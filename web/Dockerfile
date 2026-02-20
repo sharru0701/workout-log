@@ -10,6 +10,11 @@ FROM base AS builder
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NODE_ENV=production
+
+# ✅ build-time fallback env (prevents build from crashing on missing env)
+ENV DATABASE_URL=postgres://app:app@localhost:5432/workoutlog
+ENV NEXT_PUBLIC_APP_URL=http://localhost
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm build
 
