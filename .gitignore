@@ -1,0 +1,77 @@
+########################################
+# Node / Next.js
+########################################
+
+node_modules/
+.pnpm-store/
+.npm/
+
+.next/
+out/
+dist/
+build/
+
+# Next build cache
+.next/cache/
+.turbo/
+
+########################################
+# Logs
+########################################
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+########################################
+# Environment Variables (VERY IMPORTANT)
+########################################
+
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+
+deploy/.env
+
+########################################
+# Drizzle / Migrations (선택)
+########################################
+# migration SQL은 버전관리 하는 게 좋음 → 기본은 포함
+# 만약 생성된 migration을 관리 안 하려면 아래 주석 해제
+# src/server/db/migrations/*.sql
+
+########################################
+# OS Files
+########################################
+
+.DS_Store
+Thumbs.db
+
+########################################
+# VSCode / IDE
+########################################
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+########################################
+# Docker
+########################################
+
+docker-compose.override.yml
+*.env
+*.env.*
+
+########################################
+# Temporary / Misc
+########################################
+
+coverage/
+*.tmp
+*.bak
