@@ -14,6 +14,10 @@
   --radius-surface: 20px;
   --motion-duration: 180ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --duration-fast: 160ms;
+  --duration-normal: 210ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -64,6 +68,34 @@ body {
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overflow: hidden;
   interpolate-size: allow-keywords;
+}
+
+.momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+.native-page {
+  position: relative;
+}
+
+.native-page-enter {
+  animation: ui-page-in var(--duration-normal) var(--ease-standard);
+}
+
+.pull-refresh-indicator {
+  min-height: 1.2rem;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.haptic-tap {
+  transition: transform var(--duration-fast) var(--ease-standard), filter var(--duration-fast) var(--ease-standard);
+}
+
+.haptic-tap:active {
+  transform: scale(0.98);
+  filter: brightness(0.98);
 }
 
 a {
@@ -280,6 +312,14 @@ a {
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease);
+}
+
+.motion-card {
+  border: 1px solid transparent;
+  border-radius: var(--radius-surface);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), opacity var(--duration-normal) var(--ease-standard);
 }
 
 .ui-primary-button {
@@ -518,6 +558,17 @@ button {
   from {
     opacity: 0;
     transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
   }
   to {
     opacity: 1;

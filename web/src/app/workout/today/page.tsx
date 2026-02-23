@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import {
   enqueueWorkoutLog,
@@ -10,6 +10,7 @@ import {
   syncPendingWorkoutLogsViaApi,
   type WorkoutLogRequest,
 } from "@/lib/offlineLogQueue";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 type SetRow = {
   exerciseName: string;
@@ -51,6 +52,8 @@ type ExerciseOption = {
   category: string | null;
   aliases: string[];
 };
+
+const MOTION_DURATION_FAST_MS = 160;
 
 function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
   const planned = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
@@ -145,9 +148,28 @@ function WorkoutSetRow({
   onRemove: () => void;
   canCopyPrevious: boolean;
 }) {
+  const [isRemoving, setIsRemoving] = useState(false);
+  const removeTimerRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (removeTimerRef.current !== null) {
+        window.clearTimeout(removeTimerRef.current);
+      }
+    };
+  }, []);
+
+  function handleRemoveWithMotion() {
+    if (isRemoving) return;
+    setIsRemoving(true);
+    removeTimerRef.current = window.setTimeout(() => {
+      onRemove();
+    }, MOTION_DURATION_FAST_MS);
+  }
+
   return (
-    <div className="workout-swipe-shell ui-list-item">
-      <button className="workout-swipe-delete" type="button" onClick={onRemove}>
+    <div className={`workout-swipe-shell ui-list-item motion-list-item ${isRemoving ? "is-removing" : ""}`}>
+      <button className="workout-swipe-delete haptic-tap" type="button" onClick={handleRemoveWithMotion}>
         Delete
       </button>
 
@@ -259,17 +281,17 @@ function WorkoutSetRow({
         </div>
 
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <button className="workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onCompleteAndNext}>
+          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onCompleteAndNext}>
             Complete + next
           </button>
           <button
-            className="workout-action-pill rounded-xl border px-3 py-2 text-sm"
+            className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm"
             onClick={onCopyPrevious}
             disabled={!canCopyPrevious}
           >
             Copy prev
           </button>
-          <button className="workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onInsertBelow}>
+          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onInsertBelow}>
             Insert below
           </button>
         </div>
@@ -295,6 +317,7 @@ export default function WorkoutTodayPage() {
   const [loadingRecentSessions, setLoadingRecentSessions] = useState(false);
   const [selectedRecentSessionId, setSelectedRecentSessionId] = useState("");
   const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([]);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const [generatedSession, setGeneratedSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -326,6 +349,7 @@ export default function WorkoutTodayPage() {
   const [pendingFocus, setPendingFocus] = useState<{ row: number; col: number } | null>(null);
   const setInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const pendingSyncInFlight = useRef(false);
+  const sessionSwipeStartX = useRef<number | null>(null);
 
   const derivedGeneratedId = generatedSession?.id as string | undefined;
   const snapshot = generatedSession?.snapshot;
@@ -371,6 +395,46 @@ export default function WorkoutTodayPage() {
       pendingSyncInFlight.current = false;
       setIsSyncingPending(false);
     }
+  }
+
+  const refreshPageData = useCallback(async () => {
+    setRefreshTick((prev) => prev + 1);
+  }, []);
+  const pullToRefresh = usePullToRefresh({ onRefresh: refreshPageData });
+
+  function applyRecentSessionSelection(id: string) {
+    setSelectedRecentSessionId(id);
+    const picked = recentSessions.find((s) => s.id === id);
+    if (!picked) return;
+    const parsed = parseSessionKey(picked.sessionKey);
+    if (!parsed) return;
+    setWeek(parsed.week);
+    setDay(parsed.day);
+    if (parsed.sessionDate) setSessionDate(parsed.sessionDate);
+  }
+
+  function selectAdjacentRecentSession(direction: -1 | 1) {
+    if (recentSessions.length === 0) return;
+    const currentIndex = selectedRecentSessionId
+      ? recentSessions.findIndex((s) => s.id === selectedRecentSessionId)
+      : 0;
+    const safeCurrentIndex = currentIndex < 0 ? 0 : currentIndex;
+    const nextIndex = Math.max(0, Math.min(recentSessions.length - 1, safeCurrentIndex + direction));
+    if (nextIndex === safeCurrentIndex) return;
+    applyRecentSessionSelection(recentSessions[nextIndex].id);
+  }
+
+  function onRecentSessionSwipeStart(event: React.TouchEvent<HTMLDivElement>) {
+    sessionSwipeStartX.current = event.changedTouches[0]?.clientX ?? null;
+  }
+
+  function onRecentSessionSwipeEnd(event: React.TouchEvent<HTMLDivElement>) {
+    if (sessionSwipeStartX.current === null) return;
+    const endX = event.changedTouches[0]?.clientX ?? sessionSwipeStartX.current;
+    const delta = endX - sessionSwipeStartX.current;
+    sessionSwipeStartX.current = null;
+    if (Math.abs(delta) < 34) return;
+    selectAdjacentRecentSession(delta < 0 ? 1 : -1);
   }
 
   useEffect(() => {
@@ -509,7 +573,7 @@ export default function WorkoutTodayPage() {
     return () => {
       cancelled = true;
     };
-  }, [planId]);
+  }, [planId, refreshTick]);
 
   useEffect(() => {
     let cancelled = false;
@@ -524,7 +588,7 @@ export default function WorkoutTodayPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   const defaultExercisesFromSnapshot = useMemo(() => {
     const names: string[] = [];
@@ -993,10 +1057,20 @@ export default function WorkoutTodayPage() {
   }, [sets, snapshot]);
 
   return (
-    <div className="mx-auto max-w-5xl p-6 space-y-6">
+    <div
+      className="native-page native-page-enter mx-auto max-w-5xl p-6 space-y-6 momentum-scroll"
+      {...pullToRefresh.bind}
+    >
+      <div className="pull-refresh-indicator">
+        {pullToRefresh.isRefreshing
+          ? "Refreshing workout data..."
+          : pullToRefresh.pullOffset > 0
+            ? "Pull to refresh"
+            : ""}
+      </div>
       <h1 className="text-2xl font-semibold">Workout Today</h1>
 
-      <div className="rounded-2xl border p-4 space-y-3">
+      <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span
             className={`rounded-full px-2.5 py-1 ${
@@ -1024,7 +1098,7 @@ export default function WorkoutTodayPage() {
           )}
           {!isOfflineMode && pendingSyncCount > 0 && (
             <button
-              className="rounded-full border px-2.5 py-1 font-medium"
+              className="haptic-tap rounded-full border px-2.5 py-1 font-medium"
               onClick={() => {
                 setError(null);
                 setSuccess(null);
@@ -1063,31 +1137,43 @@ export default function WorkoutTodayPage() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="text-xs text-neutral-600">recent sessions</span>
-            <select
-              className="rounded-lg border px-3 py-2"
-              value={selectedRecentSessionId}
-              onChange={(e) => {
-                const id = e.target.value;
-                setSelectedRecentSessionId(id);
-                const picked = recentSessions.find((s) => s.id === id);
-                if (!picked) return;
-                const parsed = parseSessionKey(picked.sessionKey);
-                if (!parsed) return;
-                setWeek(parsed.week);
-                setDay(parsed.day);
-                if (parsed.sessionDate) setSessionDate(parsed.sessionDate);
-              }}
-            >
-              <option value="">(select)</option>
-              {recentSessions.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.sessionKey} - {new Date(s.updatedAt).toLocaleString()}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div
+            className="flex flex-col gap-1 md:col-span-2 recent-session-swipe"
+            onTouchStart={onRecentSessionSwipeStart}
+            onTouchEnd={onRecentSessionSwipeEnd}
+          >
+            <span className="text-xs text-neutral-600">recent sessions (swipe left/right)</span>
+            <div className="grid grid-cols-[auto,1fr,auto] gap-2">
+              <button
+                className="haptic-tap rounded-lg border px-3 py-2 text-sm"
+                onClick={() => selectAdjacentRecentSession(-1)}
+                disabled={recentSessions.length === 0}
+                type="button"
+              >
+                Prev
+              </button>
+              <select
+                className="rounded-lg border px-3 py-2"
+                value={selectedRecentSessionId}
+                onChange={(e) => applyRecentSessionSelection(e.target.value)}
+              >
+                <option value="">(select)</option>
+                {recentSessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.sessionKey} - {new Date(s.updatedAt).toLocaleString()}
+                  </option>
+                ))}
+              </select>
+              <button
+                className="haptic-tap rounded-lg border px-3 py-2 text-sm"
+                onClick={() => selectAdjacentRecentSession(1)}
+                disabled={recentSessions.length === 0}
+                type="button"
+              >
+                Next
+              </button>
+            </div>
+          </div>
 
           <div className="text-xs text-neutral-600 self-end pb-2">
             {loadingPlans && "Loading plans... "}
@@ -1148,7 +1234,7 @@ export default function WorkoutTodayPage() {
 
         <div className="flex gap-2 flex-wrap">
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1160,7 +1246,7 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1172,7 +1258,7 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1183,12 +1269,12 @@ export default function WorkoutTodayPage() {
             Generate Session
           </button>
 
-          <button className="rounded-xl border px-4 py-2 font-medium" onClick={addSetRow}>
+          <button className="haptic-tap rounded-xl border px-4 py-2 font-medium" onClick={addSetRow}>
             + Add Set
           </button>
 
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1199,7 +1285,7 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1211,7 +1297,7 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1238,7 +1324,7 @@ export default function WorkoutTodayPage() {
           </a>
         )}
 
-        <div className="rounded-xl border p-3 space-y-3">
+        <div className="motion-card rounded-xl border p-3 space-y-3">
           <div className="text-sm font-medium">Session overrides ({sessionKey})</div>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
@@ -1260,7 +1346,7 @@ export default function WorkoutTodayPage() {
               </select>
             </label>
             <button
-              className="rounded-xl border px-4 py-2 font-medium"
+              className="haptic-tap rounded-xl border px-4 py-2 font-medium"
               onClick={() => {
                 setSuccess(null);
                 setError(null);
@@ -1297,7 +1383,7 @@ export default function WorkoutTodayPage() {
               />
             </label>
             <button
-              className="rounded-xl border px-4 py-2 font-medium"
+              className="haptic-tap rounded-xl border px-4 py-2 font-medium"
               onClick={() => {
                 setSuccess(null);
                 setError(null);
@@ -1311,7 +1397,7 @@ export default function WorkoutTodayPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border p-4 space-y-3">
+        <div className="motion-card rounded-2xl border p-4 space-y-3">
           <div className="font-medium">Generated snapshot</div>
           {generatedSession ? (
             <div className="space-y-3">
@@ -1350,7 +1436,7 @@ export default function WorkoutTodayPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3">
+        <div className="motion-card rounded-2xl border p-4 space-y-3">
           <div className="font-medium">Sets to save</div>
 
           {defaultExercisesFromSnapshot.length > 0 && (
@@ -1387,7 +1473,7 @@ export default function WorkoutTodayPage() {
             ])}
           </datalist>
 
-          <div className="rounded-xl border p-3 space-y-2">
+          <div className="motion-card rounded-xl border p-3 space-y-2">
             <div className="font-medium">Session detail: Compare planned vs performed</div>
             {compareRows.length === 0 ? (
               <div className="text-sm text-neutral-600">No planned/performed rows to compare.</div>
