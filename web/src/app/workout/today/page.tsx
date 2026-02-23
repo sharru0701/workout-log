@@ -2,6 +2,14 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import {
+  enqueueWorkoutLog,
+  getPendingWorkoutLogCount,
+  isLikelyNetworkError,
+  offlineQueueUpdateEventName,
+  syncPendingWorkoutLogs,
+  type WorkoutLogRequest,
+} from "@/lib/offlineLogQueue";
 
 type SetRow = {
   exerciseName: string;
@@ -112,6 +120,164 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
   return `${y}-${m}-${d}`;
 }
 
+function WorkoutSetRow({
+  idx,
+  row,
+  setCellKey,
+  setInputRefs,
+  handleSetGridKeyDown,
+  updateRow,
+  onCompleteAndNext,
+  onCopyPrevious,
+  onInsertBelow,
+  onRemove,
+  canCopyPrevious,
+}: {
+  idx: number;
+  row: SetRow;
+  setCellKey: (row: number, col: number) => string;
+  setInputRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
+  handleSetGridKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
+  updateRow: (updater: (row: SetRow) => SetRow) => void;
+  onCompleteAndNext: () => void;
+  onCopyPrevious: () => void;
+  onInsertBelow: () => void;
+  onRemove: () => void;
+  canCopyPrevious: boolean;
+}) {
+  return (
+    <div className="workout-swipe-shell ui-list-item">
+      <button className="workout-swipe-delete" type="button" onClick={onRemove}>
+        Delete
+      </button>
+
+      <article className="workout-set-card">
+        <label className="flex flex-col gap-1">
+          <span className="workout-set-label">exercise</span>
+          <input
+            className="workout-set-input workout-set-input-text"
+            list="exercise-options"
+            value={row.exerciseName}
+            ref={(el) => {
+              setInputRefs.current[setCellKey(idx, 0)] = el;
+            }}
+            onKeyDown={(e) => handleSetGridKeyDown(e, idx, 0)}
+            onChange={(e) => updateRow((prev) => ({ ...prev, exerciseName: e.target.value }))}
+          />
+        </label>
+
+        <div className="mt-2 grid grid-cols-4 gap-2">
+          <label className="flex flex-col gap-1">
+            <span className="workout-set-label">set#</span>
+            <input
+              className="workout-set-input workout-set-input-number"
+              type="number"
+              inputMode="numeric"
+              value={row.setNumber}
+              ref={(el) => {
+                setInputRefs.current[setCellKey(idx, 1)] = el;
+              }}
+              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 1)}
+              onChange={(e) => updateRow((prev) => ({ ...prev, setNumber: Number(e.target.value) }))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="workout-set-label">reps</span>
+            <input
+              className="workout-set-input workout-set-input-number"
+              type="number"
+              inputMode="numeric"
+              value={row.reps}
+              ref={(el) => {
+                setInputRefs.current[setCellKey(idx, 2)] = el;
+              }}
+              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 2)}
+              onChange={(e) => updateRow((prev) => ({ ...prev, reps: Number(e.target.value) }))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="workout-set-label">kg</span>
+            <input
+              className="workout-set-input workout-set-input-number"
+              type="number"
+              inputMode="decimal"
+              value={row.weightKg}
+              ref={(el) => {
+                setInputRefs.current[setCellKey(idx, 3)] = el;
+              }}
+              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 3)}
+              onChange={(e) => updateRow((prev) => ({ ...prev, weightKg: Number(e.target.value) }))}
+            />
+          </label>
+
+          <label className="flex flex-col gap-1">
+            <span className="workout-set-label">RPE</span>
+            <input
+              className="workout-set-input workout-set-input-number"
+              type="number"
+              inputMode="decimal"
+              value={row.rpe}
+              ref={(el) => {
+                setInputRefs.current[setCellKey(idx, 4)] = el;
+              }}
+              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 4)}
+              onChange={(e) => updateRow((prev) => ({ ...prev, rpe: Number(e.target.value) }))}
+            />
+          </label>
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <label className="workout-toggle">
+            <input
+              type="checkbox"
+              checked={row.isExtra}
+              onChange={(e) =>
+                updateRow((prev) => ({
+                  ...prev,
+                  isExtra: e.target.checked,
+                  isPlanned: e.target.checked ? false : prev.isPlanned,
+                }))
+              }
+            />
+            <span>extra</span>
+          </label>
+
+          <label className="workout-toggle">
+            <input
+              type="checkbox"
+              checked={row.completed}
+              onChange={(e) => updateRow((prev) => ({ ...prev, completed: e.target.checked }))}
+            />
+            <span>complete</span>
+          </label>
+
+          <span className="text-xs text-neutral-600">
+            {row.isExtra ? "extra" : row.isPlanned ? "planned" : "custom"}
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-3 gap-2">
+          <button className="workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onCompleteAndNext}>
+            Complete + next
+          </button>
+          <button
+            className="workout-action-pill rounded-xl border px-3 py-2 text-sm"
+            onClick={onCopyPrevious}
+            disabled={!canCopyPrevious}
+          >
+            Copy prev
+          </button>
+          <button className="workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onInsertBelow}>
+            Insert below
+          </button>
+        </div>
+      </article>
+    </div>
+  );
+}
+
 export default function WorkoutTodayPage() {
   const setGridColCount = 5;
   const [userId, setUserId] = useState("dev");
@@ -134,6 +300,10 @@ export default function WorkoutTodayPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [lastSavedLogId, setLastSavedLogId] = useState<string | null>(null);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [isSyncingPending, setIsSyncingPending] = useState(false);
+  const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
   const [sets, setSets] = useState<SetRow[]>([
     {
@@ -155,6 +325,7 @@ export default function WorkoutTodayPage() {
   const [queryAutoGenerate, setQueryAutoGenerate] = useState(false);
   const [pendingFocus, setPendingFocus] = useState<{ row: number; col: number } | null>(null);
   const setInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const pendingSyncInFlight = useRef(false);
 
   const derivedGeneratedId = generatedSession?.id as string | undefined;
   const snapshot = generatedSession?.snapshot;
@@ -167,6 +338,83 @@ export default function WorkoutTodayPage() {
     (sessionKeyMode === "DATE" ? sessionDate : `W${week}D${day}`);
 
   const setCellKey = (row: number, col: number) => `${row}:${col}`;
+  const refreshPendingSyncCount = () => {
+    if (typeof window === "undefined") return;
+    setPendingSyncCount(getPendingWorkoutLogCount());
+  };
+
+  async function syncPendingQueuedLogs() {
+    if (typeof window === "undefined") return;
+    if (!navigator.onLine) return;
+    if (pendingSyncInFlight.current) return;
+    if (getPendingWorkoutLogCount() === 0) {
+      setPendingSyncCount(0);
+      setSyncNotice(null);
+      return;
+    }
+
+    pendingSyncInFlight.current = true;
+    setIsSyncingPending(true);
+    setSyncNotice("Syncing pending logs...");
+    try {
+      const result = await syncPendingWorkoutLogs((payload) => apiPost<{ log: any }>(`/api/logs`, payload));
+      setPendingSyncCount(result.remaining);
+      if (result.synced > 0) {
+        if (result.lastSyncedLogId) setLastSavedLogId(result.lastSyncedLogId);
+        setSyncNotice(`Synced ${result.synced} queued log${result.synced > 1 ? "s" : ""}`);
+      } else if (result.failed > 0) {
+        setSyncNotice(`Pending sync: ${result.remaining}`);
+      } else {
+        setSyncNotice(null);
+      }
+    } finally {
+      pendingSyncInFlight.current = false;
+      setIsSyncingPending(false);
+    }
+  }
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const handleOnline = () => {
+      setIsOfflineMode(false);
+      setSyncNotice(null);
+      refreshPendingSyncCount();
+      void syncPendingQueuedLogs();
+    };
+
+    const handleOffline = () => {
+      setIsOfflineMode(true);
+      setSyncNotice("Offline mode");
+      refreshPendingSyncCount();
+    };
+
+    const handleStorage = () => {
+      refreshPendingSyncCount();
+    };
+
+    const handleQueueUpdate = () => {
+      refreshPendingSyncCount();
+    };
+
+    setIsOfflineMode(!navigator.onLine);
+    refreshPendingSyncCount();
+    if (navigator.onLine) {
+      void syncPendingQueuedLogs();
+    }
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener(offlineQueueUpdateEventName(), handleQueueUpdate);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener(offlineQueueUpdateEventName(), handleQueueUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (selectedSetIdx !== null && !sets[selectedSetIdx]) {
@@ -503,6 +751,15 @@ export default function WorkoutTodayPage() {
     setPendingFocus({ row: sets.length, col: 0 });
   }
 
+  function updateSetRow(idx: number, updater: (row: SetRow) => SetRow) {
+    setSets((prev) => {
+      if (!prev[idx]) return prev;
+      const copy = [...prev];
+      copy[idx] = updater(copy[idx]);
+      return copy;
+    });
+  }
+
   async function repeatLastWorkout() {
     const sp = new URLSearchParams();
     sp.set("limit", "1");
@@ -553,7 +810,7 @@ export default function WorkoutTodayPage() {
     return exact?.id ?? null;
   }
 
-  async function saveLog() {
+  async function buildLogPayload(): Promise<WorkoutLogRequest> {
     if (!planId) throw new Error("planId required");
     if (!sets.length) throw new Error("sets required");
     const exerciseIdCache = new Map<string, string | null>();
@@ -575,13 +832,58 @@ export default function WorkoutTodayPage() {
       }),
     );
 
-    const res = await apiPost<{ log: any }>(`/api/logs`, {
+    return {
       planId,
       generatedSessionId: derivedGeneratedId ?? null,
       notes: `W${week}D${day} (${planType ?? "unknown"})`,
       sets: setsWithExerciseId,
-    });
+    };
+  }
+
+  async function saveLog(payload: WorkoutLogRequest) {
+    const res = await apiPost<{ log: any }>(`/api/logs`, payload);
     return res.log;
+  }
+
+  async function handleSaveLog() {
+    setSuccess(null);
+    setError(null);
+    setLastSavedLogId(null);
+    setSyncNotice(null);
+
+    try {
+      const payload = await buildLogPayload();
+
+      if (typeof window !== "undefined" && !navigator.onLine) {
+        enqueueWorkoutLog(payload);
+        refreshPendingSyncCount();
+        setIsOfflineMode(true);
+        setSuccess("Saved offline. Will sync automatically when back online.");
+        setSyncNotice("Pending sync");
+        return;
+      }
+
+      try {
+        const log = await saveLog(payload);
+        setLastSavedLogId(log.id);
+        setSuccess(`Saved log: ${log.id}`);
+        setIsOfflineMode(false);
+        refreshPendingSyncCount();
+        void syncPendingQueuedLogs();
+      } catch (error) {
+        if (isLikelyNetworkError(error)) {
+          enqueueWorkoutLog(payload);
+          refreshPendingSyncCount();
+          setIsOfflineMode(true);
+          setSuccess("Network unavailable. Saved offline and queued.");
+          setSyncNotice("Pending sync");
+          return;
+        }
+        throw error;
+      }
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to save log");
+    }
   }
 
   async function makeAccessoryPermanent() {
@@ -679,6 +981,46 @@ export default function WorkoutTodayPage() {
       <h1 className="text-2xl font-semibold">Workout Today</h1>
 
       <div className="rounded-2xl border p-4 space-y-3">
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span
+            className={`rounded-full px-2.5 py-1 ${
+              isOfflineMode
+                ? "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
+                : "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200"
+            }`}
+          >
+            {isOfflineMode ? "Offline mode" : "Online"}
+          </span>
+          {pendingSyncCount > 0 && (
+            <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-900 dark:bg-sky-900/40 dark:text-sky-200">
+              Pending sync: {pendingSyncCount}
+            </span>
+          )}
+          {isSyncingPending && (
+            <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">
+              Syncing...
+            </span>
+          )}
+          {!isSyncingPending && syncNotice && (
+            <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">
+              {syncNotice}
+            </span>
+          )}
+          {!isOfflineMode && pendingSyncCount > 0 && (
+            <button
+              className="rounded-full border px-2.5 py-1 font-medium"
+              onClick={() => {
+                setError(null);
+                setSuccess(null);
+                void syncPendingQueuedLogs();
+              }}
+              disabled={isSyncingPending}
+            >
+              Sync now
+            </button>
+          )}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-neutral-600">userId</span>
@@ -823,24 +1165,6 @@ export default function WorkoutTodayPage() {
             disabled={!planId}
           >
             Generate Session
-          </button>
-
-          <button
-            className="rounded-xl border px-4 py-2 font-medium"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              setLastSavedLogId(null);
-              saveLog()
-                .then((log) => {
-                  setLastSavedLogId(log.id);
-                  setSuccess(`Saved log: ${log.id}`);
-                })
-                .catch((e) => setError(e.message));
-            }}
-            disabled={!planId}
-          >
-            Save Log
           </button>
 
           <button className="rounded-xl border px-4 py-2 font-medium" onClick={addSetRow}>
@@ -1022,175 +1346,22 @@ export default function WorkoutTodayPage() {
             Keyboard: Enter inserts next set, arrow keys move between cells.
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3 ui-height-animate">
             {sets.map((s, idx) => (
-              <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
-                <label className="flex flex-col gap-1 md:col-span-2">
-                  <span className="text-xs text-neutral-600">exercise</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
-                    list="exercise-options"
-                    value={s.exerciseName}
-                    ref={(el) => {
-                      setInputRefs.current[setCellKey(idx, 0)] = el;
-                    }}
-                    onKeyDown={(e) => handleSetGridKeyDown(e, idx, 0)}
-                    onChange={(e) =>
-                      setSets((prev) => {
-                        const copy = [...prev];
-                        copy[idx] = { ...copy[idx], exerciseName: e.target.value };
-                        return copy;
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">set#</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
-                    type="number"
-                    value={s.setNumber}
-                    ref={(el) => {
-                      setInputRefs.current[setCellKey(idx, 1)] = el;
-                    }}
-                    onKeyDown={(e) => handleSetGridKeyDown(e, idx, 1)}
-                    onChange={(e) =>
-                      setSets((prev) => {
-                        const copy = [...prev];
-                        copy[idx] = { ...copy[idx], setNumber: Number(e.target.value) };
-                        return copy;
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">reps</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
-                    type="number"
-                    value={s.reps}
-                    ref={(el) => {
-                      setInputRefs.current[setCellKey(idx, 2)] = el;
-                    }}
-                    onKeyDown={(e) => handleSetGridKeyDown(e, idx, 2)}
-                    onChange={(e) =>
-                      setSets((prev) => {
-                        const copy = [...prev];
-                        copy[idx] = { ...copy[idx], reps: Number(e.target.value) };
-                        return copy;
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">kg</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
-                    type="number"
-                    value={s.weightKg}
-                    ref={(el) => {
-                      setInputRefs.current[setCellKey(idx, 3)] = el;
-                    }}
-                    onKeyDown={(e) => handleSetGridKeyDown(e, idx, 3)}
-                    onChange={(e) =>
-                      setSets((prev) => {
-                        const copy = [...prev];
-                        copy[idx] = { ...copy[idx], weightKg: Number(e.target.value) };
-                        return copy;
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">RPE</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
-                    type="number"
-                    value={s.rpe}
-                    ref={(el) => {
-                      setInputRefs.current[setCellKey(idx, 4)] = el;
-                    }}
-                    onKeyDown={(e) => handleSetGridKeyDown(e, idx, 4)}
-                    onChange={(e) =>
-                      setSets((prev) => {
-                        const copy = [...prev];
-                        copy[idx] = { ...copy[idx], rpe: Number(e.target.value) };
-                        return copy;
-                      })
-                    }
-                  />
-                </label>
-
-                <label className="flex items-center gap-2 md:col-span-6">
-                  <input
-                    type="checkbox"
-                    checked={s.isExtra}
-                    onChange={(e) =>
-                        setSets((prev) => {
-                          const copy = [...prev];
-                          copy[idx] = {
-                            ...copy[idx],
-                            isExtra: e.target.checked,
-                            isPlanned: e.target.checked ? false : copy[idx].isPlanned,
-                          };
-                          return copy;
-                        })
-                      }
-                  />
-                  <span className="text-sm">extra (accessory / not planned)</span>
-                  <span className="text-xs text-neutral-600">
-                    {s.isExtra ? "extra" : s.isPlanned ? "planned" : "custom"}
-                  </span>
-
-                  <label className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={s.completed}
-                      onChange={(e) =>
-                        setSets((prev) => {
-                          const copy = [...prev];
-                          copy[idx] = { ...copy[idx], completed: e.target.checked };
-                          return copy;
-                        })
-                      }
-                    />
-                    complete
-                  </label>
-
-                  <button
-                    className="rounded-xl border px-3 py-2 text-sm"
-                    onClick={() => completeSetAndAddNext(idx)}
-                  >
-                    Complete + next
-                  </button>
-
-                  <button
-                    className="rounded-xl border px-3 py-2 text-sm"
-                    onClick={() => copyPreviousSet(idx)}
-                    disabled={idx === 0}
-                  >
-                    Copy prev
-                  </button>
-
-                  <button
-                    className="rounded-xl border px-3 py-2 text-sm"
-                    onClick={() => insertSetBelow(idx, 0)}
-                  >
-                    Insert below
-                  </button>
-
-                  <button
-                    className="ml-auto rounded-xl border px-3 py-2 text-sm"
-                    onClick={() => setSets((prev) => prev.filter((_, i) => i !== idx))}
-                  >
-                    Remove
-                  </button>
-                </label>
-              </div>
+              <WorkoutSetRow
+                key={`${idx}-${s.exerciseName}-${s.setNumber}`}
+                idx={idx}
+                row={s}
+                setCellKey={setCellKey}
+                setInputRefs={setInputRefs}
+                handleSetGridKeyDown={handleSetGridKeyDown}
+                updateRow={(updater) => updateSetRow(idx, updater)}
+                onCompleteAndNext={() => completeSetAndAddNext(idx)}
+                onCopyPrevious={() => copyPreviousSet(idx)}
+                onInsertBelow={() => insertSetBelow(idx, 0)}
+                onRemove={() => setSets((prev) => prev.filter((_, i) => i !== idx))}
+                canCopyPrevious={idx !== 0}
+              />
             ))}
           </div>
           <datalist id="exercise-options">
@@ -1247,6 +1418,20 @@ export default function WorkoutTodayPage() {
             )}
           </div>
         </div>
+      </div>
+
+      <div className="workout-save-dock">
+        <button
+          className="ui-primary-button workout-save-button"
+          onClick={handleSaveLog}
+          disabled={!planId}
+        >
+          {isOfflineMode
+            ? `Save Offline${pendingSyncCount > 0 ? ` (${pendingSyncCount} pending)` : ""}`
+            : pendingSyncCount > 0
+              ? `Save Log (${pendingSyncCount} pending)`
+              : "Save Log"}
+        </button>
       </div>
     </div>
   );
