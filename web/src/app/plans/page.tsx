@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 type TemplateItem = {
   id: string;
@@ -68,6 +69,7 @@ export default function PlansPage() {
   const [templateTag, setTemplateTag] = useState("");
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [createType, setCreateType] = useState<"SINGLE" | "COMPOSITE" | "MANUAL">("SINGLE");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const templatesBySlug = useMemo(() => {
     const map = new Map<string, TemplateItem>();
@@ -107,6 +109,10 @@ export default function PlansPage() {
     () => templateOptions.filter((t) => t.type === "MANUAL"),
     [templateOptions],
   );
+  const refreshPlansPage = useCallback(async () => {
+    setRefreshTick((prev) => prev + 1);
+  }, []);
+  const pullToRefresh = usePullToRefresh({ onRefresh: refreshPlansPage });
 
   function versionsFor(slug: string) {
     return versionsBySlug[slug] ?? [];
@@ -131,7 +137,7 @@ export default function PlansPage() {
         setLoadingTemplates(false);
       }
     })();
-  }, [userId]);
+  }, [userId, refreshTick]);
 
   useEffect(() => {
     if (templates.length === 0) {
@@ -172,7 +178,7 @@ export default function PlansPage() {
         setLoadingPlans(false);
       }
     })();
-  }, [userId]);
+  }, [userId, refreshTick]);
 
   useEffect(() => {
     if (selectedPlanId && !plans.some((p) => p.id === selectedPlanId)) {
@@ -353,11 +359,21 @@ export default function PlansPage() {
 
   return (
     <>
-      <div className="mx-auto max-w-5xl p-4 space-y-4 sm:p-6">
+      <div
+        className="native-page native-page-enter mx-auto max-w-5xl p-4 space-y-4 sm:p-6 momentum-scroll"
+        {...pullToRefresh.bind}
+      >
+        <div className="pull-refresh-indicator">
+          {pullToRefresh.isRefreshing
+            ? "Refreshing plans..."
+            : pullToRefresh.pullOffset > 0
+              ? "Pull to refresh"
+              : ""}
+        </div>
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-semibold">Plans</h1>
           <button
-            className="ui-primary-button min-h-12 px-5 text-base"
+            className="haptic-tap ui-primary-button min-h-12 px-5 text-base"
             onClick={() => setCreateSheetOpen(true)}
           >
             Create Plan
@@ -457,13 +473,13 @@ export default function PlansPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
-                      className="rounded-xl border px-4 py-3 text-base font-medium"
+                      className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium"
                       onClick={() => setSelectedPlanId(p.id)}
                     >
                       Select
                     </button>
                     <button
-                      className="ui-primary-button px-4 py-3 text-base font-medium"
+                      className="haptic-tap ui-primary-button px-4 py-3 text-base font-medium"
                       onClick={() => {
                         setError(null);
                         generateSessionForPlan(p.id).catch((e) => setError(e.message));
@@ -497,7 +513,7 @@ export default function PlansPage() {
           </label>
 
           <button
-            className="ui-primary-button min-h-12 w-full text-base"
+            className="haptic-tap ui-primary-button min-h-12 w-full text-base"
             onClick={() => {
               setError(null);
               generateSession().catch((e) => setError(e.message));
@@ -515,21 +531,17 @@ export default function PlansPage() {
       </div>
 
       <div
-        className={`fixed inset-0 z-50 transition-opacity duration-200 ${
-          createSheetOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`mobile-bottom-sheet ${createSheetOpen ? "is-open pointer-events-auto" : "pointer-events-none"}`}
         aria-hidden={!createSheetOpen}
       >
         <button
           type="button"
           aria-label="Close create plan sheet"
-          className="absolute inset-0 bg-black/45"
+          className="mobile-bottom-sheet-backdrop"
           onClick={() => setCreateSheetOpen(false)}
         />
         <section
-          className={`absolute inset-x-0 bottom-0 mx-auto w-full max-w-[720px] rounded-t-3xl border bg-bg-surface p-4 shadow-2xl transition-transform duration-200 ${
-            createSheetOpen ? "translate-y-0" : "translate-y-full"
-          }`}
+          className="mobile-bottom-sheet-panel p-4"
           role="dialog"
           aria-modal="true"
           aria-label="Create plan"
@@ -538,7 +550,7 @@ export default function PlansPage() {
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Create Plan</h2>
               <button
-                className="rounded-xl border px-4 py-2 text-sm font-medium"
+                className="haptic-tap rounded-xl border px-4 py-2 text-sm font-medium"
                 onClick={() => setCreateSheetOpen(false)}
               >
                 Close
@@ -549,7 +561,7 @@ export default function PlansPage() {
               {(["SINGLE", "COMPOSITE", "MANUAL"] as const).map((type) => (
                 <button
                   key={type}
-                  className={`rounded-xl border px-3 py-3 text-sm font-semibold ${
+                  className={`haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold ${
                     createType === type ? "bg-bg-elevated" : ""
                   }`}
                   onClick={() => setCreateType(type)}
@@ -627,7 +639,7 @@ export default function PlansPage() {
             ) : null}
 
             <button
-              className="ui-primary-button min-h-12 w-full text-base font-semibold"
+              className="haptic-tap ui-primary-button min-h-12 w-full text-base font-semibold"
               onClick={() => {
                 setError(null);
                 const createFlow =

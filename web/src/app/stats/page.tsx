@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 type Plan = {
   id: string;
@@ -138,7 +139,7 @@ function MetricTile({
   trend?: { text: string; className: string };
 }) {
   return (
-    <article className="rounded-2xl border border-neutral-200 bg-white p-4 transition-all duration-200">
+    <article className="motion-card rounded-2xl border bg-white p-4">
       <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
       <div className="mt-1 text-sm text-neutral-600">{detail}</div>
@@ -178,7 +179,7 @@ function SparklineChart({
   const area = `${d} L ${last.x.toFixed(1)} ${(height - pad).toFixed(1)} L ${coords[0].x.toFixed(1)} ${(height - pad).toFixed(1)} Z`;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border border-neutral-200 bg-white text-accent transition-all duration-200">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border bg-white text-accent">
       <path d={area} fill="currentColor" fillOpacity="0.12" />
       <path d={d} fill="none" stroke="currentColor" strokeWidth="2.5" />
       <circle cx={last.x} cy={last.y} r="3.4" fill="currentColor" />
@@ -214,6 +215,7 @@ export default function StatsPage() {
   const [prs, setPrs] = useState<PRsResp | null>(null);
   const [trendWindows, setTrendWindows] = useState<TrendWindow[]>([]);
   const [rangeIndex, setRangeIndex] = useState(2);
+  const [refreshTick, setRefreshTick] = useState(0);
   const swipeStartX = useRef<number | null>(null);
 
   const rangeQuery = useMemo(() => {
@@ -326,7 +328,7 @@ export default function StatsPage() {
     return () => {
       cancelled = true;
     };
-  }, [bucket, exercise, exerciseId, planId, rangeQuery]);
+  }, [bucket, exercise, exerciseId, planId, rangeQuery, refreshTick]);
 
   const seriesPoints = useMemo(
     () => (series ? series.series.map((p) => Number(p.tonnage ?? 0)) : []),
@@ -347,6 +349,10 @@ export default function StatsPage() {
   const activeComplianceTrend = trendMeta((activeTrend?.compliance.trend?.complianceDelta ?? 0) * 100, 1);
   const volumeTrend = trendMeta(volume?.trend?.tonnageDelta ?? 0, 0);
   const complianceTrend = trendMeta((compliance?.trend?.complianceDelta ?? 0) * 100, 1);
+  const refreshStatsPage = useCallback(async () => {
+    setRefreshTick((prev) => prev + 1);
+  }, []);
+  const pullToRefresh = usePullToRefresh({ onRefresh: refreshStatsPage });
 
   useEffect(() => {
     if (from) return;
@@ -379,7 +385,17 @@ export default function StatsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 space-y-4 sm:p-6">
+    <div
+      className="native-page native-page-enter mx-auto max-w-5xl p-4 space-y-4 sm:p-6 momentum-scroll"
+      {...pullToRefresh.bind}
+    >
+      <div className="pull-refresh-indicator">
+        {pullToRefresh.isRefreshing
+          ? "Refreshing stats..."
+          : pullToRefresh.pullOffset > 0
+            ? "Pull to refresh"
+            : ""}
+      </div>
       <div className="space-y-1">
         <h1 className="text-2xl font-semibold">Stats Dashboard</h1>
         <p className="text-sm text-neutral-600">
@@ -387,7 +403,7 @@ export default function StatsPage() {
         </p>
       </div>
 
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 ui-height-animate">
+      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="flex flex-col gap-1">
             <span className="text-xs text-neutral-600">Plan</span>
@@ -441,7 +457,7 @@ export default function StatsPage() {
       </section>
 
       <section
-        className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 touch-pan-y ui-height-animate"
+        className="motion-card rounded-2xl border bg-white p-4 space-y-3 touch-pan-y ui-height-animate"
         onTouchStart={onRangeSwipeStart}
         onTouchEnd={onRangeSwipeEnd}
       >
@@ -457,7 +473,7 @@ export default function StatsPage() {
           {PRESET_RANGES.map((d, idx) => (
             <button
               key={d}
-              className={`rounded-xl border px-3 py-3 text-base font-semibold transition-all duration-200 ${
+              className={`haptic-tap rounded-xl border px-3 py-3 text-base font-semibold ${
                 idx === rangeIndex ? "bg-bg-elevated" : ""
               }`}
               onClick={() => {
@@ -528,7 +544,7 @@ export default function StatsPage() {
         />
       </section>
 
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 ui-height-animate">
+      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="flex items-end justify-between">
           <div>
             <div className="text-sm text-neutral-600">Volume Sparkline</div>
@@ -539,7 +555,7 @@ export default function StatsPage() {
         <SparklineChart points={seriesPoints} labels={seriesLabels} />
       </section>
 
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
         <div className="text-sm text-neutral-600 mb-3">Top exercise volume breakdown</div>
         {series?.byExercise?.length ? (
           <div className="overflow-x-auto">
@@ -569,7 +585,7 @@ export default function StatsPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
         <div className="text-sm text-neutral-600 mb-3">Compliance by plan</div>
         {compliance?.byPlan?.length ? (
           <div className="overflow-x-auto">
@@ -599,7 +615,7 @@ export default function StatsPage() {
         )}
       </section>
 
-      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
         <div className="text-sm text-neutral-600 mb-3">PR tracking (best e1RM by exercise)</div>
         {prs?.items?.length ? (
           <div className="overflow-x-auto">

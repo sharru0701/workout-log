@@ -12,12 +12,12 @@
   --shadow-soft: 0 20px 40px -26px rgb(0 0 0 / 72%);
   --shadow-float: 0 28px 64px -34px rgb(0 0 0 / 76%);
   --radius-surface: 20px;
-  --motion-duration: 180ms;
-  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
   --duration-fast: 160ms;
   --duration-normal: 210ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --motion-duration: var(--duration-normal);
+  --motion-ease: var(--ease-standard);
 }
 
 @media (prefers-color-scheme: light) {
@@ -115,6 +115,8 @@ a {
 .app-shell-main {
   height: 100%;
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
   overscroll-behavior-y: contain;
   padding: 1rem 1rem calc(5.75rem + env(safe-area-inset-bottom));
 }
@@ -197,7 +199,7 @@ a {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
   box-shadow: var(--shadow-soft);
-  animation: ui-card-in 190ms var(--motion-ease);
+  animation: ui-card-in var(--duration-normal) var(--motion-ease);
 }
 
 .app-sync-dot {
@@ -268,7 +270,7 @@ a {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
   box-shadow: var(--shadow-soft);
-  animation: ui-card-in 190ms var(--motion-ease);
+  animation: ui-card-in var(--duration-normal) var(--motion-ease);
 }
 
 .app-pwa-text {
@@ -320,6 +322,47 @@ a {
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), opacity var(--duration-normal) var(--ease-standard);
+}
+
+.mobile-bottom-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+}
+
+.mobile-bottom-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 0.45);
+  opacity: 0;
+  transition: opacity var(--duration-normal) var(--ease-standard);
+}
+
+.mobile-bottom-sheet-panel {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  margin-inline: auto;
+  width: 100%;
+  max-width: 720px;
+  border: 1px solid transparent;
+  border-radius: 1.5rem 1.5rem 0 0;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-float);
+  transform: translateY(105%) scale(0.985);
+  transform-origin: bottom center;
+  transition:
+    transform var(--duration-normal) var(--ease-emphasized),
+    border-radius var(--duration-fast) var(--ease-standard);
+  will-change: transform;
+}
+
+.mobile-bottom-sheet.is-open .mobile-bottom-sheet-backdrop {
+  opacity: 1;
+}
+
+.mobile-bottom-sheet.is-open .mobile-bottom-sheet-panel {
+  transform: translateY(0) scale(1);
 }
 
 .ui-primary-button {
@@ -402,7 +445,11 @@ textarea:focus {
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-surface);
-  animation: ui-list-in 200ms var(--motion-ease);
+  animation: ui-list-in var(--duration-normal) var(--motion-ease);
+}
+
+.workout-swipe-shell.is-removing {
+  animation: ui-list-out var(--duration-fast) var(--motion-ease) forwards;
 }
 
 .workout-swipe-delete {
@@ -512,7 +559,7 @@ input,
 select,
 textarea,
 button {
-  transition: background-color var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease), opacity var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease), max-height 220ms var(--motion-ease);
+  transition: background-color var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease), opacity var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease), max-height var(--duration-normal) var(--motion-ease);
 }
 
 .rounded-2xl {
@@ -531,15 +578,19 @@ button {
 .rounded-2xl.border,
 .ui-card,
 .workout-set-card {
-  animation: ui-card-in 190ms var(--motion-ease);
+  animation: ui-card-in var(--duration-normal) var(--motion-ease);
 }
 
 .ui-list-item {
-  animation: ui-list-in 180ms var(--motion-ease);
+  animation: ui-list-in var(--duration-fast) var(--motion-ease);
+}
+
+.ui-list-item.is-removing {
+  animation: ui-list-out var(--duration-fast) var(--motion-ease) forwards;
 }
 
 .ui-height-animate {
-  transition: block-size 220ms var(--motion-ease), max-height 220ms var(--motion-ease), opacity var(--motion-duration) var(--motion-ease);
+  transition: block-size var(--duration-normal) var(--motion-ease), max-height var(--duration-normal) var(--motion-ease), opacity var(--motion-duration) var(--motion-ease);
   will-change: block-size;
 }
 
@@ -562,6 +613,17 @@ button {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes ui-list-out {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(5px) scale(0.99);
   }
 }
 

@@ -19,23 +19,28 @@ export function usePullToRefresh({
 
   const startYRef = useRef<number | null>(null);
   const isPullingRef = useRef(false);
+  const scrollTargetRef = useRef<HTMLElement | null>(null);
 
   const endPull = useCallback(() => {
     startYRef.current = null;
     isPullingRef.current = false;
+    scrollTargetRef.current = null;
     setPullOffset(0);
   }, []);
 
   const onTouchStart = useCallback((event: TouchEvent<HTMLElement>) => {
-    if (typeof window === "undefined") return;
-    if (window.scrollY > 0 || isRefreshing) return;
+    if (isRefreshing) return;
+    const target = event.currentTarget;
+    if (target.scrollTop > 0) return;
     startYRef.current = event.touches[0]?.clientY ?? null;
     isPullingRef.current = startYRef.current !== null;
+    scrollTargetRef.current = target;
   }, [isRefreshing]);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isPullingRef.current || startYRef.current === null || isRefreshing) return;
-    if (typeof window !== "undefined" && window.scrollY > 0) {
+    const target = scrollTargetRef.current ?? event.currentTarget;
+    if (target.scrollTop > 0) {
       endPull();
       return;
     }
