@@ -57,7 +57,6 @@ jobs:
           tags: tag:ci
 
       - name: Install rsync
-        shell: bash
         run: |
           sudo apt-get update
           sudo apt-get install -y rsync
@@ -68,19 +67,17 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # ✅ multiline private key safe write
-          cat > ~/.ssh/id_ed25519 <<'KEY'
-${{ secrets.DEPLOY_SSH_KEY }}
-KEY
+          # Write private key safely (no YAML heredoc pitfalls)
+          printf '%s' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Ensure /opt/workout-log exists
         shell: bash
         run: |
           ssh -o StrictHostKeyChecking=yes \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} /opt/workout-log"
 
       - name: Upload deploy bundle to server
@@ -89,16 +86,15 @@ KEY
           rsync -avz --delete \
             --exclude ".env" \
             -e "ssh -o StrictHostKeyChecking=yes" \
-            ./deploy/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/workout-log/deploy/
+            ./deploy/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/workout-log/deploy/"
 
       - name: Deploy (pull & restart)
         shell: bash
         run: |
           ssh -o StrictHostKeyChecking=yes \
-            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'EOF'
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
           set -euo pipefail
           cd /opt/workout-log/deploy
-
           docker compose pull web
           docker compose up -d
           docker compose ps
