@@ -1,0 +1,11 @@
+[Unit]
+Description=Run WorkoutLog Postgres backup daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=30m
+Unit=workoutlog-backup.service
+
+[Install]
+WantedBy=timers.target

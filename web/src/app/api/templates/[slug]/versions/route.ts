@@ -2,35 +2,69 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { programTemplate, programVersion } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { withApiLogging } from "@/server/observability/apiRoute";
+import { logError } from "@/server/observability/logger";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 
 type Ctx = { params: Promise<{ slug: string }> };
+
+function canReadTemplate(t: any, userId?: string | null) {
+  if (t.visibility === "PUBLIC") return true;
+  return Boolean(userId && t.ownerUserId === userId);
+}
+
+async function GETImpl(_req: Request, ctx: Ctx) {
+  try {
+    const { slug } = await ctx.params;
+    const userId = getAuthenticatedUserId();
+
+    const tRows = await db.select().from(programTemplate).where(eq(programTemplate.slug, slug)).limit(1);
+    const t = tRows[0];
+    if (!t) return NextResponse.json({ error: "template not found" }, { status: 404 });
+    if (!canReadTemplate(t, userId)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+    const versions = await db
+      .select()
+      .from(programVersion)
+      .where(eq(programVersion.templateId, t.id))
+      .orderBy(desc(programVersion.version));
+
+    return NextResponse.json({ template: t, versions });
+  } catch (e: any) {
+    logError("api.handler_error", { error: e });
+    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+  }
+}
 
 /**
  * POST /api/templates/{slug}/versions
  * body:
  * {
- *   userId: "dev",
  *   baseVersionId?: "uuid",   // optional
  *   definition?: {...},       // optional (defaults to base definition)
  *   defaults?: {...},         // optional
  *   changelog?: "text"        // optional
  * }
  */
-export async function POST(req: Request, ctx: Ctx) {
+async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const { slug } = await ctx.params;
     const body = await req.json();
 
-    const userId = body.userId as string;
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    const userId = getAuthenticatedUserId();
 
     const tRows = await db.select().from(programTemplate).where(eq(programTemplate.slug, slug)).limit(1);
     const t = tRows[0];
     if (!t) return NextResponse.json({ error: "template not found" }, { status: 404 });
 
-    // 권한: PRIVATE 템플릿이면 owner만 버전업 가능
     if (t.visibility === "PRIVATE" && t.ownerUserId !== userId) {
       return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
+    if (t.visibility === "PUBLIC" && !t.ownerUserId) {
+      return NextResponse.json(
+        { error: "Public base templates are read-only. Fork first." },
+        { status: 403 },
+      );
     }
 
     // base version: either explicit id, or latest
@@ -75,7 +109,11 @@ export async function POST(req: Request, ctx: Ctx) {
 
     return NextResponse.json({ programVersion: created }, { status: 201 });
   } catch (e: any) {
-    console.error(e);
+    logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
+
+export const GET = withApiLogging(GETImpl);
+
+export const POST = withApiLogging(POSTImpl);

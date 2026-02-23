@@ -10,6 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 /**
  * Enums
@@ -231,6 +232,41 @@ export const generatedSession = pgTable(
 );
 
 /**
+ * exercise: canonical exercise dictionary
+ */
+export const exercise = pgTable(
+  "exercise",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    category: text("category"),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    nameUq: uniqueIndex("exercise_name_uq").on(t.name),
+  }),
+);
+
+/**
+ * exercise_alias: user-facing aliases mapped to canonical exercise
+ */
+export const exerciseAlias = pgTable(
+  "exercise_alias",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    exerciseId: uuid("exercise_id")
+      .notNull()
+      .references(() => exercise.id, { onDelete: "cascade" }),
+    alias: text("alias").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    aliasUq: uniqueIndex("exercise_alias_alias_uq").on(t.alias),
+    exerciseIdx: index("exercise_alias_exercise_idx").on(t.exerciseId),
+  }),
+);
+
+/**
  * workout_log: 실제 수행 기록
  */
 export const workoutLog = pgTable(
@@ -253,6 +289,18 @@ export const workoutLog = pgTable(
   },
   (t) => ({
     userPerformedIdx: index("workout_log_user_performed_idx").on(t.userId, t.performedAt),
+    userDayBucketUtcIdx: index("workout_log_user_day_bucket_utc_idx").on(
+      t.userId,
+      sql`date_trunc('day', ${t.performedAt} at time zone 'UTC')`,
+    ),
+    userWeekBucketUtcIdx: index("workout_log_user_week_bucket_utc_idx").on(
+      t.userId,
+      sql`date_trunc('week', ${t.performedAt} at time zone 'UTC')`,
+    ),
+    userMonthBucketUtcIdx: index("workout_log_user_month_bucket_utc_idx").on(
+      t.userId,
+      sql`date_trunc('month', ${t.performedAt} at time zone 'UTC')`,
+    ),
     planIdx: index("workout_log_plan_idx").on(t.planId),
     sessionIdx: index("workout_log_generated_session_idx").on(t.generatedSessionId),
   }),
@@ -270,6 +318,7 @@ export const workoutSet = pgTable(
       .notNull()
       .references(() => workoutLog.id, { onDelete: "cascade" }),
 
+    exerciseId: uuid("exercise_id").references(() => exercise.id, { onDelete: "set null" }),
     exerciseName: text("exercise_name").notNull(),
     sortOrder: integer("sort_order").notNull().default(0),
 
@@ -283,6 +332,35 @@ export const workoutSet = pgTable(
   },
   (t) => ({
     logIdx: index("workout_set_log_idx").on(t.logId),
+    exerciseIdIdx: index("workout_set_exercise_id_idx").on(t.exerciseId),
     exerciseIdx: index("workout_set_exercise_idx").on(t.exerciseName),
+    exerciseNameLowerIdx: index("workout_set_exercise_name_lower_idx").on(
+      sql`lower(${t.exerciseName})`,
+    ),
+  }),
+);
+
+/**
+ * stats_cache: cached aggregate payloads for expensive stats queries
+ */
+export const statsCache = pgTable(
+  "stats_cache",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    metric: text("metric").notNull(),
+    paramsHash: text("params_hash").notNull(),
+    payload: jsonb("payload").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userMetricParamsUq: uniqueIndex("stats_cache_user_metric_params_uq").on(
+      t.userId,
+      t.metric,
+      t.paramsHash,
+    ),
+    userIdx: index("stats_cache_user_idx").on(t.userId),
+    updatedAtIdx: index("stats_cache_updated_at_idx").on(t.updatedAt),
   }),
 );

@@ -1,28 +1,87 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { workoutLog, workoutSet } from "@/server/db/schema";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, or, sql } from "drizzle-orm";
+import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
+import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { parseDateRangeFromSearchParams } from "@/server/stats/range";
+import { withApiLogging } from "@/server/observability/apiRoute";
+import { logError } from "@/server/observability/logger";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 
 function epley1RM(weightKg: number, reps: number) {
   return weightKg * (1 + reps / 30);
 }
 
-export async function GET(req: Request) {
+async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const exercise = searchParams.get("exercise");
-    const days = Number(searchParams.get("days") ?? "180");
+    const userId = getAuthenticatedUserId();
+    const exerciseId = searchParams.get("exerciseId")?.trim() ?? "";
+    const exerciseName = (searchParams.get("exerciseId") ? null : searchParams.get("exercise")) ?? searchParams.get("exerciseName");
 
-    if (!userId || !exercise) {
+    if (!exerciseId && !exerciseName) {
       return NextResponse.json(
-        { error: "userId and exercise are required" },
+        { error: "exerciseId or exercise is required" },
         { status: 400 },
       );
     }
+    const { from, to, rangeDays } = parseDateRangeFromSearchParams(searchParams, 180);
 
-    const since = new Date();
-    since.setDate(since.getDate() - (Number.isFinite(days) ? days : 180));
+    let resolvedExerciseId: string | null = null;
+    let resolvedExerciseName: string | null = null;
+
+    if (exerciseId) {
+      const byId = await getExerciseById(exerciseId);
+      if (byId) {
+        resolvedExerciseId = byId.id;
+        resolvedExerciseName = byId.name;
+      } else {
+        resolvedExerciseId = exerciseId;
+      }
+    } else if (exerciseName) {
+      const resolved = await resolveExerciseByName(exerciseName);
+      if (resolved) {
+        resolvedExerciseId = resolved.id;
+        resolvedExerciseName = resolved.name;
+      } else {
+        resolvedExerciseName = exerciseName;
+      }
+    }
+
+    const cacheParams = {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      exerciseId: resolvedExerciseId,
+      exerciseName: resolvedExerciseName ?? exerciseName ?? null,
+    };
+    const cached = await getStatsCache<{
+      from: string;
+      to: string;
+      rangeDays: number;
+      exercise: string | null;
+      exerciseId: string | null;
+      best: { date: string; e1rm: number; weightKg: number; reps: number } | null;
+      series: Array<{ date: string; e1rm: number; weightKg: number; reps: number }>;
+    }>({
+      userId,
+      metric: "e1rm_best",
+      params: cacheParams,
+      maxAgeSeconds: 300,
+    });
+    if (cached) return NextResponse.json(cached);
+
+    const exerciseFilter = resolvedExerciseId
+      ? resolvedExerciseName
+        ? or(
+            eq(workoutSet.exerciseId, resolvedExerciseId),
+            and(
+              sql`${workoutSet.exerciseId} is null`,
+              sql`lower(${workoutSet.exerciseName}) = lower(${resolvedExerciseName})`,
+            ),
+          )
+        : eq(workoutSet.exerciseId, resolvedExerciseId)
+      : sql`lower(${workoutSet.exerciseName}) = lower(${resolvedExerciseName ?? ""})`;
 
     const rows = await db
       .select({
@@ -30,13 +89,14 @@ export async function GET(req: Request) {
         weightKg: workoutSet.weightKg,
         reps: workoutSet.reps,
       })
-      .from(workoutSet)
-      .innerJoin(workoutLog, eq(workoutLog.id, workoutSet.logId))
+      .from(workoutLog)
+      .innerJoin(workoutSet, eq(workoutSet.logId, workoutLog.id))
       .where(
         and(
           eq(workoutLog.userId, userId),
-          eq(workoutSet.exerciseName, exercise),
-          gte(workoutLog.performedAt, since),
+          exerciseFilter,
+          gte(workoutLog.performedAt, from),
+          lte(workoutLog.performedAt, to),
           sql`${workoutSet.weightKg} is not null`,
           sql`${workoutSet.reps} is not null`,
         ),
@@ -80,9 +140,28 @@ export async function GET(req: Request) {
       null as null | (typeof series)[number],
     );
 
-    return NextResponse.json({ exercise, best, series });
+    const payload = {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      rangeDays,
+      exercise: resolvedExerciseName ?? exerciseName ?? resolvedExerciseId ?? null,
+      exerciseId: resolvedExerciseId,
+      best,
+      series,
+    };
+
+    await setStatsCache({
+      userId,
+      metric: "e1rm_best",
+      params: cacheParams,
+      payload,
+    });
+
+    return NextResponse.json(payload);
   } catch (e: any) {
-    console.error(e);
+    logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
+
+export const GET = withApiLogging(GETImpl);

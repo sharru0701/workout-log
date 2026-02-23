@@ -18,7 +18,7 @@ services:
       retries: 20
 
   web:
-    image: ghcr.io/sharru0701/workout-log-web:latest
+    image: ghcr.io/sharru0701/workout-log-web:${WEB_IMAGE_TAG:-latest}
     container_name: workoutlog-web
     restart: unless-stopped
     environment:

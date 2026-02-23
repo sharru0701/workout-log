@@ -3,6 +3,8 @@ name: Build & Deploy (GHCR + Tailscale OAuth + SSH)
 on:
   push:
     branches: ["main"]
+    tags:
+      - "v*.*.*"
   workflow_dispatch: {}
 
 concurrency:
@@ -32,26 +34,38 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata (tags + labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=long
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+            type=ref,event=tag
+            type=semver,pattern={{version}},value=${{ github.ref_name }}
+            type=semver,pattern={{major}}.{{minor}},value=${{ github.ref_name }}
+
       - name: Build & Push (web)
         uses: docker/build-push-action@v6
         with:
           context: ./web
           file: ./web/Dockerfile
           push: true
-          tags: |
-            ${{ env.IMAGE_NAME }}:latest
-            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
   deploy:
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        
+
       - name: Tailscale connect (OAuth, tag:ci)
         uses: tailscale/github-action@v4
         with:
@@ -70,7 +84,6 @@ jobs:
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
-          # Write private key safely (no YAML heredoc pitfalls)
           printf '%s' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
@@ -91,14 +104,120 @@ jobs:
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./deploy/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/workout-log/deploy/"
 
-      - name: Deploy (pull & restart)
+      - name: Deploy image by commit SHA (capture rollback SHA)
+        id: deploy_sha
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          rollback_sha="$(ssh -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
+          set -euo pipefail
+          cd /opt/workout-log/deploy
+
+          if [[ -s .last_successful_web_sha ]]; then
+            cat .last_successful_web_sha
+            exit 0
+          fi
+
+          current_image="$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)"
+          current_tag="${current_image##*:}"
+
+          if [[ "${current_tag}" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "${current_tag}"
+          fi
+          EOF
+          )"
+
+          rollback_sha="$(echo "${rollback_sha}" | tr -d '\r' | tail -n1 | xargs || true)"
+          echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
+          echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
+
+          ssh -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
+          cd /opt/workout-log/deploy
+          export WEB_IMAGE_TAG=${{ github.sha }}
+          docker compose pull web
+          docker compose up -d web
+          docker compose ps
+          EOF
+
+      - name: Healthcheck (tailnet URL)
+        id: healthcheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
+          if [[ -z "${HEALTHCHECK_URL}" ]]; then
+            HEALTHCHECK_URL="http://${{ secrets.DEPLOY_HOST }}/api/health"
+          fi
+
+          echo "Healthcheck URL: ${HEALTHCHECK_URL}"
+
+          for i in $(seq 1 18); do
+            if curl -fsS --max-time 8 "${HEALTHCHECK_URL}" >/dev/null; then
+              echo "Healthcheck passed"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Healthcheck failed"
+          exit 1
+
+      - name: Mark successful deployed SHA
+        if: ${{ steps.healthcheck.outcome == 'success' }}
         shell: bash
         run: |
           ssh -o StrictHostKeyChecking=yes \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "printf '%s' '${{ github.sha }}' > /opt/workout-log/deploy/.last_successful_web_sha"
+
+      - name: Rollback to previous SHA
+        if: ${{ steps.healthcheck.outcome == 'failure' && steps.deploy_sha.outputs.rollback_sha != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROLLBACK_SHA="${{ steps.deploy_sha.outputs.rollback_sha }}"
+          echo "Rolling back to ${ROLLBACK_SHA}"
+
+          ssh -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
           set -euo pipefail
           cd /opt/workout-log/deploy
-          docker compose pull web
-          docker compose up -d
+          export WEB_IMAGE_TAG=${ROLLBACK_SHA}
+          docker compose pull web || true
+          docker compose up -d web
           docker compose ps
           EOF
+
+      - name: Verify rollback health
+        if: ${{ steps.healthcheck.outcome == 'failure' && steps.deploy_sha.outputs.rollback_sha != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
+          if [[ -z "${HEALTHCHECK_URL}" ]]; then
+            HEALTHCHECK_URL="http://${{ secrets.DEPLOY_HOST }}/api/health"
+          fi
+
+          for i in $(seq 1 12); do
+            if curl -fsS --max-time 8 "${HEALTHCHECK_URL}" >/dev/null; then
+              echo "Rollback healthcheck passed"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Rollback healthcheck failed"
+          exit 1
+
+      - name: Fail workflow when deploy healthcheck failed
+        if: ${{ steps.healthcheck.outcome == 'failure' }}
+        shell: bash
+        run: |
+          echo "Deploy healthcheck failed. Rollback attempted automatically."
+          exit 1

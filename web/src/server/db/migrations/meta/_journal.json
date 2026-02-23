@@ -29,6 +29,34 @@
       "when": 1771564079421,
       "tag": "0003_dark_marvex",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771569000000,
+      "tag": "0004_blue_killmonger",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1771573200000,
+      "tag": "0005_spotty_firebird",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771576800000,
+      "tag": "0006_fine_aurora",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771580400000,
+      "tag": "0007_mellow_nova",
+      "breakpoints": true
     }
   ]
 }

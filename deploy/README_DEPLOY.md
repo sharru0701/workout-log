@@ -52,13 +52,24 @@ Access from tailnet device:
 
 4) Database Backup / Restore
 
-Backup:
+Automated daily backup + retention (14 days):
 
-    docker exec -t workoutlog-postgres pg_dump -U app workoutlog > backup_$(date +%F).sql
+    cd /opt/workout-log/deploy
+    ./scripts/install_backup_timer.sh
+    systemctl list-timers --all | grep workoutlog-backup
 
-Restore:
+Manual backup run:
 
-    cat backup_xxx.sql | docker exec -i workoutlog-postgres psql -U app -d workoutlog
+    sudo systemctl start workoutlog-backup.service
+    ls -lah /opt/workout-log/backups
+
+Restore safely into running stack:
+
+    sudo ./scripts/restore_postgres.sh /opt/workout-log/backups/workoutlog_YYYYMMDDTHHMMSSZ.sql.gz --yes
+
+Detailed backup/restore guide:
+
+    /opt/workout-log/deploy/README_BACKUP_RESTORE.md
 
 ------------------------------------------------------------
 
@@ -79,6 +90,53 @@ Install service:
     git pull
     cd deploy
     docker compose up -d --build
+
+------------------------------------------------------------
+
+7) CI/CD Deploy Pipeline (GitHub Actions)
+
+- Build tags pushed to GHCR:
+  - `latest` (main branch)
+  - commit SHA (40 chars)
+  - date tag (`YYYYMMDD-HHmmss`)
+  - semver tags when pushing `v*.*.*`
+- Deploy behavior:
+  - deploys by commit SHA image tag
+  - runs post-deploy healthcheck on tailnet URL
+  - on healthcheck failure, rolls back to last successful SHA automatically
+
+Required GitHub Secrets:
+
+    TS_OAUTH_CLIENT_ID
+    TS_OAUTH_SECRET
+    DEPLOY_SSH_KEY
+    DEPLOY_USER
+    DEPLOY_HOST
+    DEPLOY_HEALTHCHECK_URL   # optional, default: http://<DEPLOY_HOST>/api/health
+
+------------------------------------------------------------
+
+8) Server Maintenance Scripts
+
+Restart workflow:
+
+    cd /opt/workout-log/deploy
+    ./scripts/restart_workoutlog.sh
+
+Restart + pull latest configured tag:
+
+    cd /opt/workout-log/deploy
+    PULL_WEB=1 ./scripts/restart_workoutlog.sh
+
+Prune old web images safely (keep 10 newest by default):
+
+    cd /opt/workout-log/deploy
+    ./scripts/prune_old_images.sh
+
+Keep only 5 images:
+
+    cd /opt/workout-log/deploy
+    KEEP_IMAGES=5 ./scripts/prune_old_images.sh
 
 ------------------------------------------------------------
 

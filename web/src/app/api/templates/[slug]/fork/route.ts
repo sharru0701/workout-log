@@ -2,19 +2,20 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { programTemplate, programVersion } from "@/server/db/schema";
 import { desc, eq } from "drizzle-orm";
+import { withApiLogging } from "@/server/observability/apiRoute";
+import { logError } from "@/server/observability/logger";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
-export async function POST(req: Request, ctx: Ctx) {
+async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const { slug } = await ctx.params;
     const body = await req.json();
 
-    const userId = body.userId as string;
+    const userId = getAuthenticatedUserId();
     const newSlug = body.newSlug as string | undefined;
     const newName = body.newName as string | undefined;
-
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
 
     const srcT = await db
       .select()
@@ -24,6 +25,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
     const sourceTemplate = srcT[0];
     if (!sourceTemplate) return NextResponse.json({ error: "source template not found" }, { status: 404 });
+    if (sourceTemplate.visibility === "PRIVATE" && sourceTemplate.ownerUserId !== userId) {
+      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    }
 
     const srcV = await db
       .select()
@@ -70,7 +74,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
     return NextResponse.json(created, { status: 201 });
   } catch (e: any) {
-    console.error(e);
+    logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
+
+export const POST = withApiLogging(POSTImpl);

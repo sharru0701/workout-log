@@ -9,7 +9,8 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx src/server/db/seed.ts"
+    "db:seed": "tsx src/server/db/seed.ts",
+    "db:backfill:exercise": "tsx src/server/db/backfillExerciseIds.ts"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",

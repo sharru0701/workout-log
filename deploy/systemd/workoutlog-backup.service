@@ -1,0 +1,10 @@
+[Unit]
+Description=WorkoutLog Postgres Backup
+Requires=docker.service
+After=docker.service workoutlog.service
+
+[Service]
+Type=oneshot
+Environment=BACKUP_DIR=/opt/workout-log/backups
+Environment=RETENTION_DAYS=14
+ExecStart=/opt/workout-log/deploy/scripts/backup_postgres.sh

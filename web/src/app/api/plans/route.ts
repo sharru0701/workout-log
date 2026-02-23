@@ -1,27 +1,30 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { plan, planModule } from "@/server/db/schema";
+import { desc, eq } from "drizzle-orm";
+import { withApiLogging } from "@/server/observability/apiRoute";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 
 /**
  * Minimal request shapes:
  * - SINGLE:
- *   { userId, name, type:"SINGLE", rootProgramVersionId, params? }
+ *   { name, type:"SINGLE", rootProgramVersionId, params? }
  *
  * - MANUAL:
- *   { userId, name, type:"MANUAL", rootProgramVersionId, params? }  // rootProgramVersionId should point to manual version
+ *   { name, type:"MANUAL", rootProgramVersionId, params? }  // rootProgramVersionId should point to manual version
  *
  * - COMPOSITE:
- *   { userId, name, type:"COMPOSITE", params?, modules: [{target, programVersionId, priority?, params?}, ...] }
+ *   { name, type:"COMPOSITE", params?, modules: [{target, programVersionId, priority?, params?}, ...] }
  */
-export async function POST(req: Request) {
+async function POSTImpl(req: Request) {
   const body = await req.json();
 
-  const userId = body.userId;
+  const userId = getAuthenticatedUserId();
   const name = body.name;
   const type = body.type;
 
-  if (!userId || !name || !type) {
-    return NextResponse.json({ error: "userId, name, type are required" }, { status: 400 });
+  if (!name || !type) {
+    return NextResponse.json({ error: "name and type are required" }, { status: 400 });
   }
 
   if (type === "COMPOSITE") {
@@ -76,3 +79,19 @@ export async function POST(req: Request) {
 
   return NextResponse.json({ plan: p }, { status: 201 });
 }
+
+async function GETImpl(_req: Request) {
+  const userId = getAuthenticatedUserId();
+
+  const items = await db
+    .select()
+    .from(plan)
+    .where(eq(plan.userId, userId))
+    .orderBy(desc(plan.createdAt));
+
+  return NextResponse.json({ items });
+}
+
+export const POST = withApiLogging(POSTImpl);
+
+export const GET = withApiLogging(GETImpl);

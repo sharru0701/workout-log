@@ -32,9 +32,11 @@ async function main() {
       templateId: template531.id,
       version: 1,
       definition: {
+        dslVersion: 1,
         kind: "531",
         schedule: { weeks: 4, sessionsPerWeek: 4 },
-        mainLifts: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
+        lifts: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
+        progression: { cycle: "531-basic" },
       },
       defaults: { tmPercent: 0.9 },
     })
@@ -56,9 +58,11 @@ async function main() {
       templateId: templateOp.id,
       version: 1,
       definition: {
+        dslVersion: 1,
         kind: "operator",
         schedule: { weeks: 6, sessionsPerWeek: 3 },
-        cluster: ["SQUAT", "BENCH", "DEADLIFT"],
+        modules: ["SQUAT", "BENCH", "DEADLIFT"],
+        progression: { profile: "operator-simplified" },
       },
       defaults: { intensity: "percent" },
     })
@@ -79,7 +83,13 @@ async function main() {
     .values({
       templateId: templateCan.id,
       version: 1,
-      definition: { kind: "candito-linear", schedule: { weeks: 6, sessionsPerWeek: 4 } },
+      definition: {
+        dslVersion: 1,
+        kind: "candito-linear",
+        schedule: { weeks: 6, sessionsPerWeek: 4 },
+        lifts: ["SQUAT", "BENCH", "DEADLIFT"],
+        progression: { profile: "candito-linear-simplified" },
+      },
       defaults: {},
     })
     .onConflictDoNothing();

@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { planOverride, plan as planTable } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
+import { withApiLogging } from "@/server/observability/apiRoute";
+import { logError } from "@/server/observability/logger";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
@@ -9,7 +12,6 @@ type Ctx = { params: Promise<{ planId: string }> };
  * v0 patch types:
  * - ADD_ACCESSORY (SESSION scope):
  *   {
- *     "userId":"dev",
  *     "scope":"SESSION",
  *     "weekNumber":1,
  *     "sessionKey":"W1D1",
@@ -24,13 +26,12 @@ type Ctx = { params: Promise<{ planId: string }> };
  *     "note":"Add dips as accessory"
  *   }
  */
-export async function POST(req: Request, ctx: Ctx) {
+async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const { planId } = await ctx.params;
     const body = await req.json();
 
-    const userId = body.userId as string;
-    if (!userId) return NextResponse.json({ error: "userId required" }, { status: 400 });
+    const userId = getAuthenticatedUserId();
 
     const planRow = await db.select().from(planTable).where(eq(planTable.id, planId)).limit(1);
     const p = planRow[0];
@@ -58,7 +59,9 @@ export async function POST(req: Request, ctx: Ctx) {
 
     return NextResponse.json({ override: created }, { status: 201 });
   } catch (e: any) {
-    console.error(e);
+    logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
   }
 }
+
+export const POST = withApiLogging(POSTImpl);
