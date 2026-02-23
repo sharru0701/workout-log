@@ -41,7 +41,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
-            type=sha,format=long
+            type=sha,format=long,prefix=
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
             type=ref,event=tag
             type=semver,pattern={{version}}
@@ -92,7 +92,7 @@ jobs:
       - name: Ensure /opt/workout-log exists
         shell: bash
         run: |
-          ssh -o StrictHostKeyChecking=yes \
+          ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} /opt/workout-log"
 
@@ -110,7 +110,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          rollback_sha="$(ssh -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
+          rollback_sha="$(ssh -T -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
           set -euo pipefail
           cd /opt/workout-log/deploy
 
@@ -128,11 +128,17 @@ jobs:
           EOF
           )"
 
-          rollback_sha="$(echo "${rollback_sha}" | tr -d '\r' | tail -n1 | xargs || true)"
+          rollback_sha="$(
+            printf '%s\n' "${rollback_sha}" \
+              | tr -d '\r' \
+              | grep -E '^[0-9a-f]{40}$' \
+              | tail -n1 \
+              | xargs || true
+          )"
           echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
           echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
 
-          ssh -o StrictHostKeyChecking=yes \
+          ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
           set -euo pipefail
           cd /opt/workout-log/deploy
@@ -171,7 +177,7 @@ jobs:
         if: ${{ steps.healthcheck.outcome == 'success' }}
         shell: bash
         run: |
-          ssh -o StrictHostKeyChecking=yes \
+          ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
             "printf '%s' '${{ github.sha }}' > /opt/workout-log/deploy/.last_successful_web_sha"
 
@@ -183,7 +189,7 @@ jobs:
           ROLLBACK_SHA="${{ steps.deploy_sha.outputs.rollback_sha }}"
           echo "Rolling back to ${ROLLBACK_SHA}"
 
-          ssh -o StrictHostKeyChecking=yes \
+          ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
           set -euo pipefail
           cd /opt/workout-log/deploy
