@@ -8,6 +8,7 @@ export type WorkoutLogRequest = {
 type PendingWorkoutLog = {
   localId: string;
   payload: WorkoutLogRequest;
+  payloadHash?: string;
   queuedAt: string;
   attempts: number;
   lastError?: string;
@@ -22,6 +23,8 @@ type SyncResult = {
 
 const STORAGE_KEY = "workout-log.pending-logs.v1";
 const UPDATE_EVENT = "offline-log-queue-update";
+const DEDUPE_WINDOW_MS = 20000;
+let syncTask: Promise<SyncResult> | null = null;
 
 function isBrowser() {
   return typeof window !== "undefined";
@@ -66,6 +69,14 @@ function writeQueue(queue: PendingWorkoutLog[]) {
   window.dispatchEvent(new CustomEvent(UPDATE_EVENT));
 }
 
+function payloadHash(payload: WorkoutLogRequest) {
+  try {
+    return JSON.stringify(payload);
+  } catch {
+    return `${payload.planId}:${payload.generatedSessionId ?? "none"}:${payload.notes}`;
+  }
+}
+
 export function getPendingWorkoutLogs(): PendingWorkoutLog[] {
   return readQueue();
 }
@@ -75,13 +86,26 @@ export function getPendingWorkoutLogCount() {
 }
 
 export function enqueueWorkoutLog(payload: WorkoutLogRequest) {
+  const hash = payloadHash(payload);
+  const queue = readQueue();
+  const nowMs = Date.now();
+  const duplicate = queue.find((item) => {
+    if (!item?.payload) return false;
+    const itemHash = item.payloadHash ?? payloadHash(item.payload);
+    const ageMs = Number.isFinite(Date.parse(item.queuedAt)) ? nowMs - Date.parse(item.queuedAt) : Number.MAX_SAFE_INTEGER;
+    return itemHash === hash && ageMs <= DEDUPE_WINDOW_MS;
+  });
+  if (duplicate) {
+    return duplicate;
+  }
+
   const next: PendingWorkoutLog = {
     localId: nextId(),
     payload,
+    payloadHash: hash,
     queuedAt: new Date().toISOString(),
     attempts: 0,
   };
-  const queue = readQueue();
   queue.push(next);
   writeQueue(queue);
   return next;
@@ -110,7 +134,7 @@ function extractLogId(response: unknown): string | null {
   return null;
 }
 
-export async function syncPendingWorkoutLogs(
+async function runSyncPendingWorkoutLogs(
   sender: (payload: WorkoutLogRequest) => Promise<unknown>,
 ): Promise<SyncResult> {
   let queue = readQueue();
@@ -151,6 +175,33 @@ export async function syncPendingWorkoutLogs(
     remaining: queue.length,
     lastSyncedLogId,
   };
+}
+
+export async function syncPendingWorkoutLogs(
+  sender: (payload: WorkoutLogRequest) => Promise<unknown>,
+): Promise<SyncResult> {
+  if (syncTask) return syncTask;
+  syncTask = runSyncPendingWorkoutLogs(sender).finally(() => {
+    syncTask = null;
+  });
+  return syncTask;
+}
+
+async function postWorkoutLogToApi(payload: WorkoutLogRequest) {
+  const response = await fetch("/api/logs", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error((data as { error?: string }).error ?? `POST /api/logs failed: ${response.status}`);
+  }
+  return data;
+}
+
+export async function syncPendingWorkoutLogsViaApi() {
+  return syncPendingWorkoutLogs((payload) => postWorkoutLogToApi(payload));
 }
 
 export function offlineQueueUpdateEventName() {
