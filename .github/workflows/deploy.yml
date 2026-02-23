@@ -17,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write # GHCR push
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,7 +49,6 @@ jobs:
     needs: build
     timeout-minutes: 15
     steps:
-      # ✅ Trust credentials (OAuth client) 방식: TS_AUTHKEY 불필요
       - name: Tailscale connect (OAuth, tag:ci)
         uses: tailscale/github-action@v4
         with:
@@ -57,14 +56,40 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
+      - name: Install rsync
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y rsync
+
       - name: Setup SSH key
         shell: bash
         run: |
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
-          echo "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
+
+          # ✅ multiline private key safe write
+          cat > ~/.ssh/id_ed25519 <<'KEY'
+${{ secrets.DEPLOY_SSH_KEY }}
+KEY
           chmod 600 ~/.ssh/id_ed25519
+
           ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Ensure /opt/workout-log exists
+        shell: bash
+        run: |
+          ssh -o StrictHostKeyChecking=yes \
+            ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} \
+            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} /opt/workout-log"
+
+      - name: Upload deploy bundle to server
+        shell: bash
+        run: |
+          rsync -avz --delete \
+            --exclude ".env" \
+            -e "ssh -o StrictHostKeyChecking=yes" \
+            ./deploy/ ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/workout-log/deploy/
 
       - name: Deploy (pull & restart)
         shell: bash
@@ -72,7 +97,6 @@ jobs:
           ssh -o StrictHostKeyChecking=yes \
             ${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }} <<'EOF'
           set -euo pipefail
-
           cd /opt/workout-log/deploy
 
           docker compose pull web
