@@ -1,18 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { PwaRegister } from "@/components/pwa-register";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Workout Log",
@@ -50,7 +39,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className="antialiased"
+        style={
+          {
+            "--font-geist-sans": "system-ui, -apple-system, sans-serif",
+            "--font-geist-mono":
+              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace",
+          } as React.CSSProperties
+        }
       >
         <PwaRegister />
         <AppShell>{children}</AppShell>
