@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
 
 type Plan = {
@@ -89,6 +89,8 @@ type TrendWindow = {
   compliance: ComplianceResp;
 };
 
+const PRESET_RANGES: Array<7 | 30 | 90> = [7, 30, 90];
+
 function toQuery(params: Record<string, string | number | undefined>) {
   const sp = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) {
@@ -124,11 +126,32 @@ function trendMeta(delta: number, digits = 1) {
   };
 }
 
-function MiniLineChart({
+function MetricTile({
+  label,
+  value,
+  detail,
+  trend,
+}: {
+  label: string;
+  value: string;
+  detail: string;
+  trend?: { text: string; className: string };
+}) {
+  return (
+    <article className="rounded-2xl border border-neutral-200 bg-white p-4 transition-all duration-200">
+      <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">{label}</div>
+      <div className="mt-2 text-3xl font-semibold">{value}</div>
+      <div className="mt-1 text-sm text-neutral-600">{detail}</div>
+      {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
+    </article>
+  );
+}
+
+function SparklineChart({
   points,
   labels,
-  width = 900,
-  height = 220,
+  width = 320,
+  height = 90,
 }: {
   points: number[];
   labels: string[];
@@ -140,7 +163,7 @@ function MiniLineChart({
   const min = Math.min(...points);
   const max = Math.max(...points);
   const span = Math.max(1e-9, max - min);
-  const pad = 16;
+  const pad = 10;
   const w = width - pad * 2;
   const h = height - pad * 2;
 
@@ -151,18 +174,19 @@ function MiniLineChart({
   });
 
   const d = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
+  const last = coords[coords.length - 1];
+  const area = `${d} L ${last.x.toFixed(1)} ${(height - pad).toFixed(1)} L ${coords[0].x.toFixed(1)} ${(height - pad).toFixed(1)} Z`;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-56 w-full rounded-xl border border-neutral-200 bg-white">
-      <path d={d} fill="none" stroke="#0f172a" strokeWidth="2.5" />
-      {coords.map((c, i) => (
-        <circle key={i} cx={c.x} cy={c.y} r="3" fill="#0f172a" />
-      ))}
-      <text x={pad} y={height - pad} fontSize="11" fill="#525252">
-        min {min.toFixed(1)}
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border border-neutral-200 bg-white text-accent transition-all duration-200">
+      <path d={area} fill="currentColor" fillOpacity="0.12" />
+      <path d={d} fill="none" stroke="currentColor" strokeWidth="2.5" />
+      <circle cx={last.x} cy={last.y} r="3.4" fill="currentColor" />
+      <text x={pad} y={height - 4} fontSize="10" fill="currentColor">
+        min {Math.round(min)}
       </text>
-      <text x={width - pad} y={height - pad} textAnchor="end" fontSize="11" fill="#525252">
-        {labels[labels.length - 1]} · max {max.toFixed(1)}
+      <text x={width - pad} y={height - 4} textAnchor="end" fontSize="10" fill="currentColor">
+        {labels[labels.length - 1]} · max {Math.round(max)}
       </text>
     </svg>
   );
@@ -189,6 +213,8 @@ export default function StatsPage() {
   const [compliance, setCompliance] = useState<ComplianceResp | null>(null);
   const [prs, setPrs] = useState<PRsResp | null>(null);
   const [trendWindows, setTrendWindows] = useState<TrendWindow[]>([]);
+  const [rangeIndex, setRangeIndex] = useState(2);
+  const swipeStartX = useRef<number | null>(null);
 
   const rangeQuery = useMemo(() => {
     if (from) {
@@ -312,56 +338,131 @@ export default function StatsPage() {
   );
 
   const selectedPlanName = useMemo(() => plans.find((p) => p.id === planId)?.name ?? null, [plans, planId]);
+  const activePresetDays = PRESET_RANGES[rangeIndex];
+  const activeTrend = useMemo(
+    () => trendWindows.find((t) => t.days === activePresetDays) ?? null,
+    [activePresetDays, trendWindows],
+  );
+  const activeVolumeTrend = trendMeta(activeTrend?.volume.trend?.tonnageDelta ?? 0, 0);
+  const activeComplianceTrend = trendMeta((activeTrend?.compliance.trend?.complianceDelta ?? 0) * 100, 1);
+  const volumeTrend = trendMeta(volume?.trend?.tonnageDelta ?? 0, 0);
+  const complianceTrend = trendMeta((compliance?.trend?.complianceDelta ?? 0) * 100, 1);
+
+  useEffect(() => {
+    if (from) return;
+    const idx = PRESET_RANGES.indexOf(days as 7 | 30 | 90);
+    if (idx >= 0) setRangeIndex(idx);
+  }, [days, from]);
+
+  function setPresetRange(next: 7 | 30 | 90) {
+    setFrom("");
+    setDays(next);
+  }
+
+  function onRangeSwipeStart(e: React.TouchEvent<HTMLDivElement>) {
+    swipeStartX.current = e.changedTouches[0]?.clientX ?? null;
+  }
+
+  function onRangeSwipeEnd(e: React.TouchEvent<HTMLDivElement>) {
+    if (swipeStartX.current === null) return;
+    const endX = e.changedTouches[0]?.clientX ?? swipeStartX.current;
+    const delta = endX - swipeStartX.current;
+    swipeStartX.current = null;
+    if (Math.abs(delta) < 36) return;
+
+    const direction = delta < 0 ? 1 : -1;
+    const nextIndex = Math.max(0, Math.min(PRESET_RANGES.length - 1, rangeIndex + direction));
+    if (nextIndex === rangeIndex) return;
+
+    setRangeIndex(nextIndex);
+    setPresetRange(PRESET_RANGES[nextIndex]);
+  }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Stats Dashboard</h1>
+    <div className="mx-auto max-w-5xl p-4 space-y-4 sm:p-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold">Stats Dashboard</h1>
+        <p className="text-sm text-neutral-600">
+          {loading ? "Loading metrics..." : `Range ready · plan: ${selectedPlanName ?? "All plans"}`}
+        </p>
+      </div>
 
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-        <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="text-xs text-neutral-600">plan (compliance filter)</span>
-          <select className="rounded-lg border px-3 py-2" value={planId} onChange={(e) => setPlanId(e.target.value)}>
-            <option value="">All plans</option>
-            {plans.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name} [{p.type}]
-              </option>
-            ))}
-          </select>
-        </label>
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 ui-height-animate">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">Plan</span>
+            <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
+              <option value="">All plans</option>
+              {plans.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name} [{p.type}]
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="flex flex-col gap-1 md:col-span-1">
-          <span className="text-xs text-neutral-600">bucket</span>
-          <select
-            className="rounded-lg border px-3 py-2"
-            value={bucket}
-            onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
-          >
-            <option value="day">day</option>
-            <option value="week">week</option>
-            <option value="month">month</option>
-          </select>
-        </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">Bucket</span>
+            <select
+              className="rounded-lg border px-3 py-3 text-base"
+              value={bucket}
+              onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
+            >
+              <option value="day">day</option>
+              <option value="week">week</option>
+              <option value="month">month</option>
+            </select>
+          </label>
+        </div>
 
-        <label className="flex flex-col gap-1 md:col-span-1">
-          <span className="text-xs text-neutral-600">days (fallback)</span>
-          <input
-            type="number"
-            min={1}
-            className="rounded-lg border px-3 py-2"
-            value={days}
-            onChange={(e) => setDays(Math.max(1, Number(e.target.value) || 1))}
-          />
-        </label>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">From (optional)</span>
+            <input type="date" className="rounded-lg border px-3 py-3 text-base" value={from} onChange={(e) => setFrom(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">To (optional)</span>
+            <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
+          </label>
+        </div>
 
-        <div className="md:col-span-1 flex gap-2">
-          {[7, 30, 90].map((d) => (
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">e1RM exerciseId</span>
+            <input className="rounded-lg border px-3 py-3 text-base" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">e1RM exercise</span>
+            <input className="rounded-lg border px-3 py-3 text-base" value={exercise} onChange={(e) => setExercise(e.target.value)} />
+          </label>
+        </div>
+
+        {error ? <div className="text-sm text-red-600">{error}</div> : null}
+      </section>
+
+      <section
+        className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 touch-pan-y ui-height-animate"
+        onTouchStart={onRangeSwipeStart}
+        onTouchEnd={onRangeSwipeEnd}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">Range</div>
+            <div className="text-lg font-semibold">{activePresetDays} days</div>
+          </div>
+          <div className="text-xs text-neutral-600">Swipe left/right</div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-2">
+          {PRESET_RANGES.map((d, idx) => (
             <button
               key={d}
-              className="rounded-lg border px-3 py-2 text-sm"
+              className={`rounded-xl border px-3 py-3 text-base font-semibold transition-all duration-200 ${
+                idx === rangeIndex ? "bg-bg-elevated" : ""
+              }`}
               onClick={() => {
-                setFrom("");
-                setDays(d);
+                setRangeIndex(idx);
+                setPresetRange(d);
               }}
             >
               {d}d
@@ -369,169 +470,136 @@ export default function StatsPage() {
           ))}
         </div>
 
-        <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="text-xs text-neutral-600">from (optional)</span>
-          <input type="date" className="rounded-lg border px-3 py-2" value={from} onChange={(e) => setFrom(e.target.value)} />
-        </label>
-
-        <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="text-xs text-neutral-600">to (optional)</span>
-          <input type="date" className="rounded-lg border px-3 py-2" value={to} onChange={(e) => setTo(e.target.value)} />
-        </label>
-
-        <label className="flex flex-col gap-1 md:col-span-1">
-          <span className="text-xs text-neutral-600">e1RM exerciseId</span>
-          <input className="rounded-lg border px-3 py-2" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
-        </label>
-
-        <label className="flex flex-col gap-1 md:col-span-1">
-          <span className="text-xs text-neutral-600">e1RM exercise</span>
-          <input className="rounded-lg border px-3 py-2" value={exercise} onChange={(e) => setExercise(e.target.value)} />
-        </label>
-
-        <div className="md:col-span-6 text-sm text-neutral-600">
-          {loading ? "Loading metrics..." : `Range ready · plan: ${selectedPlanName ?? "All"}`}
-        </div>
-        {error && <div className="md:col-span-6 text-sm text-red-600">{error}</div>}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs text-neutral-600">Best e1RM</div>
-          <div className="mt-2 text-2xl font-semibold">{e1rm?.best ? `${e1rm.best.e1rm} kg` : "—"}</div>
-          <div className="text-sm text-neutral-600 mt-1">
-            {e1rm?.best ? `${e1rm.best.date} · ${e1rm.best.weightKg}×${e1rm.best.reps}` : "No data"}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs text-neutral-600">Total Volume</div>
-          <div className="mt-2 text-2xl font-semibold">{volume ? formatKg(volume.totals.tonnage) : "—"}</div>
-          <div className="text-sm text-neutral-600 mt-1">
-            {volume ? `reps ${volume.totals.reps} · sets ${volume.totals.sets}` : "No data"}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs text-neutral-600">Compliance</div>
-          <div className="mt-2 text-2xl font-semibold">
-            {compliance ? `${Math.round(compliance.compliance * 100)}%` : "—"}
-          </div>
-          <div className="text-sm text-neutral-600 mt-1">
-            {compliance ? `planned ${compliance.planned} · done ${compliance.done}` : "No data"}
-          </div>
-        </div>
-
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-xs text-neutral-600">Tracked PR Exercises</div>
-          <div className="mt-2 text-2xl font-semibold">{prs?.items.length ?? 0}</div>
-          <div className="text-sm text-neutral-600 mt-1">Best e1RM per exercise</div>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
-        <div className="text-sm font-medium">Last 7 / 30 / 90 days</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {trendWindows.map((t) => {
-            const volTrend = trendMeta(t.volume.trend?.tonnageDelta ?? 0, 0);
-            const compTrend = trendMeta((t.compliance.trend?.complianceDelta ?? 0) * 100, 1);
-            return (
-              <div key={t.days} className="rounded-xl border p-3 space-y-2">
-                <div className="text-sm font-medium">Last {t.days} days</div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-neutral-600">Volume</span>
-                  <span className="font-medium">{formatKg(t.volume.totals.tonnage)}</span>
-                </div>
-                <div className={`text-sm ${volTrend.className}`}>
-                  {volTrend.arrow} {volTrend.value} vs prior {t.days}d
-                </div>
-                <div className="flex items-center justify-between text-sm mt-2">
-                  <span className="text-neutral-600">Compliance</span>
-                  <span className="font-medium">{Math.round(t.compliance.compliance * 100)}%</span>
-                </div>
-                <div className={`text-sm ${compTrend.className}`}>
-                  {compTrend.arrow} {compTrend.value}pp vs prior {t.days}d
-                </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="rounded-xl border p-3">
+            <div className="text-neutral-600">Volume ({activePresetDays}d)</div>
+            <div className="text-lg font-semibold">{activeTrend ? formatKg(activeTrend.volume.totals.tonnage) : "—"}</div>
+            {activeTrend ? (
+              <div className={activeVolumeTrend.className}>
+                {activeVolumeTrend.arrow} {activeVolumeTrend.value}
               </div>
-            );
-          })}
+            ) : null}
+          </div>
+          <div className="rounded-xl border p-3">
+            <div className="text-neutral-600">Compliance ({activePresetDays}d)</div>
+            <div className="text-lg font-semibold">
+              {activeTrend ? `${Math.round(activeTrend.compliance.compliance * 100)}%` : "—"}
+            </div>
+            {activeTrend ? (
+              <div className={activeComplianceTrend.className}>
+                {activeComplianceTrend.arrow} {activeComplianceTrend.value}pp
+              </div>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </section>
 
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3">
+      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <MetricTile
+          label="e1RM"
+          value={e1rm?.best ? `${e1rm.best.e1rm} kg` : "—"}
+          detail={e1rm?.best ? `${e1rm.best.date} · ${e1rm.best.weightKg}×${e1rm.best.reps}` : "No data"}
+        />
+        <MetricTile
+          label="Volume"
+          value={volume ? formatKg(volume.totals.tonnage) : "—"}
+          detail={volume ? `reps ${volume.totals.reps} · sets ${volume.totals.sets}` : "No data"}
+          trend={
+            volume
+              ? {
+                  text: `${volumeTrend.arrow} ${volumeTrend.value}`,
+                  className: volumeTrend.className,
+                }
+              : undefined
+          }
+        />
+        <MetricTile
+          label="Compliance"
+          value={compliance ? `${Math.round(compliance.compliance * 100)}%` : "—"}
+          detail={compliance ? `planned ${compliance.planned} · done ${compliance.done}` : "No data"}
+          trend={
+            compliance
+              ? {
+                  text: `${complianceTrend.arrow} ${complianceTrend.value}pp`,
+                  className: complianceTrend.className,
+                }
+              : undefined
+          }
+        />
+      </section>
+
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 space-y-3 transition-all duration-200 ui-height-animate">
         <div className="flex items-end justify-between">
           <div>
-            <div className="text-sm text-neutral-600">Volume Series</div>
+            <div className="text-sm text-neutral-600">Volume Sparkline</div>
             <div className="text-lg font-semibold">{series ? `${series.bucket} bucket` : "—"}</div>
           </div>
           <div className="text-xs text-neutral-600">points: {seriesPoints.length}</div>
         </div>
-        <MiniLineChart points={seriesPoints} labels={seriesLabels} />
-      </div>
+        <SparklineChart points={seriesPoints} labels={seriesLabels} />
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-sm text-neutral-600 mb-3">Top exercise volume breakdown</div>
-          {series?.byExercise?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="text-neutral-600">
-                  <tr>
-                    <th className="text-left py-2 pr-4">Exercise</th>
-                    <th className="text-right py-2 px-4">Tonnage</th>
-                    <th className="text-right py-2 px-4">Reps</th>
-                    <th className="text-right py-2 pl-4">Sets</th>
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
+        <div className="text-sm text-neutral-600 mb-3">Top exercise volume breakdown</div>
+        {series?.byExercise?.length ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-neutral-600">
+                <tr>
+                  <th className="text-left py-2 pr-4">Exercise</th>
+                  <th className="text-right py-2 px-4">Tonnage</th>
+                  <th className="text-right py-2 px-4">Reps</th>
+                  <th className="text-right py-2 pl-4">Sets</th>
+                </tr>
+              </thead>
+              <tbody>
+                {series.byExercise.map((r) => (
+                  <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
+                    <td className="py-2 pr-4">{r.exerciseName}</td>
+                    <td className="py-2 px-4 text-right">{Math.round(r.totals.tonnage)}</td>
+                    <td className="py-2 px-4 text-right">{r.totals.reps}</td>
+                    <td className="py-2 pl-4 text-right">{r.totals.sets}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {series.byExercise.map((r) => (
-                    <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
-                      <td className="py-2 pr-4">{r.exerciseName}</td>
-                      <td className="py-2 px-4 text-right">{Math.round(r.totals.tonnage)}</td>
-                      <td className="py-2 px-4 text-right">{r.totals.reps}</td>
-                      <td className="py-2 pl-4 text-right">{r.totals.sets}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-sm text-neutral-500">No per-exercise series data</div>
-          )}
-        </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-sm text-neutral-500">No per-exercise series data</div>
+        )}
+      </section>
 
-        <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-          <div className="text-sm text-neutral-600 mb-3">Compliance by plan</div>
-          {compliance?.byPlan?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm">
-                <thead className="text-neutral-600">
-                  <tr>
-                    <th className="text-left py-2 pr-4">Plan</th>
-                    <th className="text-right py-2 px-4">Planned</th>
-                    <th className="text-right py-2 px-4">Done</th>
-                    <th className="text-right py-2 pl-4">Compliance</th>
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
+        <div className="text-sm text-neutral-600 mb-3">Compliance by plan</div>
+        {compliance?.byPlan?.length ? (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-sm">
+              <thead className="text-neutral-600">
+                <tr>
+                  <th className="text-left py-2 pr-4">Plan</th>
+                  <th className="text-right py-2 px-4">Planned</th>
+                  <th className="text-right py-2 px-4">Done</th>
+                  <th className="text-right py-2 pl-4">Compliance</th>
+                </tr>
+              </thead>
+              <tbody>
+                {compliance.byPlan.map((r) => (
+                  <tr key={r.planId} className="border-t">
+                    <td className="py-2 pr-4">{r.planName}</td>
+                    <td className="py-2 px-4 text-right">{r.planned}</td>
+                    <td className="py-2 px-4 text-right">{r.done}</td>
+                    <td className="py-2 pl-4 text-right">{Math.round(r.compliance * 100)}%</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {compliance.byPlan.map((r) => (
-                    <tr key={r.planId} className="border-t">
-                      <td className="py-2 pr-4">{r.planName}</td>
-                      <td className="py-2 px-4 text-right">{r.planned}</td>
-                      <td className="py-2 px-4 text-right">{r.done}</td>
-                      <td className="py-2 pl-4 text-right">{Math.round(r.compliance * 100)}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="text-sm text-neutral-500">No compliance data in this range</div>
-          )}
-        </div>
-      </div>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-sm text-neutral-500">No compliance data in this range</div>
+        )}
+      </section>
 
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4">
+      <section className="rounded-2xl border border-neutral-200 bg-white p-4 ui-height-animate">
         <div className="text-sm text-neutral-600 mb-3">PR tracking (best e1RM by exercise)</div>
         {prs?.items?.length ? (
           <div className="overflow-x-auto">
@@ -566,37 +634,7 @@ export default function StatsPage() {
         ) : (
           <div className="text-sm text-neutral-500">No PR data</div>
         )}
-      </div>
-
-      <div className="rounded-2xl border border-neutral-200 bg-white p-4">
-        <div className="text-sm text-neutral-600 mb-3">By exercise totals</div>
-        {volume?.byExercise?.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-neutral-600">
-                <tr>
-                  <th className="text-left py-2 pr-4">Exercise</th>
-                  <th className="text-right py-2 px-4">Tonnage</th>
-                  <th className="text-right py-2 px-4">Reps</th>
-                  <th className="text-right py-2 pl-4">Sets</th>
-                </tr>
-              </thead>
-              <tbody>
-                {volume.byExercise.map((r) => (
-                  <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
-                    <td className="py-2 pr-4">{r.exerciseName}</td>
-                    <td className="py-2 px-4 text-right">{Math.round(r.tonnage)}</td>
-                    <td className="py-2 px-4 text-right">{r.reps}</td>
-                    <td className="py-2 pl-4 text-right">{r.sets}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-neutral-500">No volume rows</div>
-        )}
-      </div>
+      </section>
     </div>
   );
 }

@@ -66,6 +66,8 @@ export default function PlansPage() {
   const [manualSchedule, setManualSchedule] = useState("A,B,A,B");
   const [templateSearchQuery, setTemplateSearchQuery] = useState("");
   const [templateTag, setTemplateTag] = useState("");
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const [createType, setCreateType] = useState<"SINGLE" | "COMPOSITE" | "MANUAL">("SINGLE");
 
   const templatesBySlug = useMemo(() => {
     const map = new Map<string, TemplateItem>();
@@ -218,6 +220,15 @@ export default function PlansPage() {
     });
   }, [manualSlug, versionsBySlug, templatesBySlug]);
 
+  useEffect(() => {
+    if (!createSheetOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setCreateSheetOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [createSheetOpen]);
+
   function templateSelect(
     options: TemplateItem[],
     selectValue: string,
@@ -225,7 +236,7 @@ export default function PlansPage() {
   ) {
     return (
       <select
-        className="rounded-lg border px-3 py-2"
+        className="rounded-lg border px-3 py-3 text-base"
         value={selectValue}
         onChange={(e) => onChange(e.target.value)}
       >
@@ -242,7 +253,7 @@ export default function PlansPage() {
   function versionSelect(slug: string, versionId: string, onChange: (v: string) => void) {
     const versionList = versionsFor(slug);
     return (
-      <select className="rounded-lg border px-3 py-2" value={versionId} onChange={(e) => onChange(e.target.value)}>
+      <select className="rounded-lg border px-3 py-3 text-base" value={versionId} onChange={(e) => onChange(e.target.value)}>
         {versionList.length === 0 ? <option value="">(no versions)</option> : null}
         {versionList.map((v) => (
           <option key={v.id} value={v.id}>
@@ -326,172 +337,153 @@ export default function PlansPage() {
     setSelectedPlanId(res.plan.id);
   }
 
-  async function generateSession() {
-    if (!selectedPlanId) throw new Error("Select a plan first");
-    const res = await apiPost<{ session: any }>(`/api/plans/${selectedPlanId}/generate`, {
+  async function generateSessionForPlan(planIdToGenerate: string) {
+    if (!planIdToGenerate) throw new Error("Select a plan first");
+    const res = await apiPost<{ session: any }>(`/api/plans/${planIdToGenerate}/generate`, {
       week,
       day,
     });
+    setSelectedPlanId(planIdToGenerate);
     setGenerated(res.session);
   }
 
-  return (
-    <div className="mx-auto max-w-5xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Plans</h1>
+  async function generateSession() {
+    await generateSessionForPlan(selectedPlanId);
+  }
 
-      <div className="rounded-2xl border p-4 space-y-3">
-        <div className="text-sm text-neutral-600">Context</div>
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">userId</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              value={userId}
-              onChange={(e) => setUserId(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">startDate</span>
-            <input
-              type="date"
-              className="rounded-lg border px-3 py-2"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">timezone</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              value={timezone}
-              onChange={(e) => setTimezone(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">sessionKeyMode</span>
-            <select
-              className="rounded-lg border px-3 py-2"
-              value={sessionKeyMode}
-              onChange={(e) => setSessionKeyMode(e.target.value as "DATE" | "LEGACY")}
-            >
-              <option value="DATE">DATE (YYYY-MM-DD)</option>
-              <option value="LEGACY">LEGACY (WnDn)</option>
-            </select>
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">Template/program search</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              value={templateSearchQuery}
-              placeholder="name, slug, type, tag..."
-              onChange={(e) => setTemplateSearchQuery(e.target.value)}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">Template tag</span>
-            <select
-              className="rounded-lg border px-3 py-2"
-              value={templateTag}
-              onChange={(e) => setTemplateTag(e.target.value)}
-            >
-              <option value="">(all tags)</option>
-              {allTemplateTags.map((tag) => (
-                <option key={tag} value={tag}>
-                  {tag}
-                </option>
-              ))}
-            </select>
-          </label>
+  return (
+    <>
+      <div className="mx-auto max-w-5xl p-4 space-y-4 sm:p-6">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-semibold">Plans</h1>
+          <button
+            className="ui-primary-button min-h-12 px-5 text-base"
+            onClick={() => setCreateSheetOpen(true)}
+          >
+            Create Plan
+          </button>
+        </div>
+
+        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+          <div className="text-sm text-neutral-600">Context</div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">userId</span>
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                value={userId}
+                onChange={(e) => setUserId(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">startDate</span>
+              <input
+                type="date"
+                className="rounded-lg border px-3 py-3 text-base"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">timezone</span>
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                value={timezone}
+                onChange={(e) => setTimezone(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">sessionKeyMode</span>
+              <select
+                className="rounded-lg border px-3 py-3 text-base"
+                value={sessionKeyMode}
+                onChange={(e) => setSessionKeyMode(e.target.value as "DATE" | "LEGACY")}
+              >
+                <option value="DATE">DATE (YYYY-MM-DD)</option>
+                <option value="LEGACY">LEGACY (WnDn)</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">week</span>
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                type="number"
+                value={week}
+                onChange={(e) => setWeek(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">day</span>
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                type="number"
+                value={day}
+                onChange={(e) => setDay(Number(e.target.value))}
+                min={1}
+              />
+            </label>
+          </div>
+
           {loadingTemplates && <div className="text-sm">Loading templates...</div>}
           {loadingPlans && <div className="text-sm">Loading plans...</div>}
           {error && <div className="text-sm text-red-600">{error}</div>}
-        </div>
-        <div className="text-xs text-neutral-600">
-          Templates: {templateOptions.map((t) => `${t.slug} (${t.type})`).join(", ") || "(none)"}
-        </div>
-        <div className="text-xs">
-          <a className="underline" href="/templates">
+          <a className="text-xs underline" href="/templates">
             Manage templates and versions
           </a>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-2xl border p-4 space-y-3">
-          <div className="font-medium">Create SINGLE</div>
-          <div className="text-sm text-neutral-600">Select one template and specific version.</div>
-          {templateSelect(templateOptions, singleSlug, setSingleSlug)}
-          {versionSelect(singleSlug, singleVersionId, setSingleVersionId)}
-          <button
-            className="rounded-xl border px-4 py-2 font-medium"
-            onClick={() => {
-              setError(null);
-              createSingle().catch((e) => setError(e.message));
-            }}
-          >
-            Create
-          </button>
+        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+          <div className="font-medium">Plan Cards</div>
+          {plans.length === 0 ? (
+            <div className="text-sm text-neutral-600">No plans found for this user.</div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {plans.map((p) => (
+                <article
+                  key={p.id}
+                  className={`ui-list-item rounded-2xl border p-4 space-y-3 ${
+                    selectedPlanId === p.id ? "border-neutral-900" : ""
+                  }`}
+                >
+                  <div>
+                    <h3 className="text-base font-semibold">{p.name}</h3>
+                    <div className="text-sm text-neutral-600">
+                      {p.type} · {new Date(p.createdAt).toLocaleString()}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      className="rounded-xl border px-4 py-3 text-base font-medium"
+                      onClick={() => setSelectedPlanId(p.id)}
+                    >
+                      Select
+                    </button>
+                    <button
+                      className="ui-primary-button px-4 py-3 text-base font-medium"
+                      onClick={() => {
+                        setError(null);
+                        generateSessionForPlan(p.id).catch((e) => setError(e.message));
+                      }}
+                    >
+                      Quick Generate
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3">
-          <div className="font-medium">Create COMPOSITE</div>
-          <div className="text-sm text-neutral-600">Mix per lift with explicit version per module.</div>
-
-          <div className="grid grid-cols-1 gap-2">
-            <label className="text-xs text-neutral-600">Squat template</label>
-            {templateSelect(logicTemplateOptions, squatSlug, setSquatSlug)}
-            {versionSelect(squatSlug, squatVersionId, setSquatVersionId)}
-
-            <label className="text-xs text-neutral-600">Bench template</label>
-            {templateSelect(logicTemplateOptions, benchSlug, setBenchSlug)}
-            {versionSelect(benchSlug, benchVersionId, setBenchVersionId)}
-
-            <label className="text-xs text-neutral-600">Deadlift template</label>
-            {templateSelect(logicTemplateOptions, deadSlug, setDeadSlug)}
-            {versionSelect(deadSlug, deadVersionId, setDeadVersionId)}
-          </div>
-
-          <button
-            className="rounded-xl border px-4 py-2 font-medium"
-            onClick={() => {
-              setError(null);
-              createComposite().catch((e) => setError(e.message));
-            }}
-          >
-            Create
-          </button>
-        </div>
-
-        <div className="rounded-2xl border p-4 space-y-3">
-          <div className="font-medium">Create MANUAL</div>
-          <div className="text-sm text-neutral-600">Pick manual template version and schedule keys.</div>
-          {templateSelect(manualTemplateOptions, manualSlug, setManualSlug)}
-          {versionSelect(manualSlug, manualVersionId, setManualVersionId)}
-          <input
-            className="rounded-lg border px-3 py-2"
-            value={manualSchedule}
-            onChange={(e) => setManualSchedule(e.target.value)}
-          />
-          <button
-            className="rounded-xl border px-4 py-2 font-medium"
-            onClick={() => {
-              setError(null);
-              createManualPlan().catch((e) => setError(e.message));
-            }}
-          >
-            Create
-          </button>
-        </div>
-      </div>
-
-      <div className="rounded-2xl border p-4 space-y-3">
-        <div className="font-medium">Generate Session</div>
-
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-          <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="text-xs text-neutral-600">Select plan</span>
+        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+          <div className="font-medium">Selected Plan Generate</div>
+          <label className="flex flex-col gap-1">
+            <span className="text-xs text-neutral-600">selected plan</span>
             <select
-              className="rounded-lg border px-3 py-2"
+              className="rounded-lg border px-3 py-3 text-base"
               value={selectedPlanId}
               onChange={(e) => setSelectedPlanId(e.target.value)}
             >
@@ -504,67 +496,156 @@ export default function PlansPage() {
             </select>
           </label>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">week</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              type="number"
-              value={week}
-              onChange={(e) => setWeek(Number(e.target.value))}
-              min={1}
-            />
-          </label>
+          <button
+            className="ui-primary-button min-h-12 w-full text-base"
+            onClick={() => {
+              setError(null);
+              generateSession().catch((e) => setError(e.message));
+            }}
+          >
+            Generate Selected Plan
+          </button>
 
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">day</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              type="number"
-              value={day}
-              onChange={(e) => setDay(Number(e.target.value))}
-              min={1}
-            />
-          </label>
+          {generated && (
+            <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+              {JSON.stringify(generated.snapshot, null, 2)}
+            </pre>
+          )}
         </div>
+      </div>
 
+      <div
+        className={`fixed inset-0 z-50 transition-opacity duration-200 ${
+          createSheetOpen ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"
+        }`}
+        aria-hidden={!createSheetOpen}
+      >
         <button
-          className="rounded-xl border px-4 py-2 font-medium"
-          onClick={() => {
-            setError(null);
-            generateSession().catch((e) => setError(e.message));
-          }}
+          type="button"
+          aria-label="Close create plan sheet"
+          className="absolute inset-0 bg-black/45"
+          onClick={() => setCreateSheetOpen(false)}
+        />
+        <section
+          className={`absolute inset-x-0 bottom-0 mx-auto w-full max-w-[720px] rounded-t-3xl border bg-bg-surface p-4 shadow-2xl transition-transform duration-200 ${
+            createSheetOpen ? "translate-y-0" : "translate-y-full"
+          }`}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Create plan"
         >
-          Generate
-        </button>
-
-        {generated && (
-          <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
-            {JSON.stringify(generated.snapshot, null, 2)}
-          </pre>
-        )}
-      </div>
-
-      <div className="rounded-2xl border p-4 space-y-3">
-        <div className="font-medium">Existing Plans</div>
-        {plans.length === 0 ? (
-          <div className="text-sm text-neutral-600">No plans found for this user.</div>
-        ) : (
-          <ul className="space-y-2">
-            {plans.map((p) => (
-              <li
-                key={p.id}
-                className={`rounded-lg border px-3 py-2 text-sm ${
-                  selectedPlanId === p.id ? "border-neutral-900" : ""
-                }`}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold">Create Plan</h2>
+              <button
+                className="rounded-xl border px-4 py-2 text-sm font-medium"
+                onClick={() => setCreateSheetOpen(false)}
               >
-                <button className="w-full text-left" onClick={() => setSelectedPlanId(p.id)}>
-                  {p.name} [{p.type}] - {new Date(p.createdAt).toLocaleString()}
+                Close
+              </button>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              {(["SINGLE", "COMPOSITE", "MANUAL"] as const).map((type) => (
+                <button
+                  key={type}
+                  className={`rounded-xl border px-3 py-3 text-sm font-semibold ${
+                    createType === type ? "bg-bg-elevated" : ""
+                  }`}
+                  onClick={() => setCreateType(type)}
+                >
+                  {type}
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">Template/program search</span>
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={templateSearchQuery}
+                  placeholder="name, slug, type, tag..."
+                  onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">Template tag</span>
+                <select
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={templateTag}
+                  onChange={(e) => setTemplateTag(e.target.value)}
+                >
+                  <option value="">(all tags)</option>
+                  {allTemplateTags.map((tag) => (
+                    <option key={tag} value={tag}>
+                      {tag}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+
+            {createType === "SINGLE" ? (
+              <div className="space-y-3">
+                <div className="text-sm text-neutral-600">Select one template and specific version.</div>
+                {templateSelect(templateOptions, singleSlug, setSingleSlug)}
+                {versionSelect(singleSlug, singleVersionId, setSingleVersionId)}
+              </div>
+            ) : null}
+
+            {createType === "COMPOSITE" ? (
+              <div className="space-y-3">
+                <div className="text-sm text-neutral-600">Mix per lift with explicit version per module.</div>
+                <div className="grid grid-cols-1 gap-2">
+                  <label className="text-xs text-neutral-600">Squat template</label>
+                  {templateSelect(logicTemplateOptions, squatSlug, setSquatSlug)}
+                  {versionSelect(squatSlug, squatVersionId, setSquatVersionId)}
+
+                  <label className="text-xs text-neutral-600">Bench template</label>
+                  {templateSelect(logicTemplateOptions, benchSlug, setBenchSlug)}
+                  {versionSelect(benchSlug, benchVersionId, setBenchVersionId)}
+
+                  <label className="text-xs text-neutral-600">Deadlift template</label>
+                  {templateSelect(logicTemplateOptions, deadSlug, setDeadSlug)}
+                  {versionSelect(deadSlug, deadVersionId, setDeadVersionId)}
+                </div>
+              </div>
+            ) : null}
+
+            {createType === "MANUAL" ? (
+              <div className="space-y-3">
+                <div className="text-sm text-neutral-600">Pick manual template version and schedule keys.</div>
+                {templateSelect(manualTemplateOptions, manualSlug, setManualSlug)}
+                {versionSelect(manualSlug, manualVersionId, setManualVersionId)}
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={manualSchedule}
+                  onChange={(e) => setManualSchedule(e.target.value)}
+                />
+              </div>
+            ) : null}
+
+            <button
+              className="ui-primary-button min-h-12 w-full text-base font-semibold"
+              onClick={() => {
+                setError(null);
+                const createFlow =
+                  createType === "SINGLE"
+                    ? createSingle()
+                    : createType === "COMPOSITE"
+                      ? createComposite()
+                      : createManualPlan();
+                createFlow
+                  .then(() => setCreateSheetOpen(false))
+                  .catch((e) => setError(e.message));
+              }}
+            >
+              Create {createType} Plan
+            </button>
+          </div>
+        </section>
       </div>
-    </div>
+    </>
   );
 }

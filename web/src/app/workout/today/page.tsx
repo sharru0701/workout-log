@@ -7,7 +7,7 @@ import {
   getPendingWorkoutLogCount,
   isLikelyNetworkError,
   offlineQueueUpdateEventName,
-  syncPendingWorkoutLogs,
+  syncPendingWorkoutLogsViaApi,
   type WorkoutLogRequest,
 } from "@/lib/offlineLogQueue";
 
@@ -357,7 +357,7 @@ export default function WorkoutTodayPage() {
     setIsSyncingPending(true);
     setSyncNotice("Syncing pending logs...");
     try {
-      const result = await syncPendingWorkoutLogs((payload) => apiPost<{ log: any }>(`/api/logs`, payload));
+      const result = await syncPendingWorkoutLogsViaApi();
       setPendingSyncCount(result.remaining);
       if (result.synced > 0) {
         if (result.lastSyncedLogId) setLastSavedLogId(result.lastSyncedLogId);
@@ -791,14 +791,20 @@ export default function WorkoutTodayPage() {
     setSuccess(`Repeated last workout from ${new Date(last.performedAt).toLocaleString()}`);
   }
 
-  async function resolveExerciseId(name: string): Promise<string | null> {
+  async function resolveExerciseId(
+    name: string,
+    opts?: { allowRemoteLookup?: boolean },
+  ): Promise<string | null> {
     const needle = name.trim().toLowerCase();
     if (!needle) return null;
+    const allowRemoteLookup = opts?.allowRemoteLookup ?? true;
 
     for (const ex of exerciseOptions) {
       if (ex.name.toLowerCase() === needle) return ex.id;
       if (ex.aliases.some((a) => a.toLowerCase() === needle)) return ex.id;
     }
+
+    if (!allowRemoteLookup) return null;
 
     const res = await apiGet<{ items: ExerciseOption[] }>(
       `/api/exercises?query=${encodeURIComponent(name)}&limit=20`,
@@ -810,15 +816,24 @@ export default function WorkoutTodayPage() {
     return exact?.id ?? null;
   }
 
-  async function buildLogPayload(): Promise<WorkoutLogRequest> {
+  async function buildLogPayload(opts?: { allowRemoteLookup?: boolean }): Promise<WorkoutLogRequest> {
     if (!planId) throw new Error("planId required");
     if (!sets.length) throw new Error("sets required");
+    const allowRemoteLookup = opts?.allowRemoteLookup ?? true;
     const exerciseIdCache = new Map<string, string | null>();
     const setsWithExerciseId = await Promise.all(
       sets.map(async (s) => {
         const key = s.exerciseName.trim().toLowerCase();
         if (!exerciseIdCache.has(key)) {
-          exerciseIdCache.set(key, await resolveExerciseId(s.exerciseName));
+          try {
+            exerciseIdCache.set(
+              key,
+              await resolveExerciseId(s.exerciseName, { allowRemoteLookup }),
+            );
+          } catch (error) {
+            if (!isLikelyNetworkError(error)) throw error;
+            exerciseIdCache.set(key, null);
+          }
         }
         return {
           ...s,
@@ -852,9 +867,10 @@ export default function WorkoutTodayPage() {
     setSyncNotice(null);
 
     try {
-      const payload = await buildLogPayload();
+      const isOnline = typeof window === "undefined" ? true : navigator.onLine;
+      const payload = await buildLogPayload({ allowRemoteLookup: isOnline });
 
-      if (typeof window !== "undefined" && !navigator.onLine) {
+      if (typeof window !== "undefined" && !isOnline) {
         enqueueWorkoutLog(payload);
         refreshPendingSyncCount();
         setIsOfflineMode(true);
