@@ -49,6 +49,9 @@ jobs:
     needs: build
     timeout-minutes: 15
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
       - name: Tailscale connect (OAuth, tag:ci)
         uses: tailscale/github-action@v4
         with:
