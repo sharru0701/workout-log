@@ -7,6 +7,7 @@ import pkg from "../../../../package.json";
 async function GETImpl() {
   try {
     await db.execute(sql`select 1`);
+    await db.execute(sql`select 1 from "program_template" limit 1`);
     return NextResponse.json({
       ok: true,
       ts: new Date().toISOString(),

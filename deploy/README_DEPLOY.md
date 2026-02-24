@@ -12,6 +12,10 @@ Start:
     docker compose ps
     docker compose logs -f web
 
+Notes:
+    - web container runs DB migrations on startup before Next.js starts.
+    - Look for log line: [migrate] migrations applied
+
 Stop:
     cd /opt/workout-log/deploy
     docker compose down
@@ -48,6 +52,20 @@ Expose localhost:3001 to tailnet over HTTPS (recommended):
 Access from tailnet device:
 
     https://<server-hostname>.<tailnet-name>.ts.net/
+
+------------------------------------------------------------
+
+3-1) Migration Status Check (Troubleshooting)
+
+List app tables:
+
+    cd /opt/workout-log/deploy
+    docker compose exec -T postgres psql -U app -d workoutlog -c '\dt'
+
+Check applied Drizzle migrations:
+
+    cd /opt/workout-log/deploy
+    docker compose exec -T postgres psql -U app -d workoutlog -c 'select id, hash, created_at from "__drizzle_migrations" order by created_at;'
 
 ------------------------------------------------------------
 
