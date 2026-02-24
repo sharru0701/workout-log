@@ -9,6 +9,7 @@ type AccordionSectionProps = {
   defaultOpen?: boolean;
   className?: string;
   summarySlot?: ReactNode;
+  surface?: "flat" | "surface";
   children: ReactNode;
 };
 
@@ -18,6 +19,7 @@ export function AccordionSection({
   defaultOpen = false,
   className = "",
   summarySlot,
+  surface = "flat",
   children,
 }: AccordionSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -25,7 +27,11 @@ export function AccordionSection({
   const panelId = useId();
 
   return (
-    <section className={`ui-accordion ${isOpen ? "is-open" : ""} ${className}`.trim()}>
+    <section
+      className={`ui-accordion ${surface === "surface" ? "ui-accordion-surface" : "ui-accordion-flat"} ${
+        isOpen ? "is-open" : ""
+      } ${className}`.trim()}
+    >
       <button
         id={triggerId}
         type="button"

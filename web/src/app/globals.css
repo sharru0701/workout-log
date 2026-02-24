@@ -830,18 +830,48 @@ button {
 }
 
 /* Flatten nested cards to avoid "floating card on floating card" visuals. */
-:is(.ui-card, .motion-card, .rounded-2xl.bg-white, .rounded-xl.bg-white)
-  :is(.ui-card, .motion-card, .rounded-2xl.bg-white, .rounded-xl.bg-white) {
+:is(.ui-card, .motion-card, .ui-accordion, .rounded-2xl.bg-white, .rounded-xl.bg-white)
+  :is(.ui-card, .motion-card, .ui-accordion, .rounded-2xl.bg-white, .rounded-xl.bg-white) {
+  background: transparent;
+  box-shadow: none;
+  border-color: transparent !important;
+}
+
+/* Fallback for environments where :is(...) selector support is inconsistent. */
+.ui-card .ui-card,
+.ui-card .motion-card,
+.ui-card .ui-accordion,
+.motion-card .ui-card,
+.motion-card .motion-card,
+.motion-card .ui-accordion,
+.ui-accordion .ui-card,
+.ui-accordion .motion-card,
+.ui-accordion .ui-accordion,
+.rounded-2xl.bg-white .ui-card,
+.rounded-2xl.bg-white .motion-card,
+.rounded-2xl.bg-white .ui-accordion,
+.rounded-xl.bg-white .ui-card,
+.rounded-xl.bg-white .motion-card,
+.rounded-xl.bg-white .ui-accordion {
   background: transparent;
   box-shadow: none;
   border-color: transparent !important;
 }
 
 .ui-accordion {
-  border: 1px solid transparent;
   border-radius: var(--radius-md);
+}
+
+.ui-accordion.ui-accordion-surface {
+  border: 1px solid transparent;
   background: color-mix(in srgb, var(--bg-elevated) 55%, var(--bg-surface));
   box-shadow: var(--shadow-soft);
+}
+
+.ui-accordion.ui-accordion-flat {
+  border: 1px solid transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .ui-accordion-trigger {
