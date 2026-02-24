@@ -314,8 +314,16 @@ button {
 .home-hero-action {
   margin-top: 0.9rem;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: fit-content;
+  line-height: 1;
   text-decoration: none;
+}
+
+.home-hero-action-label {
+  display: inline-block;
+  transform: translateY(1px);
 }
 
 .home-section {

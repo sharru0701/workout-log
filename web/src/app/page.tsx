@@ -46,7 +46,7 @@ export default function Home() {
           Move through today&apos;s training flow without jumping between legacy links.
         </p>
         <Link className="haptic-tap ui-primary-button home-hero-action" href="/workout/today">
-          Continue Today
+          <span className="home-hero-action-label">Continue Today</span>
         </Link>
       </section>
 
