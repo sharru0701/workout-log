@@ -317,6 +317,10 @@ a {
   padding: 0.95rem;
 }
 
+.settings-menu-card {
+  padding: 0.95rem;
+}
+
 .settings-section-title {
   margin: 0;
   font-size: 0.95rem;
@@ -328,6 +332,38 @@ a {
   margin-top: 0.62rem;
   display: grid;
   gap: 0.58rem;
+}
+
+.settings-menu-list {
+  margin-top: 0.62rem;
+  display: grid;
+  gap: 0.54rem;
+}
+
+.settings-menu-link {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.72rem 0.8rem;
+  border-radius: 14px;
+  text-decoration: none;
+  background: color-mix(in srgb, var(--bg-elevated) 65%, transparent);
+  transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), background-color var(--motion-duration) var(--motion-ease);
+}
+
+.settings-menu-link:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
+}
+
+.settings-menu-title {
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.settings-menu-copy {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .settings-export-action {

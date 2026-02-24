@@ -35,8 +35,8 @@ export default function DataExportPage() {
         </div>
       </section>
 
-      <Link href="/" className="settings-back-link">
-        Back to Home
+      <Link href="/settings" className="settings-back-link">
+        Back to Settings
       </Link>
     </div>
   );

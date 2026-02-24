@@ -30,9 +30,9 @@ const utilityRoutes = [
     copy: "Manage base program templates and versions.",
   },
   {
-    href: "/settings/data",
-    label: "Data Export",
-    copy: "Download JSON or CSV exports from a dedicated screen.",
+    href: "/settings",
+    label: "Settings",
+    copy: "App tools, export, and offline utilities.",
   },
 ];
 
