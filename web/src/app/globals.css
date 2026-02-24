@@ -1473,7 +1473,7 @@ textarea::placeholder {
 
 .workout-save-dock {
   position: sticky;
-  bottom: calc(5.2rem + env(safe-area-inset-bottom));
+  bottom: calc(-0.7rem + env(safe-area-inset-bottom));
   z-index: 20;
   margin-top: 0.4rem;
   padding-top: 0.5rem;
