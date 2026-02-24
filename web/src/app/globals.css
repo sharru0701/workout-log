@@ -220,7 +220,7 @@ a {
   color: inherit;
 }
 
-:where(a, button, input, select, textarea):focus-visible {
+:where(a, button):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent-primary) 62%, transparent);
   outline-offset: 2px;
 }
@@ -857,6 +857,24 @@ button {
   transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), opacity var(--duration-normal) var(--ease-standard);
 }
 
+/* Card surfaces should not render outlines. */
+:is(
+  .ui-card,
+  .motion-card,
+  .ui-accordion,
+  .workout-set-card,
+  .home-primary,
+  .home-primary-card,
+  .home-tool-link,
+  .ui-list-item,
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white
+) {
+  border-width: 0 !important;
+  border-color: transparent !important;
+}
+
 /* Flatten nested cards to avoid "floating card on floating card" visuals. */
 :is(.ui-card, .motion-card, .ui-accordion, .rounded-2xl.bg-white, .rounded-xl.bg-white)
   :is(.ui-card, .motion-card, .ui-accordion, .rounded-2xl.bg-white, .rounded-xl.bg-white) {
@@ -884,6 +902,32 @@ button {
   background: transparent;
   box-shadow: none;
   border-color: transparent !important;
+}
+
+/* Nested cards should not cast shadow layers on top of parent cards. */
+:is(
+  .ui-card,
+  .motion-card,
+  .ui-accordion,
+  .workout-set-card,
+  .home-primary,
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white
+)
+  :is(
+    .ui-card,
+    .motion-card,
+    .ui-accordion,
+    .workout-set-card,
+    .home-primary-card,
+    .home-tool-link,
+    .ui-list-item,
+    .rounded-2xl.bg-white,
+    .rounded-xl.bg-white,
+    .rounded-lg.bg-white
+  ) {
+  box-shadow: none !important;
 }
 
 .ui-accordion {
@@ -1168,26 +1212,25 @@ button {
   color: var(--text-secondary);
 }
 
-input:not(.workout-set-input),
-select:not(.workout-set-input),
-textarea {
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+) {
   min-height: var(--touch-target);
-  border: 1px solid color-mix(in srgb, var(--field-border) 70%, transparent);
+  border: 0;
   background: var(--field-bg);
   color: var(--text-primary);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #ffffff 7%, transparent),
-    var(--shadow-soft);
+  box-shadow: none;
 }
 
-input:not(.workout-set-input):focus,
-select:not(.workout-set-input):focus,
-textarea:focus {
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+):focus {
   outline: none;
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--accent) 24%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--accent) 52%, transparent),
-    var(--shadow-soft);
+  box-shadow: none;
 }
 
 input::placeholder,
@@ -1277,13 +1320,9 @@ textarea::placeholder {
 .workout-set-input {
   width: 100%;
   min-height: 3rem;
-  border: 1px solid transparent;
   border-radius: 0.8rem;
-  background: color-mix(in srgb, var(--bg-elevated) 56%, var(--bg-surface));
-  color: var(--text-primary);
   font-size: 1.08rem;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 38%, transparent);
-  transition: background-color var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease);
+  transition: box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease);
 }
 
 .workout-set-input-text {
@@ -1294,11 +1333,6 @@ textarea::placeholder {
   padding: 0.5rem 0.6rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.workout-set-input:focus {
-  outline: none;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent), var(--shadow-soft);
 }
 
 .workout-toggle {
@@ -1314,7 +1348,7 @@ textarea::placeholder {
   gap: 0.7rem;
   padding: 0.75rem;
   border-radius: 16px;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 72%, transparent);
+  border: 0;
   background: color-mix(in srgb, var(--bg-elevated) 86%, var(--bg-surface));
 }
 
@@ -1348,7 +1382,7 @@ textarea::placeholder {
   justify-content: center;
   width: 100%;
   min-height: 2.75rem;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 78%, transparent);
+  border: 0;
   border-radius: 12px;
   padding: 0 0.85rem;
   font-size: 0.93rem;
@@ -1376,12 +1410,10 @@ textarea::placeholder {
 }
 
 .workout-action-pill.is-primary {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border-subtle));
   background: color-mix(in srgb, var(--accent) 23%, var(--bg-elevated));
 }
 
 .workout-action-pill.is-secondary {
-  border-color: color-mix(in srgb, var(--border-subtle) 88%, transparent);
   background: color-mix(in srgb, var(--bg-surface) 80%, var(--bg-elevated));
 }
 
