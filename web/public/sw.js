@@ -1,15 +1,9 @@
-const CACHE_VERSION = "v2";
+const CACHE_VERSION = "v4";
 const APP_SHELL_CACHE = `app-shell-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `runtime-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 
 const APP_SHELL_ROUTES = [
-  "/",
-  "/plans",
-  "/workout/today",
-  "/stats",
-  "/templates",
-  "/calendar",
   "/offline",
   "/manifest.json",
   "/icons/icon-192.png",
@@ -96,7 +90,6 @@ self.addEventListener("fetch", (event) => {
           return (
             (await cache.match(request)) ||
             (await cache.match("/offline")) ||
-            (await cache.match("/")) ||
             Response.error()
           );
         }
@@ -105,10 +98,15 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  if (
-    isSameOrigin &&
-    ["style", "script", "font", "image"].includes(request.destination)
-  ) {
+  if (!isSameOrigin) return;
+
+  if (["script", "style", "worker"].includes(request.destination)) {
+    // Prefer fresh bundles to avoid serving old JS/CSS after a deployment.
+    event.respondWith(networkFirst(request, RUNTIME_CACHE));
+    return;
+  }
+
+  if (["font", "image"].includes(request.destination)) {
     event.respondWith(cacheFirst(request, RUNTIME_CACHE));
   }
 });

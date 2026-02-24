@@ -1,38 +1,78 @@
-"use client";
+import Link from "next/link";
+
+const primaryRoutes = [
+  {
+    href: "/workout/today",
+    label: "Today",
+    copy: "Start or continue today's workout log.",
+  },
+  {
+    href: "/plans",
+    label: "Plans",
+    copy: "Create and tune active training plans.",
+  },
+  {
+    href: "/calendar",
+    label: "Calendar",
+    copy: "Preview upcoming sessions by date.",
+  },
+  {
+    href: "/stats",
+    label: "Stats",
+    copy: "Review volume, e1RM, and compliance trends.",
+  },
+];
+
+const utilityRoutes = [
+  {
+    href: "/templates",
+    label: "Templates",
+    copy: "Manage base program templates and versions.",
+  },
+  {
+    href: "/settings/data",
+    label: "Data Export",
+    copy: "Download JSON or CSV exports from a dedicated screen.",
+  },
+];
 
 export default function Home() {
-  function downloadJsonExport() {
-    const href = "/api/export?format=json";
-    window.location.href = href;
-  }
-
-  function downloadWorkoutSetCsv() {
-    const href = "/api/export?format=csv&type=workout_set";
-    window.location.href = href;
-  }
-
   return (
-    <div className="p-8 space-y-4">
-      <h1 className="text-2xl font-semibold">Workout Log</h1>
-      <ul className="list-disc pl-5">
-        <li><a className="underline" href="/templates">/templates</a></li>
-        <li><a className="underline" href="/plans">/plans</a></li>
-        <li><a className="underline" href="/workout/today">/workout/today</a></li>
-        <li><a className="underline" href="/calendar">/calendar</a></li>
-        <li><a className="underline" href="/stats">/stats</a></li>
-      </ul>
+    <div className="native-page native-page-enter home-screen">
+      <section className="ui-card home-hero">
+        <p className="home-hero-kicker">Workout Log</p>
+        <h1 className="home-hero-title">Training control center</h1>
+        <p className="home-hero-copy">
+          Move through today&apos;s training flow without jumping between legacy links.
+        </p>
+        <Link className="ui-primary-button home-hero-action" href="/workout/today">
+          Continue Today
+        </Link>
+      </section>
 
-      <div className="max-w-xl rounded-2xl border p-4 space-y-3">
-        <div className="font-medium">Export My Data</div>
-        <div className="flex flex-wrap gap-2">
-          <button className="rounded-xl border px-4 py-2 font-medium" onClick={downloadJsonExport}>
-            Download JSON (templates/plans/logs)
-          </button>
-          <button className="rounded-xl border px-4 py-2 font-medium" onClick={downloadWorkoutSetCsv}>
-            Download CSV (workout_set)
-          </button>
+      <section className="home-section">
+        <h2 className="home-section-title">Primary</h2>
+        <div className="home-primary-grid">
+          {primaryRoutes.map((route) => (
+            <Link key={route.href} href={route.href} className="motion-card home-primary-card">
+              <span className="home-card-label">{route.label}</span>
+              <span className="home-card-copy">{route.copy}</span>
+            </Link>
+          ))}
         </div>
-      </div>
+      </section>
+
+      <section className="ui-card home-tools">
+        <h2 className="home-section-title">Tools</h2>
+        <div className="home-tools-list">
+          {utilityRoutes.map((route) => (
+            <Link key={route.href} href={route.href} className="home-tool-link">
+              <span className="home-tool-label">{route.label}</span>
+              <span className="home-tool-copy">{route.copy}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

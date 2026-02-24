@@ -70,6 +70,18 @@ export function PwaRegister() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
+    if (process.env.NODE_ENV !== "production") {
+      const cleanupDevServiceWorker = async () => {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.unregister()));
+        if ("caches" in window) {
+          const keys = await caches.keys();
+          await Promise.all(keys.map((key) => caches.delete(key)));
+        }
+      };
+      void cleanupDevServiceWorker();
+      return;
+    }
 
     const onControllerChange = () => {
       if (isReloadingForUpdate.current) return;

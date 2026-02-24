@@ -1,18 +1,23 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { getPendingWorkoutLogCount, offlineQueueUpdateEventName } from "@/lib/offlineLogQueue";
 
 const tabs = [
-  { href: "/plans", label: "Plans" },
+  { href: "/", label: "Home" },
   { href: "/workout/today", label: "Today" },
+  { href: "/plans", label: "Plans" },
+  { href: "/calendar", label: "Calendar" },
   { href: "/stats", label: "Stats" },
-  { href: "/templates", label: "Templates" },
 ];
 
 function tabIsActive(pathname: string, href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
   if (href === "/workout/today") {
     return pathname === href || pathname.startsWith("/workout/");
   }
@@ -21,7 +26,13 @@ function tabIsActive(pathname: string, href: string) {
 
 export function BottomNav() {
   const pathname = usePathname() ?? "";
+  const [isMounted, setIsMounted] = useState(false);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const navStyle = { "--tab-count": tabs.length } as CSSProperties;
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -42,9 +53,9 @@ export function BottomNav() {
   }, []);
 
   return (
-    <nav className="app-bottom-nav" aria-label="Primary navigation">
+    <nav className="app-bottom-nav" aria-label="Primary navigation" style={navStyle}>
       {tabs.map((tab) => {
-        const active = tabIsActive(pathname, tab.href);
+        const active = isMounted ? tabIsActive(pathname, tab.href) : false;
         const isTodayTab = tab.href === "/workout/today";
         const showPendingBadge = isTodayTab && pendingSyncCount > 0;
         return (
