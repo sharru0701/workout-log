@@ -157,13 +157,18 @@ jobs:
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://${{ secrets.DEPLOY_HOST }}/api/health"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
           fi
 
-          echo "Healthcheck URL: ${HEALTHCHECK_URL}"
+          echo "Healthcheck URL (from server): ${HEALTHCHECK_URL}"
 
-          for i in $(seq 1 18); do
-            if curl -fsS --max-time 8 "${HEALTHCHECK_URL}" >/dev/null; then
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
+          HEALTHCHECK_URL="${HEALTHCHECK_URL}"
+
+          for i in \$(seq 1 18); do
+            if curl -fsS --max-time 8 "\${HEALTHCHECK_URL}" >/dev/null; then
               echo "Healthcheck passed"
               exit 0
             fi
@@ -172,6 +177,7 @@ jobs:
 
           echo "Healthcheck failed"
           exit 1
+          EOF
 
       - name: Mark successful deployed SHA
         if: ${{ steps.healthcheck.outcome == 'success' }}
@@ -207,11 +213,18 @@ jobs:
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://${{ secrets.DEPLOY_HOST }}/api/health"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
           fi
 
-          for i in $(seq 1 12); do
-            if curl -fsS --max-time 8 "${HEALTHCHECK_URL}" >/dev/null; then
+          echo "Rollback healthcheck URL (from server): ${HEALTHCHECK_URL}"
+
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
+          HEALTHCHECK_URL="${HEALTHCHECK_URL}"
+
+          for i in \$(seq 1 12); do
+            if curl -fsS --max-time 8 "\${HEALTHCHECK_URL}" >/dev/null; then
               echo "Rollback healthcheck passed"
               exit 0
             fi
@@ -220,6 +233,7 @@ jobs:
 
           echo "Rollback healthcheck failed"
           exit 1
+          EOF
 
       - name: Fail workflow when deploy healthcheck failed
         if: ${{ steps.healthcheck.outcome == 'failure' }}
