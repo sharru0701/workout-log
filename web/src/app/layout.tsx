@@ -6,6 +6,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { viewportThemeColor } from "@/lib/theme";
 
 const appSans = Noto_Sans_KR({
+  subsets: ["latin"],
   variable: "--font-geist-sans",
   display: "swap",
   weight: ["400", "500", "600", "700"],
