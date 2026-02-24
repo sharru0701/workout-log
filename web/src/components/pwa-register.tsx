@@ -31,6 +31,7 @@ export function PwaRegister() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const canUseInstallPrompt = process.env.NODE_ENV === "production";
 
     const media = window.matchMedia("(display-mode: standalone)");
     const syncMode = () => setIsStandalone(isStandaloneMode());
@@ -52,18 +53,24 @@ export function PwaRegister() {
       setIsStandalone(true);
     };
 
-    setShowIosInstallHint(isIosSafariBrowser());
+    if (canUseInstallPrompt) {
+      setShowIosInstallHint(isIosSafariBrowser());
+      window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.addEventListener("appinstalled", onAppInstalled);
+    } else {
+      setShowIosInstallHint(false);
+    }
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-    window.addEventListener("appinstalled", onAppInstalled);
     return () => {
       if (typeof media.removeEventListener === "function") {
         media.removeEventListener("change", syncMode);
       } else if (typeof media.removeListener === "function") {
         media.removeListener(syncMode);
       }
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
-      window.removeEventListener("appinstalled", onAppInstalled);
+      if (canUseInstallPrompt) {
+        window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+        window.removeEventListener("appinstalled", onAppInstalled);
+      }
     };
   }, []);
 

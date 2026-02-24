@@ -23,11 +23,11 @@ export default function DataExportPage() {
         </p>
       </header>
 
-      <section className="ui-card settings-export-card">
+      <section className="motion-card rounded-2xl border settings-export-card">
         <h2 className="settings-section-title">Export Files</h2>
         <div className="settings-export-list">
           {exportOptions.map((item) => (
-            <a key={item.href} href={item.href} className="ui-primary-button settings-export-action">
+            <a key={item.href} href={item.href} className="haptic-tap ui-primary-button settings-export-action">
               <span>{item.title}</span>
               <span className="settings-export-action-copy">{item.detail}</span>
             </a>

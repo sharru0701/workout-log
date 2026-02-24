@@ -300,10 +300,13 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Templates</h1>
+    <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
+      <div className="tab-screen-header">
+        <h1 className="tab-screen-title">Templates</h1>
+        <p className="tab-screen-caption">Curate template library and manage version branches.</p>
+      </div>
 
-      <div className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
+      <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
           <span className="text-xs text-neutral-600">userId</span>
           <input
@@ -341,7 +344,7 @@ export default function TemplatesPage() {
         </div>
         <div className="md:col-span-4 flex gap-2">
           <button
-            className="rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setError(null);
               setSuccess(null);
@@ -350,7 +353,7 @@ export default function TemplatesPage() {
           >
             Reload
           </button>
-          <a className="rounded-xl border px-4 py-2 font-medium" href="/plans">
+          <a className="haptic-tap rounded-xl border px-4 py-2 font-medium" href="/plans">
             Go to Plans
           </a>
         </div>
@@ -359,16 +362,16 @@ export default function TemplatesPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="rounded-2xl border p-4 space-y-3">
+        <div className="motion-card rounded-2xl border p-4 space-y-3">
           <div className="font-medium">Public Templates</div>
           {publicTemplates.length === 0 ? (
             <div className="text-sm text-neutral-600">No public templates.</div>
           ) : (
             <ul className="space-y-2">
               {publicTemplates.map((t) => (
-                <li key={t.slug} className="rounded-lg border px-3 py-2">
+                <li key={t.slug} className="motion-card rounded-lg border px-3 py-2">
                   <div className="flex items-center justify-between gap-2">
-                    <button className="text-left" onClick={() => setSelectedSlug(t.slug)}>
+                    <button className="haptic-tap text-left" onClick={() => setSelectedSlug(t.slug)}>
                       <div className="font-medium">{t.name}</div>
                       <div className="text-xs text-neutral-600">
                         {t.slug} · {t.type} · latest v{t.latestVersion?.version ?? "-"}
@@ -378,7 +381,7 @@ export default function TemplatesPage() {
                       )}
                     </button>
                     <button
-                      className="rounded-lg border px-3 py-1 text-sm"
+                      className="haptic-tap rounded-lg border px-3 py-1 text-sm"
                       onClick={() => {
                         setError(null);
                         setSuccess(null);
@@ -394,15 +397,15 @@ export default function TemplatesPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3">
+        <div className="motion-card rounded-2xl border p-4 space-y-3">
           <div className="font-medium">My Private Templates</div>
           {myPrivateTemplates.length === 0 ? (
             <div className="text-sm text-neutral-600">No private templates yet. Fork one to start editing.</div>
           ) : (
             <ul className="space-y-2">
               {myPrivateTemplates.map((t) => (
-                <li key={t.slug} className="rounded-lg border px-3 py-2">
-                  <button className="w-full text-left" onClick={() => setSelectedSlug(t.slug)}>
+                <li key={t.slug} className="motion-card rounded-lg border px-3 py-2">
+                  <button className="haptic-tap w-full text-left" onClick={() => setSelectedSlug(t.slug)}>
                     <div className="font-medium">{t.name}</div>
                     <div className="text-xs text-neutral-600">
                       {t.slug} · {t.type} · latest v{t.latestVersion?.version ?? "-"}
@@ -418,7 +421,7 @@ export default function TemplatesPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border p-4 space-y-4">
+      <div className="motion-card rounded-2xl border p-4 space-y-4">
         <div className="font-medium">Template Editor</div>
         {!selectedTemplate ? (
           <div className="text-sm text-neutral-600">Select a template to view versions and edit.</div>
@@ -454,7 +457,7 @@ export default function TemplatesPage() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">MANUAL session editor</div>
-                  <button className="rounded-lg border px-3 py-1 text-sm" onClick={addManualSession}>
+                  <button className="haptic-tap rounded-lg border px-3 py-1 text-sm" onClick={addManualSession}>
                     + Session
                   </button>
                 </div>
@@ -480,7 +483,7 @@ export default function TemplatesPage() {
                         }
                       />
                       <button
-                        className="rounded-lg border px-2 py-1 text-xs"
+                        className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                         onClick={() =>
                           setManualSessions((prev) => prev.filter((_, i) => i !== sessionIdx))
                         }
@@ -517,7 +520,7 @@ export default function TemplatesPage() {
                             }
                           />
                           <button
-                            className="rounded-lg border px-2 py-1 text-xs"
+                            className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                             onClick={() =>
                               setManualSessions((prev) =>
                                 prev.map((s, si) =>
@@ -631,7 +634,7 @@ export default function TemplatesPage() {
                               />
                             </label>
                             <button
-                              className="rounded-lg border px-2 py-1 text-xs"
+                              className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                               onClick={() =>
                                 setManualSessions((prev) =>
                                   prev.map((s, si) =>
@@ -658,7 +661,7 @@ export default function TemplatesPage() {
                         ))}
 
                         <button
-                          className="rounded-lg border px-2 py-1 text-xs"
+                          className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                           onClick={() =>
                             setManualSessions((prev) =>
                               prev.map((s, si) =>
@@ -685,7 +688,7 @@ export default function TemplatesPage() {
                     ))}
 
                     <button
-                      className="rounded-lg border px-2 py-1 text-xs"
+                      className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                       onClick={() =>
                         setManualSessions((prev) =>
                           prev.map((s, si) =>
@@ -769,7 +772,7 @@ export default function TemplatesPage() {
                         />
                       </label>
                       <button
-                        className="rounded-lg border px-2 py-1 text-xs"
+                        className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                         onClick={() => setLogicSubstitutions((prev) => prev.filter((_, i) => i !== idx))}
                       >
                         Remove
@@ -777,7 +780,7 @@ export default function TemplatesPage() {
                     </div>
                   ))}
                   <button
-                    className="rounded-lg border px-3 py-1 text-sm"
+                    className="haptic-tap rounded-lg border px-3 py-1 text-sm"
                     onClick={() =>
                       setLogicSubstitutions((prev) => [...prev, { target: "", exerciseName: "" }])
                     }
@@ -788,7 +791,7 @@ export default function TemplatesPage() {
               </div>
             )}
 
-            <div className="rounded-xl border p-3 space-y-2">
+            <div className="motion-card rounded-xl border p-3 space-y-2">
               <div className="text-sm font-medium">Create new version</div>
               <label className="flex flex-col gap-1">
                 <span className="text-xs text-neutral-600">changelog</span>
@@ -799,7 +802,7 @@ export default function TemplatesPage() {
                 />
               </label>
               <button
-                className="rounded-xl border px-4 py-2 font-medium"
+                className="haptic-tap ui-primary-button px-4 py-2 font-medium"
                 onClick={() => {
                   setError(null);
                   setSuccess(null);
@@ -816,7 +819,7 @@ export default function TemplatesPage() {
               )}
             </div>
 
-            <div className="rounded-xl border p-3">
+            <div className="motion-card rounded-xl border p-3">
               <div className="text-sm font-medium mb-2">Version history</div>
               {versions.length === 0 ? (
                 <div className="text-sm text-neutral-600">No versions.</div>

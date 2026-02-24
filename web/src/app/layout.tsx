@@ -1,7 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { PwaRegister } from "@/components/pwa-register";
+import { viewportThemeColor } from "@/lib/theme";
+
+const appSans = Noto_Sans_KR({
+  variable: "--font-geist-sans",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
+
+const appMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+  weight: ["400", "500", "600", "700"],
+});
 
 export const metadata: Metadata = {
   title: "Workout Log",
@@ -25,10 +40,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b121c" },
-    { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
-  ],
+  themeColor: viewportThemeColor,
 };
 
 export default function RootLayout({
@@ -38,16 +50,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className="antialiased"
-        style={
-          {
-            "--font-geist-sans": "system-ui, -apple-system, sans-serif",
-            "--font-geist-mono":
-              "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace",
-          } as React.CSSProperties
-        }
-      >
+      <body className={`${appSans.variable} ${appMono.variable} antialiased`}>
         <PwaRegister />
         <AppShell>{children}</AppShell>
       </body>

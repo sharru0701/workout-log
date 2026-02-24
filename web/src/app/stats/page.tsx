@@ -386,7 +386,7 @@ export default function StatsPage() {
 
   return (
     <div
-      className="native-page native-page-enter mx-auto max-w-5xl p-4 space-y-4 sm:p-6 momentum-scroll"
+      className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
       {...pullToRefresh.bind}
     >
       <div className="pull-refresh-indicator">
@@ -396,9 +396,9 @@ export default function StatsPage() {
             ? "Pull to refresh"
             : ""}
       </div>
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold">Stats Dashboard</h1>
-        <p className="text-sm text-neutral-600">
+      <div className="tab-screen-header">
+        <h1 className="tab-screen-title">Stats Dashboard</h1>
+        <p className="tab-screen-caption">
           {loading ? "Loading metrics..." : `Range ready · plan: ${selectedPlanName ?? "All plans"}`}
         </p>
       </div>

@@ -45,7 +45,7 @@ export default function Home() {
         <p className="home-hero-copy">
           Move through today&apos;s training flow without jumping between legacy links.
         </p>
-        <Link className="ui-primary-button home-hero-action" href="/workout/today">
+        <Link className="haptic-tap ui-primary-button home-hero-action" href="/workout/today">
           Continue Today
         </Link>
       </section>
@@ -54,7 +54,7 @@ export default function Home() {
         <h2 className="home-section-title">Primary</h2>
         <div className="home-primary-grid">
           {primaryRoutes.map((route) => (
-            <Link key={route.href} href={route.href} className="motion-card home-primary-card">
+            <Link key={route.href} href={route.href} className="haptic-tap motion-card home-primary-card">
               <span className="home-card-label">{route.label}</span>
               <span className="home-card-copy">{route.copy}</span>
             </Link>
@@ -66,7 +66,7 @@ export default function Home() {
         <h2 className="home-section-title">Tools</h2>
         <div className="home-tools-list">
           {utilityRoutes.map((route) => (
-            <Link key={route.href} href={route.href} className="home-tool-link">
+            <Link key={route.href} href={route.href} className="haptic-tap home-tool-link">
               <span className="home-tool-label">{route.label}</span>
               <span className="home-tool-copy">{route.copy}</span>
             </Link>

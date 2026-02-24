@@ -1058,7 +1058,7 @@ export default function WorkoutTodayPage() {
 
   return (
     <div
-      className="native-page native-page-enter mx-auto max-w-5xl p-6 space-y-6 momentum-scroll"
+      className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
       {...pullToRefresh.bind}
     >
       <div className="pull-refresh-indicator">
@@ -1068,31 +1068,30 @@ export default function WorkoutTodayPage() {
             ? "Pull to refresh"
             : ""}
       </div>
-      <h1 className="text-2xl font-semibold">Workout Today</h1>
+      <div className="tab-screen-header">
+        <h1 className="tab-screen-title">Workout Today</h1>
+        <p className="tab-screen-caption">Generate, log, and sync today&apos;s session in one flow.</p>
+      </div>
 
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span
-            className={`rounded-full px-2.5 py-1 ${
-              isOfflineMode
-                ? "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200"
-                : "bg-emerald-100 text-emerald-900 dark:bg-emerald-900/40 dark:text-emerald-200"
-            }`}
+            className={`ui-badge ${isOfflineMode ? "ui-badge-warning" : "ui-badge-success"}`}
           >
             {isOfflineMode ? "Offline mode" : "Online"}
           </span>
           {pendingSyncCount > 0 && (
-            <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-900 dark:bg-sky-900/40 dark:text-sky-200">
+            <span className="ui-badge ui-badge-info">
               Pending sync: {pendingSyncCount}
             </span>
           )}
           {isSyncingPending && (
-            <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">
+            <span className="ui-badge ui-badge-neutral">
               Syncing...
             </span>
           )}
           {!isSyncingPending && syncNotice && (
-            <span className="rounded-full bg-neutral-200 px-2.5 py-1 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200">
+            <span className="ui-badge ui-badge-neutral">
               {syncNotice}
             </span>
           )}
@@ -1232,9 +1231,15 @@ export default function WorkoutTodayPage() {
           </label>
         </div>
 
-        <div className="flex gap-2 flex-wrap">
+        <div className="workout-action-panel">
+          <div className="workout-action-head">
+            <div className="workout-action-title">Session actions</div>
+            <p className="workout-action-copy">Generate or update today&apos;s session from the selected plan/date.</p>
+          </div>
+          <div className="workout-action-grid">
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-primary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1246,7 +1251,8 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-primary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1258,7 +1264,8 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-primary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1269,12 +1276,13 @@ export default function WorkoutTodayPage() {
             Generate Session
           </button>
 
-          <button className="haptic-tap rounded-xl border px-4 py-2 font-medium" onClick={addSetRow}>
+          <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
             + Add Set
           </button>
 
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-secondary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1285,7 +1293,8 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-primary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1297,7 +1306,8 @@ export default function WorkoutTodayPage() {
           </button>
 
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+            className="haptic-tap workout-action-pill is-secondary"
+            type="button"
             onClick={() => {
               setSuccess(null);
               setError(null);
@@ -1311,6 +1321,7 @@ export default function WorkoutTodayPage() {
           >
             Quick add set
           </button>
+          </div>
         </div>
 
         {error && <div className="text-sm text-red-600">{error}</div>}
@@ -1346,7 +1357,8 @@ export default function WorkoutTodayPage() {
               </select>
             </label>
             <button
-              className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
+              type="button"
               onClick={() => {
                 setSuccess(null);
                 setError(null);
@@ -1383,7 +1395,8 @@ export default function WorkoutTodayPage() {
               />
             </label>
             <button
-              className="haptic-tap rounded-xl border px-4 py-2 font-medium"
+              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
+              type="button"
               onClick={() => {
                 setSuccess(null);
                 setError(null);
@@ -1535,6 +1548,7 @@ export default function WorkoutTodayPage() {
               : "Save Log"}
         </button>
       </div>
+
     </div>
   );
 }

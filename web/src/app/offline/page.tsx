@@ -1,9 +1,9 @@
 export default function OfflinePage() {
   return (
-    <div className="mx-auto max-w-2xl p-6">
-      <section className="rounded-2xl border p-5 space-y-3">
-        <h1 className="text-xl font-semibold">You are offline</h1>
-        <p className="text-sm text-neutral-600">
+    <div className="native-page native-page-enter tab-screen">
+      <section className="motion-card rounded-2xl border p-5 space-y-3">
+        <h1 className="tab-screen-title">You are offline</h1>
+        <p className="tab-screen-caption">
           The app shell is available. You can continue logging in <a className="underline" href="/workout/today">Today</a>,
           and queued logs will sync when network returns.
         </p>

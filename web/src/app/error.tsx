@@ -20,17 +20,19 @@ export default function RootError({
   }, [error]);
 
   return (
-    <div className="mx-auto max-w-xl p-6 space-y-3">
-      <h2 className="text-xl font-semibold">Something went wrong</h2>
-      <p className="text-sm text-gray-600">Please retry. If it keeps happening, check server logs.</p>
-      {error.digest ? <p className="text-xs text-gray-500">Error ID: {error.digest}</p> : null}
-      <button
-        type="button"
-        className="rounded border px-3 py-2 text-sm"
-        onClick={() => reset()}
-      >
-        Try again
-      </button>
+    <div className="native-page native-page-enter tab-screen">
+      <section className="motion-card rounded-2xl border p-5 space-y-3">
+        <h2 className="tab-screen-title">Something went wrong</h2>
+        <p className="tab-screen-caption">Please retry. If it keeps happening, check server logs.</p>
+        {error.digest ? <p className="type-caption">Error ID: {error.digest}</p> : null}
+        <button
+          type="button"
+          className="haptic-tap ui-primary-button"
+          onClick={() => reset()}
+        >
+          Try again
+        </button>
+      </section>
     </div>
   );
 }

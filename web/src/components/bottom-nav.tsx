@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -28,7 +27,6 @@ export function BottomNav() {
   const pathname = usePathname() ?? "";
   const [isMounted, setIsMounted] = useState(false);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const navStyle = { "--tab-count": tabs.length } as CSSProperties;
 
   useEffect(() => {
     setIsMounted(true);
@@ -53,7 +51,7 @@ export function BottomNav() {
   }, []);
 
   return (
-    <nav className="app-bottom-nav" aria-label="Primary navigation" style={navStyle}>
+    <nav className="app-bottom-nav" aria-label="Primary navigation">
       {tabs.map((tab) => {
         const active = isMounted ? tabIsActive(pathname, tab.href) : false;
         const isTodayTab = tab.href === "/workout/today";

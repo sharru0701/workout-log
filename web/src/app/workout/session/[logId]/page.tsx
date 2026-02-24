@@ -142,19 +142,22 @@ export default function WorkoutSessionDetailPage() {
   }, [compareRows]);
 
   return (
-    <div className="mx-auto max-w-5xl p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Session Detail</h1>
+    <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
+      <header className="tab-screen-header">
+        <h1 className="tab-screen-title">Session Detail</h1>
+        <p className="tab-screen-caption">Review planned versus performed rows for this saved workout.</p>
+      </header>
 
-      <div className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+      <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <a
-          className="rounded-xl border px-4 py-2 text-center font-medium md:col-span-2"
+          className="haptic-tap rounded-xl border px-4 py-2 text-center font-medium md:col-span-2"
           href="/workout/today"
         >
           Back to today
         </a>
 
         <button
-          className="rounded-xl border px-4 py-2 font-medium"
+          className="haptic-tap rounded-xl border px-4 py-2 font-medium"
           onClick={() => {
             setItem(null);
             setError(null);
@@ -174,7 +177,7 @@ export default function WorkoutSessionDetailPage() {
 
       {item && (
         <>
-          <div className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
               <div className="text-xs text-neutral-600">Log ID</div>
               <div className="font-mono break-all">{item.id}</div>
@@ -189,7 +192,7 @@ export default function WorkoutSessionDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border p-4 grid grid-cols-3 gap-3 text-sm">
+          <div className="motion-card rounded-2xl border p-4 grid grid-cols-3 gap-3 text-sm">
             <div>
               <div className="text-xs text-neutral-600">Matched</div>
               <div className="text-lg font-semibold">{stats.matched}</div>
@@ -204,7 +207,7 @@ export default function WorkoutSessionDetailPage() {
             </div>
           </div>
 
-          <div className="rounded-2xl border p-4">
+          <div className="motion-card rounded-2xl border p-4">
             <div className="font-medium mb-2">Planned vs Performed</div>
             {compareRows.length === 0 ? (
               <div className="text-sm text-neutral-600">No rows to compare.</div>

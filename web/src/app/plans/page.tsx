@@ -360,7 +360,7 @@ export default function PlansPage() {
   return (
     <>
       <div
-        className="native-page native-page-enter mx-auto max-w-5xl p-4 space-y-4 sm:p-6 momentum-scroll"
+        className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
         {...pullToRefresh.bind}
       >
         <div className="pull-refresh-indicator">
@@ -370,17 +370,20 @@ export default function PlansPage() {
               ? "Pull to refresh"
               : ""}
         </div>
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-2xl font-semibold">Plans</h1>
-          <button
-            className="haptic-tap ui-primary-button min-h-12 px-5 text-base"
-            onClick={() => setCreateSheetOpen(true)}
-          >
-            Create Plan
-          </button>
+        <div className="tab-screen-header">
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="tab-screen-title">Plans</h1>
+            <button
+              className="haptic-tap ui-primary-button min-h-12 px-5 text-base"
+              onClick={() => setCreateSheetOpen(true)}
+            >
+              Create Plan
+            </button>
+          </div>
+          <p className="tab-screen-caption">Build programs, generate sessions, and control schedule context.</p>
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+        <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="text-sm text-neutral-600">Context</div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <label className="flex flex-col gap-1">
@@ -452,7 +455,7 @@ export default function PlansPage() {
           </a>
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+        <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="font-medium">Plan Cards</div>
           {plans.length === 0 ? (
             <div className="text-sm text-neutral-600">No plans found for this user.</div>
@@ -461,7 +464,7 @@ export default function PlansPage() {
               {plans.map((p) => (
                 <article
                   key={p.id}
-                  className={`ui-list-item rounded-2xl border p-4 space-y-3 ${
+                  className={`ui-list-item rounded-2xl border bg-neutral-50 p-4 space-y-3 ${
                     selectedPlanId === p.id ? "border-neutral-900" : ""
                   }`}
                 >
@@ -494,7 +497,7 @@ export default function PlansPage() {
           )}
         </div>
 
-        <div className="rounded-2xl border p-4 space-y-3 ui-height-animate">
+        <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="font-medium">Selected Plan Generate</div>
           <label className="flex flex-col gap-1">
             <span className="text-xs text-neutral-600">selected plan</span>

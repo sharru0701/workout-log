@@ -26,11 +26,11 @@ export default function SettingsPage() {
         <p className="settings-copy">Utility actions are grouped here so the home screen stays focused on training.</p>
       </header>
 
-      <section className="ui-card settings-menu-card">
+      <section className="motion-card rounded-2xl border settings-menu-card">
         <h2 className="settings-section-title">Utilities</h2>
         <div className="settings-menu-list">
           {settingsLinks.map((item) => (
-            <Link key={item.href} href={item.href} className="settings-menu-link">
+            <Link key={item.href} href={item.href} className="haptic-tap settings-menu-link">
               <span className="settings-menu-title">{item.title}</span>
               <span className="settings-menu-copy">{item.detail}</span>
             </Link>

@@ -18,6 +18,22 @@ type RecentGeneratedSession = {
   updatedAt: string;
 };
 
+const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const MONTH_NAMES = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+] as const;
+
 function dateOnlyInTimezone(date: Date, timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -70,6 +86,15 @@ function daysBetween(aDateOnly: string, bDateOnly: string) {
   return Math.floor((dateOnlyToUtcDate(aDateOnly).getTime() - dateOnlyToUtcDate(bDateOnly).getTime()) / 86_400_000);
 }
 
+function formatMonthLabel(dateOnly: string) {
+  const d = dateOnlyToUtcDate(dateOnly);
+  return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+function dayOfMonth(dateOnly: string) {
+  return Number(dateOnly.slice(8, 10));
+}
+
 function computePlanContextForDate(plan: Plan | null, dateOnly: string) {
   if (!plan) return null;
   const params = plan.params ?? {};
@@ -109,7 +134,6 @@ function computePlanContextForDate(plan: Plan | null, dateOnly: string) {
 }
 
 export default function CalendarPage() {
-  const [userId, setUserId] = useState("dev");
   const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [anchorDate, setAnchorDate] = useState(() => dateOnlyInTimezone(new Date(), timezone));
@@ -162,6 +186,13 @@ export default function CalendarPage() {
   }, [recentSessions]);
 
   const cells = useMemo(() => (viewMode === "month" ? monthGrid(anchorDate) : weekGrid(anchorDate)), [anchorDate, viewMode]);
+  const anchorMonthKey = useMemo(() => monthStart(anchorDate).slice(0, 7), [anchorDate]);
+  const today = dateOnlyInTimezone(new Date(), timezone);
+
+  const periodLabel = useMemo(() => {
+    if (viewMode === "month") return formatMonthLabel(anchorDate);
+    return `${cells[0]} to ${cells[cells.length - 1]}`;
+  }, [anchorDate, cells, viewMode]);
 
   async function generateForDate(dateOnly: string) {
     if (!planId) throw new Error("Select a plan");
@@ -200,17 +231,18 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl p-6 space-y-4">
-      <h1 className="text-2xl font-semibold">Calendar</h1>
+    <div className="native-page native-page-enter tab-screen momentum-scroll">
+      <header className="tab-screen-header">
+        <h1 className="tab-screen-title">Calendar</h1>
+        <p className="tab-screen-caption">
+          {selectedPlan ? `${selectedPlan.name} · ${periodLabel}` : "Choose a plan to generate by date"}
+        </p>
+      </header>
 
-      <div className="rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-600">userId</span>
-          <input className="rounded-lg border px-3 py-2" value={userId} onChange={(e) => setUserId(e.target.value)} />
-        </label>
-        <label className="flex flex-col gap-1 md:col-span-2">
+      <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <label className="flex flex-col gap-1 lg:col-span-2">
           <span className="text-xs text-neutral-600">plan</span>
-          <select className="rounded-lg border px-3 py-2" value={planId} onChange={(e) => setPlanId(e.target.value)}>
+          <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
             {plans.length === 0 && <option value="">(no plans)</option>}
             {plans.map((p) => (
               <option key={p.id} value={p.id}>
@@ -219,14 +251,11 @@ export default function CalendarPage() {
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-600">timezone</span>
-          <input className="rounded-lg border px-3 py-2" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
-        </label>
+
         <label className="flex flex-col gap-1">
           <span className="text-xs text-neutral-600">view</span>
           <select
-            className="rounded-lg border px-3 py-2"
+            className="rounded-lg border px-3 py-3 text-base"
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as "month" | "week")}
           >
@@ -234,75 +263,103 @@ export default function CalendarPage() {
             <option value="week">week</option>
           </select>
         </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-600">anchorDate</span>
-          <input type="date" className="rounded-lg border px-3 py-2" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
-        </label>
-      </div>
 
-      <div className="flex gap-2">
-        <button className="rounded-xl border px-4 py-2 font-medium" onClick={() => shift(-1)}>
-          Prev
-        </button>
-        <button className="rounded-xl border px-4 py-2 font-medium" onClick={() => setAnchorDate(dateOnlyInTimezone(new Date(), timezone))}>
-          Today
-        </button>
-        <button className="rounded-xl border px-4 py-2 font-medium" onClick={() => shift(1)}>
-          Next
-        </button>
-      </div>
+        <label className="flex flex-col gap-1">
+          <span className="text-xs text-neutral-600">anchor date</span>
+          <input type="date" className="rounded-lg border px-3 py-3 text-base" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
+        </label>
+
+        <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
+          <span className="text-xs text-neutral-600">timezone</span>
+          <input className="rounded-lg border px-3 py-3 text-base" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+        </label>
+      </section>
+
+      <section className="motion-card rounded-2xl border bg-white calendar-nav-card">
+        <div className="calendar-nav-row">
+          <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => shift(-1)}>
+            Prev
+          </button>
+          <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => setAnchorDate(today)}>
+            Today
+          </button>
+          <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => shift(1)}>
+            Next
+          </button>
+        </div>
+      </section>
 
       {error && <div className="text-sm text-red-600">{error}</div>}
 
-      <div className={`grid gap-2 ${viewMode === "month" ? "grid-cols-7" : "grid-cols-7"}`}>
-        {cells.map((dateOnly) => {
-          const ctx = computePlanContextForDate(selectedPlan, dateOnly);
-          const generated = ctx ? generatedByKey.get(ctx.sessionKey) : undefined;
-          const label =
-            selectedPlan?.type === "MANUAL" && ctx?.scheduleKey
-              ? ctx.scheduleKey
-              : ctx
-                ? `W${ctx.week}D${ctx.day}`
-                : "-";
+      <section className="motion-card rounded-2xl border bg-white p-3 space-y-3">
+        <div className="calendar-grid-scroll">
+          <div className="calendar-weekdays">
+            {WEEKDAY_SHORT.map((name) => (
+              <div key={name} className="calendar-weekday">{name}</div>
+            ))}
+          </div>
+          <div className="calendar-grid">
+            {cells.map((dateOnly) => {
+              const ctx = computePlanContextForDate(selectedPlan, dateOnly);
+              const generated = ctx ? generatedByKey.get(ctx.sessionKey) : undefined;
+              const dayLabel =
+                selectedPlan?.type === "MANUAL" && ctx?.scheduleKey
+                  ? ctx.scheduleKey
+                  : ctx
+                    ? `W${ctx.week}D${ctx.day}`
+                    : "No plan";
+              const inAnchorMonth = viewMode === "week" || dateOnly.startsWith(anchorMonthKey);
+              const isToday = dateOnly === today;
+              const cellClass = `calendar-cell${inAnchorMonth ? "" : " is-outside"}${isToday ? " is-today" : ""}${generated ? " is-generated" : ""}`;
 
-          return (
-            <button
-              key={dateOnly}
-              className="rounded-xl border p-2 text-left min-h-24 hover:bg-neutral-50"
-              onClick={() => {
-                generateForDate(dateOnly).catch((e) => setError(e.message));
-              }}
-              disabled={!selectedPlan || loading}
-            >
-              <div className="text-sm font-medium">{dateOnly}</div>
-              <div className="text-xs text-neutral-600 mt-1">
-                {ctx?.planned ? `planned ${label}` : "on-demand"}
-              </div>
-              <div className="text-xs mt-1">
-                {generated ? "generated" : ctx?.planned ? "planned" : "not generated"}
-              </div>
-              <a
-                className="mt-2 inline-block text-xs underline"
-                href={`/workout/today?planId=${encodeURIComponent(planId)}&date=${encodeURIComponent(dateOnly)}&autoGenerate=1`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                Open
-              </a>
-            </button>
-          );
-        })}
-      </div>
+              return (
+                <article key={dateOnly} className={cellClass}>
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="calendar-cell-date">{dayOfMonth(dateOnly)}</div>
+                    {isToday && <span className="text-[0.62rem] text-neutral-600">Today</span>}
+                  </div>
 
-      <div className="rounded-2xl border p-4 space-y-2">
+                  <div className="calendar-cell-meta">{ctx?.planned ? `planned ${dayLabel}` : dayLabel}</div>
+                  <div className="calendar-cell-meta">{generated ? "Generated" : ctx?.planned ? "Planned" : "On-demand"}</div>
+
+                  <div className="calendar-cell-actions">
+                    <button
+                      className="calendar-cell-generate haptic-tap"
+                      onClick={() => {
+                        generateForDate(dateOnly).catch((e: any) => setError(e?.message ?? "Failed to generate"));
+                      }}
+                      disabled={!selectedPlan || loading}
+                    >
+                      Gen
+                    </button>
+                    {selectedPlan ? (
+                      <a
+                        className="calendar-cell-open"
+                        href={`/workout/today?planId=${encodeURIComponent(planId)}&date=${encodeURIComponent(dateOnly)}&autoGenerate=1`}
+                      >
+                        Open
+                      </a>
+                    ) : (
+                      <span className="calendar-cell-open opacity-55">Open</span>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="motion-card rounded-2xl border bg-white p-4 space-y-2">
         <div className="font-medium">Generated session</div>
         {generatedSession ? (
           <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
             {JSON.stringify(generatedSession.snapshot, null, 2)}
           </pre>
         ) : (
-          <div className="text-sm text-neutral-600">Click a date to generate/open session.</div>
+          <div className="text-sm text-neutral-600">Choose a date and press Generate.</div>
         )}
-      </div>
+      </section>
     </div>
   );
 }
