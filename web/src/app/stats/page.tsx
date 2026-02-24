@@ -368,6 +368,17 @@ export default function StatsPage() {
     setDays(next);
   }
 
+  function resetFilters() {
+    setPlanId("");
+    setExerciseId("");
+    setExercise("Back Squat");
+    setFrom("");
+    setTo(todayDateOnly());
+    setBucket("week");
+    setRangeIndex(2);
+    setDays(90);
+  }
+
   function onRangeSwipeStart(e: React.TouchEvent<HTMLDivElement>) {
     swipeStartX.current = e.changedTouches[0]?.clientX ?? null;
   }
@@ -414,10 +425,34 @@ export default function StatsPage() {
       </div>
 
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+        <div className="font-medium">Core flow</div>
+        <p className="text-sm text-neutral-600">1) Choose 7/30/90 days 2) Review KPI cards 3) Open Filters for deeper scope.</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {PRESET_RANGES.map((d, idx) => (
+            <button
+              key={`core-${d}`}
+              className={`haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold ${
+                idx === rangeIndex ? "bg-bg-elevated" : ""
+              }`}
+              onClick={() => {
+                setRangeIndex(idx);
+                setPresetRange(d);
+              }}
+            >
+              {d} days
+            </button>
+          ))}
+          <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold col-span-2 sm:col-span-1" onClick={() => setFiltersOpen(true)}>
+            Filters
+          </button>
+        </div>
+      </section>
+
+      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">Active filters</div>
-            <div className="mt-1 text-sm text-neutral-600">Tap Filters to edit range, plan and exercise scope.</div>
+            <div className="mt-1 text-sm text-neutral-600">Use Filters only when you need advanced plan/range/exercise scope edits.</div>
           </div>
           <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={() => setFiltersOpen(true)}>
             Edit
@@ -442,7 +477,7 @@ export default function StatsPage() {
             <div className="ui-card-label ui-card-label-caps">Range</div>
             <div className="text-lg font-semibold">{activePresetDays} days</div>
           </div>
-          <div className="ui-card-label">Swipe left/right</div>
+          <div className="ui-card-label">Tap buttons first, swipe optional</div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -650,6 +685,15 @@ export default function StatsPage() {
         description="Scope and compare trend windows."
       >
         <div className="space-y-4 pb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={resetFilters}>
+              Reset to defaults
+            </button>
+            <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={() => setFiltersOpen(false)}>
+              Apply & close
+            </button>
+          </div>
+
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">Plan</span>
@@ -686,6 +730,10 @@ export default function StatsPage() {
               <span className="ui-card-label">To (optional)</span>
               <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
             </label>
+          </div>
+
+          <div className="rounded-xl border px-3 py-2 text-xs text-neutral-600">
+            Advanced e1RM scope (optional): use `exerciseId` for exact targeting, or `exercise` for name-based matching.
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

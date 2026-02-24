@@ -515,10 +515,38 @@ button {
 }
 
 .calendar-cell-meta {
-  font-size: 0.64rem;
+  font-size: 0.68rem;
   color: var(--text-secondary);
-  line-height: 1.15;
+  line-height: 1.2;
   word-break: break-word;
+}
+
+.calendar-cell-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.15rem;
+  border-radius: 999px;
+  padding: 0 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-surface) 68%, transparent);
+}
+
+.calendar-cell-status.is-generated {
+  color: color-mix(in srgb, var(--accent) 65%, var(--text-primary));
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.calendar-cell-status.is-planned {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-surface) 76%, transparent);
+}
+
+.calendar-cell-status.is-on-demand {
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-surface) 64%, transparent);
 }
 
 .calendar-cell-actions {
@@ -539,9 +567,11 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  overflow: hidden;
+  white-space: normal;
+  text-overflow: clip;
+  overflow: visible;
+  line-height: 1.15;
+  text-align: center;
 }
 
 .calendar-cell-generate {
@@ -551,6 +581,15 @@ button {
 .calendar-cell-open {
   color: var(--text-primary);
   background: color-mix(in srgb, var(--accent) 20%, var(--bg-elevated));
+}
+
+.calendar-open-hint {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  border-radius: 12px;
+  padding: 0.55rem 0.75rem;
+  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
 }
 
 .settings-header {
@@ -669,18 +708,24 @@ button {
   }
 
   .calendar-cell {
-    min-height: 8.4rem;
+    min-height: 8.9rem;
     border-radius: var(--radius-sm);
     padding: var(--space-2);
     gap: var(--space-1);
   }
 
   .calendar-cell-date {
-    font-size: 0.74rem;
+    font-size: 0.78rem;
   }
 
   .calendar-cell-meta {
+    font-size: 0.64rem;
+  }
+
+  .calendar-cell-status {
     font-size: 0.58rem;
+    min-height: 1.05rem;
+    padding: 0 0.36rem;
   }
 
   .app-bottom-nav-tab {
@@ -1352,6 +1397,11 @@ textarea::placeholder {
   background: color-mix(in srgb, var(--bg-elevated) 86%, var(--bg-surface));
 }
 
+.workout-action-panel-quick {
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
+}
+
 .workout-action-head {
   display: grid;
   gap: 0.16rem;
@@ -1422,8 +1472,12 @@ textarea::placeholder {
 }
 
 .workout-save-dock {
-  position: static;
+  position: sticky;
+  bottom: calc(5.2rem + env(safe-area-inset-bottom));
+  z-index: 20;
   margin-top: 0.4rem;
+  padding-top: 0.5rem;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 0%, transparent), var(--bg-base) 44%);
 }
 
 .workout-save-button {
@@ -1432,6 +1486,21 @@ textarea::placeholder {
   font-size: 1rem;
   font-weight: 700;
   transition: transform var(--motion-duration) var(--motion-ease), filter var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease);
+}
+
+.workout-empty-state {
+  display: grid;
+  gap: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  border-radius: 14px;
+  padding: 0.8rem;
+  background: color-mix(in srgb, var(--bg-elevated) 78%, transparent);
+}
+
+.workout-empty-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.5rem;
 }
 
 input,
@@ -1497,6 +1566,10 @@ button {
 
 @media (min-width: 560px) {
   .workout-action-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .workout-empty-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

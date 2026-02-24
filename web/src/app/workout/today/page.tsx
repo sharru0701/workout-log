@@ -331,19 +331,7 @@ export default function WorkoutTodayPage() {
   const [isSyncingPending, setIsSyncingPending] = useState(false);
   const [syncNotice, setSyncNotice] = useState<string | null>(null);
 
-  const [sets, setSets] = useState<SetRow[]>([
-    {
-      exerciseName: "Back Squat",
-      setNumber: 1,
-      reps: 5,
-      weightKg: 100,
-      rpe: 8,
-      isExtra: false,
-      isPlanned: false,
-      completed: false,
-      plannedRef: null,
-    },
-  ]);
+  const [sets, setSets] = useState<SetRow[]>([]);
   const [selectedSetIdx, setSelectedSetIdx] = useState<number | null>(null);
   const [blockTarget, setBlockTarget] = useState("BENCH");
   const [replacementExerciseName, setReplacementExerciseName] = useState("");
@@ -648,6 +636,7 @@ export default function WorkoutTodayPage() {
       timezone,
     });
     applyGeneratedSession(res.session);
+    return res.session;
   }
 
   async function generateSession() {
@@ -665,6 +654,16 @@ export default function WorkoutTodayPage() {
     const today = dateOnlyInTimezone(new Date(), timezone);
     await generateForDate(today);
     setSuccess(`Generated for today: ${today}`);
+  }
+
+  async function generateAndApplyForDate(date: string) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("date must be YYYY-MM-DD");
+    const session = await generateSessionAt(week, day, { date });
+    const generatedRows = toSetRowsFromPlannedExercises(session?.snapshot);
+    if (generatedRows.length === 0) throw new Error("No planned exercises in generated session");
+    setSets(generatedRows);
+    setSelectedSetIdx(null);
+    setSuccess(`Generated and applied ${generatedRows.length} planned sets (${date})`);
   }
 
   function makeNextSetFromRow(baseRow: SetRow, rows: SetRow[]): SetRow {
@@ -1237,106 +1236,154 @@ export default function WorkoutTodayPage() {
           </div>
         </AccordionSection>
 
-        <div className="workout-action-panel">
+        <div className="workout-action-panel workout-action-panel-quick">
           <div className="workout-action-head">
-            <div className="workout-action-title">Session actions</div>
-            <p className="workout-action-copy">Generate or update today&apos;s session from the selected plan/date.</p>
+            <div className="workout-action-title">Quick start</div>
+            <p className="workout-action-copy">Recommended flow: generate and apply, log sets, then save.</p>
           </div>
           <div className="workout-action-grid">
-          <button
-            className="haptic-tap workout-action-pill is-primary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              generateForToday().catch((e) => setError(e.message));
-            }}
-            disabled={!planId}
-          >
-            Generate for today
-          </button>
+            <button
+              className="haptic-tap workout-action-pill is-primary"
+              type="button"
+              onClick={() => {
+                setSuccess(null);
+                setError(null);
+                generateAndApplyForDate(sessionDate).catch((e) => setError(e.message));
+              }}
+              disabled={!planId}
+            >
+              Generate & apply selected date
+            </button>
 
-          <button
-            className="haptic-tap workout-action-pill is-primary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              generateForDate(sessionDate).catch((e) => setError(e.message));
-            }}
-            disabled={!planId}
-          >
-            Generate selected date
-          </button>
+            <button
+              className="haptic-tap workout-action-pill is-primary"
+              type="button"
+              onClick={handleSaveLog}
+              disabled={!planId || sets.length === 0}
+            >
+              Save log now
+            </button>
 
-          <button
-            className="haptic-tap workout-action-pill is-primary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              generateSession().catch((e) => setError(e.message));
-            }}
-            disabled={!planId}
-          >
-            Generate Session
-          </button>
+            <button
+              className="haptic-tap workout-action-pill is-secondary"
+              type="button"
+              onClick={() => {
+                setSuccess(null);
+                setError(null);
+                repeatLastWorkout().catch((e) => setError(e.message));
+              }}
+            >
+              Repeat last workout
+            </button>
 
-          <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
-            + Add Set
-          </button>
-
-          <button
-            className="haptic-tap workout-action-pill is-secondary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              repeatLastWorkout().catch((e) => setError(e.message));
-            }}
-          >
-            Repeat last workout
-          </button>
-
-          <button
-            className="haptic-tap workout-action-pill is-primary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              applyPlannedSets();
-            }}
-            disabled={!generatedSession}
-          >
-            Apply planned sets
-          </button>
-
-          <button
-            className="haptic-tap workout-action-pill is-secondary"
-            type="button"
-            onClick={() => {
-              setSuccess(null);
-              setError(null);
-              try {
-                quickAddFromSelected();
-              } catch (e: any) {
-                setError(e.message);
-              }
-            }}
-            disabled={selectedSetIdx === null}
-          >
-            Quick add set
-          </button>
-          <button
-            className="haptic-tap workout-action-pill is-secondary"
-            type="button"
-            onClick={() => setOverridesSheetOpen(true)}
-            disabled={!planId}
-          >
-            Session overrides
-          </button>
+            <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
+              Start blank log (+ Add Set)
+            </button>
           </div>
         </div>
+
+        <AccordionSection
+          title="Advanced actions"
+          description="Manual generation, utility actions, and session overrides"
+          summarySlot={<span className="ui-card-label">{generatedSession ? "Session ready" : "Manual controls"}</span>}
+        >
+          <div className="workout-action-panel">
+            <div className="workout-action-grid">
+              <button
+                className="haptic-tap workout-action-pill is-primary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  generateForToday().catch((e) => setError(e.message));
+                }}
+                disabled={!planId}
+              >
+                Generate for today
+              </button>
+
+              <button
+                className="haptic-tap workout-action-pill is-primary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  generateForDate(sessionDate).catch((e) => setError(e.message));
+                }}
+                disabled={!planId}
+              >
+                Generate selected date
+              </button>
+
+              <button
+                className="haptic-tap workout-action-pill is-primary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  generateSession().catch((e) => setError(e.message));
+                }}
+                disabled={!planId}
+              >
+                Generate Session (week/day)
+              </button>
+
+              <button
+                className="haptic-tap workout-action-pill is-primary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  applyPlannedSets();
+                }}
+                disabled={!generatedSession}
+              >
+                Apply planned sets
+              </button>
+
+              <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
+                + Add Set
+              </button>
+
+              <button
+                className="haptic-tap workout-action-pill is-secondary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  repeatLastWorkout().catch((e) => setError(e.message));
+                }}
+              >
+                Repeat last workout
+              </button>
+
+              <button
+                className="haptic-tap workout-action-pill is-secondary"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  try {
+                    quickAddFromSelected();
+                  } catch (e: any) {
+                    setError(e.message);
+                  }
+                }}
+                disabled={selectedSetIdx === null}
+              >
+                Quick add set
+              </button>
+              <button
+                className="haptic-tap workout-action-pill is-secondary"
+                type="button"
+                onClick={() => setOverridesSheetOpen(true)}
+                disabled={!planId}
+              >
+                Session overrides
+              </button>
+            </div>
+          </div>
+        </AccordionSection>
 
         {error && <div className="text-sm text-red-600">{error}</div>}
         {success && <div className="text-sm text-green-700">{success}</div>}
@@ -1403,24 +1450,47 @@ export default function WorkoutTodayPage() {
             Keyboard: Enter inserts next set, arrow keys move between cells.
           </div>
 
-          <div className="space-y-3 ui-height-animate">
-            {sets.map((s, idx) => (
-              <WorkoutSetRow
-                key={`${idx}-${s.exerciseName}-${s.setNumber}`}
-                idx={idx}
-                row={s}
-                setCellKey={setCellKey}
-                setInputRefs={setInputRefs}
-                handleSetGridKeyDown={handleSetGridKeyDown}
-                updateRow={(updater) => updateSetRow(idx, updater)}
-                onCompleteAndNext={() => completeSetAndAddNext(idx)}
-                onCopyPrevious={() => copyPreviousSet(idx)}
-                onInsertBelow={() => insertSetBelow(idx, 0)}
-                onRemove={() => setSets((prev) => prev.filter((_, i) => i !== idx))}
-                canCopyPrevious={idx !== 0}
-              />
-            ))}
-          </div>
+          {sets.length === 0 ? (
+            <div className="workout-empty-state">
+              <div className="text-sm text-neutral-600">No sets yet. Start from planned sets or add a blank set.</div>
+              <div className="workout-empty-actions">
+                <button
+                  className="haptic-tap workout-action-pill is-primary"
+                  type="button"
+                  onClick={() => {
+                    setSuccess(null);
+                    setError(null);
+                    generateAndApplyForDate(sessionDate).catch((e) => setError(e.message));
+                  }}
+                  disabled={!planId}
+                >
+                  Generate & apply
+                </button>
+                <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
+                  + Add Set
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3 ui-height-animate">
+              {sets.map((s, idx) => (
+                <WorkoutSetRow
+                  key={`${idx}-${s.exerciseName}-${s.setNumber}`}
+                  idx={idx}
+                  row={s}
+                  setCellKey={setCellKey}
+                  setInputRefs={setInputRefs}
+                  handleSetGridKeyDown={handleSetGridKeyDown}
+                  updateRow={(updater) => updateSetRow(idx, updater)}
+                  onCompleteAndNext={() => completeSetAndAddNext(idx)}
+                  onCopyPrevious={() => copyPreviousSet(idx)}
+                  onInsertBelow={() => insertSetBelow(idx, 0)}
+                  onRemove={() => setSets((prev) => prev.filter((_, i) => i !== idx))}
+                  canCopyPrevious={idx !== 0}
+                />
+              ))}
+            </div>
+          )}
           <datalist id="exercise-options">
             {exerciseOptions.flatMap((ex) => [
               <option key={`n-${ex.id}`} value={ex.name} />,
@@ -1486,7 +1556,7 @@ export default function WorkoutTodayPage() {
         <button
           className="ui-primary-button workout-save-button"
           onClick={handleSaveLog}
-          disabled={!planId}
+          disabled={!planId || sets.length === 0}
         >
           {isOfflineMode
             ? `Save Offline${pendingSyncCount > 0 ? ` (${pendingSyncCount} pending)` : ""}`

@@ -378,12 +378,30 @@ export default function PlansPage() {
         </div>
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+          <div className="font-medium">Core flow</div>
+          <p className="text-sm text-neutral-600">
+            1) Create plan 2) Select plan 3) Quick Generate to verify session output.
+          </p>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              className="haptic-tap ui-primary-button min-h-12 px-4 text-base font-medium"
+              onClick={() => setCreateSheetOpen(true)}
+            >
+              Create Plan
+            </button>
+            <a className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium text-center" href="/templates">
+              Manage templates
+            </a>
+          </div>
+        </div>
+
+        <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <AccordionSection
-            title="Context"
-            description="Generation defaults and schedule keys"
+            title="Advanced context"
+            description="Generation defaults and schedule keys (optional)"
             summarySlot={
               <span className="ui-card-label">
-                {plans.length} plans
+                week {week} · day {day}
               </span>
             }
           >
@@ -460,6 +478,9 @@ export default function PlansPage() {
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="font-medium">Plan Cards</div>
+          <p className="text-sm text-neutral-600">
+            Quick Generate runs immediately for that card. Select is for manual generation in the section below.
+          </p>
           {plans.length === 0 ? (
             <div className="text-sm text-neutral-600">No plans found for this user.</div>
           ) : (
@@ -493,6 +514,9 @@ export default function PlansPage() {
                     >
                       Quick Generate
                     </button>
+                  </div>
+                  <div className="ui-card-label">
+                    Quick Generate uses current advanced week/day values and updates preview immediately.
                   </div>
                 </article>
               ))}
@@ -531,6 +555,9 @@ export default function PlansPage() {
             >
               Generate Selected Plan
             </button>
+            <div className="ui-card-label mt-2">
+              Use this when you want manual control over which selected plan to run.
+            </div>
 
             {generated && (
               <InlineDisclosure className="mt-3" label="generated snapshot">

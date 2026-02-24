@@ -139,6 +139,7 @@ export default function CalendarPage() {
   const [anchorDate, setAnchorDate] = useState(() => dateOnlyInTimezone(new Date(), timezone));
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState("");
+  const [openAutoGenerate, setOpenAutoGenerate] = useState(false);
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
   const [generatedSession, setGeneratedSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +231,16 @@ export default function CalendarPage() {
     }
   }
 
+  function workoutTodayHrefForDate(dateOnly: string) {
+    const sp = new URLSearchParams();
+    sp.set("planId", planId);
+    sp.set("date", dateOnly);
+    if (openAutoGenerate) {
+      sp.set("autoGenerate", "1");
+    }
+    return `/workout/today?${sp.toString()}`;
+  }
+
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
       <header className="tab-screen-header">
@@ -239,7 +250,7 @@ export default function CalendarPage() {
         </p>
       </header>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <label className="flex flex-col gap-1 lg:col-span-2">
           <span className="ui-card-label">plan</span>
           <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
@@ -269,10 +280,26 @@ export default function CalendarPage() {
           <input type="date" className="rounded-lg border px-3 py-3 text-base" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
         </label>
 
-        <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
+        <label className="flex flex-col gap-1">
+          <span className="ui-card-label">open action</span>
+          <select
+            className="rounded-lg border px-3 py-3 text-base"
+            value={openAutoGenerate ? "AUTO_GENERATE" : "OPEN_ONLY"}
+            onChange={(e) => setOpenAutoGenerate(e.target.value === "AUTO_GENERATE")}
+          >
+            <option value="OPEN_ONLY">Open day only</option>
+            <option value="AUTO_GENERATE">Open + auto-generate in Today</option>
+          </select>
+        </label>
+
+        <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-5">
           <span className="ui-card-label">timezone</span>
           <input className="rounded-lg border px-3 py-3 text-base" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
+
+        <div className="sm:col-span-2 lg:col-span-5 calendar-open-hint">
+          Open behavior: {openAutoGenerate ? "Open + auto-generate in Today" : "Open day context only (generate manually if needed)"}
+        </div>
       </section>
 
       <section className="motion-card rounded-2xl border bg-white calendar-nav-card">
@@ -320,7 +347,11 @@ export default function CalendarPage() {
                   </div>
 
                   <div className="calendar-cell-meta">{ctx?.planned ? `planned ${dayLabel}` : dayLabel}</div>
-                  <div className="calendar-cell-meta">{generated ? "Generated" : ctx?.planned ? "Planned" : "On-demand"}</div>
+                  <div className="calendar-cell-meta">
+                    <span className={`calendar-cell-status${generated ? " is-generated" : ctx?.planned ? " is-planned" : " is-on-demand"}`}>
+                      {generated ? "Generated" : ctx?.planned ? "Planned" : "On-demand"}
+                    </span>
+                  </div>
 
                   <div className="calendar-cell-actions">
                     <button
@@ -330,17 +361,17 @@ export default function CalendarPage() {
                       }}
                       disabled={!selectedPlan || loading}
                     >
-                      Gen
+                      Generate
                     </button>
                     {selectedPlan ? (
                       <a
                         className="calendar-cell-open"
-                        href={`/workout/today?planId=${encodeURIComponent(planId)}&date=${encodeURIComponent(dateOnly)}&autoGenerate=1`}
+                        href={workoutTodayHrefForDate(dateOnly)}
                       >
-                        Open
+                        Open day
                       </a>
                     ) : (
-                      <span className="calendar-cell-open opacity-55">Open</span>
+                      <span className="calendar-cell-open opacity-55">Open day</span>
                     )}
                   </div>
                 </article>
