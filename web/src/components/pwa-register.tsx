@@ -7,6 +7,12 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+type NextDataWindow = Window & {
+  __NEXT_DATA__?: {
+    buildId?: string;
+  };
+};
+
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
   const nav = window.navigator as Navigator & { standalone?: boolean };
@@ -19,6 +25,25 @@ function isIosSafariBrowser() {
   const isIos = /iPhone|iPad|iPod/i.test(ua);
   const isSafari = /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua);
   return isIos && isSafari;
+}
+
+function getBuildIdFromScripts() {
+  if (typeof document === "undefined") return null;
+  const scripts = document.querySelectorAll("script[src]");
+  for (const script of scripts) {
+    const src = script.getAttribute("src");
+    if (!src) continue;
+    const match = src.match(/\/_next\/static\/([^/]+)\//);
+    if (match?.[1]) return match[1];
+  }
+  return null;
+}
+
+function getServiceWorkerScriptUrl() {
+  if (typeof window === "undefined") return "/sw.js?v=dev";
+  const nextData = (window as NextDataWindow).__NEXT_DATA__;
+  const buildId = nextData?.buildId ?? getBuildIdFromScripts() ?? "dev";
+  return `/sw.js?v=${encodeURIComponent(buildId)}`;
 }
 
 export function PwaRegister() {
@@ -99,7 +124,7 @@ export function PwaRegister() {
 
     const register = async () => {
       try {
-        const registration = await navigator.serviceWorker.register("/sw.js");
+        const registration = await navigator.serviceWorker.register(getServiceWorkerScriptUrl());
         if (registration.waiting) setUpdateReady(true);
 
         registration.addEventListener("updatefound", () => {
