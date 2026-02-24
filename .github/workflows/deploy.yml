@@ -148,7 +148,7 @@ jobs:
           docker compose ps
           EOF
 
-      - name: Healthcheck (tailnet URL)
+      - name: Healthcheck (from deploy server)
         id: healthcheck
         continue-on-error: true
         shell: bash
@@ -160,24 +160,24 @@ jobs:
             HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
           fi
 
-          echo "Healthcheck URL (from server): ${HEALTHCHECK_URL}"
+          echo "Healthcheck URL: ${HEALTHCHECK_URL}"
 
-          ssh -T -o StrictHostKeyChecking=yes \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
-          set -euo pipefail
-          HEALTHCHECK_URL="${HEALTHCHECK_URL}"
-
-          for i in \$(seq 1 18); do
-            if curl -fsS --max-time 8 "\${HEALTHCHECK_URL}" >/dev/null; then
-              echo "Healthcheck passed"
+          for i in $(seq 1 18); do
+            if ssh -T -o StrictHostKeyChecking=yes \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' >/dev/null"; then
+              echo "Healthcheck passed (${i}/18)"
               exit 0
             fi
+            echo "Healthcheck retry (${i}/18)"
             sleep 5
           done
 
-          echo "Healthcheck failed"
+          echo "Healthcheck failed. Dumping server diagnostics..."
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd /opt/workout-log/deploy && docker compose ps && docker compose logs --tail=120 web postgres || true"
           exit 1
-          EOF
 
       - name: Mark successful deployed SHA
         if: ${{ steps.healthcheck.outcome == 'success' }}
@@ -216,24 +216,24 @@ jobs:
             HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
           fi
 
-          echo "Rollback healthcheck URL (from server): ${HEALTHCHECK_URL}"
+          echo "Rollback healthcheck URL: ${HEALTHCHECK_URL}"
 
-          ssh -T -o StrictHostKeyChecking=yes \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
-          set -euo pipefail
-          HEALTHCHECK_URL="${HEALTHCHECK_URL}"
-
-          for i in \$(seq 1 12); do
-            if curl -fsS --max-time 8 "\${HEALTHCHECK_URL}" >/dev/null; then
-              echo "Rollback healthcheck passed"
+          for i in $(seq 1 12); do
+            if ssh -T -o StrictHostKeyChecking=yes \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' >/dev/null"; then
+              echo "Rollback healthcheck passed (${i}/12)"
               exit 0
             fi
+            echo "Rollback healthcheck retry (${i}/12)"
             sleep 5
           done
 
-          echo "Rollback healthcheck failed"
+          echo "Rollback healthcheck failed. Dumping server diagnostics..."
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd /opt/workout-log/deploy && docker compose ps && docker compose logs --tail=120 web postgres || true"
           exit 1
-          EOF
 
       - name: Fail workflow when deploy healthcheck failed
         if: ${{ steps.healthcheck.outcome == 'failure' }}
