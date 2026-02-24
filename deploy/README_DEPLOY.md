@@ -29,7 +29,7 @@ Create environment file:
 Example .env:
 
     POSTGRES_PASSWORD=change-me-strong
-    NEXT_PUBLIC_APP_URL=http://100.xx.yy.zz
+    NEXT_PUBLIC_APP_URL=https://<server-hostname>.<tailnet-name>.ts.net
 
 Check Tailscale IP:
 
@@ -39,14 +39,15 @@ Check Tailscale IP:
 
 3) Tailscale-only Access
 
-Expose localhost:3000 to tailnet:
+Expose localhost:3001 to tailnet over HTTPS (recommended):
 
-    sudo tailscale serve --http=80 http://127.0.0.1:3000
+    sudo tailscale serve reset
+    sudo tailscale serve --bg --https=443 http://127.0.0.1:3001
     tailscale serve status
 
 Access from tailnet device:
 
-    http://<server-tailscale-ip>/
+    https://<server-hostname>.<tailnet-name>.ts.net/
 
 ------------------------------------------------------------
 
@@ -102,7 +103,7 @@ Install service:
   - semver tags when pushing `v*.*.*`
 - Deploy behavior:
   - deploys by commit SHA image tag
-  - runs post-deploy healthcheck on tailnet URL
+  - runs post-deploy healthcheck on deploy server (default: `http://127.0.0.1:3001/api/health`)
   - on healthcheck failure, rolls back to last successful SHA automatically
 
 Required GitHub Secrets:
@@ -112,7 +113,7 @@ Required GitHub Secrets:
     DEPLOY_SSH_KEY
     DEPLOY_USER
     DEPLOY_HOST
-    DEPLOY_HEALTHCHECK_URL   # optional, default: http://<DEPLOY_HOST>/api/health
+    DEPLOY_HEALTHCHECK_URL   # optional, default: http://127.0.0.1:3001/api/health
 
 ------------------------------------------------------------
 
@@ -141,7 +142,7 @@ Keep only 5 images:
 ------------------------------------------------------------
 
 Security Notes:
-- Port 3000 is bound to 127.0.0.1 only
+- Host port 3001 is bound to 127.0.0.1 only
 - No public HTTP/HTTPS exposure
 - Access restricted via Tailscale
 - No domain required
