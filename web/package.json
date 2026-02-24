@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -12,7 +12,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/server/db/seed.ts",
-    "db:backfill:exercise": "tsx src/server/db/backfillExerciseIds.ts"
+    "db:backfill:exercise": "tsx src/server/db/backfillExerciseIds.ts",
+    "dev:turbo": "next dev --turbo"
   },
   "dependencies": {
     "drizzle-orm": "^0.45.1",

@@ -382,14 +382,14 @@ export default function PlansPage() {
             title="Context"
             description="Generation defaults and schedule keys"
             summarySlot={
-              <span className="text-xs text-neutral-600">
+              <span className="ui-card-label">
                 {plans.length} plans
               </span>
             }
           >
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">userId</span>
+                <span className="ui-card-label">userId</span>
                 <input
                   className="rounded-lg border px-3 py-3 text-base"
                   value={userId}
@@ -397,7 +397,7 @@ export default function PlansPage() {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">startDate</span>
+                <span className="ui-card-label">startDate</span>
                 <input
                   type="date"
                   className="rounded-lg border px-3 py-3 text-base"
@@ -406,7 +406,7 @@ export default function PlansPage() {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">timezone</span>
+                <span className="ui-card-label">timezone</span>
                 <input
                   className="rounded-lg border px-3 py-3 text-base"
                   value={timezone}
@@ -414,7 +414,7 @@ export default function PlansPage() {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">sessionKeyMode</span>
+                <span className="ui-card-label">sessionKeyMode</span>
                 <select
                   className="rounded-lg border px-3 py-3 text-base"
                   value={sessionKeyMode}
@@ -428,7 +428,7 @@ export default function PlansPage() {
 
             <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">week</span>
+                <span className="ui-card-label">week</span>
                 <input
                   className="rounded-lg border px-3 py-3 text-base"
                   type="number"
@@ -438,7 +438,7 @@ export default function PlansPage() {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">day</span>
+                <span className="ui-card-label">day</span>
                 <input
                   className="rounded-lg border px-3 py-3 text-base"
                   type="number"
@@ -504,10 +504,10 @@ export default function PlansPage() {
           <AccordionSection
             title="Selected Plan Generate"
             description="Manual generation and snapshot preview"
-            summarySlot={<span className="text-xs text-neutral-600">{selectedPlanId ? "Selected" : "No plan"}</span>}
+            summarySlot={<span className="ui-card-label">{selectedPlanId ? "Selected" : "No plan"}</span>}
           >
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">selected plan</span>
+              <span className="ui-card-label">selected plan</span>
               <select
                 className="rounded-lg border px-3 py-3 text-base"
                 value={selectedPlanId}
@@ -568,7 +568,7 @@ export default function PlansPage() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">Template/program search</span>
+              <span className="ui-card-label">Template/program search</span>
               <input
                 className="rounded-lg border px-3 py-3 text-base"
                 value={templateSearchQuery}
@@ -577,7 +577,7 @@ export default function PlansPage() {
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">Template tag</span>
+              <span className="ui-card-label">Template tag</span>
               <select
                 className="rounded-lg border px-3 py-3 text-base"
                 value={templateTag}
@@ -605,15 +605,15 @@ export default function PlansPage() {
             <div className="space-y-3">
               <div className="text-sm text-neutral-600">Mix per lift with explicit version per module.</div>
               <div className="grid grid-cols-1 gap-2">
-                <label className="text-xs text-neutral-600">Squat template</label>
+                <label className="ui-card-label">Squat template</label>
                 {templateSelect(logicTemplateOptions, squatSlug, setSquatSlug)}
                 {versionSelect(squatSlug, squatVersionId, setSquatVersionId)}
 
-                <label className="text-xs text-neutral-600">Bench template</label>
+                <label className="ui-card-label">Bench template</label>
                 {templateSelect(logicTemplateOptions, benchSlug, setBenchSlug)}
                 {versionSelect(benchSlug, benchVersionId, setBenchVersionId)}
 
-                <label className="text-xs text-neutral-600">Deadlift template</label>
+                <label className="ui-card-label">Deadlift template</label>
                 {templateSelect(logicTemplateOptions, deadSlug, setDeadSlug)}
                 {versionSelect(deadSlug, deadVersionId, setDeadVersionId)}
               </div>

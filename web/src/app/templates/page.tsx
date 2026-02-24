@@ -309,7 +309,7 @@ export default function TemplatesPage() {
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="text-xs text-neutral-600">userId</span>
+          <span className="ui-card-label">userId</span>
           <input
             className="rounded-lg border px-3 py-2"
             value={userId}
@@ -317,7 +317,7 @@ export default function TemplatesPage() {
           />
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="text-xs text-neutral-600">Search template/program</span>
+          <span className="ui-card-label">Search template/program</span>
           <input
             className="rounded-lg border px-3 py-2"
             value={searchQuery}
@@ -326,7 +326,7 @@ export default function TemplatesPage() {
           />
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="text-xs text-neutral-600">Tag filter</span>
+          <span className="ui-card-label">Tag filter</span>
           <select
             className="rounded-lg border px-3 py-2"
             value={selectedTag}
@@ -368,7 +368,7 @@ export default function TemplatesPage() {
             title="Public Templates"
             description="Browse and fork official templates"
             defaultOpen
-            summarySlot={<span className="text-xs text-neutral-600">{publicTemplates.length}</span>}
+            summarySlot={<span className="ui-card-label">{publicTemplates.length}</span>}
           >
             {publicTemplates.length === 0 ? (
               <div className="text-sm text-neutral-600">No public templates.</div>
@@ -379,11 +379,11 @@ export default function TemplatesPage() {
                     <div className="flex items-center justify-between gap-2">
                       <button className="haptic-tap text-left" onClick={() => setSelectedSlug(t.slug)}>
                         <div className="font-medium">{t.name}</div>
-                        <div className="text-xs text-neutral-600">
+                        <div className="ui-card-label">
                           {t.slug} · {t.type} · latest v{t.latestVersion?.version ?? "-"}
                         </div>
                         {Array.isArray(t.tags) && t.tags.length > 0 && (
-                          <div className="text-xs text-neutral-600">tags: {t.tags.join(", ")}</div>
+                          <div className="ui-card-label">tags: {t.tags.join(", ")}</div>
                         )}
                       </button>
                       <button
@@ -408,7 +408,7 @@ export default function TemplatesPage() {
           <AccordionSection
             title="My Private Templates"
             description="Editable templates owned by current user"
-            summarySlot={<span className="text-xs text-neutral-600">{myPrivateTemplates.length}</span>}
+            summarySlot={<span className="ui-card-label">{myPrivateTemplates.length}</span>}
           >
             {myPrivateTemplates.length === 0 ? (
               <div className="text-sm text-neutral-600">No private templates yet. Fork one to start editing.</div>
@@ -418,11 +418,11 @@ export default function TemplatesPage() {
                   <li key={t.slug} className="motion-card rounded-lg border px-3 py-2">
                     <button className="haptic-tap w-full text-left" onClick={() => setSelectedSlug(t.slug)}>
                       <div className="font-medium">{t.name}</div>
-                      <div className="text-xs text-neutral-600">
+                      <div className="ui-card-label">
                         {t.slug} · {t.type} · latest v{t.latestVersion?.version ?? "-"}
                       </div>
                       {Array.isArray(t.tags) && t.tags.length > 0 && (
-                        <div className="text-xs text-neutral-600">tags: {t.tags.join(", ")}</div>
+                        <div className="ui-card-label">tags: {t.tags.join(", ")}</div>
                       )}
                     </button>
                   </li>
@@ -442,13 +442,13 @@ export default function TemplatesPage() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
               <div className="md:col-span-2">
                 <div className="text-sm font-medium">{selectedTemplate.name}</div>
-                <div className="text-xs text-neutral-600">
+                <div className="ui-card-label">
                   {selectedTemplate.slug} · {selectedTemplate.type} · {selectedTemplate.visibility}
                 </div>
               </div>
 
               <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="text-xs text-neutral-600">Base version</span>
+                <span className="ui-card-label">Base version</span>
                 <select
                   className="rounded-lg border px-3 py-2"
                   value={selectedBaseVersionId}
@@ -469,7 +469,7 @@ export default function TemplatesPage() {
               <AccordionSection
                 title="Manual session editor"
                 description="Session, item, and set-level editing"
-                summarySlot={<span className="text-xs text-neutral-600">{manualSessions.length} sessions</span>}
+                summarySlot={<span className="ui-card-label">{manualSessions.length} sessions</span>}
               >
                 <div className="flex items-center justify-between">
                   <div className="text-sm font-medium">MANUAL session editor</div>
@@ -481,7 +481,7 @@ export default function TemplatesPage() {
                 {manualSessions.map((session, sessionIdx) => (
                   <div key={sessionIdx} className="rounded-xl border p-3 space-y-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-neutral-600">Session key</span>
+                      <span className="ui-card-label">Session key</span>
                       <input
                         className="rounded-lg border px-2 py-1 text-sm"
                         value={session.key}
@@ -557,7 +557,7 @@ export default function TemplatesPage() {
                         {item.sets.map((setRow, setIdx) => (
                           <div key={setIdx} className="grid grid-cols-4 gap-2 items-end">
                             <label className="flex flex-col gap-1">
-                              <span className="text-xs text-neutral-600">reps</span>
+                              <span className="ui-card-label">reps</span>
                               <input
                                 type="number"
                                 className="rounded-lg border px-2 py-1 text-sm"
@@ -588,7 +588,7 @@ export default function TemplatesPage() {
                               />
                             </label>
                             <label className="flex flex-col gap-1">
-                              <span className="text-xs text-neutral-600">weightKg</span>
+                              <span className="ui-card-label">weightKg</span>
                               <input
                                 type="number"
                                 className="rounded-lg border px-2 py-1 text-sm"
@@ -619,7 +619,7 @@ export default function TemplatesPage() {
                               />
                             </label>
                             <label className="flex flex-col gap-1">
-                              <span className="text-xs text-neutral-600">rpe</span>
+                              <span className="ui-card-label">rpe</span>
                               <input
                                 type="number"
                                 className="rounded-lg border px-2 py-1 text-sm"
@@ -727,12 +727,12 @@ export default function TemplatesPage() {
               <AccordionSection
                 title="Logic safe parameters"
                 description="Schedule and substitutions"
-                summarySlot={<span className="text-xs text-neutral-600">{logicFrequency}/week</span>}
+                summarySlot={<span className="ui-card-label">{logicFrequency}/week</span>}
               >
                 <div className="text-sm font-medium">LOGIC safe parameters</div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">TM % (defaults.tmPercent)</span>
+                    <span className="ui-card-label">TM % (defaults.tmPercent)</span>
                     <input
                       type="number"
                       step="0.01"
@@ -742,7 +742,7 @@ export default function TemplatesPage() {
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">Frequency (sessions/week)</span>
+                    <span className="ui-card-label">Frequency (sessions/week)</span>
                     <input
                       type="number"
                       min={1}
@@ -752,7 +752,7 @@ export default function TemplatesPage() {
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-xs text-neutral-600">Cycle weeks</span>
+                    <span className="ui-card-label">Cycle weeks</span>
                     <input
                       type="number"
                       min={1}
@@ -764,11 +764,11 @@ export default function TemplatesPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="text-xs text-neutral-600">Exercise substitutions</div>
+                  <div className="ui-card-label">Exercise substitutions</div>
                   {logicSubstitutions.map((row, idx) => (
                     <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
                       <label className="flex flex-col gap-1 md:col-span-2">
-                        <span className="text-xs text-neutral-600">target</span>
+                        <span className="ui-card-label">target</span>
                         <input
                           className="rounded-lg border px-2 py-1 text-sm"
                           value={row.target}
@@ -780,7 +780,7 @@ export default function TemplatesPage() {
                         />
                       </label>
                       <label className="flex flex-col gap-1 md:col-span-3">
-                        <span className="text-xs text-neutral-600">exerciseName</span>
+                        <span className="ui-card-label">exerciseName</span>
                         <input
                           className="rounded-lg border px-2 py-1 text-sm"
                           value={row.exerciseName}
@@ -814,12 +814,12 @@ export default function TemplatesPage() {
             <AccordionSection
               title="Create new version"
               description="Derive from selected base version"
-              summarySlot={<span className="text-xs text-neutral-600">v{selectedBaseVersion?.version ?? "-"}</span>}
+              summarySlot={<span className="ui-card-label">v{selectedBaseVersion?.version ?? "-"}</span>}
             >
               <div className="motion-card rounded-xl border p-3 space-y-2">
                 <div className="text-sm font-medium">Create new version</div>
                 <label className="flex flex-col gap-1">
-                  <span className="text-xs text-neutral-600">changelog</span>
+                  <span className="ui-card-label">changelog</span>
                   <input
                     className="rounded-lg border px-3 py-2"
                     value={changelog}
@@ -838,7 +838,7 @@ export default function TemplatesPage() {
                   Create Version
                 </button>
                 {!canEditSelectedTemplate && (
-                  <div className="text-xs text-neutral-600">
+                  <div className="ui-card-label">
                     This template is read-only. Fork it to create your own editable version history.
                   </div>
                 )}
@@ -848,7 +848,7 @@ export default function TemplatesPage() {
             <AccordionSection
               title="Version history"
               description="Chronological change log"
-              summarySlot={<span className="text-xs text-neutral-600">{versions.length} versions</span>}
+              summarySlot={<span className="ui-card-label">{versions.length} versions</span>}
             >
               <div className="motion-card rounded-xl border p-3">
                 {versions.length === 0 ? (

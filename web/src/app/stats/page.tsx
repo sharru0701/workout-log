@@ -142,7 +142,7 @@ function MetricTile({
 }) {
   return (
     <article className="motion-card rounded-2xl border bg-white p-4">
-      <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">{label}</div>
+      <div className="ui-card-label ui-card-label-caps">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
       <div className="mt-1 text-sm text-neutral-600">{detail}</div>
       {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
@@ -416,7 +416,7 @@ export default function StatsPage() {
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">Active filters</div>
+            <div className="ui-card-label ui-card-label-caps">Active filters</div>
             <div className="mt-1 text-sm text-neutral-600">Tap Filters to edit range, plan and exercise scope.</div>
           </div>
           <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={() => setFiltersOpen(true)}>
@@ -439,10 +439,10 @@ export default function StatsPage() {
       >
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">Range</div>
+            <div className="ui-card-label ui-card-label-caps">Range</div>
             <div className="text-lg font-semibold">{activePresetDays} days</div>
           </div>
-          <div className="text-xs text-neutral-600">Swipe left/right</div>
+          <div className="ui-card-label">Swipe left/right</div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -526,7 +526,7 @@ export default function StatsPage() {
             <div className="text-sm text-neutral-600">Volume Sparkline</div>
             <div className="text-lg font-semibold">{series ? `${series.bucket} bucket` : "—"}</div>
           </div>
-          <div className="text-xs text-neutral-600">points: {seriesPoints.length}</div>
+          <div className="ui-card-label">points: {seriesPoints.length}</div>
         </div>
         <SparklineChart points={seriesPoints} labels={seriesLabels} />
       </section>
@@ -535,7 +535,7 @@ export default function StatsPage() {
         <AccordionSection
           title="Top exercise volume breakdown"
           description="Per-exercise tonnage and set distribution"
-          summarySlot={<span className="text-xs text-neutral-600">{series?.byExercise?.length ?? 0} items</span>}
+          summarySlot={<span className="ui-card-label">{series?.byExercise?.length ?? 0} items</span>}
         >
           {series?.byExercise?.length ? (
             <div className="overflow-x-auto">
@@ -570,7 +570,7 @@ export default function StatsPage() {
         <AccordionSection
           title="Compliance by plan"
           description="Planned sessions versus completion counts"
-          summarySlot={<span className="text-xs text-neutral-600">{compliance?.byPlan?.length ?? 0} plans</span>}
+          summarySlot={<span className="ui-card-label">{compliance?.byPlan?.length ?? 0} plans</span>}
         >
           {compliance?.byPlan?.length ? (
             <div className="overflow-x-auto">
@@ -605,7 +605,7 @@ export default function StatsPage() {
         <AccordionSection
           title="PR tracking"
           description="Best versus latest e1RM by exercise"
-          summarySlot={<span className="text-xs text-neutral-600">{prs?.items?.length ?? 0} records</span>}
+          summarySlot={<span className="ui-card-label">{prs?.items?.length ?? 0} records</span>}
         >
           {prs?.items?.length ? (
             <div className="overflow-x-auto">
@@ -652,7 +652,7 @@ export default function StatsPage() {
         <div className="space-y-4 pb-2">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">Plan</span>
+              <span className="ui-card-label">Plan</span>
               <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
                 <option value="">All plans</option>
                 {plans.map((p) => (
@@ -664,7 +664,7 @@ export default function StatsPage() {
             </label>
 
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">Bucket</span>
+              <span className="ui-card-label">Bucket</span>
               <select
                 className="rounded-lg border px-3 py-3 text-base"
                 value={bucket}
@@ -679,22 +679,22 @@ export default function StatsPage() {
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">From (optional)</span>
+              <span className="ui-card-label">From (optional)</span>
               <input type="date" className="rounded-lg border px-3 py-3 text-base" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">To (optional)</span>
+              <span className="ui-card-label">To (optional)</span>
               <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
             </label>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">e1RM exerciseId</span>
+              <span className="ui-card-label">e1RM exerciseId</span>
               <input className="rounded-lg border px-3 py-3 text-base" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">e1RM exercise</span>
+              <span className="ui-card-label">e1RM exercise</span>
               <input className="rounded-lg border px-3 py-3 text-base" value={exercise} onChange={(e) => setExercise(e.target.value)} />
             </label>
           </div>

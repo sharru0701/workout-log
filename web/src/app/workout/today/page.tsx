@@ -178,7 +178,7 @@ function WorkoutSetRow({
 
       <article className="workout-set-card">
         <label className="flex flex-col gap-1">
-          <span className="workout-set-label">exercise</span>
+          <span className="ui-card-label">exercise</span>
           <input
             className="workout-set-input workout-set-input-text"
             list="exercise-options"
@@ -193,7 +193,7 @@ function WorkoutSetRow({
 
         <div className="mt-2 grid grid-cols-4 gap-2">
           <label className="flex flex-col gap-1">
-            <span className="workout-set-label">set#</span>
+            <span className="ui-card-label">set#</span>
             <input
               className="workout-set-input workout-set-input-number"
               type="number"
@@ -208,7 +208,7 @@ function WorkoutSetRow({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="workout-set-label">reps</span>
+            <span className="ui-card-label">reps</span>
             <input
               className="workout-set-input workout-set-input-number"
               type="number"
@@ -223,7 +223,7 @@ function WorkoutSetRow({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="workout-set-label">kg</span>
+            <span className="ui-card-label">kg</span>
             <input
               className="workout-set-input workout-set-input-number"
               type="number"
@@ -238,7 +238,7 @@ function WorkoutSetRow({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="workout-set-label">RPE</span>
+            <span className="ui-card-label">RPE</span>
             <input
               className="workout-set-input workout-set-input-number"
               type="number"
@@ -278,7 +278,7 @@ function WorkoutSetRow({
             <span>complete</span>
           </label>
 
-          <span className="text-xs text-neutral-600">
+          <span className="ui-card-label">
             {row.isExtra ? "extra" : row.isPlanned ? "planned" : "custom"}
           </span>
         </div>
@@ -1116,7 +1116,7 @@ export default function WorkoutTodayPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="text-xs text-neutral-600">plan</span>
+            <span className="ui-card-label">plan</span>
             <select
               className="rounded-lg border px-3 py-2"
               value={planId}
@@ -1131,7 +1131,7 @@ export default function WorkoutTodayPage() {
             </select>
           </label>
           <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">sessionDate</span>
+            <span className="ui-card-label">sessionDate</span>
             <input
               className="rounded-lg border px-3 py-2"
               type="date"
@@ -1144,11 +1144,11 @@ export default function WorkoutTodayPage() {
         <AccordionSection
           title="Session context"
           description="Recent sessions and advanced generation keys"
-          summarySlot={<span className="text-xs text-neutral-600">{planId ? "Plan selected" : "No plan"}</span>}
+          summarySlot={<span className="ui-card-label">{planId ? "Plan selected" : "No plan"}</span>}
         >
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">userId</span>
+              <span className="ui-card-label">userId</span>
               <input
                 className="rounded-lg border px-3 py-2"
                 value={userId}
@@ -1161,7 +1161,7 @@ export default function WorkoutTodayPage() {
               onTouchStart={onRecentSessionSwipeStart}
               onTouchEnd={onRecentSessionSwipeEnd}
             >
-              <span className="text-xs text-neutral-600">recent sessions (swipe left/right)</span>
+              <span className="ui-card-label">recent sessions (swipe left/right)</span>
               <div className="grid grid-cols-[auto,1fr,auto] gap-2">
                 <button
                   className="haptic-tap rounded-lg border px-3 py-2 text-sm"
@@ -1194,7 +1194,7 @@ export default function WorkoutTodayPage() {
               </div>
             </div>
 
-            <div className="text-xs text-neutral-600 self-end pb-2">
+            <div className="ui-card-label self-end pb-2">
               {loadingPlans && "Loading plans... "}
               {loadingRecentSessions && "Loading sessions..."}
             </div>
@@ -1202,7 +1202,7 @@ export default function WorkoutTodayPage() {
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
             <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="text-xs text-neutral-600">timezone</span>
+              <span className="ui-card-label">timezone</span>
               <input
                 className="rounded-lg border px-3 py-2"
                 value={timezone}
@@ -1210,7 +1210,7 @@ export default function WorkoutTodayPage() {
               />
             </label>
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">week (advanced)</span>
+              <span className="ui-card-label">week (advanced)</span>
               <input
                 className="rounded-lg border px-3 py-2"
                 type="number"
@@ -1223,7 +1223,7 @@ export default function WorkoutTodayPage() {
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">day (advanced)</span>
+              <span className="ui-card-label">day (advanced)</span>
               <input
                 className="rounded-lg border px-3 py-2"
                 type="number"
@@ -1232,8 +1232,8 @@ export default function WorkoutTodayPage() {
                 onChange={(e) => setDay(Number(e.target.value))}
               />
             </label>
-            <div className="text-xs text-neutral-600">Selected planId: {planId || "(none)"}</div>
-            <div className="text-xs text-neutral-600">exercise options: {exerciseOptions.length}</div>
+            <div className="ui-card-label">Selected planId: {planId || "(none)"}</div>
+            <div className="ui-card-label">exercise options: {exerciseOptions.length}</div>
           </div>
         </AccordionSection>
 
@@ -1355,11 +1355,11 @@ export default function WorkoutTodayPage() {
           <AccordionSection
             title="Generated snapshot"
             description="Expand only the structure you need to inspect"
-            summarySlot={<span className="text-xs text-neutral-600">{generatedSession ? "Ready" : "Empty"}</span>}
+            summarySlot={<span className="ui-card-label">{generatedSession ? "Ready" : "Empty"}</span>}
           >
             {generatedSession ? (
               <div className="space-y-3">
-                <div className="text-xs text-neutral-600">generatedSessionId: {generatedSession.id}</div>
+                <div className="ui-card-label">generatedSessionId: {generatedSession.id}</div>
 
                 <InlineDisclosure label="planned exercises">
                   <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
@@ -1395,11 +1395,11 @@ export default function WorkoutTodayPage() {
           <div className="font-medium">Sets to save</div>
 
           {defaultExercisesFromSnapshot.length > 0 && (
-            <div className="text-xs text-neutral-600">
+            <div className="ui-card-label">
               Suggestions: {defaultExercisesFromSnapshot.join(", ")}
             </div>
           )}
-          <div className="text-xs text-neutral-600">
+          <div className="ui-card-label">
             Keyboard: Enter inserts next set, arrow keys move between cells.
           </div>
 
@@ -1432,7 +1432,7 @@ export default function WorkoutTodayPage() {
             <AccordionSection
               title="Session detail comparison"
               description="Planned versus performed rows"
-              summarySlot={<span className="text-xs text-neutral-600">{compareRows.length} rows</span>}
+              summarySlot={<span className="ui-card-label">{compareRows.length} rows</span>}
             >
               {compareRows.length === 0 ? (
                 <div className="text-sm text-neutral-600">No planned/performed rows to compare.</div>
@@ -1505,7 +1505,7 @@ export default function WorkoutTodayPage() {
         <div className="space-y-4 pb-2">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="text-xs text-neutral-600">Selected set row (must be extra)</span>
+              <span className="ui-card-label">Selected set row (must be extra)</span>
               <select
                 className="rounded-lg border px-3 py-2"
                 value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
@@ -1536,7 +1536,7 @@ export default function WorkoutTodayPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">blockTarget</span>
+              <span className="ui-card-label">blockTarget</span>
               <select
                 className="rounded-lg border px-3 py-2"
                 value={blockTarget}
@@ -1551,7 +1551,7 @@ export default function WorkoutTodayPage() {
               </select>
             </label>
             <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="text-xs text-neutral-600">replacement exerciseName</span>
+              <span className="ui-card-label">replacement exerciseName</span>
               <input
                 className="rounded-lg border px-3 py-2"
                 value={replacementExerciseName}

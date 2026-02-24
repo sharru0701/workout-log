@@ -50,12 +50,12 @@ export default function Home() {
         </Link>
       </section>
 
-      <section className="home-section">
+      <section className="home-section home-primary">
         <h2 className="home-section-title">Primary</h2>
         <div className="home-primary-grid">
           {primaryRoutes.map((route) => (
-            <Link key={route.href} href={route.href} className="haptic-tap motion-card home-primary-card">
-              <span className="home-card-label">{route.label}</span>
+            <Link key={route.href} href={route.href} className="haptic-tap home-primary-card">
+              <span className="ui-card-label ui-card-label-caps">{route.label}</span>
               <span className="home-card-copy">{route.copy}</span>
             </Link>
           ))}
@@ -67,7 +67,7 @@ export default function Home() {
         <div className="home-tools-list">
           {utilityRoutes.map((route) => (
             <Link key={route.href} href={route.href} className="haptic-tap home-tool-link">
-              <span className="home-tool-label">{route.label}</span>
+              <span className="ui-card-label ui-card-label-caps">{route.label}</span>
               <span className="home-tool-copy">{route.copy}</span>
             </Link>
           ))}

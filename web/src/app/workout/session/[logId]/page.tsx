@@ -179,30 +179,30 @@ export default function WorkoutSessionDetailPage() {
         <>
           <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
-              <div className="text-xs text-neutral-600">Log ID</div>
+              <div className="ui-card-label">Log ID</div>
               <div className="font-mono break-all">{item.id}</div>
             </div>
             <div>
-              <div className="text-xs text-neutral-600">Performed At</div>
+              <div className="ui-card-label">Performed At</div>
               <div>{new Date(item.performedAt).toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-xs text-neutral-600">Session Key</div>
+              <div className="ui-card-label">Session Key</div>
               <div>{item.generatedSession?.sessionKey ?? "(manual / no generated session)"}</div>
             </div>
           </div>
 
           <div className="motion-card rounded-2xl border p-4 grid grid-cols-3 gap-3 text-sm">
             <div>
-              <div className="text-xs text-neutral-600">Matched</div>
+              <div className="ui-card-label">Matched</div>
               <div className="text-lg font-semibold">{stats.matched}</div>
             </div>
             <div>
-              <div className="text-xs text-neutral-600">Missing</div>
+              <div className="ui-card-label">Missing</div>
               <div className="text-lg font-semibold">{stats.missing}</div>
             </div>
             <div>
-              <div className="text-xs text-neutral-600">Extra</div>
+              <div className="ui-card-label">Extra</div>
               <div className="text-lg font-semibold">{stats.extra}</div>
             </div>
           </div>

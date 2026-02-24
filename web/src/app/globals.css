@@ -168,6 +168,25 @@ body {
   color: var(--text-secondary);
 }
 
+.ui-card-label {
+  font-size: 0.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--text-secondary) 96%, var(--text-primary) 4%);
+}
+
+label > .ui-card-label,
+label.ui-card-label {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.ui-card-label-caps {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
@@ -331,6 +350,15 @@ button {
   gap: 0.5rem;
 }
 
+.home-primary {
+  padding: 0.9rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-surface);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-soft);
+  transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease);
+}
+
 .home-section-title {
   margin: 0;
   font-size: var(--font-caption);
@@ -346,25 +374,22 @@ button {
 }
 
 .home-primary-card {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
   min-height: 7.5rem;
   padding: var(--space-4);
   border: 1px solid transparent;
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-sm);
   text-decoration: none;
-  background: linear-gradient(145deg, color-mix(in srgb, var(--bg-surface) 93%, transparent) 0%, color-mix(in srgb, var(--bg-elevated) 70%, transparent) 100%);
-  box-shadow: var(--elevation-1);
+  background: color-mix(in srgb, var(--bg-elevated) 65%, transparent);
+  transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), background-color var(--motion-duration) var(--motion-ease);
 }
 
 .home-primary-card:hover {
   transform: translateY(-1px);
-  box-shadow: var(--shadow-float);
-}
-
-.home-card-label {
-  display: block;
-  font-size: var(--font-subtitle);
-  font-weight: 700;
-  color: var(--text-primary);
+  box-shadow: var(--shadow-soft);
+  background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
 }
 
 .home-card-copy {
@@ -400,11 +425,6 @@ button {
   transform: translateY(-1px);
   box-shadow: var(--shadow-soft);
   background: color-mix(in srgb, var(--accent) 10%, var(--bg-elevated));
-}
-
-.home-tool-label {
-  font-size: var(--font-body);
-  font-weight: 650;
 }
 
 .home-tool-copy {
@@ -1252,12 +1272,6 @@ textarea::placeholder {
   .workout-swipe-shell:active .workout-set-card {
     transform: translateX(-4.5rem);
   }
-}
-
-.workout-set-label {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  letter-spacing: 0.02em;
 }
 
 .workout-set-input {

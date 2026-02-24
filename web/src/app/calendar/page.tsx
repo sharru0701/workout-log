@@ -241,7 +241,7 @@ export default function CalendarPage() {
 
       <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         <label className="flex flex-col gap-1 lg:col-span-2">
-          <span className="text-xs text-neutral-600">plan</span>
+          <span className="ui-card-label">plan</span>
           <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
             {plans.length === 0 && <option value="">(no plans)</option>}
             {plans.map((p) => (
@@ -253,7 +253,7 @@ export default function CalendarPage() {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-600">view</span>
+          <span className="ui-card-label">view</span>
           <select
             className="rounded-lg border px-3 py-3 text-base"
             value={viewMode}
@@ -265,12 +265,12 @@ export default function CalendarPage() {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="text-xs text-neutral-600">anchor date</span>
+          <span className="ui-card-label">anchor date</span>
           <input type="date" className="rounded-lg border px-3 py-3 text-base" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
         </label>
 
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-4">
-          <span className="text-xs text-neutral-600">timezone</span>
+          <span className="ui-card-label">timezone</span>
           <input className="rounded-lg border px-3 py-3 text-base" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
       </section>
