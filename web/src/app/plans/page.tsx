@@ -3,6 +3,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AccordionSection } from "@/components/ui/accordion-section";
+import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 
 type TemplateItem = {
   id: string;
@@ -226,15 +229,6 @@ export default function PlansPage() {
     });
   }, [manualSlug, versionsBySlug, templatesBySlug]);
 
-  useEffect(() => {
-    if (!createSheetOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setCreateSheetOpen(false);
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [createSheetOpen]);
-
   function templateSelect(
     options: TemplateItem[],
     selectValue: string,
@@ -384,68 +378,77 @@ export default function PlansPage() {
         </div>
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
-          <div className="text-sm text-neutral-600">Context</div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">userId</span>
-              <input
-                className="rounded-lg border px-3 py-3 text-base"
-                value={userId}
-                onChange={(e) => setUserId(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">startDate</span>
-              <input
-                type="date"
-                className="rounded-lg border px-3 py-3 text-base"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">timezone</span>
-              <input
-                className="rounded-lg border px-3 py-3 text-base"
-                value={timezone}
-                onChange={(e) => setTimezone(e.target.value)}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">sessionKeyMode</span>
-              <select
-                className="rounded-lg border px-3 py-3 text-base"
-                value={sessionKeyMode}
-                onChange={(e) => setSessionKeyMode(e.target.value as "DATE" | "LEGACY")}
-              >
-                <option value="DATE">DATE (YYYY-MM-DD)</option>
-                <option value="LEGACY">LEGACY (WnDn)</option>
-              </select>
-            </label>
-          </div>
+          <AccordionSection
+            title="Context"
+            description="Generation defaults and schedule keys"
+            summarySlot={
+              <span className="text-xs text-neutral-600">
+                {plans.length} plans
+              </span>
+            }
+          >
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">userId</span>
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">startDate</span>
+                <input
+                  type="date"
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">timezone</span>
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={timezone}
+                  onChange={(e) => setTimezone(e.target.value)}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">sessionKeyMode</span>
+                <select
+                  className="rounded-lg border px-3 py-3 text-base"
+                  value={sessionKeyMode}
+                  onChange={(e) => setSessionKeyMode(e.target.value as "DATE" | "LEGACY")}
+                >
+                  <option value="DATE">DATE (YYYY-MM-DD)</option>
+                  <option value="LEGACY">LEGACY (WnDn)</option>
+                </select>
+              </label>
+            </div>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">week</span>
-              <input
-                className="rounded-lg border px-3 py-3 text-base"
-                type="number"
-                value={week}
-                onChange={(e) => setWeek(Number(e.target.value))}
-                min={1}
-              />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="text-xs text-neutral-600">day</span>
-              <input
-                className="rounded-lg border px-3 py-3 text-base"
-                type="number"
-                value={day}
-                onChange={(e) => setDay(Number(e.target.value))}
-                min={1}
-              />
-            </label>
-          </div>
+            <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">week</span>
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  type="number"
+                  value={week}
+                  onChange={(e) => setWeek(Number(e.target.value))}
+                  min={1}
+                />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="text-xs text-neutral-600">day</span>
+                <input
+                  className="rounded-lg border px-3 py-3 text-base"
+                  type="number"
+                  value={day}
+                  onChange={(e) => setDay(Number(e.target.value))}
+                  min={1}
+                />
+              </label>
+            </div>
+          </AccordionSection>
 
           {loadingTemplates && <div className="text-sm">Loading templates...</div>}
           {loadingPlans && <div className="text-sm">Loading plans...</div>}
@@ -498,169 +501,157 @@ export default function PlansPage() {
         </div>
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
-          <div className="font-medium">Selected Plan Generate</div>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">selected plan</span>
-            <select
-              className="rounded-lg border px-3 py-3 text-base"
-              value={selectedPlanId}
-              onChange={(e) => setSelectedPlanId(e.target.value)}
-            >
-              <option value="">(select)</option>
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} [{p.type}]
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <button
-            className="haptic-tap ui-primary-button min-h-12 w-full text-base"
-            onClick={() => {
-              setError(null);
-              generateSession().catch((e) => setError(e.message));
-            }}
+          <AccordionSection
+            title="Selected Plan Generate"
+            description="Manual generation and snapshot preview"
+            summarySlot={<span className="text-xs text-neutral-600">{selectedPlanId ? "Selected" : "No plan"}</span>}
           >
-            Generate Selected Plan
-          </button>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">selected plan</span>
+              <select
+                className="rounded-lg border px-3 py-3 text-base"
+                value={selectedPlanId}
+                onChange={(e) => setSelectedPlanId(e.target.value)}
+              >
+                <option value="">(select)</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} [{p.type}]
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          {generated && (
-            <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
-              {JSON.stringify(generated.snapshot, null, 2)}
-            </pre>
-          )}
+            <button
+              className="mt-3 haptic-tap ui-primary-button min-h-12 w-full text-base"
+              onClick={() => {
+                setError(null);
+                generateSession().catch((e) => setError(e.message));
+              }}
+            >
+              Generate Selected Plan
+            </button>
+
+            {generated && (
+              <InlineDisclosure className="mt-3" label="generated snapshot">
+                <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+                  {JSON.stringify(generated.snapshot, null, 2)}
+                </pre>
+              </InlineDisclosure>
+            )}
+          </AccordionSection>
         </div>
       </div>
 
-      <div
-        className={`mobile-bottom-sheet ${createSheetOpen ? "is-open pointer-events-auto" : "pointer-events-none"}`}
-        aria-hidden={!createSheetOpen}
+      <BottomSheet
+        open={createSheetOpen}
+        onClose={() => setCreateSheetOpen(false)}
+        title="Create Plan"
+        description="Pick template strategy and generate the initial plan."
+        closeLabel="Close"
+        panelClassName="p-0"
       >
-        <button
-          type="button"
-          aria-label="Close create plan sheet"
-          className="mobile-bottom-sheet-backdrop"
-          onClick={() => setCreateSheetOpen(false)}
-        />
-        <section
-          className="mobile-bottom-sheet-panel p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-label="Create plan"
-        >
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Create Plan</h2>
+        <div className="space-y-4 pb-2">
+          <div className="grid grid-cols-3 gap-2">
+            {(["SINGLE", "COMPOSITE", "MANUAL"] as const).map((type) => (
               <button
-                className="haptic-tap rounded-xl border px-4 py-2 text-sm font-medium"
-                onClick={() => setCreateSheetOpen(false)}
+                key={type}
+                className={`haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold ${
+                  createType === type ? "bg-bg-elevated" : ""
+                }`}
+                onClick={() => setCreateType(type)}
               >
-                Close
+                {type}
               </button>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              {(["SINGLE", "COMPOSITE", "MANUAL"] as const).map((type) => (
-                <button
-                  key={type}
-                  className={`haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold ${
-                    createType === type ? "bg-bg-elevated" : ""
-                  }`}
-                  onClick={() => setCreateType(type)}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">Template/program search</span>
-                <input
-                  className="rounded-lg border px-3 py-3 text-base"
-                  value={templateSearchQuery}
-                  placeholder="name, slug, type, tag..."
-                  onChange={(e) => setTemplateSearchQuery(e.target.value)}
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-xs text-neutral-600">Template tag</span>
-                <select
-                  className="rounded-lg border px-3 py-3 text-base"
-                  value={templateTag}
-                  onChange={(e) => setTemplateTag(e.target.value)}
-                >
-                  <option value="">(all tags)</option>
-                  {allTemplateTags.map((tag) => (
-                    <option key={tag} value={tag}>
-                      {tag}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-
-            {createType === "SINGLE" ? (
-              <div className="space-y-3">
-                <div className="text-sm text-neutral-600">Select one template and specific version.</div>
-                {templateSelect(templateOptions, singleSlug, setSingleSlug)}
-                {versionSelect(singleSlug, singleVersionId, setSingleVersionId)}
-              </div>
-            ) : null}
-
-            {createType === "COMPOSITE" ? (
-              <div className="space-y-3">
-                <div className="text-sm text-neutral-600">Mix per lift with explicit version per module.</div>
-                <div className="grid grid-cols-1 gap-2">
-                  <label className="text-xs text-neutral-600">Squat template</label>
-                  {templateSelect(logicTemplateOptions, squatSlug, setSquatSlug)}
-                  {versionSelect(squatSlug, squatVersionId, setSquatVersionId)}
-
-                  <label className="text-xs text-neutral-600">Bench template</label>
-                  {templateSelect(logicTemplateOptions, benchSlug, setBenchSlug)}
-                  {versionSelect(benchSlug, benchVersionId, setBenchVersionId)}
-
-                  <label className="text-xs text-neutral-600">Deadlift template</label>
-                  {templateSelect(logicTemplateOptions, deadSlug, setDeadSlug)}
-                  {versionSelect(deadSlug, deadVersionId, setDeadVersionId)}
-                </div>
-              </div>
-            ) : null}
-
-            {createType === "MANUAL" ? (
-              <div className="space-y-3">
-                <div className="text-sm text-neutral-600">Pick manual template version and schedule keys.</div>
-                {templateSelect(manualTemplateOptions, manualSlug, setManualSlug)}
-                {versionSelect(manualSlug, manualVersionId, setManualVersionId)}
-                <input
-                  className="rounded-lg border px-3 py-3 text-base"
-                  value={manualSchedule}
-                  onChange={(e) => setManualSchedule(e.target.value)}
-                />
-              </div>
-            ) : null}
-
-            <button
-              className="haptic-tap ui-primary-button min-h-12 w-full text-base font-semibold"
-              onClick={() => {
-                setError(null);
-                const createFlow =
-                  createType === "SINGLE"
-                    ? createSingle()
-                    : createType === "COMPOSITE"
-                      ? createComposite()
-                      : createManualPlan();
-                createFlow
-                  .then(() => setCreateSheetOpen(false))
-                  .catch((e) => setError(e.message));
-              }}
-            >
-              Create {createType} Plan
-            </button>
+            ))}
           </div>
-        </section>
-      </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">Template/program search</span>
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                value={templateSearchQuery}
+                placeholder="name, slug, type, tag..."
+                onChange={(e) => setTemplateSearchQuery(e.target.value)}
+              />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">Template tag</span>
+              <select
+                className="rounded-lg border px-3 py-3 text-base"
+                value={templateTag}
+                onChange={(e) => setTemplateTag(e.target.value)}
+              >
+                <option value="">(all tags)</option>
+                {allTemplateTags.map((tag) => (
+                  <option key={tag} value={tag}>
+                    {tag}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {createType === "SINGLE" ? (
+            <div className="space-y-3">
+              <div className="text-sm text-neutral-600">Select one template and specific version.</div>
+              {templateSelect(templateOptions, singleSlug, setSingleSlug)}
+              {versionSelect(singleSlug, singleVersionId, setSingleVersionId)}
+            </div>
+          ) : null}
+
+          {createType === "COMPOSITE" ? (
+            <div className="space-y-3">
+              <div className="text-sm text-neutral-600">Mix per lift with explicit version per module.</div>
+              <div className="grid grid-cols-1 gap-2">
+                <label className="text-xs text-neutral-600">Squat template</label>
+                {templateSelect(logicTemplateOptions, squatSlug, setSquatSlug)}
+                {versionSelect(squatSlug, squatVersionId, setSquatVersionId)}
+
+                <label className="text-xs text-neutral-600">Bench template</label>
+                {templateSelect(logicTemplateOptions, benchSlug, setBenchSlug)}
+                {versionSelect(benchSlug, benchVersionId, setBenchVersionId)}
+
+                <label className="text-xs text-neutral-600">Deadlift template</label>
+                {templateSelect(logicTemplateOptions, deadSlug, setDeadSlug)}
+                {versionSelect(deadSlug, deadVersionId, setDeadVersionId)}
+              </div>
+            </div>
+          ) : null}
+
+          {createType === "MANUAL" ? (
+            <div className="space-y-3">
+              <div className="text-sm text-neutral-600">Pick manual template version and schedule keys.</div>
+              {templateSelect(manualTemplateOptions, manualSlug, setManualSlug)}
+              {versionSelect(manualSlug, manualVersionId, setManualVersionId)}
+              <input
+                className="rounded-lg border px-3 py-3 text-base"
+                value={manualSchedule}
+                onChange={(e) => setManualSchedule(e.target.value)}
+              />
+            </div>
+          ) : null}
+
+          <button
+            className="haptic-tap ui-primary-button min-h-12 w-full text-base font-semibold"
+            onClick={() => {
+              setError(null);
+              const createFlow =
+                createType === "SINGLE"
+                  ? createSingle()
+                  : createType === "COMPOSITE"
+                    ? createComposite()
+                    : createManualPlan();
+              createFlow
+                .then(() => setCreateSheetOpen(false))
+                .catch((e) => setError(e.message));
+            }}
+          >
+            Create {createType} Plan
+          </button>
+        </div>
+      </BottomSheet>
     </>
   );
 }

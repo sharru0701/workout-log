@@ -3,6 +3,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AccordionSection } from "@/components/ui/accordion-section";
 
 type Plan = {
   id: string;
@@ -216,6 +218,7 @@ export default function StatsPage() {
   const [trendWindows, setTrendWindows] = useState<TrendWindow[]>([]);
   const [rangeIndex, setRangeIndex] = useState(2);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const swipeStartX = useRef<number | null>(null);
 
   const rangeQuery = useMemo(() => {
@@ -397,62 +400,35 @@ export default function StatsPage() {
             : ""}
       </div>
       <div className="tab-screen-header">
-        <h1 className="tab-screen-title">Stats Dashboard</h1>
-        <p className="tab-screen-caption">
-          {loading ? "Loading metrics..." : `Range ready · plan: ${selectedPlanName ?? "All plans"}`}
-        </p>
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h1 className="tab-screen-title">Stats Dashboard</h1>
+            <p className="tab-screen-caption">
+              {loading ? "Loading metrics..." : `Range ready · plan: ${selectedPlanName ?? "All plans"}`}
+            </p>
+          </div>
+          <button className="haptic-tap rounded-xl border px-4 py-2 text-sm font-semibold" onClick={() => setFiltersOpen(true)}>
+            Filters
+          </button>
+        </div>
       </div>
 
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">Plan</span>
-            <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
-              <option value="">All plans</option>
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} [{p.type}]
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">Bucket</span>
-            <select
-              className="rounded-lg border px-3 py-3 text-base"
-              value={bucket}
-              onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
-            >
-              <option value="day">day</option>
-              <option value="week">week</option>
-              <option value="month">month</option>
-            </select>
-          </label>
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <div className="text-xs uppercase tracking-[0.08em] text-neutral-600">Active filters</div>
+            <div className="mt-1 text-sm text-neutral-600">Tap Filters to edit range, plan and exercise scope.</div>
+          </div>
+          <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={() => setFiltersOpen(true)}>
+            Edit
+          </button>
         </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">From (optional)</span>
-            <input type="date" className="rounded-lg border px-3 py-3 text-base" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">To (optional)</span>
-            <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
-          </label>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-lg border px-3 py-2">Plan: {selectedPlanName ?? "All plans"}</div>
+          <div className="rounded-lg border px-3 py-2">Bucket: {bucket}</div>
+          <div className="rounded-lg border px-3 py-2">Range: {from ? `${from} → ${to || todayDateOnly()}` : `${days} days`}</div>
+          <div className="rounded-lg border px-3 py-2">Exercise: {exerciseId || exercise || "—"}</div>
         </div>
-
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">e1RM exerciseId</span>
-            <input className="rounded-lg border px-3 py-3 text-base" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-xs text-neutral-600">e1RM exercise</span>
-            <input className="rounded-lg border px-3 py-3 text-base" value={exercise} onChange={(e) => setExercise(e.target.value)} />
-          </label>
-        </div>
-
         {error ? <div className="text-sm text-red-600">{error}</div> : null}
       </section>
 
@@ -556,101 +532,174 @@ export default function StatsPage() {
       </section>
 
       <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
-        <div className="text-sm text-neutral-600 mb-3">Top exercise volume breakdown</div>
-        {series?.byExercise?.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-neutral-600">
-                <tr>
-                  <th className="text-left py-2 pr-4">Exercise</th>
-                  <th className="text-right py-2 px-4">Tonnage</th>
-                  <th className="text-right py-2 px-4">Reps</th>
-                  <th className="text-right py-2 pl-4">Sets</th>
-                </tr>
-              </thead>
-              <tbody>
-                {series.byExercise.map((r) => (
-                  <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
-                    <td className="py-2 pr-4">{r.exerciseName}</td>
-                    <td className="py-2 px-4 text-right">{Math.round(r.totals.tonnage)}</td>
-                    <td className="py-2 px-4 text-right">{r.totals.reps}</td>
-                    <td className="py-2 pl-4 text-right">{r.totals.sets}</td>
+        <AccordionSection
+          title="Top exercise volume breakdown"
+          description="Per-exercise tonnage and set distribution"
+          summarySlot={<span className="text-xs text-neutral-600">{series?.byExercise?.length ?? 0} items</span>}
+        >
+          {series?.byExercise?.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="text-neutral-600">
+                  <tr>
+                    <th className="text-left py-2 pr-4">Exercise</th>
+                    <th className="text-right py-2 px-4">Tonnage</th>
+                    <th className="text-right py-2 px-4">Reps</th>
+                    <th className="text-right py-2 pl-4">Sets</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-neutral-500">No per-exercise series data</div>
-        )}
-      </section>
-
-      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
-        <div className="text-sm text-neutral-600 mb-3">Compliance by plan</div>
-        {compliance?.byPlan?.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-neutral-600">
-                <tr>
-                  <th className="text-left py-2 pr-4">Plan</th>
-                  <th className="text-right py-2 px-4">Planned</th>
-                  <th className="text-right py-2 px-4">Done</th>
-                  <th className="text-right py-2 pl-4">Compliance</th>
-                </tr>
-              </thead>
-              <tbody>
-                {compliance.byPlan.map((r) => (
-                  <tr key={r.planId} className="border-t">
-                    <td className="py-2 pr-4">{r.planName}</td>
-                    <td className="py-2 px-4 text-right">{r.planned}</td>
-                    <td className="py-2 px-4 text-right">{r.done}</td>
-                    <td className="py-2 pl-4 text-right">{Math.round(r.compliance * 100)}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-neutral-500">No compliance data in this range</div>
-        )}
-      </section>
-
-      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
-        <div className="text-sm text-neutral-600 mb-3">PR tracking (best e1RM by exercise)</div>
-        {prs?.items?.length ? (
-          <div className="overflow-x-auto">
-            <table className="min-w-full text-sm">
-              <thead className="text-neutral-600">
-                <tr>
-                  <th className="text-left py-2 pr-4">Exercise</th>
-                  <th className="text-right py-2 px-4">Best e1RM</th>
-                  <th className="text-right py-2 px-4">Latest e1RM</th>
-                  <th className="text-right py-2 px-4">Improvement</th>
-                  <th className="text-right py-2 pl-4">Best date</th>
-                </tr>
-              </thead>
-              <tbody>
-                {prs.items.map((r) => {
-                  const imp = trendMeta(r.improvement, 1);
-                  return (
+                </thead>
+                <tbody>
+                  {series.byExercise.map((r) => (
                     <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
                       <td className="py-2 pr-4">{r.exerciseName}</td>
-                      <td className="py-2 px-4 text-right">{r.best.e1rm}</td>
-                      <td className="py-2 px-4 text-right">{r.latest.e1rm}</td>
-                      <td className={`py-2 px-4 text-right ${imp.className}`}>
-                        {imp.arrow} {imp.value}
-                      </td>
-                      <td className="py-2 pl-4 text-right">{r.best.date}</td>
+                      <td className="py-2 px-4 text-right">{Math.round(r.totals.tonnage)}</td>
+                      <td className="py-2 px-4 text-right">{r.totals.reps}</td>
+                      <td className="py-2 pl-4 text-right">{r.totals.sets}</td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        ) : (
-          <div className="text-sm text-neutral-500">No PR data</div>
-        )}
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-sm text-neutral-500">No per-exercise series data</div>
+          )}
+        </AccordionSection>
       </section>
+
+      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
+        <AccordionSection
+          title="Compliance by plan"
+          description="Planned sessions versus completion counts"
+          summarySlot={<span className="text-xs text-neutral-600">{compliance?.byPlan?.length ?? 0} plans</span>}
+        >
+          {compliance?.byPlan?.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="text-neutral-600">
+                  <tr>
+                    <th className="text-left py-2 pr-4">Plan</th>
+                    <th className="text-right py-2 px-4">Planned</th>
+                    <th className="text-right py-2 px-4">Done</th>
+                    <th className="text-right py-2 pl-4">Compliance</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {compliance.byPlan.map((r) => (
+                    <tr key={r.planId} className="border-t">
+                      <td className="py-2 pr-4">{r.planName}</td>
+                      <td className="py-2 px-4 text-right">{r.planned}</td>
+                      <td className="py-2 px-4 text-right">{r.done}</td>
+                      <td className="py-2 pl-4 text-right">{Math.round(r.compliance * 100)}%</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-sm text-neutral-500">No compliance data in this range</div>
+          )}
+        </AccordionSection>
+      </section>
+
+      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
+        <AccordionSection
+          title="PR tracking"
+          description="Best versus latest e1RM by exercise"
+          summarySlot={<span className="text-xs text-neutral-600">{prs?.items?.length ?? 0} records</span>}
+        >
+          {prs?.items?.length ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-sm">
+                <thead className="text-neutral-600">
+                  <tr>
+                    <th className="text-left py-2 pr-4">Exercise</th>
+                    <th className="text-right py-2 px-4">Best e1RM</th>
+                    <th className="text-right py-2 px-4">Latest e1RM</th>
+                    <th className="text-right py-2 px-4">Improvement</th>
+                    <th className="text-right py-2 pl-4">Best date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {prs.items.map((r) => {
+                    const imp = trendMeta(r.improvement, 1);
+                    return (
+                      <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
+                        <td className="py-2 pr-4">{r.exerciseName}</td>
+                        <td className="py-2 px-4 text-right">{r.best.e1rm}</td>
+                        <td className="py-2 px-4 text-right">{r.latest.e1rm}</td>
+                        <td className={`py-2 px-4 text-right ${imp.className}`}>
+                          {imp.arrow} {imp.value}
+                        </td>
+                        <td className="py-2 pl-4 text-right">{r.best.date}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-sm text-neutral-500">No PR data</div>
+          )}
+        </AccordionSection>
+      </section>
+
+      <BottomSheet
+        open={filtersOpen}
+        onClose={() => setFiltersOpen(false)}
+        title="Stats Filters"
+        description="Scope and compare trend windows."
+      >
+        <div className="space-y-4 pb-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">Plan</span>
+              <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
+                <option value="">All plans</option>
+                {plans.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} [{p.type}]
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">Bucket</span>
+              <select
+                className="rounded-lg border px-3 py-3 text-base"
+                value={bucket}
+                onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
+              >
+                <option value="day">day</option>
+                <option value="week">week</option>
+                <option value="month">month</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">From (optional)</span>
+              <input type="date" className="rounded-lg border px-3 py-3 text-base" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">To (optional)</span>
+              <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">e1RM exerciseId</span>
+              <input className="rounded-lg border px-3 py-3 text-base" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
+            </label>
+            <label className="flex flex-col gap-1">
+              <span className="text-xs text-neutral-600">e1RM exercise</span>
+              <input className="rounded-lg border px-3 py-3 text-base" value={exercise} onChange={(e) => setExercise(e.target.value)} />
+            </label>
+          </div>
+        </div>
+      </BottomSheet>
     </div>
   );
 }
