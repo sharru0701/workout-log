@@ -7,6 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:a11y:contrast": "node scripts/a11y-contrast-check.mjs",
+    "test:settings:compliance": "node scripts/ios-settings-compliance-gate.mjs",
+    "test:settings:compliance:structure": "playwright test e2e/ios-settings-compliance.spec.ts --project chromium",
+    "test:settings:compliance:a11y": "playwright test e2e/ios-settings-a11y.spec.ts --project chromium",
+    "test:settings:compliance:visual": "playwright test e2e/ios-settings-visual.spec.ts --project chromium",
+    "test:settings:compliance:visual:strict": "IOS_SETTINGS_VISUAL_STRICT=1 playwright test e2e/ios-settings-visual.spec.ts --project chromium",
+    "test:settings:compliance:visual:update": "IOS_SETTINGS_VISUAL_STRICT=1 playwright test e2e/ios-settings-visual.spec.ts --project chromium --update-snapshots",
+    "test:settings:policy": "tsx --test src/lib/settings/update-setting.test.ts",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "db:generate": "drizzle-kit generate",
@@ -23,6 +31,7 @@
     "react-dom": "19.2.3"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

@@ -51,6 +51,9 @@ jobs:
       - name: Run PWA update E2E
         run: pnpm test:e2e -- e2e/pwa-update.spec.ts --project chromium
 
+      - name: Run iOS Settings compliance gate
+        run: pnpm test:settings:compliance
+
       - name: Upload Playwright artifacts
         if: ${{ always() }}
         uses: actions/upload-artifact@v4

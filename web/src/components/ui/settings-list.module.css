@@ -1,0 +1,388 @@
+.baseGroupedList {
+  --sl-section-header-padding-inline: var(--settings-section-header-padding-inline, 1rem);
+  --sl-section-header-gap: var(--settings-section-header-gap, 0.2rem);
+  --sl-row-min-height: var(--settings-row-min-height, max(44px, 2.75em));
+  --sl-row-padding-block: var(--settings-row-padding-block, 0.72em);
+  --sl-row-padding-inline: var(--settings-row-padding-inline, 1rem);
+  --sl-row-content-gap: var(--settings-row-content-gap, 0.75rem);
+  --sl-group-radius: var(--settings-group-radius, 1.05rem);
+  --sl-group-background: var(--settings-group-background, var(--bg-surface));
+  --sl-group-border-color: var(--settings-group-border-color, color-mix(in srgb, var(--border-subtle) 58%, transparent));
+  --sl-row-divider-color: var(--settings-row-divider-color, color-mix(in srgb, var(--border-subtle) 52%, transparent));
+  --sl-label-color: var(--settings-label-color, var(--text-primary));
+  --sl-description-color: var(--settings-description-color, var(--text-secondary));
+  --sl-value-color: var(--settings-value-color, color-mix(in srgb, var(--text-secondary) 88%, var(--text-primary) 12%));
+  --sl-subtitle-color: var(--settings-subtitle-color, color-mix(in srgb, var(--text-primary) 82%, var(--text-secondary) 18%));
+  --sl-chevron-color: var(--settings-chevron-color, color-mix(in srgb, var(--text-secondary) 88%, transparent));
+  --sl-row-icon-size: var(--settings-row-icon-size, 1.8rem);
+  --sl-row-icon-radius: var(--settings-row-icon-radius, 0.48rem);
+  --sl-row-icon-font-size: var(--settings-row-icon-font-size, 0.92rem);
+  --sl-badge-height: var(--settings-badge-height, 1.15rem);
+  --sl-badge-radius: var(--settings-badge-radius, 999px);
+  --sl-badge-padding-inline: var(--settings-badge-padding-inline, 0.4rem);
+  --sl-switch-off-color: var(--settings-switch-off-color, #8e8e93);
+  --sl-switch-on-color: var(--settings-switch-on-color, #34c759);
+  --sl-focus-ring-color: var(--settings-focus-ring-color, color-mix(in srgb, var(--accent-primary) 72%, transparent));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--sl-group-border-color);
+  border-radius: var(--sl-group-radius);
+  background: var(--sl-group-background);
+  overflow: clip;
+}
+
+.baseGroupedList > li {
+  list-style: none;
+}
+
+.baseGroupedList > li + li {
+  border-top: 1px solid var(--sl-row-divider-color);
+}
+
+.baseGroupedList > li:target {
+  scroll-margin-top: 5.25rem;
+}
+
+.baseGroupedList > li:target :where(.rowStatic, .rowButton, .rowLink, .rowToggleLabel) {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+.sectionHeader {
+  display: grid;
+  gap: var(--sl-section-header-gap);
+  margin: 0;
+  padding-inline: var(--sl-section-header-padding-inline);
+}
+
+.sectionHeaderTitle {
+  margin: 0;
+  font-size: var(--type-scale-footnote-size, 0.85rem);
+  line-height: var(--type-scale-footnote-line-height, 1.2);
+  font-weight: 650;
+  letter-spacing: 0.012em;
+  color: var(--sl-description-color);
+}
+
+.sectionHeaderDescription {
+  margin: 0;
+  font-size: var(--type-scale-footnote-size, 0.84rem);
+  line-height: var(--type-scale-footnote-line-height, 1.3);
+  color: var(--sl-description-color);
+}
+
+.sectionFootnote {
+  margin: 0;
+  padding-inline: var(--sl-section-header-padding-inline);
+  font-size: var(--type-scale-footnote-size, 0.84rem);
+  line-height: var(--type-scale-footnote-line-height, 1.34);
+  color: var(--sl-description-color);
+}
+
+.rowStatic,
+.rowButton,
+.rowLink,
+.rowToggleLabel {
+  width: 100%;
+  min-block-size: var(--sl-row-min-height);
+  padding-block: var(--sl-row-padding-block);
+  padding-inline: var(--sl-row-padding-inline);
+  display: flex;
+  align-items: center;
+  gap: var(--sl-row-content-gap);
+  text-align: left;
+  color: var(--sl-label-color);
+  background: transparent;
+  font-size: var(--type-scale-body-size, 1rem);
+  line-height: var(--type-scale-body-line-height, 1.4);
+}
+
+.rowButton,
+.rowLink,
+.rowToggleLabel {
+  cursor: pointer;
+}
+
+.rowButton,
+.rowToggleLabel {
+  border: 0;
+}
+
+.rowButton {
+  font: inherit;
+  color: inherit;
+}
+
+.rowButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.rowLink {
+  text-decoration: none;
+}
+
+.rowButton:focus-visible,
+.rowLink:focus-visible,
+.toggleInput:focus-visible + .toggleTrack {
+  outline: 2px solid var(--sl-focus-ring-color);
+  outline-offset: -2px;
+}
+
+.rowButton:not(:disabled):hover,
+.rowLink:hover,
+.rowToggleLabel:hover {
+  background: color-mix(in srgb, var(--bg-tertiary) 18%, transparent);
+}
+
+.leading {
+  flex: 0 0 auto;
+  width: var(--sl-row-icon-size);
+  min-height: var(--sl-row-icon-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sl-description-color);
+}
+
+.rowIcon {
+  width: var(--sl-row-icon-size);
+  height: var(--sl-row-icon-size);
+  border-radius: var(--sl-row-icon-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--sl-row-icon-font-size);
+  font-weight: 650;
+  line-height: 1;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 72%, transparent);
+}
+
+.rowIconNeutral {
+  background: color-mix(in srgb, var(--bg-tertiary) 76%, transparent);
+  color: color-mix(in srgb, var(--sl-label-color) 86%, var(--sl-description-color) 14%);
+}
+
+.rowIconTint {
+  background: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 19%, var(--bg-surface) 81%);
+  color: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 70%, var(--sl-label-color) 30%);
+}
+
+.rowIconBlue {
+  background: color-mix(in srgb, #0a84ff 17%, var(--bg-surface) 83%);
+  color: color-mix(in srgb, #0a84ff 74%, var(--sl-label-color) 26%);
+}
+
+.rowIconGreen {
+  background: color-mix(in srgb, #34c759 17%, var(--bg-surface) 83%);
+  color: color-mix(in srgb, #30d158 70%, var(--sl-label-color) 30%);
+}
+
+.rowIconOrange {
+  background: color-mix(in srgb, #ff9f0a 18%, var(--bg-surface) 82%);
+  color: color-mix(in srgb, #ff9f0a 74%, var(--sl-label-color) 26%);
+}
+
+.body {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.label {
+  margin: 0;
+  font-size: 1em;
+  line-height: var(--type-scale-body-line-height, 1.25);
+  color: var(--sl-label-color);
+}
+
+.subtitle {
+  margin: 0;
+  font-size: calc(var(--type-scale-footnote-size, 0.84rem) * 1.02);
+  line-height: var(--type-scale-footnote-line-height, 1.28);
+  color: var(--sl-subtitle-color);
+}
+
+.description {
+  margin: 0;
+  font-size: var(--type-scale-footnote-size, 0.84rem);
+  line-height: var(--type-scale-footnote-line-height, 1.28);
+  color: var(--sl-description-color);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trailing {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--sl-badge-height);
+  padding-inline: var(--sl-badge-padding-inline);
+  border-radius: var(--sl-badge-radius);
+  font-size: calc(var(--type-scale-footnote-size, 0.84rem) * 0.84);
+  font-weight: 680;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+  line-height: 1;
+}
+
+.badgeNeutral {
+  background: color-mix(in srgb, var(--bg-tertiary) 72%, transparent);
+  color: var(--sl-description-color);
+  border-color: color-mix(in srgb, var(--border-subtle) 72%, transparent);
+}
+
+.badgeAccent {
+  background: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 17%, var(--bg-surface) 83%);
+  color: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 74%, var(--sl-label-color) 26%);
+  border-color: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 36%, transparent);
+}
+
+.badgeWarning {
+  background: color-mix(in srgb, #ff9f0a 17%, var(--bg-surface) 83%);
+  color: color-mix(in srgb, #ff9f0a 76%, var(--sl-label-color) 24%);
+  border-color: color-mix(in srgb, #ff9f0a 32%, transparent);
+}
+
+.value {
+  font-size: 0.98em;
+  line-height: var(--type-scale-body-line-height, 1.2);
+  color: var(--sl-value-color);
+  white-space: nowrap;
+}
+
+.valueWrap {
+  white-space: normal;
+  text-align: right;
+}
+
+.chevron {
+  color: var(--sl-chevron-color);
+  font-size: 1.35rem;
+  line-height: 1;
+  transform: translateY(-0.02em);
+}
+
+.toggleContainer {
+  position: relative;
+  flex: 0 0 auto;
+  width: max(2.95rem, 2.95em);
+  height: max(1.8rem, 1.8em);
+}
+
+.toggleInput {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+}
+
+.toggleTrack {
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 72%, transparent);
+  background: color-mix(in srgb, var(--sl-switch-off-color) 62%, transparent);
+  transition: background-color var(--duration-normal) var(--ease-standard);
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: max(1.36rem, 1.36em);
+  height: max(1.36rem, 1.36em);
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: none;
+  transition: transform var(--duration-normal) var(--ease-standard);
+}
+
+.toggleInput:checked + .toggleTrack {
+  background: var(--sl-switch-on-color);
+  border-color: var(--sl-switch-on-color);
+}
+
+.toggleInput:checked + .toggleTrack .toggleThumb {
+  transform: translateX(1.13rem);
+}
+
+.toggleInput:disabled + .toggleTrack {
+  opacity: 0.45;
+}
+
+.infoNeutral {
+  color: var(--sl-label-color);
+}
+
+.infoSuccess .label {
+  color: var(--color-success-text, var(--color-success, #30d158));
+}
+
+.infoWarning .label {
+  color: var(--color-warning-text, var(--color-warning, #ff9f0a));
+}
+
+.infoCritical .label {
+  color: var(--color-danger-text, var(--color-danger, #ff453a));
+}
+
+.infoDisabled .label,
+.infoDisabled .description,
+.infoDisabled .value {
+  color: var(--sl-description-color);
+}
+
+@media (prefers-contrast: more) {
+  .baseGroupedList {
+    border-color: var(--text-primary);
+  }
+
+  .baseGroupedList > li + li {
+    border-top-color: var(--text-primary);
+  }
+
+  .sectionHeaderTitle,
+  .sectionHeaderDescription,
+  .description,
+  .subtitle,
+  .value,
+  .chevron,
+  .rowIcon,
+  .badge {
+    color: var(--sl-label-color);
+  }
+
+  .rowIcon,
+  .badge {
+    background: transparent;
+    border-color: var(--sl-label-color);
+  }
+
+  .toggleTrack {
+    border-color: var(--sl-label-color);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rowButton,
+  .rowLink,
+  .rowToggleLabel,
+  .toggleTrack,
+  .toggleThumb {
+    transition-duration: 0ms !important;
+  }
+}

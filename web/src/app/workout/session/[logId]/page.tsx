@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet } from "@/lib/api";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 
 type PlannedRow = {
   exerciseName: string;
@@ -145,7 +146,7 @@ export default function WorkoutSessionDetailPage() {
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
       <header className="tab-screen-header">
         <h1 className="tab-screen-title">Session Detail</h1>
-        <p className="tab-screen-caption">Review planned versus performed rows for this saved workout.</p>
+        <p className="tab-screen-caption">저장된 운동의 계획/수행 세트를 비교합니다.</p>
       </header>
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
@@ -172,70 +173,89 @@ export default function WorkoutSessionDetailPage() {
         </button>
       </div>
 
-      {loading && <div className="text-sm text-neutral-600">Loading...</div>}
-      {error && <div className="text-sm text-red-600">{error}</div>}
+      <LoadingStateRows
+        active={loading}
+        label="불러오는 중"
+        description="세션 상세 정보를 조회하고 있습니다."
+      />
+      <ErrorStateRows
+        message={error}
+        onRetry={() => {
+          setItem(null);
+          setError(null);
+          setLoading(true);
+          apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
+            .then((res) => setItem(res.item))
+            .catch((e: any) => setError(e?.message ?? "다시 불러오기에 실패했습니다."))
+            .finally(() => setLoading(false));
+        }}
+      />
 
       {item && (
         <>
           <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
-              <div className="ui-card-label">Log ID</div>
+              <div className="ui-card-label">로그 ID</div>
               <div className="font-mono break-all">{item.id}</div>
             </div>
             <div>
-              <div className="ui-card-label">Performed At</div>
+              <div className="ui-card-label">수행 시각</div>
               <div>{new Date(item.performedAt).toLocaleString()}</div>
             </div>
             <div>
-              <div className="ui-card-label">Session Key</div>
-              <div>{item.generatedSession?.sessionKey ?? "(manual / no generated session)"}</div>
+              <div className="ui-card-label">세션 키</div>
+              <div>{item.generatedSession?.sessionKey ?? "(수동 / 생성 세션 없음)"}</div>
             </div>
           </div>
 
           <div className="motion-card rounded-2xl border p-4 grid grid-cols-3 gap-3 text-sm">
             <div>
-              <div className="ui-card-label">Matched</div>
+              <div className="ui-card-label">일치</div>
               <div className="text-lg font-semibold">{stats.matched}</div>
             </div>
             <div>
-              <div className="ui-card-label">Missing</div>
+              <div className="ui-card-label">누락</div>
               <div className="text-lg font-semibold">{stats.missing}</div>
             </div>
             <div>
-              <div className="ui-card-label">Extra</div>
+              <div className="ui-card-label">추가</div>
               <div className="text-lg font-semibold">{stats.extra}</div>
             </div>
           </div>
 
           <div className="motion-card rounded-2xl border p-4">
-            <div className="font-medium mb-2">Planned vs Performed</div>
+            <div className="ios-section-heading mb-2">계획 대비 수행</div>
             {compareRows.length === 0 ? (
-              <div className="text-sm text-neutral-600">No rows to compare.</div>
+              <EmptyStateRows
+                when
+                label="설정 값 없음"
+                description="비교할 계획/수행 세트가 없습니다."
+              />
             ) : (
               <div className="overflow-x-auto">
-                <table className="min-w-full text-sm">
+                <table className="min-w-full text-sm ios-data-table">
                   <thead className="text-neutral-600">
                     <tr>
-                      <th className="text-left py-2 pr-3">Exercise</th>
-                      <th className="text-right py-2 px-3">Set#</th>
-                      <th className="text-right py-2 px-3">Planned</th>
-                      <th className="text-right py-2 px-3">Performed</th>
-                      <th className="text-right py-2 pl-3">Diff</th>
-                      <th className="text-right py-2 pl-3">Status</th>
+                      <th className="text-left py-2 pr-3">운동</th>
+                      <th className="text-right py-2 px-3">세트</th>
+                      <th className="text-right py-2 px-3">계획</th>
+                      <th className="text-right py-2 px-3">수행</th>
+                      <th className="text-right py-2 pl-3">차이</th>
+                      <th className="text-right py-2 pl-3">상태</th>
                     </tr>
                   </thead>
                   <tbody>
                     {compareRows.map((r, idx) => {
                       const plannedText = r.planned
-                        ? `${r.planned.reps || "-"} reps @ ${r.planned.weightKg || 0}kg`
+                        ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg`
                         : "-";
                       const performedText = r.actual
-                        ? `${r.actual.reps || "-"} reps @ ${r.actual.weightKg || 0}kg`
+                        ? `${r.actual.reps || "-"}회 @ ${r.actual.weightKg || 0}kg`
                         : "-";
 
                       const repsDiff = (r.actual?.reps ?? 0) - (r.planned?.reps ?? 0);
                       const kgDiff = (r.actual?.weightKg ?? 0) - (r.planned?.weightKg ?? 0);
-                      const diffText = r.planned && r.actual ? `${repsDiff >= 0 ? "+" : ""}${repsDiff} reps, ${kgDiff >= 0 ? "+" : ""}${kgDiff}kg` : "-";
+                      const diffText = r.planned && r.actual ? `${repsDiff >= 0 ? "+" : ""}${repsDiff}회, ${kgDiff >= 0 ? "+" : ""}${kgDiff}kg` : "-";
 
                       const status = !r.planned
                         ? "extra"

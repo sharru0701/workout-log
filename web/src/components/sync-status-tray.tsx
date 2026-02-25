@@ -128,7 +128,7 @@ export function SyncStatusTray() {
 
   return (
     <div className="app-sync-tray" aria-live="polite">
-      <div className={`app-sync-dot ${isOnline ? "is-online" : "is-offline"}`} />
+      <div className={`app-sync-dot ${isOnline ? "is-online" : "is-offline"}`} aria-hidden="true" />
       <span className="app-sync-text">
         {!isOnline
           ? `Offline mode${pendingCount > 0 ? ` · ${pendingCount} queued` : ""}`
@@ -139,7 +139,7 @@ export function SyncStatusTray() {
               : notice ?? "Synced"}
       </span>
       {isOnline && pendingCount > 0 && (
-        <button className="app-sync-action" onClick={() => void syncPending()} disabled={isSyncing}>
+        <button type="button" className="app-sync-action" onClick={() => void syncPending()} disabled={isSyncing}>
           Sync now
         </button>
       )}

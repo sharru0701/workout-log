@@ -246,7 +246,7 @@ button {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
-  padding: var(--space-4) var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
+  padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
 }
 
 .app-bottom-nav {
@@ -1596,11 +1596,1215 @@ button {
   }
 }
 
+/* iOS Settings-inspired system refresh */
+:root {
+  --touch-target: 2.9rem;
+  --radius-sm: 1rem;
+  --radius-md: 1.2rem;
+  --radius-lg: 1.6rem;
+  --radius-surface: 1.65rem;
+  --bg-primary: #07080a;
+  --bg-secondary: #17191e;
+  --bg-tertiary: #22252b;
+  --text-primary: #f3f4f8;
+  --text-secondary: #969aa5;
+  --accent-primary: #0a84ff;
+  --accent-subtle: #17375f;
+  --border-default: #353a44;
+  --field-bg: #20242c;
+  --field-border: #434957;
+  --shadow-soft: 0 18px 34px -26px rgb(0 0 0 / 68%);
+  --shadow-float: 0 28px 52px -32px rgb(0 0 0 / 74%);
+  --font-display: clamp(2rem, 6vw, 2.8rem);
+  --font-title: clamp(1.55rem, 5vw, 2.2rem);
+  --font-subtitle: clamp(1.18rem, 3.4vw, 1.45rem);
+  --font-body: 1rem;
+  --font-caption: 0.9rem;
+  --line-tight: 1.08;
+  --tracking-tight: -0.01em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.02em;
+  --duration-fast: 130ms;
+  --duration-normal: 190ms;
+  --duration-slow: 260ms;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: #eceef4;
+    --bg-secondary: #f8f9fd;
+    --bg-tertiary: #ffffff;
+    --text-primary: #14161d;
+    --text-secondary: #777b88;
+    --accent-primary: #0a84ff;
+    --accent-subtle: #dcecff;
+    --border-default: #d2d6e2;
+    --field-bg: #ffffff;
+    --field-border: #c9cfdb;
+    --shadow-soft: 0 18px 30px -26px rgb(17 19 35 / 18%);
+    --shadow-float: 0 28px 50px -32px rgb(17 19 35 / 22%);
+  }
+}
+
+body {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-primary) 98%, #ffffff 2%), var(--bg-primary));
+  letter-spacing: var(--tracking-normal);
+}
+
+.app-shell {
+  background: transparent;
+}
+
+.app-shell-main {
+  padding: 0 var(--space-4) calc(6rem + env(safe-area-inset-bottom));
+}
+
+.home-screen,
+.tab-screen,
+.settings-screen {
+  width: min(100%, var(--layout-max-wide));
+  padding: 0 0 var(--space-6);
+  gap: var(--space-4);
+}
+
+.home-screen {
+  padding-top: 0;
+}
+
+.tab-screen,
+.settings-screen {
+  padding-top: 0;
+}
+
+.app-top-nav {
+  width: auto;
+  margin-inline: -1rem;
+  position: sticky;
+  top: 0;
+  z-index: 34;
+  padding-inline: 1rem;
+  padding-top: calc(var(--safe-top) + 11px);
+  padding-bottom: 0.66rem;
+  min-height: 3.52rem;
+  margin-bottom: 0.52rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  column-gap: 0.72rem;
+  background: color-mix(in srgb, var(--bg-primary) 78%, transparent);
+  border-bottom: 0;
+  -webkit-backdrop-filter: blur(16px) saturate(1.08);
+  backdrop-filter: blur(16px) saturate(1.08);
+}
+
+.app-top-back-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.app-top-back-button,
+.app-top-nav-placeholder {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 2.72rem;
+  min-height: 2.72rem;
+  padding: 0;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 48%, transparent);
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-surface) 64%, transparent);
+  box-shadow: none;
+  backdrop-filter: blur(10px) saturate(1.04);
+}
+
+.app-top-back-button:hover {
+  background: color-mix(in srgb, var(--bg-tertiary) 62%, transparent);
+}
+
+.app-top-nav-placeholder {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.app-top-nav-title {
+  text-align: center;
+  font-size: 1.12rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.018em;
+  color: var(--text-primary);
+}
+
+.app-top-back-icon {
+  display: block;
+  width: 0.64rem;
+  height: 0.64rem;
+  border-left: 2.1px solid currentColor;
+  border-bottom: 2.1px solid currentColor;
+  transform: translateX(1.6px) rotate(45deg);
+  font-size: 0;
+}
+
+.app-bottom-nav {
+  bottom: calc(0.78rem + env(safe-area-inset-bottom));
+  gap: 0.32rem;
+  padding: 0.38rem;
+  border-radius: 1.3rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 58%, transparent);
+  box-shadow: var(--shadow-float);
+  -webkit-backdrop-filter: blur(20px) saturate(1.14);
+  backdrop-filter: blur(20px) saturate(1.14);
+}
+
+.app-bottom-nav-tab {
+  min-height: 2.35rem;
+  border-radius: 1rem;
+  font-size: 0.72rem;
+  color: color-mix(in srgb, var(--text-secondary) 95%, var(--text-primary) 5%);
+}
+
+.app-bottom-nav-tab:hover {
+  transform: none;
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-tertiary) 68%, transparent);
+}
+
+.app-bottom-nav-tab.is-active {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
+.app-bottom-nav-badge {
+  background: #ff453a;
+  color: #ffffff;
+}
+
+.app-sync-tray,
+.app-pwa-banner {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
+}
+
+.app-sync-action,
+.app-pwa-button {
+  background: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.app-pwa-button.is-subtle {
+  background: color-mix(in srgb, var(--bg-tertiary) 76%, transparent);
+  color: var(--text-secondary);
+}
+
+.tab-screen-header,
+.settings-header {
+  gap: 0.18rem;
+  padding-inline: 0.22rem;
+  margin-top: 0.08rem;
+}
+
+.tab-screen-title,
+.settings-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.tab-screen-caption,
+.settings-copy {
+  font-size: 0.84rem;
+  line-height: 1.38;
+  color: color-mix(in srgb, var(--text-secondary) 90%, var(--text-primary) 10%);
+  text-wrap: pretty;
+}
+
+.home-hero {
+  background: var(--bg-surface);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 62%, transparent);
+}
+
+.home-hero-kicker {
+  text-transform: none;
+  letter-spacing: 0.015em;
+  font-size: 0.84rem;
+}
+
+.home-section-title,
+.settings-section-title {
+  text-transform: none;
+  letter-spacing: 0.01em;
+  font-size: 0.96rem;
+  color: color-mix(in srgb, var(--text-secondary) 96%, var(--text-primary) 4%);
+}
+
+.ios-section-heading {
+  margin: 0;
+  font-size: 0.81rem;
+  font-weight: 700;
+  letter-spacing: 0.018em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--text-secondary) 96%, var(--text-primary) 4%);
+}
+
+.ios-inline-heading {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--text-primary);
+}
+
+label > .ui-card-label,
+label.ui-card-label,
+.ui-card-label-caps {
+  text-transform: none;
+  letter-spacing: 0.012em;
+  font-size: 0.79rem;
+  font-weight: 650;
+}
+
+.home-primary,
+.home-tools,
+.settings-menu-card,
+.settings-export-card {
+  padding: 0.35rem 0.95rem;
+}
+
+.home-primary-grid,
+.home-tools-list,
+.settings-menu-list,
+.settings-export-list {
+  gap: 0;
+  border-radius: 1.15rem;
+  overflow: hidden;
+}
+
+.home-primary-grid {
+  grid-template-columns: 1fr;
+}
+
+.home-primary-card,
+.home-tool-link,
+.settings-menu-link,
+.settings-export-action {
+  position: relative;
+  min-height: auto;
+  border-radius: 0;
+  padding: 0.88rem 2.15rem 0.88rem 0.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 46%, transparent);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color var(--motion-duration) var(--motion-ease), color var(--motion-duration) var(--motion-ease);
+}
+
+.home-primary-card:first-child,
+.home-tool-link:first-child,
+.settings-menu-link:first-child,
+.settings-export-action:first-child {
+  border-top: 0;
+}
+
+.home-primary-card:hover,
+.home-tool-link:hover,
+.settings-menu-link:hover,
+.settings-export-action:hover {
+  transform: none;
+  box-shadow: none;
+  background: color-mix(in srgb, var(--bg-tertiary) 34%, transparent);
+}
+
+.home-primary-card::after,
+.home-tool-link::after,
+.settings-menu-link::after,
+.settings-export-action::after {
+  content: "›";
+  position: absolute;
+  right: 0.35rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.home-card-copy,
+.home-tool-copy,
+.settings-menu-copy,
+.settings-export-action-copy {
+  font-size: 0.84rem;
+  color: var(--text-secondary);
+}
+
+.ui-card,
+.motion-card,
+.home-primary,
+.workout-set-card,
+.rounded-2xl.bg-white,
+.rounded-xl.bg-white,
+.rounded-lg.bg-white {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent) !important;
+  background: var(--bg-surface) !important;
+  box-shadow: 0 16px 28px -24px color-mix(in srgb, #000000 48%, transparent);
+}
+
+:where(.ui-card, .motion-card, .home-primary, .workout-set-card, .settings-menu-card, .settings-export-card)
+  :where(.motion-card, .ui-card, .workout-set-card, .rounded-xl.bg-white, .rounded-lg.bg-white) {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 54%, transparent) !important;
+  background: color-mix(in srgb, var(--bg-tertiary) 66%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.ui-accordion.ui-accordion-surface {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  background: color-mix(in srgb, var(--bg-tertiary) 58%, transparent);
+  box-shadow: none;
+}
+
+.ui-accordion-trigger {
+  min-height: 3.05rem;
+  padding: 0.84rem 0.92rem;
+}
+
+.ui-accordion-title {
+  font-size: 0.98rem;
+  font-weight: 650;
+}
+
+.ui-accordion-description {
+  font-size: 0.82rem;
+}
+
+.ui-accordion-chevron {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-right-width: 2.4px;
+  border-bottom-width: 2.4px;
+}
+
+.ui-inline-disclosure-trigger {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  min-height: 2.2rem;
+  padding: 0 0.84rem;
+  background: color-mix(in srgb, var(--bg-tertiary) 64%, transparent);
+  color: var(--text-primary);
+  font-size: 0.79rem;
+  font-weight: 620;
+}
+
+.mobile-bottom-sheet-backdrop {
+  background: color-mix(in srgb, #000000 54%, transparent);
+  -webkit-backdrop-filter: blur(1.5px);
+  backdrop-filter: blur(1.5px);
+}
+
+.mobile-bottom-sheet-panel {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.14);
+  backdrop-filter: blur(20px) saturate(1.14);
+}
+
+.mobile-bottom-sheet-close {
+  background: color-mix(in srgb, var(--bg-tertiary) 72%, transparent);
+  color: var(--text-primary);
+}
+
+.calendar-cell {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent);
+  background: color-mix(in srgb, var(--bg-tertiary) 66%, transparent);
+}
+
+.calendar-cell-generate,
+.calendar-cell-open {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 58%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 78%, var(--bg-tertiary));
+}
+
+.calendar-cell-open {
+  background: color-mix(in srgb, var(--accent-primary) 20%, var(--bg-tertiary));
+}
+
+.ui-primary-button {
+  border: 0;
+  border-radius: 1rem;
+  background: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: none;
+}
+
+.ui-primary-button:hover:not(:disabled) {
+  transform: none;
+  filter: brightness(1.05);
+  box-shadow: none;
+}
+
+:where(.haptic-tap.rounded-xl.border, .haptic-tap.rounded-lg.border, .haptic-tap.rounded-2xl.border) {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 58%, transparent) !important;
+  background: color-mix(in srgb, var(--bg-tertiary) 54%, transparent);
+}
+
+.border,
+.border-neutral-200,
+.border-neutral-900 {
+  border-color: color-mix(in srgb, var(--border-subtle) 62%, transparent) !important;
+}
+
+.border-neutral-900 {
+  box-shadow: none;
+}
+
+.border-t {
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--border-subtle) 52%, transparent);
+}
+
+.bg-white {
+  background-color: var(--bg-surface) !important;
+  box-shadow: none;
+}
+
+.bg-neutral-50 {
+  background-color: color-mix(in srgb, var(--bg-tertiary) 68%, var(--bg-surface));
+}
+
+.text-neutral-600,
+.text-neutral-500,
+.text-gray-600,
+.text-gray-500 {
+  color: var(--text-secondary) !important;
+}
+
+.text-red-600 {
+  color: #ff453a !important;
+}
+
+.text-green-700 {
+  color: #30d158 !important;
+}
+
+.ios-data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ios-data-table thead {
+  color: color-mix(in srgb, var(--text-secondary) 95%, var(--text-primary) 5%);
+}
+
+.ios-data-table th {
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ios-data-table tbody tr {
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 54%, transparent);
+}
+
+.ios-data-table tbody tr:first-child {
+  border-top: 0;
+}
+
+.ios-data-table td {
+  font-size: 0.86rem;
+}
+
+.tab-screen .ui-list-item {
+  border-radius: 1rem !important;
+  padding: 0.88rem 0.92rem;
+}
+
+.workout-toggle {
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  gap: 0.52rem;
+  min-height: 1.95rem;
+  color: var(--text-primary);
+}
+
+.workout-toggle input[type="checkbox"] {
+  appearance: none;
+  position: relative;
+  width: 2.92rem;
+  min-width: 2.92rem;
+  height: 1.74rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 76%, transparent);
+  background: color-mix(in srgb, #8e8e93 62%, transparent);
+  transition: background-color var(--motion-duration) var(--motion-ease), border-color var(--motion-duration) var(--motion-ease);
+}
+
+.workout-toggle input[type="checkbox"]::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1.36rem;
+  height: 1.36rem;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.28);
+  transition: transform var(--motion-duration) var(--motion-ease);
+}
+
+.workout-toggle input[type="checkbox"]:checked {
+  background: #34c759;
+  border-color: #34c759;
+}
+
+.workout-toggle input[type="checkbox"]:checked::before {
+  transform: translateX(1.18rem);
+}
+
+.workout-toggle span {
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.004em;
+}
+
+:where(button, a).rounded-xl.border.px-4.py-3,
+:where(button, a).rounded-xl.border.px-3.py-3 {
+  min-height: 2.76rem;
+  font-size: 0.9rem;
+  font-weight: 620;
+  letter-spacing: 0;
+}
+
+:where(button, a).rounded-lg.border.px-3.py-2,
+:where(button, a).rounded-lg.border.px-2.py-1 {
+  min-height: 2.35rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.tab-screen a.underline,
+.settings-screen a.underline {
+  text-decoration: none;
+  color: var(--accent-primary);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+) {
+  min-height: 2.8rem;
+  border: 1px solid color-mix(in srgb, var(--field-border) 84%, transparent) !important;
+  border-radius: 0.92rem !important;
+  background: var(--field-bg);
+  color: var(--text-primary);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+):focus {
+  border-color: color-mix(in srgb, var(--accent-primary) 68%, var(--field-border)) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--accent-primary);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  opacity: 0.8;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
+}
+
+.workout-action-panel {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  background: color-mix(in srgb, var(--bg-tertiary) 64%, var(--bg-surface));
+}
+
+.workout-action-pill {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 54%, transparent);
+  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+}
+
+.workout-action-pill.is-primary {
+  background: color-mix(in srgb, var(--accent-primary) 18%, var(--bg-tertiary));
+}
+
+.workout-save-dock {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-base) 0%, transparent), var(--bg-base) 54%);
+}
+
+.workout-empty-state {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 54%, transparent);
+  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+}
+
+@media (max-width: 430px) {
+  .app-shell-main {
+    padding-inline: 0.78rem;
+    padding-bottom: calc(5.92rem + env(safe-area-inset-bottom));
+  }
+
+  .app-top-nav {
+    margin-inline: -0.78rem;
+    padding-inline: 0.78rem;
+    padding-top: calc(var(--safe-top) + 11px);
+    padding-bottom: 0.54rem;
+    margin-bottom: 0.36rem;
+    min-height: 3.3rem;
+  }
+
+  .app-top-back-button,
+  .app-top-nav-placeholder {
+    width: 2.52rem;
+    min-height: 2.52rem;
+  }
+
+  .app-top-nav-title {
+    font-size: 1.05rem;
+  }
+
+  .home-screen,
+  .tab-screen,
+  .settings-screen {
+    gap: 0.62rem;
+    padding-bottom: 0.95rem;
+  }
+
+  .tab-screen-header,
+  .settings-header {
+    padding-inline: 0.08rem;
+    margin-top: 0;
+  }
+
+  .tab-screen-caption,
+  .settings-copy {
+    font-size: 0.79rem;
+    line-height: 1.34;
+  }
+
+  .ios-section-heading {
+    font-size: 0.74rem;
+    letter-spacing: 0.022em;
+  }
+
+  .ui-card,
+  .motion-card,
+  .workout-set-card,
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white {
+    border-radius: 1.22rem !important;
+  }
+
+  .rounded-xl {
+    border-radius: 0.96rem !important;
+  }
+
+  .rounded-lg {
+    border-radius: 0.8rem !important;
+  }
+
+  :where(
+    input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+    select,
+    textarea
+  ) {
+    min-height: 2.62rem;
+    font-size: 0.92rem;
+  }
+
+  .ui-primary-button {
+    min-height: 2.72rem;
+    font-size: 0.93rem;
+  }
+
+  :where(button, a).rounded-xl.border.px-4.py-3,
+  :where(button, a).rounded-xl.border.px-3.py-3 {
+    min-height: 2.58rem;
+    font-size: 0.84rem;
+  }
+
+  :where(button, a).rounded-lg.border.px-3.py-2,
+  :where(button, a).rounded-lg.border.px-2.py-1 {
+    min-height: 2.18rem;
+    font-size: 0.78rem;
+  }
+
+  .workout-action-pill {
+    min-height: 2.46rem;
+    border-radius: 0.86rem;
+    font-size: 0.86rem;
+  }
+
+  .workout-set-input {
+    min-height: 2.75rem;
+    font-size: 0.98rem;
+  }
+
+  .workout-save-button {
+    min-height: 2.9rem;
+    font-size: 0.95rem;
+  }
+
+  .home-primary,
+  .home-tools,
+  .settings-menu-card,
+  .settings-export-card {
+    padding: 0.28rem 0.76rem;
+  }
+
+  .home-primary-card,
+  .home-tool-link,
+  .settings-menu-link,
+  .settings-export-action {
+    padding: 0.78rem 1.96rem 0.78rem 0.1rem;
+  }
+
+  .tab-screen .ui-list-item {
+    border-radius: 0.92rem !important;
+    padding: 0.76rem 0.8rem;
+  }
+
+  .ios-data-table th {
+    font-size: 0.67rem;
+  }
+
+  .ios-data-table td {
+    font-size: 0.78rem;
+  }
+
+  .calendar-cell {
+    min-height: 8.35rem;
+    padding: 0.42rem;
+  }
+
+  .calendar-cell-generate,
+  .calendar-cell-open {
+    min-height: 2.26rem;
+    padding: 0 0.48rem;
+    font-size: 0.72rem;
+  }
+
+  .app-bottom-nav {
+    width: min(calc(100% - 0.94rem), var(--layout-max));
+    padding: 0.3rem;
+    gap: 0.25rem;
+    bottom: calc(0.62rem + env(safe-area-inset-bottom));
+  }
+
+  .app-bottom-nav-tab {
+    min-height: 2.18rem;
+    font-size: 0.66rem;
+    padding-inline: 0.1rem;
+  }
+
+  .app-sync-tray {
+    width: min(calc(100% - 1rem), var(--layout-max));
+    min-height: 2.25rem;
+    bottom: calc(4.85rem + env(safe-area-inset-bottom));
+  }
+}
+
+@media (min-width: 390px) and (max-width: 430px) {
+  .app-shell-main {
+    padding-inline: 0.9rem;
+  }
+
+  .app-top-nav {
+    margin-inline: -0.9rem;
+    padding-inline: 0.9rem;
+    margin-bottom: 0.28rem;
+  }
+
+  .app-top-nav-title {
+    font-size: 1.01rem;
+  }
+
+  .home-screen,
+  .tab-screen,
+  .settings-screen {
+    gap: 0.58rem;
+  }
+
+  .tab-screen-caption,
+  .settings-copy {
+    font-size: 0.78rem;
+  }
+
+  .ui-card,
+  .motion-card,
+  .workout-set-card,
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white {
+    border-radius: 1.16rem !important;
+  }
+
+  .workout-set-input {
+    min-height: 2.68rem;
+  }
+
+  .app-bottom-nav {
+    width: min(calc(100% - 0.8rem), var(--layout-max));
+  }
+
+  .app-bottom-nav-tab {
+    min-height: 2.08rem;
+    font-size: 0.64rem;
+  }
+
+  .app-sync-tray {
+    bottom: calc(4.72rem + env(safe-area-inset-bottom));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation: none !important;
     transition-duration: 0ms !important;
+  }
+}
+
+/* PR6: iOS typography, spacing, and semantic color token system */
+:root {
+  --color-label-primary: #edf3fb;
+  --color-label-secondary: #a8bbd2;
+  --color-label-tertiary: #7f95ae;
+  --color-fill-base: #0b121c;
+  --color-fill-surface: #141d29;
+  --color-fill-elevated: #1a2533;
+  --color-separator: #2b3a4f;
+  --color-tint: #0a84ff;
+  --color-success: #30d158;
+  --color-warning: #ff9f0a;
+  --color-danger: #ff453a;
+  --color-switch-on: #34c759;
+  --color-switch-off: #8e8e93;
+
+  --type-scale-title-size: clamp(1.38rem, 1.6vw + 1rem, 1.76rem);
+  --type-scale-title-line-height: 1.18;
+  --type-scale-title-weight: 700;
+  --type-scale-body-size: clamp(0.95rem, 0.42vw + 0.86rem, 1.03rem);
+  --type-scale-body-line-height: 1.46;
+  --type-scale-footnote-size: clamp(0.78rem, 0.28vw + 0.72rem, 0.86rem);
+  --type-scale-footnote-line-height: 1.34;
+  --type-scale-footnote-weight: 500;
+
+  --space-screen-section-gap: 0.88rem;
+  --space-section-top-offset: 0.16rem;
+  --settings-row-min-height: 2.9em;
+  --settings-row-padding-block: 0.72em;
+  --settings-row-padding-inline: 1rem;
+  --settings-row-content-gap: 0.72rem;
+  --settings-section-header-padding-inline: 0.25rem;
+  --settings-section-header-gap: 0.2rem;
+
+  --bg-primary: var(--color-fill-base);
+  --bg-secondary: var(--color-fill-surface);
+  --bg-tertiary: var(--color-fill-elevated);
+  --text-primary: var(--color-label-primary);
+  --text-secondary: var(--color-label-secondary);
+  --accent-primary: var(--color-tint);
+  --border-default: var(--color-separator);
+  --field-bg: color-mix(in srgb, var(--color-fill-surface) 84%, var(--color-fill-elevated));
+  --field-border: color-mix(in srgb, var(--color-separator) 86%, transparent);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-label-primary: #111111;
+    --color-label-secondary: #6b7280;
+    --color-label-tertiary: #8f99a6;
+    --color-fill-base: #f2f2f7;
+    --color-fill-surface: #ffffff;
+    --color-fill-elevated: #f6f6fa;
+    --color-separator: #d1d1d6;
+    --color-tint: #007aff;
+
+    --bg-primary: var(--color-fill-base);
+    --bg-secondary: var(--color-fill-surface);
+    --bg-tertiary: var(--color-fill-elevated);
+    --text-primary: var(--color-label-primary);
+    --text-secondary: var(--color-label-secondary);
+    --accent-primary: var(--color-tint);
+    --border-default: var(--color-separator);
+    --field-bg: color-mix(in srgb, var(--color-fill-surface) 88%, var(--color-fill-elevated));
+    --field-border: color-mix(in srgb, var(--color-separator) 88%, transparent);
+  }
+}
+
+body {
+  font-size: var(--type-scale-body-size);
+  line-height: var(--type-scale-body-line-height);
+}
+
+.type-title {
+  font-size: var(--type-scale-title-size);
+  line-height: var(--type-scale-title-line-height);
+  font-weight: var(--type-scale-title-weight);
+  letter-spacing: -0.012em;
+}
+
+.type-body {
+  font-size: var(--type-scale-body-size);
+  line-height: var(--type-scale-body-line-height);
+}
+
+.type-footnote,
+.type-caption {
+  font-size: var(--type-scale-footnote-size);
+  line-height: var(--type-scale-footnote-line-height);
+  font-weight: var(--type-scale-footnote-weight);
+  color: var(--color-label-secondary);
+}
+
+.ui-card-label,
+.ui-card-label-caps,
+label > .ui-card-label,
+label.ui-card-label {
+  font-size: var(--type-scale-footnote-size);
+  line-height: var(--type-scale-footnote-line-height);
+  color: var(--color-label-secondary);
+}
+
+.home-screen,
+.tab-screen,
+.settings-screen {
+  gap: var(--space-screen-section-gap) !important;
+}
+
+.home-screen > header + section,
+.tab-screen > header + section,
+.settings-screen > header + section {
+  margin-top: var(--space-section-top-offset);
+}
+
+:where(.settings-menu-link, .settings-export-action, .home-primary-card, .home-tool-link, .ui-accordion-trigger) {
+  min-height: var(--settings-row-min-height);
+  padding-inline: var(--settings-row-padding-inline) !important;
+}
+
+:where(.settings-menu-link, .settings-export-action, .home-primary-card, .home-tool-link) {
+  padding-block: var(--settings-row-padding-block) !important;
+}
+
+.text-red-600 {
+  color: var(--color-danger) !important;
+}
+
+.text-green-700 {
+  color: var(--color-success) !important;
+}
+
+@media (max-width: 430px) {
+  :root {
+    --space-screen-section-gap: 0.72rem;
+    --settings-row-padding-inline: 0.9rem;
+    --settings-row-padding-block: 0.66em;
+  }
+}
+
+/* PR7: restrained visual pass (iOS Settings-like minimalism) */
+:root {
+  --shadow-soft: none;
+  --shadow-float: none;
+  --elevation-1: none;
+  --elevation-2: none;
+  --duration-fast: 110ms;
+  --duration-normal: 130ms;
+  --duration-slow: 180ms;
+  --motion-duration: var(--duration-normal);
+}
+
+body {
+  background: var(--color-fill-base) !important;
+}
+
+.native-page-enter,
+.ui-card,
+.motion-card,
+.ui-list-item,
+.workout-set-card,
+.app-sync-tray,
+.app-pwa-banner {
+  animation: none !important;
+}
+
+:where(.ui-card, .motion-card, .workout-set-card, .rounded-2xl.bg-white, .rounded-xl.bg-white, .rounded-lg.bg-white) {
+  box-shadow: none !important;
+}
+
+:where(.home-hero, .home-primary, .home-tools, .settings-menu-card, .settings-export-card, .workout-action-panel, .workout-empty-state) {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-bottom-nav {
+  background: color-mix(in srgb, var(--color-fill-surface) 94%, transparent);
+  border-color: color-mix(in srgb, var(--color-separator) 46%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(12px) saturate(1.02);
+  backdrop-filter: blur(12px) saturate(1.02);
+}
+
+.app-bottom-nav-tab.is-active {
+  color: var(--color-label-primary);
+  background: color-mix(in srgb, var(--color-fill-elevated) 55%, transparent);
+}
+
+.ui-primary-button,
+.workout-action-pill.is-primary {
+  background: color-mix(in srgb, var(--color-fill-surface) 92%, transparent) !important;
+  color: var(--color-label-primary) !important;
+  border: 1px solid color-mix(in srgb, var(--color-separator) 62%, transparent) !important;
+  box-shadow: none !important;
+}
+
+.ui-primary-button:hover:not(:disabled),
+.workout-action-pill:hover:not(:disabled),
+.haptic-tap:hover {
+  transform: none !important;
+  filter: none !important;
+}
+
+.mobile-bottom-sheet-backdrop {
+  background: color-mix(in srgb, #000000 36%, transparent);
+}
+
+.mobile-bottom-sheet-panel {
+  box-shadow: none;
+  border-color: color-mix(in srgb, var(--color-separator) 58%, transparent);
+}
+
+input,
+select,
+textarea,
+button {
+  transition: background-color var(--duration-fast) var(--ease-standard), color var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard), opacity var(--duration-fast) var(--ease-standard) !important;
+}
+
+/* PR8: iOS baseline accessibility pass */
+:root {
+  color-scheme: light dark;
+  --touch-target-min: 44px;
+  --touch-target: max(var(--touch-target-min), 2.75rem);
+  --settings-row-min-height: max(var(--touch-target-min), 2.75em);
+  --settings-focus-ring-color: color-mix(in srgb, var(--color-tint, var(--accent-primary)) 72%, transparent);
+  --color-success-text: var(--color-success);
+  --color-warning-text: var(--color-warning);
+  --color-danger-text: var(--color-danger);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    color-scheme: light;
+    --color-tint: #0067d8;
+    --color-success-text: #1e7a34;
+    --color-warning-text: #9a5b00;
+    --color-danger-text: #b3261e;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+:where(
+  button,
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  .app-bottom-nav-tab,
+  .settings-menu-link,
+  .settings-export-action,
+  .home-primary-card,
+  .home-tool-link,
+  .ui-accordion-trigger,
+  .workout-action-pill,
+  .app-sync-action,
+  .app-pwa-button
+) {
+  min-height: var(--touch-target);
+}
+
+:where(button, a).rounded-lg.border.px-3.py-2,
+:where(button, a).rounded-lg.border.px-2.py-1 {
+  min-height: var(--touch-target);
+}
+
+.workout-toggle {
+  min-height: var(--touch-target);
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+) {
+  min-height: var(--touch-target);
+  font-size: 1rem;
+}
+
+:where(a[href], button, [role="button"], input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--settings-focus-ring-color);
+  outline-offset: 2px;
+}
+
+:where(input, select, textarea):disabled,
+:where(button, [role="button"]):disabled {
+  cursor: not-allowed;
+}
+
+.text-red-600 {
+  color: var(--color-danger-text, var(--color-danger)) !important;
+}
+
+.text-green-700 {
+  color: var(--color-success-text, var(--color-success)) !important;
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --color-label-secondary: color-mix(in srgb, var(--color-label-primary) 84%, transparent);
+    --color-separator: color-mix(in srgb, var(--color-label-primary) 68%, transparent);
+    --settings-focus-ring-color: var(--color-label-primary);
+  }
+
+  :where(.text-neutral-600, .text-neutral-500, .text-gray-600, .text-gray-500, .type-caption, .type-footnote) {
+    color: var(--color-label-primary) !important;
+  }
+
+  :where(.ui-primary-button, .workout-action-pill.is-primary) {
+    border-color: var(--color-label-primary) !important;
   }
 }
