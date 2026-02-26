@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type Plan = {
   id: string;
@@ -245,12 +246,10 @@ export default function CalendarPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="tab-screen-header">
-        <h1 className="tab-screen-title">Calendar</h1>
-        <p className="tab-screen-caption">
-          {selectedPlan ? `${selectedPlan.name} · ${periodLabel}` : "Choose a plan to generate by date"}
-        </p>
-      </header>
+      <ScreenTitleCard
+        title="Calendar"
+        note={selectedPlan ? `${selectedPlan.name} · ${periodLabel}` : "Choose a plan to generate by date"}
+      />
 
       <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <label className="flex flex-col gap-1 lg:col-span-2">

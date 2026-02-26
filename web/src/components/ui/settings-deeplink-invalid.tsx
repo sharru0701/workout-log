@@ -8,6 +8,7 @@ import {
   SectionHeader,
   ValueRow,
 } from "./settings-list";
+import { ScreenTitleCard } from "./screen-title-card";
 
 function errorMessage(code: SettingsDeepLinkErrorCode) {
   switch (code) {
@@ -32,10 +33,7 @@ export function SettingsDeepLinkInvalidView({
 }) {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="grid gap-1 px-1">
-        <h1 className="type-title m-0">설정 링크</h1>
-        <p className="type-caption m-0">링크를 열 수 없습니다.</p>
-      </header>
+      <ScreenTitleCard title="설정 링크" note="링크를 열 수 없습니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="안내" />

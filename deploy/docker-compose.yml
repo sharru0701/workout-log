@@ -17,6 +17,26 @@ services:
       timeout: 3s
       retries: 20
 
+  migrate:
+    image: ghcr.io/sharru0701/workout-log-web:${WEB_IMAGE_TAG:-latest}
+    restart: "no"
+    command: ["node", "scripts/migrate.mjs"]
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@postgres:5432/workoutlog
+      DB_MIGRATE_ENABLED: ${MIGRATE_DB_MIGRATE_ENABLED:-1}
+      DB_MIGRATE_RUNNER: ${MIGRATE_DB_MIGRATE_RUNNER:-compose-migrate-job}
+      DB_MIGRATE_TELEMETRY_ENABLED: ${DB_MIGRATE_TELEMETRY_ENABLED:-1}
+      DB_MIGRATE_USE_ADVISORY_LOCK: ${DB_MIGRATE_USE_ADVISORY_LOCK:-1}
+      DB_MIGRATE_LOCK_ID: ${DB_MIGRATE_LOCK_ID:-872341}
+      DB_MIGRATE_LOCK_MAX_WAIT_MS: ${DB_MIGRATE_LOCK_MAX_WAIT_MS:-180000}
+      DB_MIGRATE_LOCK_POLL_MS: ${DB_MIGRATE_LOCK_POLL_MS:-1500}
+      DB_MIGRATE_MAX_ATTEMPTS: ${DB_MIGRATE_MAX_ATTEMPTS:-30}
+      DB_MIGRATE_RETRY_DELAY_MS: ${DB_MIGRATE_RETRY_DELAY_MS:-2000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   web:
     image: ghcr.io/sharru0701/workout-log-web:${WEB_IMAGE_TAG:-latest}
     container_name: workoutlog-web
@@ -26,6 +46,16 @@ services:
       PORT: 3000
       DATABASE_URL: postgres://app:${POSTGRES_PASSWORD}@postgres:5432/workoutlog
       NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL}
+      OPS_MIGRATION_TOKEN: ${OPS_MIGRATION_TOKEN:-}
+      DB_MIGRATE_ENABLED: ${WEB_DB_MIGRATE_ENABLED:-0}
+      DB_MIGRATE_RUNNER: ${WEB_DB_MIGRATE_RUNNER:-web-startup}
+      DB_MIGRATE_TELEMETRY_ENABLED: ${DB_MIGRATE_TELEMETRY_ENABLED:-1}
+      DB_MIGRATE_USE_ADVISORY_LOCK: ${DB_MIGRATE_USE_ADVISORY_LOCK:-1}
+      DB_MIGRATE_LOCK_ID: ${DB_MIGRATE_LOCK_ID:-872341}
+      DB_MIGRATE_LOCK_MAX_WAIT_MS: ${DB_MIGRATE_LOCK_MAX_WAIT_MS:-180000}
+      DB_MIGRATE_LOCK_POLL_MS: ${DB_MIGRATE_LOCK_POLL_MS:-1500}
+      DB_MIGRATE_MAX_ATTEMPTS: ${DB_MIGRATE_MAX_ATTEMPTS:-30}
+      DB_MIGRATE_RETRY_DELAY_MS: ${DB_MIGRATE_RETRY_DELAY_MS:-2000}
     depends_on:
       postgres:
         condition: service_healthy

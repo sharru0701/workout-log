@@ -8,13 +8,20 @@
 
 Start:
     cd /opt/workout-log/deploy
-    docker compose up -d --build
+    docker compose up -d --build postgres
+    docker compose run --rm migrate
+    docker compose up -d web
     docker compose ps
     docker compose logs -f web
 
 Notes:
-    - web container runs DB migrations on startup before Next.js starts.
-    - Look for log line: [migrate] migrations applied
+    - DB migration is executed by dedicated `migrate` job before web replacement.
+    - web startup migration is disabled by default (`WEB_DB_MIGRATE_ENABLED=0`) to avoid multi-replica race.
+    - deploy pipeline/restart script both run dedicated migration job before web 교체.
+    - Look for log lines:
+      - [migrate] run started
+      - [migrate] advisory lock acquired
+      - [migrate] migrations applied
 
 Stop:
     cd /opt/workout-log/deploy
@@ -67,6 +74,16 @@ Check applied Drizzle migrations:
     cd /opt/workout-log/deploy
     docker compose exec -T postgres psql -U app -d workoutlog -c 'select id, hash, created_at from "__drizzle_migrations" order by created_at;'
 
+Migration one-shot dry run (no app restart):
+
+    cd /opt/workout-log/deploy
+    docker compose run --rm migrate
+
+Check migration telemetry endpoint (requires OPS_MIGRATION_TOKEN):
+
+    curl -fsS -H "x-ops-token: <OPS_MIGRATION_TOKEN>" \
+      "http://127.0.0.1:3001/api/ops/migrations?lookbackMinutes=120&limit=10"
+
 ------------------------------------------------------------
 
 4) Database Backup / Restore
@@ -108,7 +125,9 @@ Install service:
     cd /opt/workout-log
     git pull
     cd deploy
-    docker compose up -d --build
+    docker compose pull web migrate
+    docker compose run --rm migrate
+    docker compose up -d --no-deps web
 
 ------------------------------------------------------------
 
@@ -121,7 +140,9 @@ Install service:
   - semver tags when pushing `v*.*.*`
 - Deploy behavior:
   - deploys by commit SHA image tag
-  - runs post-deploy healthcheck on deploy server (default: `http://127.0.0.1:3001/api/health`)
+  - runs dedicated migration job first (`docker compose run --rm migrate`)
+  - runs post-deploy healthcheck on deploy server (default: deep health with required tables)
+  - optional migration telemetry alert check (`/api/ops/migrations`)
   - on healthcheck failure, rolls back to last successful SHA automatically
 
 Required GitHub Secrets:
@@ -131,7 +152,13 @@ Required GitHub Secrets:
     DEPLOY_SSH_KEY
     DEPLOY_USER
     DEPLOY_HOST
-    DEPLOY_HEALTHCHECK_URL   # optional, default: http://127.0.0.1:3001/api/health
+    DEPLOY_HEALTHCHECK_URL   # optional, default: deep health URL
+    DEPLOY_OPS_TOKEN         # optional, for migration telemetry alert check
+
+Optional GitHub Variables:
+
+    DEPLOY_MIGRATION_ALERT_LOOKBACK_MINUTES   # default 120
+    DEPLOY_MIGRATION_ALERT_STRICT             # 1 => fail deploy on critical telemetry
 
 ------------------------------------------------------------
 
@@ -146,6 +173,16 @@ Restart + pull latest configured tag:
 
     cd /opt/workout-log/deploy
     PULL_WEB=1 ./scripts/restart_workoutlog.sh
+
+Restart without one-shot migration (not recommended):
+
+    cd /opt/workout-log/deploy
+    MIGRATE_FIRST=0 ./scripts/restart_workoutlog.sh
+
+Restart + migration telemetry strict check:
+
+    cd /opt/workout-log/deploy
+    OPS_TOKEN=<OPS_MIGRATION_TOKEN> MIGRATION_ALERT_STRICT=1 ./scripts/restart_workoutlog.sh
 
 Prune old web images safely (keep 10 newest by default):
 

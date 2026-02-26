@@ -6,14 +6,12 @@ import {
   SectionHeader,
   SubtitleRow,
 } from "@/components/ui/settings-list";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function SettingsPage() {
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="grid gap-1 px-1">
-        <h1 className="type-title m-0">설정</h1>
-        <p className="type-caption m-0">설정 도구를 선택하세요.</p>
-      </header>
+    <div className="native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll">
+      <ScreenTitleCard title="설정" note="설정 도구를 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="데이터" />
@@ -60,6 +58,16 @@ export default function SettingsPage() {
             subtitle="즉시 반영 + 롤백"
             description="저장, 롤백, 행 잠금을 점검합니다."
             leading={<RowIcon symbol="SV" tone="green" />}
+            badge="NEW"
+            badgeTone="accent"
+          />
+          <SubtitleRow
+            rowId="row-ux-thresholds"
+            href="/settings/ux-thresholds"
+            label="UX 기준치"
+            subtitle="전환율 임계치"
+            description="대시보드 UX 임계치 목표를 조정합니다."
+            leading={<RowIcon symbol="UX" tone="tint" />}
             badge="NEW"
             badgeTone="accent"
           />

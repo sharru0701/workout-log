@@ -5,6 +5,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type TemplateItem = {
   id: string;
@@ -304,10 +305,7 @@ export default function TemplatesPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
-      <div className="tab-screen-header">
-        <h1 className="tab-screen-title">Templates</h1>
-        <p className="tab-screen-caption">템플릿 라이브러리를 정리하고 버전 분기를 관리합니다.</p>
-      </div>
+      <ScreenTitleCard title="Templates" note="템플릿 라이브러리를 정리하고 버전 분기를 관리합니다." />
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
@@ -320,12 +318,32 @@ export default function TemplatesPage() {
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
           <span className="ui-card-label">Search template/program</span>
-          <input
-            className="rounded-lg border px-3 py-2"
-            value={searchQuery}
-            placeholder="name, slug, type, tag..."
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="app-search-shell">
+            <span className="app-search-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <circle cx="11" cy="11" r="7" />
+                <path d="m20 20-3.8-3.8" />
+              </svg>
+            </span>
+            <input
+              type="search"
+              inputMode="search"
+              className="app-search-input"
+              value={searchQuery}
+              placeholder="name, slug, type, tag..."
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery.trim().length > 0 ? (
+              <button
+                type="button"
+                className="app-search-clear"
+                aria-label="Clear search"
+                onClick={() => setSearchQuery("")}
+              >
+                ×
+              </button>
+            ) : null}
+          </div>
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
           <span className="ui-card-label">Tag filter</span>

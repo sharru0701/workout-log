@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet } from "@/lib/api";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type PlannedRow = {
   exerciseName: string;
@@ -144,10 +145,7 @@ export default function WorkoutSessionDetailPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
-      <header className="tab-screen-header">
-        <h1 className="tab-screen-title">Session Detail</h1>
-        <p className="tab-screen-caption">저장된 운동의 계획/수행 세트를 비교합니다.</p>
-      </header>
+      <ScreenTitleCard title="Session Detail" note="저장된 운동의 계획/수행 세트를 비교합니다." />
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <a

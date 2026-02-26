@@ -1,27 +1,158 @@
+import { readdir } from "node:fs/promises";
+import path from "node:path";
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import pkg from "../../../../package.json";
 
-async function GETImpl() {
-  try {
-    await db.execute(sql`select 1`);
-    await db.execute(sql`select 1 from "program_template" limit 1`);
-    return NextResponse.json({
-      ok: true,
-      ts: new Date().toISOString(),
-      version: process.env.APP_VERSION ?? pkg.version ?? "unknown",
-    });
-  } catch (e: any) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: e?.message ?? "db check failed",
-        version: process.env.APP_VERSION ?? pkg.version ?? "unknown",
-      },
-      { status: 503 },
+const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
+const MIGRATION_FILE_PATTERN = /^\d+_.+\.sql$/;
+
+type HealthCheckResult = {
+  ok: boolean;
+  mode: "basic" | "deep";
+  ts: string;
+  version: string;
+  checks: {
+    db: boolean;
+    requiredTables: {
+      requested: string[];
+      missing: string[];
+    };
+    migrations?: {
+      localCount: number;
+      appliedCount: number;
+      pending: number;
+      latestAppliedAt: string | null;
+      latestAppliedHash: string | null;
+    };
+  };
+  error?: string;
+};
+
+function parseNumber(value: unknown, fallback = 0) {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+
+function parseRequiredTables(raw: string | null) {
+  const parsed = (raw ?? "")
+    .split(",")
+    .map((token) => token.trim())
+    .filter((token) => /^[a-zA-Z0-9_]+$/.test(token));
+  if (parsed.length === 0) return ["program_template"];
+  return Array.from(new Set(parsed));
+}
+
+async function readLocalMigrationCount() {
+  const files = await readdir(MIGRATIONS_DIR).catch(() => []);
+  return files.filter((file) => MIGRATION_FILE_PATTERN.test(file)).length;
+}
+
+async function getMissingTables(requiredTables: string[]) {
+  const missing: string[] = [];
+  for (const table of requiredTables) {
+    const row = await db.execute<{ regclass: string | null }>(
+      sql`select to_regclass(${`public.${table}`}) as regclass`,
     );
+    const exists = Boolean(row.rows[0]?.regclass);
+    if (!exists) missing.push(table);
+  }
+  return missing;
+}
+
+async function GETImpl(req: Request) {
+  const version = process.env.APP_VERSION ?? pkg.version ?? "unknown";
+  const ts = new Date().toISOString();
+
+  try {
+    const { searchParams } = new URL(req.url);
+    const deepCheck = searchParams.get("checkMigrations") === "1";
+    const requiredTables = parseRequiredTables(searchParams.get("requiredTables"));
+
+    await db.execute(sql`select 1`);
+
+    const missingTables = await getMissingTables(requiredTables);
+
+    if (!deepCheck) {
+      const payload: HealthCheckResult = {
+        ok: missingTables.length === 0,
+        mode: "basic",
+        ts,
+        version,
+        checks: {
+          db: true,
+          requiredTables: {
+            requested: requiredTables,
+            missing: missingTables,
+          },
+        },
+        error: missingTables.length > 0 ? "required tables missing" : undefined,
+      };
+      return NextResponse.json(payload, { status: payload.ok ? 200 : 503 });
+    }
+
+    const [localCount, appliedRow, latestAppliedRow] = await Promise.all([
+      readLocalMigrationCount(),
+      db.execute<{ count: number | string }>(sql`select count(*)::int as count from "__drizzle_migrations"`),
+      db.execute<{ created_at: string | null; hash: string | null }>(
+        sql`select created_at, hash from "__drizzle_migrations" order by created_at desc limit 1`,
+      ),
+    ]);
+
+    const appliedCount = parseNumber(appliedRow.rows[0]?.count, 0);
+    const pending = Math.max(0, localCount - appliedCount);
+    const latestApplied = latestAppliedRow.rows[0];
+
+    const ok = missingTables.length === 0 && pending === 0;
+    const payload: HealthCheckResult = {
+      ok,
+      mode: "deep",
+      ts,
+      version,
+      checks: {
+        db: true,
+        requiredTables: {
+          requested: requiredTables,
+          missing: missingTables,
+        },
+        migrations: {
+          localCount,
+          appliedCount,
+          pending,
+          latestAppliedAt: latestApplied?.created_at ?? null,
+          latestAppliedHash: latestApplied?.hash ?? null,
+        },
+      },
+      error: ok
+        ? undefined
+        : missingTables.length > 0
+          ? "required tables missing"
+          : "pending migrations detected",
+    };
+
+    return NextResponse.json(payload, { status: ok ? 200 : 503 });
+  } catch (error: unknown) {
+    const payload: HealthCheckResult = {
+      ok: false,
+      mode: "deep",
+      ts,
+      version,
+      checks: {
+        db: false,
+        requiredTables: {
+          requested: ["program_template"],
+          missing: ["program_template"],
+        },
+      },
+      error: error instanceof Error ? error.message : "db check failed",
+    };
+    return NextResponse.json(payload, { status: 503 });
   }
 }
 

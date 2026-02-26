@@ -7,8 +7,8 @@ import { getPendingWorkoutLogCount, offlineQueueUpdateEventName } from "@/lib/of
 
 const tabs = [
   { href: "/", label: "Home" },
-  { href: "/workout/today", label: "Today" },
-  { href: "/plans", label: "Plans" },
+  { href: "/workout/today/log", label: "Today" },
+  { href: "/plans/manage", label: "Plans" },
   { href: "/calendar", label: "Calendar" },
   { href: "/stats", label: "Stats" },
 ];
@@ -17,20 +17,18 @@ function tabIsActive(pathname: string, href: string) {
   if (href === "/") {
     return pathname === "/";
   }
-  if (href === "/workout/today") {
+  if (href === "/workout/today/log") {
     return pathname === href || pathname.startsWith("/workout/");
+  }
+  if (href === "/plans/manage") {
+    return pathname === href || pathname.startsWith("/plans/");
   }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
 export function BottomNav() {
   const pathname = usePathname() ?? "";
-  const [isMounted, setIsMounted] = useState(false);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
-
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -53,8 +51,8 @@ export function BottomNav() {
   return (
     <nav className="app-bottom-nav" aria-label="Primary navigation">
       {tabs.map((tab) => {
-        const active = isMounted ? tabIsActive(pathname, tab.href) : false;
-        const isTodayTab = tab.href === "/workout/today";
+        const active = tabIsActive(pathname, tab.href);
+        const isTodayTab = tab.href === "/workout/today/log";
         const showPendingBadge = isTodayTab && pendingSyncCount > 0;
         return (
           <Link

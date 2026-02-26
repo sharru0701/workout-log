@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { BaseGroupedList, NavigationRow, SectionFootnote, SectionHeader } from "./settings-list";
+import { ScreenTitleCard } from "./screen-title-card";
 import { EmptyStateRows } from "./settings-state";
 
 type SelectionOption = {
@@ -88,9 +89,7 @@ function useFilteredOptions(options: SelectionOption[], query: string) {
 function SelectionLayout({ title, children }: SelectionLayoutProps) {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="grid gap-1 px-1">
-        <h1 className="type-title m-0">{title}</h1>
-      </header>
+      <ScreenTitleCard title={title} />
       {children}
     </div>
   );
@@ -108,19 +107,33 @@ function SearchInput({
   return (
     <section className="grid gap-2">
       <SectionHeader title="검색" />
-      <BaseGroupedList ariaLabel="검색 입력">
-        <li>
-          <div className="flex flex-col gap-1 px-4 py-3">
-            <span className="ui-card-label">검색어</span>
-            <input
-              className="rounded-lg border px-3 py-2"
-              value={value}
-              onChange={(event) => onChange(event.target.value)}
-              placeholder={placeholder}
-            />
-          </div>
-        </li>
-      </BaseGroupedList>
+      <div className="app-search-shell" aria-label="검색 입력">
+        <span className="app-search-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m20 20-3.8-3.8" />
+          </svg>
+        </span>
+        <input
+          type="search"
+          inputMode="search"
+          className="app-search-input"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          aria-label={placeholder}
+        />
+        {value.trim().length > 0 ? (
+          <button
+            type="button"
+            className="app-search-clear"
+            aria-label="검색어 지우기"
+            onClick={() => onChange("")}
+          >
+            ×
+          </button>
+        ) : null}
+      </div>
       <SectionFootnote>검색어를 입력해 항목을 빠르게 찾습니다.</SectionFootnote>
     </section>
   );

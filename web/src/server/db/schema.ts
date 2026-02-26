@@ -1,4 +1,5 @@
 import {
+  bigserial,
   boolean,
   index,
   integer,
@@ -362,5 +363,78 @@ export const statsCache = pgTable(
     ),
     userIdx: index("stats_cache_user_idx").on(t.userId),
     updatedAtIdx: index("stats_cache_updated_at_idx").on(t.updatedAt),
+  }),
+);
+
+/**
+ * user_setting: per-user persisted settings (primitive JSON values)
+ */
+export const userSetting = pgTable(
+  "user_setting",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    key: text("key").notNull(),
+    value: jsonb("value").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userKeyUq: uniqueIndex("user_setting_user_key_uq").on(t.userId, t.key),
+    userIdx: index("user_setting_user_idx").on(t.userId),
+    userUpdatedIdx: index("user_setting_user_updated_idx").on(t.userId, t.updatedAt),
+  }),
+);
+
+/**
+ * ux_event_log: client UX event stream persisted server-side for cross-device continuity
+ */
+export const uxEventLog = pgTable(
+  "ux_event_log",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    clientEventId: text("client_event_id").notNull(),
+    name: text("name").notNull(),
+    recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull(),
+    props: jsonb("props").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    userClientEventUq: uniqueIndex("ux_event_log_user_client_event_uq").on(
+      t.userId,
+      t.clientEventId,
+    ),
+    userRecordedIdx: index("ux_event_log_user_recorded_idx").on(t.userId, t.recordedAt),
+    userNameRecordedIdx: index("ux_event_log_user_name_recorded_idx").on(
+      t.userId,
+      t.name,
+      t.recordedAt,
+    ),
+  }),
+);
+
+/**
+ * migration_run_log: migration execution telemetry for deploy/ops alerts
+ */
+export const migrationRunLog = pgTable(
+  "migration_run_log",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    runId: text("run_id").notNull(),
+    runner: text("runner").notNull(),
+    host: text("host"),
+    status: text("status").notNull(),
+    errorCode: text("error_code"),
+    message: text("message"),
+    startedAt: timestamp("started_at", { withTimezone: true }).defaultNow().notNull(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    lockWaitMs: integer("lock_wait_ms").notNull().default(0),
+    details: jsonb("details").notNull().default({}),
+  },
+  (t) => ({
+    runIdUq: uniqueIndex("migration_run_log_run_id_uq").on(t.runId),
+    startedIdx: index("migration_run_log_started_idx").on(t.startedAt),
+    statusStartedIdx: index("migration_run_log_status_started_idx").on(t.status, t.startedAt),
   }),
 );

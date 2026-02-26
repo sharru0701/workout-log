@@ -6,14 +6,12 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function StatsIndexPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="grid gap-1 px-1">
-        <h1 className="type-title m-0">통계</h1>
-        <p className="type-caption m-0">대시보드와 필터를 확인하세요.</p>
-      </header>
+      <ScreenTitleCard title="통계" note="대시보드와 필터를 확인하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="대시보드" />
@@ -56,6 +54,18 @@ export default function StatsIndexPage() {
             label="PR 추적"
             description="PR 기록 상세를 확인합니다."
             leading={<RowIcon symbol="PR" tone="orange" />}
+          />
+          <NavigationRow
+            href="/stats/dashboard"
+            label="UX 퍼널"
+            description="전환 퍼널과 오늘/7일/14일 UX 스냅샷을 확인합니다."
+            leading={<RowIcon symbol="UX" tone="tint" />}
+          />
+          <NavigationRow
+            href="/stats/dashboard"
+            label="운영 마이그레이션 상태"
+            description="배포 마이그레이션 실행 상태와 최근 실패/락 타임아웃을 확인합니다."
+            leading={<RowIcon symbol="OP" tone="neutral" />}
           />
           <ValueRow
             label="필터 입력 방식"

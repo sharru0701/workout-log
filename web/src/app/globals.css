@@ -216,6 +216,142 @@ label.ui-card-label {
   filter: brightness(0.98);
 }
 
+/* Shared search field style for template/exercise flows */
+.app-search-shell {
+  min-height: 50px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.56rem;
+  padding: 0.4rem 0.82rem;
+  border-radius: 1.15rem;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, #ffffff 12%, var(--bg-surface) 88%) 0%,
+      color-mix(in srgb, var(--bg-surface) 90%, var(--bg-tertiary) 10%) 100%
+    );
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 7%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 72%, transparent),
+    0 8px 20px color-mix(in srgb, #000000 5%, transparent);
+  backdrop-filter: blur(10px) saturate(132%);
+  transition:
+    border-color var(--duration-normal) var(--ease-standard),
+    box-shadow var(--duration-normal) var(--ease-standard),
+    background-color var(--duration-normal) var(--ease-standard);
+}
+
+.app-search-shell:focus-within {
+  border-color: transparent;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 16%, transparent),
+    inset 0 1px 0 color-mix(in srgb, #ffffff 78%, transparent),
+    0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent),
+    0 9px 22px color-mix(in srgb, #000000 6%, transparent);
+}
+
+.app-search-icon {
+  color: color-mix(in srgb, var(--text-secondary) 88%, transparent);
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  padding-inline-start: 0.08rem;
+}
+
+.app-search-icon svg {
+  width: 1.28rem;
+  height: 1.28rem;
+  stroke: currentColor;
+  stroke-width: 2.15;
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-search-input {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  width: 100%;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  margin: 0;
+  padding: 0.42rem 0;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 1.04rem;
+  line-height: 1.3;
+}
+
+.app-search-input:focus {
+  outline: none;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.app-search-input::placeholder {
+  color: color-mix(in srgb, var(--text-secondary) 76%, transparent);
+}
+
+.app-search-input::-webkit-search-decoration,
+.app-search-input::-webkit-search-cancel-button,
+.app-search-input::-webkit-search-results-button,
+.app-search-input::-webkit-search-results-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.app-search-input::-ms-clear,
+.app-search-input::-ms-reveal {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.app-search-clear {
+  border: 0;
+  border-radius: 999px;
+  padding: 0;
+  width: 1.9rem;
+  min-height: 1.9rem;
+  background: color-mix(in srgb, var(--bg-tertiary) 76%, transparent);
+  color: color-mix(in srgb, var(--text-secondary) 86%, transparent);
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    transform var(--duration-fast) var(--ease-standard);
+}
+
+.app-search-clear:hover {
+  background: color-mix(in srgb, var(--bg-tertiary) 88%, transparent);
+  color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+}
+
+.app-search-clear:active {
+  transform: scale(0.96);
+}
+
+.app-search-clear:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 52%, transparent);
+  outline-offset: 0;
+}
+
 a {
   color: inherit;
 }
@@ -1106,7 +1242,7 @@ button {
 .mobile-bottom-sheet {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: 72;
 }
 
 .mobile-bottom-sheet-backdrop {
@@ -1133,6 +1269,7 @@ button {
   display: flex;
   flex-direction: column;
   max-height: min(92svh, 840px);
+  overflow: hidden;
   transition:
     transform var(--duration-normal) var(--ease-emphasized),
     border-radius var(--duration-fast) var(--ease-standard);
@@ -1187,10 +1324,12 @@ button {
 }
 
 .mobile-bottom-sheet-body {
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 0 0.95rem calc(0.95rem + env(safe-area-inset-bottom));
+  padding: 0 0.95rem calc(1.2rem + env(safe-area-inset-bottom));
 }
 
 .mobile-bottom-sheet-footer {
@@ -1733,10 +1872,10 @@ body {
 
 .app-top-nav-title {
   text-align: center;
-  font-size: 1.12rem;
-  font-weight: 700;
+  font-size: 1.06rem;
+  font-weight: 600;
   line-height: 1.15;
-  letter-spacing: -0.018em;
+  letter-spacing: -0.012em;
   color: var(--text-primary);
 }
 
@@ -1808,30 +1947,25 @@ body {
 
 .tab-screen-header,
 .settings-header {
-  gap: 0.18rem;
-  padding-inline: 0.22rem;
+  gap: 0.22rem;
   margin-top: 0.08rem;
 }
 
 .tab-screen-title,
 .settings-title {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  margin: -1px;
-  padding: 0;
-  border: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  clip-path: inset(50%);
-  white-space: nowrap;
+  margin: 0;
+  font-size: var(--type-scale-title-size);
+  line-height: var(--type-scale-title-line-height);
+  font-weight: var(--type-scale-title-weight);
+  letter-spacing: -0.022em;
+  color: var(--color-label-primary);
 }
 
 .tab-screen-caption,
 .settings-copy {
-  font-size: 0.84rem;
-  line-height: 1.38;
-  color: color-mix(in srgb, var(--text-secondary) 90%, var(--text-primary) 10%);
+  font-size: var(--type-scale-footnote-size);
+  line-height: 1.33;
+  color: var(--color-label-secondary);
   text-wrap: pretty;
 }
 
@@ -1933,14 +2067,16 @@ label.ui-card-label,
 .home-tool-link::after,
 .settings-menu-link::after,
 .settings-export-action::after {
-  content: "›";
+  content: "";
   position: absolute;
-  right: 0.35rem;
+  right: 0.54rem;
   top: 50%;
-  transform: translateY(-50%);
-  color: var(--text-secondary);
-  font-size: 1.45rem;
-  line-height: 1;
+  width: 0.64rem;
+  height: 0.64rem;
+  border-right: 2.2px solid currentColor;
+  border-bottom: 2.2px solid currentColor;
+  transform: translateY(-50%) rotate(-45deg);
+  color: var(--color-label-tertiary);
 }
 
 .home-card-copy,
@@ -2487,13 +2623,13 @@ textarea::placeholder {
 
 /* PR6: iOS typography, spacing, and semantic color token system */
 :root {
-  --color-label-primary: #edf3fb;
-  --color-label-secondary: #a8bbd2;
-  --color-label-tertiary: #7f95ae;
-  --color-fill-base: #0b121c;
-  --color-fill-surface: #141d29;
-  --color-fill-elevated: #1a2533;
-  --color-separator: #2b3a4f;
+  --color-label-primary: #ffffff;
+  --color-label-secondary: #8e8e93;
+  --color-label-tertiary: #636366;
+  --color-fill-base: #000000;
+  --color-fill-surface: #1c1c1e;
+  --color-fill-elevated: #2c2c2e;
+  --color-separator: #38383a;
   --color-tint: #0a84ff;
   --color-success: #30d158;
   --color-warning: #ff9f0a;
@@ -2501,23 +2637,41 @@ textarea::placeholder {
   --color-switch-on: #34c759;
   --color-switch-off: #8e8e93;
 
-  --type-scale-title-size: clamp(1.38rem, 1.6vw + 1rem, 1.76rem);
-  --type-scale-title-line-height: 1.18;
+  --type-scale-title-size: 2.125rem;
+  --type-scale-title-line-height: 1.1;
   --type-scale-title-weight: 700;
-  --type-scale-body-size: clamp(0.95rem, 0.42vw + 0.86rem, 1.03rem);
-  --type-scale-body-line-height: 1.46;
-  --type-scale-footnote-size: clamp(0.78rem, 0.28vw + 0.72rem, 0.86rem);
-  --type-scale-footnote-line-height: 1.34;
+  --type-scale-body-size: 1.0625rem;
+  --type-scale-body-line-height: 1.3;
+  --type-scale-footnote-size: 0.9375rem;
+  --type-scale-footnote-line-height: 1.33;
   --type-scale-footnote-weight: 500;
 
-  --space-screen-section-gap: 0.88rem;
-  --space-section-top-offset: 0.16rem;
-  --settings-row-min-height: 2.9em;
-  --settings-row-padding-block: 0.72em;
-  --settings-row-padding-inline: 1rem;
-  --settings-row-content-gap: 0.72rem;
-  --settings-section-header-padding-inline: 0.25rem;
-  --settings-section-header-gap: 0.2rem;
+  --space-screen-section-gap: 1.44rem;
+  --space-section-top-offset: 0.3rem;
+  --screen-card-inset-inline: 0.56rem;
+  --settings-row-min-height: max(var(--touch-target-min), 2.98em);
+  --settings-row-padding-block: 0.88em;
+  --settings-row-padding-inline: 1.12rem;
+  --settings-row-content-gap: 0.88rem;
+  --screen-text-inset-inline: 1.46rem;
+  --screen-section-text-inset-inline: 1.82rem;
+  --screen-secondary-text-offset-inline: 0.28rem;
+  --screen-header-card-padding-inline: 1.14rem;
+  --screen-header-card-padding-block: 1.08rem;
+  --screen-header-card-gap: 0.28rem;
+  --screen-header-card-radius: 1.72rem;
+  --settings-section-header-padding-inline: var(--screen-section-text-inset-inline);
+  --settings-section-header-gap: 0.28rem;
+  --settings-group-radius: 1.72rem;
+  --settings-group-border-color: color-mix(in srgb, var(--color-separator) 34%, transparent);
+  --settings-row-divider-color: color-mix(in srgb, var(--color-separator) 58%, transparent);
+  --settings-row-divider-inset-start: calc(
+    var(--settings-row-padding-inline) + var(--settings-row-icon-size) + var(--settings-row-content-gap)
+  );
+  --settings-row-divider-inset-end: var(--settings-row-padding-inline);
+  --settings-row-icon-size: 2.02rem;
+  --settings-row-icon-radius: 0.62rem;
+  --settings-row-icon-font-size: 0.98rem;
 
   --bg-primary: var(--color-fill-base);
   --bg-secondary: var(--color-fill-surface);
@@ -2533,11 +2687,11 @@ textarea::placeholder {
 @media (prefers-color-scheme: light) {
   :root {
     --color-label-primary: #111111;
-    --color-label-secondary: #6b7280;
-    --color-label-tertiary: #8f99a6;
+    --color-label-secondary: #8e8e93;
+    --color-label-tertiary: #c7c7cc;
     --color-fill-base: #f2f2f7;
     --color-fill-surface: #ffffff;
-    --color-fill-elevated: #f6f6fa;
+    --color-fill-elevated: #ffffff;
     --color-separator: #d1d1d6;
     --color-tint: #007aff;
 
@@ -2562,7 +2716,7 @@ body {
   font-size: var(--type-scale-title-size);
   line-height: var(--type-scale-title-line-height);
   font-weight: var(--type-scale-title-weight);
-  letter-spacing: -0.012em;
+  letter-spacing: -0.018em;
 }
 
 .type-body {
@@ -2591,12 +2745,104 @@ label.ui-card-label {
 .tab-screen,
 .settings-screen {
   gap: var(--space-screen-section-gap) !important;
+  padding-inline: var(--screen-card-inset-inline) !important;
+}
+
+.home-screen > header,
+.tab-screen > header,
+.settings-screen > header,
+.tab-screen-header,
+.settings-header {
+  display: grid;
+  gap: var(--screen-header-card-gap) !important;
+  margin-top: 0.08rem;
+  padding-block: var(--screen-header-card-padding-block);
+  padding-inline: var(--screen-header-card-padding-inline) !important;
+  border-radius: var(--screen-header-card-radius);
+  border: 1px solid var(--color-separator);
+  border: 1px solid var(--settings-group-border-color);
+  background: var(--color-fill-surface);
+  background: color-mix(in srgb, var(--color-fill-surface) 96%, var(--color-fill-elevated) 4%);
 }
 
 .home-screen > header + section,
 .tab-screen > header + section,
 .settings-screen > header + section {
   margin-top: var(--space-section-top-offset);
+}
+
+.home-screen > section,
+.tab-screen > section,
+.settings-screen > section {
+  gap: 0.74rem !important;
+}
+
+.settings-screen > section {
+  gap: 0.68rem !important;
+}
+
+.settings-screen {
+  --settings-row-min-height: max(var(--touch-target-min), 3.06em);
+  --settings-row-padding-block: 0.9em;
+  --settings-row-padding-inline: 1.14rem;
+  --settings-row-content-gap: 0.9rem;
+  --screen-text-inset-inline: 1.58rem;
+  --screen-section-text-inset-inline: 1.92rem;
+  --screen-secondary-text-offset-inline: 0.3rem;
+  --screen-header-card-padding-inline: 1.18rem;
+  --screen-header-card-padding-block: 1.12rem;
+  --screen-header-card-gap: 0.3rem;
+  --settings-section-header-gap: 0.32rem;
+  --settings-group-radius: 1.72rem;
+  --settings-row-divider-color: color-mix(in srgb, var(--color-separator) 56%, transparent);
+}
+
+.settings-screen > header {
+  gap: 0.18rem !important;
+}
+
+.settings-screen > header .type-caption {
+  color: var(--color-label-secondary);
+}
+
+.settings-screen-main {
+  --space-section-top-offset: 0.36rem;
+  --space-screen-section-gap: 1.56rem;
+  --settings-row-min-height: max(var(--touch-target-min), 3.1em);
+  --settings-row-padding-block: 0.94em;
+  --settings-row-padding-inline: 1.16rem;
+  --settings-row-content-gap: 0.92rem;
+  --screen-text-inset-inline: 1.68rem;
+  --screen-section-text-inset-inline: 2rem;
+  --screen-secondary-text-offset-inline: 0.32rem;
+  --screen-header-card-padding-inline: 1.22rem;
+  --screen-header-card-padding-block: 1.16rem;
+  --screen-header-card-gap: 0.32rem;
+  --settings-section-header-gap: 0.22rem;
+}
+
+.settings-screen-main > header {
+  gap: 0.12rem !important;
+}
+
+.settings-screen-main .type-title {
+  letter-spacing: -0.024em;
+}
+
+.settings-screen-main .type-caption {
+  font-size: var(--type-scale-footnote-size);
+  line-height: 1.32;
+}
+
+.tab-screen-caption,
+.settings-copy {
+  font-size: var(--type-scale-footnote-size);
+  line-height: var(--type-scale-footnote-line-height);
+  color: var(--color-label-secondary);
+}
+
+:where(.home-screen, .tab-screen, .settings-screen) [data-settings-footnote="true"] {
+  padding-inline-start: var(--screen-secondary-text-offset-inline);
 }
 
 :where(.settings-menu-link, .settings-export-action, .home-primary-card, .home-tool-link, .ui-accordion-trigger) {
@@ -2618,9 +2864,32 @@ label.ui-card-label {
 
 @media (max-width: 430px) {
   :root {
-    --space-screen-section-gap: 0.72rem;
-    --settings-row-padding-inline: 0.9rem;
-    --settings-row-padding-block: 0.66em;
+    --space-screen-section-gap: 1.22rem;
+    --screen-card-inset-inline: 0.46rem;
+    --settings-row-padding-inline: 1rem;
+    --settings-row-padding-block: 0.82em;
+    --settings-row-content-gap: 0.78rem;
+    --screen-text-inset-inline: 1.32rem;
+    --screen-section-text-inset-inline: 1.68rem;
+    --screen-secondary-text-offset-inline: 0.26rem;
+    --screen-header-card-padding-inline: 1.02rem;
+    --screen-header-card-padding-block: 0.98rem;
+    --screen-header-card-gap: 0.24rem;
+    --settings-group-radius: 1.5rem;
+    --screen-header-card-radius: 1.5rem;
+    --settings-row-icon-size: 1.9rem;
+  }
+
+  .settings-screen-main {
+    --space-screen-section-gap: 1.28rem;
+    --settings-row-padding-inline: 1.04rem;
+    --settings-row-content-gap: 0.82rem;
+    --screen-text-inset-inline: 1.4rem;
+    --screen-section-text-inset-inline: 1.74rem;
+    --screen-header-card-padding-inline: 1.06rem;
+    --screen-header-card-padding-block: 1rem;
+    --settings-group-radius: 1.56rem;
+    --screen-header-card-radius: 1.56rem;
   }
 }
 

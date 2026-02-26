@@ -7,14 +7,12 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function OfflinePage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <header className="grid gap-1 px-1">
-        <h1 className="type-title m-0">오프라인</h1>
-        <p className="type-caption m-0">오프라인 복구 동작을 확인합니다.</p>
-      </header>
+      <ScreenTitleCard title="오프라인" note="오프라인 복구 동작을 확인합니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="복구" />

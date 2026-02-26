@@ -57,6 +57,27 @@
       "when": 1771580400000,
       "tag": "0007_mellow_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771584000000,
+      "tag": "0008_lush_polaris",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1771587600000,
+      "tag": "0009_sturdy_meridian",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1771591200000,
+      "tag": "0010_solid_watchtower",
+      "breakpoints": true
     }
   ]
 }

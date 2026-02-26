@@ -15,7 +15,7 @@ export default function SelectionTemplatePage() {
   const metricOptionValues = useMemo(() => new Set(statsMetricOptions.map((option) => option.value)), []);
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
       <SingleSelectionScreen
         title="선택 템플릿"
         sectionTitle="세션 키 방식"

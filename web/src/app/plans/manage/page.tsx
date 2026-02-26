@@ -1,13 +1,15 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any, react-hooks/exhaustive-deps */
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type TemplateItem = {
   id: string;
@@ -39,13 +41,38 @@ type Plan = {
   createdAt: string;
 };
 
+function dateOnlyInTimezone(date: Date, timezone: string) {
+  const fmt = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const parts = fmt.formatToParts(date);
+  const y = parts.find((p) => p.type === "year")?.value ?? "1970";
+  const m = parts.find((p) => p.type === "month")?.value ?? "01";
+  const d = parts.find((p) => p.type === "day")?.value ?? "01";
+  return `${y}-${m}-${d}`;
+}
+
+function workoutStartHref(planId: string, sessionDate: string) {
+  const sp = new URLSearchParams();
+  sp.set("planId", planId);
+  sp.set("date", sessionDate);
+  sp.set("autoGenerate", "1");
+  return `/workout/today/log?${sp.toString()}`;
+}
+
 export default function PlansPage() {
+  const searchParams = useSearchParams();
+  const queryHandledRef = useRef(false);
   const [userId, setUserId] = useState("dev");
   const [startDate, setStartDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
   const [sessionKeyMode, setSessionKeyMode] = useState<"DATE" | "LEGACY">("DATE");
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [versionsBySlug, setVersionsBySlug] = useState<Record<string, ProgramVersion[]>>({});
+  const [versionsLoadingBySlug, setVersionsLoadingBySlug] = useState<Record<string, boolean>>({});
   const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -75,6 +102,8 @@ export default function PlansPage() {
   const [createSheetOpen, setCreateSheetOpen] = useState(false);
   const [createType, setCreateType] = useState<"SINGLE" | "COMPOSITE" | "MANUAL">("SINGLE");
   const [refreshTick, setRefreshTick] = useState(0);
+  const [planCreateNotice, setPlanCreateNotice] = useState<string | null>(null);
+  const loadingVersionSlugsRef = useRef(new Set<string>());
 
   const templatesBySlug = useMemo(() => {
     const map = new Map<string, TemplateItem>();
@@ -114,6 +143,12 @@ export default function PlansPage() {
     () => templateOptions.filter((t) => t.type === "MANUAL"),
     [templateOptions],
   );
+  const todayDate = useMemo(() => dateOnlyInTimezone(new Date(), timezone), [timezone]);
+  const selectedPlan = useMemo(
+    () => plans.find((plan) => plan.id === selectedPlanId) ?? null,
+    [plans, selectedPlanId],
+  );
+  const selectedPlanStartHref = selectedPlanId ? workoutStartHref(selectedPlanId, todayDate) : "/workout/today/log";
   const refreshPlansPage = useCallback(async () => {
     setRefreshTick((prev) => prev + 1);
   }, []);
@@ -128,6 +163,17 @@ export default function PlansPage() {
     if (vList[0]?.id) return vList[0].id;
     return templatesBySlug.get(slug)?.latestVersion?.id ?? "";
   }
+
+  useEffect(() => {
+    if (queryHandledRef.current) return;
+    if (searchParams.get("create") !== "1") return;
+    queryHandledRef.current = true;
+    const requestedType = (searchParams.get("type") ?? "").toUpperCase();
+    if (requestedType === "SINGLE" || requestedType === "COMPOSITE" || requestedType === "MANUAL") {
+      setCreateType(requestedType);
+    }
+    setCreateSheetOpen(true);
+  }, [searchParams]);
 
   useEffect(() => {
     (async () => {
@@ -145,30 +191,45 @@ export default function PlansPage() {
   }, [userId, refreshTick]);
 
   useEffect(() => {
-    if (templates.length === 0) {
-      setVersionsBySlug({});
-      return;
+    if (templates.length > 0) return;
+    setVersionsBySlug({});
+    setVersionsLoadingBySlug({});
+    loadingVersionSlugsRef.current.clear();
+  }, [templates.length]);
+
+  async function ensureTemplateVersions(slug: string) {
+    if (!slug) return;
+    if (versionsBySlug[slug] !== undefined) return;
+    if (loadingVersionSlugsRef.current.has(slug)) return;
+
+    loadingVersionSlugsRef.current.add(slug);
+    setVersionsLoadingBySlug((prev) => ({ ...prev, [slug]: true }));
+    try {
+      const res = await apiGet<{ versions: ProgramVersion[] }>(
+        `/api/templates/${encodeURIComponent(slug)}/versions`,
+      );
+      setVersionsBySlug((prev) => {
+        if (prev[slug] !== undefined) return prev;
+        return { ...prev, [slug]: res.versions };
+      });
+    } catch (e: any) {
+      setError(e?.message ?? "Failed to load template versions");
+    } finally {
+      loadingVersionSlugsRef.current.delete(slug);
+      setVersionsLoadingBySlug((prev) => ({ ...prev, [slug]: false }));
     }
+  }
 
-    (async () => {
-      try {
-        const pairs = await Promise.all(
-          templates.map(async (t) => {
-            const res = await apiGet<{ versions: ProgramVersion[] }>(
-              `/api/templates/${encodeURIComponent(t.slug)}/versions`,
-            );
-            return [t.slug, res.versions] as const;
-          }),
-        );
+  useEffect(() => {
+    if (!createSheetOpen) return;
+    if (templates.length === 0) return;
 
-        const next: Record<string, ProgramVersion[]> = {};
-        for (const [slug, list] of pairs) next[slug] = list;
-        setVersionsBySlug(next);
-      } catch (e: any) {
-        setError(e?.message ?? "Failed to load template versions");
-      }
-    })();
-  }, [templates, userId]);
+    void ensureTemplateVersions(singleSlug);
+    void ensureTemplateVersions(squatSlug);
+    void ensureTemplateVersions(benchSlug);
+    void ensureTemplateVersions(deadSlug);
+    void ensureTemplateVersions(manualSlug);
+  }, [benchSlug, createSheetOpen, deadSlug, manualSlug, singleSlug, squatSlug, templates.length, versionsBySlug]);
 
   useEffect(() => {
     (async () => {
@@ -254,9 +315,10 @@ export default function PlansPage() {
 
   function versionSelect(slug: string, versionId: string, onChange: (v: string) => void) {
     const versionList = versionsFor(slug);
+    const isLoading = Boolean(versionsLoadingBySlug[slug]);
     return (
       <select className="rounded-lg border px-3 py-3 text-base" value={versionId} onChange={(e) => onChange(e.target.value)}>
-        {versionList.length === 0 ? <option value="">(no versions)</option> : null}
+        {versionList.length === 0 ? <option value="">{isLoading ? "(loading versions...)" : "(no versions)"}</option> : null}
         {versionList.map((v) => (
           <option key={v.id} value={v.id}>
             v{v.version}
@@ -291,6 +353,7 @@ export default function PlansPage() {
     });
     setPlans((p) => [res.plan, ...p]);
     setSelectedPlanId(res.plan.id);
+    setPlanCreateNotice(`새 플랜 생성 완료: ${res.plan.name}`);
   }
 
   async function createComposite() {
@@ -314,6 +377,7 @@ export default function PlansPage() {
     });
     setPlans((p) => [res.plan, ...p]);
     setSelectedPlanId(res.plan.id);
+    setPlanCreateNotice(`새 조합 플랜 생성 완료: ${res.plan.name}`);
   }
 
   async function createManualPlan() {
@@ -337,6 +401,7 @@ export default function PlansPage() {
     });
     setPlans((p) => [res.plan, ...p]);
     setSelectedPlanId(res.plan.id);
+    setPlanCreateNotice(`새 수동 플랜 생성 완료: ${res.plan.name}`);
   }
 
   async function generateSessionForPlan(planIdToGenerate: string) {
@@ -366,35 +431,48 @@ export default function PlansPage() {
               ? "당겨서 새로고침"
               : ""}
         </div>
-        <div className="tab-screen-header">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="tab-screen-title">플랜</h1>
+        <ScreenTitleCard
+          title="플랜"
+          note="커스텀 프로그램 생성 후 바로 운동 기록으로 이어집니다."
+          actions={
             <button
               className="haptic-tap ui-primary-button min-h-12 px-5 text-base"
               onClick={() => setCreateSheetOpen(true)}
             >
               플랜 만들기
             </button>
-          </div>
-          <p className="tab-screen-caption">프로그램을 만들고 세션 생성 컨텍스트를 관리합니다.</p>
-        </div>
+          }
+        />
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="ios-section-heading">기본 흐름</div>
           <p className="text-sm text-neutral-600">
-            1) 플랜 생성 2) 플랜 선택 3) 빠른 생성으로 결과 확인
+            1) 플랜 생성/선택 2) 오늘 운동 시작 3) 세트 기록 후 저장
           </p>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               className="haptic-tap ui-primary-button min-h-12 px-4 text-base font-medium"
               onClick={() => setCreateSheetOpen(true)}
             >
               플랜 만들기
             </button>
+            <a className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium text-center" href={selectedPlanStartHref}>
+              {selectedPlan ? `${selectedPlan.name}으로 오늘 운동` : "오늘 운동 시작"}
+            </a>
             <a className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium text-center" href="/templates">
               템플릿 관리
             </a>
           </div>
+          <NoticeStateRows
+            message={planCreateNotice}
+            tone="success"
+            label="생성 상태"
+          />
+          <DisabledStateRows
+            when={!selectedPlanId}
+            label="선택된 플랜 없음"
+            description="플랜 카드에서 선택하면 오늘 운동 딥링크가 해당 플랜으로 연결됩니다."
+          />
         </div>
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
@@ -514,7 +592,7 @@ export default function PlansPage() {
                       {p.type} · {new Date(p.createdAt).toLocaleString()}
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     <button
                       className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium"
                       onClick={() => setSelectedPlanId(p.id)}
@@ -530,9 +608,15 @@ export default function PlansPage() {
                     >
                       빠른 생성
                     </button>
+                    <a
+                      className="haptic-tap rounded-xl border px-4 py-3 text-base font-medium text-center"
+                      href={workoutStartHref(p.id, todayDate)}
+                    >
+                      오늘 운동
+                    </a>
                   </div>
                   <div className="ui-card-label">
-                    빠른 생성은 현재 주차/일차 값을 사용하고 미리보기를 즉시 갱신합니다.
+                    빠른 생성은 현재 주차/일차 값을 사용하고, 오늘 운동은 생성+기록 화면으로 바로 이동합니다.
                   </div>
                 </article>
               ))}
@@ -571,6 +655,9 @@ export default function PlansPage() {
             >
               선택 플랜 생성
             </button>
+            <a className="mt-2 block haptic-tap rounded-xl border px-4 py-3 text-center text-base font-medium" href={selectedPlanStartHref}>
+              선택 플랜으로 오늘 운동 시작
+            </a>
             <div className="ui-card-label mt-2">
               실행할 플랜을 직접 선택해 수동으로 생성할 때 사용합니다.
             </div>
@@ -618,12 +705,32 @@ export default function PlansPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">템플릿/프로그램 검색</span>
-              <input
-                className="rounded-lg border px-3 py-3 text-base"
-                value={templateSearchQuery}
-                placeholder="이름, slug, type, tag..."
-                onChange={(e) => setTemplateSearchQuery(e.target.value)}
-              />
+              <div className="app-search-shell">
+                <span className="app-search-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.8-3.8" />
+                  </svg>
+                </span>
+                <input
+                  type="search"
+                  inputMode="search"
+                  className="app-search-input"
+                  value={templateSearchQuery}
+                  placeholder="이름, slug, type, tag..."
+                  onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                />
+                {templateSearchQuery.trim().length > 0 ? (
+                  <button
+                    type="button"
+                    className="app-search-clear"
+                    aria-label="검색어 지우기"
+                    onClick={() => setTemplateSearchQuery("")}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </div>
             </label>
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">템플릿 태그</span>
@@ -695,6 +802,7 @@ export default function PlansPage() {
             className="haptic-tap ui-primary-button min-h-12 w-full text-base font-semibold"
             onClick={() => {
               setError(null);
+              setPlanCreateNotice(null);
               const createFlow =
                 createType === "SINGLE"
                   ? createSingle()

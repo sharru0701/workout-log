@@ -249,6 +249,14 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     description: "선택/입력 템플릿 샘플",
   },
   {
+    key: "settings.ux-thresholds",
+    title: "UX 기준치",
+    path: "/settings/ux-thresholds",
+    section: "시스템",
+    keywords: ["ux", "threshold", "baseline", "전환율", "임계치", "compare"],
+    description: "UX 퍼널/행동 기준치 조정",
+  },
+  {
     key: "offline.help",
     title: "오프라인 도움말",
     path: "/offline",

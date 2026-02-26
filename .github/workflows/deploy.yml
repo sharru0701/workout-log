@@ -144,7 +144,9 @@ jobs:
           cd /opt/workout-log/deploy
           export WEB_IMAGE_TAG=${{ github.sha }}
           docker compose pull web
-          docker compose up -d web
+          echo "[deploy] running dedicated migration job before switching web container"
+          docker compose run --rm migrate
+          docker compose up -d --no-deps web
           docker compose ps
           EOF
 
@@ -157,7 +159,7 @@ jobs:
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?checkMigrations=1&requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
           fi
 
           echo "Healthcheck URL: ${HEALTHCHECK_URL}"
@@ -179,8 +181,66 @@ jobs:
             "cd /opt/workout-log/deploy && docker compose ps && docker compose logs --tail=120 web postgres || true"
           exit 1
 
-      - name: Mark successful deployed SHA
+      - name: Migration telemetry alert check
         if: ${{ steps.healthcheck.outcome == 'success' }}
+        id: migration_telemetry
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          OPS_TOKEN="${{ secrets.DEPLOY_OPS_TOKEN }}"
+          if [[ -z "${OPS_TOKEN}" ]]; then
+            echo "DEPLOY_OPS_TOKEN not set. Skipping migration telemetry alert check."
+            exit 0
+          fi
+
+          LOOKBACK_MINUTES="${{ vars.DEPLOY_MIGRATION_ALERT_LOOKBACK_MINUTES }}"
+          if [[ -z "${LOOKBACK_MINUTES}" ]]; then
+            LOOKBACK_MINUTES=120
+          fi
+
+          TELEMETRY_URL="http://127.0.0.1:3001/api/ops/migrations?lookbackMinutes=${LOOKBACK_MINUTES}&limit=10"
+          echo "Telemetry URL: ${TELEMETRY_URL}"
+
+          response="$(ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "curl -sS --max-time 8 -H 'x-ops-token: ${OPS_TOKEN}' -w '\n%{http_code}' '${TELEMETRY_URL}'")"
+
+          http_code="$(printf '%s\n' "${response}" | tail -n1)"
+          payload="$(printf '%s\n' "${response}" | sed '$d')"
+
+          echo "Migration telemetry response (status=${http_code}):"
+          echo "${payload}"
+
+          strict_mode="${{ vars.DEPLOY_MIGRATION_ALERT_STRICT }}"
+          if [[ -z "${strict_mode}" ]]; then
+            strict_mode=0
+          fi
+
+          if [[ "${http_code}" -ge 400 ]]; then
+            echo "::warning::Migration telemetry endpoint returned HTTP ${http_code}"
+            if [[ "${strict_mode}" == "1" ]]; then
+              echo "DEPLOY_MIGRATION_ALERT_STRICT=1, failing deploy."
+              exit 1
+            fi
+            exit 0
+          fi
+
+          status="$(printf '%s' "${payload}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const d=JSON.parse(raw||'{}');process.stdout.write(String(d.status||''));")"
+          reasons="$(printf '%s' "${payload}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const d=JSON.parse(raw||'{}');const r=Array.isArray(d.reasons)?d.reasons:[];process.stdout.write(r.join(','));")"
+
+          if [[ "${status}" == "critical" ]]; then
+            echo "::warning::Migration telemetry is critical (${reasons:-unknown})"
+            if [[ "${strict_mode}" == "1" ]]; then
+              echo "DEPLOY_MIGRATION_ALERT_STRICT=1, failing deploy."
+              exit 1
+            fi
+          fi
+
+      - name: Mark successful deployed SHA
+        if: ${{ steps.healthcheck.outcome == 'success' && steps.migration_telemetry.outcome != 'failure' }}
+        id: mark_success
         shell: bash
         run: |
           ssh -T -o StrictHostKeyChecking=yes \
@@ -188,7 +248,7 @@ jobs:
             "printf '%s' '${{ github.sha }}' > /opt/workout-log/deploy/.last_successful_web_sha"
 
       - name: Rollback to previous SHA
-        if: ${{ steps.healthcheck.outcome == 'failure' && steps.deploy_sha.outputs.rollback_sha != '' }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -201,19 +261,19 @@ jobs:
           cd /opt/workout-log/deploy
           export WEB_IMAGE_TAG=${ROLLBACK_SHA}
           docker compose pull web || true
-          docker compose up -d web
+          docker compose up -d --no-deps web
           docker compose ps
           EOF
 
       - name: Verify rollback health
-        if: ${{ steps.healthcheck.outcome == 'failure' && steps.deploy_sha.outputs.rollback_sha != '' }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
         shell: bash
         run: |
           set -euo pipefail
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?checkMigrations=1&requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
           fi
 
           echo "Rollback healthcheck URL: ${HEALTHCHECK_URL}"
@@ -236,8 +296,8 @@ jobs:
           exit 1
 
       - name: Fail workflow when deploy healthcheck failed
-        if: ${{ steps.healthcheck.outcome == 'failure' }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') }}
         shell: bash
         run: |
-          echo "Deploy healthcheck failed. Rollback attempted automatically."
+          echo "Deploy verification failed (healthcheck or strict migration telemetry). Rollback attempted automatically."
           exit 1

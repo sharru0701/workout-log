@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbo",
+    "dev:webpack": "next dev --webpack",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
@@ -21,6 +22,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/server/db/seed.ts",
     "db:backfill:exercise": "tsx src/server/db/backfillExerciseIds.ts",
+    "db:cleanup:ux-events": "tsx src/server/db/cleanupUxEventLog.ts",
     "dev:turbo": "next dev --turbo"
   },
   "dependencies": {

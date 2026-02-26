@@ -205,20 +205,19 @@ export function NavigationRow({
   ariaLabel,
   showChevron = true,
 }: NavigationRowProps) {
+  const hasLeading = Boolean(leading);
   const trailing = (
     <>
       {value ? <span className={styles.value}>{value}</span> : null}
       {showChevron ? (
-        <span aria-hidden="true" className={styles.chevron}>
-          ›
-        </span>
+        <span aria-hidden="true" className={styles.chevron} />
       ) : null}
     </>
   );
 
   if (href && !disabled) {
     return (
-      <li id={rowId} className={className} data-settings-row="navigation">
+      <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
         <Link href={href} aria-label={ariaLabel} className={styles.rowLink} data-settings-touch-target="true">
           <RowContent
             label={label}
@@ -236,7 +235,7 @@ export function NavigationRow({
 
   if (!href && !onPress) {
     return (
-      <li id={rowId} className={className} data-settings-row="navigation">
+      <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
         <div className={styles.rowStatic} aria-label={ariaLabel} data-settings-touch-target="true">
           <RowContent
             label={label}
@@ -253,7 +252,7 @@ export function NavigationRow({
   }
 
   return (
-    <li id={rowId} className={className} data-settings-row="navigation">
+    <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
       <button
         type="button"
         className={styles.rowButton}
@@ -293,6 +292,7 @@ export function ToggleRow({
 }: ToggleRowProps) {
   const generatedId = useId();
   const inputId = id ?? generatedId;
+  const hasLeading = Boolean(leading);
 
   const trailing = (
     <span className={styles.toggleContainer}>
@@ -312,7 +312,7 @@ export function ToggleRow({
   );
 
   return (
-    <li id={rowId} className={className} data-settings-row="toggle">
+    <li id={rowId} className={className} data-settings-row="toggle" data-has-leading={hasLeading ? "true" : "false"}>
       <label htmlFor={inputId} className={styles.rowToggleLabel} data-settings-touch-target="true">
         <RowContent
           label={label}
@@ -345,21 +345,20 @@ export function ValueRow({
   ariaLabel,
   showChevron,
 }: ValueRowProps) {
+  const hasLeading = Boolean(leading);
   const isInteractive = Boolean((href || onPress) && !disabled);
   const trailing = (
     <>
       <span className={cx(styles.value, wrapValue && styles.valueWrap)}>{value}</span>
       {(showChevron ?? isInteractive) ? (
-        <span aria-hidden="true" className={styles.chevron}>
-          ›
-        </span>
+        <span aria-hidden="true" className={styles.chevron} />
       ) : null}
     </>
   );
 
   if (href && !disabled) {
     return (
-      <li id={rowId} className={className} data-settings-row="value">
+      <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
         <Link href={href} aria-label={ariaLabel} className={styles.rowLink} data-settings-touch-target="true">
           <RowContent
             label={label}
@@ -377,7 +376,7 @@ export function ValueRow({
 
   if (!href && onPress) {
     return (
-      <li id={rowId} className={className} data-settings-row="value">
+      <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
         <button
           type="button"
           className={styles.rowButton}
@@ -401,7 +400,7 @@ export function ValueRow({
   }
 
   return (
-    <li id={rowId} className={className} data-settings-row="value">
+    <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
       <div className={styles.rowStatic} data-settings-touch-target="true">
         <RowContent
           label={label}
@@ -429,6 +428,7 @@ export function InfoRow({
   value,
   tone = "neutral",
 }: InfoRowProps) {
+  const hasLeading = Boolean(leading);
   const toneClass = {
     neutral: styles.infoNeutral,
     success: styles.infoSuccess,
@@ -438,7 +438,7 @@ export function InfoRow({
   }[tone];
 
   return (
-    <li id={rowId} className={className} data-settings-row="info">
+    <li id={rowId} className={className} data-settings-row="info" data-has-leading={hasLeading ? "true" : "false"}>
       <div className={cx(styles.rowStatic, toneClass)} data-settings-touch-target="true">
         <RowContent
           label={label}
