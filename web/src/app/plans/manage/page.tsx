@@ -63,7 +63,7 @@ function workoutStartHref(planId: string, sessionDate: string) {
   return `/workout/today/log?${sp.toString()}`;
 }
 
-export default function PlansPage() {
+function PlansPageContent() {
   const searchParams = useSearchParams();
   const queryHandledRef = useRef(false);
   const [userId, setUserId] = useState("dev");
@@ -819,5 +819,13 @@ export default function PlansPage() {
         </div>
       </BottomSheet>
     </>
+  );
+}
+
+export default function PlansPage() {
+  return (
+    <React.Suspense fallback={<div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll" />}>
+      <PlansPageContent />
+    </React.Suspense>
   );
 }
