@@ -22,7 +22,7 @@ async function getTimeOrigin(page: Page) {
 test.describe("PWA service worker update", () => {
   test("activates a new service worker version after an update", async ({ page }) => {
     await page.goto("/offline");
-    await expect(page.getByRole("heading", { name: "You are offline" })).toBeVisible();
+    await expect(page.getByRole("list", { name: "Offline recovery" })).toBeVisible();
 
     await expect
       .poll(async () => getActiveServiceWorkerScriptUrl(page), {
