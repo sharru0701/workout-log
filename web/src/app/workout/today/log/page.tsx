@@ -26,7 +26,6 @@ import { AccordionSection } from "@/components/ui/accordion-section";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type SetRow = {
   exerciseName: string;
@@ -1342,7 +1341,6 @@ export default function WorkoutTodayPage() {
             ? "당겨서 새로고침"
             : ""}
       </div>
-      <ScreenTitleCard title="오늘 운동" note="생성 · 운동 추가/기록 · 저장 순서로 진행하세요." />
 
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="ios-section-heading">기록 모드</div>

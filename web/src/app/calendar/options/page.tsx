@@ -5,7 +5,6 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -41,7 +40,6 @@ export default async function CalendarOptionsPage({
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="캘린더 옵션" note="수정할 옵션을 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="보기 및 열기" />

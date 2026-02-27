@@ -9,10 +9,7 @@
   --sl-group-background: var(--settings-group-background, var(--bg-surface));
   --sl-group-border-color: var(--settings-group-border-color, color-mix(in srgb, var(--border-subtle) 44%, transparent));
   --sl-row-divider-color: var(--settings-row-divider-color, color-mix(in srgb, var(--border-subtle) 46%, transparent));
-  --sl-row-divider-inset-start: var(
-    --settings-row-divider-inset-start,
-    calc(var(--sl-row-padding-inline) + var(--sl-row-icon-size) + var(--sl-row-content-gap))
-  );
+  --sl-row-divider-inset-start: var(--sl-row-padding-inline);
   --sl-row-divider-inset-end: var(--settings-row-divider-inset-end, var(--sl-row-padding-inline));
   --sl-label-color: var(--settings-label-color, var(--text-primary));
   --sl-description-color: var(--settings-description-color, var(--text-secondary));
@@ -55,10 +52,6 @@
   block-size: 1px;
   background: var(--sl-row-divider-color);
   pointer-events: none;
-}
-
-.baseGroupedList > li + li[data-has-leading="false"]::before {
-  inset-inline-start: var(--sl-row-padding-inline);
 }
 
 .baseGroupedList > li:target {
@@ -162,13 +155,7 @@
 }
 
 .leading {
-  flex: 0 0 auto;
-  width: var(--sl-row-icon-size);
-  min-height: var(--sl-row-icon-size);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--sl-description-color);
+  display: none;
 }
 
 .rowIcon {

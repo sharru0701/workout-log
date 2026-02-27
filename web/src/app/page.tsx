@@ -5,7 +5,6 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 import { SettingsSearchPanel } from "@/components/ui/settings-search-panel";
 import { settingsSearchIndex } from "@/lib/settings/settings-search-index";
 
@@ -74,7 +73,6 @@ const advancedRows = [
 export default function Home() {
   return (
     <div className="native-page native-page-enter home-screen momentum-scroll">
-      <ScreenTitleCard title="운동 기록 시작" note="화면 탐색 없이 아래 순서대로 진행하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="빠른 시작" description="운동 앱의 핵심 흐름만 먼저 노출합니다." />

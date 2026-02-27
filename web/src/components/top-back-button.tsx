@@ -37,6 +37,7 @@ export function TopBackButton() {
         <div className="app-top-nav-placeholder" aria-hidden="true" />
         <div className="app-top-nav-title">{title}</div>
         <div className="app-top-nav-placeholder" aria-hidden="true" />
+        <div className="app-top-nav-fade" aria-hidden="true" />
       </div>
     );
   }
@@ -50,6 +51,7 @@ export function TopBackButton() {
       </div>
       <div className="app-top-nav-title">{title}</div>
       <div className="app-top-nav-placeholder" aria-hidden="true" />
+      <div className="app-top-nav-fade" aria-hidden="true" />
     </div>
   );
 }

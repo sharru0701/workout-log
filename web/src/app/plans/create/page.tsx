@@ -7,12 +7,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function PlanCreatePage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="플랜 만들기" note="생성 방식을 선택해 시작하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="생성 방식" />

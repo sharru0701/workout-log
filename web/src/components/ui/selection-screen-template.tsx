@@ -2,7 +2,6 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { BaseGroupedList, NavigationRow, SectionFootnote, SectionHeader } from "./settings-list";
-import { ScreenTitleCard } from "./screen-title-card";
 import { EmptyStateRows } from "./settings-state";
 
 type SelectionOption = {
@@ -15,7 +14,6 @@ type SelectionOption = {
 };
 
 type SelectionLayoutProps = {
-  title: ReactNode;
   children: ReactNode;
 };
 
@@ -86,10 +84,9 @@ function useFilteredOptions(options: SelectionOption[], query: string) {
   }, [options, query]);
 }
 
-function SelectionLayout({ title, children }: SelectionLayoutProps) {
+function SelectionLayout({ children }: SelectionLayoutProps) {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title={title} />
       {children}
     </div>
   );
@@ -151,11 +148,12 @@ export function SingleSelectionScreen({
   emptyDescription = "조건에 맞는 항목이 없습니다.",
   ariaLabel = "단일 선택 옵션",
 }: SingleSelectionScreenProps) {
+  void title;
   const [query, setQuery] = useState("");
   const filtered = useFilteredOptions(options, searchable ? query : "");
 
   return (
-    <SelectionLayout title={title}>
+    <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
       <section className="grid gap-2">
         <SectionHeader title={sectionTitle} />
@@ -195,12 +193,13 @@ export function MultiSelectionScreen({
   emptyDescription = "조건에 맞는 항목이 없습니다.",
   ariaLabel = "다중 선택 옵션",
 }: MultiSelectionScreenProps) {
+  void title;
   const [query, setQuery] = useState("");
   const filtered = useFilteredOptions(options, searchable ? query : "");
   const selectedSet = useMemo(() => new Set(selectedValues), [selectedValues]);
 
   return (
-    <SelectionLayout title={title}>
+    <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
       <section className="grid gap-2">
         <SectionHeader title={sectionTitle} />
@@ -250,8 +249,9 @@ export function PickerSelectionScreen({
   applyDescription = "입력값을 저장하고 이전 화면으로 돌아갑니다.",
   ariaLabel = "입력 값 선택",
 }: PickerSelectionScreenProps) {
+  void title;
   return (
-    <SelectionLayout title={title}>
+    <SelectionLayout>
       <section className="grid gap-2">
         <SectionHeader title={sectionTitle} />
         <BaseGroupedList ariaLabel={ariaLabel}>

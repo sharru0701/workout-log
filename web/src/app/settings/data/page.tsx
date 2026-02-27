@@ -7,12 +7,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function DataExportPage() {
   return (
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
-      <ScreenTitleCard title="데이터 내보내기" note="파일 형식을 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="내보내기 파일" />

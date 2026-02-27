@@ -6,12 +6,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function StatsIndexPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="통계" note="대시보드와 필터를 확인하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="대시보드" />

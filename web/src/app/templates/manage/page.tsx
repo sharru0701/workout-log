@@ -5,7 +5,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type TemplateItem = {
   id: string;
@@ -305,7 +304,6 @@ export default function TemplatesPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
-      <ScreenTitleCard title="Templates" note="템플릿 라이브러리를 정리하고 버전 분기를 관리합니다." />
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">

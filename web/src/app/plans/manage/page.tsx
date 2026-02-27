@@ -9,7 +9,6 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type TemplateItem = {
   id: string;
@@ -431,18 +430,6 @@ function PlansPageContent() {
               ? "당겨서 새로고침"
               : ""}
         </div>
-        <ScreenTitleCard
-          title="플랜"
-          note="커스텀 프로그램 생성 후 바로 운동 기록으로 이어집니다."
-          actions={
-            <button
-              className="haptic-tap ui-primary-button min-h-12 px-5 text-base"
-              onClick={() => setCreateSheetOpen(true)}
-            >
-              플랜 만들기
-            </button>
-          }
-        />
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="ios-section-heading">기본 흐름</div>

@@ -10,7 +10,6 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -243,7 +242,6 @@ export default function SettingsUxThresholdsPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
-      <ScreenTitleCard title="UX 기준치" note="대시보드 UX 임계치를 팀 정책에 맞게 조정하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="글로벌 기준치" />

@@ -6,12 +6,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function WorkoutTodayIndexPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="오늘 운동" note="기본 흐름만 따라가면 바로 기록할 수 있습니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="기본 흐름" description="운동 프로그램 선택 후 바로 기록을 시작하세요." />

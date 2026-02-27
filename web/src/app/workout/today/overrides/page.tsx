@@ -6,12 +6,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function WorkoutOverridesPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="세션 오버라이드" note="세션 대체 동작을 선택합니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="오버라이드 동작" />

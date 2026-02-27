@@ -6,12 +6,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function TemplatesIndexPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="템플릿" note="템플릿 작업을 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="라이브러리" />

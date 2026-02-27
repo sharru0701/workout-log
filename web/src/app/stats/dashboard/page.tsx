@@ -7,7 +7,6 @@ import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type Plan = {
   id: string;
@@ -1118,15 +1117,6 @@ export default function StatsPage() {
             ? "당겨서 새로고침"
             : ""}
       </div>
-      <ScreenTitleCard
-        title="통계 대시보드"
-        note={`조회 범위 준비 · 플랜: ${selectedPlanName ?? "전체 플랜"}`}
-        actions={
-          <button className="haptic-tap rounded-xl border px-4 py-2 text-sm font-semibold" onClick={() => setFiltersOpen(true)}>
-            필터
-          </button>
-        }
-      />
 
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="ios-section-heading">기본 흐름</div>

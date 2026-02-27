@@ -4,7 +4,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type Plan = {
   id: string;
@@ -22,20 +21,6 @@ type RecentGeneratedSession = {
 };
 
 const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
-const MONTH_NAMES = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-] as const;
 
 function dateOnlyInTimezone(date: Date, timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -87,11 +72,6 @@ function weekGrid(dateOnly: string) {
 
 function daysBetween(aDateOnly: string, bDateOnly: string) {
   return Math.floor((dateOnlyToUtcDate(aDateOnly).getTime() - dateOnlyToUtcDate(bDateOnly).getTime()) / 86_400_000);
-}
-
-function formatMonthLabel(dateOnly: string) {
-  const d = dateOnlyToUtcDate(dateOnly);
-  return `${MONTH_NAMES[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
 function dayOfMonth(dateOnly: string) {
@@ -193,11 +173,6 @@ export default function CalendarPage() {
   const anchorMonthKey = useMemo(() => monthStart(anchorDate).slice(0, 7), [anchorDate]);
   const today = dateOnlyInTimezone(new Date(), timezone);
 
-  const periodLabel = useMemo(() => {
-    if (viewMode === "month") return formatMonthLabel(anchorDate);
-    return `${cells[0]} to ${cells[cells.length - 1]}`;
-  }, [anchorDate, cells, viewMode]);
-
   async function generateForDate(dateOnly: string) {
     if (!planId) throw new Error("Select a plan");
     setLoading(true);
@@ -246,10 +221,6 @@ export default function CalendarPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard
-        title="Calendar"
-        note={selectedPlan ? `${selectedPlan.name} · ${periodLabel}` : "Choose a plan to generate by date"}
-      />
 
       <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <label className="flex flex-col gap-1 lg:col-span-2">

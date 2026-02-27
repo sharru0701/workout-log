@@ -6,12 +6,10 @@ import {
   SectionHeader,
   SubtitleRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function SettingsPage() {
   return (
     <div className="native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll">
-      <ScreenTitleCard title="설정" note="설정 도구를 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="데이터" />

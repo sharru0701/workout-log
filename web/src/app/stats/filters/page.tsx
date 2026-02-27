@@ -5,7 +5,6 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -57,7 +56,6 @@ export default async function StatsFiltersPage({
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="통계 필터" note="수정할 필터를 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="범위" />

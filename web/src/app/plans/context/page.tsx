@@ -5,7 +5,6 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -51,7 +50,6 @@ export default async function PlanContextPage({
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="생성 컨텍스트" note="수정할 값을 선택하세요." />
 
       <section className="grid gap-2">
         <SectionHeader title="컨텍스트 항목" />

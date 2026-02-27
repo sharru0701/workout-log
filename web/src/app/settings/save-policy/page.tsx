@@ -10,7 +10,6 @@ import {
   ToggleRow,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -68,7 +67,6 @@ export default function SettingsSavePolicyPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
-      <ScreenTitleCard title="저장 정책" note="토글 또는 값 Row를 눌러 저장합니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="실패 시뮬레이션" />

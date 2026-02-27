@@ -6,12 +6,10 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { ScreenTitleCard } from "@/components/ui/screen-title-card";
 
 export default function CalendarIndexPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <ScreenTitleCard title="캘린더" note="날짜 기반 세션 흐름을 엽니다." />
 
       <section className="grid gap-2">
         <SectionHeader title="세션 캘린더" />

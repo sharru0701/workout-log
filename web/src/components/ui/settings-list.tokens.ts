@@ -10,8 +10,7 @@ export const settingsListTokenDefaults = {
   "--settings-group-background": "color-mix(in srgb, var(--color-fill-surface, var(--bg-surface)) 94%, var(--color-fill-elevated, var(--bg-tertiary)) 6%)",
   "--settings-group-border-color": "color-mix(in srgb, var(--color-separator, var(--border-subtle)) 26%, transparent)",
   "--settings-row-divider-color": "color-mix(in srgb, var(--color-separator, var(--border-subtle)) 50%, transparent)",
-  "--settings-row-divider-inset-start":
-    "calc(var(--settings-row-padding-inline) + var(--settings-row-icon-size) + var(--settings-row-content-gap))",
+  "--settings-row-divider-inset-start": "var(--settings-row-padding-inline)",
   "--settings-row-divider-inset-end": "var(--settings-row-padding-inline)",
   "--settings-label-color": "var(--color-label-primary, var(--text-primary))",
   "--settings-description-color": "var(--color-label-secondary, var(--text-secondary))",
