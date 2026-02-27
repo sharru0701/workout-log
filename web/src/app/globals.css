@@ -1795,10 +1795,10 @@ body {
 }
 
 .app-shell-main {
-  --app-top-nav-fade-size: 1.52rem;
-  --app-top-nav-fade-overlap: 1.02rem;
-  --app-top-nav-content-gap: 0.24rem;
-  --app-top-nav-content-offset: calc(var(--app-top-nav-fade-size) + var(--app-top-nav-content-gap));
+  --app-top-nav-fade-size: 2.2rem;
+  --app-top-nav-content-gap: 0.18rem;
+  --app-top-nav-content-offset: var(--app-top-nav-content-gap);
+  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.66) + var(--app-top-nav-content-gap));
   padding: 0 var(--space-4) calc(6rem + env(safe-area-inset-bottom));
 }
 
@@ -1820,6 +1820,7 @@ body {
 }
 
 .app-top-nav {
+  --app-top-nav-fade-active: 0px;
   width: auto;
   margin-inline: -1rem;
   position: sticky;
@@ -1829,17 +1830,42 @@ body {
   overflow: visible;
   padding-inline: 1rem;
   padding-top: calc(var(--safe-top) + 11px);
-  padding-bottom: 0.66rem;
+  padding-bottom: calc(0.66rem + var(--app-top-nav-fade-active));
   min-height: 3.52rem;
   margin-bottom: var(--app-top-nav-content-offset);
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   column-gap: 0.72rem;
-  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
+  background: color-mix(in srgb, var(--bg-primary) 48%, transparent);
   border-bottom: 0;
-  -webkit-backdrop-filter: blur(26px) saturate(1.15);
-  backdrop-filter: blur(26px) saturate(1.15);
+  -webkit-backdrop-filter: blur(32px) saturate(1.18);
+  backdrop-filter: blur(32px) saturate(1.18);
+}
+
+.app-top-nav.app-top-nav--ios {
+  --app-top-nav-fade-active: var(--app-top-nav-fade-size);
+  margin-bottom: var(--app-top-nav-ios-content-offset);
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
+    rgb(0 0 0 / 88%) calc(100% - (var(--app-top-nav-fade-size) * 0.7)),
+    rgb(0 0 0 / 40%) calc(100% - (var(--app-top-nav-fade-size) * 0.36)),
+    rgb(0 0 0 / 0%) 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 100%) 0%,
+    rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
+    rgb(0 0 0 / 88%) calc(100% - (var(--app-top-nav-fade-size) * 0.7)),
+    rgb(0 0 0 / 40%) calc(100% - (var(--app-top-nav-fade-size) * 0.36)),
+    rgb(0 0 0 / 0%) 100%
+  );
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
 .app-top-nav + .home-screen,
@@ -1848,22 +1874,9 @@ body {
   padding-top: 0;
 }
 
-.app-top-nav-fade {
-  position: absolute;
-  inset-inline: 0;
-  inset-block-start: calc(100% - var(--app-top-nav-fade-overlap));
-  block-size: calc(var(--app-top-nav-fade-size) + var(--app-top-nav-fade-overlap));
-  pointer-events: none;
-  -webkit-backdrop-filter: blur(26px) saturate(1.16);
-  backdrop-filter: blur(26px) saturate(1.16);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--bg-primary) 92%, transparent) 0%,
-    color-mix(in srgb, var(--bg-primary) 92%, transparent) 18%,
-    color-mix(in srgb, var(--bg-primary) 68%, transparent) 46%,
-    color-mix(in srgb, var(--bg-primary) 38%, transparent) 74%,
-    transparent 100%
-  );
+.app-top-nav > * {
+  position: relative;
+  z-index: 3;
 }
 
 .app-top-back-wrap {
@@ -2424,10 +2437,10 @@ textarea::placeholder {
 
 @media (max-width: 430px) {
   .app-shell-main {
-    --app-top-nav-fade-size: 1.22rem;
-    --app-top-nav-fade-overlap: 0.82rem;
-    --app-top-nav-content-gap: 0.2rem;
-    --app-top-nav-content-offset: calc(var(--app-top-nav-fade-size) + var(--app-top-nav-content-gap));
+    --app-top-nav-fade-size: 1.7rem;
+    --app-top-nav-content-gap: 0.16rem;
+    --app-top-nav-content-offset: var(--app-top-nav-content-gap);
+    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.68) + var(--app-top-nav-content-gap));
     padding-inline: 0.78rem;
     padding-bottom: calc(5.92rem + env(safe-area-inset-bottom));
   }
@@ -2436,7 +2449,7 @@ textarea::placeholder {
     margin-inline: -0.78rem;
     padding-inline: 0.78rem;
     padding-top: calc(var(--safe-top) + 11px);
-    padding-bottom: 0.54rem;
+    padding-bottom: calc(0.54rem + var(--app-top-nav-fade-active));
     margin-bottom: var(--app-top-nav-content-offset);
     min-height: 3.3rem;
   }

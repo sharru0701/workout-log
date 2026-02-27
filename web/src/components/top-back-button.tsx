@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 function titleFromPathname(pathname: string) {
@@ -17,11 +17,34 @@ function titleFromPathname(pathname: string) {
   return "Workout Log";
 }
 
+function detectIosSafari() {
+  if (typeof navigator === "undefined") return false;
+
+  const ua = navigator.userAgent;
+  const platform = navigator.platform;
+  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
+  const isIosDevice = /iPad|iPhone|iPod/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
+  if (!isIosDevice) return false;
+
+  const excludedEngines = /(CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|YaBrowser|SamsungBrowser|UCBrowser)/i;
+  return /Safari/i.test(ua) && !excludedEngines.test(ua);
+}
+
+function subscribeNoop() {
+  return () => undefined;
+}
+
+function useIsIosSafari() {
+  return useSyncExternalStore(subscribeNoop, detectIosSafari, () => false);
+}
+
 export function TopBackButton() {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const title = titleFromPathname(pathname);
   const isRoot = pathname === "/";
+  const isIosSafari = useIsIosSafari();
+  const topNavClassName = isIosSafari ? "app-top-nav app-top-nav--ios" : "app-top-nav";
 
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -33,17 +56,16 @@ export function TopBackButton() {
 
   if (isRoot) {
     return (
-      <div className="app-top-nav">
+      <div className={topNavClassName}>
         <div className="app-top-nav-placeholder" aria-hidden="true" />
         <div className="app-top-nav-title">{title}</div>
         <div className="app-top-nav-placeholder" aria-hidden="true" />
-        <div className="app-top-nav-fade" aria-hidden="true" />
       </div>
     );
   }
 
   return (
-    <div className="app-top-nav">
+    <div className={topNavClassName}>
       <div className="app-top-back-wrap">
         <button type="button" className="haptic-tap app-top-back-button" onClick={handleBack} aria-label="Go back">
           <span className="app-top-back-icon" aria-hidden="true" />
@@ -51,7 +73,6 @@ export function TopBackButton() {
       </div>
       <div className="app-top-nav-title">{title}</div>
       <div className="app-top-nav-placeholder" aria-hidden="true" />
-      <div className="app-top-nav-fade" aria-hidden="true" />
     </div>
   );
 }
