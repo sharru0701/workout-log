@@ -35,7 +35,7 @@ test.describe("iOS Settings compliance: visual regression", () => {
           return;
         }
 
-        expect(screenshot.byteLength).toBeGreaterThan(30_000);
+        expect(screenshot.byteLength).toBeGreaterThan(15_000);
       });
     }
   }

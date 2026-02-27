@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useId, useMemo, useState, type ReactNode } from "react";
 import { BaseGroupedList, NavigationRow, SectionFootnote, SectionHeader } from "./settings-list";
 import { EmptyStateRows } from "./settings-state";
 
@@ -250,6 +250,8 @@ export function PickerSelectionScreen({
   ariaLabel = "입력 값 선택",
 }: PickerSelectionScreenProps) {
   void title;
+  const inputId = useId();
+
   return (
     <SelectionLayout>
       <section className="grid gap-2">
@@ -257,8 +259,11 @@ export function PickerSelectionScreen({
         <BaseGroupedList ariaLabel={ariaLabel}>
           <li>
             <div className="flex flex-col gap-1 px-4 py-3">
-              <span className="ui-card-label">{inputLabel}</span>
+              <label className="ui-card-label" htmlFor={inputId}>
+                {inputLabel}
+              </label>
               <input
+                id={inputId}
                 className="rounded-lg border px-3 py-2"
                 type={inputType}
                 value={value}

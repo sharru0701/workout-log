@@ -51,8 +51,8 @@ test.describe("iOS Settings compliance: layout/touch/typography/color", () => {
           minSectionGap = Math.min(minSectionGap, next.top - prev.bottom);
         }
 
-        const title = document.querySelector<HTMLElement>(".type-title");
-        const caption = document.querySelector<HTMLElement>(".type-caption");
+        const title = document.querySelector<HTMLElement>(".type-title, [data-settings-section-header='true'] h2");
+        const caption = document.querySelector<HTMLElement>(".type-caption, [data-settings-footnote='true']");
         const bodyStyle = window.getComputedStyle(document.body);
         const titleStyle = title ? window.getComputedStyle(title) : bodyStyle;
         const captionStyle = caption ? window.getComputedStyle(caption) : bodyStyle;
