@@ -47,16 +47,18 @@ function getServiceWorkerScriptUrl() {
 }
 
 export function PwaRegister() {
+  const disableServiceWorker = process.env.NEXT_PUBLIC_DISABLE_SW === "1";
+  const canUseInstallPrompt = process.env.NODE_ENV === "production";
+  const canShowIosInstallHint = !disableServiceWorker && canUseInstallPrompt && isIosSafariBrowser();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [updateReady, setUpdateReady] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
-  const [showIosInstallHint, setShowIosInstallHint] = useState(false);
   const [dismissedIosHint, setDismissedIosHint] = useState(false);
   const isReloadingForUpdate = useRef(false);
 
   useEffect(() => {
+    if (disableServiceWorker) return;
     if (typeof window === "undefined") return;
-    const canUseInstallPrompt = process.env.NODE_ENV === "production";
 
     const media = window.matchMedia("(display-mode: standalone)");
     const syncMode = () => setIsStandalone(isStandaloneMode());
@@ -79,11 +81,8 @@ export function PwaRegister() {
     };
 
     if (canUseInstallPrompt) {
-      setShowIosInstallHint(isIosSafariBrowser());
       window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.addEventListener("appinstalled", onAppInstalled);
-    } else {
-      setShowIosInstallHint(false);
     }
 
     return () => {
@@ -97,9 +96,10 @@ export function PwaRegister() {
         window.removeEventListener("appinstalled", onAppInstalled);
       }
     };
-  }, []);
+  }, [disableServiceWorker, canUseInstallPrompt]);
 
   useEffect(() => {
+    if (disableServiceWorker) return;
     if (typeof window === "undefined") return;
     if (!("serviceWorker" in navigator)) return;
     if (process.env.NODE_ENV !== "production") {
@@ -155,7 +155,9 @@ export function PwaRegister() {
     }
 
     return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
-  }, []);
+  }, [disableServiceWorker]);
+
+  if (disableServiceWorker) return null;
 
   async function handleInstall() {
     if (!deferredPrompt) return;
@@ -177,12 +179,12 @@ export function PwaRegister() {
   }
 
   if ((isStandalone || !deferredPrompt) && !updateReady) {
-    if (!showIosInstallHint || isStandalone || dismissedIosHint) return null;
+    if (!canShowIosInstallHint || isStandalone || dismissedIosHint) return null;
   }
 
   return (
     <div className="app-pwa-stack" aria-live="polite">
-      {showIosInstallHint && !isStandalone && !deferredPrompt && !dismissedIosHint && (
+      {canShowIosInstallHint && !isStandalone && !deferredPrompt && !dismissedIosHint && (
         <div className="app-pwa-banner">
           <span className="app-pwa-text">In Safari: Share menu → Add to Home Screen.</span>
           <div className="app-pwa-actions">

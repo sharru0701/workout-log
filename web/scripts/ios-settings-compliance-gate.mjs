@@ -20,16 +20,19 @@ const steps = [
       "--project",
       "chromium",
     ],
+    env: {
+      NEXT_PUBLIC_DISABLE_SW: "1",
+    },
   },
 ];
 
-function runStep(label, command) {
+function runStep(label, command, env = {}) {
   console.log(`\n==> ${label}`);
   console.log(`$ ${command.join(" ")}`);
   const result = spawnSync(command[0], command.slice(1), {
     stdio: "inherit",
     shell: process.platform === "win32",
-    env: process.env,
+    env: { ...process.env, ...env },
   });
 
   if (result.status !== 0) {
@@ -38,7 +41,7 @@ function runStep(label, command) {
 }
 
 for (const step of steps) {
-  runStep(step.label, step.command);
+  runStep(step.label, step.command, step.env);
 }
 
 console.log("\nAll iOS Settings compliance gates passed.");
