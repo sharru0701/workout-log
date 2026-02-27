@@ -118,6 +118,11 @@ Install service:
     sudo systemctl enable --now workoutlog.service
     sudo systemctl status workoutlog.service
 
+Notes:
+    - systemd start now uses `scripts/restart_workoutlog.sh` (migration + healthcheck).
+    - if `.last_successful_web_sha` exists, restart uses that SHA as default `WEB_IMAGE_TAG`
+      to avoid falling back to an older local `latest` image.
+
 ------------------------------------------------------------
 
 6) Update After Git Pull
