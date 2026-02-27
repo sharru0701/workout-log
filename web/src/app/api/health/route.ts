@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import pkg from "../../../../package.json";
 
@@ -24,21 +25,13 @@ type HealthCheckResult = {
       localCount: number;
       appliedCount: number;
       pending: number;
+      tableQualifiedName: string | null;
       latestAppliedAt: string | null;
       latestAppliedHash: string | null;
     };
   };
   error?: string;
 };
-
-function parseNumber(value: unknown, fallback = 0) {
-  if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
-    const parsed = Number(value);
-    if (Number.isFinite(parsed)) return parsed;
-  }
-  return fallback;
-}
 
 function parseRequiredTables(raw: string | null) {
   const parsed = (raw ?? "")
@@ -97,17 +90,13 @@ async function GETImpl(req: Request) {
       return NextResponse.json(payload, { status: payload.ok ? 200 : 503 });
     }
 
-    const [localCount, appliedRow, latestAppliedRow] = await Promise.all([
+    const [localCount, migrationLedger] = await Promise.all([
       readLocalMigrationCount(),
-      db.execute<{ count: number | string }>(sql`select count(*)::int as count from "__drizzle_migrations"`),
-      db.execute<{ created_at: string | null; hash: string | null }>(
-        sql`select created_at, hash from "__drizzle_migrations" order by created_at desc limit 1`,
-      ),
+      readMigrationLedgerSnapshot(),
     ]);
 
-    const appliedCount = parseNumber(appliedRow.rows[0]?.count, 0);
-    const pending = Math.max(0, localCount - appliedCount);
-    const latestApplied = latestAppliedRow.rows[0];
+    const appliedCount = migrationLedger.appliedCount;
+    const pending = migrationLedger.tableQualifiedName ? Math.max(0, localCount - appliedCount) : localCount;
 
     const ok = missingTables.length === 0 && pending === 0;
     const payload: HealthCheckResult = {
@@ -125,15 +114,18 @@ async function GETImpl(req: Request) {
           localCount,
           appliedCount,
           pending,
-          latestAppliedAt: latestApplied?.created_at ?? null,
-          latestAppliedHash: latestApplied?.hash ?? null,
+          tableQualifiedName: migrationLedger.tableQualifiedName,
+          latestAppliedAt: migrationLedger.latestAppliedAt,
+          latestAppliedHash: migrationLedger.latestAppliedHash,
         },
       },
       error: ok
         ? undefined
         : missingTables.length > 0
           ? "required tables missing"
-          : "pending migrations detected",
+          : migrationLedger.tableQualifiedName
+            ? "pending migrations detected"
+            : "migration metadata table missing",
     };
 
     return NextResponse.json(payload, { status: ok ? 200 : 503 });

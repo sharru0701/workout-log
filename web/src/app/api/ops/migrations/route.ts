@@ -3,6 +3,7 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
@@ -38,6 +39,7 @@ type OpsMigrationResponse = {
       localCount: number;
       appliedCount: number;
       pending: number;
+      tableQualifiedName: string | null;
     };
     telemetry: {
       available: boolean;
@@ -96,14 +98,14 @@ async function GETImpl(req: Request) {
   const lookbackMinutes = parseBoundedInt(searchParams.get("lookbackMinutes"), 120, 5, 1440);
   const limit = parseBoundedInt(searchParams.get("limit"), 20, 1, 100);
 
-  const [localCount, appliedCountRow, telemetryTableRow] = await Promise.all([
+  const [localCount, migrationLedger, telemetryTableRow] = await Promise.all([
     readLocalMigrationCount(),
-    db.execute<{ count: number | string }>(sql`select count(*)::int as count from "__drizzle_migrations"`),
+    readMigrationLedgerSnapshot(),
     db.execute<{ regclass: string | null }>(sql`select to_regclass('public.migration_run_log') as regclass`),
   ]);
 
-  const appliedCount = parseNumber(appliedCountRow.rows[0]?.count, 0);
-  const pending = Math.max(0, localCount - appliedCount);
+  const appliedCount = migrationLedger.appliedCount;
+  const pending = migrationLedger.tableQualifiedName ? Math.max(0, localCount - appliedCount) : localCount;
   const telemetryAvailable = Boolean(telemetryTableRow.rows[0]?.regclass);
 
   const alerts: MigrationAlertSummary = {
@@ -180,6 +182,10 @@ async function GETImpl(req: Request) {
   const reasons: string[] = [];
   let status: OpsMigrationStatus = "ok";
 
+  if (!migrationLedger.tableQualifiedName) {
+    status = "critical";
+    reasons.push("migration_metadata_missing");
+  }
   if (pending > 0) {
     status = "critical";
     reasons.push("pending_migrations");
@@ -206,6 +212,7 @@ async function GETImpl(req: Request) {
         localCount,
         appliedCount,
         pending,
+        tableQualifiedName: migrationLedger.tableQualifiedName,
       },
       telemetry: {
         available: telemetryAvailable,
