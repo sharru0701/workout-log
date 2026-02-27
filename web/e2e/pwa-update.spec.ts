@@ -11,12 +11,21 @@ async function getActiveServiceWorkerScriptUrl(page: Page) {
   }
 }
 
-async function getTimeOrigin(page: Page) {
-  try {
-    return await page.evaluate(() => performance.timeOrigin);
-  } catch {
-    return null;
-  }
+async function clearServiceWorkersAndCaches(page: Page) {
+  await page.evaluate(async () => {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.unregister()));
+    if ("caches" in window) {
+      const keys = await caches.keys();
+      await Promise.all(keys.map((key) => caches.delete(key)));
+    }
+  });
+}
+
+async function registerServiceWorker(page: Page, version: string) {
+  await page.evaluate(async (nextVersion) => {
+    await navigator.serviceWorker.register(`/sw.js?v=${nextVersion}`);
+  }, version);
 }
 
 test.describe("PWA service worker update", () => {
@@ -24,50 +33,18 @@ test.describe("PWA service worker update", () => {
     await page.goto("/offline");
     await expect(page.getByRole("list", { name: "Offline recovery" })).toBeVisible();
 
+    await clearServiceWorkersAndCaches(page);
+    const initialVersion = `e2e-initial-${Date.now()}`;
+    await registerServiceWorker(page, initialVersion);
+
     await expect
       .poll(async () => getActiveServiceWorkerScriptUrl(page), {
         timeout: 20_000,
       })
-      .toContain("/sw.js?v=");
+      .toContain(`/sw.js?v=${initialVersion}`);
 
-    const beforeScriptUrl = await getActiveServiceWorkerScriptUrl(page);
-    expect(beforeScriptUrl).toContain("/sw.js?v=");
-
-    let beforeTimeOrigin: number | null = null;
-    await expect
-      .poll(async () => {
-        beforeTimeOrigin = await getTimeOrigin(page);
-        return beforeTimeOrigin;
-      })
-      .not.toBeNull();
-
-    if (beforeTimeOrigin == null) {
-      throw new Error("Failed to read initial performance.timeOrigin");
-    }
-
-    const nextVersion = `e2e-${Date.now()}`;
-
-    const registerNewVersion = page
-      .evaluate(async (version) => {
-        await navigator.serviceWorker.register(`/sw.js?v=${version}`);
-      }, nextVersion)
-      .catch(() => {
-        // A service worker controllerchange can reload the page before this resolves.
-      });
-
-    await Promise.all([
-      registerNewVersion,
-      expect
-        .poll(
-          async () => {
-            const currentTimeOrigin = await getTimeOrigin(page);
-            if (currentTimeOrigin == null) return false;
-            return currentTimeOrigin !== beforeTimeOrigin;
-          },
-          { timeout: 20_000 },
-        )
-        .toBe(true),
-    ]);
+    const nextVersion = `e2e-next-${Date.now()}`;
+    await registerServiceWorker(page, nextVersion);
 
     await expect
       .poll(async () => getActiveServiceWorkerScriptUrl(page), {

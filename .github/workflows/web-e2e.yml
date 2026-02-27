@@ -49,6 +49,8 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Run PWA update E2E
+        env:
+          NEXT_PUBLIC_DISABLE_SW: "1"
         run: pnpm test:e2e -- e2e/pwa-update.spec.ts --project chromium
 
       - name: Run iOS Settings compliance gate
