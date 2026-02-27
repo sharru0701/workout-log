@@ -19,8 +19,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm build
 
 FROM base AS runner
+ARG APP_VERSION=unknown
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV APP_VERSION=${APP_VERSION}
 WORKDIR /app
 
 COPY --from=builder /app/.next ./.next

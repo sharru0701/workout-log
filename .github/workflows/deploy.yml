@@ -53,6 +53,8 @@ jobs:
           context: ./web
           file: ./web/Dockerfile
           push: true
+          build-args: |
+            APP_VERSION=${{ github.sha }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -165,12 +167,19 @@ jobs:
           echo "Healthcheck URL: ${HEALTHCHECK_URL}"
 
           for i in $(seq 1 18); do
-            if ssh -T -o StrictHostKeyChecking=yes \
+            response="$(ssh -T -o StrictHostKeyChecking=yes \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' >/dev/null"; then
-              echo "Healthcheck passed (${i}/18)"
-              exit 0
+              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}'" || true)"
+
+            if [[ -n "${response}" ]]; then
+              actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');try{const d=JSON.parse(raw||'{}');process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
+              if [[ "${actual_version}" == "${{ github.sha }}" ]]; then
+                echo "Healthcheck passed with expected version (${i}/18): ${actual_version}"
+                exit 0
+              fi
+              echo "Healthcheck response version mismatch (${i}/18): got='${actual_version}' expected='${{ github.sha }}'"
             fi
+
             echo "Healthcheck retry (${i}/18)"
             sleep 5
           done
