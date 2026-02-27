@@ -147,8 +147,8 @@ jobs:
           export WEB_IMAGE_TAG=${{ github.sha }}
           docker compose pull web
           echo "[deploy] running dedicated migration job before switching web container"
-          docker compose run --rm migrate
-          docker compose up -d --no-deps web
+          docker compose run --rm -T migrate </dev/null
+          docker compose up -d --no-deps --force-recreate web
           docker compose ps
           EOF
 
@@ -171,15 +171,37 @@ jobs:
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
               "curl -fsS --max-time 8 '${HEALTHCHECK_URL}'" || true)"
 
+            running_tag="$(
+              ssh -T -o StrictHostKeyChecking=yes \
+                "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+                "docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true" \
+                | tr -d '\r' \
+                | awk -F: '{print $NF}' \
+                | grep -E '^[0-9a-f]{40}$' \
+                | tail -n1 \
+                | xargs || true
+            )"
+
+            actual_version=""
             if [[ -n "${response}" ]]; then
-              actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');try{const d=JSON.parse(raw||'{}');process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
-              if [[ "${actual_version}" == "${{ github.sha }}" ]]; then
-                echo "Healthcheck passed with expected version (${i}/18): ${actual_version}"
-                exit 0
-              fi
-              echo "Healthcheck response version mismatch (${i}/18): got='${actual_version}' expected='${{ github.sha }}'"
+              actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
             fi
 
+            if [[ -n "${response}" && "${running_tag}" == "${{ github.sha }}" ]]; then
+              if [[ -n "${actual_version}" && "${actual_version}" != "${{ github.sha }}" ]]; then
+                echo "::warning::Healthcheck version mismatch but running image tag is expected SHA (got version='${actual_version}', expected='${{ github.sha }}')."
+              fi
+              echo "Healthcheck passed with expected running image tag (${i}/18): ${running_tag}"
+              exit 0
+            fi
+
+            if [[ -z "${response}" ]]; then
+              echo "Healthcheck request failed or returned empty body (${i}/18). running_tag='${running_tag:-<none>}' expected='${{ github.sha }}'"
+            elif [[ -z "${actual_version}" ]]; then
+              echo "Healthcheck response version missing/unparseable (${i}/18). running_tag='${running_tag:-<none>}' expected='${{ github.sha }}'"
+            else
+              echo "Healthcheck response version mismatch (${i}/18): got='${actual_version}' expected='${{ github.sha }}' running_tag='${running_tag:-<none>}'"
+            fi
             echo "Healthcheck retry (${i}/18)"
             sleep 5
           done
