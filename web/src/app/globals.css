@@ -1795,10 +1795,11 @@ body {
 }
 
 .app-shell-main {
-  --app-top-nav-fade-size: 2.2rem;
+  --app-top-nav-fade-size: 2.8rem;
   --app-top-nav-content-gap: 0.18rem;
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.66) + var(--app-top-nav-content-gap));
+  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.72) + var(--app-top-nav-content-gap));
+  --app-top-nav-ios-screen-pad: clamp(0.56rem, calc(var(--app-top-nav-fade-size) * 0.24), 0.98rem);
   padding: 0 var(--space-4) calc(6rem + env(safe-area-inset-bottom));
 }
 
@@ -1846,20 +1847,23 @@ body {
 .app-top-nav.app-top-nav--ios {
   --app-top-nav-fade-active: var(--app-top-nav-fade-size);
   margin-bottom: var(--app-top-nav-ios-content-offset);
+  background: color-mix(in srgb, var(--bg-primary) 58%, transparent);
   -webkit-mask-image: linear-gradient(
     to bottom,
     rgb(0 0 0 / 100%) 0%,
     rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
-    rgb(0 0 0 / 88%) calc(100% - (var(--app-top-nav-fade-size) * 0.7)),
-    rgb(0 0 0 / 40%) calc(100% - (var(--app-top-nav-fade-size) * 0.36)),
+    rgb(0 0 0 / 92%) calc(100% - (var(--app-top-nav-fade-size) * 0.72)),
+    rgb(0 0 0 / 68%) calc(100% - (var(--app-top-nav-fade-size) * 0.5)),
+    rgb(0 0 0 / 30%) calc(100% - (var(--app-top-nav-fade-size) * 0.24)),
     rgb(0 0 0 / 0%) 100%
   );
   mask-image: linear-gradient(
     to bottom,
     rgb(0 0 0 / 100%) 0%,
     rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
-    rgb(0 0 0 / 88%) calc(100% - (var(--app-top-nav-fade-size) * 0.7)),
-    rgb(0 0 0 / 40%) calc(100% - (var(--app-top-nav-fade-size) * 0.36)),
+    rgb(0 0 0 / 92%) calc(100% - (var(--app-top-nav-fade-size) * 0.72)),
+    rgb(0 0 0 / 68%) calc(100% - (var(--app-top-nav-fade-size) * 0.5)),
+    rgb(0 0 0 / 30%) calc(100% - (var(--app-top-nav-fade-size) * 0.24)),
     rgb(0 0 0 / 0%) 100%
   );
   -webkit-mask-size: 100% 100%;
@@ -1872,6 +1876,12 @@ body {
 .app-top-nav + .tab-screen,
 .app-top-nav + .settings-screen {
   padding-top: 0;
+}
+
+.app-top-nav.app-top-nav--ios + .home-screen,
+.app-top-nav.app-top-nav--ios + .tab-screen,
+.app-top-nav.app-top-nav--ios + .settings-screen {
+  padding-top: var(--app-top-nav-ios-screen-pad);
 }
 
 .app-top-nav > * {
@@ -2437,10 +2447,11 @@ textarea::placeholder {
 
 @media (max-width: 430px) {
   .app-shell-main {
-    --app-top-nav-fade-size: 1.7rem;
+    --app-top-nav-fade-size: 2.3rem;
     --app-top-nav-content-gap: 0.16rem;
     --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.68) + var(--app-top-nav-content-gap));
+    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.74) + var(--app-top-nav-content-gap));
+    --app-top-nav-ios-screen-pad: clamp(0.64rem, calc(var(--app-top-nav-fade-size) * 0.27), 1.04rem);
     padding-inline: 0.78rem;
     padding-bottom: calc(5.92rem + env(safe-area-inset-bottom));
   }
