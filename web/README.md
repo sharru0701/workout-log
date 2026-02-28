@@ -1,36 +1,64 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Workout Log Web
 
-## Getting Started
+추가 문서:
+- `git clone` 직후 온보딩: [`docs/local-dev-after-clone-guide.md`](./docs/local-dev-after-clone-guide.md)
+- 기여/형상관리 규칙: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 
-First, run the development server:
+## Local Dev (Docker, Recommended)
+
+Run from repository root:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+./dev up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+What this does:
+- starts Postgres (`127.0.0.1:5432`)
+- installs dependencies inside container on first run
+- runs DB migrations
+- starts Next.js dev server on `http://localhost:3000`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful commands:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# stop containers
+./dev down
 
-## Learn More
+# stop + delete DB data volume
+./dev down:volumes
 
-To learn more about Next.js, take a look at the following resources:
+# follow logs
+./dev logs
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# run seed manually
+./dev seed
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Optional env overrides:
 
-## Deploy on Vercel
+```bash
+# run seed automatically at startup
+RUN_DB_SEED=1 ./dev up
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# run on different host ports
+WEB_PORT=3001 POSTGRES_PORT=5433 ./dev up
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Local Dev (Without Docker)
+
+```bash
+pnpm run dev:check
+pnpm install
+pnpm db:migrate
+pnpm db:seed
+pnpm dev
+```
+
+Required local env (`.env.local`):
+
+```bash
+DATABASE_URL=postgres://app:app@127.0.0.1:5432/workoutlog
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+WORKOUT_AUTH_USER_ID=local-user
+NEXT_PUBLIC_DISABLE_SW=1
+```

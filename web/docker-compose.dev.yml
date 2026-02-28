@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgres:16
+    container_name: workoutlog-postgres-dev
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: workoutlog
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - workoutlog_pgdata_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d workoutlog"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: workoutlog-web-dev
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://app:app@db:5432/workoutlog
+      NEXT_PUBLIC_APP_URL: http://localhost:${WEB_PORT:-3000}
+      WORKOUT_AUTH_USER_ID: ${WORKOUT_AUTH_USER_ID:-local-user}
+      NEXT_PUBLIC_DISABLE_SW: ${NEXT_PUBLIC_DISABLE_SW:-1}
+      WATCHPACK_POLLING: ${WATCHPACK_POLLING:-true}
+      CHOKIDAR_USEPOLLING: ${CHOKIDAR_USEPOLLING:-1}
+      PORT: 3000
+      SKIP_DB_MIGRATE: ${SKIP_DB_MIGRATE:-0}
+      RUN_DB_SEED: ${RUN_DB_SEED:-0}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    volumes:
+      - ./:/app
+      - workoutlog_node_modules_dev:/app/node_modules
+      - workoutlog_pnpm_store_dev:/pnpm/store
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["bash", "scripts/docker-dev-start.sh"]
+
+volumes:
+  workoutlog_pgdata_dev:
+  workoutlog_node_modules_dev:
+  workoutlog_pnpm_store_dev:

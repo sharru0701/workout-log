@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="$ROOT_DIR/web/docker-compose.dev.yml"
+
+usage() {
+  cat <<'EOF'
+Usage: ./dev [command]
+
+Commands:
+  up              Build and start local dev stack (default)
+  up:detached     Build and start in background
+  down            Stop stack
+  down:volumes    Stop and remove volumes
+  logs            Follow web/db logs
+  migrate         Run DB migrations in web container
+  seed            Run DB seed in web container
+EOF
+}
+
+cmd="${1:-up}"
+
+if [[ ! -f "$COMPOSE_FILE" ]]; then
+  echo "[dev] Missing compose file: $COMPOSE_FILE" >&2
+  exit 1
+fi
+
+case "$cmd" in
+  up)
+    docker compose -f "$COMPOSE_FILE" up --build
+    ;;
+  up:detached)
+    docker compose -f "$COMPOSE_FILE" up -d --build
+    ;;
+  down)
+    docker compose -f "$COMPOSE_FILE" down
+    ;;
+  down:volumes)
+    docker compose -f "$COMPOSE_FILE" down -v
+    ;;
+  logs)
+    docker compose -f "$COMPOSE_FILE" logs -f web db
+    ;;
+  migrate)
+    docker compose -f "$COMPOSE_FILE" exec web pnpm db:migrate
+    ;;
+  seed)
+    docker compose -f "$COMPOSE_FILE" exec web pnpm db:seed
+    ;;
+  -h | --help | help)
+    usage
+    ;;
+  *)
+    echo "[dev] Unknown command: $cmd" >&2
+    usage
+    exit 1
+    ;;
+esac
