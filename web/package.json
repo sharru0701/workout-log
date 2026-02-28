@@ -4,6 +4,13 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbo",
+    "docker:dev:up": "docker compose -f docker-compose.dev.yml up --build",
+    "docker:dev:up:detached": "docker compose -f docker-compose.dev.yml up -d --build",
+    "docker:dev:down": "docker compose -f docker-compose.dev.yml down",
+    "docker:dev:down:volumes": "docker compose -f docker-compose.dev.yml down -v",
+    "docker:dev:logs": "docker compose -f docker-compose.dev.yml logs -f web db",
+    "docker:dev:migrate": "docker compose -f docker-compose.dev.yml exec web pnpm db:migrate",
+    "docker:dev:seed": "docker compose -f docker-compose.dev.yml exec web pnpm db:seed",
     "dev:check": "bash scripts/local-dev-check.sh",
     "dev:webpack": "next dev --webpack",
     "build": "next build",
