@@ -4,18 +4,12 @@
 - `git clone` 직후 온보딩: [`docs/local-dev-after-clone-guide.md`](./docs/local-dev-after-clone-guide.md)
 - 기여/형상관리 규칙: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 
-루트에서 실행:
+## Local Dev (Docker, Recommended)
+
+Run from repository root:
 
 ```bash
 ./dev up
-```
-
-## Local Dev (Docker, Recommended)
-
-Run from `/home/sharr/projects/workout-log/web`:
-
-```bash
-pnpm docker:dev:up
 ```
 
 What this does:
@@ -28,26 +22,26 @@ Useful commands:
 
 ```bash
 # stop containers
-pnpm docker:dev:down
+./dev down
 
 # stop + delete DB data volume
-pnpm docker:dev:down:volumes
+./dev down:volumes
 
 # follow logs
-pnpm docker:dev:logs
+./dev logs
 
 # run seed manually
-pnpm docker:dev:seed
+./dev seed
 ```
 
 Optional env overrides:
 
 ```bash
 # run seed automatically at startup
-RUN_DB_SEED=1 pnpm docker:dev:up
+RUN_DB_SEED=1 ./dev up
 
 # run on different host ports
-WEB_PORT=3001 POSTGRES_PORT=5433 pnpm docker:dev:up
+WEB_PORT=3001 POSTGRES_PORT=5433 ./dev up
 ```
 
 ## Local Dev (Without Docker)
