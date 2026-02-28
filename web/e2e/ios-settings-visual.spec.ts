@@ -11,8 +11,9 @@ test.describe("iOS Settings compliance: visual regression", () => {
     for (const colorScheme of colorSchemes) {
       test(`${target.id} (${colorScheme}) snapshot`, async ({ page }) => {
         await page.emulateMedia({ colorScheme });
-        await page.goto(target.path);
-        await page.waitForLoadState("networkidle");
+        await page.goto(target.path, { waitUntil: "domcontentloaded" });
+        await expect(page.locator("[data-settings-grouped-list='true']").first()).toBeVisible();
+        await page.waitForTimeout(120);
 
         await page.addStyleTag({
           content:

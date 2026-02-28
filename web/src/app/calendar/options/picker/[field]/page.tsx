@@ -37,6 +37,10 @@ export default function CalendarOptionsPickerFieldPage() {
   const rawField = String(params?.field ?? "");
   const config = useMemo(() => configs[rawField as PickerField], [rawField]);
   const returnTo = normalizeReturnTo(searchParams.get("returnTo"), "/calendar/options");
+  const safeConfig = config ?? configs["open-time"];
+  const [value, setValue] = useState(
+    readParamFromHref(returnTo, safeConfig.paramKey, safeConfig.defaultValue),
+  );
 
   if (!config) {
     return (
@@ -49,8 +53,6 @@ export default function CalendarOptionsPickerFieldPage() {
       </div>
     );
   }
-
-  const [value, setValue] = useState(readParamFromHref(returnTo, config.paramKey, config.defaultValue));
 
   return (
     <PickerSelectionScreen

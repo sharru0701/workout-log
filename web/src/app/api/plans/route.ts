@@ -80,7 +80,7 @@ async function POSTImpl(req: Request) {
   return NextResponse.json({ plan: p }, { status: 201 });
 }
 
-async function GETImpl(_req: Request) {
+async function GETImpl() {
   const userId = getAuthenticatedUserId();
 
   const items = await db

@@ -64,6 +64,9 @@ export default function PlansContextPickerFieldPage() {
   const rawField = String(params?.field ?? "");
   const config = useMemo(() => configs[rawField as PickerField], [rawField]);
   const returnTo = normalizeReturnTo(searchParams.get("returnTo"), "/plans/context");
+  const safeConfig = config ?? configs.week;
+  const initial = readParamFromHref(returnTo, safeConfig.paramKey, safeConfig.defaultValue);
+  const [value, setValue] = useState(initial);
 
   if (!config) {
     return (
@@ -76,9 +79,6 @@ export default function PlansContextPickerFieldPage() {
       </div>
     );
   }
-
-  const initial = readParamFromHref(returnTo, config.paramKey, config.defaultValue);
-  const [value, setValue] = useState(initial);
 
   return (
     <PickerSelectionScreen

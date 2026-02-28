@@ -88,6 +88,44 @@ const configs: Record<SelectField, FieldConfig> = {
   },
 };
 
+function MultiStatsFilterSelection({
+  config,
+  returnTo,
+  onApply,
+}: {
+  config: FieldConfig;
+  returnTo: string;
+  onApply: (nextValue: string) => void;
+}) {
+  const initial = parseCsvParam(
+    readParamFromHref(returnTo, config.paramKey, config.defaultValue),
+    parseCsvParam(config.defaultValue),
+  );
+  const [selected, setSelected] = useState<string[]>(initial);
+
+  return (
+    <MultiSelectionScreen
+      title={config.title}
+      sectionTitle={config.sectionTitle}
+      sectionFootnote={config.sectionFootnote}
+      options={config.options}
+      selectedValues={selected}
+      onToggle={(next) => {
+        setSelected((prev) => {
+          const current = new Set(prev);
+          if (current.has(next)) current.delete(next);
+          else current.add(next);
+          return Array.from(current);
+        });
+      }}
+      onApply={() => {
+        const normalized = toCsvParam(selected);
+        onApply(normalized || config.defaultValue);
+      }}
+    />
+  );
+}
+
 export default function StatsFiltersSelectFieldPage() {
   const params = useParams<{ field: string }>();
   const router = useRouter();
@@ -109,27 +147,12 @@ export default function StatsFiltersSelectFieldPage() {
   }
 
   if (config.multi) {
-    const initial = parseCsvParam(readParamFromHref(returnTo, config.paramKey, config.defaultValue), parseCsvParam(config.defaultValue));
-    const [selected, setSelected] = useState<string[]>(initial);
-
     return (
-      <MultiSelectionScreen
-        title={config.title}
-        sectionTitle={config.sectionTitle}
-        sectionFootnote={config.sectionFootnote}
-        options={config.options}
-        selectedValues={selected}
-        onToggle={(next) => {
-          setSelected((prev) => {
-            const current = new Set(prev);
-            if (current.has(next)) current.delete(next);
-            else current.add(next);
-            return Array.from(current);
-          });
-        }}
-        onApply={() => {
-          const normalized = toCsvParam(selected);
-          router.push(withPatchedQuery(returnTo, { [config.paramKey]: normalized || config.defaultValue }));
+      <MultiStatsFilterSelection
+        config={config}
+        returnTo={returnTo}
+        onApply={(nextValue) => {
+          router.push(withPatchedQuery(returnTo, { [config.paramKey]: nextValue }));
         }}
       />
     );

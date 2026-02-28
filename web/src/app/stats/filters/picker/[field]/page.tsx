@@ -61,6 +61,10 @@ export default function StatsFiltersPickerFieldPage() {
   const rawField = String(params?.field ?? "");
   const config = useMemo(() => configs[rawField as PickerField], [rawField]);
   const returnTo = normalizeReturnTo(searchParams.get("returnTo"), "/stats/filters");
+  const safeConfig = config ?? configs.days;
+  const [value, setValue] = useState(
+    readParamFromHref(returnTo, safeConfig.paramKey, safeConfig.defaultValue),
+  );
 
   if (!config) {
     return (
@@ -73,8 +77,6 @@ export default function StatsFiltersPickerFieldPage() {
       </div>
     );
   }
-
-  const [value, setValue] = useState(readParamFromHref(returnTo, config.paramKey, config.defaultValue));
 
   return (
     <PickerSelectionScreen

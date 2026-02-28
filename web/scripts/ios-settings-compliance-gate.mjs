@@ -10,9 +10,8 @@ const steps = [
   {
     label: "Settings compliance suite (structure + axe + visual)",
     command: [
-      "pnpm",
-      "exec",
-      "playwright",
+      "bash",
+      "scripts/playwright-wrapper.sh",
       "test",
       "e2e/ios-settings-compliance.spec.ts",
       "e2e/ios-settings-a11y.spec.ts",

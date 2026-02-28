@@ -39,6 +39,7 @@ type RowBaseProps = {
 
 type NavigationRowProps = RowBaseProps & {
   href?: string;
+  prefetch?: boolean;
   onPress?: () => void;
   value?: ReactNode;
   disabled?: boolean;
@@ -199,6 +200,7 @@ export function NavigationRow({
   leading,
   className,
   href,
+  prefetch,
   onPress,
   value,
   disabled = false,
@@ -218,7 +220,13 @@ export function NavigationRow({
   if (href && !disabled) {
     return (
       <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
-        <Link href={href} aria-label={ariaLabel} className={styles.rowLink} data-settings-touch-target="true">
+        <Link
+          href={href}
+          prefetch={prefetch}
+          aria-label={ariaLabel}
+          className={styles.rowLink}
+          data-settings-touch-target="true"
+        >
           <RowContent
             label={label}
             subtitle={subtitle}

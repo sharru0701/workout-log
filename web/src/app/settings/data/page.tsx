@@ -18,6 +18,7 @@ export default function DataExportPage() {
           <NavigationRow
             rowId="row-download-json"
             href="/api/export?format=json"
+            prefetch={false}
             label="JSON 다운로드"
             subtitle="구조형"
             description="템플릿, 플랜, 세션, 로그를 함께 내보냅니다."
@@ -26,6 +27,7 @@ export default function DataExportPage() {
           <NavigationRow
             rowId="row-download-csv"
             href="/api/export?format=csv&type=workout_set"
+            prefetch={false}
             label="CSV 다운로드"
             subtitle="테이블형"
             description="workout_set 행 기반으로 내보냅니다."
