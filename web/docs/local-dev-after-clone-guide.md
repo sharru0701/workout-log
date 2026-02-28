@@ -5,17 +5,17 @@
 
 ```bash
 git clone <repo-url>
-cd workout-log/web
+cd workout-log
 ```
 
-## 1) 빠른 시작 (Docker 권장)
+## 1) 빠른 시작 (루트에서 1줄, Docker 권장)
 사전 조건:
 - Docker Desktop 또는 Docker Engine + Compose plugin 설치
 
 실행:
 
 ```bash
-pnpm docker:dev:up
+./dev up
 ```
 
 접속:
@@ -25,13 +25,13 @@ pnpm docker:dev:up
 종료:
 
 ```bash
-pnpm docker:dev:down
+./dev down
 ```
 
 처음 데이터까지 자동 준비하고 싶다면:
 
 ```bash
-RUN_DB_SEED=1 pnpm docker:dev:up
+RUN_DB_SEED=1 ./dev up
 ```
 
 ## 2) Docker 없이 실행
@@ -60,9 +60,9 @@ pnpm dev
 ```
 
 ## 3) 자주 막히는 포인트
-- `5432` 충돌 시: `WEB_PORT=3001 POSTGRES_PORT=5433 pnpm docker:dev:up`
-- 컨테이너 재시작 후 이상할 때: `pnpm docker:dev:down` 후 `pnpm docker:dev:up`
-- DB 데이터까지 초기화: `pnpm docker:dev:down:volumes`
+- `5432` 충돌 시: `WEB_PORT=3001 POSTGRES_PORT=5433 ./dev up`
+- 컨테이너 재시작 후 이상할 때: `./dev down` 후 `./dev up`
+- DB 데이터까지 초기화: `./dev down:volumes`
 
 ## 4) 형상관리(버전관리) 가능 여부
 가능합니다. 현재 구조는 Git으로 형상관리하기에 문제 없습니다.

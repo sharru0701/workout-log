@@ -4,6 +4,12 @@
 - `git clone` 직후 온보딩: [`docs/local-dev-after-clone-guide.md`](./docs/local-dev-after-clone-guide.md)
 - 기여/형상관리 규칙: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 
+루트에서 실행:
+
+```bash
+./dev up
+```
+
 ## Local Dev (Docker, Recommended)
 
 Run from `/home/sharr/projects/workout-log/web`:

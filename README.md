@@ -5,8 +5,9 @@
 빠른 시작:
 
 ```bash
-cd web
-pnpm docker:dev:up
+git clone <repo-url>
+cd workout-log
+./dev up
 ```
 
 문서 링크:
