@@ -5,11 +5,13 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/web-e2e.yml"
+      - ".github/workflows/deploy.yml"
   push:
     branches: ["main"]
     paths:
       - "web/**"
       - ".github/workflows/web-e2e.yml"
+      - ".github/workflows/deploy.yml"
   workflow_dispatch: {}
 
 concurrency:
