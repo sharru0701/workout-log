@@ -102,7 +102,7 @@ export default function SettingsThemePage() {
       <NoticeStateRows message={themeSetting.notice} tone={themeSetting.error ? "warning" : "success"} label="테마 안내" />
 
       <section className="grid gap-2">
-        <SectionHeader title="C-1 테마 설정" description="라이트 / 다크 / 시스템 설정 따름" />
+        <SectionHeader title="테마 설정" description="라이트 / 다크 / 시스템 설정 따름" />
         <BaseGroupedList ariaLabel="Theme selection">
           {themeOptions.map((option) => {
             const active = selectedTheme === option.value;

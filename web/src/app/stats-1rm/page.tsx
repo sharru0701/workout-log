@@ -377,16 +377,16 @@ export default function Stats1RMPage() {
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
       <section className="grid gap-2">
-        <h2 className="ios-section-heading">B-4 1RM Stats / Graph</h2>
+        <h2 className="ios-section-heading">1RM Stats / Graph</h2>
         <article className="motion-card rounded-2xl border p-4 grid gap-3">
           <div className="stats-filter-chip-row">
             <FilterChip
-              title="4-1 운동종목"
+              title="운동종목"
               value={selectedExercise?.name ?? "선택 필요"}
               onPress={() => setActiveSheet("exercise")}
             />
-            <FilterChip title="4-2 기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
-            <FilterChip title="4-3 프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
+            <FilterChip title="기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
+            <FilterChip title="프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
           </div>
           <p className="stats-filter-summary">
             선택된 필터: {selectedExercise?.name ?? "운동 미선택"} / {formatRangeLabel(rangeFilter)} / {selectedProgramLabel}
@@ -445,7 +445,7 @@ export default function Stats1RMPage() {
           <article className="motion-card rounded-2xl border p-4 grid gap-3">
             <header className="stats-chart-header">
               <div>
-                <h3 className="ios-inline-heading">B-4-4 그래프 영역</h3>
+                <h3 className="ios-inline-heading">그래프 영역</h3>
                 <p className="stats-chart-caption">
                   터치/드래그로 포인트를 스크러빙하여 날짜별 값을 확인할 수 있습니다.
                 </p>
@@ -485,7 +485,7 @@ export default function Stats1RMPage() {
 
       <BottomSheet
         open={activeSheet === "exercise"}
-        title="4-1 운동종목 필터"
+        title="운동종목 필터"
         description="그래프 대상 운동종목을 선택합니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
@@ -517,7 +517,7 @@ export default function Stats1RMPage() {
 
       <BottomSheet
         open={activeSheet === "range"}
-        title="4-2 기간 필터"
+        title="기간 필터"
         description="기간을 선택하면 필터 조합으로 다시 조회합니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
@@ -589,7 +589,7 @@ export default function Stats1RMPage() {
 
       <BottomSheet
         open={activeSheet === "program"}
-        title="4-3 프로그램 필터"
+        title="프로그램 필터"
         description="특정 프로그램 기록만 보거나 전체를 볼 수 있습니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"

@@ -554,7 +554,7 @@ export default function ProgramStorePage() {
       <NoticeStateRows message={notice} label="Program Store 안내" />
 
       <section className="grid gap-2">
-        <h2 className="ios-section-heading">B-3-1 프로그램 목록 (시중 + 커스텀)</h2>
+        <h2 className="ios-section-heading">프로그램 목록 (시중 + 커스텀)</h2>
         <EmptyStateRows
           when={!loading && !error && listItems.length === 0}
           label="표시할 프로그램이 없습니다"
@@ -581,19 +581,19 @@ export default function ProgramStorePage() {
       </section>
 
       <section className="grid gap-2">
-        <h2 className="ios-section-heading">B-3-2 나만의 커스터마이징 프로그램 추가</h2>
+        <h2 className="ios-section-heading">나만의 커스터마이징 프로그램 추가</h2>
         <button
           type="button"
           className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
           onClick={openCreateSheet}
         >
-          3-2-1 프로그램 커스터마이징 모달 열기
+          프로그램 커스터마이징 모달 열기
         </button>
       </section>
 
       <BottomSheet
         open={Boolean(detailTarget)}
-        title="3-1-2 프로그램 상세"
+        title="프로그램 상세"
         description={detailTarget ? toContextLabel(detailTarget) : ""}
         onClose={() => setDetailTargetId(null)}
         closeLabel="닫기"
@@ -609,7 +609,7 @@ export default function ProgramStorePage() {
                   void startProgramFromTemplate(detailTarget.template);
                 }}
               >
-                3-1-2-1 프로그램 선택하여 시작하기
+                프로그램 선택하여 시작하기
               </button>
               <button
                 type="button"
@@ -622,7 +622,7 @@ export default function ProgramStorePage() {
                   });
                 }}
               >
-                3-1-2-2 프로그램 커스터마이징
+                프로그램 커스터마이징
               </button>
             </div>
           ) : null
@@ -644,7 +644,7 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(customizeDraft)}
-        title="3-1-2-2-1 커스터마이징 모달"
+        title="커스터마이징 모달"
         description={customizeDraft ? `컨텍스트: ${customizeDraft.baseTemplate.name}` : ""}
         onClose={() => setCustomizeDraft(null)}
         closeLabel="닫기"
@@ -680,12 +680,12 @@ export default function ProgramStorePage() {
             </label>
 
             <article className="rounded-xl border p-3 grid gap-2">
-              <strong>3-1-2-2-1-1 종목 순서 변경</strong>
+              <strong>종목 순서 변경</strong>
               <span className="text-sm text-[var(--text-secondary)]">리스트를 드래그해서 순서를 바꾸세요.</span>
             </article>
 
             <article className="rounded-xl border p-3 grid gap-3">
-              <strong>3-1-2-2-1-2 세션별 종목 변경 (수정/삭제/추가)</strong>
+              <strong>세션별 종목 변경 (수정/삭제/추가)</strong>
               {customizeDraft.sessions.map((session) => (
                 <div
                   key={session.id}
@@ -799,7 +799,7 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(createDraft)}
-        title="3-2-1 프로그램 생성/커스터마이징 모달"
+        title="프로그램 생성/커스터마이징 모달"
         description="새 커스텀 프로그램 생성"
         onClose={() => setCreateDraft(null)}
         closeLabel="닫기"
@@ -815,7 +815,7 @@ export default function ProgramStorePage() {
                   void saveCreateDraft(createDraft);
                 }}
               >
-                3-2-1-5 프로그램 생성
+                프로그램 생성
               </button>
             </div>
           ) : null
@@ -904,7 +904,7 @@ export default function ProgramStorePage() {
             )}
 
             <article className="rounded-xl border p-3 grid gap-2">
-              <strong>3-2-1-3 세션 규칙 생성</strong>
+              <strong>세션 규칙 생성</strong>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -973,7 +973,7 @@ export default function ProgramStorePage() {
             </article>
 
             <article className="rounded-xl border p-3 grid gap-2">
-              <strong>3-2-1-4 세션 안에 운동종목 배치</strong>
+              <strong>세션 안에 운동종목 배치</strong>
               {createDraft.sessions.map((session) => (
                 <div
                   key={session.id}
@@ -1026,7 +1026,7 @@ export default function ProgramStorePage() {
                         })
                       }
                     >
-                      3-2-1-1 + 운동종목 추가
+                      + 운동종목 추가
                     </button>
                   </header>
 

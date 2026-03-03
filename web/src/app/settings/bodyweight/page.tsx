@@ -81,7 +81,7 @@ export default function SettingsBodyweightPage() {
       <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label="몸무게 안내" />
 
       <section className="grid gap-2">
-        <SectionHeader title="C-3 몸무게 입력" description="중량 풀업 등 몸무게 연관 종목 계산/표시에 사용" />
+        <SectionHeader title="몸무게 입력" description="중량 풀업 등 몸무게 연관 종목 계산/표시에 사용" />
         <BaseGroupedList ariaLabel="Bodyweight setting">
           <ValueRow
             label="현재 몸무게"

@@ -214,7 +214,7 @@ export default function SettingsMinimumPlatePage() {
       <NoticeStateRows message={latestNotice} tone={hasSaveError ? "warning" : "success"} label="최소 원판 안내" />
 
       <section className="grid gap-2">
-        <SectionHeader title="C-2 기본 최소 원판 무게" description="기본값은 규칙이 없는 모든 종목에 적용됩니다." />
+        <SectionHeader title="기본 최소 원판 무게" description="기본값은 규칙이 없는 모든 종목에 적용됩니다." />
         <BaseGroupedList ariaLabel="Default minimum plate setting">
           <ValueRow
             label="기본 Increment"
@@ -274,7 +274,7 @@ export default function SettingsMinimumPlatePage() {
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="C-2-1 종목별 최소 원판 규칙" description="예: Pull-up 1.25kg, 나머지 2.5kg" />
+        <SectionHeader title="종목별 최소 원판 규칙" description="예: Pull-up 1.25kg, 나머지 2.5kg" />
         <BaseGroupedList ariaLabel="Per exercise minimum plate rules">
           {rules.map((rule) => (
             <NavigationRow

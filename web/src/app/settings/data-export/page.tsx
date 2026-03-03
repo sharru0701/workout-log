@@ -98,7 +98,7 @@ export default function SettingsDataExportPage() {
       <NoticeStateRows message={error} tone="warning" label="Export 실패" />
 
       <section className="grid gap-2">
-        <SectionHeader title="C-4 데이터 Export" description="Export는 iOS 표준 ShareSheet를 우선 사용합니다." />
+        <SectionHeader title="데이터 Export" description="Export는 iOS 표준 ShareSheet를 우선 사용합니다." />
         <BaseGroupedList ariaLabel="Data export actions">
           <NavigationRow
             label="JSON Export"

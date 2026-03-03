@@ -94,7 +94,7 @@ export default function HomePage() {
 
       <section className="grid gap-2">
         <SectionHeader
-          title="B-1-1 오늘의 운동 요약"
+          title="오늘의 운동 요약"
           description="탭하면 Workout Record의 오늘 컨텍스트로 이동합니다."
         />
         <BaseGroupedList ariaLabel="Today workout summary">
@@ -125,7 +125,7 @@ export default function HomePage() {
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="B-1-2 프로그램 스토어 진입" description="프로그램 탐색/선택/커스터마이징 진입 CTA" />
+        <SectionHeader title="프로그램 스토어 진입" description="프로그램 탐색/선택/커스터마이징 진입 CTA" />
         <BaseGroupedList ariaLabel="Program store entry">
           <NavigationRow
             href="/program-store"
@@ -140,7 +140,7 @@ export default function HomePage() {
 
       <section className="grid gap-2">
         <SectionHeader
-          title={`B-1-3 지난 운동 요약 (최근 ${viewData.recentLimit}개)`}
+          title={`지난 운동 요약 (최근 ${viewData.recentLimit}개)`}
           description="가장 최근 완료한 세션 요약 목록"
         />
 

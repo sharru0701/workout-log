@@ -673,7 +673,7 @@ export default function WorkoutRecordPage() {
       {!noPlan && draft && (
         <>
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">B-2-1 선택된 프로그램 명</h2>
+            <h2 className="ios-section-heading">선택된 프로그램 명</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-2">
               <strong>{draft.session.planName}</strong>
               <label className="grid gap-1">
@@ -696,7 +696,7 @@ export default function WorkoutRecordPage() {
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">B-2-2 지난 세션 요약</h2>
+            <h2 className="ios-section-heading">지난 세션 요약</h2>
             <article className="motion-card rounded-2xl border p-4 text-sm text-[var(--text-secondary)] grid gap-1">
               <span>{lastSession?.title ?? "지난 세션 없음"}</span>
               <span>{lastSession?.description ?? "저장된 세션이 없습니다."}</span>
@@ -704,7 +704,7 @@ export default function WorkoutRecordPage() {
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">B-2-3 오늘 수행 세션 요약</h2>
+            <h2 className="ios-section-heading">오늘 수행 세션 요약</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-1 text-sm">
               <span>예상 1RM: {draft.session.estimatedE1rmKg === null ? "-" : `${draft.session.estimatedE1rmKg}kg`}</span>
               <span>예상 TM: {draft.session.estimatedTmKg === null ? "-" : `${draft.session.estimatedTmKg}kg`}</span>
@@ -719,7 +719,7 @@ export default function WorkoutRecordPage() {
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">B-2-4 기록 본문 영역</h2>
+            <h2 className="ios-section-heading">기록 본문 영역</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-3">
               <p className="text-sm text-[var(--text-secondary)]">
                 프로그램 로직 기반 자동 세팅 + 사용자 편집 레이어를 함께 적용합니다.
@@ -833,7 +833,7 @@ export default function WorkoutRecordPage() {
                 }}
                 disabled={workflowState === "saving"}
               >
-                {workflowState === "saving" ? "저장 중..." : "B-2-5 운동기록 완료"}
+                {workflowState === "saving" ? "저장 중..." : "운동기록 완료"}
               </button>
             </div>
           </section>

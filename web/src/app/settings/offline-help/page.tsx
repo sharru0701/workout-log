@@ -4,7 +4,7 @@ export default function SettingsOfflineHelpPage() {
   return (
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
       <section className="grid gap-2">
-        <SectionHeader title="C-5 오프라인 도움말" description="오프라인 상태에서도 기록이 유실되지 않도록 동작합니다." />
+        <SectionHeader title="오프라인 도움말" description="오프라인 상태에서도 기록이 유실되지 않도록 동작합니다." />
         <BaseGroupedList ariaLabel="Offline help summary">
           <InfoRow
             label="오프라인 기록 저장"
@@ -18,7 +18,7 @@ export default function SettingsOfflineHelpPage() {
           />
           <InfoRow
             label="동기화 실패 대응"
-            description="반복 실패 시 C-4 Data Export로 백업 파일을 생성해 보관할 수 있습니다."
+            description="반복 실패 시 Data Export로 백업 파일을 생성해 보관할 수 있습니다."
             leading={<RowIcon symbol="BK" tone="orange" />}
           />
         </BaseGroupedList>
