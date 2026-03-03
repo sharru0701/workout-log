@@ -59,7 +59,7 @@ const rows = [
 
 export default function SettingsPage() {
   return (
-    <div className="native-page native-page-enter settings-screen settings-screen-main momentum-scroll">
+    <div className="native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll">
       <section className="grid gap-2">
         <SectionHeader
           title="C. Settings"
