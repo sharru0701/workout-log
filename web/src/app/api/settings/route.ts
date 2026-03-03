@@ -16,6 +16,10 @@ type PatchRequestBody = {
 };
 
 const DEFAULT_SETTINGS: SettingsSnapshot = {
+  "prefs.theme.mode": "SYSTEM",
+  "prefs.minimumPlate.defaultKg": 2.5,
+  "prefs.minimumPlate.rulesJson": "[]",
+  "prefs.bodyweight.kg": 70,
   "prefs.autoSync": true,
   "prefs.timezone": "UTC",
   "prefs.metricPresetDays": 90,

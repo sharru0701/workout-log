@@ -3,6 +3,7 @@ import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { PwaRegister } from "@/components/pwa-register";
+import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { viewportThemeColor } from "@/lib/theme";
 
 const appSans = Noto_Sans_KR({
@@ -53,6 +54,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${appSans.variable} ${appMono.variable} antialiased`}>
         <PwaRegister />
+        <ThemePreferenceSync />
         <AppShell>{children}</AppShell>
       </body>
     </html>

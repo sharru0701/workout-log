@@ -1,114 +1,174 @@
+"use client";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BaseGroupedList,
   NavigationRow,
   RowIcon,
   SectionFootnote,
   SectionHeader,
+  ValueRow,
 } from "@/components/ui/settings-list";
-import { SettingsSearchPanel } from "@/components/ui/settings-search-panel";
-import { settingsSearchIndex } from "@/lib/settings/settings-search-index";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import {
+  ApiHomeDataSource,
+  HOME_PREVIEW_DATA,
+  PreviewHomeDataSource,
+  type HomeData,
+  type HomeDataSource,
+} from "@/lib/home/home-data-source";
 
-const quickStartRows = [
-  {
-    href: "/workout/today/log",
-    label: "오늘 운동 시작",
-    subtitle: "1순위",
-    description: "세션 생성부터 기록/저장을 한 화면에서 바로 진행합니다.",
-    symbol: "GO",
-    tone: "blue" as const,
-  },
-  {
-    href: "/plans/manage?create=1&type=SINGLE",
-    label: "커스텀 프로그램 만들기",
-    subtitle: "새 프로그램",
-    description: "생성 시트를 바로 열어 플랜을 만든 뒤 운동으로 이동합니다.",
-    symbol: "CP",
-    tone: "green" as const,
-  },
-  {
-    href: "/plans/manage",
-    label: "프로그램 선택 후 시작",
-    subtitle: "플로우",
-    description: "이미 만든 플랜을 선택해 빠르게 세션을 시작합니다.",
-    symbol: "PL",
-    tone: "green" as const,
-  },
-] as const;
+const HOME_PREVIEW_MODE = process.env.NEXT_PUBLIC_HOME_DATA_MODE === "preview";
 
-const advancedRows = [
-  {
-    href: "/calendar",
-    label: "운동 캘린더",
-    subtitle: "날짜 기반",
-    description: "특정 날짜 세션을 열어 생성/진행합니다.",
-    symbol: "CA",
-    tone: "blue" as const,
-  },
-  {
-    href: "/templates/manage",
-    label: "템플릿 워크스페이스",
-    subtitle: "고급 편집",
-    description: "템플릿/버전/포크를 관리합니다.",
-    symbol: "TP",
-    tone: "green" as const,
-  },
-  {
-    href: "/stats",
-    label: "통계 대시보드",
-    subtitle: "분석",
-    description: "e1RM/볼륨/준수율 지표를 확인합니다.",
-    symbol: "ST",
-    tone: "tint" as const,
-  },
-  {
-    href: "/settings",
-    label: "앱 설정",
-    subtitle: "시스템",
-    description: "저장 정책/링크/데이터 옵션을 조정합니다.",
-    symbol: "SE",
-    tone: "neutral" as const,
-  },
-] as const;
+function useHomeDataSource(): HomeDataSource {
+  return useMemo(() => {
+    if (HOME_PREVIEW_MODE) {
+      return new PreviewHomeDataSource();
+    }
+    return new ApiHomeDataSource(3);
+  }, []);
+}
 
-export default function Home() {
+export default function HomePage() {
+  const dataSource = useHomeDataSource();
+  const [homeData, setHomeData] = useState<HomeData | null>(HOME_PREVIEW_MODE ? HOME_PREVIEW_DATA : null);
+  const [loading, setLoading] = useState(!HOME_PREVIEW_MODE);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadHomeData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const nextData = await dataSource.load();
+      setHomeData(nextData);
+    } catch (e: any) {
+      setError(e?.message ?? "Home 데이터를 불러오지 못했습니다.");
+    } finally {
+      setLoading(false);
+    }
+  }, [dataSource]);
+
+  useEffect(() => {
+    if (HOME_PREVIEW_MODE) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const nextData = await dataSource.load();
+        if (!cancelled) setHomeData(nextData);
+      } catch (e: any) {
+        if (!cancelled) setError(e?.message ?? "Home 데이터를 불러오지 못했습니다.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [dataSource]);
+
+  const viewData = homeData ?? HOME_PREVIEW_DATA;
+  const showRecentEmpty = !loading && !error && viewData.recentSessions.length === 0;
+
   return (
     <div className="native-page native-page-enter home-screen momentum-scroll">
+      <LoadingStateRows
+        active={loading}
+        delayMs={180}
+        label="Home 데이터 불러오는 중"
+        description="오늘 요약과 최근 운동 요약을 조회하고 있습니다."
+        ariaLabel="Home loading state"
+      />
+      <ErrorStateRows
+        message={error}
+        onRetry={() => {
+          void loadHomeData();
+        }}
+        title="Home 데이터를 불러오지 못했습니다"
+        retryLabel="다시 불러오기"
+        ariaLabel="Home error state"
+      />
 
       <section className="grid gap-2">
-        <SectionHeader title="빠른 시작" description="운동 앱의 핵심 흐름만 먼저 노출합니다." />
-        <BaseGroupedList ariaLabel="Quick start actions">
-          {quickStartRows.map((row) => (
-            <NavigationRow
-              key={row.href}
-              href={row.href}
-              label={row.label}
-              subtitle={row.subtitle}
-              description={row.description}
-              leading={<RowIcon symbol={row.symbol} tone={row.tone} />}
-            />
-          ))}
+        <SectionHeader
+          title="B-1-1 오늘의 운동 요약"
+          description="탭하면 Workout Record의 오늘 컨텍스트로 이동합니다."
+        />
+        <BaseGroupedList ariaLabel="Today workout summary">
+          <NavigationRow
+            href={viewData.today.href}
+            label={viewData.today.headline}
+            subtitle={viewData.today.programName}
+            description={viewData.today.meta}
+            value="기록하기"
+            leading={<RowIcon symbol="TD" tone="blue" />}
+          />
+          <ValueRow
+            label="완료 세트"
+            description="오늘 완료한 총 세트 수"
+            value={`${viewData.today.completedSets}세트`}
+            showChevron={false}
+            leading={<RowIcon symbol="ST" tone="green" />}
+          />
+          <ValueRow
+            label="예상 e1RM"
+            description="오늘 기록 기반 추정값"
+            value={viewData.today.estimatedE1rmKg === null ? "-" : `${Math.round(viewData.today.estimatedE1rmKg)}kg`}
+            showChevron={false}
+            leading={<RowIcon symbol="RM" tone="tint" />}
+          />
         </BaseGroupedList>
-        <SectionFootnote>권장 순서: 프로그램 준비 후 오늘 운동 시작.</SectionFootnote>
+        <SectionFootnote>오늘 기록이 없어도 동일한 진입점으로 바로 시작할 수 있습니다.</SectionFootnote>
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="고급 도구" description="기능 축소 없이 세부 도구는 여기서 접근합니다." />
-        <BaseGroupedList ariaLabel="Advanced tools">
-          {advancedRows.map((row) => (
-            <NavigationRow
-              key={row.href}
-              href={row.href}
-              label={row.label}
-              subtitle={row.subtitle}
-              description={row.description}
-              leading={<RowIcon symbol={row.symbol} tone={row.tone} />}
-            />
-          ))}
+        <SectionHeader title="B-1-2 프로그램 스토어 진입" description="프로그램 탐색/선택/커스터마이징 진입 CTA" />
+        <BaseGroupedList ariaLabel="Program store entry">
+          <NavigationRow
+            href="/program-store"
+            label="프로그램 스토어 열기"
+            subtitle="Program Store"
+            description="시중 프로그램 + 사용자 커스터마이징 프로그램을 한 화면에서 확인합니다."
+            value="열기"
+            leading={<RowIcon symbol="PS" tone="tint" />}
+          />
         </BaseGroupedList>
-        <SectionFootnote>고급 편집/분석/설정 기능은 그대로 유지됩니다.</SectionFootnote>
       </section>
 
-      <SettingsSearchPanel index={settingsSearchIndex} />
+      <section className="grid gap-2">
+        <SectionHeader
+          title={`B-1-3 지난 운동 요약 (최근 ${viewData.recentLimit}개)`}
+          description="가장 최근 완료한 세션 요약 목록"
+        />
+
+        <EmptyStateRows
+          when={showRecentEmpty}
+          label="지난 운동 기록이 없습니다"
+          description="첫 운동 기록을 저장하면 최근 요약이 여기에 표시됩니다."
+          ariaLabel="Recent workout empty state"
+        />
+
+        {!showRecentEmpty && (
+          <BaseGroupedList ariaLabel="Recent workout summaries">
+            {viewData.recentSessions.map((session) => (
+              <NavigationRow
+                key={session.id}
+                href={session.href}
+                label={session.title}
+                subtitle={session.subtitle}
+                description={session.description}
+                value="열기"
+                leading={<RowIcon symbol="RC" tone="neutral" />}
+              />
+            ))}
+          </BaseGroupedList>
+        )}
+
+        <SectionFootnote>최근 세션은 최신 순으로 노출됩니다.</SectionFootnote>
+      </section>
     </div>
   );
 }

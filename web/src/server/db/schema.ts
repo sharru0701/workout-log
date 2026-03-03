@@ -3,6 +3,7 @@ import {
   boolean,
   index,
   integer,
+  numeric,
   jsonb,
   pgEnum,
   pgTable,
@@ -325,7 +326,7 @@ export const workoutSet = pgTable(
 
     setNumber: integer("set_number").notNull().default(1),
     reps: integer("reps"),
-    weightKg: integer("weight_kg"),
+    weightKg: numeric("weight_kg", { precision: 8, scale: 2, mode: "number" }),
     rpe: integer("rpe"),
     isExtra: boolean("is_extra").notNull().default(false),
 

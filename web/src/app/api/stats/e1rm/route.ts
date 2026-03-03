@@ -17,6 +17,7 @@ async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
+    const planId = searchParams.get("planId")?.trim() ?? "";
     const exerciseId = searchParams.get("exerciseId")?.trim() ?? "";
     const exerciseName = (searchParams.get("exerciseId") ? null : searchParams.get("exercise")) ?? searchParams.get("exerciseName");
 
@@ -52,6 +53,7 @@ async function GETImpl(req: Request) {
     const cacheParams = {
       from: from.toISOString(),
       to: to.toISOString(),
+      planId: planId || null,
       exerciseId: resolvedExerciseId,
       exerciseName: resolvedExerciseName ?? exerciseName ?? null,
     };
@@ -94,6 +96,7 @@ async function GETImpl(req: Request) {
       .where(
         and(
           eq(workoutLog.userId, userId),
+          planId ? eq(workoutLog.planId, planId) : undefined,
           exerciseFilter,
           gte(workoutLog.performedAt, from),
           lte(workoutLog.performedAt, to),

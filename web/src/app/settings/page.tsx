@@ -4,73 +4,81 @@ import {
   RowIcon,
   SectionFootnote,
   SectionHeader,
-  SubtitleRow,
 } from "@/components/ui/settings-list";
+
+const rows = [
+  {
+    href: "/settings/theme",
+    label: "C-1 테마 설정",
+    subtitle: "Theme",
+    description: "라이트 / 다크 / 시스템 설정",
+    symbol: "TM",
+    tone: "blue" as const,
+  },
+  {
+    href: "/settings/minimum-plate",
+    label: "C-2 최소 원판 무게",
+    subtitle: "Minimum Plate",
+    description: "종목별 최소 원판 무게 설정",
+    symbol: "PL",
+    tone: "neutral" as const,
+  },
+  {
+    href: "/settings/bodyweight",
+    label: "C-3 몸무게 입력",
+    subtitle: "Bodyweight",
+    description: "몸무게 연관 종목 계산/표시에 사용",
+    symbol: "BW",
+    tone: "green" as const,
+  },
+  {
+    href: "/settings/data-export",
+    label: "C-4 데이터 Export",
+    subtitle: "Data Export",
+    description: "운동 데이터 내보내기",
+    symbol: "EX",
+    tone: "tint" as const,
+  },
+  {
+    href: "/settings/offline-help",
+    label: "C-5 오프라인 도움말",
+    subtitle: "Offline Help",
+    description: "오프라인 동작 가이드",
+    symbol: "HP",
+    tone: "orange" as const,
+  },
+  {
+    href: "/settings/about",
+    label: "C-6 앱 정보",
+    subtitle: "App Info",
+    description: "버전 및 앱 정보",
+    symbol: "AB",
+    tone: "neutral" as const,
+  },
+];
 
 export default function SettingsPage() {
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll">
-
+    <div className="native-page native-page-enter settings-screen settings-screen-main momentum-scroll">
       <section className="grid gap-2">
-        <SectionHeader title="데이터" />
-        <BaseGroupedList ariaLabel="Settings data">
-          <NavigationRow
-            rowId="row-data-export"
-            href="/settings/data"
-            label="데이터 내보내기"
-            description="운동 데이터를 파일로 내려받습니다."
-            leading={<RowIcon symbol="EX" tone="neutral" />}
-          />
+        <SectionHeader
+          title="C. Settings"
+          description="iOS Settings Form + Section 패턴으로 설정 항목을 구성합니다."
+        />
+        <BaseGroupedList ariaLabel="Settings menu">
+          {rows.map((row) => (
+            <NavigationRow
+              key={row.href}
+              href={row.href}
+              label={row.label}
+              subtitle={row.subtitle}
+              description={row.description}
+              value="열기"
+              leading={<RowIcon symbol={row.symbol} tone={row.tone} />}
+            />
+          ))}
         </BaseGroupedList>
-        <SectionFootnote>큰 수정이나 마이그레이션 전에 먼저 내보내세요.</SectionFootnote>
-      </section>
-
-      <section className="grid gap-2">
-        <SectionHeader title="유틸리티" />
-        <BaseGroupedList ariaLabel="Settings utilities">
-          <NavigationRow
-            rowId="row-offline-help"
-            href="/offline"
-            label="오프라인 도움말"
-            description="오프라인 저장 동작을 확인합니다."
-            leading={<RowIcon symbol="OF" tone="orange" />}
-          />
-          <NavigationRow
-            rowId="row-template-management"
-            href="/templates"
-            label="템플릿 관리"
-            description="템플릿 워크스페이스를 엽니다."
-            leading={<RowIcon symbol="TP" tone="neutral" />}
-          />
-          <NavigationRow
-            rowId="row-selection-template"
-            href="/settings/selection-template"
-            label="선택 템플릿"
-            description="선택 화면 템플릿을 확인합니다."
-            leading={<RowIcon symbol="SL" tone="tint" />}
-          />
-          <SubtitleRow
-            rowId="row-save-policy"
-            href="/settings/save-policy"
-            label="저장 정책"
-            subtitle="즉시 반영 + 롤백"
-            description="저장, 롤백, 행 잠금을 점검합니다."
-            leading={<RowIcon symbol="SV" tone="green" />}
-            badge="NEW"
-            badgeTone="accent"
-          />
-          <SubtitleRow
-            rowId="row-ux-thresholds"
-            href="/settings/ux-thresholds"
-            label="UX 기준치"
-            subtitle="전환율 임계치"
-            description="대시보드 UX 임계치 목표를 조정합니다."
-            leading={<RowIcon symbol="UX" tone="tint" />}
-            badge="NEW"
-            badgeTone="accent"
-          />
-        </BaseGroupedList>
-        <SectionFootnote>선택 템플릿과 저장 정책에서 입력/저장 규칙을 확인하세요.</SectionFootnote>
+        <SectionFootnote>모든 설정은 저장 즉시 반영되며, 실패 시 안내와 함께 이전 값으로 복구됩니다.</SectionFootnote>
       </section>
     </div>
   );

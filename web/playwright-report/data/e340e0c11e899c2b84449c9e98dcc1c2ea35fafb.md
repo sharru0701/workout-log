@@ -1,0 +1,80 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e4]:
+        - button "Go back" [ref=e6]
+        - generic [ref=e8]: Settings
+        - link "Settings" [ref=e10] [cursor=pointer]:
+          - /url: /settings
+      - generic [ref=e12]:
+        - generic [ref=e13]:
+          - heading "C. Settings" [level=2] [ref=e14]
+          - paragraph [ref=e15]: iOS Settings Form + Section 패턴으로 설정 항목을 구성합니다.
+        - list "Settings menu" [ref=e16]:
+          - listitem [ref=e17]:
+            - link "C-1 테마 설정 Theme 라이트 / 다크 / 시스템 설정 열기" [ref=e18] [cursor=pointer]:
+              - /url: /settings/theme
+              - generic [ref=e19]:
+                - generic [ref=e20]: C-1 테마 설정
+                - generic [ref=e21]: Theme
+                - generic [ref=e22]: 라이트 / 다크 / 시스템 설정
+              - generic [ref=e24]: 열기
+          - listitem [ref=e26]:
+            - link "C-2 최소 원판 무게 Minimum Plate 종목별 최소 원판 무게 설정 열기" [ref=e27] [cursor=pointer]:
+              - /url: /settings/minimum-plate
+              - generic [ref=e28]:
+                - generic [ref=e29]: C-2 최소 원판 무게
+                - generic [ref=e30]: Minimum Plate
+                - generic [ref=e31]: 종목별 최소 원판 무게 설정
+              - generic [ref=e33]: 열기
+          - listitem [ref=e35]:
+            - link "C-3 몸무게 입력 Bodyweight 몸무게 연관 종목 계산/표시에 사용 열기" [ref=e36] [cursor=pointer]:
+              - /url: /settings/bodyweight
+              - generic [ref=e37]:
+                - generic [ref=e38]: C-3 몸무게 입력
+                - generic [ref=e39]: Bodyweight
+                - generic [ref=e40]: 몸무게 연관 종목 계산/표시에 사용
+              - generic [ref=e42]: 열기
+          - listitem [ref=e44]:
+            - link "C-4 데이터 Export Data Export 운동 데이터 내보내기 열기" [ref=e45] [cursor=pointer]:
+              - /url: /settings/data-export
+              - generic [ref=e46]:
+                - generic [ref=e47]: C-4 데이터 Export
+                - generic [ref=e48]: Data Export
+                - generic [ref=e49]: 운동 데이터 내보내기
+              - generic [ref=e51]: 열기
+          - listitem [ref=e53]:
+            - link "C-5 오프라인 도움말 Offline Help 오프라인 동작 가이드 열기" [ref=e54] [cursor=pointer]:
+              - /url: /settings/offline-help
+              - generic [ref=e55]:
+                - generic [ref=e56]: C-5 오프라인 도움말
+                - generic [ref=e57]: Offline Help
+                - generic [ref=e58]: 오프라인 동작 가이드
+              - generic [ref=e60]: 열기
+          - listitem [ref=e62]:
+            - link "C-6 앱 정보 App Info 버전 및 앱 정보 열기" [ref=e63] [cursor=pointer]:
+              - /url: /settings/about
+              - generic [ref=e64]:
+                - generic [ref=e65]: C-6 앱 정보
+                - generic [ref=e66]: App Info
+                - generic [ref=e67]: 버전 및 앱 정보
+              - generic [ref=e69]: 열기
+        - paragraph [ref=e71]: 모든 설정은 저장 즉시 반영되며, 실패 시 안내와 함께 이전 값으로 복구됩니다.
+    - navigation "Floating tab navigation" [ref=e72]:
+      - link "홈" [ref=e73] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e74]: 홈
+      - link "운동기록" [ref=e75] [cursor=pointer]:
+        - /url: /workout-record
+        - generic [ref=e76]: 운동기록
+      - link "프로그램 스토어" [ref=e77] [cursor=pointer]:
+        - /url: /program-store
+        - generic [ref=e78]: 프로그램 스토어
+      - link "1RM 통계" [ref=e79] [cursor=pointer]:
+        - /url: /stats-1rm
+        - generic [ref=e80]: 1RM 통계
+  - alert [ref=e81]
+```

@@ -1,50 +1,35 @@
 "use client";
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback } from "react";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 function titleFromPathname(pathname: string) {
-  if (pathname.startsWith("/workout/session/")) return "Session Detail";
-  if (pathname.startsWith("/workout/today")) return "Workout Today";
-  if (pathname.startsWith("/plans")) return "Plans";
-  if (pathname.startsWith("/calendar")) return "Calendar";
-  if (pathname.startsWith("/stats")) return "Stats";
-  if (pathname.startsWith("/templates")) return "Templates";
-  if (pathname.startsWith("/settings/data")) return "Data Export";
+  if (pathname === "/") return "Home";
+  if (pathname.startsWith("/workout-record/add-exercise")) return "Add Exercise";
+  if (pathname.startsWith("/workout-record/exercise-catalog")) return "Exercise Catalog";
+  if (pathname.startsWith("/workout-record")) return "Workout Record";
+  if (pathname.startsWith("/program-store/create")) return "Create Program";
+  if (pathname.startsWith("/program-store/customize")) return "Customize Program";
+  if (pathname.startsWith("/program-store/detail")) return "Program Detail";
+  if (pathname.startsWith("/program-store")) return "Program Store";
+  if (pathname.startsWith("/stats-1rm")) return "1RM Stats";
+  if (pathname.startsWith("/settings/theme")) return "Theme";
+  if (pathname.startsWith("/settings/minimum-plate")) return "Minimum Plate";
+  if (pathname.startsWith("/settings/bodyweight")) return "Bodyweight";
+  if (pathname.startsWith("/settings/data-export")) return "Data Export";
+  if (pathname.startsWith("/settings/offline-help")) return "Offline Help";
+  if (pathname.startsWith("/settings/about")) return "App Info";
   if (pathname.startsWith("/settings")) return "Settings";
-  if (pathname.startsWith("/offline")) return "Offline";
-  if (pathname.startsWith("/error")) return "Error";
   return "Workout Log";
-}
-
-function detectIosSafari() {
-  if (typeof navigator === "undefined") return false;
-
-  const ua = navigator.userAgent;
-  const platform = navigator.platform;
-  const maxTouchPoints = navigator.maxTouchPoints ?? 0;
-  const isIosDevice = /iPad|iPhone|iPod/i.test(ua) || (platform === "MacIntel" && maxTouchPoints > 1);
-  if (!isIosDevice) return false;
-
-  const excludedEngines = /(CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|YaBrowser|SamsungBrowser|UCBrowser)/i;
-  return /Safari/i.test(ua) && !excludedEngines.test(ua);
-}
-
-function subscribeNoop() {
-  return () => undefined;
-}
-
-function useIsIosSafari() {
-  return useSyncExternalStore(subscribeNoop, detectIosSafari, () => false);
 }
 
 export function TopBackButton() {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const title = titleFromPathname(pathname);
-  const isRoot = pathname === "/";
-  const isIosSafari = useIsIosSafari();
-  const topNavClassName = isIosSafari ? "app-top-nav app-top-nav--ios" : "app-top-nav";
+  const topNavClassName = "app-top-nav app-top-nav--ios";
+  const isSettingsRoute = pathname.startsWith("/settings");
 
   const handleBack = useCallback(() => {
     if (typeof window !== "undefined" && window.history.length > 1) {
@@ -54,16 +39,6 @@ export function TopBackButton() {
     router.push("/");
   }, [router]);
 
-  if (isRoot) {
-    return (
-      <div className={topNavClassName}>
-        <div className="app-top-nav-placeholder" aria-hidden="true" />
-        <div className="app-top-nav-title">{title}</div>
-        <div className="app-top-nav-placeholder" aria-hidden="true" />
-      </div>
-    );
-  }
-
   return (
     <div className={topNavClassName}>
       <div className="app-top-back-wrap">
@@ -72,7 +47,15 @@ export function TopBackButton() {
         </button>
       </div>
       <div className="app-top-nav-title">{title}</div>
-      <div className="app-top-nav-placeholder" aria-hidden="true" />
+      <div className="app-top-settings-wrap">
+        <Link
+          href="/settings"
+          className={`haptic-tap app-top-settings-button${isSettingsRoute ? " is-active" : ""}`}
+          aria-current={isSettingsRoute ? "page" : undefined}
+        >
+          Settings
+        </Link>
+      </div>
     </div>
   );
 }
