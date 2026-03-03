@@ -1294,15 +1294,27 @@ button {
   transition: none;
 }
 
-.mobile-bottom-sheet-handle {
-  width: 2.7rem;
-  height: 0.25rem;
-  border-radius: 999px;
-  margin: 0.58rem auto 0.18rem;
-  background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+.mobile-bottom-sheet-handle-hit {
+  min-height: 2.12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   touch-action: none;
   cursor: grab;
   user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-bottom-sheet-handle-hit:active {
+  cursor: grabbing;
+}
+
+.mobile-bottom-sheet-handle {
+  width: 4.4rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  margin: 0;
+  background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
 }
 
 .mobile-bottom-sheet-header {

@@ -28,15 +28,29 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const panelRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
+  const closeAnimationTimerRef = useRef<number | null>(null);
+  const closeAnimationMs = 180;
 
-  const clearDragState = useCallback(() => {
+  const clearDragListeners = useCallback(() => {
     dragCleanupRef.current?.();
     dragCleanupRef.current = null;
+  }, []);
+
+  const clearDragVisual = useCallback(() => {
     const panel = panelRef.current;
     if (!panel) return;
     panel.classList.remove("is-dragging");
     panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
   }, []);
+
+  const clearDragState = useCallback(() => {
+    clearDragListeners();
+    clearDragVisual();
+    if (closeAnimationTimerRef.current !== null) {
+      window.clearTimeout(closeAnimationTimerRef.current);
+      closeAnimationTimerRef.current = null;
+    }
+  }, [clearDragListeners, clearDragVisual]);
 
   useEffect(() => {
     if (!open) return;
@@ -92,21 +106,42 @@ export function BottomSheet({
   }, [open]);
 
   useEffect(() => {
-    if (open) return;
-    clearDragState();
-  }, [open, clearDragState]);
+    if (open) {
+      if (closeAnimationTimerRef.current !== null) {
+        window.clearTimeout(closeAnimationTimerRef.current);
+        closeAnimationTimerRef.current = null;
+      }
+      return;
+    }
+
+    clearDragListeners();
+    if (closeAnimationTimerRef.current !== null) window.clearTimeout(closeAnimationTimerRef.current);
+    closeAnimationTimerRef.current = window.setTimeout(() => {
+      clearDragVisual();
+      closeAnimationTimerRef.current = null;
+    }, closeAnimationMs);
+
+    return () => {
+      if (closeAnimationTimerRef.current === null) return;
+      window.clearTimeout(closeAnimationTimerRef.current);
+      closeAnimationTimerRef.current = null;
+    };
+  }, [open, clearDragListeners, clearDragVisual]);
 
   useEffect(() => () => clearDragState(), [clearDragState]);
 
   const onHandlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!open || event.button !== 0) return;
+      if (!open) return;
+      if (event.pointerType === "mouse" && event.button !== 0) return;
       const panel = panelRef.current;
       if (!panel) return;
 
+      event.preventDefault();
       clearDragState();
 
-      const closeThresholdPx = 84;
+      const panelHeight = panel.getBoundingClientRect().height;
+      const closeThresholdPx = Math.min(Math.max(panelHeight * 0.22, 88), 180);
       const pointerId = event.pointerId;
       const startY = event.clientY;
       let dragOffset = 0;
@@ -115,11 +150,9 @@ export function BottomSheet({
       panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
 
       const finish = (close: boolean) => {
-        dragCleanupRef.current?.();
-        dragCleanupRef.current = null;
+        clearDragListeners();
         panel.classList.remove("is-dragging");
         if (close) {
-          panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
           onClose();
           return;
         }
@@ -153,7 +186,7 @@ export function BottomSheet({
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onPointerCancel);
     },
-    [open, onClose, clearDragState],
+    [open, onClose, clearDragState, clearDragListeners],
   );
 
   return (
@@ -174,7 +207,9 @@ export function BottomSheet({
         aria-modal="true"
         aria-label={title}
       >
-        <div className="mobile-bottom-sheet-handle" aria-hidden="true" onPointerDown={onHandlePointerDown} />
+        <div className="mobile-bottom-sheet-handle-hit" onPointerDown={onHandlePointerDown}>
+          <div className="mobile-bottom-sheet-handle" aria-hidden="true" />
+        </div>
         <header className="mobile-bottom-sheet-header">
           <div>
             <h2 className="mobile-bottom-sheet-title">{title}</h2>
