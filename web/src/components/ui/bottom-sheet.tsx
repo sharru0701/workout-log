@@ -1,7 +1,7 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { useEffect } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 type BottomSheetProps = {
   open: boolean;
@@ -26,6 +26,18 @@ export function BottomSheet({
   closeLabel = "Close",
   footer,
 }: BottomSheetProps) {
+  const panelRef = useRef<HTMLElement | null>(null);
+  const dragCleanupRef = useRef<(() => void) | null>(null);
+
+  const clearDragState = useCallback(() => {
+    dragCleanupRef.current?.();
+    dragCleanupRef.current = null;
+    const panel = panelRef.current;
+    if (!panel) return;
+    panel.classList.remove("is-dragging");
+    panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
+  }, []);
+
   useEffect(() => {
     if (!open) return;
 
@@ -47,13 +59,13 @@ export function BottomSheet({
     if (lockCount === 0) {
       const scrollY = window.scrollY;
       body.dataset.bottomSheetScrollY = String(scrollY);
+      root.dataset.bottomSheetOpen = "true";
       body.style.position = "fixed";
       body.style.top = `-${scrollY}px`;
       body.style.left = "0";
       body.style.right = "0";
       body.style.width = "100%";
       body.style.overflow = "hidden";
-      body.style.touchAction = "none";
       root.style.overflow = "hidden";
     }
 
@@ -73,11 +85,76 @@ export function BottomSheet({
       body.style.right = "";
       body.style.width = "";
       body.style.overflow = "";
-      body.style.touchAction = "";
+      delete root.dataset.bottomSheetOpen;
       root.style.overflow = "";
       window.scrollTo(0, scrollY);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (open) return;
+    clearDragState();
+  }, [open, clearDragState]);
+
+  useEffect(() => () => clearDragState(), [clearDragState]);
+
+  const onHandlePointerDown = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      if (!open || event.button !== 0) return;
+      const panel = panelRef.current;
+      if (!panel) return;
+
+      clearDragState();
+
+      const closeThresholdPx = 84;
+      const pointerId = event.pointerId;
+      const startY = event.clientY;
+      let dragOffset = 0;
+
+      panel.classList.add("is-dragging");
+      panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
+
+      const finish = (close: boolean) => {
+        dragCleanupRef.current?.();
+        dragCleanupRef.current = null;
+        panel.classList.remove("is-dragging");
+        if (close) {
+          panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
+          onClose();
+          return;
+        }
+        panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
+      };
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        if (moveEvent.pointerId !== pointerId) return;
+        dragOffset = Math.max(0, moveEvent.clientY - startY);
+        panel.style.setProperty("--mobile-bottom-sheet-drag-offset", `${dragOffset}px`);
+        if (dragOffset > 0) moveEvent.preventDefault();
+      };
+
+      const onPointerUp = (upEvent: PointerEvent) => {
+        if (upEvent.pointerId !== pointerId) return;
+        finish(dragOffset >= closeThresholdPx);
+      };
+
+      const onPointerCancel = (cancelEvent: PointerEvent) => {
+        if (cancelEvent.pointerId !== pointerId) return;
+        finish(false);
+      };
+
+      dragCleanupRef.current = () => {
+        window.removeEventListener("pointermove", onPointerMove);
+        window.removeEventListener("pointerup", onPointerUp);
+        window.removeEventListener("pointercancel", onPointerCancel);
+      };
+
+      window.addEventListener("pointermove", onPointerMove, { passive: false });
+      window.addEventListener("pointerup", onPointerUp);
+      window.addEventListener("pointercancel", onPointerCancel);
+    },
+    [open, onClose, clearDragState],
+  );
 
   return (
     <div
@@ -91,12 +168,13 @@ export function BottomSheet({
         onClick={onClose}
       />
       <section
+        ref={panelRef}
         className={`mobile-bottom-sheet-panel ${panelClassName}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={title}
       >
-        <div className="mobile-bottom-sheet-handle" aria-hidden="true" />
+        <div className="mobile-bottom-sheet-handle" aria-hidden="true" onPointerDown={onHandlePointerDown} />
         <header className="mobile-bottom-sheet-header">
           <div>
             <h2 className="mobile-bottom-sheet-title">{title}</h2>

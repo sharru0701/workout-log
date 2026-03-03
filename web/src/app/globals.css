@@ -385,6 +385,11 @@ button {
   padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
 }
 
+:root[data-bottom-sheet-open="true"] .app-shell-main {
+  overflow: hidden !important;
+  overscroll-behavior-y: none !important;
+}
+
 .app-bottom-nav {
   position: fixed;
   left: 50%;
@@ -1254,6 +1259,7 @@ button {
 }
 
 .mobile-bottom-sheet-panel {
+  --mobile-bottom-sheet-drag-offset: 0px;
   position: absolute;
   inset-inline: 0;
   bottom: 0;
@@ -1264,7 +1270,7 @@ button {
   border-radius: 1.5rem 1.5rem 0 0;
   background: var(--bg-surface);
   box-shadow: var(--shadow-float);
-  transform: translateY(105%) scale(0.985);
+  transform: translateY(calc(105% + var(--mobile-bottom-sheet-drag-offset))) scale(0.985);
   transform-origin: bottom center;
   display: flex;
   flex-direction: column;
@@ -1281,7 +1287,11 @@ button {
 }
 
 .mobile-bottom-sheet.is-open .mobile-bottom-sheet-panel {
-  transform: translateY(0) scale(1);
+  transform: translateY(var(--mobile-bottom-sheet-drag-offset)) scale(1);
+}
+
+.mobile-bottom-sheet-panel.is-dragging {
+  transition: none;
 }
 
 .mobile-bottom-sheet-handle {
@@ -1290,6 +1300,9 @@ button {
   border-radius: 999px;
   margin: 0.58rem auto 0.18rem;
   background: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
 }
 
 .mobile-bottom-sheet-header {
@@ -2164,10 +2177,10 @@ body {
 
 .app-shell-main {
   --app-top-nav-fade-size: 2.8rem;
-  --app-top-nav-content-gap: 0.18rem;
+  --app-top-nav-content-gap: 0.06rem;
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.72) + var(--app-top-nav-content-gap));
-  --app-top-nav-ios-screen-pad: clamp(0.56rem, calc(var(--app-top-nav-fade-size) * 0.24), 0.98rem);
+  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.46) + var(--app-top-nav-content-gap));
+  --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
   padding: 0 var(--space-4) calc(6.35rem + env(safe-area-inset-bottom));
 }
 
@@ -2761,7 +2774,7 @@ label.ui-card-label,
   textarea
 ) {
   min-height: 2.8rem;
-  border: 1px solid color-mix(in srgb, var(--field-border) 84%, transparent) !important;
+  border: 0 !important;
   border-radius: 0.92rem !important;
   background: var(--field-bg);
   color: var(--text-primary);
@@ -2772,8 +2785,8 @@ label.ui-card-label,
   select,
   textarea
 ):focus {
-  border-color: color-mix(in srgb, var(--accent-primary) 68%, var(--field-border)) !important;
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  border: 0 !important;
+  box-shadow: none;
 }
 
 input[type="checkbox"],
@@ -2816,10 +2829,10 @@ textarea::placeholder {
 @media (max-width: 430px) {
   .app-shell-main {
     --app-top-nav-fade-size: 2.3rem;
-    --app-top-nav-content-gap: 0.16rem;
+    --app-top-nav-content-gap: 0.05rem;
     --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.74) + var(--app-top-nav-content-gap));
-    --app-top-nav-ios-screen-pad: clamp(0.64rem, calc(var(--app-top-nav-fade-size) * 0.27), 1.04rem);
+    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * 0.48) + var(--app-top-nav-content-gap));
+    --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
     padding-bottom: calc(6.28rem + env(safe-area-inset-bottom));
   }
@@ -3075,7 +3088,7 @@ textarea::placeholder {
   --type-scale-footnote-weight: 500;
 
   --space-screen-section-gap: 1.14rem;
-  --space-section-top-offset: 0.14rem;
+  --space-section-top-offset: 0.06rem;
   --screen-card-inset-inline: 0.56rem;
   --settings-row-min-height: max(var(--touch-target-min), 2.98em);
   --settings-row-padding-block: 0.88em;
@@ -3234,7 +3247,7 @@ label.ui-card-label {
 }
 
 .settings-screen-main {
-  --space-section-top-offset: 0.2rem;
+  --space-section-top-offset: 0.1rem;
   --space-screen-section-gap: 1.24rem;
   --settings-row-min-height: max(var(--touch-target-min), 3.1em);
   --settings-row-padding-block: 0.94em;
@@ -3469,6 +3482,8 @@ html {
   textarea
 ) {
   min-height: var(--touch-target);
+  border: 0 !important;
+  box-shadow: none !important;
   font-size: 1rem;
 }
 
