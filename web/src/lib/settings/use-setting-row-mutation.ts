@@ -73,14 +73,22 @@ export function useSettingRowMutation<T extends SettingValue>({
   const [notice, setNotice] = useState<string | null>(null);
   const valueRef = useRef(value);
   const hadCachedAtInitRef = useRef(store.read(key) !== undefined);
+  const lastResolvedServerValueRef = useRef<T>(resolvedServerValue);
 
   useEffect(() => {
     valueRef.current = value;
   }, [value]);
 
   useEffect(() => {
-    if (hadCachedAtInitRef.current) return;
     if (pending) return;
+    const previousResolvedServerValue = lastResolvedServerValueRef.current;
+    if (Object.is(previousResolvedServerValue, resolvedServerValue)) return;
+    lastResolvedServerValueRef.current = resolvedServerValue;
+
+    // Sync from server only when local value still points to the previous server snapshot.
+    if (hadCachedAtInitRef.current) return;
+    if (!Object.is(valueRef.current, previousResolvedServerValue)) return;
+
     setValue(resolvedServerValue);
     valueRef.current = resolvedServerValue;
   }, [pending, resolvedServerValue]);
@@ -160,4 +168,3 @@ export type {
   CommitIgnored,
   CommitCompleted,
 };
-

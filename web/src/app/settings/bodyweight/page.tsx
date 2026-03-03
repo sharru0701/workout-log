@@ -23,11 +23,19 @@ function normalizeBodyweightKg(value: number) {
   return Math.round(clipped * 10) / 10;
 }
 
+function parseDraftBodyweightKg(input: string): number | null {
+  const trimmed = input.trim();
+  if (!trimmed) return null;
+  const parsed = Number(trimmed);
+  if (!Number.isFinite(parsed)) return null;
+  return normalizeBodyweightKg(parsed);
+}
+
 export default function SettingsBodyweightPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverBodyweightKg, setServerBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
-  const [draftBodyweightKg, setDraftBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
+  const [draftBodyweightInput, setDraftBodyweightInput] = useState(String(DEFAULT_BODYWEIGHT_KG));
 
   const bodyweight = useSettingRowMutation<number>({
     key: SETTINGS_KEYS.bodyweightKg,
@@ -46,7 +54,7 @@ export default function SettingsBodyweightPage() {
       const parsed = Number(snapshot[SETTINGS_KEYS.bodyweightKg]);
       const resolved = normalizeBodyweightKg(Number.isFinite(parsed) ? parsed : DEFAULT_BODYWEIGHT_KG);
       setServerBodyweightKg(resolved);
-      setDraftBodyweightKg(resolved);
+      setDraftBodyweightInput(String(resolved));
     } catch (e: any) {
       setLoadError(e?.message ?? "몸무게 설정을 불러오지 못했습니다.");
     } finally {
@@ -60,7 +68,7 @@ export default function SettingsBodyweightPage() {
 
   useEffect(() => {
     if (bodyweight.pending) return;
-    setDraftBodyweightKg(normalizeBodyweightKg(bodyweight.value));
+    setDraftBodyweightInput(String(normalizeBodyweightKg(bodyweight.value)));
   }, [bodyweight.pending, bodyweight.value]);
 
   return (
@@ -93,14 +101,24 @@ export default function SettingsBodyweightPage() {
           <NavigationRow
             label="몸무게 -0.5kg"
             description="스텝으로 빠르게 조절"
-            onPress={() => setDraftBodyweightKg((prev) => normalizeBodyweightKg(prev - 0.5))}
+            onPress={() =>
+              setDraftBodyweightInput((prev) => {
+                const base = parseDraftBodyweightKg(prev) ?? normalizeBodyweightKg(bodyweight.value);
+                return String(normalizeBodyweightKg(base - 0.5));
+              })
+            }
             showChevron={false}
             leading={<RowIcon symbol="-0.5" tone="neutral" />}
           />
           <NavigationRow
             label="몸무게 +0.5kg"
             description="스텝으로 빠르게 조절"
-            onPress={() => setDraftBodyweightKg((prev) => normalizeBodyweightKg(prev + 0.5))}
+            onPress={() =>
+              setDraftBodyweightInput((prev) => {
+                const base = parseDraftBodyweightKg(prev) ?? normalizeBodyweightKg(bodyweight.value);
+                return String(normalizeBodyweightKg(base + 0.5));
+              })
+            }
             showChevron={false}
             leading={<RowIcon symbol="+0.5" tone="neutral" />}
           />
@@ -119,11 +137,16 @@ export default function SettingsBodyweightPage() {
               min={MIN_BODYWEIGHT_KG}
               max={MAX_BODYWEIGHT_KG}
               step={0.1}
-              value={draftBodyweightKg}
+              value={draftBodyweightInput}
               onChange={(event) => {
-                const next = Number(event.target.value);
+                const nextRaw = event.target.value;
+                if (nextRaw === "") {
+                  setDraftBodyweightInput("");
+                  return;
+                }
+                const next = Number(nextRaw);
                 if (!Number.isFinite(next)) return;
-                setDraftBodyweightKg(normalizeBodyweightKg(next));
+                setDraftBodyweightInput(nextRaw);
               }}
             />
           </label>
@@ -131,8 +154,17 @@ export default function SettingsBodyweightPage() {
             type="button"
             className="ui-primary-button"
             disabled={bodyweight.pending}
-            onClick={() => {
-              void bodyweight.commit(normalizeBodyweightKg(draftBodyweightKg));
+            onClick={async () => {
+              const parsed = parseDraftBodyweightKg(draftBodyweightInput);
+              if (parsed === null) {
+                setDraftBodyweightInput(String(normalizeBodyweightKg(bodyweight.value)));
+                return;
+              }
+              const result = await bodyweight.commit(parsed);
+              if (!result.ignored && result.ok) {
+                setServerBodyweightKg(result.value);
+                setDraftBodyweightInput(String(normalizeBodyweightKg(result.value)));
+              }
             }}
           >
             {bodyweight.pending ? "저장 중..." : "몸무게 저장"}

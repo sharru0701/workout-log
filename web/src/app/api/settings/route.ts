@@ -51,6 +51,13 @@ function isSettingValue(value: unknown): value is SettingValue {
 
 function toSafeSettingValue(value: unknown): SettingValue | undefined {
   if (isSettingValue(value)) return value;
+  if (value && typeof value === "object") {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return undefined;
+    }
+  }
   return undefined;
 }
 

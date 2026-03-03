@@ -104,6 +104,10 @@ export default function SettingsMinimumPlatePage() {
       return full.includes(query);
     });
   }, [exerciseQuery, exercises]);
+  const selectedExerciseOption = useMemo(
+    () => (ruleDraft.exerciseId ? exercises.find((exercise) => exercise.id === ruleDraft.exerciseId) ?? null : null),
+    [ruleDraft.exerciseId, exercises],
+  );
 
   const latestNotice = defaultIncrement.notice ?? rulesSetting.notice ?? null;
   const hasSaveError = Boolean(defaultIncrement.error || rulesSetting.error);
@@ -121,7 +125,7 @@ export default function SettingsMinimumPlatePage() {
         DEFAULT_MINIMUM_PLATE_KG,
       );
       const rulesRaw = snapshot[SETTINGS_KEYS.minimumPlateRulesJson];
-      const nextRulesJson = typeof rulesRaw === "string" ? rulesRaw : "[]";
+      const nextRulesJson = serializeMinimumPlateRules(parseMinimumPlateRules(rulesRaw));
       setServerDefaultKg(nextDefaultKg);
       setDefaultDraftKg(nextDefaultKg);
       setServerRulesJson(nextRulesJson);
@@ -155,21 +159,39 @@ export default function SettingsMinimumPlatePage() {
   };
 
   const openEditSheet = (rule: MinimumPlateRule) => {
+    const matchedExercise =
+      exercises.find((exercise) => exercise.name.trim().toLowerCase() === rule.exerciseName.trim().toLowerCase()) ??
+      null;
     setEditingRuleKey(toRuleKey(rule));
     setRuleDraft({
-      exerciseId: rule.exerciseId,
-      exerciseName: rule.exerciseName,
+      exerciseId: matchedExercise?.id ?? rule.exerciseId,
+      exerciseName: matchedExercise?.name ?? rule.exerciseName,
       incrementKg: normalizeIncrementKg(rule.incrementKg, DEFAULT_MINIMUM_PLATE_KG),
     });
-    setExerciseQuery(rule.exerciseName);
+    setExerciseQuery("");
     setSheetError(null);
     setSheetOpen(true);
   };
 
+  const selectExerciseOption = useCallback((option: ExerciseOption | null) => {
+    setRuleDraft((prev) => ({
+      ...prev,
+      exerciseId: option?.id ?? null,
+      exerciseName: option?.name ?? "",
+    }));
+    setExerciseQuery("");
+    setSheetError(null);
+  }, []);
+
   const saveRule = async () => {
-    const exerciseName = ruleDraft.exerciseName.trim();
+    if (!ruleDraft.exerciseId) {
+      setSheetError("드롭다운에서 운동종목을 선택하세요.");
+      return;
+    }
+    const selectedExercise = exercises.find((exercise) => exercise.id === ruleDraft.exerciseId) ?? null;
+    const exerciseName = (selectedExercise?.name ?? ruleDraft.exerciseName).trim();
     if (!exerciseName) {
-      setSheetError("운동종목을 선택하거나 입력하세요.");
+      setSheetError("선택한 운동종목 정보를 확인하세요.");
       return;
     }
 
@@ -183,6 +205,7 @@ export default function SettingsMinimumPlatePage() {
     const nextRules = dedupeRules([...filtered, nextRule]);
     const result = await rulesSetting.commit(serializeMinimumPlateRules(nextRules));
     if (!result.ignored && result.ok) {
+      setServerRulesJson(result.value);
       setSheetOpen(false);
     }
   };
@@ -192,6 +215,7 @@ export default function SettingsMinimumPlatePage() {
     const nextRules = rules.filter((rule) => toRuleKey(rule) !== editingRuleKey);
     const result = await rulesSetting.commit(serializeMinimumPlateRules(nextRules));
     if (!result.ignored && result.ok) {
+      setServerRulesJson(result.value);
       setSheetOpen(false);
     }
   };
@@ -264,8 +288,11 @@ export default function SettingsMinimumPlatePage() {
             type="button"
             className="ui-primary-button"
             disabled={defaultIncrement.pending}
-            onClick={() => {
-              void defaultIncrement.commit(normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG));
+            onClick={async () => {
+              const result = await defaultIncrement.commit(normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG));
+              if (!result.ignored && result.ok) {
+                setServerDefaultKg(result.value);
+              }
             }}
           >
             {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
@@ -334,51 +361,93 @@ export default function SettingsMinimumPlatePage() {
       >
         <div className="grid gap-3">
           <label className="grid gap-1">
-            <span className="ui-card-label">운동종목 검색</span>
-            <input
-              className="workout-set-input workout-set-input-text"
-              value={exerciseQuery}
-              placeholder="예: Pull-up"
-              onChange={(event) => setExerciseQuery(event.target.value)}
-            />
-          </label>
+            <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
+            <div className="workout-combobox" data-no-swipe="true">
+              <div className="app-search-shell">
+                <span className="app-search-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <circle cx="11" cy="11" r="7" />
+                    <path d="m20 20-3.8-3.8" />
+                  </svg>
+                </span>
+                <input
+                  type="search"
+                  inputMode="search"
+                  className="app-search-input"
+                  value={exerciseQuery}
+                  placeholder="예: Pull-up"
+                  onChange={(event) => {
+                    const nextQuery = event.target.value;
+                    setExerciseQuery(nextQuery);
+                    setSheetError(null);
+                    setRuleDraft((prev) => {
+                      if (!prev.exerciseId) return prev;
+                      if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                      return { ...prev, exerciseId: null, exerciseName: "" };
+                    });
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter") return;
+                    event.preventDefault();
+                    const first = visibleExercises[0] ?? null;
+                    if (!first) return;
+                    selectExerciseOption(first);
+                  }}
+                />
+                {exerciseQuery.trim().length > 0 ? (
+                  <button
+                    type="button"
+                    className="app-search-clear"
+                    aria-label="검색어 지우기"
+                    onClick={() => {
+                      setExerciseQuery("");
+                      setSheetError(null);
+                    }}
+                  >
+                    ×
+                  </button>
+                ) : null}
+              </div>
 
-          <div className="grid gap-2 max-h-48 overflow-auto">
-            {visibleExercises.map((exercise) => (
-              <button
-                key={exercise.id}
-                type="button"
-                className={`haptic-tap rounded-xl border px-3 py-2 text-left text-sm ${
-                  ruleDraft.exerciseId === exercise.id ? "border-[color:var(--accent-primary)]" : ""
-                }`}
-                onClick={() => {
-                  setRuleDraft((prev) => ({
-                    ...prev,
-                    exerciseId: exercise.id,
-                    exerciseName: exercise.name,
-                  }));
-                  setSheetError(null);
-                }}
-              >
-                <strong>{exercise.name}</strong>
-                {exercise.category ? <span className="ml-2 text-[var(--text-secondary)]">{exercise.category}</span> : null}
-              </button>
-            ))}
-          </div>
+              {selectedExerciseOption ? (
+                <div className="workout-combobox-selected" role="status" aria-live="polite">
+                  <span className="workout-combobox-selected-kicker">선택됨</span>
+                  <strong className="workout-combobox-selected-name">
+                    {selectedExerciseOption.category
+                      ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
+                      : selectedExerciseOption.name}
+                  </strong>
+                  <button
+                    type="button"
+                    className="haptic-tap workout-combobox-selected-edit"
+                    onClick={() => selectExerciseOption(null)}
+                  >
+                    선택 변경
+                  </button>
+                </div>
+              ) : null}
 
-          <label className="grid gap-1">
-            <span className="ui-card-label">운동종목명</span>
-            <input
-              className="workout-set-input workout-set-input-text"
-              value={ruleDraft.exerciseName}
-              onChange={(event) =>
-                setRuleDraft((prev) => ({
-                  ...prev,
-                  exerciseId: null,
-                  exerciseName: event.target.value,
-                }))
-              }
-            />
+              {!selectedExerciseOption ? (
+                <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                  {visibleExercises.length === 0 ? (
+                    <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                  ) : (
+                    visibleExercises.map((exercise) => (
+                      <button
+                        key={exercise.id}
+                        type="button"
+                        className={`haptic-tap workout-combobox-option${ruleDraft.exerciseId === exercise.id ? " is-active" : ""}`}
+                        onClick={() => {
+                          selectExerciseOption(exercise);
+                        }}
+                      >
+                        {exercise.category ? `${exercise.name} · ${exercise.category}` : exercise.name}
+                      </button>
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </div>
           </label>
 
           <label className="grid gap-1">

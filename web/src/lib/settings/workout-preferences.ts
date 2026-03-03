@@ -41,6 +41,14 @@ function toFiniteNumber(value: unknown): number | null {
   return parsed;
 }
 
+function toExerciseNameKey(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[\s_-]+/g, "")
+    .replace(/[^\p{L}\p{N}]/gu, "");
+}
+
 export function normalizeThemePreference(value: unknown): ThemePreference {
   const normalized = String(value ?? "")
     .trim()
@@ -73,26 +81,32 @@ function normalizeRule(raw: unknown): MinimumPlateRule | null {
   };
 }
 
-export function parseMinimumPlateRules(value: unknown): MinimumPlateRule[] {
+function parseRuleEntries(value: unknown): unknown[] {
+  if (Array.isArray(value)) return value;
   if (typeof value !== "string" || !value.trim()) return [];
   try {
     const parsed = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-
-    const normalized: MinimumPlateRule[] = [];
-    const dedupe = new Set<string>();
-    for (const entry of parsed) {
-      const rule = normalizeRule(entry);
-      if (!rule) continue;
-      const key = rule.exerciseId ? `id:${rule.exerciseId}` : `name:${rule.exerciseName.toLowerCase()}`;
-      if (dedupe.has(key)) continue;
-      dedupe.add(key);
-      normalized.push(rule);
-    }
-    return normalized;
+    return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
   }
+}
+
+export function parseMinimumPlateRules(value: unknown): MinimumPlateRule[] {
+  const entries = parseRuleEntries(value);
+  if (entries.length === 0) return [];
+
+  const normalized: MinimumPlateRule[] = [];
+  const dedupe = new Set<string>();
+  for (const entry of entries) {
+    const rule = normalizeRule(entry);
+    if (!rule) continue;
+    const key = rule.exerciseId ? `id:${rule.exerciseId}` : `name:${rule.exerciseName.toLowerCase()}`;
+    if (dedupe.has(key)) continue;
+    dedupe.add(key);
+    normalized.push(rule);
+  }
+  return normalized;
 }
 
 export function serializeMinimumPlateRules(rules: MinimumPlateRule[]): string {
@@ -142,12 +156,18 @@ export function resolveMinimumPlateIncrementKg(
     : null;
   if (byId) return byId.incrementKg;
 
-  const nameKey = input.exerciseName.trim().toLowerCase();
+  const nameKey = toExerciseNameKey(input.exerciseName);
   if (nameKey) {
-    const byName = preferences.minimumPlateRules.find(
-      (rule) => !rule.exerciseId && rule.exerciseName.trim().toLowerCase() === nameKey,
+    // Prefer explicit name-only rules first, then fallback to any same-name rule (including DB-linked).
+    const byNameOnlyRule = preferences.minimumPlateRules.find(
+      (rule) => !rule.exerciseId && toExerciseNameKey(rule.exerciseName) === nameKey,
     );
-    if (byName) return byName.incrementKg;
+    if (byNameOnlyRule) return byNameOnlyRule.incrementKg;
+
+    const byAnyNameRule = preferences.minimumPlateRules.find(
+      (rule) => toExerciseNameKey(rule.exerciseName) === nameKey,
+    );
+    if (byAnyNameRule) return byAnyNameRule.incrementKg;
   }
 
   return preferences.minimumPlateDefaultKg;

@@ -1,7 +1,55 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+
+const SHEET_STACK_EVENT = "mobile-bottom-sheet-stack-change";
+const SHEET_STACK_DATA_KEY = "bottomSheetStack";
+
+function readSheetStack(body: HTMLElement) {
+  const raw = body.dataset[SHEET_STACK_DATA_KEY];
+  if (!raw) return [] as string[];
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed) && parsed.every((id) => typeof id === "string")) {
+      return parsed;
+    }
+  } catch {
+    return [] as string[];
+  }
+
+  return [] as string[];
+}
+
+function writeSheetStack(body: HTMLElement, stack: string[]) {
+  if (stack.length > 0) {
+    body.dataset[SHEET_STACK_DATA_KEY] = JSON.stringify(stack);
+  } else {
+    delete body.dataset[SHEET_STACK_DATA_KEY];
+  }
+
+  window.dispatchEvent(new Event(SHEET_STACK_EVENT));
+}
+
+function upsertSheetId(body: HTMLElement, id: string) {
+  const nextStack = readSheetStack(body).filter((item) => item !== id);
+  nextStack.push(id);
+  writeSheetStack(body, nextStack);
+}
+
+function removeSheetId(body: HTMLElement, id: string) {
+  const currentStack = readSheetStack(body);
+  const nextStack = currentStack.filter((item) => item !== id);
+  if (nextStack.length === currentStack.length) return;
+  writeSheetStack(body, nextStack);
+}
+
+function topSheetId(body: HTMLElement) {
+  const stack = readSheetStack(body);
+  return stack.length > 0 ? stack[stack.length - 1] : null;
+}
 
 type BottomSheetProps = {
   open: boolean;
@@ -26,10 +74,44 @@ export function BottomSheet({
   closeLabel = "Close",
   footer,
 }: BottomSheetProps) {
+  const sheetId = useId();
+  const [mounted, setMounted] = useState(false);
+  const [isTopSheet, setIsTopSheet] = useState(false);
   const panelRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const closeAnimationTimerRef = useRef<number | null>(null);
   const closeAnimationMs = 180;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const syncTopSheetState = useCallback(() => {
+    if (!open) {
+      setIsTopSheet(false);
+      return;
+    }
+    setIsTopSheet(topSheetId(document.body) === sheetId);
+  }, [open, sheetId]);
+
+  useEffect(() => {
+    if (!open) {
+      removeSheetId(document.body, sheetId);
+      syncTopSheetState();
+      return;
+    }
+
+    upsertSheetId(document.body, sheetId);
+    syncTopSheetState();
+    window.addEventListener(SHEET_STACK_EVENT, syncTopSheetState);
+
+    return () => {
+      window.removeEventListener(SHEET_STACK_EVENT, syncTopSheetState);
+      removeSheetId(document.body, sheetId);
+    };
+  }, [open, sheetId, syncTopSheetState]);
+
+  const isInteractiveSheet = open && isTopSheet;
 
   const clearDragListeners = useCallback(() => {
     dragCleanupRef.current?.();
@@ -53,7 +135,7 @@ export function BottomSheet({
   }, [clearDragListeners, clearDragVisual]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isInteractiveSheet) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
@@ -61,7 +143,7 @@ export function BottomSheet({
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [open, onClose]);
+  }, [isInteractiveSheet, onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -132,7 +214,7 @@ export function BottomSheet({
 
   const onHandlePointerDown = useCallback(
     (event: ReactPointerEvent<HTMLDivElement>) => {
-      if (!open) return;
+      if (!isInteractiveSheet) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
       const panel = panelRef.current;
       if (!panel) return;
@@ -186,19 +268,24 @@ export function BottomSheet({
       window.addEventListener("pointerup", onPointerUp);
       window.addEventListener("pointercancel", onPointerCancel);
     },
-    [open, onClose, clearDragState, clearDragListeners],
+    [isInteractiveSheet, onClose, clearDragState, clearDragListeners],
   );
 
-  return (
+  const sheetElement = (
     <div
-      className={`mobile-bottom-sheet ${open ? "is-open pointer-events-auto" : "pointer-events-none"} ${className}`.trim()}
-      aria-hidden={!open}
+      className={`mobile-bottom-sheet ${open ? "is-open" : ""} ${isInteractiveSheet ? "pointer-events-auto" : "pointer-events-none"} ${
+        open && !isInteractiveSheet ? "is-underlay" : ""
+      } ${className}`.trim()}
+      aria-hidden={!isInteractiveSheet}
     >
       <button
         type="button"
         aria-label={closeLabel}
         className="mobile-bottom-sheet-backdrop"
-        onClick={onClose}
+        onClick={() => {
+          if (!isInteractiveSheet) return;
+          onClose();
+        }}
       />
       <section
         ref={panelRef}
@@ -224,4 +311,8 @@ export function BottomSheet({
       </section>
     </div>
   );
+
+  if (!mounted) return null;
+
+  return createPortal(sheetElement, document.body);
 }

@@ -225,6 +225,14 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     description: "조회 종료 날짜",
   },
   {
+    key: "settings.exercise-management",
+    title: "운동종목 관리",
+    path: "/settings/exercise-management",
+    section: "시스템",
+    keywords: ["exercise", "catalog", "운동종목", "추가", "수정", "삭제", "dropdown"],
+    description: "운동종목 카탈로그 관리 및 추가 화면 연동",
+  },
+  {
     key: "settings.data-export",
     title: "데이터 내보내기",
     path: "/settings/data",

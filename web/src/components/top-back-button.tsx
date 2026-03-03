@@ -17,6 +17,7 @@ function titleFromPathname(pathname: string) {
   if (pathname.startsWith("/settings/theme")) return "Theme";
   if (pathname.startsWith("/settings/minimum-plate")) return "Minimum Plate";
   if (pathname.startsWith("/settings/bodyweight")) return "Bodyweight";
+  if (pathname.startsWith("/settings/exercise-management")) return "Exercise Catalog";
   if (pathname.startsWith("/settings/data-export")) return "Data Export";
   if (pathname.startsWith("/settings/offline-help")) return "Offline Help";
   if (pathname.startsWith("/settings/about")) return "App Info";
