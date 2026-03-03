@@ -208,10 +208,11 @@ export function NavigationRow({
   showChevron = true,
 }: NavigationRowProps) {
   const hasLeading = Boolean(leading);
+  const showChevronIndicator = showChevron;
   const trailing = (
     <>
-      {value ? <span className={styles.value}>{value}</span> : null}
-      {showChevron ? (
+      {!showChevronIndicator && value ? <span className={styles.value}>{value}</span> : null}
+      {showChevronIndicator ? (
         <span aria-hidden="true" className={styles.chevron} />
       ) : null}
     </>
@@ -355,10 +356,11 @@ export function ValueRow({
 }: ValueRowProps) {
   const hasLeading = Boolean(leading);
   const isInteractive = Boolean((href || onPress) && !disabled);
+  const showChevronIndicator = showChevron ?? isInteractive;
   const trailing = (
     <>
-      <span className={cx(styles.value, wrapValue && styles.valueWrap)}>{value}</span>
-      {(showChevron ?? isInteractive) ? (
+      {!showChevronIndicator ? <span className={cx(styles.value, wrapValue && styles.valueWrap)}>{value}</span> : null}
+      {showChevronIndicator ? (
         <span aria-hidden="true" className={styles.chevron} />
       ) : null}
     </>

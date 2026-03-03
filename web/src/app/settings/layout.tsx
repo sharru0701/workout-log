@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { SettingsHomeContent } from "@/components/settings/settings-home-content";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -31,6 +32,34 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/settings";
   const router = useRouter();
   const isRoot = pathname === "/settings";
+  const closeTimerRef = useRef<number | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(true);
+
+  useEffect(() => {
+    if (isRoot) return;
+    setSheetOpen(true);
+    if (closeTimerRef.current === null) return;
+    window.clearTimeout(closeTimerRef.current);
+    closeTimerRef.current = null;
+  }, [isRoot, pathname]);
+
+  useEffect(
+    () => () => {
+      if (closeTimerRef.current === null) return;
+      window.clearTimeout(closeTimerRef.current);
+      closeTimerRef.current = null;
+    },
+    [],
+  );
+
+  const handleClose = useCallback(() => {
+    if (closeTimerRef.current !== null) return;
+    setSheetOpen(false);
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      router.push("/settings");
+    }, 400);
+  }, [router]);
 
   if (isRoot) return <>{children}</>;
 
@@ -38,8 +67,8 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
     <>
       <SettingsHomeContent className="settings-child-modal-background" />
       <BottomSheet
-        open
-        onClose={() => router.push("/settings")}
+        open={sheetOpen}
+        onClose={handleClose}
         title={modalTitleFromPathname(pathname)}
         description={modalDescriptionFromPathname(pathname)}
         closeLabel="닫기"

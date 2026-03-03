@@ -76,15 +76,45 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const sheetId = useId();
   const [mounted, setMounted] = useState(false);
+  const [visualOpen, setVisualOpen] = useState(false);
   const [isTopSheet, setIsTopSheet] = useState(false);
   const panelRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const closeAnimationTimerRef = useRef<number | null>(null);
-  const closeAnimationMs = 180;
+  const openAnimationFrameRef = useRef<number | null>(null);
+  const closeAnimationMs = 400;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+    if (openAnimationFrameRef.current !== null) {
+      window.cancelAnimationFrame(openAnimationFrameRef.current);
+      openAnimationFrameRef.current = null;
+    }
+
+    if (!open) {
+      setVisualOpen(false);
+      return;
+    }
+
+    // Start from the closed transform first, then animate in next frame.
+    setVisualOpen(false);
+    openAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      openAnimationFrameRef.current = window.requestAnimationFrame(() => {
+        setVisualOpen(true);
+        openAnimationFrameRef.current = null;
+      });
+    });
+
+    return () => {
+      if (openAnimationFrameRef.current === null) return;
+      window.cancelAnimationFrame(openAnimationFrameRef.current);
+      openAnimationFrameRef.current = null;
+    };
+  }, [mounted, open]);
 
   const syncTopSheetState = useCallback(() => {
     if (!open) {
@@ -273,7 +303,7 @@ export function BottomSheet({
 
   const sheetElement = (
     <div
-      className={`mobile-bottom-sheet ${open ? "is-open" : ""} ${isInteractiveSheet ? "pointer-events-auto" : "pointer-events-none"} ${
+      className={`mobile-bottom-sheet ${visualOpen ? "is-open" : ""} ${isInteractiveSheet ? "pointer-events-auto" : "pointer-events-none"} ${
         open && !isInteractiveSheet ? "is-underlay" : ""
       } ${className}`.trim()}
       aria-hidden={!isInteractiveSheet}

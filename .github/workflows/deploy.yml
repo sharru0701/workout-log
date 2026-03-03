@@ -166,6 +166,8 @@ jobs:
           fi
           echo "[deploy] running dedicated migration job before switching web container"
           docker compose run --rm -T migrate </dev/null
+          echo "[deploy] checking base seed data (program templates / exercises)"
+          docker compose run --rm -T migrate node scripts/seed-if-empty.mjs </dev/null
           docker compose up -d --no-deps --force-recreate web
           docker compose ps
           EOF
