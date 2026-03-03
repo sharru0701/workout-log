@@ -1315,12 +1315,41 @@ button {
 .mobile-bottom-sheet-close {
   border: 1px solid transparent;
   border-radius: 999px;
+  width: 2rem;
   min-height: 2rem;
-  padding: 0 0.75rem;
+  padding: 0;
   background: color-mix(in srgb, var(--bg-elevated) 74%, transparent);
   color: var(--text-secondary);
-  font-size: 0.78rem;
-  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-bottom-sheet-close-icon {
+  position: relative;
+  width: 0.82rem;
+  height: 0.82rem;
+}
+
+.mobile-bottom-sheet-close-icon::before,
+.mobile-bottom-sheet-close-icon::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100%;
+  height: 1.8px;
+  border-radius: 999px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.mobile-bottom-sheet-close-icon::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.mobile-bottom-sheet-close-icon::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 .mobile-bottom-sheet-body {
@@ -1329,11 +1358,11 @@ button {
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 0 0.95rem calc(1.2rem + env(safe-area-inset-bottom));
+  padding: 0 0.95rem calc(0.92rem + env(safe-area-inset-bottom));
 }
 
 .mobile-bottom-sheet-footer {
-  padding: 0.58rem 0.95rem calc(0.82rem + env(safe-area-inset-bottom));
+  padding: 0.52rem 0.95rem calc(1.14rem + env(safe-area-inset-bottom));
   background: linear-gradient(180deg, color-mix(in srgb, var(--bg-surface) 0%, transparent), var(--bg-surface) 36%);
 }
 
@@ -1453,14 +1482,20 @@ textarea::placeholder {
 }
 
 .workout-swipe-shell {
+  --workout-swipe-offset: 0px;
   position: relative;
   overflow: hidden;
   border-radius: var(--radius-surface);
+  touch-action: pan-y;
   animation: ui-list-in var(--duration-normal) var(--motion-ease);
 }
 
 .workout-swipe-shell.is-removing {
   animation: ui-list-out var(--duration-fast) var(--motion-ease) forwards;
+}
+
+.workout-swipe-shell.is-dragging {
+  user-select: none;
 }
 
 .workout-swipe-delete {
@@ -1476,6 +1511,9 @@ textarea::placeholder {
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .workout-set-card {
@@ -1486,19 +1524,12 @@ textarea::placeholder {
   background: var(--bg-surface);
   padding: 0.9rem;
   box-shadow: var(--shadow-soft);
+  transform: translateX(var(--workout-swipe-offset));
   transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease);
 }
 
-.workout-swipe-shell:hover .workout-set-card,
-.workout-swipe-shell:focus-within .workout-set-card {
-  transform: translateX(-4.5rem);
-  box-shadow: var(--shadow-float);
-}
-
-@media (hover: none) {
-  .workout-swipe-shell:active .workout-set-card {
-    transform: translateX(-4.5rem);
-  }
+.workout-swipe-shell.is-dragging .workout-set-card {
+  transition: none;
 }
 
 .workout-set-input {
@@ -1661,6 +1692,7 @@ textarea::placeholder {
 .workout-save-button {
   width: 100%;
   min-height: 3.1rem;
+  border-radius: var(--radius-surface);
   font-size: 1rem;
   font-weight: 700;
   transition: transform var(--motion-duration) var(--motion-ease), filter var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease);
@@ -2802,7 +2834,8 @@ textarea::placeholder {
   }
 
   .app-top-back-button,
-  .app-top-nav-placeholder {
+  .app-top-nav-placeholder,
+  .app-top-settings-button {
     width: 2.52rem;
     min-height: 2.52rem;
   }
@@ -2891,6 +2924,7 @@ textarea::placeholder {
 
   .workout-save-button {
     min-height: 2.9rem;
+    border-radius: var(--radius-surface);
     font-size: 0.95rem;
   }
 
@@ -3040,8 +3074,8 @@ textarea::placeholder {
   --type-scale-footnote-line-height: 1.33;
   --type-scale-footnote-weight: 500;
 
-  --space-screen-section-gap: 1.44rem;
-  --space-section-top-offset: 0.3rem;
+  --space-screen-section-gap: 1.14rem;
+  --space-section-top-offset: 0.14rem;
   --screen-card-inset-inline: 0.56rem;
   --settings-row-min-height: max(var(--touch-target-min), 2.98em);
   --settings-row-padding-block: 0.88em;
@@ -3168,11 +3202,11 @@ label.ui-card-label {
 .home-screen > section,
 .tab-screen > section,
 .settings-screen > section {
-  gap: 0.74rem !important;
+  gap: 0.64rem !important;
 }
 
 .settings-screen > section {
-  gap: 0.68rem !important;
+  gap: 0.58rem !important;
 }
 
 .settings-screen {
@@ -3200,8 +3234,8 @@ label.ui-card-label {
 }
 
 .settings-screen-main {
-  --space-section-top-offset: 0.36rem;
-  --space-screen-section-gap: 1.56rem;
+  --space-section-top-offset: 0.2rem;
+  --space-screen-section-gap: 1.24rem;
   --settings-row-min-height: max(var(--touch-target-min), 3.1em);
   --settings-row-padding-block: 0.94em;
   --settings-row-padding-inline: 1.16rem;
@@ -3258,7 +3292,7 @@ label.ui-card-label {
 
 @media (max-width: 430px) {
   :root {
-    --space-screen-section-gap: 1.22rem;
+    --space-screen-section-gap: 1rem;
     --screen-card-inset-inline: 0.46rem;
     --settings-row-padding-inline: 1rem;
     --settings-row-padding-block: 0.82em;
@@ -3275,7 +3309,7 @@ label.ui-card-label {
   }
 
   .settings-screen-main {
-    --space-screen-section-gap: 1.28rem;
+    --space-screen-section-gap: 1.08rem;
     --settings-row-padding-inline: 1.04rem;
     --settings-row-content-gap: 0.82rem;
     --screen-text-inset-inline: 1.4rem;
@@ -3483,17 +3517,31 @@ html {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 2.72rem;
   min-height: var(--touch-target);
-  min-width: var(--touch-target);
-  padding: 0 0.75rem;
+  min-width: 2.72rem;
+  padding: 0;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--border-subtle) 48%, transparent);
   background: color-mix(in srgb, var(--bg-surface) 64%, transparent);
   color: var(--text-primary);
   text-decoration: none;
-  font-size: 0.84rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+}
+
+.app-top-settings-icon {
+  display: inline-flex;
+  width: 1rem;
+  height: 1rem;
+}
+
+.app-top-settings-icon svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.65;
 }
 
 .app-top-settings-button.is-active {

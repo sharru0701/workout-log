@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
@@ -77,8 +77,7 @@ type AddExerciseDraft = {
   exerciseId: string | null;
   exerciseName: string;
   weightKg: number;
-  sets: number;
-  reps: number;
+  repsPerSet: number[];
   memo: string;
 };
 
@@ -139,6 +138,42 @@ function stateLabel(state: WorkoutWorkflowState) {
   if (state === "editing") return "Editing";
   if (state === "saving") return "Saving";
   return "Done";
+}
+
+function clampReps(value: number) {
+  return Math.min(100, Math.max(1, Math.round(value)));
+}
+
+function normalizeRepsPerSet(value: number[], fallback = 5) {
+  if (!Array.isArray(value) || value.length === 0) {
+    return [clampReps(fallback)];
+  }
+  return value.map((entry) => clampReps(entry)).slice(0, 50);
+}
+
+function patchSetRepsAtIndex(values: number[], index: number, nextReps: number) {
+  const next = normalizeRepsPerSet(values);
+  if (index < 0 || index >= next.length) return next;
+  next[index] = clampReps(nextReps);
+  return next;
+}
+
+function appendSetReps(values: number[]) {
+  const next = normalizeRepsPerSet(values);
+  const last = next[next.length - 1] ?? 5;
+  if (next.length >= 50) return next;
+  return [...next, last];
+}
+
+function removeLastSetReps(values: number[]) {
+  const next = normalizeRepsPerSet(values);
+  if (next.length <= 1) return next;
+  return next.slice(0, next.length - 1);
+}
+
+function isSwipeDisabledTarget(target: EventTarget | null) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest("input, textarea, select, button, a, [role='button'], [data-no-swipe='true']"));
 }
 
 function NumberStepper({
@@ -203,8 +238,9 @@ function ExerciseRow({
   bodyweightKg,
   onChangeName,
   onChangeWeight,
-  onChangeSets,
-  onChangeReps,
+  onChangeSetReps,
+  onAddSet,
+  onRemoveSet,
   onChangeMemo,
   onDelete,
 }: {
@@ -213,20 +249,113 @@ function ExerciseRow({
   bodyweightKg: number | null;
   onChangeName: (value: string) => void;
   onChangeWeight: (value: number) => void;
-  onChangeSets: (value: number) => void;
-  onChangeReps: (value: number) => void;
+  onChangeSetReps: (setIndex: number, value: number) => void;
+  onAddSet: () => void;
+  onRemoveSet: () => void;
   onChangeMemo: (value: string) => void;
   onDelete: () => void;
 }) {
+  const swipeStateRef = useRef<{
+    pointerId: number | null;
+    startX: number;
+    startY: number;
+    startOffset: number;
+    isHorizontal: boolean | null;
+  }>({
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    startOffset: 0,
+    isHorizontal: null,
+  });
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
+  const revealDelete = swipeOffset <= -44;
+
+  const resetSwipeGesture = useCallback(() => {
+    swipeStateRef.current = {
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      startOffset: 0,
+      isHorizontal: null,
+    };
+    setIsSwiping(false);
+  }, []);
+
+  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0 || isSwipeDisabledTarget(event.target)) return;
+    swipeStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startOffset: swipeOffset,
+      isHorizontal: null,
+    };
+  }, [swipeOffset]);
+
+  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (swipeStateRef.current.pointerId !== event.pointerId) return;
+    const deltaX = event.clientX - swipeStateRef.current.startX;
+    const deltaY = event.clientY - swipeStateRef.current.startY;
+
+    if (swipeStateRef.current.isHorizontal === null) {
+      if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
+      swipeStateRef.current.isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
+      if (!swipeStateRef.current.isHorizontal) {
+        resetSwipeGesture();
+        return;
+      }
+    }
+
+    event.preventDefault();
+    const nextOffset = Math.max(-88, Math.min(0, swipeStateRef.current.startOffset + deltaX));
+    setIsSwiping(true);
+    setSwipeOffset(nextOffset);
+  }, [resetSwipeGesture]);
+
+  const handlePointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (swipeStateRef.current.pointerId !== event.pointerId) return;
+    if (swipeStateRef.current.isHorizontal) {
+      setSwipeOffset((prev) => (prev <= -44 ? -88 : 0));
+    }
+    resetSwipeGesture();
+  }, [resetSwipeGesture]);
 
   return (
-    <div className="workout-swipe-shell">
-      <button type="button" className="workout-swipe-delete haptic-tap" onClick={onDelete}>
+    <div
+      className={`workout-swipe-shell${isSwiping ? " is-dragging" : ""}${revealDelete ? " is-open" : ""}`}
+      style={{ ["--workout-swipe-offset" as any]: `${swipeOffset}px` }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+      onPointerLeave={(event) => {
+        if (!isSwiping) return;
+        handlePointerUp(event);
+      }}
+    >
+      <button
+        type="button"
+        className="workout-swipe-delete haptic-tap"
+        onClick={() => {
+          onDelete();
+          setSwipeOffset(0);
+        }}
+        data-no-swipe="true"
+      >
         삭제
       </button>
 
-      <article className="workout-set-card grid gap-2">
+      <article
+        className="workout-set-card grid gap-2"
+        onClick={(event) => {
+          if (!revealDelete || isSwipeDisabledTarget(event.target)) return;
+          event.preventDefault();
+          setSwipeOffset(0);
+        }}
+      >
         <div className="flex items-center justify-between gap-2">
           <span className={`ui-badge ${exercise.source === "PROGRAM" ? "ui-badge-info" : "ui-badge-neutral"}`}>
             {exercise.source === "PROGRAM" ? "Program Seed" : "User Added"}
@@ -244,7 +373,7 @@ function ExerciseRow({
           />
         </label>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="grid gap-1">
             <span className="ui-card-label">무게 (kg)</span>
             <input
@@ -258,22 +387,44 @@ function ExerciseRow({
               onChange={(event) => onChangeWeight(Number(event.target.value))}
             />
           </label>
-          <NumberStepper
-            label="세트"
-            value={exercise.set.count}
-            min={1}
-            max={50}
-            onChange={onChangeSets}
-            inputMode="numeric"
-          />
-          <NumberStepper
-            label="횟수"
-            value={exercise.set.reps}
-            min={1}
-            max={100}
-            onChange={onChangeReps}
-            inputMode="numeric"
-          />
+          <div className="grid gap-1 rounded-xl border p-2">
+            <span className="ui-card-label">세트 수</span>
+            <strong>{exercise.set.repsPerSet.length}세트</strong>
+            <span className="text-xs text-[var(--text-secondary)]">세트별 횟수 입력으로 자동 관리됩니다.</span>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between">
+            <span className="ui-card-label">세트별 운동횟수</span>
+            <span className="text-xs text-[var(--text-secondary)]">각 세트를 개별 입력</span>
+          </div>
+          <div className="grid gap-2">
+            {exercise.set.repsPerSet.map((setReps, index) => (
+              <NumberStepper
+                key={`${exercise.id}-set-${index}`}
+                label={`${index + 1}세트`}
+                value={setReps}
+                min={1}
+                max={100}
+                onChange={(value) => onChangeSetReps(index, value)}
+                inputMode="numeric"
+              />
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2" data-no-swipe="true">
+            <button type="button" className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold" onClick={onAddSet}>
+              + 세트 추가
+            </button>
+            <button
+              type="button"
+              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+              onClick={onRemoveSet}
+              disabled={exercise.set.repsPerSet.length <= 1}
+            >
+              - 마지막 세트
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
@@ -323,8 +474,7 @@ export default function WorkoutRecordPage() {
     exerciseId: null,
     exerciseName: "",
     weightKg: 0,
-    sets: 3,
-    reps: 5,
+    repsPerSet: [5, 5, 5],
     memo: "",
   });
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
@@ -596,8 +746,7 @@ export default function WorkoutRecordPage() {
         exerciseId: addDraft.exerciseId,
         exerciseName,
         weightKg: snappedWeightKg,
-        sets: addDraft.sets,
-        reps: addDraft.reps,
+        repsPerSet: addDraft.repsPerSet,
         memo: addDraft.memo,
       });
     });
@@ -608,8 +757,7 @@ export default function WorkoutRecordPage() {
       exerciseId: null,
       exerciseName: "",
       weightKg: 0,
-      sets: 3,
-      reps: 5,
+      repsPerSet: [5, 5, 5],
       memo: "",
     });
   }, [addDraft, draft, resolveWeightWithCurrentPreferences]);
@@ -754,19 +902,29 @@ export default function WorkoutRecordPage() {
                     }
                     applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { weightKg: snapped } }));
                   }}
-                  onChangeSets={(value) => {
+                  onChangeSetReps={(setIndex, value) => {
+                    const repsPerSet = patchSetRepsAtIndex(exercise.set.repsPerSet, setIndex, value);
                     if (exercise.source === "PROGRAM") {
-                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { count: value } }));
+                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
                       return;
                     }
-                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { count: value } }));
+                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
                   }}
-                  onChangeReps={(value) => {
+                  onAddSet={() => {
+                    const repsPerSet = appendSetReps(exercise.set.repsPerSet);
                     if (exercise.source === "PROGRAM") {
-                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { reps: value } }));
+                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
                       return;
                     }
-                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { reps: value } }));
+                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
+                  }}
+                  onRemoveSet={() => {
+                    const repsPerSet = removeLastSetReps(exercise.set.repsPerSet);
+                    if (exercise.source === "PROGRAM") {
+                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
+                      return;
+                    }
+                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
                   }}
                   onChangeMemo={(value) => {
                     if (exercise.source === "PROGRAM") {
@@ -913,7 +1071,7 @@ export default function WorkoutRecordPage() {
             />
           </label>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             <label className="grid gap-1">
               <span className="ui-card-label">무게 (kg)</span>
               <input
@@ -935,20 +1093,62 @@ export default function WorkoutRecordPage() {
                 }
               />
             </label>
-            <NumberStepper
-              label="세트"
-              value={addDraft.sets}
-              min={1}
-              max={50}
-              onChange={(value) => setAddDraft((prev) => ({ ...prev, sets: value }))}
-            />
-            <NumberStepper
-              label="횟수"
-              value={addDraft.reps}
-              min={1}
-              max={100}
-              onChange={(value) => setAddDraft((prev) => ({ ...prev, reps: value }))}
-            />
+            <div className="grid gap-1 rounded-xl border p-2">
+              <span className="ui-card-label">세트 수</span>
+              <strong>{addDraft.repsPerSet.length}세트</strong>
+              <span className="text-xs text-[var(--text-secondary)]">세트별 운동횟수 입력으로 자동 관리됩니다.</span>
+            </div>
+          </div>
+
+          <div className="grid gap-2">
+            <div className="flex items-center justify-between">
+              <span className="ui-card-label">세트별 운동횟수</span>
+              <span className="text-xs text-[var(--text-secondary)]">추가할 운동의 각 세트 횟수</span>
+            </div>
+            <div className="grid gap-2">
+              {addDraft.repsPerSet.map((setReps, index) => (
+                <NumberStepper
+                  key={`add-set-${index}`}
+                  label={`${index + 1}세트`}
+                  value={setReps}
+                  min={1}
+                  max={100}
+                  onChange={(value) =>
+                    setAddDraft((prev) => ({
+                      ...prev,
+                      repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
+                    }))
+                  }
+                />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+                onClick={() =>
+                  setAddDraft((prev) => ({
+                    ...prev,
+                    repsPerSet: appendSetReps(prev.repsPerSet),
+                  }))
+                }
+              >
+                + 세트 추가
+              </button>
+              <button
+                type="button"
+                className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+                onClick={() =>
+                  setAddDraft((prev) => ({
+                    ...prev,
+                    repsPerSet: removeLastSetReps(prev.repsPerSet),
+                  }))
+                }
+                disabled={addDraft.repsPerSet.length <= 1}
+              >
+                - 마지막 세트
+              </button>
+            </div>
           </div>
 
           <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">

@@ -3,6 +3,7 @@ export type WorkoutWorkflowState = "idle" | "editing" | "saving" | "done";
 export type WorkoutSetModel = {
   count: number;
   reps: number;
+  repsPerSet: number[];
   weightKg: number;
 };
 
@@ -110,6 +111,30 @@ function toNumber(value: unknown, fallback: number) {
   return parsed;
 }
 
+function normalizeRepsValue(value: unknown, fallback = 5) {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) return fallback;
+  return Math.min(100, Math.max(1, Math.round(parsed)));
+}
+
+function normalizeRepsPerSetArray(
+  value: unknown,
+  fallbackReps = 5,
+  fallbackCount = 1,
+): number[] {
+  if (Array.isArray(value)) {
+    const normalized = value
+      .map((entry) => normalizeRepsValue(entry, fallbackReps))
+      .filter((entry) => Number.isFinite(entry))
+      .slice(0, 50);
+    if (normalized.length > 0) return normalized;
+  }
+
+  const count = Math.min(50, Math.max(1, Math.round(toNumber(fallbackCount, 1))));
+  const reps = normalizeRepsValue(fallbackReps, 5);
+  return Array.from({ length: count }, () => reps);
+}
+
 function nonEmpty(value: string, fallback: string) {
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : fallback;
@@ -161,6 +186,11 @@ function toSessionType(day: number) {
 function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerciseModel {
   const sets = Array.isArray(exercise.sets) && exercise.sets.length > 0 ? exercise.sets : [{}];
   const first = sets[0] ?? {};
+  const repsPerSet = normalizeRepsPerSetArray(
+    sets.map((set) => set?.reps),
+    toNumber(first.reps, 5),
+    sets.length,
+  );
 
   return {
     id: `seed-${index + 1}`,
@@ -168,13 +198,40 @@ function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerc
     exerciseName: nonEmpty(String(exercise.exerciseName ?? exercise.name ?? ""), `Exercise ${index + 1}`),
     source: "PROGRAM",
     set: {
-      count: Math.max(1, sets.length),
-      reps: Math.max(1, Math.round(toNumber(first.reps, 5))),
+      count: repsPerSet.length,
+      reps: repsPerSet[0] ?? 5,
+      repsPerSet,
       weightKg: Math.max(0, toNumber(first.targetWeightKg ?? first.weightKg, 0)),
     },
     note: {
       memo: typeof first.note === "string" ? first.note : "",
     },
+  };
+}
+
+function mergeSetModel(base: WorkoutSetModel, patch?: Partial<WorkoutSetModel>): WorkoutSetModel {
+  const baseRepsPerSet = normalizeRepsPerSetArray(base.repsPerSet, base.reps, base.count);
+  let nextRepsPerSet = baseRepsPerSet;
+
+  if (patch?.repsPerSet !== undefined) {
+    nextRepsPerSet = normalizeRepsPerSetArray(patch.repsPerSet, base.reps, base.count);
+  } else {
+    const requestedCount = patch?.count !== undefined ? Math.max(1, Math.min(50, Math.round(patch.count))) : baseRepsPerSet.length;
+    const requestedReps = patch?.reps !== undefined ? normalizeRepsValue(patch.reps, base.reps) : null;
+
+    if (requestedCount !== baseRepsPerSet.length || requestedReps !== null) {
+      const fallbackReps = requestedReps ?? baseRepsPerSet[baseRepsPerSet.length - 1] ?? base.reps;
+      nextRepsPerSet = Array.from({ length: requestedCount }, (_, index) =>
+        requestedReps ?? baseRepsPerSet[index] ?? fallbackReps,
+      );
+    }
+  }
+
+  return {
+    count: nextRepsPerSet.length,
+    reps: nextRepsPerSet[0] ?? 5,
+    repsPerSet: nextRepsPerSet,
+    weightKg: patch?.weightKg !== undefined ? Math.max(0, Number(patch.weightKg)) : base.weightKg,
   };
 }
 
@@ -191,11 +248,7 @@ function mergeSeedExercise(base: WorkoutExerciseModel, patch: SeedExerciseEditPa
     ...base,
     exerciseId: patch.exerciseId !== undefined ? patch.exerciseId : base.exerciseId,
     exerciseName: patch.exerciseName ?? base.exerciseName,
-    set: {
-      count: patch.set?.count ?? base.set.count,
-      reps: patch.set?.reps ?? base.set.reps,
-      weightKg: patch.set?.weightKg ?? base.set.weightKg,
-    },
+    set: mergeSetModel(base.set, patch.set),
     note: {
       memo: patch.note?.memo ?? base.note.memo,
     },
@@ -256,6 +309,7 @@ export function hasWorkoutEdits(draft: WorkoutRecordDraft) {
         patch.exerciseName !== undefined ||
         patch.set?.count !== undefined ||
         patch.set?.reps !== undefined ||
+        patch.set?.repsPerSet !== undefined ||
         patch.set?.weightKg !== undefined ||
         patch.note?.memo !== undefined,
     );
@@ -297,20 +351,23 @@ export function addUserExercise(
     exerciseId?: string | null;
     exerciseName: string;
     weightKg: number;
-    sets: number;
-    reps: number;
+    sets?: number;
+    reps?: number;
+    repsPerSet?: number[];
     memo: string;
   },
 ): WorkoutRecordDraft {
   const userIndex = draft.userExercises.length + 1;
+  const repsPerSet = normalizeRepsPerSetArray(input.repsPerSet, input.reps ?? 5, input.sets ?? 1);
   const userExercise: WorkoutExerciseModel = {
     id: `user-${Date.now()}-${userIndex}`,
     exerciseId: input.exerciseId ?? null,
     exerciseName: nonEmpty(input.exerciseName, `Custom Exercise ${userIndex}`),
     source: "USER",
     set: {
-      count: Math.max(1, Math.round(input.sets)),
-      reps: Math.max(1, Math.round(input.reps)),
+      count: repsPerSet.length,
+      reps: repsPerSet[0] ?? 5,
+      repsPerSet,
       weightKg: Math.max(0, input.weightKg),
     },
     note: {
@@ -337,11 +394,7 @@ export function updateUserExercise(
         ...exercise,
         exerciseId: patch.exerciseId !== undefined ? patch.exerciseId : exercise.exerciseId,
         exerciseName: patch.exerciseName ?? exercise.exerciseName,
-        set: {
-          count: patch.set?.count ?? exercise.set.count,
-          reps: patch.set?.reps ?? exercise.set.reps,
-          weightKg: patch.set?.weightKg ?? exercise.set.weightKg,
-        },
+        set: mergeSetModel(exercise.set, patch.set),
         note: {
           memo: patch.note?.memo ?? exercise.note.memo,
         },
@@ -373,9 +426,15 @@ export function validateWorkoutDraft(draft: WorkoutRecordDraft): WorkoutRecordVa
     if (!Number.isFinite(exercise.set.count) || exercise.set.count < 1 || exercise.set.count > 50) {
       errors.push(`${row}번째 운동의 세트 수는 1~50 범위여야 합니다.`);
     }
-    if (!Number.isFinite(exercise.set.reps) || exercise.set.reps < 1 || exercise.set.reps > 100) {
-      errors.push(`${row}번째 운동의 횟수는 1~100 범위여야 합니다.`);
+    const repsPerSet = normalizeRepsPerSetArray(exercise.set.repsPerSet, exercise.set.reps, exercise.set.count);
+    if (repsPerSet.length !== exercise.set.count) {
+      errors.push(`${row}번째 운동의 세트별 횟수 정보가 올바르지 않습니다.`);
     }
+    repsPerSet.forEach((reps, setIndex) => {
+      if (!Number.isFinite(reps) || reps < 1 || reps > 100) {
+        errors.push(`${row}번째 운동의 ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`);
+      }
+    });
     if (!Number.isFinite(exercise.set.weightKg) || exercise.set.weightKg < 0 || exercise.set.weightKg > 1000) {
       errors.push(`${row}번째 운동의 무게는 0~1000kg 범위여야 합니다.`);
     }
@@ -400,15 +459,14 @@ export function toWorkoutLogPayload(
   const isBodyweightExercise = options.isBodyweightExercise;
 
   exercises.forEach((exercise) => {
-    const count = Math.max(1, Math.round(exercise.set.count));
-    const reps = Math.max(1, Math.round(exercise.set.reps));
+    const repsPerSet = normalizeRepsPerSetArray(exercise.set.repsPerSet, exercise.set.reps, exercise.set.count);
     const weightKg = roundTo2(Math.max(0, Number(exercise.set.weightKg ?? 0)));
     const exerciseName = exercise.exerciseName.trim();
     const attachBodyweightMeta =
       Boolean(bodyweightKg) &&
       typeof isBodyweightExercise === "function" &&
       isBodyweightExercise(exerciseName);
-    for (let i = 0; i < count; i += 1) {
+    repsPerSet.forEach((repsValue, index) => {
       const meta: Record<string, unknown> = exercise.note.memo.trim()
         ? { memo: exercise.note.memo.trim() }
         : {};
@@ -420,14 +478,14 @@ export function toWorkoutLogPayload(
       sets.push({
         exerciseId: exercise.exerciseId,
         exerciseName,
-        setNumber: i + 1,
-        reps,
+        setNumber: index + 1,
+        reps: Math.max(1, Math.round(repsValue)),
         weightKg,
         rpe: 0,
         isExtra: exercise.source === "USER",
         meta,
       });
-    }
+    });
   });
 
   const note = draft.session.note.memo.trim();

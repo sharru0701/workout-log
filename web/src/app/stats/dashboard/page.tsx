@@ -1829,7 +1829,7 @@ export default function StatsPage() {
               기본값으로 재설정
             </button>
             <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={() => setFiltersOpen(false)}>
-              적용하고 닫기
+              적용
             </button>
           </div>
 
