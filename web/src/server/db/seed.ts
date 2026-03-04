@@ -12,7 +12,7 @@ import {
 import { and, eq, inArray } from "drizzle-orm";
 
 async function main() {
-  const legacyProgramSlugs = ["starter-fullbody-3day", "531", "operator", "candito-linear"] as const;
+  const legacyProgramSlugs = ["starter-fullbody-3day", "531", "candito-linear"] as const;
   const shouldHardReset = process.env.WORKOUT_SEED_RESET_ALL === "1";
 
   async function upsertTemplate(slug: string, values: any) {
@@ -178,7 +178,34 @@ async function main() {
   }
   await removeLegacyProgramSeeds();
 
-  // 1) Manual template (MANUAL)
+  // 1) Tactical Barbell Operator (LOGIC)
+  const templateOperator = await upsertTemplate("operator", {
+    slug: "operator",
+    name: "Tactical Barbell Operator (Base)",
+    type: "LOGIC",
+    visibility: "PUBLIC",
+    description: "Canonical Operator base wave using submax percentages across a 6-week cycle.",
+    tags: ["strength", "barbell", "operator", "logic"],
+  });
+
+  const templateOperatorV1 = await upsertVersion(templateOperator.id, 1, {
+    definition: {
+      dslVersion: 1,
+      kind: "operator",
+      schedule: { weeks: 6, sessionsPerWeek: 3 },
+      modules: ["SQUAT", "BENCH", "DEADLIFT"],
+      progression: {
+        profile: "operator-ia-base",
+        mainSets: 3,
+        deadliftSets: 1,
+      },
+    },
+    defaults: {
+      tmPercent: 1,
+    },
+  });
+
+  // 2) Manual template (MANUAL)
   const templateManual = await upsertTemplate("manual", {
     slug: "manual",
     name: "Manual Sessions",
@@ -581,6 +608,24 @@ async function main() {
   }
 
   const devUserId = (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() || "dev";
+
+  if (templateOperatorV1?.id) {
+    await upsertPlanForUser(devUserId, "Program Tactical Barbell Operator", {
+      type: "SINGLE",
+      rootProgramVersionId: templateOperatorV1.id,
+      params: {
+        timezone: "Asia/Seoul",
+        startDate: "2026-01-05",
+        schedule: ["D1", "D2", "D3"],
+        sessionKeyMode: "DATE",
+        trainingMaxKg: {
+          SQUAT: 150,
+          BENCH: 110,
+          DEADLIFT: 190,
+        },
+      },
+    });
+  }
 
   if (templateStartingStrengthV1?.id) {
     await upsertPlanForUser(devUserId, "Program Starting Strength LP", {

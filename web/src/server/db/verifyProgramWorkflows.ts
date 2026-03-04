@@ -120,6 +120,30 @@ async function main() {
 
   const verifiablePlans: VerifiablePlan[] = [
     {
+      name: "Program Tactical Barbell Operator",
+      date: "2026-01-05",
+      checks: (session) => {
+        const map = toMapByExercise(session);
+        const squat = map.get("Back Squat");
+        const bench = map.get("Bench Press");
+        const deadlift = map.get("Deadlift");
+        assert.ok(squat && bench && deadlift, "Operator base exercises missing");
+        assertSetCount(squat, 3);
+        assertSetCount(bench, 3);
+        assertSetCount(deadlift, 1);
+        assertReps(squat, [5, 5, 5]);
+        assert.deepEqual(
+          squat.sets.map((set) => Number(Number(set.percent ?? 0).toFixed(2))),
+          [0.7, 0.7, 0.7],
+        );
+        assert.equal(
+          String(squat.sets[0]?.note ?? "").includes("Operator W1"),
+          true,
+          "Operator W1 note missing",
+        );
+      },
+    },
+    {
       name: "Program Starting Strength LP",
       date: "2026-01-05",
       checks: (session) => {

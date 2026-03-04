@@ -7,6 +7,9 @@
 ## seed 반영 내용
 
 ### 1) 프로그램 데이터
+- 신규 `LOGIC` 템플릿
+1. `operator`
+
 - 신규 `MANUAL` 템플릿
 1. `starting-strength-lp`
 2. `stronglifts-5x5`
@@ -15,11 +18,12 @@
 5. `greyskull-lp`
 
 - 검증용 플랜(유저: `dev`)
-1. `Program Starting Strength LP`
-2. `Program StrongLifts 5x5`
-3. `Program Texas Method`
-4. `Program GZCLP`
-5. `Program Greyskull LP`
+1. `Program Tactical Barbell Operator`
+2. `Program Starting Strength LP`
+3. `Program StrongLifts 5x5`
+4. `Program Texas Method`
+5. `Program GZCLP`
+6. `Program Greyskull LP`
 
 ### 2) 운동종목 최소 보완
 - 추가
@@ -32,6 +36,7 @@
 ### 3) 샘플 테스트 데이터 파라미터
 - `sessionKeyMode: "DATE"` 적용 (프로그램 기반 날짜 재진입 테스트 용이)
 - `startDate: "2026-01-05"` 고정
+- Operator: `%TM` 기반 6주 파형(70/80/90/75/85/95), 기본 `mainSets=3`, `deadliftSets=1`
 - Greyskull: 마지막 세트 `AMRAP 5+` note 노출 확인
 - GZCLP: `percent` + `T3 AMRAP` note 노출 확인
 
@@ -39,8 +44,7 @@
 - seed 실행 시 아래 legacy 템플릿과 연결 플랜/로그를 자동 정리
 1. `starter-fullbody-3day`
 2. `531`
-3. `operator`
-4. `candito-linear`
+3. `candito-linear`
 - 배포 후 전체 정리가 필요하면 아래 방식으로 강제 초기화 후 seed 가능
 ```bash
 WORKOUT_SEED_RESET_ALL=1 pnpm db:seed
@@ -84,7 +88,7 @@ pnpm db:verify:programs
 - `db:migrate`: 성공
 - `db:seed`: 성공
 - `db:verify:programs`: 성공
-  - Starting Strength / StrongLifts / Texas / GZCLP / Greyskull 세션 생성 검증 통과
+  - Operator / Starting Strength / StrongLifts / Texas / GZCLP / Greyskull 세션 생성 검증 통과
   - 로그 저장/재조회/수정/재조회 통과
 
 ## 수동 검증 체크리스트 (운동기록 화면)

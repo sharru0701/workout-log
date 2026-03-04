@@ -302,24 +302,34 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
     ? [normalizeTarget(ctx.forcedTarget)]
     : normalizeTargets(def, ["SQUAT", "BENCH", "DEADLIFT"]);
   const weekInCycle = ((ctx.week - 1) % 6) + 1;
+  const mainSets = Math.min(
+    5,
+    Math.max(3, clampPositiveInt(def.progression?.mainSets ?? 3, 3)),
+  );
+  const deadliftSets = Math.min(
+    3,
+    Math.max(1, clampPositiveInt(def.progression?.deadliftSets ?? 1, 1)),
+  );
 
-  const scheme =
-    weekInCycle <= 2
-      ? { sets: 5, reps: 5, percent: 0.75 }
-      : weekInCycle <= 4
-        ? { sets: 5, reps: 4, percent: 0.8 }
-        : weekInCycle === 5
-          ? { sets: 6, reps: 3, percent: 0.85 }
-          : { sets: 3, reps: 5, percent: 0.7, note: "deload" };
+  const schemeByWeek: Record<number, { reps: number; percent: number; note: string }> = {
+    1: { reps: 5, percent: 0.7, note: "Operator W1" },
+    2: { reps: 5, percent: 0.8, note: "Operator W2" },
+    3: { reps: 3, percent: 0.9, note: "Operator W3" },
+    4: { reps: 5, percent: 0.75, note: "Operator W4" },
+    5: { reps: 3, percent: 0.85, note: "Operator W5" },
+    6: { reps: 1, percent: 0.95, note: "Operator W6" },
+  };
+  const scheme = schemeByWeek[weekInCycle] ?? schemeByWeek[1];
 
   return targets.map((target, i) => {
     const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
+    const setCount = target === "DEADLIFT" ? deadliftSets : mainSets;
     return {
       exerciseName: defaultExerciseNameForTarget(target),
       role: "MAIN" as const,
       sourceBlockTarget: target,
       order: ctx.orderBase + i,
-      sets: buildRepeatedSets(scheme.sets, scheme, tm),
+      sets: buildRepeatedSets(setCount, scheme, tm),
     };
   });
 }
