@@ -71,3 +71,14 @@ Use this once after setup to verify recoverability:
 2. Restore that backup using `restore_postgres.sh`.
 3. Confirm app and DB health checks pass.
 4. Keep this note with date/operator in your ops log.
+
+## 4) Before destructive clear
+
+If you run `deploy/scripts/clear_workout_data.sh --yes`, a pre-clear backup is created by default.
+
+You can restore that snapshot with:
+
+```bash
+cd /opt/workout-log/deploy
+sudo ./scripts/restore_postgres.sh /opt/workout-log/backups/workoutlog_YYYYMMDDTHHMMSSZ.sql.gz --yes
+```

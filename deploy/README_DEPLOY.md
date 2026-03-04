@@ -201,6 +201,28 @@ Keep only 5 images:
 
 ------------------------------------------------------------
 
+9) Clear Workout/Program/Exercise Data (Destructive)
+
+Use this only when you intentionally want a fresh state after deploy.
+
+Default behavior:
+    - creates pre-clear backup automatically
+    - stops web container temporarily to prevent writes
+    - clears workout logs + program store data + exercise catalog data
+    - starts web container again
+
+Run:
+
+    cd /opt/workout-log/deploy
+    ./scripts/clear_workout_data.sh --yes
+
+Skip pre-clear backup (not recommended):
+
+    cd /opt/workout-log/deploy
+    ./scripts/clear_workout_data.sh --yes --skip-backup
+
+------------------------------------------------------------
+
 Security Notes:
 - Host port 3001 is bound to 127.0.0.1 only
 - No public HTTP/HTTPS exposure
