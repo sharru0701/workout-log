@@ -42,6 +42,7 @@ type SetRow = {
     reps?: number;
     targetWeightKg?: number;
     rpe?: number;
+    percent?: number;
     note?: string;
   } | null;
 };
@@ -92,6 +93,7 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
       const reps = Number(s?.reps ?? 0);
       const weightKg = Number(s?.targetWeightKg ?? 0);
       const rpe = Number(s?.rpe ?? 0);
+      const percent = Number(s?.percent ?? 0);
       rows.push({
         exerciseName,
         setNumber: idx + 1,
@@ -107,6 +109,7 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
           reps: Number.isFinite(reps) ? reps : undefined,
           targetWeightKg: Number.isFinite(weightKg) ? weightKg : undefined,
           rpe: Number.isFinite(rpe) ? rpe : undefined,
+          percent: Number.isFinite(percent) && percent > 0 ? percent : undefined,
           note: typeof s?.note === "string" ? s.note : undefined,
         },
       });
@@ -114,6 +117,19 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
   }
 
   return rows;
+}
+
+function formatPlannedRef(ref: SetRow["plannedRef"]) {
+  if (!ref) return "";
+  const reps = ref.reps ?? "-";
+  const weight = ref.targetWeightKg ?? 0;
+  const percent =
+    typeof ref.percent === "number" && Number.isFinite(ref.percent) && ref.percent > 0
+      ? `${Math.round(ref.percent * 100)}%`
+      : null;
+  const note = typeof ref.note === "string" && ref.note.trim() ? ref.note.trim() : null;
+  const meta = [percent, note].filter(Boolean).join(" · ");
+  return `${reps}회 @ ${weight}kg${meta ? ` (${meta})` : ""}`;
 }
 
 function parseSessionKey(sessionKey: string) {
@@ -304,6 +320,12 @@ function WorkoutSetRow({
             {row.isExtra ? "추가" : row.isPlanned ? "계획" : "사용자"}
           </span>
         </div>
+
+        {row.plannedRef ? (
+          <div className="mt-2 rounded-lg border px-2 py-1 text-xs text-[var(--text-secondary)]">
+            처방: {formatPlannedRef(row.plannedRef)}
+          </div>
+        ) : null}
 
         <div className="mt-3 grid grid-cols-3 gap-2">
           <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onCompleteAndNext}>
@@ -1942,8 +1964,22 @@ export default function WorkoutTodayPage() {
                       </thead>
                       <tbody>
                         {compareRows.map((r, idx) => {
+                          const plannedMeta =
+                            r.planned && typeof r.planned.plannedRef?.note === "string" && r.planned.plannedRef.note.trim()
+                              ? r.planned.plannedRef.note.trim()
+                              : null;
+                          const plannedPercent =
+                            r.planned &&
+                            typeof r.planned.plannedRef?.percent === "number" &&
+                            Number.isFinite(r.planned.plannedRef.percent)
+                              ? `${Math.round(r.planned.plannedRef.percent * 100)}%`
+                              : null;
                           const plannedText = r.planned
-                            ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg`
+                            ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg${
+                                plannedPercent || plannedMeta
+                                  ? ` (${[plannedPercent, plannedMeta].filter(Boolean).join(" · ")})`
+                                  : ""
+                              }`
                             : "-";
                           const performedText = r.actual
                             ? `${r.actual.reps || "-"}회 @ ${r.actual.weightKg || 0}kg`

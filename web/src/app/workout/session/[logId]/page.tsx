@@ -11,6 +11,8 @@ type PlannedRow = {
   reps: number;
   weightKg: number;
   rpe: number;
+  percent: number | null;
+  note: string | null;
 };
 
 type PerformedRow = {
@@ -57,6 +59,8 @@ function plannedRowsFromSnapshot(snapshot: any): PlannedRow[] {
         reps: Number(s?.reps ?? 0) || 0,
         weightKg: Number(s?.targetWeightKg ?? 0) || 0,
         rpe: Number(s?.rpe ?? 0) || 0,
+        percent: Number.isFinite(Number(s?.percent)) && Number(s?.percent) > 0 ? Number(s?.percent) : null,
+        note: typeof s?.note === "string" && s.note.trim() ? s.note.trim() : null,
       });
     });
   }
@@ -246,8 +250,18 @@ export default function WorkoutSessionDetailPage() {
                   </thead>
                   <tbody>
                     {compareRows.map((r, idx) => {
+                      const plannedPercent =
+                        r.planned && typeof r.planned.percent === "number"
+                          ? `${Math.round(r.planned.percent * 100)}%`
+                          : null;
+                      const plannedMeta =
+                        r.planned && r.planned.note ? r.planned.note : null;
                       const plannedText = r.planned
-                        ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg`
+                        ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg${
+                            plannedPercent || plannedMeta
+                              ? ` (${[plannedPercent, plannedMeta].filter(Boolean).join(" · ")})`
+                              : ""
+                          }`
                         : "-";
                       const performedText = r.actual
                         ? `${r.actual.reps || "-"}회 @ ${r.actual.weightKg || 0}kg`

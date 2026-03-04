@@ -35,6 +35,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed": "tsx src/server/db/seed.ts",
+    "db:verify:programs": "tsx src/server/db/verifyProgramWorkflows.ts",
     "db:backfill:exercise": "tsx src/server/db/backfillExerciseIds.ts",
     "db:cleanup:ux-events": "tsx src/server/db/cleanupUxEventLog.ts",
     "dev:turbo": "next dev --turbo"

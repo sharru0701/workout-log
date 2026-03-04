@@ -1,9 +1,20 @@
 import "dotenv/config";
 import { db } from "./client";
-import { exercise, exerciseAlias, plan as planTable, programTemplate, programVersion } from "./schema";
-import { and, eq } from "drizzle-orm";
+import {
+  exercise,
+  exerciseAlias,
+  plan as planTable,
+  programTemplate,
+  programVersion,
+  statsCache,
+  workoutLog,
+} from "./schema";
+import { and, eq, inArray } from "drizzle-orm";
 
 async function main() {
+  const legacyProgramSlugs = ["starter-fullbody-3day", "531", "operator", "candito-linear"] as const;
+  const shouldHardReset = process.env.WORKOUT_SEED_RESET_ALL === "1";
+
   async function upsertTemplate(slug: string, values: any) {
     const inserted = await db
       .insert(programTemplate)
@@ -96,70 +107,78 @@ async function main() {
     return inserted[0];
   }
 
-  // 1) 5/3/1 (LOGIC)
-  const template531 = await upsertTemplate("531", {
-    slug: "531",
-    name: "5/3/1",
-    type: "LOGIC",
-    visibility: "PUBLIC",
-    description: "Jim Wendler 5/3/1 template (base).",
-    tags: ["strength", "barbell"],
-  });
+  async function hardResetSeedData() {
+    await db.delete(workoutLog);
+    await db.delete(planTable);
+    await db.delete(programTemplate);
+    await db.delete(exercise);
+    await db.delete(statsCache);
+    console.log("[seed] hard reset done (workout/program/exercise/stats)");
+  }
 
-  const template531v1 = await upsertVersion(template531.id, 1, {
-    definition: {
-      dslVersion: 1,
-      kind: "531",
-      schedule: { weeks: 4, sessionsPerWeek: 4 },
-      lifts: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
-      progression: { cycle: "531-basic" },
-    },
-    defaults: { tmPercent: 0.9 },
-  });
+  async function removeLegacyProgramSeeds() {
+    const templates = await db
+      .select({
+        id: programTemplate.id,
+      })
+      .from(programTemplate)
+      .where(inArray(programTemplate.slug, [...legacyProgramSlugs]));
 
-  // 2) Operator (LOGIC)
-  const templateOp = await upsertTemplate("operator", {
-    slug: "operator",
-    name: "Tactical Barbell Operator",
-    type: "LOGIC",
-    visibility: "PUBLIC",
-    description: "Tactical Barbell Operator template (base).",
-    tags: ["strength", "tactical"],
-  });
+    if (templates.length < 1) return;
 
-  await upsertVersion(templateOp.id, 1, {
-    definition: {
-      dslVersion: 1,
-      kind: "operator",
-      schedule: { weeks: 6, sessionsPerWeek: 3 },
-      modules: ["SQUAT", "BENCH", "DEADLIFT"],
-      progression: { profile: "operator-simplified" },
-    },
-    defaults: { intensity: "percent" },
-  });
+    const templateIds = templates.map((row) => row.id);
+    const versions = await db
+      .select({
+        id: programVersion.id,
+      })
+      .from(programVersion)
+      .where(inArray(programVersion.templateId, templateIds));
+    const versionIds = versions.map((row) => row.id);
 
-  // 3) Candito Linear (LOGIC)
-  const templateCan = await upsertTemplate("candito-linear", {
-    slug: "candito-linear",
-    name: "Candito Linear Program",
-    type: "LOGIC",
-    visibility: "PUBLIC",
-    description: "Candito linear program template (base).",
-    tags: ["strength", "powerlifting"],
-  });
+    if (versionIds.length > 0) {
+      const legacyPlans = await db
+        .select({
+          id: planTable.id,
+        })
+        .from(planTable)
+        .where(inArray(planTable.rootProgramVersionId, versionIds));
+      const legacyPlanIds = legacyPlans.map((row) => row.id);
+      if (legacyPlanIds.length > 0) {
+        await db.delete(workoutLog).where(inArray(workoutLog.planId, legacyPlanIds));
+        await db.delete(planTable).where(inArray(planTable.id, legacyPlanIds));
+      }
+    }
 
-  await upsertVersion(templateCan.id, 1, {
-    definition: {
-      dslVersion: 1,
-      kind: "candito-linear",
-      schedule: { weeks: 6, sessionsPerWeek: 4 },
-      lifts: ["SQUAT", "BENCH", "DEADLIFT"],
-      progression: { profile: "candito-linear-simplified" },
-    },
-    defaults: {},
-  });
+    await db.delete(programTemplate).where(inArray(programTemplate.id, templateIds));
+    console.log(`[seed] removed legacy templates: ${legacyProgramSlugs.join(", ")}`);
+  }
 
-  // 4) Manual template (MANUAL)
+  function repeatSets(
+    count: number,
+    set: { reps?: number; targetWeightKg?: number; percent?: number; note?: string; rpe?: number },
+  ) {
+    return Array.from({ length: Math.max(1, count) }, () => ({ ...set }));
+  }
+
+  function repeatSetsWithLastNote(
+    count: number,
+    set: { reps?: number; targetWeightKg?: number; percent?: number; note?: string; rpe?: number },
+    lastNote: string,
+  ) {
+    const rows = repeatSets(count, set);
+    rows[rows.length - 1] = {
+      ...rows[rows.length - 1],
+      note: lastNote,
+    };
+    return rows;
+  }
+
+  if (shouldHardReset) {
+    await hardResetSeedData();
+  }
+  await removeLegacyProgramSeeds();
+
+  // 1) Manual template (MANUAL)
   const templateManual = await upsertTemplate("manual", {
     slug: "manual",
     name: "Manual Sessions",
@@ -225,55 +244,331 @@ async function main() {
     changelog: "Local demo manual sessions",
   });
 
-  const templateStarter = await upsertTemplate("starter-fullbody-3day", {
-    slug: "starter-fullbody-3day",
-    name: "Starter Fullbody 3 Day",
+  const templateStartingStrength = await upsertTemplate("starting-strength-lp", {
+    slug: "starting-strength-lp",
+    name: "Starting Strength LP (Base)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "로컬 테스트용 3일 풀바디 예시 프로그램",
-    tags: ["manual", "starter", "fullbody"],
+    description: "Canonical novice linear progression base (A/B split).",
+    tags: ["manual", "strength", "linear", "novice"],
   });
 
-  const templateStarterV1 = await upsertVersion(templateStarter.id, 1, {
+  const templateStartingStrengthV1 = await upsertVersion(templateStartingStrength.id, 1, {
     definition: {
       kind: "manual",
       sessions: [
         {
           key: "A",
           items: [
-            { exerciseName: "Back Squat", sets: [{ reps: 8, targetWeightKg: 60 }, { reps: 8, targetWeightKg: 60 }] },
-            { exerciseName: "Bench Press", sets: [{ reps: 8, targetWeightKg: 45 }, { reps: 8, targetWeightKg: 45 }] },
-            { exerciseName: "Barbell Row", sets: [{ reps: 10, targetWeightKg: 40 }, { reps: 10, targetWeightKg: 40 }] },
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(3, { reps: 5, targetWeightKg: 80, note: "work set" }),
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSets(3, { reps: 5, targetWeightKg: 60, note: "work set" }),
+            },
+            {
+              exerciseName: "Deadlift",
+              sets: [{ reps: 5, targetWeightKg: 100, note: "top set" }],
+            },
           ],
         },
         {
           key: "B",
           items: [
-            { exerciseName: "Deadlift", sets: [{ reps: 5, targetWeightKg: 80 }, { reps: 5, targetWeightKg: 80 }] },
-            { exerciseName: "Overhead Press", sets: [{ reps: 8, targetWeightKg: 32.5 }, { reps: 8, targetWeightKg: 32.5 }] },
-            { exerciseName: "Pull-Up", sets: [{ reps: 8 }, { reps: 8 }, { reps: 8 }] },
-          ],
-        },
-        {
-          key: "C",
-          items: [
-            { exerciseName: "Leg Press", sets: [{ reps: 12, targetWeightKg: 120 }, { reps: 12, targetWeightKg: 120 }] },
-            { exerciseName: "Incline Bench Press", sets: [{ reps: 10, targetWeightKg: 40 }, { reps: 10, targetWeightKg: 40 }] },
-            { exerciseName: "Lat Pulldown", sets: [{ reps: 12, targetWeightKg: 45 }, { reps: 12, targetWeightKg: 45 }] },
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(3, { reps: 5, targetWeightKg: 82.5, note: "work set" }),
+            },
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSets(3, { reps: 5, targetWeightKg: 42.5, note: "work set" }),
+            },
+            {
+              exerciseName: "Power Clean",
+              sets: repeatSets(5, { reps: 3, targetWeightKg: 60, note: "work set" }),
+            },
           ],
         },
       ],
     },
     defaults: {},
+    changelog: "Canonical base A/B split",
+  });
+
+  const templateStronglifts = await upsertTemplate("stronglifts-5x5", {
+    slug: "stronglifts-5x5",
+    name: "StrongLifts 5x5 (Base)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description: "Canonical A/B fullbody 5x5 novice progression.",
+    tags: ["manual", "strength", "linear", "novice", "5x5"],
+  });
+
+  const templateStrongliftsV1 = await upsertVersion(templateStronglifts.id, 1, {
+    definition: {
+      kind: "manual",
+      sessions: [
+        {
+          key: "A",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 80, note: "5x5 work set" }),
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 57.5, note: "5x5 work set" }),
+            },
+            {
+              exerciseName: "Barbell Row",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 55, note: "5x5 work set" }),
+            },
+          ],
+        },
+        {
+          key: "B",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 82.5, note: "5x5 work set" }),
+            },
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 40, note: "5x5 work set" }),
+            },
+            {
+              exerciseName: "Deadlift",
+              sets: [{ reps: 5, targetWeightKg: 105, note: "1x5 top set" }],
+            },
+          ],
+        },
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical A/B 5x5 with deadlift 1x5 day",
+  });
+
+  const templateTexasMethod = await upsertTemplate("texas-method", {
+    slug: "texas-method",
+    name: "Texas Method (Base)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description: "Canonical weekly V/R/I structure.",
+    tags: ["manual", "strength", "intermediate", "weekly-undulation"],
+  });
+
+  const templateTexasMethodV1 = await upsertVersion(templateTexasMethod.id, 1, {
+    definition: {
+      kind: "manual",
+      sessions: [
+        {
+          key: "V",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 120, note: "volume day" }),
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 85, note: "volume day" }),
+            },
+            {
+              exerciseName: "Barbell Row",
+              sets: repeatSets(5, { reps: 5, targetWeightKg: 75, note: "volume day" }),
+            },
+          ],
+        },
+        {
+          key: "R",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(2, { reps: 5, targetWeightKg: 95, note: "recovery day" }),
+            },
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSets(3, { reps: 5, targetWeightKg: 55, note: "recovery day" }),
+            },
+            {
+              exerciseName: "Pull-Up",
+              sets: repeatSets(3, { reps: 8, note: "recovery day" }),
+            },
+          ],
+        },
+        {
+          key: "I",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: [{ reps: 5, targetWeightKg: 130, note: "intensity top set" }],
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: [{ reps: 5, targetWeightKg: 92.5, note: "intensity top set" }],
+            },
+            {
+              exerciseName: "Deadlift",
+              sets: [{ reps: 5, targetWeightKg: 150, note: "intensity top set" }],
+            },
+          ],
+        },
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical V/R/I base microcycle",
+  });
+
+  const templateGzclp = await upsertTemplate("gzclp", {
+    slug: "gzclp",
+    name: "GZCLP (Base T1/T2/T3)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description: "Canonical GZCLP base tier structure for novice-intermediate progression.",
+    tags: ["manual", "strength", "tiers", "top-set", "amrap"],
+  });
+
+  const templateGzclpV1 = await upsertVersion(templateGzclp.id, 1, {
+    definition: {
+      kind: "manual",
+      sessions: [
+        {
+          key: "D1",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(5, { reps: 3, targetWeightKg: 100, percent: 0.85, note: "T1 main" }),
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSets(3, { reps: 10, targetWeightKg: 60, percent: 0.7, note: "T2 volume" }),
+            },
+            {
+              exerciseName: "Lat Pulldown",
+              sets: repeatSetsWithLastNote(3, { reps: 15, targetWeightKg: 45, note: "T3" }, "T3 AMRAP"),
+            },
+          ],
+        },
+        {
+          key: "D2",
+          items: [
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSets(5, { reps: 3, targetWeightKg: 52.5, percent: 0.85, note: "T1 main" }),
+            },
+            {
+              exerciseName: "Deadlift",
+              sets: repeatSets(3, { reps: 8, targetWeightKg: 110, percent: 0.75, note: "T2 volume" }),
+            },
+            {
+              exerciseName: "Barbell Row",
+              sets: repeatSetsWithLastNote(3, { reps: 15, targetWeightKg: 50, note: "T3" }, "T3 AMRAP"),
+            },
+          ],
+        },
+        {
+          key: "D3",
+          items: [
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSets(5, { reps: 3, targetWeightKg: 75, percent: 0.85, note: "T1 main" }),
+            },
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSets(3, { reps: 10, targetWeightKg: 90, percent: 0.72, note: "T2 volume" }),
+            },
+            {
+              exerciseName: "Pull-Up",
+              sets: repeatSetsWithLastNote(3, { reps: 10, note: "T3" }, "T3 AMRAP"),
+            },
+          ],
+        },
+        {
+          key: "D4",
+          items: [
+            {
+              exerciseName: "Deadlift",
+              sets: repeatSets(5, { reps: 3, targetWeightKg: 140, percent: 0.85, note: "T1 main" }),
+            },
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSets(3, { reps: 10, targetWeightKg: 42.5, percent: 0.72, note: "T2 volume" }),
+            },
+            {
+              exerciseName: "Leg Press",
+              sets: repeatSetsWithLastNote(3, { reps: 15, targetWeightKg: 140, note: "T3" }, "T3 AMRAP"),
+            },
+          ],
+        },
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical base tier split with T3 AMRAP",
+  });
+
+  const templateGreyskull = await upsertTemplate("greyskull-lp", {
+    slug: "greyskull-lp",
+    name: "Greyskull LP (Base)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description: "Canonical A/B LP with 2x5 + 1x5+ AMRAP structure.",
+    tags: ["manual", "strength", "linear", "amrap"],
+  });
+
+  const templateGreyskullV1 = await upsertVersion(templateGreyskull.id, 1, {
+    definition: {
+      kind: "manual",
+      sessions: [
+        {
+          key: "A",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSetsWithLastNote(3, { reps: 5, targetWeightKg: 90, note: "work set" }, "AMRAP 5+"),
+            },
+            {
+              exerciseName: "Bench Press",
+              sets: repeatSetsWithLastNote(3, { reps: 5, targetWeightKg: 62.5, note: "work set" }, "AMRAP 5+"),
+            },
+            {
+              exerciseName: "Barbell Row",
+              sets: repeatSetsWithLastNote(3, { reps: 5, targetWeightKg: 57.5, note: "work set" }, "AMRAP 5+"),
+            },
+          ],
+        },
+        {
+          key: "B",
+          items: [
+            {
+              exerciseName: "Back Squat",
+              sets: repeatSetsWithLastNote(3, { reps: 5, targetWeightKg: 92.5, note: "work set" }, "AMRAP 5+"),
+            },
+            {
+              exerciseName: "Overhead Press",
+              sets: repeatSetsWithLastNote(3, { reps: 5, targetWeightKg: 42.5, note: "work set" }, "AMRAP 5+"),
+            },
+            {
+              exerciseName: "Deadlift",
+              sets: [{ reps: 5, targetWeightKg: 110, note: "AMRAP 5+" }],
+            },
+          ],
+        },
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical base A/B 2x5 + 1x5+ structure",
   });
 
   const seededExercises = [
     { name: "Back Squat", category: "Legs", aliases: ["Squat", "스쿼트"] },
     { name: "Bench Press", category: "Chest", aliases: ["Bench", "벤치프레스"] },
     { name: "Deadlift", category: "Back", aliases: ["DL", "데드리프트"] },
-    { name: "Overhead Press", category: "Shoulder", aliases: ["OHP", "밀리터리 프레스"] },
+    { name: "Overhead Press", category: "Shoulder", aliases: ["OHP", "Press", "밀리터리 프레스"] },
     { name: "Barbell Row", category: "Back", aliases: ["BB Row", "바벨 로우"] },
     { name: "Pull-Up", category: "Back", aliases: ["풀업", "턱걸이"] },
+    { name: "Power Clean", category: "Olympic Lift", aliases: ["Clean", "파워 클린", "파워클린"] },
+    { name: "Front Squat", category: "Legs", aliases: ["FSQ", "프론트 스쿼트"] },
     { name: "Incline Bench Press", category: "Chest", aliases: ["인클라인 벤치"] },
     { name: "Romanian Deadlift", category: "Legs", aliases: ["RDL", "루마니안 데드리프트"] },
     { name: "Leg Press", category: "Legs", aliases: ["레그 프레스"] },
@@ -286,30 +581,68 @@ async function main() {
   }
 
   const devUserId = (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() || "dev";
-  if (template531v1?.id) {
-    await upsertPlanForUser(devUserId, "Demo 5/3/1", {
-      type: "SINGLE",
-      rootProgramVersionId: template531v1.id,
+
+  if (templateStartingStrengthV1?.id) {
+    await upsertPlanForUser(devUserId, "Program Starting Strength LP", {
+      type: "MANUAL",
+      rootProgramVersionId: templateStartingStrengthV1.id,
       params: {
         timezone: "Asia/Seoul",
-        trainingMaxKg: {
-          SQUAT: 140,
-          BENCH: 100,
-          DEADLIFT: 180,
-          OHP: 70,
-        },
+        startDate: "2026-01-05",
+        schedule: ["A", "B"],
+        sessionKeyMode: "DATE",
       },
     });
   }
-  if (templateStarterV1?.id) {
-    await upsertPlanForUser(devUserId, "Demo Starter Fullbody", {
+
+  if (templateStrongliftsV1?.id) {
+    await upsertPlanForUser(devUserId, "Program StrongLifts 5x5", {
       type: "MANUAL",
-      rootProgramVersionId: templateStarterV1.id,
+      rootProgramVersionId: templateStrongliftsV1.id,
       params: {
         timezone: "Asia/Seoul",
-        startDate: "2025-01-01",
-        schedule: ["A", "B", "C"],
-        sessionKeyMode: "LEGACY",
+        startDate: "2026-01-05",
+        schedule: ["A", "B"],
+        sessionKeyMode: "DATE",
+      },
+    });
+  }
+
+  if (templateTexasMethodV1?.id) {
+    await upsertPlanForUser(devUserId, "Program Texas Method", {
+      type: "MANUAL",
+      rootProgramVersionId: templateTexasMethodV1.id,
+      params: {
+        timezone: "Asia/Seoul",
+        startDate: "2026-01-05",
+        schedule: ["V", "R", "I"],
+        sessionKeyMode: "DATE",
+      },
+    });
+  }
+
+  if (templateGzclpV1?.id) {
+    await upsertPlanForUser(devUserId, "Program GZCLP", {
+      type: "MANUAL",
+      rootProgramVersionId: templateGzclpV1.id,
+      params: {
+        timezone: "Asia/Seoul",
+        startDate: "2026-01-05",
+        schedule: ["D1", "D2", "D3", "D4"],
+        sessionKeyMode: "DATE",
+      },
+    });
+  }
+
+  if (templateGreyskullV1?.id) {
+    await upsertPlanForUser(devUserId, "Program Greyskull LP", {
+      type: "MANUAL",
+      rootProgramVersionId: templateGreyskullV1.id,
+      params: {
+        timezone: "Asia/Seoul",
+        startDate: "2026-01-05",
+        schedule: ["A", "B"],
+        sessionKeyMode: "DATE",
       },
     });
   }
