@@ -73,23 +73,59 @@ WORKOUT_SEED_RESET_ALL=1 pnpm db:seed
 1. 프로그램별 세션 생성 결과(운동순서/세트수/rep/percent/note)
 2. 로그 저장(POST) → 재조회(GET)
 3. 로그 수정(PATCH) → 재조회(GET)
+4. auto progression state/event 저장 확인
+
+### 4) 자동 진행(Stage 1) 최소 도입
+- 신규 테이블
+1. `plan_runtime_state` (플랜별 누적 상태)
+2. `plan_progress_event` (로그 기반 진행 이벤트)
+- 파일
+1. `src/server/progression/reducer.ts` (순수 규칙 계산)
+2. `src/server/progression/autoProgression.ts` (DB 반영 + PATCH replay)
+3. `src/server/program-engine/generateSession.ts` (runtime state 오버레이)
+4. `src/app/api/logs/route.ts` / `src/app/api/logs/[logId]/route.ts` (저장 훅 연결)
+- 적용 대상(기본 ON)
+1. `Program Tactical Barbell Operator`
+2. `Program Greyskull LP`
+- 기본 정책
+1. Operator: 성공 누적 시 증량, 실패 누적 시 감산/reset, 3일 완료 시 day/week/cycle 전진
+2. Greyskull: 성공 시 선형 증량, 실패 누적 시 reset
+3. `PATCH /api/logs/[logId]` 시 해당 로그 이벤트를 재계산하고 이후 이벤트까지 순차 replay
+
+### 5) UX 최소 보완 (자동 진행 가시성)
+- 파일
+1. `src/lib/progression/summary.ts` (자동 진행 요약/라벨 공통 포맷)
+2. `src/server/progression/summary.ts` (진행 이벤트 응답 payload 변환)
+3. `src/app/api/logs/route.ts` / `src/app/api/logs/[logId]/route.ts` (`progression` 응답 포함)
+4. `src/app/workout/today/log/page.tsx` (저장 직후 자동 진행 요약 표시)
+5. `src/app/workout/session/[logId]/page.tsx` (세션 상세에서 이벤트/타겟 결정 표시)
+6. `src/app/api/plans/[planId]/route.ts` + `src/app/plans/manage/page.tsx` (플랜별 `autoProgression` ON/OFF 토글)
+- 원칙
+1. 기존 기록 플로우/페이지 구조는 유지
+2. 기존 API 응답에 필드 추가만 수행(하위 호환)
+3. 자동 진행 제어는 `plan.params.autoProgression`만 부분 업데이트
 
 ## 실행한 테스트와 결과
 
 ### 실행 명령
 ```bash
 cd web
+pnpm test:progression
+pnpm build
 pnpm db:migrate
 pnpm db:seed
 pnpm db:verify:programs
 ```
 
 ### 결과 요약
+- `test:progression`: 성공 (reducer unit tests 3 pass)
+- `build`: 성공
 - `db:migrate`: 성공
 - `db:seed`: 성공
 - `db:verify:programs`: 성공
   - Operator / Starting Strength / StrongLifts / Texas / GZCLP / Greyskull 세션 생성 검증 통과
   - 로그 저장/재조회/수정/재조회 통과
+  - auto progression state/event 저장 검증 통과
 
 ## 수동 검증 체크리스트 (운동기록 화면)
 
@@ -109,6 +145,11 @@ pnpm db:verify:programs
 ### C. 기존 기록 수정
 1. API 기준: `PATCH /api/logs/[logId]`로 세트 수정
 2. `GET /api/logs/[logId]` 재조회 시 변경 반영 확인
+
+### D. 자동 진행 UX
+1. `/plans/manage`에서 대상 플랜의 `자동 진행 ON/OFF` 토글 동작 확인
+2. `/workout/today/log` 저장 후 `자동 진행` 안내 행 노출 확인
+3. `/workout/session/[logId]`에서 자동 진행 이벤트/타겟별 결정 표시 확인
 
 ## 발견 이슈와 처리
 1. 이슈: 로컬 DB에서 `workout_set.weight_kg`가 `integer`로 남아 소수 중량 업데이트 실패

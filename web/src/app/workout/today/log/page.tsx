@@ -3,6 +3,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import {
   enqueueWorkoutLog,
   getPendingWorkoutLogCount,
@@ -80,6 +81,13 @@ type UxSummaryResp = {
 type LogFocusMode = "BEGINNER" | "POWER";
 
 const MOTION_DURATION_FAST_MS = 160;
+
+type SaveLogResponse = {
+  log: {
+    id: string;
+  };
+  progression?: ProgressionSummaryPayload | null;
+};
 
 function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
   const planned = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
@@ -370,6 +378,7 @@ export default function WorkoutTodayPage() {
   const [generatedSession, setGeneratedSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [progressionSummary, setProgressionSummary] = useState<ProgressionSummaryPayload | null>(null);
   const [lastSavedLogId, setLastSavedLogId] = useState<string | null>(null);
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
@@ -691,6 +700,16 @@ export default function WorkoutTodayPage() {
       setTimezone(tz);
     }
   }, [selectedPlan?.id, selectedPlan?.params?.timezone]);
+
+  useEffect(() => {
+    if (!success) {
+      setProgressionSummary(null);
+      return;
+    }
+    if (!success.startsWith("로그를 저장했습니다:")) {
+      setProgressionSummary(null);
+    }
+  }, [success]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1221,13 +1240,13 @@ export default function WorkoutTodayPage() {
   }
 
   async function saveLog(payload: WorkoutLogRequest) {
-    const res = await apiPost<{ log: any }>(`/api/logs`, payload);
-    return res.log;
+    return apiPost<SaveLogResponse>(`/api/logs`, payload);
   }
 
   async function handleSaveLog() {
     setSuccess(null);
     setError(null);
+    setProgressionSummary(null);
     setLastSavedLogId(null);
     setSyncNotice(null);
     trackEvent("workout_save_clicked", { setCount: sets.length });
@@ -1241,15 +1260,18 @@ export default function WorkoutTodayPage() {
         refreshPendingSyncCount();
         setIsOfflineMode(true);
         setSuccess("오프라인으로 저장했습니다. 온라인 복귀 시 자동 동기화됩니다.");
+        setProgressionSummary(null);
         setSyncNotice("동기화 대기");
         trackEvent("workout_save_succeeded", { strategy: "offline-queued", setCount: payload.sets.length });
         return;
       }
 
       try {
-        const log = await saveLog(payload);
+        const saved = await saveLog(payload);
+        const log = saved.log;
         setLastSavedLogId(log.id);
         setSuccess(`로그를 저장했습니다: ${log.id}`);
+        setProgressionSummary(saved.progression ?? null);
         setIsOfflineMode(false);
         refreshPendingSyncCount();
         void syncPendingQueuedLogs();
@@ -1264,6 +1286,7 @@ export default function WorkoutTodayPage() {
           refreshPendingSyncCount();
           setIsOfflineMode(true);
           setSuccess("네트워크가 불안정해 오프라인 저장 후 대기열에 추가했습니다.");
+          setProgressionSummary(null);
           setSyncNotice("동기화 대기");
           trackEvent("workout_save_succeeded", { strategy: "fallback-queued", setCount: payload.sets.length });
           return;
@@ -1798,10 +1821,16 @@ export default function WorkoutTodayPage() {
           message={error}
           onRetry={() => {
             setError(null);
+            setProgressionSummary(null);
             void refreshPageData();
           }}
         />
         <NoticeStateRows message={success} tone="success" label="저장 상태" />
+        <NoticeStateRows
+          message={summarizeProgression(progressionSummary)}
+          tone={progressionTone(progressionSummary)}
+          label="자동 진행"
+        />
         <DisabledStateRows
           when={initialPlanLoadDone && !planId}
           label="플랜 미선택"

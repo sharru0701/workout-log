@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet } from "@/lib/api";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type PlannedRow = {
   exerciseName: string;
@@ -41,6 +42,7 @@ type LogItem = {
     snapshot: any;
     updatedAt: string;
   } | null;
+  progression?: ProgressionSummaryPayload | null;
 };
 
 function plannedRowsFromSnapshot(snapshot: any): PlannedRow[] {
@@ -66,6 +68,10 @@ function plannedRowsFromSnapshot(snapshot: any): PlannedRow[] {
   }
 
   return rows;
+}
+
+function formatKg(value: number | null) {
+  return typeof value === "number" && Number.isFinite(value) ? `${value}kg` : "-";
 }
 
 export default function WorkoutSessionDetailPage() {
@@ -225,6 +231,67 @@ export default function WorkoutSessionDetailPage() {
               <div className="ui-card-label">추가</div>
               <div className="text-lg font-semibold">{stats.extra}</div>
             </div>
+          </div>
+
+          <div className="motion-card rounded-2xl border p-4 space-y-3 text-sm">
+            <div className="ios-section-heading">자동 진행</div>
+            <NoticeStateRows
+              message={summarizeProgression(item.progression ?? null)}
+              tone={progressionTone(item.progression ?? null)}
+              label="요약"
+            />
+            {item.progression?.event ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                  <div>
+                    <div className="ui-card-label">이벤트</div>
+                    <div>{item.progression.event.eventType}</div>
+                  </div>
+                  <div>
+                    <div className="ui-card-label">프로그램</div>
+                    <div>{item.progression.event.programSlug}</div>
+                  </div>
+                  <div>
+                    <div className="ui-card-label">세션 진행</div>
+                    <div>{item.progression.event.didAdvanceSession ? "예" : "아니오"}</div>
+                  </div>
+                  <div>
+                    <div className="ui-card-label">적용 시각</div>
+                    <div>{new Date(item.progression.event.createdAt).toLocaleString()}</div>
+                  </div>
+                </div>
+                {item.progression.event.targetDecisions.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm ios-data-table">
+                      <thead className="text-neutral-600">
+                        <tr>
+                          <th className="text-left py-2 pr-3">Target</th>
+                          <th className="text-right py-2 px-3">결과</th>
+                          <th className="text-right py-2 px-3">변화</th>
+                          <th className="text-right py-2 pl-3">사유</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {item.progression.event.targetDecisions.map((decision, idx) => (
+                          <tr key={`${decision.target}-${decision.eventType}-${idx}`} className="border-t">
+                            <td className="py-1 pr-3">{decision.target}</td>
+                            <td className="py-1 px-3 text-right">{decision.eventType}</td>
+                            <td className="py-1 px-3 text-right">
+                              {formatKg(decision.beforeWorkKg)} → {formatKg(decision.afterWorkKg)}
+                            </td>
+                            <td className="py-1 pl-3 text-right">{decision.reason}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <EmptyStateRows when label="타겟별 자동 진행 결정 없음" />
+                )}
+              </>
+            ) : (
+              <EmptyStateRows when label="이 로그에는 자동 진행 이벤트가 없습니다." />
+            )}
           </div>
 
           <div className="motion-card rounded-2xl border p-4">

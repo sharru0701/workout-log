@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
+import { applyAutoProgressionFromLog } from "@/server/progression/autoProgression";
+import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
@@ -67,12 +69,24 @@ async function GETImpl(_req: Request, ctx: Ctx) {
             .limit(1)
         )[0] ?? null
       : null;
+    const progressionEvent = await readProgressEventByLog({
+      tx: db,
+      planId: log.planId,
+      logId,
+    });
+    const progressionSummary = progressionEvent
+      ? buildProgressionSummary({
+          mode: "upsert",
+          eventRow: progressionEvent,
+        })
+      : null;
 
     return NextResponse.json({
       item: {
         ...log,
         sets,
         generatedSession: generated,
+        progression: progressionSummary,
       },
     });
   } catch (e: any) {
@@ -204,12 +218,33 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
         ),
       );
 
+      const progressionResult = await applyAutoProgressionFromLog({
+        tx,
+        userId,
+        planId: submittedPlanId,
+        logId,
+        sets,
+        mode: "replay",
+      });
+      const progressionEvent = await readProgressEventByLog({
+        tx,
+        planId: submittedPlanId,
+        logId,
+      });
+
       await invalidateStatsCacheForUser(userId, tx);
 
-      return log;
+      return {
+        log,
+        progression: buildProgressionSummary({
+          mode: "replay",
+          applyResult: progressionResult,
+          eventRow: progressionEvent,
+        }),
+      };
     });
 
-    return NextResponse.json({ log: updated }, { status: 200 });
+    return NextResponse.json(updated, { status: 200 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });

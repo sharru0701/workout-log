@@ -3,6 +3,8 @@ import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { generatedSession, plan, workoutLog, workoutSet } from "@/server/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
+import { applyAutoProgressionFromLog } from "@/server/progression/autoProgression";
+import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
@@ -227,12 +229,32 @@ async function POSTImpl(req: Request) {
         ),
       );
 
+      const progressionResult = await applyAutoProgressionFromLog({
+        tx,
+        userId,
+        planId: submittedPlanId,
+        logId: log.id,
+        sets,
+      });
+      const progressionEvent = await readProgressEventByLog({
+        tx,
+        planId: submittedPlanId,
+        logId: log.id,
+      });
+
       await invalidateStatsCacheForUser(userId, tx);
 
-      return log;
+      return {
+        log,
+        progression: buildProgressionSummary({
+          mode: "upsert",
+          applyResult: progressionResult,
+          eventRow: progressionEvent,
+        }),
+      };
     });
 
-    return NextResponse.json({ log: created }, { status: 201 });
+    return NextResponse.json(created, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });

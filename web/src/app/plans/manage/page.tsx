@@ -3,7 +3,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -81,6 +81,7 @@ function PlansPageContent() {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [plansLoadKey, setPlansLoadKey] = useState("plans-manage:plans:init");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+  const [updatingPlanId, setUpdatingPlanId] = useState<string>("");
 
   const [week, setWeek] = useState(1);
   const [day, setDay] = useState(1);
@@ -426,6 +427,25 @@ function PlansPageContent() {
     await generateSessionForPlan(selectedPlanId);
   }
 
+  async function togglePlanAutoProgression(targetPlan: Plan) {
+    const nextEnabled = !(targetPlan.params?.autoProgression === true);
+    try {
+      setUpdatingPlanId(targetPlan.id);
+      setError(null);
+      const res = await apiPatch<{ plan: Plan }>(`/api/plans/${encodeURIComponent(targetPlan.id)}`, {
+        autoProgression: nextEnabled,
+      });
+      setPlans((prev) => prev.map((item) => (item.id === targetPlan.id ? res.plan : item)));
+      setPlanCreateNotice(
+        `${res.plan.name}: 자동 진행을 ${nextEnabled ? "활성화" : "비활성화"}했습니다.`,
+      );
+    } catch (e: any) {
+      setError(e?.message ?? "자동 진행 설정 변경에 실패했습니다.");
+    } finally {
+      setUpdatingPlanId("");
+    }
+  }
+
   return (
     <>
       <div
@@ -605,8 +625,32 @@ function PlansPageContent() {
                       오늘 운동
                     </a>
                   </div>
-                  <div className="ui-card-label">
-                    주차 {week} · 일차 {day}
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 items-center">
+                    <div className="ui-card-label">
+                      주차 {week} · 일차 {day}
+                    </div>
+                    <div className="flex items-center justify-start sm:justify-end gap-2">
+                      <span
+                        className={`ui-badge ${
+                          p.params?.autoProgression === true ? "ui-badge-success" : "ui-badge-neutral"
+                        }`}
+                      >
+                        자동 진행 {p.params?.autoProgression === true ? "ON" : "OFF"}
+                      </span>
+                      <button
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
+                        onClick={() => {
+                          void togglePlanAutoProgression(p);
+                        }}
+                        disabled={updatingPlanId === p.id}
+                      >
+                        {updatingPlanId === p.id
+                          ? "변경 중..."
+                          : p.params?.autoProgression === true
+                            ? "자동 진행 끄기"
+                            : "자동 진행 켜기"}
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}

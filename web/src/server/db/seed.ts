@@ -94,7 +94,20 @@ async function main() {
       .from(planTable)
       .where(and(eq(planTable.userId, userId), eq(planTable.name, name)))
       .limit(1);
-    if (existing[0]) return existing[0];
+    if (existing[0]) {
+      const [updated] = await db
+        .update(planTable)
+        .set({
+          type: values.type ?? existing[0].type,
+          rootProgramVersionId: values.rootProgramVersionId ?? existing[0].rootProgramVersionId,
+          params: values.params ?? existing[0].params,
+          isArchived: false,
+          updatedAt: new Date(),
+        })
+        .where(eq(planTable.id, existing[0].id))
+        .returning();
+      return updated ?? existing[0];
+    }
 
     const inserted = await db
       .insert(planTable)
@@ -618,6 +631,7 @@ async function main() {
         startDate: "2026-01-05",
         schedule: ["D1", "D2", "D3"],
         sessionKeyMode: "DATE",
+        autoProgression: true,
         trainingMaxKg: {
           SQUAT: 150,
           BENCH: 110,
@@ -688,6 +702,14 @@ async function main() {
         startDate: "2026-01-05",
         schedule: ["A", "B"],
         sessionKeyMode: "DATE",
+        autoProgression: true,
+        trainingMaxKg: {
+          SQUAT: 90,
+          BENCH: 62.5,
+          OHP: 42.5,
+          DEADLIFT: 110,
+          PULL: 57.5,
+        },
       },
     });
   }

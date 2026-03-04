@@ -144,6 +144,29 @@ export const plan = pgTable(
 );
 
 /**
+ * plan_runtime_state: per-plan mutable runtime state for auto progression.
+ */
+export const planRuntimeState = pgTable(
+  "plan_runtime_state",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plan.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    engineVersion: integer("engine_version").notNull().default(1),
+    state: jsonb("state").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    planUq: uniqueIndex("plan_runtime_state_plan_uq").on(t.planId),
+    userIdx: index("plan_runtime_state_user_idx").on(t.userId),
+    updatedAtIdx: index("plan_runtime_state_updated_at_idx").on(t.updatedAt),
+  }),
+);
+
+/**
  * plan_module: for COMPOSITE plans, mapping each target lift/module to a program version.
  */
 export const planModule = pgTable(
@@ -305,6 +328,37 @@ export const workoutLog = pgTable(
     ),
     planIdx: index("workout_log_plan_idx").on(t.planId),
     sessionIdx: index("workout_log_generated_session_idx").on(t.generatedSessionId),
+  }),
+);
+
+/**
+ * plan_progress_event: append-only progression decisions triggered by logs.
+ */
+export const planProgressEvent = pgTable(
+  "plan_progress_event",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    planId: uuid("plan_id")
+      .notNull()
+      .references(() => plan.id, { onDelete: "cascade" }),
+    logId: uuid("log_id").references(() => workoutLog.id, { onDelete: "cascade" }),
+    userId: text("user_id").notNull(),
+    eventType: text("event_type").notNull(),
+    programSlug: text("program_slug").notNull(),
+    reason: text("reason"),
+    beforeState: jsonb("before_state").notNull().default({}),
+    afterState: jsonb("after_state").notNull().default({}),
+    meta: jsonb("meta").notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => ({
+    planLogSlugUq: uniqueIndex("plan_progress_event_plan_log_slug_uq").on(
+      t.planId,
+      t.logId,
+      t.programSlug,
+    ),
+    planIdx: index("plan_progress_event_plan_idx").on(t.planId, t.createdAt),
+    userIdx: index("plan_progress_event_user_idx").on(t.userId, t.createdAt),
   }),
 );
 

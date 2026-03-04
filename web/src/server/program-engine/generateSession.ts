@@ -5,9 +5,11 @@ import {
   plan as planTable,
   planModule,
   planOverride,
+  planRuntimeState,
   programTemplate,
   programVersion,
 } from "@/server/db/schema";
+import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
 
 type AccessoryPatch = {
   op: "ADD_ACCESSORY";
@@ -105,6 +107,26 @@ function defaultExerciseNameForTarget(target: string) {
   if (t === "OHP") return "Overhead Press";
   if (t === "PULL") return "Pull-Up";
   return "Main Lift";
+}
+
+function inferTargetFromExerciseName(exerciseName: string) {
+  const normalized = String(exerciseName).trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes("squat")) return "SQUAT";
+  if (normalized.includes("bench")) return "BENCH";
+  if (normalized.includes("deadlift")) return "DEADLIFT";
+  if (normalized.includes("overhead press") || normalized === "ohp" || normalized.includes("shoulder press")) {
+    return "OHP";
+  }
+  if (
+    normalized.includes("row") ||
+    normalized.includes("pull-up") ||
+    normalized.includes("pull up") ||
+    normalized.includes("pulldown")
+  ) {
+    return "PULL";
+  }
+  return null;
 }
 
 function roundToNearest2p5(v: number) {
@@ -563,6 +585,49 @@ function pickManualSession(definition: any, sessionKey: string) {
   return sessions.find((s: any) => s.key === sessionKey) ?? null;
 }
 
+function mergePlanParamsWithRuntimeState(planParams: unknown, runtimeState: unknown) {
+  const baseParams = (planParams ?? {}) as Record<string, unknown>;
+  const runtimeTrainingMax = extractTrainingMaxOverridesFromState(runtimeState);
+  if (Object.keys(runtimeTrainingMax).length < 1) return baseParams;
+
+  const existingTrainingMax =
+    typeof baseParams.trainingMaxKg === "object" && baseParams.trainingMaxKg
+      ? (baseParams.trainingMaxKg as Record<string, unknown>)
+      : {};
+
+  return {
+    ...baseParams,
+    trainingMaxKg: {
+      ...existingTrainingMax,
+      ...runtimeTrainingMax,
+    },
+  };
+}
+
+function applyManualRuntimeWeightOverrides(
+  programSlug: string,
+  exercises: PlannedExercise[],
+  runtimeState: unknown,
+) {
+  if (String(programSlug).trim().toLowerCase() !== "greyskull-lp") return exercises;
+  const runtimeTrainingMax = extractTrainingMaxOverridesFromState(runtimeState);
+  if (Object.keys(runtimeTrainingMax).length < 1) return exercises;
+
+  return exercises.map((exercise) => {
+    const target = inferTargetFromExerciseName(exercise.exerciseName);
+    if (!target) return exercise;
+    const weight = runtimeTrainingMax[target];
+    if (!Number.isFinite(weight) || weight <= 0) return exercise;
+    return {
+      ...exercise,
+      sets: (exercise.sets ?? []).map((set) => ({
+        ...set,
+        targetWeightKg: weight,
+      })),
+    };
+  });
+}
+
 /**
  * Snapshot format v3:
  * - keeps legacy fields: blocks[], accessories[], manualSession
@@ -589,8 +654,19 @@ export async function generateAndSaveSession(input: {
   if (!p) throw new Error("Plan not found");
   if (p.userId !== input.userId) throw new Error("Forbidden");
 
+  const runtimeRows = await db
+    .select({ state: planRuntimeState.state })
+    .from(planRuntimeState)
+    .where(eq(planRuntimeState.planId, p.id))
+    .limit(1);
+  const runtimeState = runtimeRows[0]?.state ?? null;
+  const effectivePlanParams = mergePlanParamsWithRuntimeState(p.params ?? {}, runtimeState);
+
   const sessionCtx = deriveSessionContext({
-    plan: p,
+    plan: {
+      ...p,
+      params: effectivePlanParams,
+    },
     week: input.week,
     day: input.day,
     sessionDate: input.sessionDate,
@@ -660,7 +736,12 @@ export async function generateAndSaveSession(input: {
     );
 
     snapshot.blocks = blocks;
-    snapshot.exercises = plannedExercisesFromBlocks(snapshot, sessionCtx.week, sessionCtx.day, p.params ?? {});
+    snapshot.exercises = plannedExercisesFromBlocks(
+      snapshot,
+      sessionCtx.week,
+      sessionCtx.day,
+      effectivePlanParams,
+    );
     snapshot = applyOverridesToSnapshot(snapshot, overrides);
   } else {
     if (!p.rootProgramVersionId) throw new Error("rootProgramVersionId missing");
@@ -682,7 +763,9 @@ export async function generateAndSaveSession(input: {
     if (!template) throw new Error("Program template not found");
 
     if (p.type === "MANUAL") {
-      const schedule = Array.isArray((p.params as any)?.schedule) ? (p.params as any).schedule : [];
+      const schedule = Array.isArray((effectivePlanParams as any)?.schedule)
+        ? (effectivePlanParams as any).schedule
+        : [];
       const chosenKey = schedule[sessionCtx.day - 1] ?? schedule[(sessionCtx.day - 1) % schedule.length];
       if (!chosenKey) {
         snapshot.manualSession = null;
@@ -695,6 +778,11 @@ export async function generateAndSaveSession(input: {
           snapshot.manualError = `Manual session '${chosenKey}' not found in program definition`;
         }
         snapshot.exercises = plannedExercisesFromManualSession(snapshot.manualSession);
+        snapshot.exercises = applyManualRuntimeWeightOverrides(
+          template.slug,
+          snapshot.exercises,
+          runtimeState,
+        );
       }
 
       snapshot.program = {
@@ -717,10 +805,15 @@ export async function generateAndSaveSession(input: {
           },
           definition: version.definition,
           defaults: version.defaults ?? {},
-          params: p.params ?? {},
+          params: effectivePlanParams,
         },
       ];
-      snapshot.exercises = plannedExercisesFromBlocks(snapshot, sessionCtx.week, sessionCtx.day, p.params ?? {});
+      snapshot.exercises = plannedExercisesFromBlocks(
+        snapshot,
+        sessionCtx.week,
+        sessionCtx.day,
+        effectivePlanParams,
+      );
       snapshot = applyOverridesToSnapshot(snapshot, overrides);
     }
   }

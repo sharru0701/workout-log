@@ -1,8 +1,8 @@
 import "dotenv/config";
 import assert from "node:assert/strict";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "./client";
-import { plan as planTable, workoutLog } from "./schema";
+import { plan as planTable, planProgressEvent, planRuntimeState, workoutLog } from "./schema";
 import { generateAndSaveSession } from "../program-engine/generateSession";
 import { POST as postLogRoute } from "../../app/api/logs/route";
 import { GET as getLogByIdRoute, PATCH as patchLogByIdRoute } from "../../app/api/logs/[logId]/route";
@@ -291,18 +291,32 @@ async function main() {
   const beforeData = (await getBeforeRes.json()) as { item: { sets: Array<{ reps: number; weightKg: number }> } };
   assert.equal(beforeData.item.sets.length, payloadSets.length, "created set count mismatch");
 
-  const updatedSets = payloadSets.map((set, index) =>
-    index === 0
-      ? {
-          ...set,
-          reps: Math.max(1, set.reps + 1),
-          weightKg: set.weightKg + 2.5,
-          meta: {
-            ...(set.meta ?? {}),
-            editedBy: "verifyProgramWorkflows",
-          },
-        }
-      : set,
+  const beforeEventRows = await db
+    .select({
+      id: planProgressEvent.id,
+      eventType: planProgressEvent.eventType,
+      afterState: planProgressEvent.afterState,
+    })
+    .from(planProgressEvent)
+    .where(
+      and(
+        eq(planProgressEvent.planId, updateTargetPlan.id),
+        eq(planProgressEvent.logId, createdLogId),
+      ),
+    )
+    .limit(1);
+  assert.ok(beforeEventRows[0], "progress event missing before patch");
+  const beforeEvent = beforeEventRows[0];
+
+  const updatedSets = payloadSets.map((set) =>
+    ({
+      ...set,
+      reps: 0,
+      meta: {
+        ...(set.meta ?? {}),
+        editedBy: "verifyProgramWorkflows",
+      },
+    }),
   );
 
   const patchReq = new Request(`http://localhost/api/logs/${createdLogId}`, {
@@ -341,9 +355,42 @@ async function main() {
   };
   assert.equal(afterData.item.sets.length, updatedSets.length, "updated set count mismatch");
   assert.equal(afterData.item.sets[0]?.reps, updatedSets[0]?.reps, "updated reps mismatch");
-  assert.equal(Number(afterData.item.sets[0]?.weightKg), updatedSets[0]?.weightKg, "updated weight mismatch");
+  assert.equal(Number(afterData.item.sets[0]?.weightKg), Number(updatedSets[0]?.weightKg), "updated weight mismatch");
   assert.equal(afterData.item.notes, "program verify updated", "updated note mismatch");
   assert.equal(afterData.item.sets[0]?.meta?.editedBy, "verifyProgramWorkflows", "updated meta mismatch");
+
+  const runtimeRows = await db
+    .select({
+      id: planRuntimeState.id,
+      userId: planRuntimeState.userId,
+      state: planRuntimeState.state,
+    })
+    .from(planRuntimeState)
+    .where(eq(planRuntimeState.planId, updateTargetPlan.id))
+    .limit(1);
+  assert.ok(runtimeRows[0], "runtime state missing after log save");
+  assert.equal(runtimeRows[0]?.userId, userId, "runtime state user mismatch");
+
+  const progressEventRows = await db
+    .select({
+      id: planProgressEvent.id,
+      eventType: planProgressEvent.eventType,
+      afterState: planProgressEvent.afterState,
+    })
+    .from(planProgressEvent)
+    .where(
+      and(
+        eq(planProgressEvent.planId, updateTargetPlan.id),
+        eq(planProgressEvent.logId, createdLogId),
+      ),
+    )
+    .limit(1);
+  assert.ok(progressEventRows[0], "progress event missing after log save");
+  assert.notEqual(
+    JSON.stringify(progressEventRows[0]?.afterState ?? {}),
+    JSON.stringify(beforeEvent?.afterState ?? {}),
+    "progress event after_state should be replayed on patch",
+  );
 
   console.log(`[verify] log create/reload/update ok: ${createdLogId}`);
 
