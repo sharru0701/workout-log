@@ -4,6 +4,7 @@ import {
   exercise,
   exerciseAlias,
   plan as planTable,
+  planModule,
   programTemplate,
   programVersion,
   statsCache,
@@ -149,17 +150,34 @@ async function main() {
     const versionIds = versions.map((row) => row.id);
 
     if (versionIds.length > 0) {
-      const legacyPlans = await db
+      const legacyRootPlans = await db
         .select({
           id: planTable.id,
         })
         .from(planTable)
         .where(inArray(planTable.rootProgramVersionId, versionIds));
-      const legacyPlanIds = legacyPlans.map((row) => row.id);
+
+      const legacyModulePlans = await db
+        .select({
+          planId: planModule.planId,
+        })
+        .from(planModule)
+        .where(inArray(planModule.programVersionId, versionIds));
+
+      const legacyPlanIds = Array.from(
+        new Set([
+          ...legacyRootPlans.map((row) => row.id),
+          ...legacyModulePlans.map((row) => row.planId),
+        ]),
+      );
+
       if (legacyPlanIds.length > 0) {
         await db.delete(workoutLog).where(inArray(workoutLog.planId, legacyPlanIds));
         await db.delete(planTable).where(inArray(planTable.id, legacyPlanIds));
       }
+
+      // Safety: remove module rows that can still reference legacy versions.
+      await db.delete(planModule).where(inArray(planModule.programVersionId, versionIds));
     }
 
     await db.delete(programTemplate).where(inArray(programTemplate.id, templateIds));
