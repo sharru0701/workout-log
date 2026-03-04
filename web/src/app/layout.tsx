@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
+import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { PwaRegister } from "@/components/pwa-register";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { viewportThemeColor } from "@/lib/theme";
@@ -53,6 +54,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${appSans.variable} ${appMono.variable} antialiased`}>
+        <AppLaunchSplash />
         <PwaRegister />
         <ThemePreferenceSync />
         <AppShell>{children}</AppShell>
