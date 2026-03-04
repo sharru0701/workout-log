@@ -70,8 +70,27 @@ export default function HomePage() {
     };
   }, [dataSource]);
 
-  const viewData = homeData ?? HOME_PREVIEW_DATA;
-  const showRecentEmpty = !loading && !error && viewData.recentSessions.length === 0;
+  const hasResolvedHomeData = HOME_PREVIEW_MODE || homeData !== null;
+  const viewData = homeData;
+
+  if (!hasResolvedHomeData) {
+    return (
+      <div className="native-page native-page-enter home-screen momentum-scroll">
+        <LoadingStateRows active={loading} delayMs={80} label="Home 데이터 불러오는 중" ariaLabel="Home loading state" />
+        <ErrorStateRows
+          message={error}
+          onRetry={() => {
+            void loadHomeData();
+          }}
+          retryLabel="다시 불러오기"
+          ariaLabel="Home error state"
+        />
+      </div>
+    );
+  }
+
+  const resolvedViewData = viewData ?? HOME_PREVIEW_DATA;
+  const showRecentEmpty = !loading && !error && resolvedViewData.recentSessions.length === 0;
 
   return (
     <div className="native-page native-page-enter home-screen momentum-scroll">
@@ -99,24 +118,24 @@ export default function HomePage() {
         />
         <BaseGroupedList ariaLabel="Today workout summary">
           <NavigationRow
-            href={viewData.today.href}
-            label={viewData.today.headline}
-            subtitle={viewData.today.programName}
-            description={viewData.today.meta}
+            href={resolvedViewData.today.href}
+            label={resolvedViewData.today.headline}
+            subtitle={resolvedViewData.today.programName}
+            description={resolvedViewData.today.meta}
             value="기록하기"
             leading={<RowIcon symbol="TD" tone="blue" />}
           />
           <ValueRow
             label="완료 세트"
             description="오늘 완료한 총 세트 수"
-            value={`${viewData.today.completedSets}세트`}
+            value={`${resolvedViewData.today.completedSets}세트`}
             showChevron={false}
             leading={<RowIcon symbol="ST" tone="green" />}
           />
           <ValueRow
             label="예상 e1RM"
             description="오늘 기록 기반 추정값"
-            value={viewData.today.estimatedE1rmKg === null ? "-" : `${Math.round(viewData.today.estimatedE1rmKg)}kg`}
+            value={resolvedViewData.today.estimatedE1rmKg === null ? "-" : `${Math.round(resolvedViewData.today.estimatedE1rmKg)}kg`}
             showChevron={false}
             leading={<RowIcon symbol="RM" tone="tint" />}
           />
@@ -140,7 +159,7 @@ export default function HomePage() {
 
       <section className="grid gap-2">
         <SectionHeader
-          title={`지난 운동 요약 (최근 ${viewData.recentLimit}개)`}
+          title={`지난 운동 요약 (최근 ${resolvedViewData.recentLimit}개)`}
           description="가장 최근 완료한 세션 요약 목록"
         />
 
@@ -153,7 +172,7 @@ export default function HomePage() {
 
         {!showRecentEmpty && (
           <BaseGroupedList ariaLabel="Recent workout summaries">
-            {viewData.recentSessions.map((session) => (
+            {resolvedViewData.recentSessions.map((session) => (
               <NavigationRow
                 key={session.id}
                 href={session.href}

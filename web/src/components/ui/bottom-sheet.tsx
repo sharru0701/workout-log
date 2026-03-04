@@ -3,6 +3,7 @@
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 
 const SHEET_STACK_EVENT = "mobile-bottom-sheet-stack-change";
 const SHEET_STACK_DATA_KEY = "bottomSheetStack";
@@ -330,7 +331,7 @@ export function BottomSheet({
         <header className="mobile-bottom-sheet-header">
           <div>
             <h2 className="mobile-bottom-sheet-title">{title}</h2>
-            {description ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
+            {!MINIMAL_COPY_MODE && description ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
           </div>
           <button type="button" className="haptic-tap mobile-bottom-sheet-close" onClick={onClose} aria-label={closeLabel}>
             <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useApiNetworkBusy } from "@/lib/ui/use-api-network-busy";
 import { BaseGroupedList, InfoRow, NavigationRow, RowIcon } from "./settings-list";
 
 type LoadingStateRowsProps = {
@@ -18,6 +19,9 @@ type EmptyStateRowsProps = {
   description?: ReactNode;
   ariaLabel?: string;
   className?: string;
+  deferWhileNetworkBusy?: boolean;
+  maxDeferMs?: number;
+  revealDelayMs?: number;
 };
 
 type ErrorStateRowsProps = {
@@ -48,19 +52,47 @@ type NoticeStateRowsProps = {
 
 export function useDelayedVisibility(active: boolean, delayMs = 420) {
   const [visible, setVisible] = useState(false);
+  const shownAtRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (!active) {
+    const minVisibleMs = 180;
+    if (active) {
+      if (visible) return;
+      const timer = window.setTimeout(() => {
+        shownAtRef.current = Date.now();
+        setVisible(true);
+      }, delayMs);
+      return () => {
+        window.clearTimeout(timer);
+      };
+    }
+
+    if (!visible) {
+      shownAtRef.current = null;
+      return;
+    }
+
+    const shownAt = shownAtRef.current;
+    if (shownAt === null) {
       setVisible(false);
       return;
     }
-    const timer = window.setTimeout(() => {
-      setVisible(true);
-    }, delayMs);
+
+    const remaining = Math.max(minVisibleMs - (Date.now() - shownAt), 0);
+    if (remaining === 0) {
+      shownAtRef.current = null;
+      setVisible(false);
+      return;
+    }
+
+    const hideTimer = window.setTimeout(() => {
+      shownAtRef.current = null;
+      setVisible(false);
+    }, remaining);
     return () => {
-      window.clearTimeout(timer);
+      window.clearTimeout(hideTimer);
     };
-  }, [active, delayMs]);
+  }, [active, delayMs, visible]);
 
   return visible;
 }
@@ -69,16 +101,32 @@ export function LoadingStateRows({
   active,
   delayMs = 420,
   label = "불러오는 중",
-  description = "잠시 후 자동으로 갱신됩니다.",
   ariaLabel = "Loading state",
   className,
 }: LoadingStateRowsProps) {
-  const visible = useDelayedVisibility(active, delayMs);
+  const [effectiveDelayMs, setEffectiveDelayMs] = useState(delayMs);
+
+  useEffect(() => {
+    if (!active) {
+      setEffectiveDelayMs(delayMs);
+      return;
+    }
+    if (typeof document === "undefined") {
+      setEffectiveDelayMs(delayMs);
+      return;
+    }
+    const hasTabRouteTransition =
+      document.documentElement.hasAttribute("data-tab-route-direction") ||
+      document.documentElement.hasAttribute("data-tab-route-pending-direction");
+    setEffectiveDelayMs(delayMs + (hasTabRouteTransition ? 260 : 0));
+  }, [active, delayMs]);
+
+  const visible = useDelayedVisibility(active, effectiveDelayMs);
   if (!visible) return null;
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow label={label} description={description} leading={<RowIcon symbol="LD" tone="blue" />} />
+      <InfoRow label={label} leading={<RowIcon symbol="LD" tone="blue" />} />
     </BaseGroupedList>
   );
 }
@@ -86,15 +134,39 @@ export function LoadingStateRows({
 export function EmptyStateRows({
   when,
   label = "설정 값 없음",
-  description = "현재 표시할 설정 값이 없습니다.",
   ariaLabel = "Empty state",
   className,
+  deferWhileNetworkBusy = true,
+  maxDeferMs = 540,
+  revealDelayMs = 120,
 }: EmptyStateRowsProps) {
-  if (!when) return null;
+  const networkBusy = useApiNetworkBusy();
+  const [networkGateOpen, setNetworkGateOpen] = useState(false);
+
+  useEffect(() => {
+    if (!when) {
+      setNetworkGateOpen(false);
+      return;
+    }
+    if (!deferWhileNetworkBusy || !networkBusy) {
+      setNetworkGateOpen(true);
+      return;
+    }
+    setNetworkGateOpen(false);
+    const timer = window.setTimeout(() => {
+      setNetworkGateOpen(true);
+    }, maxDeferMs);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [deferWhileNetworkBusy, maxDeferMs, networkBusy, when]);
+
+  const visible = useDelayedVisibility(when && networkGateOpen, revealDelayMs);
+  if (!visible) return null;
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow label={label} description={description} leading={<RowIcon symbol="EM" tone="neutral" />} />
+      <InfoRow label={label} leading={<RowIcon symbol="EM" tone="neutral" />} />
     </BaseGroupedList>
   );
 }
@@ -104,7 +176,6 @@ export function ErrorStateRows({
   onRetry,
   retryDisabled = false,
   retryLabel = "다시 시도",
-  title = "요청을 완료하지 못했습니다",
   ariaLabel = "Error state",
   className,
 }: ErrorStateRowsProps) {
@@ -112,10 +183,9 @@ export function ErrorStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow tone="warning" label={title} description={message} leading={<RowIcon symbol="ER" tone="orange" />} />
+      <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="orange" />} />
       <NavigationRow
         label={retryLabel}
-        description="문제가 계속되면 입력값을 확인한 뒤 다시 시도하세요."
         onPress={onRetry}
         disabled={retryDisabled || !onRetry}
         showChevron={Boolean(onRetry && !retryDisabled)}
@@ -128,7 +198,6 @@ export function ErrorStateRows({
 export function DisabledStateRows({
   when,
   label = "현재 사용할 수 없음",
-  description = "필수 조건을 채우면 사용할 수 있습니다.",
   ariaLabel = "Disabled state",
   className,
 }: DisabledStateRowsProps) {
@@ -136,7 +205,7 @@ export function DisabledStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow tone="disabled" label={label} description={description} leading={<RowIcon symbol="DS" tone="neutral" />} />
+      <InfoRow tone="disabled" label={label} leading={<RowIcon symbol="DS" tone="neutral" />} />
     </BaseGroupedList>
   );
 }
@@ -144,7 +213,6 @@ export function DisabledStateRows({
 export function NoticeStateRows({
   message,
   tone = "neutral",
-  label = "안내",
   ariaLabel = "Notice state",
   className,
 }: NoticeStateRowsProps) {
@@ -152,7 +220,7 @@ export function NoticeStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow tone={tone} label={label} description={message} leading={<RowIcon symbol="NT" tone="tint" />} />
+      <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="tint" />} />
     </BaseGroupedList>
   );
 }

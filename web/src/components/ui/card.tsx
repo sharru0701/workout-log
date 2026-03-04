@@ -8,7 +8,7 @@ type CardProps = {
 
 export function Card({ children, className = "", elevated = true, ...props }: CardProps) {
   return (
-    <div className={`${elevated ? "motion-card" : "ui-card"} rounded-2xl border bg-white ${className}`.trim()} {...props}>
+    <div className={`${elevated ? "motion-card" : "ui-card"} rounded-2xl ${className}`.trim()} {...props}>
       {children}
     </div>
   );

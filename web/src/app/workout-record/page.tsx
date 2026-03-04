@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
   computeBodyweightTotalLoadKg,
@@ -458,14 +459,12 @@ function ExerciseRow({
           <div className="grid gap-1 rounded-xl border p-2">
             <span className="ui-card-label">세트 수</span>
             <strong>{exercise.set.repsPerSet.length}세트</strong>
-            <span className="text-xs text-[var(--text-secondary)]">세트별 횟수 입력으로 자동 관리됩니다.</span>
           </div>
         </div>
 
         <div className="grid gap-2">
           <div className="flex items-center justify-between">
             <span className="ui-card-label">세트별 운동횟수</span>
-            <span className="text-xs text-[var(--text-secondary)]">각 세트를 개별 입력</span>
           </div>
           <div className="grid gap-2">
             {exercise.set.repsPerSet.map((setReps, index) => (
@@ -497,12 +496,8 @@ function ExerciseRow({
 
         <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
           <span>최소 원판 Increment: {minimumPlateIncrementKg.toFixed(2)}kg</span>
-          {isBodyweightRelatedExerciseName(exercise.exerciseName) ? (
-            <span>
-              {bodyweightKg
-                ? `총 부하(외부중량 + 체중): ${totalLoadKg?.toFixed(2) ?? "-"}kg`
-                : "체중 설정을 입력하면 중량 풀업 총 부하를 함께 계산합니다."}
-            </span>
+          {isBodyweightRelatedExerciseName(exercise.exerciseName) && bodyweightKg ? (
+            <span>{`총 부하(외부중량 + 체중): ${totalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
           ) : null}
         </div>
 
@@ -529,6 +524,7 @@ export default function WorkoutRecordPage() {
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
   const [lastSession, setLastSession] = useState<{ title: string; description: string } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [plansLoadKey, setPlansLoadKey] = useState("workout-record:init");
   const [error, setError] = useState<string | null>(null);
   const [workflowState, setWorkflowState] = useState<WorkoutWorkflowState>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -713,6 +709,7 @@ export default function WorkoutRecordPage() {
     (async () => {
       const nextQuery = readQueryContext();
       setQuery(nextQuery);
+      setPlansLoadKey(`workout-record:${nextQuery.date}:${nextQuery.planId ?? ""}:${Date.now()}`);
       setLoading(true);
       setError(null);
 
@@ -893,7 +890,8 @@ export default function WorkoutRecordPage() {
     }
   }, [draft, router, workoutPreferences.bodyweightKg]);
 
-  const noPlan = !loading && !error && plans.length === 0;
+  const isPlansSettled = useQuerySettled(plansLoadKey, loading);
+  const noPlan = isPlansSettled && !error && plans.length === 0;
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
@@ -901,7 +899,6 @@ export default function WorkoutRecordPage() {
         active={loading}
         delayMs={160}
         label="Workout Record 로딩 중"
-        description="오늘 세션 자동 세팅과 지난 기록을 조회하고 있습니다."
       />
       <ErrorStateRows
         message={error}
@@ -921,7 +918,6 @@ export default function WorkoutRecordPage() {
       <EmptyStateRows
         when={noPlan}
         label="선택 가능한 프로그램이 없습니다"
-        description="Program Store에서 프로그램을 시작한 뒤 다시 시도하세요."
       />
 
       {!noPlan && draft && (
@@ -951,9 +947,8 @@ export default function WorkoutRecordPage() {
 
           <section className="grid gap-2">
             <h2 className="ios-section-heading">지난 세션 요약</h2>
-            <article className="motion-card rounded-2xl border p-4 text-sm text-[var(--text-secondary)] grid gap-1">
+            <article className="motion-card rounded-2xl border p-4 text-sm grid gap-1">
               <span>{lastSession?.title ?? "지난 세션 없음"}</span>
-              <span>{lastSession?.description ?? "저장된 세션이 없습니다."}</span>
             </article>
           </section>
 
@@ -975,10 +970,6 @@ export default function WorkoutRecordPage() {
           <section className="grid gap-2">
             <h2 className="ios-section-heading">기록 본문 영역</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-3">
-              <p className="text-sm text-[var(--text-secondary)]">
-                프로그램 로직 기반 자동 세팅 + 사용자 편집 레이어를 함께 적용합니다.
-              </p>
-
               {visibleExercises.map((exercise) => (
                 <ExerciseRow
                   key={exercise.id}
@@ -1052,7 +1043,6 @@ export default function WorkoutRecordPage() {
               {visibleExercises.length === 0 && (
                 <div className="workout-empty-state">
                   <strong>기록할 운동이 없습니다.</strong>
-                  <span className="text-sm text-[var(--text-secondary)]">+ 버튼으로 운동을 추가해 주세요.</span>
                 </div>
               )}
 
@@ -1244,14 +1234,12 @@ export default function WorkoutRecordPage() {
             <div className="grid gap-1 rounded-xl border p-2">
               <span className="ui-card-label">세트 수</span>
               <strong>{addDraft.repsPerSet.length}세트</strong>
-              <span className="text-xs text-[var(--text-secondary)]">세트별 운동횟수 입력으로 자동 관리됩니다.</span>
             </div>
           </div>
 
           <div className="grid gap-2">
             <div className="flex items-center justify-between">
               <span className="ui-card-label">세트별 운동횟수</span>
-              <span className="text-xs text-[var(--text-secondary)]">추가할 운동의 각 세트 횟수</span>
             </div>
             <div className="grid gap-2">
               {addDraft.repsPerSet.map((setReps, index) => (
@@ -1301,12 +1289,8 @@ export default function WorkoutRecordPage() {
 
           <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
             <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span>
-            {isBodyweightRelatedExerciseName(addDraft.exerciseName) ? (
-              <span>
-                {workoutPreferences.bodyweightKg
-                  ? `총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`
-                  : "체중 설정값이 없어서 총 부하 계산은 생략됩니다."}
-              </span>
+            {isBodyweightRelatedExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
+              <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
             ) : null}
           </div>
 

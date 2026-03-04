@@ -4,6 +4,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiGet, apiPost } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
@@ -72,11 +73,13 @@ function PlansPageContent() {
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [versionsBySlug, setVersionsBySlug] = useState<Record<string, ProgramVersion[]>>({});
   const [versionsLoadingBySlug, setVersionsLoadingBySlug] = useState<Record<string, boolean>>({});
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [templatesLoadKey, setTemplatesLoadKey] = useState("plans-manage:templates:init");
   const [error, setError] = useState<string | null>(null);
 
   const [plans, setPlans] = useState<Plan[]>([]);
-  const [loadingPlans, setLoadingPlans] = useState(false);
+  const [loadingPlans, setLoadingPlans] = useState(true);
+  const [plansLoadKey, setPlansLoadKey] = useState("plans-manage:plans:init");
   const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
   const [week, setWeek] = useState(1);
@@ -152,6 +155,10 @@ function PlansPageContent() {
     setRefreshTick((prev) => prev + 1);
   }, []);
   const pullToRefresh = usePullToRefresh({ onRefresh: refreshPlansPage });
+  const isTemplatesSettled = useQuerySettled(templatesLoadKey, loadingTemplates);
+  const isPlansSettled = useQuerySettled(plansLoadKey, loadingPlans);
+  const showNoSelectedPlanNotice = isPlansSettled && plans.length > 0 && !selectedPlanId;
+  const showPlansEmptyState = isPlansSettled && plans.length === 0;
 
   function versionsFor(slug: string) {
     return versionsBySlug[slug] ?? [];
@@ -178,6 +185,7 @@ function PlansPageContent() {
     (async () => {
       try {
         setLoadingTemplates(true);
+        setTemplatesLoadKey(`plans-manage:templates:${Date.now()}`);
         setError(null);
         const res = await apiGet<{ items: TemplateItem[] }>("/api/templates?limit=200");
         setTemplates(res.items);
@@ -234,6 +242,7 @@ function PlansPageContent() {
     (async () => {
       try {
         setLoadingPlans(true);
+        setPlansLoadKey(`plans-manage:plans:${Date.now()}`);
         setError(null);
         const res = await apiGet<{ items: Plan[] }>("/api/plans");
         setPlans(res.items);
@@ -433,13 +442,11 @@ function PlansPageContent() {
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="ios-section-heading">기본 흐름</div>
-          <p className="text-sm text-neutral-600">
-            1) 플랜 생성/선택 2) 오늘 운동 시작 3) 세트 기록 후 저장
-          </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               className="haptic-tap ui-primary-button min-h-12 px-4 text-base font-medium"
               onClick={() => setCreateSheetOpen(true)}
+              disabled={!isTemplatesSettled}
             >
               플랜 만들기
             </button>
@@ -456,7 +463,7 @@ function PlansPageContent() {
             label="생성 상태"
           />
           <DisabledStateRows
-            when={!selectedPlanId}
+            when={showNoSelectedPlanNotice}
             label="선택된 플랜 없음"
             description="플랜 카드에서 선택하면 오늘 운동 딥링크가 해당 플랜으로 연결됩니다."
           />
@@ -538,7 +545,6 @@ function PlansPageContent() {
           <LoadingStateRows
             active={loadingTemplates || loadingPlans}
             label="불러오는 중"
-            description="템플릿과 플랜 목록을 동기화하고 있습니다."
             className="mt-2"
           />
           <ErrorStateRows
@@ -556,11 +562,8 @@ function PlansPageContent() {
 
         <div className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
           <div className="ios-section-heading">플랜 카드</div>
-          <p className="text-sm text-neutral-600">
-            빠른 생성은 카드 단위로 즉시 실행됩니다. 수동 생성은 아래 섹션을 사용하세요.
-          </p>
           <EmptyStateRows
-            when={plans.length === 0}
+            when={showPlansEmptyState}
             label="설정 값 없음"
             description="현재 사용자에 대해 생성된 플랜이 없습니다."
           />
@@ -603,7 +606,7 @@ function PlansPageContent() {
                     </a>
                   </div>
                   <div className="ui-card-label">
-                    빠른 생성은 현재 주차/일차 값을 사용하고, 오늘 운동은 생성+기록 화면으로 바로 이동합니다.
+                    주차 {week} · 일차 {day}
                   </div>
                 </article>
               ))}
@@ -645,11 +648,8 @@ function PlansPageContent() {
             <a className="mt-2 block haptic-tap rounded-xl border px-4 py-3 text-center text-base font-medium" href={selectedPlanStartHref}>
               선택 플랜으로 오늘 운동 시작
             </a>
-            <div className="ui-card-label mt-2">
-              실행할 플랜을 직접 선택해 수동으로 생성할 때 사용합니다.
-            </div>
             <DisabledStateRows
-              when={!selectedPlanId}
+              when={showNoSelectedPlanNotice}
               label="선택된 플랜 없음"
               description="플랜 카드에서 선택하면 수동 생성 버튼이 활성화됩니다."
               className="mt-3"
@@ -787,6 +787,7 @@ function PlansPageContent() {
 
           <button
             className="haptic-tap ui-primary-button min-h-12 w-full text-base font-semibold"
+            disabled={!isTemplatesSettled}
             onClick={() => {
               setError(null);
               setPlanCreateNotice(null);

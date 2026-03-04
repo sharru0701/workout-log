@@ -69,11 +69,14 @@ export default function WorkoutSessionDetailPage() {
   const logId = String(params?.logId ?? "");
 
   const [item, setItem] = useState<LogItem | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!logId) return;
+    if (!logId) {
+      setLoading(false);
+      return;
+    }
     let cancelled = false;
 
     (async () => {
@@ -171,6 +174,7 @@ export default function WorkoutSessionDetailPage() {
 
       <LoadingStateRows
         active={loading}
+        delayMs={140}
         label="불러오는 중"
         description="세션 상세 정보를 조회하고 있습니다."
       />

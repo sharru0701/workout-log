@@ -338,6 +338,7 @@ export default function WorkoutTodayPage() {
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
+  const [initialPlanLoadDone, setInitialPlanLoadDone] = useState(false);
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
   const [loadingRecentSessions, setLoadingRecentSessions] = useState(false);
   const [selectedRecentSessionId, setSelectedRecentSessionId] = useState("");
@@ -685,7 +686,10 @@ export default function WorkoutTodayPage() {
         if (cancelled) return;
         setError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
       } finally {
-        if (!cancelled) setLoadingPlans(false);
+        if (!cancelled) {
+          setLoadingPlans(false);
+          setInitialPlanLoadDone(true);
+        }
       }
     })();
     return () => {
@@ -1355,9 +1359,6 @@ export default function WorkoutTodayPage() {
 
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="ios-section-heading">기록 모드</div>
-        <p className="text-sm text-neutral-600">
-          기본 모드는 핵심 액션만, 고급 모드는 세부 제어/분석까지 함께 표시합니다.
-        </p>
         <div className="grid grid-cols-2 gap-2">
           <button
             className={`haptic-tap rounded-xl border px-4 py-3 text-sm font-medium ${
@@ -1393,7 +1394,6 @@ export default function WorkoutTodayPage() {
         <div className="motion-card rounded-2xl border p-4 space-y-3">
           <div className="ios-section-heading">실행 가이드</div>
           <div className="text-sm font-semibold">{guidedHint.title}</div>
-          <p className="text-sm text-neutral-600">{guidedHint.description}</p>
           <button className="haptic-tap workout-action-pill is-primary w-full" type="button" onClick={runGuidedHintAction}>
             {guidedHint.actionLabel}
           </button>
@@ -1546,7 +1546,6 @@ export default function WorkoutTodayPage() {
               <LoadingStateRows
                 active={loadingPlans || loadingRecentSessions}
                 label="불러오는 중"
-                description="플랜과 최근 세션 목록을 확인하고 있습니다."
               />
             </div>
           </div>
@@ -1591,7 +1590,6 @@ export default function WorkoutTodayPage() {
         <div className="workout-action-panel workout-action-panel-quick">
           <div className="workout-action-head">
             <div className="workout-action-title">빠른 시작</div>
-            <p className="workout-action-copy">초보자 흐름: 생성/적용 · 운동 추가 · 저장</p>
           </div>
           <div className="workout-action-grid">
             <button
@@ -1783,12 +1781,12 @@ export default function WorkoutTodayPage() {
         />
         <NoticeStateRows message={success} tone="success" label="저장 상태" />
         <DisabledStateRows
-          when={!planId}
+          when={initialPlanLoadDone && !planId}
           label="플랜 미선택"
           description="플랜을 선택하면 생성/저장/오버라이드 기능이 활성화됩니다."
         />
         <DisabledStateRows
-          when={planId.length > 0 && sets.length === 0}
+          when={initialPlanLoadDone && planId.length > 0 && sets.length === 0}
           label="저장 비활성"
           description="저장할 세트가 없습니다. 생성/적용 또는 운동 추가를 먼저 실행하세요."
         />

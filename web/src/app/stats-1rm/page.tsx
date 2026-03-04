@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
 type ExerciseOption = {
   id: string;
@@ -240,8 +241,10 @@ function E1RMInteractiveChart({
 export default function Stats1RMPage() {
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
+  const [optionsLoadKey, setOptionsLoadKey] = useState("stats-1rm:options:init");
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [dataLoadKey, setDataLoadKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const [exercises, setExercises] = useState<ExerciseOption[]>([]);
@@ -266,10 +269,17 @@ export default function Stats1RMPage() {
   const hasChartData = series.length > 0;
   const resolvedActiveIndex = hasChartData ? clampIndex(activePointIndex, series.length) : 0;
   const activePoint = hasChartData ? series[resolvedActiveIndex] : null;
+  const activeDataQueryKey = useMemo(() => {
+    if (!selectedExerciseId) return null;
+    return [selectedExerciseId, selectedPlanId || "", rangeFilter.preset, rangeFilter.from, rangeFilter.to, refreshTick].join("|");
+  }, [rangeFilter.from, rangeFilter.preset, rangeFilter.to, refreshTick, selectedExerciseId, selectedPlanId]);
+  const isOptionsSettled = useQuerySettled(optionsLoadKey, optionsLoading);
+  const isDataSettled = useQuerySettled(dataLoadKey, loading);
 
   const loadFilterOptions = useCallback(async () => {
     try {
       setOptionsLoading(true);
+      setOptionsLoadKey(`stats-1rm:options:${Date.now()}`);
       setOptionsError(null);
       const [exerciseRes, planRes] = await Promise.all([
         apiGet<ExercisesResponse>("/api/exercises?limit=200"),
@@ -309,16 +319,19 @@ export default function Stats1RMPage() {
   }, [activeSheet, rangeFilter]);
 
   useEffect(() => {
-    if (!selectedExerciseId) {
+    if (!selectedExerciseId || !activeDataQueryKey) {
       setStats(null);
+      setDataLoadKey(null);
       return;
     }
 
     let cancelled = false;
+    const nextLoadKey = `stats-1rm:data:${activeDataQueryKey}:${Date.now()}`;
 
     (async () => {
       try {
         setLoading(true);
+        setDataLoadKey(nextLoadKey);
         setError(null);
 
         const path = `/api/stats/e1rm?${toQuery({
@@ -344,7 +357,7 @@ export default function Stats1RMPage() {
     return () => {
       cancelled = true;
     };
-  }, [rangeFilter, refreshTick, selectedExerciseId, selectedPlanId]);
+  }, [activeDataQueryKey, rangeFilter, selectedExerciseId, selectedPlanId]);
 
   const applyRangeDraft = () => {
     if (rangeDraft.preset === "CUSTOM") {
@@ -371,28 +384,29 @@ export default function Stats1RMPage() {
     setActiveSheet(null);
   };
 
-  const showNoExerciseState = !optionsLoading && !optionsError && exercises.length === 0;
-  const showDataEmptyState = !loading && !error && !showNoExerciseState && selectedExerciseId !== null && series.length === 0;
+  const showNoExerciseState = isOptionsSettled && !optionsError && exercises.length === 0;
+  const showDataEmptyState = isDataSettled && !error && !showNoExerciseState && series.length === 0;
+  const hasResolvedFilterOptions = isOptionsSettled || optionsError !== null || exercises.length > 0;
+  const showChartSection = hasChartData;
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
-      <section className="grid gap-2">
-        <h2 className="ios-section-heading">1RM Stats / Graph</h2>
-        <article className="motion-card rounded-2xl border p-4 grid gap-3">
-          <div className="stats-filter-chip-row">
-            <FilterChip
-              title="운동종목"
-              value={selectedExercise?.name ?? "선택 필요"}
-              onPress={() => setActiveSheet("exercise")}
-            />
-            <FilterChip title="기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
-            <FilterChip title="프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
-          </div>
-          <p className="stats-filter-summary">
-            선택된 필터: {selectedExercise?.name ?? "운동 미선택"} / {formatRangeLabel(rangeFilter)} / {selectedProgramLabel}
-          </p>
-        </article>
-      </section>
+      {hasResolvedFilterOptions && (
+        <section className="grid gap-2">
+          <h2 className="ios-section-heading">1RM Stats / Graph</h2>
+          <article className="motion-card rounded-2xl border p-4 grid gap-3">
+            <div className="stats-filter-chip-row">
+              <FilterChip
+                title="운동종목"
+                value={selectedExercise?.name ?? "선택 필요"}
+                onPress={() => setActiveSheet("exercise")}
+              />
+              <FilterChip title="기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
+              <FilterChip title="프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
+            </div>
+          </article>
+        </section>
+      )}
 
       <LoadingStateRows
         active={optionsLoading}
@@ -440,15 +454,12 @@ export default function Stats1RMPage() {
         </>
       )}
 
-      {!loading && !error && hasChartData && (
+      {showChartSection && (
         <section className="grid gap-2">
           <article className="motion-card rounded-2xl border p-4 grid gap-3">
             <header className="stats-chart-header">
               <div>
                 <h3 className="ios-inline-heading">그래프 영역</h3>
-                <p className="stats-chart-caption">
-                  터치/드래그로 포인트를 스크러빙하여 날짜별 값을 확인할 수 있습니다.
-                </p>
               </div>
               <div className="stats-chart-focus">
                 <strong>{activePoint ? `${activePoint.e1rm.toFixed(1)} kg` : "-"}</strong>
@@ -509,7 +520,7 @@ export default function Stats1RMPage() {
               </button>
             );
           })}
-          {exercises.length === 0 ? (
+          {isOptionsSettled && exercises.length === 0 ? (
             <div className="stats-sheet-empty">선택 가능한 운동종목이 없습니다.</div>
           ) : null}
         </div>
@@ -624,7 +635,7 @@ export default function Stats1RMPage() {
               </button>
             );
           })}
-          {plans.length === 0 ? <div className="stats-sheet-empty">등록된 프로그램이 없습니다.</div> : null}
+          {isOptionsSettled && plans.length === 0 ? <div className="stats-sheet-empty">등록된 프로그램이 없습니다.</div> : null}
         </div>
       </BottomSheet>
     </div>

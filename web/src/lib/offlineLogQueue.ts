@@ -1,3 +1,5 @@
+import { apiPost } from "@/lib/api";
+
 export type WorkoutLogRequest = {
   planId: string;
   generatedSessionId: string | null;
@@ -188,16 +190,7 @@ export async function syncPendingWorkoutLogs(
 }
 
 async function postWorkoutLogToApi(payload: WorkoutLogRequest) {
-  const response = await fetch("/api/logs", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    throw new Error((data as { error?: string }).error ?? `POST /api/logs failed: ${response.status}`);
-  }
-  return data;
+  return apiPost("/api/logs", payload);
 }
 
 export async function syncPendingWorkoutLogsViaApi() {

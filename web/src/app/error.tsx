@@ -24,7 +24,6 @@ export default function RootError({
     <div className="native-page native-page-enter tab-screen">
       <section className="motion-card rounded-2xl border p-5 space-y-3">
         <h2 className="tab-screen-title">문제가 발생했습니다</h2>
-        <p className="tab-screen-caption">다시 시도하세요. 반복되면 서버 로그를 확인하세요.</p>
         <ErrorStateRows
           message={error.message || "알 수 없는 렌더링 오류"}
           onRetry={() => reset()}

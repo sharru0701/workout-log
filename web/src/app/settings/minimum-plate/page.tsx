@@ -14,6 +14,7 @@ import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } fro
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   DEFAULT_MINIMUM_PLATE_KG,
   normalizeIncrementKg,
@@ -61,6 +62,7 @@ function dedupeRules(rules: MinimumPlateRule[]) {
 
 export default function SettingsMinimumPlatePage() {
   const [loading, setLoading] = useState(true);
+  const [settingsLoadKey, setSettingsLoadKey] = useState("minimum-plate:init");
   const [loadError, setLoadError] = useState<string | null>(null);
   const [exercises, setExercises] = useState<ExerciseOption[]>([]);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -108,6 +110,7 @@ export default function SettingsMinimumPlatePage() {
     () => (ruleDraft.exerciseId ? exercises.find((exercise) => exercise.id === ruleDraft.exerciseId) ?? null : null),
     [ruleDraft.exerciseId, exercises],
   );
+  const isSettingsSettled = useQuerySettled(settingsLoadKey, loading);
 
   const latestNotice = defaultIncrement.notice ?? rulesSetting.notice ?? null;
   const hasSaveError = Boolean(defaultIncrement.error || rulesSetting.error);
@@ -116,6 +119,7 @@ export default function SettingsMinimumPlatePage() {
     try {
       setLoading(true);
       setLoadError(null);
+      setSettingsLoadKey(`minimum-plate:${Date.now()}`);
       const [snapshot, exerciseRes] = await Promise.all([
         fetchSettingsSnapshot(),
         apiGet<ExerciseResponse>("/api/exercises?limit=250"),
@@ -324,7 +328,7 @@ export default function SettingsMinimumPlatePage() {
           />
         </BaseGroupedList>
         <EmptyStateRows
-          when={!loading && rules.length === 0}
+          when={isSettingsSettled && rules.length === 0}
           label="종목별 규칙이 없습니다"
           description="기본값만 사용 중입니다. 필요하면 규칙을 추가하세요."
           ariaLabel="Minimum plate rule empty state"

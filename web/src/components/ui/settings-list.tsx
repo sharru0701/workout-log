@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useId } from "react";
 import Link from "next/link";
+import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 import styles from "./settings-list.module.css";
 import type { SettingsListTokenOverrides } from "./settings-list.tokens";
 
@@ -134,8 +135,8 @@ function RowContent({
       {leading ? <span className={styles.leading}>{leading}</span> : null}
       <span className={styles.body}>
         <span className={styles.label}>{label}</span>
-        {subtitle ? <span className={styles.subtitle}>{subtitle}</span> : null}
-        {description ? <span className={styles.description}>{description}</span> : null}
+        {!MINIMAL_COPY_MODE && subtitle ? <span className={styles.subtitle}>{subtitle}</span> : null}
+        {!MINIMAL_COPY_MODE && description ? <span className={styles.description}>{description}</span> : null}
       </span>
       {trailing || badge ? (
         <span className={styles.trailing}>
@@ -164,12 +165,13 @@ export function SectionHeader({ title, description, className }: SectionHeaderPr
   return (
     <header className={cx(styles.sectionHeader, className)} data-settings-section-header="true">
       <h2 className={styles.sectionHeaderTitle}>{title}</h2>
-      {description ? <p className={styles.sectionHeaderDescription}>{description}</p> : null}
+      {!MINIMAL_COPY_MODE && description ? <p className={styles.sectionHeaderDescription}>{description}</p> : null}
     </header>
   );
 }
 
 export function SectionFootnote({ children, className }: SectionFootnoteProps) {
+  if (MINIMAL_COPY_MODE) return null;
   return (
     <p className={cx(styles.sectionFootnote, className)} data-settings-footnote="true">
       {children}

@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -425,19 +426,16 @@ function trendMeta(delta: number, digits = 1) {
 function MetricTile({
   label,
   value,
-  detail,
   trend,
 }: {
   label: string;
   value: string;
-  detail: string;
   trend?: { text: string; className: string };
 }) {
   return (
     <article className="motion-card rounded-2xl border bg-white p-4">
       <div className="ui-card-label ui-card-label-caps">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
-      <div className="mt-1 text-sm text-neutral-600">{detail}</div>
       {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
     </article>
   );
@@ -454,15 +452,7 @@ function SparklineChart({
   width?: number;
   height?: number;
 }) {
-  if (!points.length) {
-    return (
-      <EmptyStateRows
-        when
-        label="설정 값 없음"
-        description="선택한 범위에 표시할 볼륨 시계열 데이터가 없습니다."
-      />
-    );
-  }
+  if (!points.length) return null;
 
   const min = Math.min(...points);
   const max = Math.max(...points);
@@ -498,6 +488,7 @@ function SparklineChart({
 
 export default function StatsPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [plansLoading, setPlansLoading] = useState(true);
   const [planId, setPlanId] = useState("");
 
   const [exerciseId, setExerciseId] = useState("");
@@ -509,8 +500,10 @@ export default function StatsPage() {
   const [bucket, setBucket] = useState<"day" | "week" | "month">("week");
 
   const [loading, setLoading] = useState(false);
+  const [coreLoadKey, setCoreLoadKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsLoadKey, setDetailsLoadKey] = useState<string | null>(null);
   const [detailsError, setDetailsError] = useState<string | null>(null);
   const [trendLoading, setTrendLoading] = useState(false);
 
@@ -524,6 +517,7 @@ export default function StatsPage() {
   const [uxSummaryWindows, setUxSummaryWindows] = useState<UxSummaryWindow[]>([]);
   const [migrationTelemetry, setMigrationTelemetry] = useState<MigrationTelemetryResp | null>(null);
   const [migrationTelemetryLoading, setMigrationTelemetryLoading] = useState(false);
+  const [migrationLoadKey, setMigrationLoadKey] = useState<string | null>(null);
   const [migrationLookbackMinutes, setMigrationLookbackMinutes] = useState<number>(720);
   const [migrationRunStatusFilter, setMigrationRunStatusFilter] = useState<"ALL" | "ISSUE">("ALL");
   const [settingsSnapshot, setSettingsSnapshot] = useState<
@@ -552,6 +546,12 @@ export default function StatsPage() {
       days,
     };
   }, [days, from, to]);
+  const isCoreSettled = useQuerySettled(coreLoadKey, loading);
+  const isDetailsSettled = useQuerySettled(detailsLoadKey, detailsLoading);
+  const isMigrationSettled = useQuerySettled(migrationLoadKey, migrationTelemetryLoading);
+  const canShowCoreEmptyState = isCoreSettled && !loading && !error;
+  const canShowDetailsEmptyState = isDetailsSettled && !detailsLoading && !detailsError;
+  const canShowMigrationEmptyState = isMigrationSettled && !migrationTelemetryLoading;
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -572,6 +572,7 @@ export default function StatsPage() {
     let cancelled = false;
     (async () => {
       try {
+        setPlansLoading(true);
         const res = await apiGet<{ items: Plan[] }>("/api/plans");
         if (cancelled) return;
         setPlans(res.items);
@@ -581,6 +582,8 @@ export default function StatsPage() {
         });
       } catch {
         if (!cancelled) setPlans([]);
+      } finally {
+        if (!cancelled) setPlansLoading(false);
       }
     })();
     return () => {
@@ -651,6 +654,7 @@ export default function StatsPage() {
     (async () => {
       try {
         setLoading(true);
+        setCoreLoadKey(`stats-dashboard:core:${Date.now()}`);
         setError(null);
 
         const e1rmPath = `/api/stats/e1rm?${toQuery({
@@ -698,6 +702,7 @@ export default function StatsPage() {
     (async () => {
       try {
         setDetailsLoading(true);
+        setDetailsLoadKey(`stats-dashboard:details:${Date.now()}`);
         setDetailsError(null);
 
         const seriesPath = `/api/stats/volume-series?${toQuery({
@@ -801,14 +806,14 @@ export default function StatsPage() {
     let cancelled = false;
     (async () => {
       setMigrationTelemetryLoading(true);
+      setMigrationLoadKey(`stats-dashboard:migration:${Date.now()}`);
       const path = `/api/stats/migration-telemetry?${toQuery({
         lookbackMinutes: migrationLookbackMinutes,
         limit: 20,
         runStatus: migrationRunStatusFilter === "ALL" ? undefined : migrationRunStatusFilter,
       })}`;
       try {
-        const res = await fetch(path, { cache: "no-store" });
-        const body = (await res.json().catch(() => null)) as unknown;
+        const body = await apiGet<unknown>(path);
         if (cancelled) return;
         if (isMigrationTelemetryResp(body)) {
           setMigrationTelemetry(body);
@@ -1120,7 +1125,6 @@ export default function StatsPage() {
 
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="ios-section-heading">기본 흐름</div>
-        <p className="text-sm text-neutral-600">1) 7/30/90일 선택 2) KPI 카드 확인 3) 필요 시 필터 조정</p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRESET_RANGES.map((d, idx) => (
             <button
@@ -1155,9 +1159,6 @@ export default function StatsPage() {
               </button>
             ))}
           </div>
-          <div className="mt-2 text-xs text-neutral-600">
-            범위를 UX 행동 분석에 맞춰 고정하고 집계 단위를 `day`로 자동 설정합니다.
-          </div>
         </div>
       </section>
 
@@ -1165,7 +1166,6 @@ export default function StatsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">활성 필터</div>
-            <div className="mt-1 text-sm text-neutral-600">플랜/범위/운동 조건을 세밀하게 바꿀 때만 필터를 사용하세요.</div>
           </div>
           <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={() => setFiltersOpen(true)}>
             수정
@@ -1178,7 +1178,7 @@ export default function StatsPage() {
           <div className="rounded-lg border px-3 py-2">운동: {exerciseId || exercise || "—"}</div>
         </div>
         <LoadingStateRows
-          active={loading}
+          active={plansLoading || loading}
           label="불러오는 중"
           description="통계 지표를 계산하고 있습니다."
         />
@@ -1215,7 +1215,6 @@ export default function StatsPage() {
             <div className="ui-card-label ui-card-label-caps">범위</div>
             <div className="text-lg font-semibold">{rangeHeadline}</div>
           </div>
-          <div className="ui-card-label">버튼으로 선택하고 필요 시 스와이프하세요.</div>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
@@ -1263,12 +1262,10 @@ export default function StatsPage() {
         <MetricTile
           label="e1RM"
           value={e1rm?.best ? `${e1rm.best.e1rm} kg` : "—"}
-          detail={e1rm?.best ? `${e1rm.best.date} · ${e1rm.best.weightKg}×${e1rm.best.reps}` : "데이터 없음"}
         />
         <MetricTile
           label="볼륨"
           value={volume ? formatKg(volume.totals.tonnage) : "—"}
-          detail={volume ? `반복 ${volume.totals.reps} · 세트 ${volume.totals.sets}` : "데이터 없음"}
           trend={
             volume
               ? {
@@ -1281,7 +1278,6 @@ export default function StatsPage() {
         <MetricTile
           label="준수율"
           value={compliance ? `${Math.round(compliance.compliance * 100)}%` : "—"}
-          detail={compliance ? `계획 ${compliance.planned} · 완료 ${compliance.done}` : "데이터 없음"}
           trend={
             compliance
               ? {
@@ -1297,9 +1293,6 @@ export default function StatsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">운영 마이그레이션 상태</div>
-            <div className="mt-1 text-sm text-neutral-600">
-              배포 시 실행되는 전용 migration job 상태를 최근 기록 기준으로 확인합니다.
-            </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${migrationStatusMeta.className}`}>
@@ -1331,9 +1324,6 @@ export default function StatsPage() {
             ))}
           </div>
           <div className="mt-2 flex items-center justify-between gap-2">
-            <div className="text-xs text-neutral-600">
-              최근 {formatLookbackLabel(migrationLookbackMinutes)} 내 실행을 조회합니다.
-            </div>
             <button
               type="button"
               className={`haptic-tap rounded-lg border px-3 py-1.5 text-xs font-medium ${
@@ -1451,7 +1441,7 @@ export default function StatsPage() {
               </div>
             ) : (
               <EmptyStateRows
-                when
+                when={canShowMigrationEmptyState}
                 label="실행 기록 없음"
                 description={
                   migrationRunStatusFilter === "ISSUE"
@@ -1461,22 +1451,19 @@ export default function StatsPage() {
               />
             )}
           </>
-        ) : migrationTelemetryLoading ? null : (
+        ) : canShowMigrationEmptyState ? (
           <EmptyStateRows
             when
             label="운영 상태 로드 실패"
             description="마이그레이션 텔레메트리 응답이 없어 기본 통계만 표시합니다."
           />
-        )}
+        ) : null}
       </section>
 
       <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 퍼널 (서버 집계)</div>
-            <div className="mt-1 text-sm text-neutral-600">
-              생성/저장/추가운동 포함 저장 흐름을 서버 로그 기반으로 집계합니다.
-            </div>
           </div>
           <a className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" href={uxFunnelCsvHref}>
             CSV 내보내기
@@ -1532,7 +1519,7 @@ export default function StatsPage() {
           </>
         ) : (
           <EmptyStateRows
-            when
+            when={canShowDetailsEmptyState}
             label="설정 값 없음"
             description="선택한 조건에서 UX 퍼널 데이터를 집계하지 못했습니다."
           />
@@ -1543,9 +1530,6 @@ export default function StatsPage() {
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 행동 요약 (오늘/7일/14일)</div>
-            <div className="mt-1 text-sm text-neutral-600">
-              서버 동기화 이벤트를 기준으로 기록 흐름의 안정성을 기간별로 비교합니다.
-            </div>
           </div>
           <div className="flex flex-wrap gap-2">
             <button
@@ -1639,7 +1623,6 @@ export default function StatsPage() {
                 <div className={`mt-1 text-xs ${threshold.status === "ok" ? "text-emerald-700" : "text-amber-700"}`}>
                   {threshold.status === "ok" ? "기준 충족" : "개선 필요"}
                 </div>
-                <div className="mt-1 text-xs text-neutral-600">{threshold.hint}</div>
               </article>
             ))}
           </div>
@@ -1674,7 +1657,7 @@ export default function StatsPage() {
             </div>
           ) : (
             <EmptyStateRows
-              when
+              when={canShowDetailsEmptyState}
               label="비교 데이터 없음"
               description="현재 범위에서 이전 구간 비교를 계산할 수 없습니다."
             />
@@ -1690,7 +1673,15 @@ export default function StatsPage() {
           </div>
           <div className="ui-card-label">포인트: {seriesPoints.length}</div>
         </div>
-        <SparklineChart points={seriesPoints} labels={seriesLabels} />
+        {seriesPoints.length > 0 ? (
+          <SparklineChart points={seriesPoints} labels={seriesLabels} />
+        ) : (
+          <EmptyStateRows
+            when={canShowDetailsEmptyState}
+            label="설정 값 없음"
+            description="선택한 범위에 표시할 볼륨 시계열 데이터가 없습니다."
+          />
+        )}
       </section>
 
       <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
@@ -1724,7 +1715,7 @@ export default function StatsPage() {
             </div>
           ) : (
             <EmptyStateRows
-              when
+              when={canShowDetailsEmptyState}
               label="설정 값 없음"
               description="기간 내 운동별 볼륨 데이터가 없습니다."
             />
@@ -1763,7 +1754,7 @@ export default function StatsPage() {
             </div>
           ) : (
             <EmptyStateRows
-              when
+              when={canShowCoreEmptyState}
               label="설정 값 없음"
               description="기간 내 준수율 데이터가 없습니다."
             />
@@ -1809,7 +1800,7 @@ export default function StatsPage() {
             </div>
           ) : (
             <EmptyStateRows
-              when
+              when={canShowDetailsEmptyState}
               label="설정 값 없음"
               description="기간 내 PR 기록이 없습니다."
             />
@@ -1869,10 +1860,6 @@ export default function StatsPage() {
               <span className="ui-card-label">종료일(선택)</span>
               <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
             </label>
-          </div>
-
-          <div className="rounded-xl border px-3 py-2 text-xs text-neutral-600">
-            고급 e1RM 범위(선택): 정확히 지정할 때는 `exerciseId`, 이름 기준으로 찾을 때는 `exercise`를 사용합니다.
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

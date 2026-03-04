@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
 type Plan = {
   id: string;
@@ -125,41 +126,61 @@ export default function CalendarPage() {
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
   const [generatedSession, setGeneratedSession] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [plansLoadKey, setPlansLoadKey] = useState("calendar-manage:init");
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
+  const isPlansSettled = useQuerySettled(plansLoadKey, loading);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       try {
+        setLoading(true);
+        setPlansLoadKey(`calendar-manage:${Date.now()}`);
         const res = await apiGet<{ items: Plan[] }>("/api/plans");
+        if (cancelled) return;
         setPlans(res.items);
         setPlanId((prev) => {
           if (prev && res.items.some((p) => p.id === prev)) return prev;
           return res.items[0]?.id ?? "";
         });
       } catch (e: any) {
-        setError(e?.message ?? "Failed to load plans");
+        if (!cancelled) setError(e?.message ?? "Failed to load plans");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
+    let cancelled = false;
     (async () => {
       if (!planId) {
-        setRecentSessions([]);
+        if (!cancelled) setRecentSessions([]);
         return;
       }
       try {
+        setLoading(true);
         const sp = new URLSearchParams();
         sp.set("planId", planId);
         sp.set("limit", "100");
         const res = await apiGet<{ items: RecentGeneratedSession[] }>(`/api/generated-sessions?${sp.toString()}`);
-        setRecentSessions(res.items);
+        if (!cancelled) setRecentSessions(res.items);
       } catch (e: any) {
-        setError(e?.message ?? "Failed to load generated sessions");
+        if (!cancelled) setError(e?.message ?? "Failed to load generated sessions");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [planId]);
 
   const generatedByKey = useMemo(() => {
@@ -268,9 +289,6 @@ export default function CalendarPage() {
           <input className="rounded-lg border px-3 py-3 text-base" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
 
-        <div className="sm:col-span-2 lg:col-span-5 calendar-open-hint">
-          Open behavior: {openAutoGenerate ? "Open + auto-generate in Today" : "Open day context only (generate manually if needed)"}
-        </div>
       </section>
 
       <section className="motion-card rounded-2xl border bg-white calendar-nav-card">
@@ -290,7 +308,6 @@ export default function CalendarPage() {
       <LoadingStateRows
         active={loading}
         label="불러오는 중"
-        description="선택한 날짜 세션을 생성하고 있습니다."
       />
       <ErrorStateRows
         message={error}
@@ -320,7 +337,7 @@ export default function CalendarPage() {
         }}
       />
       <EmptyStateRows
-        when={plans.length === 0}
+        when={isPlansSettled && plans.length === 0}
         label="설정 값 없음"
         description="사용 가능한 플랜이 없습니다. 플랜 화면에서 먼저 생성하세요."
       />

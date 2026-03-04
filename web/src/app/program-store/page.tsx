@@ -4,7 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
   hasAtLeastOneExercise,
@@ -145,18 +146,7 @@ function validateCustomSessions(sessions: ProgramSessionDraft[]) {
 }
 
 async function putProgramVersionDefinition(versionId: string, definition: any) {
-  const res = await fetch(`/api/program-versions/${encodeURIComponent(versionId)}`, {
-    method: "PUT",
-    headers: {
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({ definition }),
-  });
-
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error ?? `프로그램 버전 저장 실패: ${res.status}`);
-  }
+  await apiPut(`/api/program-versions/${encodeURIComponent(versionId)}`, { definition });
 }
 
 function ExerciseEditorRow({
@@ -295,6 +285,7 @@ export default function ProgramStorePage() {
   const [templates, setTemplates] = useState<ProgramTemplate[]>([]);
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [storeLoadKey, setStoreLoadKey] = useState("program-store:init");
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -324,6 +315,7 @@ export default function ProgramStorePage() {
     try {
       setLoading(true);
       setError(null);
+      setStoreLoadKey(`program-store:${Date.now()}`);
       const [templatesRes, plansRes] = await Promise.all([
         apiGet<TemplatesResponse>("/api/templates?limit=200"),
         apiGet<PlansResponse>("/api/plans"),
@@ -536,13 +528,14 @@ export default function ProgramStorePage() {
     setCreateDraft(buildInitialCreateDraft(templates));
   };
 
+  const isStoreSettled = useQuerySettled(storeLoadKey, loading);
+
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
       <LoadingStateRows
         active={loading}
         delayMs={160}
         label="Program Store 로딩 중"
-        description="시중 프로그램과 사용자 커스텀 프로그램을 불러오고 있습니다."
       />
       <ErrorStateRows
         message={error}
@@ -556,9 +549,8 @@ export default function ProgramStorePage() {
       <section className="grid gap-2">
         <h2 className="ios-section-heading">프로그램 목록 (시중 + 커스텀)</h2>
         <EmptyStateRows
-          when={!loading && !error && listItems.length === 0}
+          when={isStoreSettled && !error && listItems.length === 0}
           label="표시할 프로그램이 없습니다"
-          description="데이터 시드/생성 후 다시 확인하세요."
         />
         {listItems.length > 0 && (
           <article className="motion-card rounded-2xl border p-4 grid gap-2">
@@ -572,8 +564,6 @@ export default function ProgramStorePage() {
                 }}
               >
                 <strong>{item.name}</strong>
-                <span className="text-sm text-[var(--text-secondary)]">{item.subtitle}</span>
-                <span className="text-sm text-[var(--text-secondary)]">{item.description}</span>
               </button>
             ))}
           </article>
@@ -632,7 +622,6 @@ export default function ProgramStorePage() {
           <div className="grid gap-2">
             <article className="rounded-xl border p-3 text-sm">
               <strong>{detailTarget.template.name}</strong>
-              <p className="mt-1 text-[var(--text-secondary)]">{detailTarget.description}</p>
               <p className="mt-1 text-[var(--text-secondary)]">
                 타입: {detailTarget.template.type} / 최신 버전:{" "}
                 {detailTarget.template.latestVersion ? `v${detailTarget.template.latestVersion.version}` : "-"}
@@ -681,7 +670,6 @@ export default function ProgramStorePage() {
 
             <article className="rounded-xl border p-3 grid gap-2">
               <strong>종목 순서 변경</strong>
-              <span className="text-sm text-[var(--text-secondary)]">리스트를 드래그해서 순서를 바꾸세요.</span>
             </article>
 
             <article className="rounded-xl border p-3 grid gap-3">

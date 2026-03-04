@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
@@ -113,11 +114,13 @@ function buildManualDefinition(sessions: ManualSession[]) {
 export default function TemplatesPage() {
   const [userId, setUserId] = useState("dev");
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
+  const [loadingTemplates, setLoadingTemplates] = useState(true);
+  const [templatesLoadKey, setTemplatesLoadKey] = useState("templates-manage:templates:init");
 
   const [selectedSlug, setSelectedSlug] = useState("");
   const [versions, setVersions] = useState<ProgramVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
+  const [versionsLoadKey, setVersionsLoadKey] = useState<string | null>(null);
   const [selectedBaseVersionId, setSelectedBaseVersionId] = useState("");
 
   const [changelog, setChangelog] = useState("UI에서 업데이트");
@@ -174,9 +177,16 @@ export default function TemplatesPage() {
     () => filteredTemplates.filter((t) => t.visibility === "PRIVATE"),
     [filteredTemplates],
   );
+  const isTemplatesSettled = useQuerySettled(templatesLoadKey, loadingTemplates);
+  const isVersionsSettled = useQuerySettled(versionsLoadKey, loadingVersions);
+  const showPublicTemplatesEmpty = isTemplatesSettled && publicTemplates.length === 0;
+  const showPrivateTemplatesEmpty = isTemplatesSettled && myPrivateTemplates.length === 0;
+  const showTemplateEditorEmpty = isTemplatesSettled && !selectedTemplate;
+  const showVersionsEmpty = isVersionsSettled && Boolean(selectedTemplate) && versions.length === 0;
 
   async function loadTemplates() {
     setLoadingTemplates(true);
+    setTemplatesLoadKey(`templates-manage:templates:${Date.now()}`);
     try {
       const res = await apiGet<{ items: TemplateItem[] }>("/api/templates?limit=200");
       setTemplates(res.items);
@@ -193,9 +203,11 @@ export default function TemplatesPage() {
     if (!slug) {
       setVersions([]);
       setSelectedBaseVersionId("");
+      setVersionsLoadKey(null);
       return;
     }
     setLoadingVersions(true);
+    setVersionsLoadKey(`templates-manage:versions:${slug}:${Date.now()}`);
     try {
       const res = await apiGet<{ template: TemplateItem; versions: ProgramVersion[] }>(
         `/api/templates/${encodeURIComponent(slug)}/versions`,
@@ -214,7 +226,12 @@ export default function TemplatesPage() {
   }, [userId]);
 
   useEffect(() => {
-    if (!selectedSlug) return;
+    if (!selectedSlug) {
+      setVersions([]);
+      setSelectedBaseVersionId("");
+      setVersionsLoadKey(null);
+      return;
+    }
     loadVersions(selectedSlug).catch((e: any) => setError(e?.message ?? "버전 목록을 불러오지 못했습니다."));
   }, [selectedSlug, userId]);
 
@@ -406,7 +423,7 @@ export default function TemplatesPage() {
             summarySlot={<span className="ui-card-label">{publicTemplates.length}</span>}
           >
             <EmptyStateRows
-              when={publicTemplates.length === 0}
+              when={showPublicTemplatesEmpty}
               label="설정 값 없음"
               description="표시할 공개 템플릿이 없습니다."
             />
@@ -449,7 +466,7 @@ export default function TemplatesPage() {
             summarySlot={<span className="ui-card-label">{myPrivateTemplates.length}</span>}
           >
             <EmptyStateRows
-              when={myPrivateTemplates.length === 0}
+              when={showPrivateTemplatesEmpty}
               label="설정 값 없음"
               description="개인 템플릿이 없습니다. 공개 템플릿을 포크해 편집을 시작하세요."
             />
@@ -477,7 +494,7 @@ export default function TemplatesPage() {
       <div className="motion-card rounded-2xl border p-4 space-y-4">
         <div className="ios-section-heading">템플릿 편집기</div>
         <EmptyStateRows
-          when={!selectedTemplate}
+          when={showTemplateEditorEmpty}
           label="설정 값 없음"
           description="좌측 목록에서 템플릿을 선택하면 버전/편집 설정이 표시됩니다."
         />
@@ -901,7 +918,7 @@ export default function TemplatesPage() {
             >
               <div className="motion-card rounded-xl border p-3">
                 <EmptyStateRows
-                  when={versions.length === 0}
+                  when={showVersionsEmpty}
                   label="설정 값 없음"
                   description="선택한 템플릿의 버전 이력이 아직 없습니다."
                 />

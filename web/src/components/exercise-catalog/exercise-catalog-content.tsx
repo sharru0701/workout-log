@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
+import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type ExerciseItem = {
@@ -37,6 +38,7 @@ export function ExerciseCatalogContent() {
   const [items, setItems] = useState<ExerciseItem[]>([]);
 
   const [query, setQuery] = useState("");
+  const [activeLoadQuery, setActiveLoadQuery] = useState("");
   const [createName, setCreateName] = useState("");
   const [createCategory, setCreateCategory] = useState("");
   const [savingCreate, setSavingCreate] = useState(false);
@@ -49,9 +51,11 @@ export function ExerciseCatalogContent() {
     try {
       setLoading(true);
       setError(null);
+      const normalizedSearch = search.trim().toLowerCase();
+      setActiveLoadQuery(normalizedSearch);
       const params = new URLSearchParams({ limit: "200" });
-      if (search.trim()) {
-        params.set("query", search.trim());
+      if (normalizedSearch) {
+        params.set("query", normalizedSearch);
       }
       const res = await apiGet<ExerciseResponse>(`/api/exercises?${params.toString()}`);
       setItems(res.items ?? []);
@@ -67,6 +71,8 @@ export function ExerciseCatalogContent() {
   }, [loadExercises]);
 
   const visibleItems = useMemo(() => items, [items]);
+  const listQueryKey = `exercise-catalog:${activeLoadQuery}`;
+  const isListSettled = useQuerySettled(listQueryKey, loading);
 
   return (
     <div className="native-page native-page-enter tab-screen momentum-scroll">
@@ -161,7 +167,7 @@ export function ExerciseCatalogContent() {
       <section className="grid gap-2">
         <h2 className="ios-section-heading">수정 / 삭제 (Update / Delete)</h2>
         <EmptyStateRows
-          when={!loading && !error && visibleItems.length === 0}
+          when={isListSettled && !error && visibleItems.length === 0}
           label="운동종목이 없습니다"
           description="상단에서 운동종목을 먼저 추가하세요."
         />
@@ -203,13 +209,7 @@ export function ExerciseCatalogContent() {
                         try {
                           setDeletingId(item.id);
                           setNotice(null);
-                          const res = await fetch(`/api/exercises/${encodeURIComponent(item.id)}`, {
-                            method: "DELETE",
-                          });
-                          if (!res.ok) {
-                            const body = await res.json().catch(() => ({}));
-                            throw new Error(body?.error ?? `삭제 실패: ${res.status}`);
-                          }
+                          await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
                           setNotice("운동종목이 삭제되었습니다.");
                           await loadExercises(query);
                         } catch (e: any) {
@@ -254,18 +254,10 @@ export function ExerciseCatalogContent() {
                         try {
                           setSavingEdit(true);
                           setNotice(null);
-                          const res = await fetch(`/api/exercises/${encodeURIComponent(editing.id)}`, {
-                            method: "PATCH",
-                            headers: { "content-type": "application/json" },
-                            body: JSON.stringify({
-                              name: editing.name.trim(),
-                              category: editing.category.trim() || null,
-                            }),
+                          await apiPatch(`/api/exercises/${encodeURIComponent(editing.id)}`, {
+                            name: editing.name.trim(),
+                            category: editing.category.trim() || null,
                           });
-                          if (!res.ok) {
-                            const body = await res.json().catch(() => ({}));
-                            throw new Error(body?.error ?? `수정 실패: ${res.status}`);
-                          }
                           setEditing(null);
                           setNotice("운동종목이 수정되었습니다.");
                           await loadExercises(query);

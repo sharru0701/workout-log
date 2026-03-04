@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useId, useState } from "react";
+import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 
 type AccordionSectionProps = {
   title: string;
@@ -42,7 +43,7 @@ export function AccordionSection({
       >
         <span className="ui-accordion-copy">
           <span className="ui-accordion-title">{title}</span>
-          {description ? <span className="ui-accordion-description">{description}</span> : null}
+          {!MINIMAL_COPY_MODE && description ? <span className="ui-accordion-description">{description}</span> : null}
         </span>
         <span className="ui-accordion-meta">
           {summarySlot}

@@ -1,4 +1,5 @@
 import type { PersistSettingFn, SettingValue } from "./update-setting";
+import { apiGet, apiPatch } from "@/lib/api";
 
 type SettingsSnapshot = Record<string, SettingValue>;
 
@@ -19,24 +20,8 @@ type PersistServerSettingOptions = {
   simulateFailure?: boolean;
 };
 
-function toApiErrorMessage(raw: unknown, status: number) {
-  if (raw && typeof raw === "object" && "error" in raw) {
-    const message = (raw as { error?: unknown }).error;
-    if (typeof message === "string" && message.trim()) return message;
-  }
-  return `설정 저장 요청이 실패했습니다. (${status})`;
-}
-
 export async function fetchSettingsSnapshot(signal?: AbortSignal): Promise<SettingsSnapshot> {
-  const res = await fetch("/api/settings", {
-    method: "GET",
-    cache: "no-store",
-    signal,
-  });
-  const data = (await res.json().catch(() => ({}))) as Partial<FetchSettingsResponse> & { error?: unknown };
-  if (!res.ok) {
-    throw new Error(toApiErrorMessage(data, res.status));
-  }
+  const data = await apiGet<FetchSettingsResponse>("/api/settings", { signal });
   return data.settings ?? {};
 }
 
@@ -44,27 +29,18 @@ export function createPersistServerSetting<T extends SettingValue>({
   simulateFailure = false,
 }: PersistServerSettingOptions = {}): PersistSettingFn<T> {
   return async ({ key, value, signal }) => {
-    const res = await fetch("/api/settings", {
-      method: "PATCH",
-      headers: {
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
+    const data = await apiPatch<SettingsPatchResponse>(
+      "/api/settings",
+      {
         key,
         value,
         simulateFailure,
-      }),
-      signal,
-    });
-
-    const data = (await res.json().catch(() => ({}))) as Partial<SettingsPatchResponse> & { error?: unknown };
-    if (!res.ok) {
-      throw new Error(toApiErrorMessage(data, res.status));
-    }
+      },
+      { signal },
+    );
 
     return {
       canonicalValue: (data.setting?.value as T | undefined) ?? value,
     };
   };
 }
-
