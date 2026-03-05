@@ -80,6 +80,25 @@ type StartProgramDraft = {
   tmPercent: number;
   targets: OneRmTarget[];
   oneRmInputs: Record<string, string>;
+  recommendations: Record<string, OneRmRecommendation>;
+  recommendationStatus: "idle" | "loading" | "ready" | "failed";
+  recommendationMessage: string | null;
+};
+
+type OneRmRecommendation = {
+  sourceExerciseName: string;
+  latestE1rmKg: number;
+  bestE1rmKg: number;
+  recommendedKg: number;
+  latestDate: string;
+};
+
+type PrStatsResponse = {
+  items?: Array<{
+    exerciseName: string;
+    best?: { e1rm?: number; date?: string } | null;
+    latest?: { e1rm?: number; date?: string } | null;
+  }>;
 };
 
 function todayKeyInTimezone(timezone: string) {
@@ -162,10 +181,129 @@ function roundToNearest2p5(value: number) {
   return Math.round(value / 2.5) * 2.5;
 }
 
+function roundToNearest0p5(value: number) {
+  return Math.round(value * 2) / 2;
+}
+
 function parsePositiveNumber(input: string) {
   const n = Number(input);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.round(n * 100) / 100;
+}
+
+function formatKg(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function normalizeExerciseLookupKey(value: string) {
+  return String(value)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function targetRecommendationNames(target: OneRmTarget) {
+  const fromLabel = normalizeExerciseLookupKey(target.label);
+  const fromKey = normalizeExerciseLookupKey(target.key.replace(/^EX_/, "").replace(/_/g, " "));
+  const key = String(target.key).trim().toUpperCase();
+
+  const candidates = new Set<string>([fromLabel, fromKey].filter(Boolean));
+
+  if (key === "SQUAT") {
+    ["back squat", "squat", "스쿼트"].forEach((name) => candidates.add(name));
+  } else if (key === "BENCH") {
+    ["bench press", "bench", "벤치프레스", "벤치"].forEach((name) => candidates.add(name));
+  } else if (key === "DEADLIFT") {
+    ["deadlift", "데드리프트"].forEach((name) => candidates.add(name));
+  } else if (key === "OHP") {
+    ["overhead press", "ohp", "press", "military press", "shoulder press", "밀리터리 프레스"].forEach((name) =>
+      candidates.add(name),
+    );
+  } else if (key === "PULL") {
+    ["barbell row", "row", "pull-up", "pull up", "lat pulldown", "pulldown", "풀업", "로우"].forEach((name) =>
+      candidates.add(name),
+    );
+  }
+
+  return Array.from(candidates).map(normalizeExerciseLookupKey).filter(Boolean);
+}
+
+function scoreNameMatch(targetName: string, exerciseName: string) {
+  if (!targetName || !exerciseName) return 0;
+  if (exerciseName === targetName) return 100;
+  if (exerciseName.startsWith(targetName) || exerciseName.endsWith(targetName)) return 90;
+  if (exerciseName.includes(targetName)) return 75;
+  if (targetName.includes(exerciseName)) return 65;
+  return 0;
+}
+
+function buildOneRmRecommendations(targets: OneRmTarget[], statsItems: PrStatsResponse["items"]): Record<string, OneRmRecommendation> {
+  const items = Array.isArray(statsItems) ? statsItems : [];
+  const out: Record<string, OneRmRecommendation> = {};
+
+  for (const target of targets) {
+    const candidates = targetRecommendationNames(target);
+    let bestCandidate:
+      | {
+          score: number;
+          latestDateMs: number;
+          latestE1rm: number;
+          item: NonNullable<PrStatsResponse["items"]>[number];
+        }
+      | null = null;
+
+    for (const item of items) {
+      const name = normalizeExerciseLookupKey(item.exerciseName ?? "");
+      if (!name) continue;
+
+      let nameScore = 0;
+      for (const candidate of candidates) {
+        nameScore = Math.max(nameScore, scoreNameMatch(candidate, name));
+      }
+      if (nameScore <= 0) continue;
+
+      const latestE1rm = Number(item.latest?.e1rm ?? item.best?.e1rm ?? 0);
+      if (!Number.isFinite(latestE1rm) || latestE1rm <= 0) continue;
+      const latestDateRaw = String(item.latest?.date ?? item.best?.date ?? "");
+      const latestDateMs = Number.isFinite(Date.parse(latestDateRaw)) ? Date.parse(latestDateRaw) : 0;
+
+      const current = {
+        score: nameScore,
+        latestDateMs,
+        latestE1rm,
+        item,
+      };
+      if (
+        !bestCandidate ||
+        current.score > bestCandidate.score ||
+        (current.score === bestCandidate.score && current.latestDateMs > bestCandidate.latestDateMs) ||
+        (current.score === bestCandidate.score &&
+          current.latestDateMs === bestCandidate.latestDateMs &&
+          current.latestE1rm > bestCandidate.latestE1rm)
+      ) {
+        bestCandidate = current;
+      }
+    }
+
+    if (!bestCandidate) continue;
+
+    const latestE1rmKg = Number(bestCandidate.item.latest?.e1rm ?? bestCandidate.item.best?.e1rm ?? 0);
+    const bestE1rmKg = Number(bestCandidate.item.best?.e1rm ?? latestE1rmKg);
+    if (!Number.isFinite(latestE1rmKg) || latestE1rmKg <= 0) continue;
+    if (!Number.isFinite(bestE1rmKg) || bestE1rmKg <= 0) continue;
+
+    out[target.key] = {
+      sourceExerciseName: String(bestCandidate.item.exerciseName ?? target.label),
+      latestE1rmKg: Math.round(latestE1rmKg * 10) / 10,
+      bestE1rmKg: Math.round(bestE1rmKg * 10) / 10,
+      recommendedKg: Math.max(1, roundToNearest0p5(latestE1rmKg)),
+      latestDate: String(bestCandidate.item.latest?.date ?? bestCandidate.item.best?.date ?? ""),
+    };
+  }
+
+  return out;
 }
 
 function readOneRmFromPlanParams(params: any, key: string, tmPercent: number) {
@@ -345,6 +483,44 @@ export default function ProgramStorePage() {
     [detailTargetId, listItems],
   );
 
+  const loadOneRmRecommendations = useCallback(async (templateId: string, targets: OneRmTarget[]) => {
+    try {
+      const response = await apiGet<PrStatsResponse>("/api/stats/prs?days=3650&limit=100");
+      const recommendations = buildOneRmRecommendations(targets, response.items);
+
+      setStartProgramDraft((prev) => {
+        if (!prev || prev.template.id !== templateId) return prev;
+        const nextInputs = { ...prev.oneRmInputs };
+
+        for (const target of prev.targets) {
+          const current = String(nextInputs[target.key] ?? "").trim();
+          const recommendation = recommendations[target.key];
+          if (!current && recommendation) {
+            nextInputs[target.key] = String(recommendation.recommendedKg);
+          }
+        }
+
+        const hasAnyRecommendation = Object.keys(recommendations).length > 0;
+        return {
+          ...prev,
+          oneRmInputs: nextInputs,
+          recommendations,
+          recommendationStatus: "ready",
+          recommendationMessage: hasAnyRecommendation ? null : "추천 가능한 1RM 통계가 없습니다.",
+        };
+      });
+    } catch (e: any) {
+      setStartProgramDraft((prev) => {
+        if (!prev || prev.template.id !== templateId) return prev;
+        return {
+          ...prev,
+          recommendationStatus: "failed",
+          recommendationMessage: e?.message ?? "1RM 통계 추천값 조회에 실패했습니다.",
+        };
+      });
+    }
+  }, []);
+
   const loadStore = useCallback(async () => {
     try {
       setLoading(true);
@@ -430,10 +606,15 @@ export default function ProgramStorePage() {
         tmPercent,
         targets,
         oneRmInputs,
+        recommendations: {},
+        recommendationStatus: "loading",
+        recommendationMessage: null,
       });
       setError(null);
+
+      void loadOneRmRecommendations(template.id, targets);
     },
-    [plans],
+    [loadOneRmRecommendations, plans],
   );
 
   const submitStartProgram = useCallback(async () => {
@@ -754,9 +935,17 @@ export default function ProgramStorePage() {
                 TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
               </span>
             </article>
+            {startProgramDraft.recommendationStatus === "loading" ? (
+              <p className="ui-card-label">운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
+            ) : null}
+            {startProgramDraft.recommendationMessage ? (
+              <p className="ui-card-label">{startProgramDraft.recommendationMessage}</p>
+            ) : null}
             {startProgramDraft.targets.map((target) => (
-              <label key={target.key} className="grid gap-1">
-                <span className="ui-card-label">{target.label} 1RM (kg)</span>
+              <label key={target.key} className="grid gap-2">
+                <span className="ui-card-label">
+                  {target.label} 1RM (kg)
+                </span>
                 <input
                   className="workout-set-input workout-set-input-number"
                   type="number"
@@ -777,6 +966,35 @@ export default function ProgramStorePage() {
                     })
                   }
                 />
+                {startProgramDraft.recommendations[target.key] ? (
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="ui-card-label">
+                      추천 {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
+                      {" · "}
+                      최근 e1RM {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
+                    </span>
+                    <button
+                      type="button"
+                      className="haptic-tap rounded-lg border px-2 py-1 text-xs font-semibold"
+                      onClick={() =>
+                        setStartProgramDraft((prev) => {
+                          if (!prev) return prev;
+                          const recommendation = prev.recommendations[target.key];
+                          if (!recommendation) return prev;
+                          return {
+                            ...prev,
+                            oneRmInputs: {
+                              ...prev.oneRmInputs,
+                              [target.key]: String(recommendation.recommendedKg),
+                            },
+                          };
+                        })
+                      }
+                    >
+                      추천값 적용
+                    </button>
+                  </div>
+                ) : null}
               </label>
             ))}
           </div>

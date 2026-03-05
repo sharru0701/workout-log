@@ -143,6 +143,7 @@ export function BottomSheet({
   }, [open, sheetId, syncTopSheetState]);
 
   const isInteractiveSheet = open && isTopSheet;
+  const hasDescription = !MINIMAL_COPY_MODE && Boolean(description);
 
   const clearDragListeners = useCallback(() => {
     dragCleanupRef.current?.();
@@ -328,10 +329,10 @@ export function BottomSheet({
         <div className="mobile-bottom-sheet-handle-hit" onPointerDown={onHandlePointerDown}>
           <div className="mobile-bottom-sheet-handle" aria-hidden="true" />
         </div>
-        <header className="mobile-bottom-sheet-header">
+        <header className={`mobile-bottom-sheet-header${hasDescription ? "" : " mobile-bottom-sheet-header--compact"}`}>
           <div>
             <h2 className="mobile-bottom-sheet-title">{title}</h2>
-            {!MINIMAL_COPY_MODE && description ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
+            {hasDescription ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
           </div>
           <button type="button" className="haptic-tap mobile-bottom-sheet-close" onClick={onClose} aria-label={closeLabel}>
             <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />

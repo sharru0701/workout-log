@@ -4119,13 +4119,51 @@ html[data-tab-route-direction="backward"] .native-page-enter {
 }
 
 .mobile-bottom-sheet-panel {
-  background: var(--sheet-panel-bg);
-  border-color: var(--surface-border-color);
+  background: color-mix(in srgb, var(--bg-primary) 96%, var(--bg-surface) 4%);
+  border-color: color-mix(in srgb, var(--border-subtle) 52%, transparent);
   box-shadow: none;
+  -webkit-backdrop-filter: blur(20px) saturate(1.08);
+  backdrop-filter: blur(20px) saturate(1.08);
+}
+
+.mobile-bottom-sheet-header--compact {
+  align-items: center;
+}
+
+.mobile-bottom-sheet-close {
+  width: 2.36rem;
+  height: 2.36rem;
+  min-width: 2.36rem;
+  min-height: 2.36rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--bg-surface) 64%, transparent) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: blur(14px) saturate(1.08);
+  backdrop-filter: blur(14px) saturate(1.08);
+  color: var(--text-primary) !important;
+}
+
+.mobile-bottom-sheet-close:hover {
+  background: color-mix(in srgb, var(--bg-tertiary) 62%, transparent) !important;
+}
+
+.mobile-bottom-sheet-close:active {
+  transform: scale(0.97);
+}
+
+.mobile-bottom-sheet-close:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 62%, transparent);
+  outline-offset: 2px;
 }
 
 .mobile-bottom-sheet-footer {
-  background: linear-gradient(180deg, color-mix(in srgb, var(--sheet-panel-bg) 0%, transparent), var(--sheet-panel-bg) 52%);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--bg-primary) 0%, transparent),
+    color-mix(in srgb, var(--bg-primary) 96%, var(--bg-surface) 4%) 56%
+  );
 }
 
 .settings-child-modal-background {
