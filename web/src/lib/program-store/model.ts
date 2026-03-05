@@ -23,6 +23,11 @@ export type ProgramListItem = {
   template: ProgramTemplate;
 };
 
+export type OneRmTarget = {
+  key: string;
+  label: string;
+};
+
 export type ProgramExerciseMode = "MARKET" | "MANUAL";
 
 export type ProgramExerciseDraft = {
@@ -80,6 +85,26 @@ function defaultExerciseNameForTarget(targetRaw: string) {
   return targetRaw || "Exercise";
 }
 
+function inferTargetFromExerciseName(exerciseName: string) {
+  const normalized = String(exerciseName).trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized.includes("squat")) return "SQUAT";
+  if (normalized.includes("bench")) return "BENCH";
+  if (normalized.includes("deadlift")) return "DEADLIFT";
+  if (normalized.includes("overhead press") || normalized === "ohp" || normalized.includes("shoulder press")) {
+    return "OHP";
+  }
+  if (
+    normalized.includes("row") ||
+    normalized.includes("pull-up") ||
+    normalized.includes("pull up") ||
+    normalized.includes("pulldown")
+  ) {
+    return "PULL";
+  }
+  return null;
+}
+
 export function toProgramListItems(templates: ProgramTemplate[]): ProgramListItem[] {
   return templates
     .map((template) => {
@@ -124,6 +149,74 @@ function normalizeTargets(definition: any): string[] {
     if (!unique.includes(target)) unique.push(target);
   }
   return unique;
+}
+
+function canonicalTarget(raw: string) {
+  const normalized = String(raw).trim().toUpperCase();
+  if (!normalized) return "";
+  if (normalized.includes("SQUAT")) return "SQUAT";
+  if (normalized.includes("BENCH")) return "BENCH";
+  if (normalized.includes("DEADLIFT") || normalized === "DEAD") return "DEADLIFT";
+  if (normalized.includes("OHP") || normalized.includes("OVERHEAD") || normalized.includes("PRESS")) return "OHP";
+  if (normalized.includes("PULL") || normalized.includes("ROW")) return "PULL";
+  return normalized;
+}
+
+function targetLabel(target: string) {
+  const canonical = canonicalTarget(target);
+  if (canonical === "SQUAT") return "Back Squat";
+  if (canonical === "BENCH") return "Bench Press";
+  if (canonical === "DEADLIFT") return "Deadlift";
+  if (canonical === "OHP") return "Overhead Press";
+  if (canonical === "PULL") return "Pull-Up / Row";
+  return defaultExerciseNameForTarget(canonical || target);
+}
+
+function manualExerciseKey(exerciseName: string) {
+  return `EX_${exerciseName
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48)}`;
+}
+
+function oneRmTargetsFromManualDefinition(definition: any): OneRmTarget[] {
+  if (definition?.kind !== "manual" || !Array.isArray(definition.sessions)) return [];
+  const out: OneRmTarget[] = [];
+  for (const session of definition.sessions) {
+    const items = Array.isArray(session?.items) ? session.items : [];
+    for (const item of items) {
+      const exerciseName = String(item?.exerciseName ?? item?.name ?? "").trim();
+      if (!exerciseName) continue;
+      const inferred = inferTargetFromExerciseName(exerciseName);
+      const key = inferred ? inferred : manualExerciseKey(exerciseName);
+      const label = inferred ? targetLabel(inferred) : exerciseName;
+      if (!out.some((entry) => entry.key === key)) {
+        out.push({ key, label });
+      }
+    }
+  }
+  return out;
+}
+
+export function extractOneRmTargetsFromTemplate(template: ProgramTemplate): OneRmTarget[] {
+  const definition = template.latestVersion?.definition ?? {};
+  const fromLogic: OneRmTarget[] = normalizeTargets(definition)
+    .map(canonicalTarget)
+    .filter(Boolean)
+    .map((key) => ({ key, label: targetLabel(key) }));
+  const fromManual = oneRmTargetsFromManualDefinition(definition);
+  const merged: OneRmTarget[] = [];
+  for (const target of [...fromLogic, ...fromManual]) {
+    if (!merged.some((entry) => entry.key === target.key)) {
+      merged.push(target);
+    }
+  }
+
+  if (merged.length > 0) return merged;
+  const fallback = template.type === "LOGIC" ? ["SQUAT", "BENCH", "DEADLIFT"] : ["SQUAT"];
+  return fallback.map((key) => ({ key, label: targetLabel(key) }));
 }
 
 function sessionDraftFromManual(session: any): ProgramSessionDraft {

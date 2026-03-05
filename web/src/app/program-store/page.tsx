@@ -4,10 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiGet, apiPost, apiPut } from "@/lib/api";
+import { apiGet, apiPatch, apiPost, apiPut } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
+  extractOneRmTargetsFromTemplate,
   hasAtLeastOneExercise,
   inferSessionDraftsFromTemplate,
   makeForkSlug,
@@ -22,6 +23,7 @@ import {
   type ProgramSessionDraft,
   type ProgramTemplate,
   type SessionRule,
+  type OneRmTarget,
 } from "@/lib/program-store/model";
 
 type TemplatesResponse = {
@@ -67,6 +69,17 @@ type CreateDraft = {
   sourceTemplateSlug: string | null;
   rule: SessionRule;
   sessions: ProgramSessionDraft[];
+};
+
+type StartProgramDraft = {
+  template: ProgramTemplate;
+  expectedPlanType: "SINGLE" | "MANUAL";
+  existingPlanId: string | null;
+  timezone: string;
+  today: string;
+  tmPercent: number;
+  targets: OneRmTarget[];
+  oneRmInputs: Record<string, string>;
 };
 
 function todayKeyInTimezone(timezone: string) {
@@ -143,6 +156,26 @@ function validateCustomSessions(sessions: ProgramSessionDraft[]) {
     });
   });
   return errors;
+}
+
+function roundToNearest2p5(value: number) {
+  return Math.round(value / 2.5) * 2.5;
+}
+
+function parsePositiveNumber(input: string) {
+  const n = Number(input);
+  if (!Number.isFinite(n) || n <= 0) return null;
+  return Math.round(n * 100) / 100;
+}
+
+function readOneRmFromPlanParams(params: any, key: string, tmPercent: number) {
+  const oneRmRaw = Number(params?.oneRepMaxKg?.[key]);
+  if (Number.isFinite(oneRmRaw) && oneRmRaw > 0) return oneRmRaw;
+  const tmRaw = Number(params?.trainingMaxKg?.[key]);
+  if (Number.isFinite(tmRaw) && tmRaw > 0 && tmPercent > 0) {
+    return Math.round((tmRaw / tmPercent) * 100) / 100;
+  }
+  return null;
 }
 
 async function putProgramVersionDefinition(versionId: string, definition: any) {
@@ -291,6 +324,7 @@ export default function ProgramStorePage() {
   const [saving, setSaving] = useState(false);
 
   const [detailTargetId, setDetailTargetId] = useState<string | null>(null);
+  const [startProgramDraft, setStartProgramDraft] = useState<StartProgramDraft | null>(null);
   const [customizeDraft, setCustomizeDraft] = useState<CustomizeDraft | null>(null);
   const [createDraft, setCreateDraft] = useState<CreateDraft | null>(null);
   const [dragContext, setDragContext] = useState<DragContext | null>(null);
@@ -366,52 +400,109 @@ export default function ProgramStorePage() {
     }
   }, [listItems, queryState.create, queryState.customize, queryState.detail, templates]);
 
-  const startProgramFromTemplate = useCallback(
-    async (template: ProgramTemplate) => {
+  const openStartProgramDraft = useCallback(
+    (template: ProgramTemplate) => {
       if (!template.latestVersion) {
         setError("선택한 프로그램의 버전 정보가 없습니다.");
         return;
       }
-
-      try {
-        setSaving(true);
-        setNotice(null);
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-        const today = todayKeyInTimezone(timezone);
-        const expectedType = template.type === "MANUAL" ? "MANUAL" : "SINGLE";
-
-        const existing = plans.find(
-          (plan) => plan.rootProgramVersionId === template.latestVersion?.id && plan.type === expectedType,
-        );
-
-        const targetPlanId =
-          existing?.id ??
-          (
-            await apiPost<{ plan: PlanItem }>("/api/plans", {
-              name: `${template.name} Program`,
-              type: expectedType,
-              rootProgramVersionId: template.latestVersion.id,
-              params: {
-                startDate: today,
-                timezone,
-                sessionKeyMode: "DATE",
-              },
-            })
-          ).plan.id;
-
-        if (!existing) {
-          await loadStore();
-        }
-
-        router.push(`/workout-record?planId=${encodeURIComponent(targetPlanId)}&date=${today}&context=today`);
-      } catch (e: any) {
-        setError(e?.message ?? "프로그램 시작에 실패했습니다.");
-      } finally {
-        setSaving(false);
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      const today = todayKeyInTimezone(timezone);
+      const expectedType = template.type === "MANUAL" ? "MANUAL" : "SINGLE";
+      const existing = plans.find(
+        (plan) => plan.rootProgramVersionId === template.latestVersion?.id && plan.type === expectedType,
+      );
+      const tmPercentRaw = Number(template.latestVersion.defaults?.tmPercent);
+      const tmPercent = Number.isFinite(tmPercentRaw) && tmPercentRaw > 0 ? tmPercentRaw : 1;
+      const targets = extractOneRmTargetsFromTemplate(template);
+      const oneRmInputs: Record<string, string> = {};
+      for (const target of targets) {
+        const preset = existing ? readOneRmFromPlanParams(existing.params, target.key, tmPercent) : null;
+        oneRmInputs[target.key] = preset !== null ? String(preset) : "";
       }
+
+      setStartProgramDraft({
+        template,
+        expectedPlanType: expectedType,
+        existingPlanId: existing?.id ?? null,
+        timezone,
+        today,
+        tmPercent,
+        targets,
+        oneRmInputs,
+      });
+      setError(null);
     },
-    [loadStore, plans, router],
+    [plans],
   );
+
+  const submitStartProgram = useCallback(async () => {
+    if (!startProgramDraft) return;
+
+    const oneRepMaxKg: Record<string, number> = {};
+    for (const target of startProgramDraft.targets) {
+      const parsed = parsePositiveNumber(startProgramDraft.oneRmInputs[target.key] ?? "");
+      if (parsed === null) {
+        setError(`${target.label} 1RM을 kg 기준으로 입력하세요.`);
+        return;
+      }
+      oneRepMaxKg[target.key] = parsed;
+    }
+
+    const trainingMaxKg = Object.fromEntries(
+      Object.entries(oneRepMaxKg).map(([key, oneRm]) => [key, roundToNearest2p5(oneRm * startProgramDraft.tmPercent)]),
+    );
+
+    try {
+      setSaving(true);
+      setNotice(null);
+      const existing = startProgramDraft.existingPlanId
+        ? plans.find((plan) => plan.id === startProgramDraft.existingPlanId) ?? null
+        : null;
+
+      let targetPlanId = startProgramDraft.existingPlanId;
+      if (existing && targetPlanId) {
+        await apiPatch<{ plan: PlanItem }>(`/api/plans/${encodeURIComponent(targetPlanId)}`, {
+          params: {
+            ...(existing.params ?? {}),
+            startDate: startProgramDraft.today,
+            timezone: startProgramDraft.timezone,
+            sessionKeyMode: "DATE",
+            oneRepMaxKg,
+            trainingMaxKg,
+          },
+        });
+      } else {
+        const created = await apiPost<{ plan: PlanItem }>("/api/plans", {
+          name: `${startProgramDraft.template.name} Program`,
+          type: startProgramDraft.expectedPlanType,
+          rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
+          params: {
+            startDate: startProgramDraft.today,
+            timezone: startProgramDraft.timezone,
+            sessionKeyMode: "DATE",
+            oneRepMaxKg,
+            trainingMaxKg,
+          },
+        });
+        targetPlanId = created.plan.id;
+      }
+
+      if (!targetPlanId) {
+        throw new Error("플랜 생성/갱신 결과가 올바르지 않습니다.");
+      }
+
+      await loadStore();
+      setStartProgramDraft(null);
+      router.push(
+        `/workout-record?planId=${encodeURIComponent(targetPlanId)}&date=${startProgramDraft.today}&context=today`,
+      );
+    } catch (e: any) {
+      setError(e?.message ?? "프로그램 시작에 실패했습니다.");
+    } finally {
+      setSaving(false);
+    }
+  }, [loadStore, plans, router, startProgramDraft]);
 
   const saveCustomizationDraft = useCallback(
     async (draft: CustomizeDraft) => {
@@ -596,7 +687,7 @@ export default function ProgramStorePage() {
                 className="ui-primary-button"
                 disabled={saving || !detailTarget.template.latestVersion}
                 onClick={() => {
-                  void startProgramFromTemplate(detailTarget.template);
+                  openStartProgramDraft(detailTarget.template);
                 }}
               >
                 프로그램 선택하여 시작하기
@@ -629,6 +720,67 @@ export default function ProgramStorePage() {
             </article>
           </div>
         )}
+      </BottomSheet>
+
+      <BottomSheet
+        open={Boolean(startProgramDraft)}
+        title="시작 전 1RM 입력"
+        description="모든 종목의 1RM 입력이 필수입니다."
+        onClose={() => setStartProgramDraft(null)}
+        closeLabel="닫기"
+        className="program-store-sheet program-store-sheet--medium"
+        footer={
+          startProgramDraft ? (
+            <div className="grid gap-2">
+              <button
+                type="button"
+                className="ui-primary-button"
+                disabled={saving}
+                onClick={() => {
+                  void submitStartProgram();
+                }}
+              >
+                1RM 저장 후 시작
+              </button>
+            </div>
+          ) : null
+        }
+      >
+        {startProgramDraft ? (
+          <div className="grid gap-3">
+            <article className="rounded-xl border p-3 text-sm grid gap-1">
+              <strong>{startProgramDraft.template.name}</strong>
+              <span className="ui-card-label">
+                TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
+              </span>
+            </article>
+            {startProgramDraft.targets.map((target) => (
+              <label key={target.key} className="grid gap-1">
+                <span className="ui-card-label">{target.label} 1RM (kg)</span>
+                <input
+                  className="workout-set-input workout-set-input-number"
+                  type="number"
+                  inputMode="decimal"
+                  min={1}
+                  step="0.5"
+                  value={startProgramDraft.oneRmInputs[target.key] ?? ""}
+                  onChange={(event) =>
+                    setStartProgramDraft((prev) => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        oneRmInputs: {
+                          ...prev.oneRmInputs,
+                          [target.key]: event.target.value,
+                        },
+                      };
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+        ) : null}
       </BottomSheet>
 
       <BottomSheet

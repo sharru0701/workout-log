@@ -220,15 +220,24 @@ function pickTrainingMaxKg(params: any, defaults: any, target: string) {
     return null;
   };
 
-  return (
+  const value = (
     scoped(params?.trainingMaxKg) ??
     scoped(params?.tmKg) ??
     scoped(params?.tm) ??
     scoped(defaults?.trainingMaxKg) ??
     scoped(defaults?.tmKg) ??
-    scoped(defaults?.tm) ??
-    100
+    scoped(defaults?.tm)
   );
+  if (value === null || value <= 0) return null;
+  return value;
+}
+
+function requireTrainingMaxKg(params: any, defaults: any, target: string) {
+  const tm = pickTrainingMaxKg(params, defaults, target);
+  if (tm === null) {
+    throw new Error(`1RM/TM 입력이 필요합니다: ${target}`);
+  }
+  return tm;
 }
 
 function normalizeTargets(def: LogicDefinitionV1, fallback: string[]) {
@@ -282,7 +291,7 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
     ? [normalizeTarget(ctx.forcedTarget)]
     : normalizeTargets(def, ["SQUAT", "BENCH", "DEADLIFT", "OHP"]);
   const target = targets[(ctx.day - 1) % targets.length] ?? targets[0];
-  const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
+  const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
   const weekInCycle = ((ctx.week - 1) % 4) + 1;
 
   const table: Record<number, Array<{ reps: number; percent: number; note?: string }>> = {
@@ -344,7 +353,7 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
   const scheme = schemeByWeek[weekInCycle] ?? schemeByWeek[1];
 
   return targets.map((target, i) => {
-    const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
+    const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
     const setCount = target === "DEADLIFT" ? deadliftSets : mainSets;
     return {
       exerciseName: defaultExerciseNameForTarget(target),
@@ -374,7 +383,7 @@ function generateCanditoLinear(def: LogicDefinitionV1, ctx: GeneratorCtx): Plann
     6: { sets: 3, reps: 1, percent: 0.95, note: "test prep" },
   };
 
-  const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
+  const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
   const s = scheme[weekInCycle] ?? scheme[1];
 
   return [
