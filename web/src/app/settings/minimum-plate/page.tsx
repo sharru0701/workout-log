@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AppNumberStepper } from "@/components/ui/form-controls";
 import {
   BaseGroupedList,
   NavigationRow,
@@ -39,10 +40,6 @@ type RuleDraft = {
   exerciseName: string;
   incrementKg: number;
 };
-
-function nextIncrement(value: number, delta: number) {
-  return normalizeIncrementKg(value + delta, DEFAULT_MINIMUM_PLATE_KG);
-}
 
 function compareRules(a: MinimumPlateRule, b: MinimumPlateRule) {
   return a.exerciseName.localeCompare(b.exerciseName, "ko");
@@ -251,43 +248,21 @@ export default function SettingsMinimumPlatePage() {
             showChevron={false}
             leading={<RowIcon symbol="DF" tone="neutral" />}
           />
-          <NavigationRow
-            label="기본값 -0.25kg"
-            description="스텝으로 빠르게 조절"
-            onPress={() => setDefaultDraftKg((prev) => nextIncrement(prev, -0.25))}
-            showChevron={false}
-            leading={<RowIcon symbol="-0.25" tone="neutral" />}
-          />
-          <NavigationRow
-            label="기본값 +0.25kg"
-            description="스텝으로 빠르게 조절"
-            onPress={() => setDefaultDraftKg((prev) => nextIncrement(prev, 0.25))}
-            showChevron={false}
-            leading={<RowIcon symbol="+0.25" tone="neutral" />}
-          />
         </BaseGroupedList>
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="기본값 수동 입력" description="숫자 키패드로 직접 설정할 수 있습니다." />
+        <SectionHeader title="기본값 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
         <article className="motion-card rounded-2xl border p-4 grid gap-3">
-          <label className="grid gap-1">
-            <span className="ui-card-label">기본 최소 원판 (kg)</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="decimal"
-              min={0.25}
-              max={25}
-              step={0.25}
-              value={defaultDraftKg}
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                if (!Number.isFinite(next)) return;
-                setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG));
-              }}
-            />
-          </label>
+          <AppNumberStepper
+            label="기본 최소 원판 (kg)"
+            value={defaultDraftKg}
+            min={0.25}
+            max={25}
+            step={0.25}
+            inputMode="decimal"
+            onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
+          />
           <button
             type="button"
             className="ui-primary-button"
@@ -454,53 +429,20 @@ export default function SettingsMinimumPlatePage() {
             </div>
           </label>
 
-          <label className="grid gap-1">
-            <span className="ui-card-label">최소 원판 Increment (kg)</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="decimal"
-              min={0.25}
-              max={25}
-              step={0.25}
-              value={ruleDraft.incrementKg}
-              onChange={(event) => {
-                const next = Number(event.target.value);
-                if (!Number.isFinite(next)) return;
-                setRuleDraft((prev) => ({
-                  ...prev,
-                  incrementKg: normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG),
-                }));
-              }}
-            />
-          </label>
-
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              type="button"
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-              onClick={() =>
-                setRuleDraft((prev) => ({
-                  ...prev,
-                  incrementKg: nextIncrement(prev.incrementKg, -0.25),
-                }))
-              }
-            >
-              -0.25kg
-            </button>
-            <button
-              type="button"
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-              onClick={() =>
-                setRuleDraft((prev) => ({
-                  ...prev,
-                  incrementKg: nextIncrement(prev.incrementKg, 0.25),
-                }))
-              }
-            >
-              +0.25kg
-            </button>
-          </div>
+          <AppNumberStepper
+            label="최소 원판 Increment (kg)"
+            value={ruleDraft.incrementKg}
+            min={0.25}
+            max={25}
+            step={0.25}
+            inputMode="decimal"
+            onChange={(next) =>
+              setRuleDraft((prev) => ({
+                ...prev,
+                incrementKg: normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG),
+              }))
+            }
+          />
 
           {sheetError ? <p className="text-sm text-[var(--color-danger)]">{sheetError}</p> : null}
         </div>

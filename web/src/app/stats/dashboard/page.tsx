@@ -7,6 +7,7 @@ import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 
 type Plan = {
@@ -1827,49 +1828,48 @@ export default function StatsPage() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">플랜</span>
-              <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
+              <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
                 <option value="">전체 플랜</option>
                 {plans.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.name} [{p.type}]
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
 
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">집계 단위</span>
-              <select
-                className="rounded-lg border px-3 py-3 text-base"
+              <AppSelect
                 value={bucket}
                 onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
               >
                 <option value="day">일</option>
                 <option value="week">주</option>
                 <option value="month">월</option>
-              </select>
+              </AppSelect>
             </label>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">시작일(선택)</span>
-              <input type="date" className="rounded-lg border px-3 py-3 text-base" value={from} onChange={(e) => setFrom(e.target.value)} />
+              <AppTextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
             </label>
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">종료일(선택)</span>
-              <input type="date" className="rounded-lg border px-3 py-3 text-base" value={to} onChange={(e) => setTo(e.target.value)} />
+              <AppTextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
             </label>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">e1RM exerciseId</span>
-              <input className="rounded-lg border px-3 py-3 text-base" value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
+              <AppTextInput value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
             </label>
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">e1RM exercise</span>
-              <input className="rounded-lg border px-3 py-3 text-base" value={exercise} onChange={(e) => setExercise(e.target.value)} />
+              <AppTextInput value={exercise} onChange={(e) => setExercise(e.target.value)} />
             </label>
           </div>
         </div>

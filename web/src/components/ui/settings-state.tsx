@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useApiNetworkBusy } from "@/lib/ui/use-api-network-busy";
 import { BaseGroupedList, InfoRow, NavigationRow, RowIcon } from "./settings-list";
+import { useMaybeAppDialog } from "./app-dialog-provider";
 
 type LoadingStateRowsProps = {
   active: boolean;
@@ -176,10 +177,41 @@ export function ErrorStateRows({
   onRetry,
   retryDisabled = false,
   retryLabel = "다시 시도",
+  title = "오류",
   ariaLabel = "Error state",
   className,
 }: ErrorStateRowsProps) {
+  const dialog = useMaybeAppDialog();
+  const lastShownMessageRef = useRef<string | null>(null);
+  const hasMessage = hasDialogMessage(message);
+  const messageText = hasMessage ? toDialogText(message) : "";
+  const titleText = toDialogText(title, "오류");
+  const shouldUseDialog = Boolean(dialog && !onRetry && hasMessage && messageText);
+  const dialogKey = messageText ? `${titleText}::${messageText}` : "";
+
+  useEffect(() => {
+    if (!shouldUseDialog || !dialog || !dialogKey) return;
+    if (lastShownMessageRef.current === dialogKey) return;
+    lastShownMessageRef.current = dialogKey;
+
+    void (async () => {
+      await dialog.alert({
+        title: titleText,
+        message: messageText,
+        buttonText: "확인",
+        tone: "danger",
+      });
+    })();
+  }, [dialog, dialogKey, messageText, shouldUseDialog, titleText]);
+
+  useEffect(() => {
+    if (dialogKey) return;
+    lastShownMessageRef.current = null;
+  }, [dialogKey]);
+
   if (!message) return null;
+
+  if (shouldUseDialog) return null;
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
@@ -213,16 +245,67 @@ export function DisabledStateRows({
 export function NoticeStateRows({
   message,
   tone = "neutral",
+  label = "안내",
   ariaLabel = "Notice state",
   className,
 }: NoticeStateRowsProps) {
+  const dialog = useMaybeAppDialog();
+  const lastShownMessageRef = useRef<string | null>(null);
+  const hasMessage = hasDialogMessage(message);
+  const messageText = hasMessage ? toDialogText(message) : "";
+  const titleText = toDialogText(label, "안내");
+  const dialogKey = messageText ? `${titleText}::${messageText}` : "";
+
+  useEffect(() => {
+    if (!dialog || !dialogKey) return;
+    if (lastShownMessageRef.current === dialogKey) return;
+    lastShownMessageRef.current = dialogKey;
+
+    void dialog.alert({
+      title: titleText,
+      message: messageText,
+      buttonText: "확인",
+      tone: tone === "warning" || tone === "critical" ? "danger" : "default",
+    });
+  }, [dialog, dialogKey, messageText, titleText, tone]);
+
+  useEffect(() => {
+    if (dialogKey) return;
+    lastShownMessageRef.current = null;
+  }, [dialogKey]);
+
   if (!message) return null;
+
+  if (dialog) return null;
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
       <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="tint" />} />
     </BaseGroupedList>
   );
+}
+
+function toDialogText(input: ReactNode | null | undefined, fallback = ""): string {
+  if (input === null || input === undefined || input === false) return fallback;
+  if (typeof input === "string" || typeof input === "number") return String(input).trim() || fallback;
+  if (Array.isArray(input)) {
+    const text = input
+      .map((entry) => (typeof entry === "string" || typeof entry === "number" ? String(entry) : ""))
+      .join(" ")
+      .trim();
+    return text || fallback;
+  }
+  return fallback;
+}
+
+function hasDialogMessage(input: ReactNode | null | undefined): boolean {
+  if (input === null || input === undefined || input === false) return false;
+  if (typeof input === "string") return input.trim().length > 0;
+  if (typeof input === "number") return true;
+  if (Array.isArray(input)) {
+    return input.some((entry) => hasDialogMessage(entry as ReactNode));
+  }
+  return true;
 }
 
 export type {

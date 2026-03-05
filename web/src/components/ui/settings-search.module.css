@@ -10,7 +10,7 @@
   align-items: center;
   gap: 0.56rem;
   padding: 0.4rem 0.82rem;
-  border-radius: 1.15rem;
+  border-radius: var(--radius-surface);
   border: 1px solid transparent;
   background:
     linear-gradient(

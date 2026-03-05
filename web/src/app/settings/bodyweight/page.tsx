@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   BaseGroupedList,
-  NavigationRow,
   RowIcon,
   SectionFootnote,
   SectionHeader,
@@ -13,6 +12,7 @@ import { ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { SETTINGS_KEYS } from "@/lib/settings/workout-preferences";
+import { AppNumberStepper } from "@/components/ui/form-controls";
 
 const MIN_BODYWEIGHT_KG = 20;
 const MAX_BODYWEIGHT_KG = 300;
@@ -23,19 +23,11 @@ function normalizeBodyweightKg(value: number) {
   return Math.round(clipped * 10) / 10;
 }
 
-function parseDraftBodyweightKg(input: string): number | null {
-  const trimmed = input.trim();
-  if (!trimmed) return null;
-  const parsed = Number(trimmed);
-  if (!Number.isFinite(parsed)) return null;
-  return normalizeBodyweightKg(parsed);
-}
-
 export default function SettingsBodyweightPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverBodyweightKg, setServerBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
-  const [draftBodyweightInput, setDraftBodyweightInput] = useState(String(DEFAULT_BODYWEIGHT_KG));
+  const [draftBodyweightKg, setDraftBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
 
   const bodyweight = useSettingRowMutation<number>({
     key: SETTINGS_KEYS.bodyweightKg,
@@ -54,7 +46,7 @@ export default function SettingsBodyweightPage() {
       const parsed = Number(snapshot[SETTINGS_KEYS.bodyweightKg]);
       const resolved = normalizeBodyweightKg(Number.isFinite(parsed) ? parsed : DEFAULT_BODYWEIGHT_KG);
       setServerBodyweightKg(resolved);
-      setDraftBodyweightInput(String(resolved));
+      setDraftBodyweightKg(resolved);
     } catch (e: any) {
       setLoadError(e?.message ?? "몸무게 설정을 불러오지 못했습니다.");
     } finally {
@@ -68,7 +60,7 @@ export default function SettingsBodyweightPage() {
 
   useEffect(() => {
     if (bodyweight.pending) return;
-    setDraftBodyweightInput(String(normalizeBodyweightKg(bodyweight.value)));
+    setDraftBodyweightKg(normalizeBodyweightKg(bodyweight.value));
   }, [bodyweight.pending, bodyweight.value]);
 
   return (
@@ -98,72 +90,30 @@ export default function SettingsBodyweightPage() {
             showChevron={false}
             leading={<RowIcon symbol="BW" tone="green" />}
           />
-          <NavigationRow
-            label="몸무게 -0.5kg"
-            description="스텝으로 빠르게 조절"
-            onPress={() =>
-              setDraftBodyweightInput((prev) => {
-                const base = parseDraftBodyweightKg(prev) ?? normalizeBodyweightKg(bodyweight.value);
-                return String(normalizeBodyweightKg(base - 0.5));
-              })
-            }
-            showChevron={false}
-            leading={<RowIcon symbol="-0.5" tone="neutral" />}
-          />
-          <NavigationRow
-            label="몸무게 +0.5kg"
-            description="스텝으로 빠르게 조절"
-            onPress={() =>
-              setDraftBodyweightInput((prev) => {
-                const base = parseDraftBodyweightKg(prev) ?? normalizeBodyweightKg(bodyweight.value);
-                return String(normalizeBodyweightKg(base + 0.5));
-              })
-            }
-            showChevron={false}
-            leading={<RowIcon symbol="+0.5" tone="neutral" />}
-          />
         </BaseGroupedList>
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="수동 입력" description="숫자 키패드로 직접 수정할 수 있습니다." />
+        <SectionHeader title="몸무게 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
         <article className="motion-card rounded-2xl border p-4 grid gap-3">
-          <label className="grid gap-1">
-            <span className="ui-card-label">Bodyweight (kg)</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="decimal"
-              min={MIN_BODYWEIGHT_KG}
-              max={MAX_BODYWEIGHT_KG}
-              step={0.1}
-              value={draftBodyweightInput}
-              onChange={(event) => {
-                const nextRaw = event.target.value;
-                if (nextRaw === "") {
-                  setDraftBodyweightInput("");
-                  return;
-                }
-                const next = Number(nextRaw);
-                if (!Number.isFinite(next)) return;
-                setDraftBodyweightInput(nextRaw);
-              }}
-            />
-          </label>
+          <AppNumberStepper
+            label="Bodyweight (kg)"
+            value={draftBodyweightKg}
+            min={MIN_BODYWEIGHT_KG}
+            max={MAX_BODYWEIGHT_KG}
+            step={0.1}
+            inputMode="decimal"
+            onChange={(next) => setDraftBodyweightKg(normalizeBodyweightKg(next))}
+          />
           <button
             type="button"
             className="ui-primary-button"
             disabled={bodyweight.pending}
             onClick={async () => {
-              const parsed = parseDraftBodyweightKg(draftBodyweightInput);
-              if (parsed === null) {
-                setDraftBodyweightInput(String(normalizeBodyweightKg(bodyweight.value)));
-                return;
-              }
-              const result = await bodyweight.commit(parsed);
+              const result = await bodyweight.commit(normalizeBodyweightKg(draftBodyweightKg));
               if (!result.ignored && result.ok) {
                 setServerBodyweightKg(result.value);
-                setDraftBodyweightInput(String(normalizeBodyweightKg(result.value)));
+                setDraftBodyweightKg(normalizeBodyweightKg(result.value));
               }
             }}
           >

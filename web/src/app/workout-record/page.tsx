@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput, AppTextarea } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -37,6 +39,7 @@ import {
 type PlanItem = {
   id: string;
   name: string;
+  isArchived?: boolean;
 };
 
 type LogItem = {
@@ -97,6 +100,13 @@ function toDateKey(date: Date) {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
+}
+
+function inferProgramNameFromPlanName(planName: string) {
+  return String(planName)
+    .replace(/^program\s+/i, "")
+    .replace(/\s+program$/i, "")
+    .trim();
 }
 
 function readQueryContext(): QueryContext {
@@ -187,125 +197,10 @@ function isSwipeDisabledTarget(target: EventTarget | null) {
   return Boolean(target.closest("input, textarea, select, button, a, [role='button'], [data-no-swipe='true']"));
 }
 
-function NumberStepper({
-  label,
-  value,
-  min,
-  max,
-  step = 1,
-  onChange,
-  inputMode = "numeric",
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  onChange: (next: number) => void;
-  inputMode?: "numeric" | "decimal";
-}) {
-  const [draftValue, setDraftValue] = useState(() => String(value));
-  const [isEditing, setIsEditing] = useState(false);
-
-  useEffect(() => {
-    if (isEditing) return;
-    setDraftValue(String(value));
-  }, [isEditing, value]);
-
-  const clampValue = useCallback((next: number) => Math.min(max, Math.max(min, next)), [max, min]);
-
-  const commitDraftValue = useCallback(
-    (rawValue: string) => {
-      const normalized = rawValue.trim();
-      if (!normalized) {
-        setDraftValue(String(value));
-        return;
-      }
-      const parsed = Number(normalized);
-      if (!Number.isFinite(parsed)) {
-        setDraftValue(String(value));
-        return;
-      }
-      const clamped = clampValue(parsed);
-      onChange(clamped);
-      setDraftValue(String(clamped));
-    },
-    [clampValue, onChange, value],
-  );
-
-  const handleStepDown = useCallback(() => {
-    const next = clampValue(value - step);
-    setIsEditing(false);
-    setDraftValue(String(next));
-    onChange(next);
-  }, [clampValue, onChange, step, value]);
-
-  const handleStepUp = useCallback(() => {
-    const next = clampValue(value + step);
-    setIsEditing(false);
-    setDraftValue(String(next));
-    onChange(next);
-  }, [clampValue, onChange, step, value]);
-
-  return (
-    <label className="workout-stepper">
-      <span className="ui-card-label">{label}</span>
-      <div className="workout-stepper-control">
-        <button
-          type="button"
-          className="haptic-tap workout-stepper-button"
-          onClick={handleStepDown}
-          aria-label={`${label} 줄이기`}
-        >
-          -
-        </button>
-        <input
-          className="workout-stepper-input"
-          type="number"
-          inputMode={inputMode}
-          min={min}
-          max={max}
-          step={step}
-          value={draftValue}
-          onFocus={() => setIsEditing(true)}
-          onBlur={() => {
-            setIsEditing(false);
-            commitDraftValue(draftValue);
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter") return;
-            event.preventDefault();
-            commitDraftValue(draftValue);
-            event.currentTarget.blur();
-          }}
-          onChange={(event) => {
-            const nextRaw = event.target.value;
-            setDraftValue(nextRaw);
-            const normalized = nextRaw.trim();
-            if (!normalized) return;
-            const parsed = Number(normalized);
-            if (!Number.isFinite(parsed)) return;
-            onChange(clampValue(parsed));
-          }}
-        />
-        <button
-          type="button"
-          className="haptic-tap workout-stepper-button"
-          onClick={handleStepUp}
-          aria-label={`${label} 늘리기`}
-        >
-          +
-        </button>
-      </div>
-    </label>
-  );
-}
-
 function ExerciseRow({
   exercise,
   minimumPlateIncrementKg,
   bodyweightKg,
-  onChangeName,
   onChangeWeight,
   onChangeSetReps,
   onAddSet,
@@ -316,7 +211,6 @@ function ExerciseRow({
   exercise: WorkoutExerciseViewModel;
   minimumPlateIncrementKg: number;
   bodyweightKg: number | null;
-  onChangeName: (value: string) => void;
   onChangeWeight: (value: number) => void;
   onChangeSetReps: (setIndex: number, value: number) => void;
   onAddSet: () => void;
@@ -425,50 +319,38 @@ function ExerciseRow({
           setSwipeOffset(0);
         }}
       >
-        <div className="flex items-center justify-between gap-2">
-          <span className={`ui-badge ${exercise.source === "PROGRAM" ? "ui-badge-info" : "ui-badge-neutral"}`}>
-            {exercise.source === "PROGRAM" ? "Program Seed" : "User Added"}
-          </span>
-          {exercise.isEdited ? <span className="ui-badge ui-badge-warning">Edited</span> : null}
-        </div>
+        {exercise.source !== "PROGRAM" ? (
+          <div className="flex items-center justify-end">
+            <span className="ui-badge ui-badge-info">사용자 추가</span>
+          </div>
+        ) : null}
 
         <label className="grid gap-1">
           <span className="ui-card-label">운동종목</span>
-          <input
-            className="workout-set-input workout-set-input-text"
+          <AppTextInput
+            variant="workout"
+            className="cursor-default"
             value={exercise.exerciseName}
-            onChange={(event) => onChangeName(event.target.value)}
-            placeholder="예: Back Squat"
+            readOnly
+            aria-readonly="true"
+            tabIndex={-1}
           />
         </label>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">무게 (kg)</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="decimal"
-              min={0}
-              max={1000}
-              step={minimumPlateIncrementKg}
-              value={exercise.set.weightKg}
-              onChange={(event) => onChangeWeight(Number(event.target.value))}
-            />
-          </label>
-          <div className="grid gap-1 rounded-xl border p-2">
-            <span className="ui-card-label">세트 수</span>
-            <strong>{exercise.set.repsPerSet.length}세트</strong>
-          </div>
-        </div>
+        <AppNumberStepper
+          label="무게 (kg)"
+          value={exercise.set.weightKg}
+          min={0}
+          max={1000}
+          step={minimumPlateIncrementKg}
+          inputMode="decimal"
+          onChange={onChangeWeight}
+        />
 
         <div className="grid gap-2">
-          <div className="flex items-center justify-between">
-            <span className="ui-card-label">세트별 운동횟수</span>
-          </div>
           <div className="grid gap-2">
             {exercise.set.repsPerSet.map((setReps, index) => (
-              <NumberStepper
+              <AppNumberStepper
                 key={`${exercise.id}-set-${index}`}
                 label={`${index + 1}세트`}
                 value={setReps}
@@ -480,16 +362,22 @@ function ExerciseRow({
             ))}
           </div>
           <div className="grid grid-cols-2 gap-2" data-no-swipe="true">
-            <button type="button" className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold" onClick={onAddSet}>
-              + 세트 추가
+            <button
+              type="button"
+              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+              onClick={onAddSet}
+            >
+              <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+              <span>세트 추가</span>
             </button>
             <button
               type="button"
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
               onClick={onRemoveSet}
               disabled={exercise.set.repsPerSet.length <= 1}
             >
-              - 마지막 세트
+              <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
+              <span>마지막 세트</span>
             </button>
           </div>
         </div>
@@ -503,8 +391,9 @@ function ExerciseRow({
 
         <label className="grid gap-1">
           <span className="ui-card-label">메모</span>
-          <textarea
-            className="workout-set-input workout-set-input-text min-h-20"
+          <AppTextarea
+            variant="workout"
+            className="min-h-20"
             value={exercise.note.memo}
             onChange={(event) => onChangeMemo(event.target.value)}
             placeholder="세트 메모를 입력하세요."
@@ -517,6 +406,7 @@ function ExerciseRow({
 
 export default function WorkoutRecordPage() {
   const router = useRouter();
+  const { alert } = useAppDialog();
 
   const [query, setQuery] = useState<QueryContext>(() => readQueryContext());
   const [plans, setPlans] = useState<PlanItem[]>([]);
@@ -724,18 +614,28 @@ export default function WorkoutRecordPage() {
         setWorkoutPreferences(nextPreferences);
 
         const items = planRes.items ?? [];
-        setPlans(items);
+        const activePlans = items.filter((entry) => !entry.isArchived);
+        setPlans(activePlans);
 
-        if (items.length === 0) {
+        if (activePlans.length === 0) {
           setSelectedPlanId("");
           setDraft(null);
           setLastSession(null);
+          setWorkflowState("idle");
+          setSaveError(null);
           setLoading(false);
+          await alert({
+            title: "프로그램 선택 필요",
+            message: "선택된 플랜이 없습니다.\n프로그램 스토어로 이동합니다.",
+            buttonText: "이동",
+          });
+          if (cancelled) return;
+          router.replace("/program-store");
           return;
         }
 
-        const fallbackPlan = items[0];
-        const plan = items.find((entry) => entry.id === nextQuery.planId) ?? fallbackPlan;
+        const fallbackPlan = activePlans[0];
+        const plan = activePlans.find((entry) => entry.id === nextQuery.planId) ?? fallbackPlan;
         setSelectedPlanId(plan.id);
         await loadWorkoutContext(plan.id, plan.name, nextQuery.date, nextPreferences);
 
@@ -753,7 +653,7 @@ export default function WorkoutRecordPage() {
     return () => {
       cancelled = true;
     };
-  }, [loadWorkoutContext]);
+  }, [alert, loadWorkoutContext, router]);
 
   useEffect(() => {
     if (!addSheetOpen) return;
@@ -917,19 +817,22 @@ export default function WorkoutRecordPage() {
       />
       <EmptyStateRows
         when={noPlan}
-        label="선택 가능한 프로그램이 없습니다"
+        label="선택 가능한 플랜이 없습니다"
       />
 
       {!noPlan && draft && (
         <>
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">선택된 프로그램 명</h2>
+            <h2 className="ios-section-heading">선택된 플랜</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-2">
-              <strong>{draft.session.planName}</strong>
+              <strong>{selectedPlan?.name ?? draft.session.planName}</strong>
+              <span className="ui-card-label">
+                기반 프로그램: {inferProgramNameFromPlanName(draft.session.planName)}
+              </span>
               <label className="grid gap-1">
-                <span className="ui-card-label">프로그램 변경</span>
-                <select
-                  className="workout-set-input workout-set-input-text"
+                <span className="ui-card-label">플랜 변경</span>
+                <AppSelect
+                  variant="workout"
                   value={selectedPlanId}
                   onChange={(event) => {
                     void handlePlanChange(event.target.value);
@@ -940,7 +843,7 @@ export default function WorkoutRecordPage() {
                       {plan.name}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             </article>
           </section>
@@ -979,13 +882,6 @@ export default function WorkoutRecordPage() {
                     exerciseName: exercise.exerciseName,
                   })}
                   bodyweightKg={workoutPreferences.bodyweightKg}
-                  onChangeName={(value) => {
-                    if (exercise.source === "PROGRAM") {
-                      applyEditing((prev) => patchSeedExercise(prev, exercise.id, { exerciseName: value }));
-                      return;
-                    }
-                    applyEditing((prev) => updateUserExercise(prev, exercise.id, { exerciseName: value }));
-                  }}
                   onChangeWeight={(value) => {
                     if (!Number.isFinite(value)) return;
                     const snapped = resolveWeightWithCurrentPreferences(
@@ -1048,19 +944,21 @@ export default function WorkoutRecordPage() {
 
               <button
                 type="button"
-                className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
+                className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold inline-flex items-center justify-center gap-1.5"
                 onClick={() => {
                   resetAddExerciseSheetState();
                   setAddSheetOpen(true);
                 }}
               >
-                + Add Exercise
+                <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+                <span>Add Exercise</span>
               </button>
 
               <label className="grid gap-1">
                 <span className="ui-card-label">세션 메모</span>
-                <textarea
-                  className="workout-set-input workout-set-input-text min-h-20"
+                <AppTextarea
+                  variant="workout"
+                  className="min-h-20"
                   value={draft.session.note.memo}
                   onChange={(event) => {
                     const next = event.target.value;
@@ -1209,41 +1107,29 @@ export default function WorkoutRecordPage() {
 
           {exerciseOptionsError ? <p className="text-sm text-[var(--color-warning)]">{exerciseOptionsError}</p> : null}
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <label className="grid gap-1">
-              <span className="ui-card-label">무게 (kg)</span>
-              <input
-                className="workout-set-input workout-set-input-number"
-                type="number"
-                inputMode="decimal"
-                min={0}
-                step={addDraftIncrementKg}
-                value={addDraft.weightKg}
-                onChange={(event) =>
-                  setAddDraft((prev) => ({
-                    ...prev,
-                    weightKg: resolveWeightWithCurrentPreferences(
-                      Number(event.target.value),
-                      prev.exerciseId,
-                      prev.exerciseName,
-                    ),
-                  }))
-                }
-              />
-            </label>
-            <div className="grid gap-1 rounded-xl border p-2">
-              <span className="ui-card-label">세트 수</span>
-              <strong>{addDraft.repsPerSet.length}세트</strong>
-            </div>
-          </div>
+          <AppNumberStepper
+            label="무게 (kg)"
+            value={addDraft.weightKg}
+            min={0}
+            max={1000}
+            step={addDraftIncrementKg}
+            inputMode="decimal"
+            onChange={(value) =>
+              setAddDraft((prev) => ({
+                ...prev,
+                weightKg: resolveWeightWithCurrentPreferences(
+                  value,
+                  prev.exerciseId,
+                  prev.exerciseName,
+                ),
+              }))
+            }
+          />
 
           <div className="grid gap-2">
-            <div className="flex items-center justify-between">
-              <span className="ui-card-label">세트별 운동횟수</span>
-            </div>
             <div className="grid gap-2">
               {addDraft.repsPerSet.map((setReps, index) => (
-                <NumberStepper
+                <AppNumberStepper
                   key={`add-set-${index}`}
                   label={`${index + 1}세트`}
                   value={setReps}
@@ -1260,31 +1146,33 @@ export default function WorkoutRecordPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
-                type="button"
-                className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+              type="button"
+              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+              onClick={() =>
+                setAddDraft((prev) => ({
+                  ...prev,
+                  repsPerSet: appendSetReps(prev.repsPerSet),
+                }))
+              }
+            >
+              <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+              <span>세트 추가</span>
+            </button>
+            <button
+              type="button"
+                className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
                 onClick={() =>
-                  setAddDraft((prev) => ({
-                    ...prev,
-                    repsPerSet: appendSetReps(prev.repsPerSet),
-                  }))
-                }
-              >
-                + 세트 추가
-              </button>
-              <button
-                type="button"
-                className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-                onClick={() =>
-                  setAddDraft((prev) => ({
-                    ...prev,
-                    repsPerSet: removeLastSetReps(prev.repsPerSet),
-                  }))
-                }
-                disabled={addDraft.repsPerSet.length <= 1}
-              >
-                - 마지막 세트
-              </button>
-            </div>
+                setAddDraft((prev) => ({
+                  ...prev,
+                  repsPerSet: removeLastSetReps(prev.repsPerSet),
+                }))
+              }
+              disabled={addDraft.repsPerSet.length <= 1}
+            >
+              <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
+              <span>마지막 세트</span>
+            </button>
+          </div>
           </div>
 
           <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
@@ -1296,8 +1184,9 @@ export default function WorkoutRecordPage() {
 
           <label className="grid gap-1">
             <span className="ui-card-label">메모</span>
-            <textarea
-              className="workout-set-input workout-set-input-text min-h-20"
+            <AppTextarea
+              variant="workout"
+              className="min-h-20"
               value={addDraft.memo}
               onChange={(event) => setAddDraft((prev) => ({ ...prev, memo: event.target.value }))}
             />

@@ -1659,7 +1659,7 @@ textarea::placeholder {
   min-height: 3rem;
   border-radius: 0.8rem;
   font-size: 1.08rem;
-  transition: box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease);
+  transition: border-color var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), transform var(--motion-duration) var(--motion-ease);
 }
 
 .workout-set-input-text {
@@ -1672,6 +1672,31 @@ textarea::placeholder {
   font-variant-numeric: tabular-nums;
 }
 
+.workout-record-framed-input,
+.workout-stepper-control {
+  --workout-control-border-default: color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  --workout-control-border-focus: color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle));
+  --workout-control-focus-ring: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  border: 1px solid var(--workout-control-border-default);
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
+  box-shadow: none;
+}
+
+.workout-set-input.workout-record-framed-input {
+  border: 1px solid var(--workout-control-border-default) !important;
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+.workout-set-input.workout-record-framed-input:focus,
+.workout-set-input.workout-record-framed-input:focus-visible,
+.workout-stepper-control:focus-within {
+  border-color: var(--workout-control-border-focus) !important;
+  box-shadow: var(--workout-control-focus-ring) !important;
+  outline: none;
+}
+
 .workout-stepper {
   display: grid;
   gap: 0.32rem;
@@ -1679,28 +1704,36 @@ textarea::placeholder {
 
 .workout-stepper-control {
   display: grid;
-  grid-template-columns: 2.6rem minmax(0, 1fr) 2.6rem;
+  grid-template-columns: 3rem minmax(0, 1fr) 3rem;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
   border-radius: 0.8rem;
   overflow: hidden;
   min-height: 3rem;
-  background: color-mix(in srgb, var(--bg-surface) 86%, transparent);
-}
-
-.workout-stepper-control:focus-within {
-  border-color: color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
 
 .workout-stepper-button {
   border: 0;
   height: 100%;
   min-height: 3rem;
-  background: color-mix(in srgb, var(--bg-tertiary) 72%, transparent);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+  letter-spacing: 0;
+  background: color-mix(in srgb, var(--color-separator, var(--border-subtle)) 28%, var(--bg-surface) 72%) !important;
   color: var(--text-primary);
-  font-size: 1.05rem;
+  font-size: 1.08rem;
   font-weight: 700;
+}
+
+.workout-stepper-button:first-of-type {
+  border-inline-end: 1px solid color-mix(in srgb, var(--color-separator, var(--border-subtle)) 68%, transparent);
+}
+
+.workout-stepper-button:last-of-type {
+  border-inline-start: 1px solid color-mix(in srgb, var(--color-separator, var(--border-subtle)) 68%, transparent);
 }
 
 .workout-stepper-input {
@@ -1712,7 +1745,7 @@ textarea::placeholder {
   text-align: center;
   font-size: 1rem;
   font-variant-numeric: tabular-nums;
-  background: transparent;
+  background: var(--bg-surface) !important;
   color: var(--text-primary);
 }
 
@@ -2022,6 +2055,44 @@ textarea::placeholder {
   margin: 0;
   font-size: 0.8rem;
   color: var(--text-secondary);
+}
+
+.app-dialog-sheet .mobile-bottom-sheet-panel {
+  max-height: min(48svh, 440px);
+}
+
+.app-dialog-content {
+  display: grid;
+  gap: 0.5rem;
+  padding-top: 0.15rem;
+}
+
+.app-dialog-message {
+  margin: 0;
+  white-space: pre-line;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+
+.app-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.app-dialog-actions--single {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.app-dialog-button {
+  min-height: 2.7rem;
+}
+
+.app-dialog-button-danger.ui-primary-button {
+  border-color: color-mix(in srgb, var(--color-danger, #ff453a) 48%, transparent) !important;
+  background: color-mix(in srgb, var(--color-danger, #ff453a) 16%, var(--bg-surface)) !important;
+  color: var(--color-danger-text, var(--color-danger, #ff453a)) !important;
 }
 
 .stats-sheet-list {
@@ -4189,4 +4260,194 @@ html[data-tab-route-direction="backward"] .native-page-enter {
 .settings-child-modal-content .tab-screen > header,
 .settings-child-modal-content .settings-screen > header {
   margin-top: 0;
+}
+
+/* PR10: curvature unification (card radius baseline) */
+:root {
+  --radius-sm: var(--radius-surface);
+  --radius-md: var(--radius-surface);
+  --radius-lg: var(--radius-surface);
+  --settings-group-radius: var(--radius-surface);
+  --screen-header-card-radius: var(--radius-surface);
+}
+
+:where(
+  .rounded-2xl,
+  .rounded-xl,
+  .rounded-lg,
+  .ui-card,
+  .motion-card,
+  .workout-set-card,
+  .ui-list-item,
+  .app-search-shell,
+  .app-pwa-banner,
+  .app-bottom-nav,
+  .app-bottom-nav-tab,
+  .workout-set-input,
+  .workout-stepper-control,
+  .workout-combobox-panel,
+  .workout-combobox-selected,
+  .workout-action-panel,
+  .workout-action-pill,
+  .workout-empty-state,
+  .program-store-session-card,
+  .program-store-drag-handle,
+  .stats-sheet-option,
+  .stats-sheet-empty,
+  .stats-range-input-grid,
+  .stats-range-input input,
+  .stats-chart-shell,
+  .stats-chart-meta-card,
+  .calendar-open-hint,
+  .settings-menu-link,
+  .ui-primary-button
+) {
+  border-radius: var(--radius-surface) !important;
+}
+
+:where(
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="color"]),
+  select,
+  textarea
+) {
+  border-radius: var(--radius-surface) !important;
+}
+
+:where(button, a).rounded-xl.border,
+:where(button, a).rounded-lg.border,
+:where(button, a).rounded-2xl.border {
+  border-radius: var(--radius-surface) !important;
+}
+
+/* unified input frame + focus for modal/screen forms */
+:where(
+  input.workout-set-input,
+  select.workout-set-input,
+  textarea.workout-set-input,
+  input.app-form-control,
+  select.app-form-control,
+  textarea.app-form-control,
+  input.rounded-lg.border,
+  select.rounded-lg.border,
+  textarea.rounded-lg.border,
+  input.rounded-xl.border,
+  select.rounded-xl.border,
+  textarea.rounded-xl.border,
+  input.rounded-2xl.border,
+  select.rounded-2xl.border,
+  textarea.rounded-2xl.border
+) {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent) !important;
+  background: color-mix(in srgb, var(--bg-surface) 86%, transparent) !important;
+  box-shadow: none !important;
+  outline: none;
+}
+
+:where(
+  input.workout-set-input,
+  select.workout-set-input,
+  textarea.workout-set-input,
+  input.app-form-control,
+  select.app-form-control,
+  textarea.app-form-control,
+  input.rounded-lg.border,
+  select.rounded-lg.border,
+  textarea.rounded-lg.border,
+  input.rounded-xl.border,
+  select.rounded-xl.border,
+  textarea.rounded-xl.border,
+  input.rounded-2xl.border,
+  select.rounded-2xl.border,
+  textarea.rounded-2xl.border
+):focus,
+:where(
+  input.workout-set-input,
+  select.workout-set-input,
+  textarea.workout-set-input,
+  input.app-form-control,
+  select.app-form-control,
+  textarea.app-form-control,
+  input.rounded-lg.border,
+  select.rounded-lg.border,
+  textarea.rounded-lg.border,
+  input.rounded-xl.border,
+  select.rounded-xl.border,
+  textarea.rounded-xl.border,
+  input.rounded-2xl.border,
+  select.rounded-2xl.border,
+  textarea.rounded-2xl.border
+):focus-visible {
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle)) !important;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent) !important;
+  outline: none;
+}
+
+/* shared select shell for explicit chevron rendering */
+.app-form-select-shell {
+  position: relative;
+  width: 100%;
+}
+
+.app-form-select {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-inline-end: 2.56rem !important;
+  background-image: none !important;
+}
+
+.app-form-select-chevron {
+  position: absolute;
+  inset-inline-end: 0.92rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.82rem;
+  height: 0.82rem;
+  color: color-mix(in srgb, var(--text-secondary) 86%, transparent);
+  pointer-events: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-form-select-chevron svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* fallback chevron for native selects not migrated to AppSelect yet */
+select:not(.app-form-select):not([multiple]):not([size]),
+select:not(.app-form-select):not([multiple])[size="1"] {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  padding-inline-end: 2.56rem !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' fill='none'%3E%3Cpath d='M2.5 4.5L6 8L9.5 4.5' stroke='%238792A3' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") !important;
+  background-size: 0.78rem 0.78rem !important;
+  background-repeat: no-repeat !important;
+  background-position: calc(100% - 0.92rem) 50% !important;
+}
+
+select:not(.app-form-select):not([multiple]):not([size])::-ms-expand,
+select:not(.app-form-select):not([multiple])[size="1"]::-ms-expand {
+  display: none;
+}
+
+.mobile-bottom-sheet-panel {
+  border-radius: var(--radius-surface) var(--radius-surface) 0 0;
+}
+
+@media (max-width: 430px) {
+  :root {
+    --settings-group-radius: var(--radius-surface);
+    --screen-header-card-radius: var(--radius-surface);
+  }
+
+  .settings-screen-main {
+    --settings-group-radius: var(--radius-surface);
+    --screen-header-card-radius: var(--radius-surface);
+  }
 }

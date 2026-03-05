@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -572,7 +573,8 @@ export default function Stats1RMPage() {
             <div className="stats-range-input-grid">
               <label className="stats-range-input">
                 <span className="ui-card-label">시작일</span>
-                <input
+                <AppTextInput
+                  variant="compact"
                   type="date"
                   value={rangeDraft.from}
                   onChange={(event) => {
@@ -583,7 +585,8 @@ export default function Stats1RMPage() {
               </label>
               <label className="stats-range-input">
                 <span className="ui-card-label">종료일</span>
-                <input
+                <AppTextInput
+                  variant="compact"
                   type="date"
                   value={rangeDraft.to}
                   onChange={(event) => {

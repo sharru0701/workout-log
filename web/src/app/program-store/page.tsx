@@ -3,8 +3,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiGet, apiPatch, apiPost, apiPut } from "@/lib/api";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
@@ -40,6 +42,16 @@ type PlanItem = {
 
 type PlansResponse = {
   items: PlanItem[];
+};
+
+type ExerciseOption = {
+  id: string;
+  name: string;
+  category: string | null;
+};
+
+type ExerciseResponse = {
+  items: ExerciseOption[];
 };
 
 type ForkResponse = {
@@ -101,6 +113,16 @@ type PrStatsResponse = {
   }>;
 };
 
+type DeleteTemplateResponse = {
+  deleted: boolean;
+  template: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  deletedPlanCount: number;
+};
+
 function todayKeyInTimezone(timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -116,7 +138,25 @@ function todayKeyInTimezone(timezone: string) {
 }
 
 function toContextLabel(item: ProgramListItem) {
-  return `${item.name} / ${item.subtitle}`;
+  return `${formatProgramDisplayName(item.name)} / ${item.subtitle}`;
+}
+
+function formatProgramDisplayName(name: string) {
+  return String(name)
+    .replace(/\s*\(base[^)]*\)\s*/gi, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function sourceBadgeMeta(source: ProgramListItem["source"]) {
+  if (source === "CUSTOM") {
+    return { label: "Custom", className: "ui-badge-warning" };
+  }
+  return { label: "Base", className: "ui-badge-info" };
+}
+
+function formatExerciseOptionLabel(option: ExerciseOption) {
+  return option.category ? `${option.name} · ${option.category}` : option.name;
 }
 
 function parseSearchValue(value: string | string[] | null) {
@@ -323,6 +363,8 @@ async function putProgramVersionDefinition(versionId: string, definition: any) {
 function ExerciseEditorRow({
   exercise,
   publicTemplates,
+  exerciseOptions,
+  exerciseOptionsLoading,
   onPatch,
   onDelete,
   onDragStart,
@@ -331,12 +373,53 @@ function ExerciseEditorRow({
 }: {
   exercise: ProgramExerciseDraft;
   publicTemplates: ProgramTemplate[];
+  exerciseOptions: ExerciseOption[];
+  exerciseOptionsLoading: boolean;
   onPatch: (patch: Partial<ProgramExerciseDraft>) => void;
   onDelete: () => void;
   onDragStart: () => void;
   onDragOver: () => void;
   onDrop: () => void;
 }) {
+  const [exerciseQuery, setExerciseQuery] = useState(exercise.exerciseName);
+
+  useEffect(() => {
+    const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
+    if (!normalizedSelectedName) return;
+    const normalizedQuery = exerciseQuery.trim().toLowerCase();
+    if (normalizedQuery === normalizedSelectedName) return;
+    setExerciseQuery(exercise.exerciseName);
+  }, [exercise.exerciseName, exerciseQuery]);
+
+  const selectedExerciseOption = useMemo(() => {
+    const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
+    if (!normalizedSelectedName) return null;
+    const match = exerciseOptions.find((option) => option.name.trim().toLowerCase() === normalizedSelectedName);
+    if (match) return match;
+    return {
+      id: `legacy:${exercise.exerciseName}`,
+      name: exercise.exerciseName,
+      category: null,
+    } satisfies ExerciseOption;
+  }, [exercise.exerciseName, exerciseOptions]);
+
+  const filteredExerciseOptions = useMemo(() => {
+    const normalizedQuery = exerciseQuery.trim().toLowerCase();
+    if (!normalizedQuery) return exerciseOptions;
+    return exerciseOptions.filter((option) => {
+      const haystack = [option.name, option.category ?? ""].join(" ").toLowerCase();
+      return haystack.includes(normalizedQuery);
+    });
+  }, [exerciseOptions, exerciseQuery]);
+
+  const selectExerciseOption = useCallback(
+    (option: ExerciseOption | null) => {
+      onPatch({ exerciseName: option?.name ?? "" });
+      setExerciseQuery(option?.name ?? "");
+    },
+    [onPatch],
+  );
+
   return (
     <div className="workout-swipe-shell">
       <button type="button" className="workout-swipe-delete haptic-tap" onClick={onDelete}>
@@ -364,19 +447,104 @@ function ExerciseEditorRow({
 
         <label className="grid gap-1">
           <span className="ui-card-label">운동종목</span>
-          <input
-            className="workout-set-input workout-set-input-text"
-            value={exercise.exerciseName}
-            onChange={(event) => onPatch({ exerciseName: event.target.value })}
-            placeholder="예: Back Squat"
-          />
+          <div className="workout-combobox" data-no-swipe="true">
+            <div className="app-search-shell">
+              <span className="app-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.8-3.8" />
+                </svg>
+              </span>
+              <input
+                type="search"
+                inputMode="search"
+                className="app-search-input"
+                value={exerciseQuery}
+                placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
+                onChange={(event) => {
+                  const nextQuery = event.target.value;
+                  setExerciseQuery(nextQuery);
+                  const normalizedQuery = nextQuery.trim().toLowerCase();
+                  const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
+                  if (!normalizedSelectedName) return;
+                  if (normalizedQuery === normalizedSelectedName) return;
+                  onPatch({ exerciseName: "" });
+                }}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  const first = filteredExerciseOptions[0] ?? null;
+                  if (!first) return;
+                  selectExerciseOption(first);
+                }}
+              />
+              {exerciseQuery.trim().length > 0 ? (
+                <button
+                  type="button"
+                  className="app-search-clear"
+                  aria-label="검색어 지우기"
+                  onClick={() => {
+                    setExerciseQuery("");
+                    onPatch({ exerciseName: "" });
+                  }}
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+
+            {selectedExerciseOption ? (
+              <div className="workout-combobox-selected" role="status" aria-live="polite">
+                <span className="workout-combobox-selected-kicker">선택됨</span>
+                <strong className="workout-combobox-selected-name">
+                  {formatExerciseOptionLabel(selectedExerciseOption)}
+                </strong>
+                <button
+                  type="button"
+                  className="haptic-tap workout-combobox-selected-edit"
+                  onClick={() => {
+                    selectExerciseOption(null);
+                  }}
+                >
+                  선택 변경
+                </button>
+              </div>
+            ) : null}
+
+            {!selectedExerciseOption ? (
+              <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                {exerciseOptionsLoading ? (
+                  <span className="workout-combobox-empty">검색 중...</span>
+                ) : filteredExerciseOptions.length === 0 ? (
+                  <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                ) : (
+                  filteredExerciseOptions.map((option) => (
+                    <button
+                      key={option.id}
+                      type="button"
+                      className={`haptic-tap workout-combobox-option${
+                        exercise.exerciseName.trim().toLowerCase() === option.name.trim().toLowerCase()
+                          ? " is-active"
+                          : ""
+                      }`}
+                      onClick={() => {
+                        selectExerciseOption(option);
+                      }}
+                    >
+                      {formatExerciseOptionLabel(option)}
+                    </button>
+                  ))
+                )}
+              </div>
+            ) : null}
+          </div>
         </label>
 
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <label className="grid gap-1">
             <span className="ui-card-label">수행 방식</span>
-            <select
-              className="workout-set-input workout-set-input-text"
+            <AppSelect
+              variant="workout"
               value={exercise.mode}
               onChange={(event) =>
                 onPatch({
@@ -387,59 +555,51 @@ function ExerciseEditorRow({
             >
               <option value="MARKET">시중 프로그램 기반</option>
               <option value="MANUAL">완전 수동</option>
-            </select>
+            </AppSelect>
           </label>
 
           {exercise.mode === "MARKET" && (
             <label className="grid gap-1">
               <span className="ui-card-label">기반 프로그램</span>
-              <select
-                className="workout-set-input workout-set-input-text"
+              <AppSelect
+                variant="workout"
                 value={exercise.marketTemplateSlug ?? ""}
                 onChange={(event) => onPatch({ marketTemplateSlug: event.target.value || null })}
               >
                 <option value="">선택</option>
                 {publicTemplates.map((template) => (
                   <option key={template.id} value={template.slug}>
-                    {template.name}
+                    {formatProgramDisplayName(template.name)}
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
           )}
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">세트</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={50}
-              value={exercise.sets}
-              onChange={(event) => onPatch({ sets: Math.max(1, Number(event.target.value) || 1) })}
-            />
-          </label>
-          <label className="grid gap-1">
-            <span className="ui-card-label">횟수</span>
-            <input
-              className="workout-set-input workout-set-input-number"
-              type="number"
-              inputMode="numeric"
-              min={1}
-              max={100}
-              value={exercise.reps}
-              onChange={(event) => onPatch({ reps: Math.max(1, Number(event.target.value) || 1) })}
-            />
-          </label>
+          <AppNumberStepper
+            label="세트"
+            value={exercise.sets}
+            min={1}
+            max={50}
+            step={1}
+            onChange={(next) => onPatch({ sets: next })}
+          />
+          <AppNumberStepper
+            label="횟수"
+            value={exercise.reps}
+            min={1}
+            max={100}
+            step={1}
+            onChange={(next) => onPatch({ reps: next })}
+          />
         </div>
 
         <label className="grid gap-1">
           <span className="ui-card-label">메모</span>
-          <input
-            className="workout-set-input workout-set-input-text"
+          <AppTextInput
+            variant="workout"
             value={exercise.note}
             onChange={(event) => onPatch({ note: event.target.value })}
             placeholder="세션 메모"
@@ -452,9 +612,12 @@ function ExerciseEditorRow({
 
 export default function ProgramStorePage() {
   const router = useRouter();
+  const { confirm } = useAppDialog();
 
   const [templates, setTemplates] = useState<ProgramTemplate[]>([]);
   const [plans, setPlans] = useState<PlanItem[]>([]);
+  const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([]);
+  const [exerciseOptionsLoading, setExerciseOptionsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [storeLoadKey, setStoreLoadKey] = useState("program-store:init");
   const [error, setError] = useState<string | null>(null);
@@ -539,9 +702,25 @@ export default function ProgramStorePage() {
     }
   }, []);
 
+  const loadExerciseOptions = useCallback(async () => {
+    try {
+      setExerciseOptionsLoading(true);
+      const res = await apiGet<ExerciseResponse>("/api/exercises?limit=250");
+      setExerciseOptions(res.items ?? []);
+    } catch {
+      setExerciseOptions([]);
+    } finally {
+      setExerciseOptionsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadStore();
   }, [loadStore]);
+
+  useEffect(() => {
+    void loadExerciseOptions();
+  }, [loadExerciseOptions]);
 
   useEffect(() => {
     setQueryState(readSearchQueryFromLocation());
@@ -565,7 +744,7 @@ export default function ProgramStorePage() {
       const item = listItems.find((entry) => entry.template.slug === customizeSlug);
       if (item) {
         setCustomizeDraft({
-          name: `${item.template.name} Custom`,
+          name: `${formatProgramDisplayName(item.template.name)} Custom`,
           baseTemplate: item.template,
           sessions: inferSessionDraftsFromTemplate(item.template),
         });
@@ -655,7 +834,7 @@ export default function ProgramStorePage() {
         });
       } else {
         const created = await apiPost<{ plan: PlanItem }>("/api/plans", {
-          name: `${startProgramDraft.template.name} Program`,
+          name: `${formatProgramDisplayName(startProgramDraft.template.name)} Program`,
           type: startProgramDraft.expectedPlanType,
           rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
           params: {
@@ -685,6 +864,44 @@ export default function ProgramStorePage() {
     }
   }, [loadStore, plans, router, startProgramDraft]);
 
+  const deleteCustomTemplate = useCallback(
+    async (item: ProgramListItem) => {
+      if (item.source !== "CUSTOM") return;
+      const confirmed = await confirm({
+        title: "커스텀 프로그램 삭제",
+        message: `커스텀 프로그램 "${item.template.name}"을(를) 삭제할까요?\n연결된 내 플랜도 함께 삭제됩니다.`,
+        confirmText: "삭제",
+        cancelText: "취소",
+        tone: "danger",
+      });
+      if (!confirmed) return;
+
+      try {
+        setSaving(true);
+        setError(null);
+        setNotice(null);
+        const res = await apiDelete<DeleteTemplateResponse>(
+          `/api/templates/${encodeURIComponent(item.template.slug)}`,
+        );
+        const deletedPlanSuffix =
+          Number(res.deletedPlanCount) > 0
+            ? ` (연결 플랜 ${res.deletedPlanCount}개 삭제)`
+            : "";
+
+        setDetailTargetId(null);
+        setCustomizeDraft(null);
+        setStartProgramDraft(null);
+        await loadStore();
+        setNotice(`커스텀 프로그램 삭제 완료: ${formatProgramDisplayName(item.template.name)}${deletedPlanSuffix}`);
+      } catch (e: any) {
+        setError(e?.message ?? "커스텀 프로그램 삭제에 실패했습니다.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [confirm, loadStore],
+  );
+
   const saveCustomizationDraft = useCallback(
     async (draft: CustomizeDraft) => {
       const errors = validateCustomSessions(draft.sessions);
@@ -707,7 +924,7 @@ export default function ProgramStorePage() {
         const definition = toManualDefinition(draft.sessions);
         await putProgramVersionDefinition(fork.version.id, definition);
 
-        setNotice(`커스터마이징 프로그램 생성 완료: ${fork.template.name}`);
+        setNotice(`커스터마이징 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
         setCustomizeDraft(null);
         setDetailTargetId(null);
         await loadStore();
@@ -752,7 +969,7 @@ export default function ProgramStorePage() {
         const definition = toManualDefinition(draft.sessions);
         await putProgramVersionDefinition(fork.version.id, definition);
 
-        setNotice(`커스텀 프로그램 생성 완료: ${fork.template.name}`);
+        setNotice(`커스텀 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
         setCreateDraft(null);
         await loadStore();
       } catch (e: any) {
@@ -826,18 +1043,24 @@ export default function ProgramStorePage() {
         />
         {listItems.length > 0 && (
           <article className="motion-card rounded-2xl border p-4 grid gap-2">
-            {listItems.map((item) => (
-              <button
-                key={item.key}
-                type="button"
-                className="haptic-tap rounded-xl border p-3 grid gap-1 text-left"
-                onClick={() => {
-                  setDetailTargetId(item.template.id);
-                }}
-              >
-                <strong>{item.name}</strong>
-              </button>
-            ))}
+            {listItems.map((item) => {
+              const badge = sourceBadgeMeta(item.source);
+              return (
+                <button
+                  key={item.key}
+                  type="button"
+                  className="haptic-tap rounded-xl border p-3 grid gap-1 text-left"
+                  onClick={() => {
+                    setDetailTargetId(item.template.id);
+                  }}
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <strong>{formatProgramDisplayName(item.name)}</strong>
+                    <span className={`ui-badge ${badge.className}`}>{badge.label}</span>
+                  </span>
+                </button>
+              );
+            })}
           </article>
         )}
       </section>
@@ -851,6 +1074,16 @@ export default function ProgramStorePage() {
         >
           프로그램 커스터마이징 모달 열기
         </button>
+      </section>
+
+      <section className="grid gap-2">
+        <h2 className="ios-section-heading">플랜 관리</h2>
+        <a
+          href="/plans/manage"
+          className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
+        >
+          플랜 조회/수정/삭제 열기
+        </a>
       </section>
 
       <BottomSheet
@@ -878,7 +1111,7 @@ export default function ProgramStorePage() {
                 className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
                 onClick={() => {
                   setCustomizeDraft({
-                    name: `${detailTarget.template.name} Custom`,
+                    name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
                     baseTemplate: detailTarget.template,
                     sessions: inferSessionDraftsFromTemplate(detailTarget.template),
                   });
@@ -886,6 +1119,18 @@ export default function ProgramStorePage() {
               >
                 프로그램 커스터마이징
               </button>
+              {detailTarget.source === "CUSTOM" ? (
+                <button
+                  type="button"
+                  className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-red-600"
+                  disabled={saving}
+                  onClick={() => {
+                    void deleteCustomTemplate(detailTarget);
+                  }}
+                >
+                  커스텀 프로그램 삭제
+                </button>
+              ) : null}
             </div>
           ) : null
         }
@@ -893,7 +1138,13 @@ export default function ProgramStorePage() {
         {detailTarget && (
           <div className="grid gap-2">
             <article className="rounded-xl border p-3 text-sm">
-              <strong>{detailTarget.template.name}</strong>
+              <div className="flex items-center justify-between gap-2">
+                <strong>{formatProgramDisplayName(detailTarget.template.name)}</strong>
+                {(() => {
+                  const badge = sourceBadgeMeta(detailTarget.source);
+                  return <span className={`ui-badge ${badge.className}`}>{badge.label}</span>;
+                })()}
+              </div>
               <p className="mt-1 text-[var(--text-secondary)]">
                 타입: {detailTarget.template.type} / 최신 버전:{" "}
                 {detailTarget.template.latestVersion ? `v${detailTarget.template.latestVersion.version}` : "-"}
@@ -930,7 +1181,7 @@ export default function ProgramStorePage() {
         {startProgramDraft ? (
           <div className="grid gap-3">
             <article className="rounded-xl border p-3 text-sm grid gap-1">
-              <strong>{startProgramDraft.template.name}</strong>
+              <strong>{formatProgramDisplayName(startProgramDraft.template.name)}</strong>
               <span className="ui-card-label">
                 TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
               </span>
@@ -946,8 +1197,8 @@ export default function ProgramStorePage() {
                 <span className="ui-card-label">
                   {target.label} 1RM (kg)
                 </span>
-                <input
-                  className="workout-set-input workout-set-input-number"
+                <AppTextInput
+                  variant="workout-number"
                   type="number"
                   inputMode="decimal"
                   min={1}
@@ -1029,8 +1280,8 @@ export default function ProgramStorePage() {
           <div className="grid gap-3">
             <label className="grid gap-1">
               <span className="ui-card-label">프로그램 이름</span>
-              <input
-                className="workout-set-input workout-set-input-text"
+              <AppTextInput
+                variant="workout"
                 value={customizeDraft.name}
                 onChange={(event) =>
                   setCustomizeDraft((prev) => (prev ? { ...prev, name: event.target.value } : prev))
@@ -1104,6 +1355,8 @@ export default function ProgramStorePage() {
                       key={exercise.id}
                       exercise={exercise}
                       publicTemplates={publicTemplates}
+                      exerciseOptions={exerciseOptions}
+                      exerciseOptionsLoading={exerciseOptionsLoading}
                       onPatch={(patch) =>
                         setCustomizeDraft((prev) => {
                           if (!prev) return prev;
@@ -1183,8 +1436,8 @@ export default function ProgramStorePage() {
           <div className="grid gap-3">
             <label className="grid gap-1">
               <span className="ui-card-label">프로그램 이름</span>
-              <input
-                className="workout-set-input workout-set-input-text"
+              <AppTextInput
+                variant="workout"
                 value={createDraft.name}
                 onChange={(event) =>
                   setCreateDraft((prev) => (prev ? { ...prev, name: event.target.value } : prev))
@@ -1235,8 +1488,8 @@ export default function ProgramStorePage() {
             {createDraft.mode === "MARKET_BASED" && (
               <label className="grid gap-1">
                 <span className="ui-card-label">기반 시중 프로그램</span>
-                <select
-                  className="workout-set-input workout-set-input-text"
+                <AppSelect
+                  variant="workout"
                   value={createDraft.sourceTemplateSlug ?? ""}
                   onChange={(event) =>
                     setCreateDraft((prev) => {
@@ -1254,10 +1507,10 @@ export default function ProgramStorePage() {
                   <option value="">선택</option>
                   {publicTemplates.map((template) => (
                     <option key={template.id} value={template.slug}>
-                      {template.name}
+                      {formatProgramDisplayName(template.name)}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             )}
 
@@ -1306,8 +1559,8 @@ export default function ProgramStorePage() {
               {createDraft.rule.type === "NUMERIC" && (
                 <label className="grid gap-1">
                   <span className="ui-card-label">세션 개수 (1~4)</span>
-                  <input
-                    className="workout-set-input workout-set-input-number"
+                  <AppTextInput
+                    variant="workout-number"
                     type="number"
                     inputMode="numeric"
                     min={1}
@@ -1397,6 +1650,8 @@ export default function ProgramStorePage() {
                       key={exercise.id}
                       exercise={exercise}
                       publicTemplates={publicTemplates}
+                      exerciseOptions={exerciseOptions}
+                      exerciseOptionsLoading={exerciseOptionsLoading}
                       onPatch={(patch) =>
                         setCreateDraft((prev) => {
                           if (!prev) return prev;

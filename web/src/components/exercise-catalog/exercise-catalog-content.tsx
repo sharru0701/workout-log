@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
 
 type ExerciseItem = {
   id: string;
@@ -32,6 +33,7 @@ type EditingState = {
 };
 
 export function ExerciseCatalogContent() {
+  const { confirm } = useAppDialog();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -202,9 +204,13 @@ export function ExerciseCatalogContent() {
                       className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold text-[var(--color-danger)]"
                       disabled={deletingId === item.id}
                       onClick={async () => {
-                        const confirmDelete = window.confirm(
-                          `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
-                        );
+                        const confirmDelete = await confirm({
+                          title: "운동종목 삭제",
+                          message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
+                          confirmText: "삭제",
+                          cancelText: "취소",
+                          tone: "danger",
+                        });
                         if (!confirmDelete) return;
                         try {
                           setDeletingId(item.id);

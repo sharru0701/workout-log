@@ -1,9 +1,20 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { plan, planModule } from "@/server/db/schema";
-import { desc, eq } from "drizzle-orm";
+import { plan, planModule, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
+import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+
+function toRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function withAutoProgressionDefaults(value: unknown) {
+  const next = { ...toRecord(value) };
+  next.autoProgression = true;
+  return next;
+}
 
 /**
  * Minimal request shapes:
@@ -40,7 +51,7 @@ async function POSTImpl(req: Request) {
           userId,
           name,
           type,
-          params: body.params ?? {},
+          params: withAutoProgressionDefaults(body.params),
         })
         .returning();
 
@@ -73,7 +84,7 @@ async function POSTImpl(req: Request) {
       name,
       type,
       rootProgramVersionId,
-      params: body.params ?? {},
+      params: withAutoProgressionDefaults(body.params),
     })
     .returning();
 
@@ -83,11 +94,76 @@ async function POSTImpl(req: Request) {
 async function GETImpl() {
   const userId = getAuthenticatedUserId();
 
-  const items = await db
+  const baseItems = await db
     .select()
     .from(plan)
     .where(eq(plan.userId, userId))
     .orderBy(desc(plan.createdAt));
+
+  if (baseItems.length === 0) {
+    return NextResponse.json({ items: [] });
+  }
+
+  const rootVersionIds = Array.from(
+    new Set(
+      baseItems
+        .map((item) => item.rootProgramVersionId)
+        .filter((value): value is string => Boolean(value)),
+    ),
+  );
+
+  const versionRows =
+    rootVersionIds.length > 0
+      ? await db
+          .select({
+            versionId: programVersion.id,
+            templateName: programTemplate.name,
+          })
+          .from(programVersion)
+          .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
+          .where(inArray(programVersion.id, rootVersionIds))
+      : [];
+  const versionNameById = new Map<string, string>();
+  for (const row of versionRows) {
+    if (!row.versionId) continue;
+    const label = String(row.templateName ?? "").trim();
+    if (!label) continue;
+    versionNameById.set(row.versionId, label);
+  }
+
+  const planIds = baseItems.map((item) => item.id);
+  const logRows = await db
+    .select({
+      planId: workoutLog.planId,
+      performedAt: workoutLog.performedAt,
+    })
+    .from(workoutLog)
+    .where(
+      and(
+        eq(workoutLog.userId, userId),
+        isNotNull(workoutLog.planId),
+        inArray(workoutLog.planId, planIds),
+      ),
+    )
+    .orderBy(desc(workoutLog.performedAt));
+  const lastPerformedAtByPlanId = new Map<string, Date>();
+  for (const row of logRows) {
+    const planId = row.planId;
+    if (!planId) continue;
+    if (lastPerformedAtByPlanId.has(planId)) continue;
+    lastPerformedAtByPlanId.set(planId, row.performedAt);
+  }
+
+  const items = baseItems.map((item) => {
+    const baseProgramName =
+      (item.rootProgramVersionId && versionNameById.get(item.rootProgramVersionId)) ??
+      (item.type === "COMPOSITE" ? "복합 플랜" : "프로그램 정보 없음");
+    return {
+      ...item,
+      baseProgramName,
+      lastPerformedAt: lastPerformedAtByPlanId.get(item.id) ?? null,
+    };
+  });
 
   return NextResponse.json({ items });
 }

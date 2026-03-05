@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
@@ -245,48 +246,46 @@ export default function CalendarPage() {
       <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         <label className="flex flex-col gap-1 lg:col-span-2">
           <span className="ui-card-label">plan</span>
-          <select className="rounded-lg border px-3 py-3 text-base" value={planId} onChange={(e) => setPlanId(e.target.value)}>
+          <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
             {plans.length === 0 && <option value="">(no plans)</option>}
             {plans.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name} [{p.type}]
               </option>
             ))}
-          </select>
+          </AppSelect>
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="ui-card-label">view</span>
-          <select
-            className="rounded-lg border px-3 py-3 text-base"
+          <AppSelect
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as "month" | "week")}
           >
             <option value="month">month</option>
             <option value="week">week</option>
-          </select>
+          </AppSelect>
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="ui-card-label">anchor date</span>
-          <input type="date" className="rounded-lg border px-3 py-3 text-base" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
+          <AppTextInput type="date" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
         </label>
 
         <label className="flex flex-col gap-1">
           <span className="ui-card-label">open action</span>
-          <select
-            className="rounded-lg border px-3 py-3 text-base"
+          <AppSelect
             value={openAutoGenerate ? "AUTO_GENERATE" : "OPEN_ONLY"}
             onChange={(e) => setOpenAutoGenerate(e.target.value === "AUTO_GENERATE")}
           >
             <option value="OPEN_ONLY">Open day only</option>
             <option value="AUTO_GENERATE">Open + auto-generate in Today</option>
-          </select>
+          </AppSelect>
         </label>
 
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-5">
           <span className="ui-card-label">timezone</span>
-          <input className="rounded-lg border px-3 py-3 text-base" value={timezone} onChange={(e) => setTimezone(e.target.value)} />
+          <AppTextInput value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
 
       </section>

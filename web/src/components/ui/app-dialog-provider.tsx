@@ -1,0 +1,225 @@
+"use client";
+
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+
+type DialogTone = "default" | "danger";
+
+export type AppAlertOptions = {
+  title?: string;
+  message: string;
+  buttonText?: string;
+  tone?: DialogTone;
+};
+
+export type AppConfirmOptions = {
+  title?: string;
+  message: string;
+  confirmText?: string;
+  cancelText?: string;
+  tone?: DialogTone;
+};
+
+type AlertRequest = {
+  kind: "alert";
+  title: string;
+  message: string;
+  buttonText: string;
+  tone: DialogTone;
+  resolve: () => void;
+};
+
+type ConfirmRequest = {
+  kind: "confirm";
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  tone: DialogTone;
+  resolve: (confirmed: boolean) => void;
+};
+
+type DialogRequest = AlertRequest | ConfirmRequest;
+
+type AppDialogContextValue = {
+  alert: (input: string | AppAlertOptions) => Promise<void>;
+  confirm: (input: string | AppConfirmOptions) => Promise<boolean>;
+};
+
+const AppDialogContext = createContext<AppDialogContextValue | null>(null);
+
+function normalizeAlertInput(input: string | AppAlertOptions): {
+  title: string;
+  message: string;
+  buttonText: string;
+  tone: DialogTone;
+} {
+  if (typeof input === "string") {
+    return {
+      title: "안내",
+      message: input,
+      buttonText: "확인",
+      tone: "default" as const,
+    };
+  }
+
+  return {
+    title: String(input.title ?? "").trim() || "안내",
+    message: String(input.message ?? "").trim(),
+    buttonText: String(input.buttonText ?? "").trim() || "확인",
+    tone: input.tone === "danger" ? "danger" : "default",
+  };
+}
+
+function normalizeConfirmInput(input: string | AppConfirmOptions): {
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  tone: DialogTone;
+} {
+  if (typeof input === "string") {
+    return {
+      title: "확인",
+      message: input,
+      confirmText: "확인",
+      cancelText: "취소",
+      tone: "default" as const,
+    };
+  }
+
+  return {
+    title: String(input.title ?? "").trim() || "확인",
+    message: String(input.message ?? "").trim(),
+    confirmText: String(input.confirmText ?? "").trim() || "확인",
+    cancelText: String(input.cancelText ?? "").trim() || "취소",
+    tone: input.tone === "danger" ? "danger" : "default",
+  };
+}
+
+export function AppDialogProvider({ children }: { children: ReactNode }) {
+  const [queue, setQueue] = useState<DialogRequest[]>([]);
+  const queueRef = useRef<DialogRequest[]>([]);
+
+  useEffect(() => {
+    queueRef.current = queue;
+  }, [queue]);
+
+  useEffect(() => {
+    return () => {
+      for (const request of queueRef.current) {
+        if (request.kind === "confirm") request.resolve(false);
+        else request.resolve();
+      }
+    };
+  }, []);
+
+  const active = queue[0] ?? null;
+
+  const closeActiveAsCancel = useCallback(() => {
+    if (!active) return;
+    if (active.kind === "confirm") active.resolve(false);
+    else active.resolve();
+    setQueue((prev) => prev.slice(1));
+  }, [active]);
+
+  const closeActiveAsAccept = useCallback(() => {
+    if (!active) return;
+    if (active.kind === "confirm") active.resolve(true);
+    else active.resolve();
+    setQueue((prev) => prev.slice(1));
+  }, [active]);
+
+  const alert = useCallback((input: string | AppAlertOptions) => {
+    const normalized = normalizeAlertInput(input);
+    return new Promise<void>((resolve) => {
+      const request: AlertRequest = {
+        kind: "alert",
+        title: normalized.title,
+        message: normalized.message,
+        buttonText: normalized.buttonText,
+        tone: normalized.tone,
+        resolve,
+      };
+      setQueue((prev) => [...prev, request]);
+    });
+  }, []);
+
+  const confirm = useCallback((input: string | AppConfirmOptions) => {
+    const normalized = normalizeConfirmInput(input);
+    return new Promise<boolean>((resolve) => {
+      const request: ConfirmRequest = {
+        kind: "confirm",
+        title: normalized.title,
+        message: normalized.message,
+        confirmText: normalized.confirmText,
+        cancelText: normalized.cancelText,
+        tone: normalized.tone,
+        resolve,
+      };
+      setQueue((prev) => [...prev, request]);
+    });
+  }, []);
+
+  const contextValue = useMemo<AppDialogContextValue>(
+    () => ({
+      alert,
+      confirm,
+    }),
+    [alert, confirm],
+  );
+
+  return (
+    <AppDialogContext.Provider value={contextValue}>
+      {children}
+      <BottomSheet
+        open={Boolean(active)}
+        title={active?.title ?? ""}
+        description=""
+        onClose={closeActiveAsCancel}
+        closeLabel="닫기"
+        className="app-dialog-sheet program-store-sheet--medium"
+        footer={
+          active ? (
+            <div className={`app-dialog-actions${active.kind === "alert" ? " app-dialog-actions--single" : ""}`}>
+              {active.kind === "confirm" ? (
+                <button
+                  type="button"
+                  className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold app-dialog-button"
+                  onClick={closeActiveAsCancel}
+                >
+                  {active.cancelText}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                className={`ui-primary-button app-dialog-button${active.tone === "danger" ? " app-dialog-button-danger" : ""}`}
+                onClick={closeActiveAsAccept}
+              >
+                {active.kind === "confirm" ? active.confirmText : active.buttonText}
+              </button>
+            </div>
+          ) : null
+        }
+      >
+        {active ? (
+          <div className="app-dialog-content">
+            <p className="app-dialog-message">{active.message}</p>
+          </div>
+        ) : null}
+      </BottomSheet>
+    </AppDialogContext.Provider>
+  );
+}
+
+export function useAppDialog() {
+  const context = useContext(AppDialogContext);
+  if (!context) {
+    throw new Error("useAppDialog must be used within AppDialogProvider");
+  }
+  return context;
+}
+
+export function useMaybeAppDialog() {
+  return useContext(AppDialogContext);
+}

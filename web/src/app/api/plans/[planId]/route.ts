@@ -72,3 +72,27 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
 }
 
 export const PATCH = withApiLogging(PATCHImpl);
+
+async function DELETEImpl(_: Request, ctx: Ctx) {
+  try {
+    const { planId } = await ctx.params;
+    const userId = getAuthenticatedUserId();
+
+    const rows = await db
+      .select()
+      .from(planTable)
+      .where(eq(planTable.id, planId))
+      .limit(1);
+    const found = rows[0];
+    if (!found) return NextResponse.json({ error: "plan not found" }, { status: 404 });
+    if (found.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+    await db.delete(planTable).where(eq(planTable.id, planId));
+    return NextResponse.json({ deleted: true, planId }, { status: 200 });
+  } catch (e: any) {
+    logError("api.handler_error", { error: e });
+    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+  }
+}
+
+export const DELETE = withApiLogging(DELETEImpl);

@@ -25,6 +25,7 @@ import {
 } from "@/lib/workout-ux-events";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
@@ -225,8 +226,8 @@ function WorkoutSetRow({
       <article className="workout-set-card">
         <label className="flex flex-col gap-1">
           <span className="ui-card-label">운동</span>
-          <input
-            className="workout-set-input workout-set-input-text"
+          <AppTextInput
+            variant="workout"
             list="exercise-options"
             value={row.exerciseName}
             ref={(el) => {
@@ -240,8 +241,8 @@ function WorkoutSetRow({
         <div className="mt-2 grid grid-cols-4 gap-2">
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">세트</span>
-            <input
-              className="workout-set-input workout-set-input-number"
+            <AppTextInput
+              variant="workout-number"
               type="number"
               inputMode="numeric"
               value={row.setNumber}
@@ -255,8 +256,8 @@ function WorkoutSetRow({
 
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">반복</span>
-            <input
-              className="workout-set-input workout-set-input-number"
+            <AppTextInput
+              variant="workout-number"
               type="number"
               inputMode="numeric"
               value={row.reps}
@@ -270,8 +271,8 @@ function WorkoutSetRow({
 
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">중량(kg)</span>
-            <input
-              className="workout-set-input workout-set-input-number"
+            <AppTextInput
+              variant="workout-number"
               type="number"
               inputMode="decimal"
               value={row.weightKg}
@@ -285,8 +286,8 @@ function WorkoutSetRow({
 
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">RPE</span>
-            <input
-              className="workout-set-input workout-set-input-number"
+            <AppTextInput
+              variant="workout-number"
               type="number"
               inputMode="decimal"
               value={row.rpe}
@@ -1506,8 +1507,8 @@ export default function WorkoutTodayPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="flex flex-col gap-1 md:col-span-2">
             <span className="ui-card-label">플랜</span>
-            <select
-              className="rounded-lg border px-3 py-2"
+            <AppSelect
+              variant="compact"
               value={planId}
               onChange={(e) => {
                 const nextPlanId = e.target.value;
@@ -1521,12 +1522,12 @@ export default function WorkoutTodayPage() {
                   {p.name} [{p.type}]
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">세션 날짜</span>
-            <input
-              className="rounded-lg border px-3 py-2"
+            <AppTextInput
+              variant="compact"
               type="date"
               value={sessionDate}
               onChange={(e) => setSessionDate(e.target.value)}
@@ -1542,8 +1543,8 @@ export default function WorkoutTodayPage() {
           <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">userId</span>
-              <input
-                className="rounded-lg border px-3 py-2"
+              <AppTextInput
+                variant="compact"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
               />
@@ -1564,8 +1565,8 @@ export default function WorkoutTodayPage() {
                 >
                   이전
                 </button>
-                <select
-                  className="rounded-lg border px-3 py-2"
+                <AppSelect
+                  variant="compact"
                   value={selectedRecentSessionId}
                   onChange={(e) => applyRecentSessionSelection(e.target.value)}
                 >
@@ -1575,7 +1576,7 @@ export default function WorkoutTodayPage() {
                       {s.sessionKey} - {new Date(s.updatedAt).toLocaleString()}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
                 <button
                   className="haptic-tap rounded-lg border px-3 py-2 text-sm"
                   onClick={() => selectAdjacentRecentSession(1)}
@@ -1598,16 +1599,16 @@ export default function WorkoutTodayPage() {
           <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
             <label className="flex flex-col gap-1 md:col-span-2">
               <span className="ui-card-label">시간대</span>
-              <input
-                className="rounded-lg border px-3 py-2"
+              <AppTextInput
+                variant="compact"
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
               />
             </label>
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">주차(고급)</span>
-              <input
-                className="rounded-lg border px-3 py-2"
+              <AppTextInput
+                variant="compact"
                 type="number"
                 value={week}
                 min={1}
@@ -1619,8 +1620,8 @@ export default function WorkoutTodayPage() {
           <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">일차(고급)</span>
-              <input
-                className="rounded-lg border px-3 py-2"
+              <AppTextInput
+                variant="compact"
                 type="number"
                 value={day}
                 min={1}
@@ -1668,7 +1669,11 @@ export default function WorkoutTodayPage() {
                 openAddExerciseSheet("quick");
               }}
             >
-              2) + 운동 추가
+              <span className="inline-flex items-center justify-center gap-1.5">
+                <span>2)</span>
+                <AppPlusMinusIcon kind="plus" />
+                <span>운동 추가</span>
+              </span>
             </button>
 
             <button
@@ -1749,12 +1754,13 @@ export default function WorkoutTodayPage() {
                   계획 세트 적용
                 </button>
 
-                <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
-                  + 세트 추가
+                <button className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5" type="button" onClick={addSetRow}>
+                  <AppPlusMinusIcon kind="plus" />
+                  <span>세트 추가</span>
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-secondary"
+                  className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1762,7 +1768,8 @@ export default function WorkoutTodayPage() {
                     openAddExerciseSheet("advanced");
                   }}
                 >
-                  + 운동 추가
+                  <AppPlusMinusIcon kind="plus" />
+                  <span>운동 추가</span>
                 </button>
 
                 <button
@@ -1931,11 +1938,12 @@ export default function WorkoutTodayPage() {
                   생성 및 적용
                 </button>
                 <button
-                  className="haptic-tap workout-action-pill is-secondary"
+                  className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5"
                   type="button"
                   onClick={() => openAddExerciseSheet("empty")}
                 >
-                  + 운동 추가
+                  <AppPlusMinusIcon kind="plus" />
+                  <span>운동 추가</span>
                 </button>
               </div>
             </div>
@@ -2161,8 +2169,8 @@ export default function WorkoutTodayPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1 md:col-span-2">
               <span className="ui-card-label">선택 세트 행(추가 상태 필수)</span>
-              <select
-                className="rounded-lg border px-3 py-2"
+              <AppSelect
+                variant="compact"
                 value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
                 onChange={(e) => {
                   setSelectedSetIdx(e.target.value === "" ? null : Number(e.target.value));
@@ -2174,7 +2182,7 @@ export default function WorkoutTodayPage() {
                     #{idx + 1} {s.exerciseName || "(비어 있음)"} [{s.isExtra ? "추가" : s.isPlanned ? "계획" : "사용자"}]
                   </option>
                 ))}
-              </select>
+              </AppSelect>
             </label>
             <button
               className="haptic-tap workout-action-pill is-secondary workout-inline-action"
@@ -2192,8 +2200,8 @@ export default function WorkoutTodayPage() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">블록 대상</span>
-              <select
-                className="rounded-lg border px-3 py-2"
+              <AppSelect
+                variant="compact"
                 value={blockTarget}
                 onChange={(e) => setBlockTarget(e.target.value)}
               >
@@ -2203,12 +2211,12 @@ export default function WorkoutTodayPage() {
                 <option value="OHP">OHP</option>
                 <option value="PULL">PULL</option>
                 <option value="CUSTOM">CUSTOM</option>
-              </select>
+              </AppSelect>
             </label>
             <label className="flex flex-col gap-1 md:col-span-2">
               <span className="ui-card-label">대체 운동 이름</span>
-              <input
-                className="rounded-lg border px-3 py-2"
+              <AppTextInput
+                variant="compact"
                 value={replacementExerciseName}
                 onChange={(e) => setReplacementExerciseName(e.target.value)}
                 placeholder="예: Paused Bench Press"

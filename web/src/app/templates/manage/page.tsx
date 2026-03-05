@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { AccordionSection } from "@/components/ui/accordion-section";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type TemplateItem = {
@@ -324,8 +325,8 @@ export default function TemplatesPage() {
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
           <span className="ui-card-label">userId</span>
-          <input
-            className="rounded-lg border px-3 py-2"
+          <AppTextInput
+            variant="compact"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
@@ -361,8 +362,8 @@ export default function TemplatesPage() {
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
           <span className="ui-card-label">Tag filter</span>
-          <select
-            className="rounded-lg border px-3 py-2"
+          <AppSelect
+            variant="compact"
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
           >
@@ -372,7 +373,7 @@ export default function TemplatesPage() {
                 {tag}
               </option>
             ))}
-          </select>
+          </AppSelect>
         </label>
         <div className="md:col-span-4 text-sm text-neutral-600">{`${filteredTemplates.length}/${templates.length} templates visible`}</div>
         <div className="md:col-span-4 flex gap-2">
@@ -510,8 +511,8 @@ export default function TemplatesPage() {
 
               <label className="flex flex-col gap-1 md:col-span-2">
                 <span className="ui-card-label">기준 버전</span>
-                <select
-                  className="rounded-lg border px-3 py-2"
+                <AppSelect
+                  variant="compact"
                   value={selectedBaseVersionId}
                   onChange={(e) => setSelectedBaseVersionId(e.target.value)}
                 >
@@ -520,7 +521,7 @@ export default function TemplatesPage() {
                       v{v.version} - {new Date(v.createdAt).toLocaleString()}
                     </option>
                   ))}
-                </select>
+                </AppSelect>
               </label>
             </div>
 
@@ -547,8 +548,8 @@ export default function TemplatesPage() {
                   <div key={sessionIdx} className="rounded-xl border p-3 space-y-2">
                     <div className="flex items-center gap-2">
                       <span className="ui-card-label">Session key</span>
-                      <input
-                        className="rounded-lg border px-2 py-1 text-sm"
+                      <AppTextInput
+                        variant="dense"
                         value={session.key}
                         onChange={(e) =>
                           setManualSessions((prev) =>
@@ -576,8 +577,9 @@ export default function TemplatesPage() {
                     {session.items.map((item, itemIdx) => (
                       <div key={itemIdx} className="rounded-lg border p-2 space-y-2">
                         <div className="flex items-center gap-2">
-                          <input
-                            className="rounded-lg border px-2 py-1 text-sm flex-1"
+                          <AppTextInput
+                            variant="dense"
+                            className="flex-1"
                             placeholder="exerciseName"
                             value={item.exerciseName}
                             onChange={(e) =>
@@ -623,9 +625,9 @@ export default function TemplatesPage() {
                           <div key={setIdx} className="grid grid-cols-4 gap-2 items-end">
                             <label className="flex flex-col gap-1">
                               <span className="ui-card-label">reps</span>
-                              <input
+                              <AppTextInput
+                                variant="dense"
                                 type="number"
-                                className="rounded-lg border px-2 py-1 text-sm"
                                 value={setRow.reps}
                                 onChange={(e) =>
                                   setManualSessions((prev) =>
@@ -654,9 +656,9 @@ export default function TemplatesPage() {
                             </label>
                             <label className="flex flex-col gap-1">
                               <span className="ui-card-label">weightKg</span>
-                              <input
+                              <AppTextInput
+                                variant="dense"
                                 type="number"
-                                className="rounded-lg border px-2 py-1 text-sm"
                                 value={setRow.targetWeightKg}
                                 onChange={(e) =>
                                   setManualSessions((prev) =>
@@ -685,9 +687,9 @@ export default function TemplatesPage() {
                             </label>
                             <label className="flex flex-col gap-1">
                               <span className="ui-card-label">rpe</span>
-                              <input
+                              <AppTextInput
+                                variant="dense"
                                 type="number"
-                                className="rounded-lg border px-2 py-1 text-sm"
                                 value={setRow.rpe}
                                 onChange={(e) =>
                                   setManualSessions((prev) =>
@@ -798,30 +800,30 @@ export default function TemplatesPage() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   <label className="flex flex-col gap-1">
                     <span className="ui-card-label">TM % (defaults.tmPercent)</span>
-                    <input
+                    <AppTextInput
+                      variant="compact"
                       type="number"
                       step="0.01"
-                      className="rounded-lg border px-3 py-2"
                       value={logicTmPercent}
                       onChange={(e) => setLogicTmPercent(Number(e.target.value) || 0)}
                     />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className="ui-card-label">Frequency (sessions/week)</span>
-                    <input
+                    <AppTextInput
+                      variant="compact"
                       type="number"
                       min={1}
-                      className="rounded-lg border px-3 py-2"
                       value={logicFrequency}
                       onChange={(e) => setLogicFrequency(Math.max(1, Number(e.target.value) || 1))}
                     />
                   </label>
                   <label className="flex flex-col gap-1">
                     <span className="ui-card-label">Cycle weeks</span>
-                    <input
+                    <AppTextInput
+                      variant="compact"
                       type="number"
                       min={1}
-                      className="rounded-lg border px-3 py-2"
                       value={logicWeeks}
                       onChange={(e) => setLogicWeeks(Math.max(1, Number(e.target.value) || 1))}
                     />
@@ -834,8 +836,8 @@ export default function TemplatesPage() {
                     <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
                       <label className="flex flex-col gap-1 md:col-span-2">
                         <span className="ui-card-label">target</span>
-                        <input
-                          className="rounded-lg border px-2 py-1 text-sm"
+                        <AppTextInput
+                          variant="dense"
                           value={row.target}
                           onChange={(e) =>
                             setLogicSubstitutions((prev) =>
@@ -846,8 +848,8 @@ export default function TemplatesPage() {
                       </label>
                       <label className="flex flex-col gap-1 md:col-span-3">
                         <span className="ui-card-label">exerciseName</span>
-                        <input
-                          className="rounded-lg border px-2 py-1 text-sm"
+                        <AppTextInput
+                          variant="dense"
                           value={row.exerciseName}
                           onChange={(e) =>
                             setLogicSubstitutions((prev) =>
@@ -885,8 +887,8 @@ export default function TemplatesPage() {
                 <div className="ios-inline-heading">새 버전 생성</div>
                 <label className="flex flex-col gap-1">
                   <span className="ui-card-label">changelog</span>
-                  <input
-                    className="rounded-lg border px-3 py-2"
+                  <AppTextInput
+                    variant="compact"
                     value={changelog}
                     onChange={(e) => setChangelog(e.target.value)}
                   />

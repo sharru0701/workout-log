@@ -13,6 +13,7 @@ import {
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
+import { AppSelect } from "@/components/ui/form-controls";
 
 const DEFAULT_TARGETS = {
   saveFromGenerate: 0.65,
@@ -339,8 +340,8 @@ export default function SettingsUxThresholdsPage() {
         <div className="rounded-2xl border bg-white p-4 space-y-3">
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">플랜 선택</span>
-            <select
-              className="rounded-lg border px-3 py-2"
+            <AppSelect
+              variant="compact"
               value={selectedPlanId}
               onChange={(event) => setSelectedPlanId(event.target.value)}
             >
@@ -350,7 +351,7 @@ export default function SettingsUxThresholdsPage() {
                   {plan.name} [{plan.type}]
                 </option>
               ))}
-            </select>
+            </AppSelect>
           </label>
 
           <BaseGroupedList ariaLabel="Plan threshold settings">
