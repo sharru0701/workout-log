@@ -22,6 +22,9 @@ function modalTitleFromPathname(pathname: string) {
 }
 
 function modalDescriptionFromPathname(pathname: string) {
+  if (pathname.startsWith("/settings/data")) {
+    return "데이터 Export와 앱 전체 초기화 작업을 관리합니다.";
+  }
   if (pathname.startsWith("/settings/exercise-management")) {
     return "운동종목 카탈로그를 관리하고 운동 추가 화면에 즉시 반영합니다.";
   }

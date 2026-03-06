@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { pathToFileURL } from "node:url";
 import { db } from "./client";
 import {
   exercise,
@@ -8,13 +9,22 @@ import {
   programTemplate,
   programVersion,
   statsCache,
+  userSetting,
+  uxEventLog,
   workoutLog,
 } from "./schema";
 import { and, eq, inArray } from "drizzle-orm";
 
-async function main() {
+export type SeedRunOptions = {
+  shouldHardReset?: boolean;
+  includeDemoPlans?: boolean;
+  devUserId?: string;
+};
+
+export async function runSeed(options: SeedRunOptions = {}) {
   const legacyProgramSlugs = ["starter-fullbody-3day", "531", "candito-linear"] as const;
-  const shouldHardReset = process.env.WORKOUT_SEED_RESET_ALL === "1";
+  const shouldHardReset = options.shouldHardReset === true;
+  const includeDemoPlans = options.includeDemoPlans !== false;
 
   async function upsertTemplate(slug: string, values: any) {
     const inserted = await db
@@ -135,7 +145,9 @@ async function main() {
     await db.delete(programTemplate);
     await db.delete(exercise);
     await db.delete(statsCache);
-    console.log("[seed] hard reset done (workout/program/exercise/stats)");
+    await db.delete(userSetting);
+    await db.delete(uxEventLog);
+    console.log("[seed] hard reset done (workout/program/exercise/stats/settings/ux)");
   }
 
   async function removeLegacyProgramSeeds() {
@@ -646,105 +658,128 @@ async function main() {
     await upsertExercise(item);
   }
 
-  const devUserId = (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() || "dev";
+  const devUserId =
+    options.devUserId?.trim() ||
+    (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() ||
+    "dev";
 
-  if (templateOperatorV1?.id) {
-    await upsertPlanForUser(devUserId, "Program Tactical Barbell Operator", {
-      type: "SINGLE",
-      rootProgramVersionId: templateOperatorV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["D1", "D2", "D3"],
-        sessionKeyMode: "DATE",
-        autoProgression: true,
-        trainingMaxKg: {
-          SQUAT: 150,
-          BENCH: 110,
-          DEADLIFT: 190,
-          PULL: 57.5,
+  if (includeDemoPlans) {
+    if (templateOperatorV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Tactical Barbell Operator", {
+        type: "SINGLE",
+        rootProgramVersionId: templateOperatorV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["D1", "D2", "D3"],
+          sessionKeyMode: "DATE",
+          autoProgression: true,
+          trainingMaxKg: {
+            SQUAT: 150,
+            BENCH: 110,
+            DEADLIFT: 190,
+            PULL: 57.5,
+          },
         },
-      },
-    });
-  }
+      });
+    }
 
-  if (templateStartingStrengthV1?.id) {
-    await upsertPlanForUser(devUserId, "Program Starting Strength LP", {
-      type: "MANUAL",
-      rootProgramVersionId: templateStartingStrengthV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["A", "B"],
-        sessionKeyMode: "DATE",
-      },
-    });
-  }
-
-  if (templateStrongliftsV1?.id) {
-    await upsertPlanForUser(devUserId, "Program StrongLifts 5x5", {
-      type: "MANUAL",
-      rootProgramVersionId: templateStrongliftsV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["A", "B"],
-        sessionKeyMode: "DATE",
-      },
-    });
-  }
-
-  if (templateTexasMethodV1?.id) {
-    await upsertPlanForUser(devUserId, "Program Texas Method", {
-      type: "MANUAL",
-      rootProgramVersionId: templateTexasMethodV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["V", "R", "I"],
-        sessionKeyMode: "DATE",
-      },
-    });
-  }
-
-  if (templateGzclpV1?.id) {
-    await upsertPlanForUser(devUserId, "Program GZCLP", {
-      type: "MANUAL",
-      rootProgramVersionId: templateGzclpV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["D1", "D2", "D3", "D4"],
-        sessionKeyMode: "DATE",
-      },
-    });
-  }
-
-  if (templateGreyskullV1?.id) {
-    await upsertPlanForUser(devUserId, "Program Greyskull LP", {
-      type: "MANUAL",
-      rootProgramVersionId: templateGreyskullV1.id,
-      params: {
-        timezone: "Asia/Seoul",
-        startDate: "2026-01-05",
-        schedule: ["A", "B"],
-        sessionKeyMode: "DATE",
-        autoProgression: true,
-        trainingMaxKg: {
-          SQUAT: 90,
-          BENCH: 62.5,
-          OHP: 42.5,
-          DEADLIFT: 110,
-          PULL: 57.5,
+    if (templateStartingStrengthV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Starting Strength LP", {
+        type: "MANUAL",
+        rootProgramVersionId: templateStartingStrengthV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["A", "B"],
+          sessionKeyMode: "DATE",
         },
-      },
-    });
+      });
+    }
+
+    if (templateStrongliftsV1?.id) {
+      await upsertPlanForUser(devUserId, "Program StrongLifts 5x5", {
+        type: "MANUAL",
+        rootProgramVersionId: templateStrongliftsV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["A", "B"],
+          sessionKeyMode: "DATE",
+        },
+      });
+    }
+
+    if (templateTexasMethodV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Texas Method", {
+        type: "MANUAL",
+        rootProgramVersionId: templateTexasMethodV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["V", "R", "I"],
+          sessionKeyMode: "DATE",
+        },
+      });
+    }
+
+    if (templateGzclpV1?.id) {
+      await upsertPlanForUser(devUserId, "Program GZCLP", {
+        type: "MANUAL",
+        rootProgramVersionId: templateGzclpV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["D1", "D2", "D3", "D4"],
+          sessionKeyMode: "DATE",
+        },
+      });
+    }
+
+    if (templateGreyskullV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Greyskull LP", {
+        type: "MANUAL",
+        rootProgramVersionId: templateGreyskullV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["A", "B"],
+          sessionKeyMode: "DATE",
+          autoProgression: true,
+          trainingMaxKg: {
+            SQUAT: 90,
+            BENCH: 62.5,
+            OHP: 42.5,
+            DEADLIFT: 110,
+            PULL: 57.5,
+          },
+        },
+      });
+    }
   }
 
-  console.log(`Seed done. user=${devUserId}`);
+  console.log(
+    `Seed done. user=${devUserId} includeDemoPlans=${includeDemoPlans ? "1" : "0"} hardReset=${shouldHardReset ? "1" : "0"}`,
+  );
+
+  return {
+    devUserId,
+    includeDemoPlans,
+    shouldHardReset,
+    baseTemplateCount: 7,
+    baseExerciseCount: seededExercises.length,
+  };
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+const isDirectExecution =
+  Boolean(process.argv[1]) && import.meta.url === pathToFileURL(process.argv[1]!).href;
+
+if (isDirectExecution) {
+  runSeed({
+    shouldHardReset: process.env.WORKOUT_SEED_RESET_ALL === "1",
+    includeDemoPlans: process.env.WORKOUT_SEED_SKIP_DEMO_PLANS === "1" ? false : true,
+  }).catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
