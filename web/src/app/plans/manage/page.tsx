@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
-import settingsListStyles from "@/components/ui/settings-list.module.css";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
+import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
@@ -46,6 +49,11 @@ function PlansManagePageContent() {
     [managePlanId, plans],
   );
   const isSettled = useQuerySettled(loadKey, loading);
+  const activeHistoryCount = useMemo(
+    () => plans.filter((item) => Boolean(item.lastPerformedAt)).length,
+    [plans],
+  );
+  const todayDateKey = useMemo(() => toLocalDateKey(), []);
 
   const loadPlans = useCallback(async () => {
     try {
@@ -177,11 +185,24 @@ function PlansManagePageContent() {
               : ""}
         </div>
 
-        <section className="grid gap-2">
-          <div className="ios-section-heading">플랜 목록</div>
-          <p className="text-sm text-neutral-600">
-            진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요.
-          </p>
+        <DashboardHero
+          eyebrow="플랜 관리"
+          title="보유 플랜 관리와 실행"
+          description="이 화면은 이미 시작한 플랜을 정리하고, 필요할 때 바로 오늘 기록이나 히스토리로 이어지는 운영 화면입니다."
+          primaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 스토어", tone: "primary" }}
+          secondaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
+          metrics={[
+            { label: "전체 플랜", value: `${plans.length}개` },
+            { label: "기록 이력", value: `${activeHistoryCount}개` },
+            { label: "빠른 이동", value: "오늘 기록 / 히스토리" },
+          ]}
+          tone="accent"
+        />
+
+        <DashboardSection
+          title="플랜 목록"
+          description="진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요."
+        >
 
           <LoadingStateRows
             active={loading}
@@ -201,27 +222,54 @@ function PlansManagePageContent() {
           />
 
           {plans.length > 0 ? (
-            <article className="motion-card rounded-2xl border p-4 grid gap-2">
-              {plans.map((plan) => (
-                <button
-                  key={plan.id}
-                  type="button"
-                  className="haptic-tap rounded-xl border p-3 grid gap-1 text-left"
-                  onClick={() => openManageSheet(plan)}
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <strong className="min-w-0 truncate">{plan.name}</strong>
-                    <span
-                      aria-hidden="true"
-                      className={settingsListStyles.chevron}
-                      style={{ color: "var(--settings-chevron-color, color-mix(in srgb, var(--text-secondary) 88%, transparent))" }}
-                    />
-                  </span>
-                </button>
-              ))}
-            </article>
+            <DashboardSurface className="grid gap-2">
+              {plans.map((plan) => {
+                const todayWorkoutHref = buildTodayLogHref({
+                  planId: plan.id,
+                  date: todayDateKey,
+                  autoGenerate: true,
+                });
+                return (
+                  <article key={plan.id} className="rounded-xl border p-3 grid gap-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="grid gap-1 min-w-0">
+                        <strong className="min-w-0 truncate">{plan.name}</strong>
+                        <span className="ui-card-label">
+                          기반 프로그램: {plan.baseProgramName ?? "-"}
+                        </span>
+                        <span className="text-sm text-[var(--text-secondary)]">
+                          최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-full border px-3 py-1 text-sm font-medium shrink-0"
+                        onClick={() => openManageSheet(plan)}
+                      >
+                        관리
+                      </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      <a
+                        className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
+                        href={todayWorkoutHref}
+                      >
+                        오늘 운동
+                      </a>
+                      <a
+                        className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
+                        href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
+                      >
+                        수행 히스토리
+                      </a>
+                    </div>
+                  </article>
+                );
+              })}
+            </DashboardSurface>
           ) : null}
-        </section>
+        </DashboardSection>
       </div>
 
       <BottomSheet
@@ -236,22 +284,16 @@ function PlansManagePageContent() {
       >
         {managedPlan ? (
           <div className="space-y-3 pb-2">
-            <div className="rounded-xl border bg-neutral-50 p-3 space-y-2 text-sm">
-              <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                <div>
-                  <div className="ui-card-label">기반 프로그램</div>
-                  <div>{managedPlan.baseProgramName ?? "-"}</div>
-                </div>
-                <div>
-                  <div className="ui-card-label">생성일</div>
-                  <div>{formatDateTime(managedPlan.createdAt)}</div>
-                </div>
-                <div>
-                  <div className="ui-card-label">마지막 수행일</div>
-                  <div>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
-                </div>
-              </div>
-            </div>
+            <Card tone="subtle" padding="sm" elevated={false}>
+              <CardMetaGrid className="grid-cols-1 sm:grid-cols-3">
+                <CardMetaItem label="기반 프로그램" value={managedPlan.baseProgramName ?? "-"} />
+                <CardMetaItem label="생성일" value={formatDateTime(managedPlan.createdAt)} />
+                <CardMetaItem
+                  label="마지막 수행일"
+                  value={managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}
+                />
+              </CardMetaGrid>
+            </Card>
 
             <label className="flex flex-col gap-1">
               <span className="ui-card-label">플랜 이름</span>
@@ -262,7 +304,7 @@ function PlansManagePageContent() {
               />
             </label>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <CardActionGroup className="grid-cols-1 sm:grid-cols-3">
               <a
                 className="haptic-tap rounded-xl border px-4 py-3 text-center text-base font-semibold"
                 href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
@@ -286,15 +328,15 @@ function PlansManagePageContent() {
                 onClick={() => {
                   void deletePlan();
                 }}
-              >
-                {deleting ? "삭제 중..." : "플랜 삭제"}
-              </button>
-            </div>
+                >
+                  {deleting ? "삭제 중..." : "플랜 삭제"}
+                </button>
+            </CardActionGroup>
           </div>
         ) : (
-          <div className="rounded-xl border bg-neutral-50 p-3 text-sm text-neutral-700">
+          <Card tone="subtle" padding="sm" elevated={false} className="text-sm text-neutral-700">
             관리할 플랜을 찾을 수 없습니다.
-          </div>
+          </Card>
         )}
       </BottomSheet>
     </>

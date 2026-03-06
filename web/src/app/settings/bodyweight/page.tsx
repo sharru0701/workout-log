@@ -9,6 +9,7 @@ import {
   ValueRow,
 } from "@/components/ui/settings-list";
 import { ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { Card, CardContent } from "@/components/ui/card";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { SETTINGS_KEYS } from "@/lib/settings/workout-preferences";
@@ -95,33 +96,35 @@ export default function SettingsBodyweightPage() {
 
       <section className="grid gap-2">
         <SectionHeader title="몸무게 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
-        <article className="motion-card rounded-2xl border p-4 grid gap-3">
-          <AppNumberStepper
-            label="Bodyweight (kg)"
-            value={draftBodyweightKg}
-            min={MIN_BODYWEIGHT_KG}
-            max={MAX_BODYWEIGHT_KG}
-            step={0.1}
-            inputMode="decimal"
-            onChange={(next) => setDraftBodyweightKg(normalizeBodyweightKg(next))}
-          />
-          <button
-            type="button"
-            className="ui-primary-button"
-            disabled={bodyweight.pending}
-            onClick={async () => {
-              const result = await bodyweight.commit(normalizeBodyweightKg(draftBodyweightKg));
-              if (!result.ignored && result.ok) {
-                setServerBodyweightKg(result.value);
-                setDraftBodyweightKg(normalizeBodyweightKg(result.value));
-              }
-            }}
-          >
-            {bodyweight.pending ? "저장 중..." : "몸무게 저장"}
-          </button>
-        </article>
+        <Card padding="md" elevated={false}>
+          <CardContent className="gap-3">
+            <AppNumberStepper
+              label="Bodyweight (kg)"
+              value={draftBodyweightKg}
+              min={MIN_BODYWEIGHT_KG}
+              max={MAX_BODYWEIGHT_KG}
+              step={0.1}
+              inputMode="decimal"
+              onChange={(next) => setDraftBodyweightKg(normalizeBodyweightKg(next))}
+            />
+            <button
+              type="button"
+              className="ui-primary-button"
+              disabled={bodyweight.pending}
+              onClick={async () => {
+                const result = await bodyweight.commit(normalizeBodyweightKg(draftBodyweightKg));
+                if (!result.ignored && result.ok) {
+                  setServerBodyweightKg(result.value);
+                  setDraftBodyweightKg(normalizeBodyweightKg(result.value));
+                }
+              }}
+            >
+              {bodyweight.pending ? "저장 중..." : "몸무게 저장"}
+            </button>
+          </CardContent>
+        </Card>
         <SectionFootnote>
-          저장된 몸무게는 Workout Record에서 중량 풀업 계열 종목의 총 부하(외부중량 + 몸무게) 계산에 사용됩니다.
+          저장된 몸무게는 기록 화면에서 중량 풀업 계열 종목의 총 부하(외부중량 + 몸무게) 계산에 사용됩니다.
         </SectionFootnote>
       </section>
     </div>

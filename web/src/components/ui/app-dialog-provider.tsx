@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 
 type DialogTone = "default" | "danger";
 
@@ -203,9 +204,11 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         }
       >
         {active ? (
-          <div className="app-dialog-content">
-            <p className="app-dialog-message">{active.message}</p>
-          </div>
+          <Card tone={active.tone === "danger" ? "danger" : "subtle"} padding="md" elevated={false} className="app-dialog-content">
+            <CardContent>
+              <p className="app-dialog-message">{active.message}</p>
+            </CardContent>
+          </Card>
         ) : null}
       </BottomSheet>
     </AppDialogContext.Provider>

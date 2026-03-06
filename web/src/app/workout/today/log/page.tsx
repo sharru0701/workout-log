@@ -3,6 +3,8 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
+import { APP_ROUTES } from "@/lib/app-routes";
 import {
   computeBodyweightTotalLoadKg,
   computeExternalLoadFromTotalKg,
@@ -35,6 +37,7 @@ import {
 } from "@/lib/workout-ux-events";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
@@ -1449,7 +1452,7 @@ export default function WorkoutTodayPage() {
 
   return (
     <div
-      className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
+      className="native-page native-page-enter tab-screen tab-screen-wide app-dashboard-screen momentum-scroll"
       {...pullToRefresh.bind}
     >
       <div className="pull-refresh-indicator">
@@ -1459,6 +1462,24 @@ export default function WorkoutTodayPage() {
             ? "당겨서 새로고침"
             : ""}
       </div>
+
+      <DashboardHero
+        eyebrow="오늘 기록"
+        title="오늘 세션 생성과 기록"
+        description="이 화면이 실제 핵심 입력 화면입니다. 선택한 플랜으로 세션을 만들고 세트 입력, 오버라이드, 저장까지 한 흐름으로 이어집니다."
+        primaryAction={{
+          href: selectedPlan ? APP_ROUTES.plansManage : APP_ROUTES.programStore,
+          label: selectedPlan ? "보유 플랜 보기" : "프로그램 선택",
+          tone: "secondary",
+        }}
+        secondaryAction={{ href: APP_ROUTES.workoutRecord, label: "기록 워크스페이스", tone: "primary" }}
+        metrics={[
+          { label: "플랜", value: selectedPlan?.name ?? "미선택" },
+          { label: "세션 날짜", value: sessionDate },
+          { label: "동기화 대기", value: `${pendingSyncCount}개` },
+        ]}
+        tone="accent"
+      />
 
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="ios-section-heading">기록 모드</div>
@@ -2156,63 +2177,67 @@ export default function WorkoutTodayPage() {
         description="2탭으로 운동을 넣고 바로 기록하세요."
       >
         <div className="space-y-3 pb-2">
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">추천/등록 운동 드롭다운 검색/선택</span>
-            <div className="workout-combobox" data-no-swipe="true">
-              <div className="app-search-shell">
-                <span className="app-search-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.8-3.8" />
-                  </svg>
-                </span>
-                <input
-                  type="search"
-                  inputMode="search"
-                  className="app-search-input"
-                  value={addExerciseQuery}
-                  placeholder="예: Bench Press"
-                  onChange={(event) => setAddExerciseQuery(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    if (selectedAddExerciseName) {
-                      addExerciseFromSheet(selectedAddExerciseName);
-                      return;
-                    }
-                    addExerciseFromSheet(addExerciseQuery.trim());
-                  }}
-                />
-                {addExerciseQuery.trim().length > 0 ? (
-                  <button
-                    type="button"
-                    className="app-search-clear"
-                    aria-label="검색어 지우기"
-                    onClick={() => setAddExerciseQuery("")}
-                  >
-                    ×
-                  </button>
-                ) : null}
-              </div>
+          <Card padding="md" elevated={false}>
+            <CardContent>
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">추천/등록 운동 드롭다운 검색/선택</span>
+                <div className="workout-combobox" data-no-swipe="true">
+                  <div className="app-search-shell">
+                    <span className="app-search-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.8-3.8" />
+                      </svg>
+                    </span>
+                    <input
+                      type="search"
+                      inputMode="search"
+                      className="app-search-input"
+                      value={addExerciseQuery}
+                      placeholder="예: Bench Press"
+                      onChange={(event) => setAddExerciseQuery(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        event.preventDefault();
+                        if (selectedAddExerciseName) {
+                          addExerciseFromSheet(selectedAddExerciseName);
+                          return;
+                        }
+                        addExerciseFromSheet(addExerciseQuery.trim());
+                      }}
+                    />
+                    {addExerciseQuery.trim().length > 0 ? (
+                      <button
+                        type="button"
+                        className="app-search-clear"
+                        aria-label="검색어 지우기"
+                        onClick={() => setAddExerciseQuery("")}
+                      >
+                        ×
+                      </button>
+                    ) : null}
+                  </div>
 
-              <div className="workout-combobox-panel" role="listbox" aria-label="추천 운동 검색 결과">
-                {addExerciseCandidates.length === 0 ? (
-                  <span className="workout-combobox-empty">검색 결과가 없습니다.</span>
-                ) : (
-                  addExerciseCandidates.map((exerciseName) => (
-                    <button
-                      key={exerciseName}
-                      type="button"
-                      className={`haptic-tap workout-combobox-option${selectedAddExerciseName === exerciseName ? " is-active" : ""}`}
-                      onClick={() => setSelectedAddExerciseName(exerciseName)}
-                    >
-                      {exerciseName}
-                    </button>
-                  ))
-                )}
-              </div>
-            </div>
-          </label>
+                  <div className="workout-combobox-panel" role="listbox" aria-label="추천 운동 검색 결과">
+                    {addExerciseCandidates.length === 0 ? (
+                      <span className="workout-combobox-empty">검색 결과가 없습니다.</span>
+                    ) : (
+                      addExerciseCandidates.map((exerciseName) => (
+                        <button
+                          key={exerciseName}
+                          type="button"
+                          className={`haptic-tap workout-combobox-option${selectedAddExerciseName === exerciseName ? " is-active" : ""}`}
+                          onClick={() => setSelectedAddExerciseName(exerciseName)}
+                        >
+                          {exerciseName}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </label>
+            </CardContent>
+          </Card>
 
           {addExerciseCandidates.length === 0 ? (
             <EmptyStateRows
@@ -2240,74 +2265,78 @@ export default function WorkoutTodayPage() {
         description={`대상 세션: ${formatSessionKeyLabel(sessionKey)}`}
       >
         <div className="space-y-4 pb-2">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="ui-card-label">선택 세트 행(추가 상태 필수)</span>
-              <AppSelect
-                variant="compact"
-                value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
-                onChange={(e) => {
-                  setSelectedSetIdx(e.target.value === "" ? null : Number(e.target.value));
+          <Card padding="md" elevated={false}>
+            <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
+              <label className="flex flex-col gap-1 md:col-span-2">
+                <span className="ui-card-label">선택 세트 행(추가 상태 필수)</span>
+                <AppSelect
+                  variant="compact"
+                  value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
+                  onChange={(e) => {
+                    setSelectedSetIdx(e.target.value === "" ? null : Number(e.target.value));
+                  }}
+                >
+                  <option value="">(행 선택)</option>
+                  {sets.map((s, idx) => (
+                    <option key={idx} value={idx}>
+                      #{idx + 1} {s.exerciseName || "(비어 있음)"} [{s.isExtra ? "추가" : s.isPlanned ? "계획" : "사용자"}]
+                    </option>
+                  ))}
+                </AppSelect>
+              </label>
+              <button
+                className="haptic-tap workout-action-pill is-secondary workout-inline-action"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  makeAccessoryPermanent().catch((e) => setError(e.message));
                 }}
               >
-                <option value="">(행 선택)</option>
-                {sets.map((s, idx) => (
-                  <option key={idx} value={idx}>
-                    #{idx + 1} {s.exerciseName || "(비어 있음)"} [{s.isExtra ? "추가" : s.isPlanned ? "계획" : "사용자"}]
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
-            <button
-              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
-              type="button"
-              onClick={() => {
-                setSuccess(null);
-                setError(null);
-                makeAccessoryPermanent().catch((e) => setError(e.message));
-              }}
-            >
-              보조 운동 고정
-            </button>
-          </div>
+                보조 운동 고정
+              </button>
+            </CardContent>
+          </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">블록 대상</span>
-              <AppSelect
-                variant="compact"
-                value={blockTarget}
-                onChange={(e) => setBlockTarget(e.target.value)}
+          <Card padding="md" elevated={false}>
+            <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">블록 대상</span>
+                <AppSelect
+                  variant="compact"
+                  value={blockTarget}
+                  onChange={(e) => setBlockTarget(e.target.value)}
+                >
+                  <option value="SQUAT">SQUAT</option>
+                  <option value="BENCH">BENCH</option>
+                  <option value="DEADLIFT">DEADLIFT</option>
+                  <option value="OHP">OHP</option>
+                  <option value="PULL">PULL</option>
+                  <option value="CUSTOM">CUSTOM</option>
+                </AppSelect>
+              </label>
+              <label className="flex flex-col gap-1 md:col-span-2">
+                <span className="ui-card-label">대체 운동 이름</span>
+                <AppTextInput
+                  variant="compact"
+                  value={replacementExerciseName}
+                  onChange={(e) => setReplacementExerciseName(e.target.value)}
+                  placeholder="예: Paused Bench Press"
+                />
+              </label>
+              <button
+                className="haptic-tap workout-action-pill is-secondary workout-inline-action"
+                type="button"
+                onClick={() => {
+                  setSuccess(null);
+                  setError(null);
+                  replaceExercisePermanent().catch((e) => setError(e.message));
+                }}
               >
-                <option value="SQUAT">SQUAT</option>
-                <option value="BENCH">BENCH</option>
-                <option value="DEADLIFT">DEADLIFT</option>
-                <option value="OHP">OHP</option>
-                <option value="PULL">PULL</option>
-                <option value="CUSTOM">CUSTOM</option>
-              </AppSelect>
-            </label>
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="ui-card-label">대체 운동 이름</span>
-              <AppTextInput
-                variant="compact"
-                value={replacementExerciseName}
-                onChange={(e) => setReplacementExerciseName(e.target.value)}
-                placeholder="예: Paused Bench Press"
-              />
-            </label>
-            <button
-              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
-              type="button"
-              onClick={() => {
-                setSuccess(null);
-                setError(null);
-                replaceExercisePermanent().catch((e) => setError(e.message));
-              }}
-            >
-              운동 교체
-            </button>
-          </div>
+                운동 교체
+              </button>
+            </CardContent>
+          </Card>
         </div>
       </BottomSheet>
 

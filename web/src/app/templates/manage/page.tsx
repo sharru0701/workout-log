@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -223,7 +224,7 @@ export default function TemplatesPage() {
   }
 
   useEffect(() => {
-    loadTemplates().catch((e: any) => setError(e?.message ?? "Failed to load templates"));
+    loadTemplates().catch((e: any) => setError(e?.message ?? "템플릿을 불러오지 못했습니다."));
   }, [userId]);
 
   useEffect(() => {
@@ -266,7 +267,7 @@ export default function TemplatesPage() {
     const res = await apiPost<{ template: TemplateItem }>(`/api/templates/${encodeURIComponent(slug)}/fork`, {});
     await loadTemplates();
     setSelectedSlug(res.template.slug);
-    setSuccess(`Forked template: ${res.template.slug}`);
+    setSuccess(`템플릿을 포크했습니다: ${res.template.slug}`);
   }
 
   function addManualSession() {
@@ -280,7 +281,7 @@ export default function TemplatesPage() {
   }
 
   async function createNewVersion() {
-    if (!selectedTemplate) throw new Error("Select a template");
+    if (!selectedTemplate) throw new Error("템플릿을 먼저 선택하세요.");
     if (!selectedBaseVersion) throw new Error("기준 버전을 선택하세요.");
 
     const nextDefinition = cloneValue(selectedBaseVersion.definition ?? {});
@@ -324,7 +325,7 @@ export default function TemplatesPage() {
 
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="ui-card-label">userId</span>
+          <span className="ui-card-label">사용자 ID</span>
           <AppTextInput
             variant="compact"
             value={userId}
@@ -332,7 +333,7 @@ export default function TemplatesPage() {
           />
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="ui-card-label">Search template/program</span>
+          <span className="ui-card-label">템플릿/프로그램 검색</span>
           <div className="app-search-shell">
             <span className="app-search-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
@@ -345,14 +346,14 @@ export default function TemplatesPage() {
               inputMode="search"
               className="app-search-input"
               value={searchQuery}
-              placeholder="name, slug, type, tag..."
+              placeholder="이름, slug, 타입, 태그..."
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             {searchQuery.trim().length > 0 ? (
               <button
                 type="button"
                 className="app-search-clear"
-                aria-label="Clear search"
+                aria-label="검색어 지우기"
                 onClick={() => setSearchQuery("")}
               >
                 ×
@@ -361,13 +362,13 @@ export default function TemplatesPage() {
           </div>
         </label>
         <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="ui-card-label">Tag filter</span>
+          <span className="ui-card-label">태그 필터</span>
           <AppSelect
             variant="compact"
             value={selectedTag}
             onChange={(e) => setSelectedTag(e.target.value)}
           >
-            <option value="">(all tags)</option>
+            <option value="">전체 태그</option>
             {allTags.map((tag) => (
               <option key={tag} value={tag}>
                 {tag}
@@ -375,20 +376,20 @@ export default function TemplatesPage() {
             ))}
           </AppSelect>
         </label>
-        <div className="md:col-span-4 text-sm text-neutral-600">{`${filteredTemplates.length}/${templates.length} templates visible`}</div>
+        <div className="md:col-span-4 text-sm text-neutral-600">{`${filteredTemplates.length}/${templates.length}개 표시 중`}</div>
         <div className="md:col-span-4 flex gap-2">
           <button
             className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setError(null);
               setSuccess(null);
-              loadTemplates().catch((e: any) => setError(e?.message ?? "Failed to reload"));
+              loadTemplates().catch((e: any) => setError(e?.message ?? "템플릿을 다시 불러오지 못했습니다."));
             }}
           >
-            Reload
+            다시 불러오기
           </button>
-          <a className="haptic-tap rounded-xl border px-4 py-2 font-medium" href="/plans">
-            Go to Plans
+          <a className="haptic-tap rounded-xl border px-4 py-2 font-medium" href={APP_ROUTES.plansHome}>
+            플랜 화면
           </a>
         </div>
         <div className="md:col-span-8">
@@ -406,7 +407,7 @@ export default function TemplatesPage() {
               setSuccess(null);
               loadTemplates()
                 .then(() => (selectedSlug ? loadVersions(selectedSlug) : Promise.resolve()))
-                .catch((e: any) => setError(e?.message ?? "Failed to reload"));
+                .catch((e: any) => setError(e?.message ?? "템플릿을 다시 불러오지 못했습니다."));
             }}
           />
         </div>

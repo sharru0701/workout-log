@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper } from "@/components/ui/form-controls";
 import {
   BaseGroupedList,
@@ -253,30 +254,32 @@ export default function SettingsMinimumPlatePage() {
 
       <section className="grid gap-2">
         <SectionHeader title="기본값 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
-        <article className="motion-card rounded-2xl border p-4 grid gap-3">
-          <AppNumberStepper
-            label="기본 최소 원판 (kg)"
-            value={defaultDraftKg}
-            min={0.25}
-            max={25}
-            step={0.25}
-            inputMode="decimal"
-            onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
-          />
-          <button
-            type="button"
-            className="ui-primary-button"
-            disabled={defaultIncrement.pending}
-            onClick={async () => {
-              const result = await defaultIncrement.commit(normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG));
-              if (!result.ignored && result.ok) {
-                setServerDefaultKg(result.value);
-              }
-            }}
-          >
-            {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
-          </button>
-        </article>
+        <Card padding="md" elevated={false}>
+          <CardContent className="gap-3">
+            <AppNumberStepper
+              label="기본 최소 원판 (kg)"
+              value={defaultDraftKg}
+              min={0.25}
+              max={25}
+              step={0.25}
+              inputMode="decimal"
+              onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
+            />
+            <button
+              type="button"
+              className="ui-primary-button"
+              disabled={defaultIncrement.pending}
+              onClick={async () => {
+                const result = await defaultIncrement.commit(normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG));
+                if (!result.ignored && result.ok) {
+                  setServerDefaultKg(result.value);
+                }
+              }}
+            >
+              {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
+            </button>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-2">
@@ -309,14 +312,14 @@ export default function SettingsMinimumPlatePage() {
           ariaLabel="Minimum plate rule empty state"
         />
         <SectionFootnote>
-          저장된 규칙은 Workout Record 무게 입력 시 자동으로 스냅되어 적용됩니다.
+          저장된 규칙은 기록 화면의 무게 입력 시 자동으로 스냅되어 적용됩니다.
         </SectionFootnote>
       </section>
 
       <BottomSheet
         open={sheetOpen}
         title={editingRuleKey ? "종목별 최소 원판 규칙 편집" : "종목별 최소 원판 규칙 추가"}
-        description="운동종목을 선택하고 increment를 설정하세요."
+        description="운동종목을 선택하고 증가 단위를 설정하세요."
         onClose={() => setSheetOpen(false)}
         closeLabel="닫기"
         className="stats-sheet stats-sheet--large"
@@ -339,110 +342,118 @@ export default function SettingsMinimumPlatePage() {
         }
       >
         <div className="grid gap-3">
-          <label className="grid gap-1">
-            <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
-            <div className="workout-combobox" data-no-swipe="true">
-              <div className="app-search-shell">
-                <span className="app-search-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.8-3.8" />
-                  </svg>
-                </span>
-                <input
-                  type="search"
-                  inputMode="search"
-                  className="app-search-input"
-                  value={exerciseQuery}
-                  placeholder="예: Pull-up"
-                  onChange={(event) => {
-                    const nextQuery = event.target.value;
-                    setExerciseQuery(nextQuery);
-                    setSheetError(null);
-                    setRuleDraft((prev) => {
-                      if (!prev.exerciseId) return prev;
-                      if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                      return { ...prev, exerciseId: null, exerciseName: "" };
-                    });
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    const first = visibleExercises[0] ?? null;
-                    if (!first) return;
-                    selectExerciseOption(first);
-                  }}
-                />
-                {exerciseQuery.trim().length > 0 ? (
-                  <button
-                    type="button"
-                    className="app-search-clear"
-                    aria-label="검색어 지우기"
-                    onClick={() => {
-                      setExerciseQuery("");
-                      setSheetError(null);
-                    }}
-                  >
-                    ×
-                  </button>
-                ) : null}
-              </div>
-
-              {selectedExerciseOption ? (
-                <div className="workout-combobox-selected" role="status" aria-live="polite">
-                  <span className="workout-combobox-selected-kicker">선택됨</span>
-                  <strong className="workout-combobox-selected-name">
-                    {selectedExerciseOption.category
-                      ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
-                      : selectedExerciseOption.name}
-                  </strong>
-                  <button
-                    type="button"
-                    className="haptic-tap workout-combobox-selected-edit"
-                    onClick={() => selectExerciseOption(null)}
-                  >
-                    선택 변경
-                  </button>
-                </div>
-              ) : null}
-
-              {!selectedExerciseOption ? (
-                <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
-                  {visibleExercises.length === 0 ? (
-                    <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
-                  ) : (
-                    visibleExercises.map((exercise) => (
+          <Card padding="md" elevated={false}>
+            <CardContent>
+              <label className="grid gap-1">
+                <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
+                <div className="workout-combobox" data-no-swipe="true">
+                  <div className="app-search-shell">
+                    <span className="app-search-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.8-3.8" />
+                      </svg>
+                    </span>
+                    <input
+                      type="search"
+                      inputMode="search"
+                      className="app-search-input"
+                      value={exerciseQuery}
+                      placeholder="예: Pull-up"
+                      onChange={(event) => {
+                        const nextQuery = event.target.value;
+                        setExerciseQuery(nextQuery);
+                        setSheetError(null);
+                        setRuleDraft((prev) => {
+                          if (!prev.exerciseId) return prev;
+                          if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                          return { ...prev, exerciseId: null, exerciseName: "" };
+                        });
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        event.preventDefault();
+                        const first = visibleExercises[0] ?? null;
+                        if (!first) return;
+                        selectExerciseOption(first);
+                      }}
+                    />
+                    {exerciseQuery.trim().length > 0 ? (
                       <button
-                        key={exercise.id}
                         type="button"
-                        className={`haptic-tap workout-combobox-option${ruleDraft.exerciseId === exercise.id ? " is-active" : ""}`}
+                        className="app-search-clear"
+                        aria-label="검색어 지우기"
                         onClick={() => {
-                          selectExerciseOption(exercise);
+                          setExerciseQuery("");
+                          setSheetError(null);
                         }}
                       >
-                        {exercise.category ? `${exercise.name} · ${exercise.category}` : exercise.name}
+                        ×
                       </button>
-                    ))
-                  )}
-                </div>
-              ) : null}
-            </div>
-          </label>
+                    ) : null}
+                  </div>
 
-          <AppNumberStepper
-            label="최소 원판 Increment (kg)"
-            value={ruleDraft.incrementKg}
-            min={0.25}
-            max={25}
-            step={0.25}
-            inputMode="decimal"
-            onChange={(next) =>
-              setRuleDraft((prev) => ({
-                ...prev,
-                incrementKg: normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG),
-              }))
-            }
-          />
+                  {selectedExerciseOption ? (
+                    <div className="workout-combobox-selected" role="status" aria-live="polite">
+                      <span className="workout-combobox-selected-kicker">선택됨</span>
+                      <strong className="workout-combobox-selected-name">
+                        {selectedExerciseOption.category
+                          ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
+                          : selectedExerciseOption.name}
+                      </strong>
+                      <button
+                        type="button"
+                        className="haptic-tap workout-combobox-selected-edit"
+                        onClick={() => selectExerciseOption(null)}
+                      >
+                        선택 변경
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {!selectedExerciseOption ? (
+                    <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                      {visibleExercises.length === 0 ? (
+                        <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                      ) : (
+                        visibleExercises.map((exercise) => (
+                          <button
+                            key={exercise.id}
+                            type="button"
+                            className={`haptic-tap workout-combobox-option${ruleDraft.exerciseId === exercise.id ? " is-active" : ""}`}
+                            onClick={() => {
+                              selectExerciseOption(exercise);
+                            }}
+                          >
+                            {exercise.category ? `${exercise.name} · ${exercise.category}` : exercise.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
+                </div>
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card padding="md" elevated={false}>
+            <CardContent>
+              <AppNumberStepper
+                label="최소 원판 Increment (kg)"
+                value={ruleDraft.incrementKg}
+                min={0.25}
+                max={25}
+                step={0.25}
+                inputMode="decimal"
+                onChange={(next) =>
+                  setRuleDraft((prev) => ({
+                    ...prev,
+                    incrementKg: normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG),
+                  }))
+                }
+              />
+            </CardContent>
+          </Card>
 
           {sheetError ? <p className="text-sm text-[var(--color-danger)]">{sheetError}</p> : null}
         </div>

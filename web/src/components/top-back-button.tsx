@@ -5,24 +5,24 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
 function titleFromPathname(pathname: string) {
-  if (pathname === "/") return "Home";
-  if (pathname.startsWith("/workout-record/add-exercise")) return "Add Exercise";
-  if (pathname.startsWith("/workout-record/exercise-catalog")) return "Exercise Catalog";
-  if (pathname.startsWith("/workout-record")) return "Workout Record";
-  if (pathname.startsWith("/program-store/create")) return "Create Program";
-  if (pathname.startsWith("/program-store/customize")) return "Customize Program";
-  if (pathname.startsWith("/program-store/detail")) return "Program Detail";
-  if (pathname.startsWith("/program-store")) return "Program Store";
-  if (pathname.startsWith("/stats-1rm")) return "1RM Stats";
-  if (pathname.startsWith("/settings/theme")) return "Theme";
-  if (pathname.startsWith("/settings/minimum-plate")) return "Minimum Plate";
-  if (pathname.startsWith("/settings/bodyweight")) return "Bodyweight";
-  if (pathname.startsWith("/settings/exercise-management")) return "Exercise Catalog";
-  if (pathname.startsWith("/settings/data-export")) return "Data Export";
-  if (pathname.startsWith("/settings/offline-help")) return "Offline Help";
-  if (pathname.startsWith("/settings/about")) return "App Info";
-  if (pathname.startsWith("/settings")) return "Settings";
-  return "Workout Log";
+  if (pathname === "/") return "홈";
+  if (pathname.startsWith("/workout-record/add-exercise")) return "운동 추가";
+  if (pathname.startsWith("/workout-record/exercise-catalog")) return "운동 카탈로그";
+  if (pathname.startsWith("/workout-record")) return "기록";
+  if (pathname.startsWith("/program-store/create")) return "프로그램 만들기";
+  if (pathname.startsWith("/program-store/customize")) return "프로그램 수정";
+  if (pathname.startsWith("/program-store/detail")) return "프로그램 상세";
+  if (pathname.startsWith("/program-store")) return "프로그램";
+  if (pathname.startsWith("/stats-1rm")) return "1RM";
+  if (pathname.startsWith("/settings/theme")) return "테마";
+  if (pathname.startsWith("/settings/minimum-plate")) return "최소 원판";
+  if (pathname.startsWith("/settings/bodyweight")) return "몸무게";
+  if (pathname.startsWith("/settings/exercise-management")) return "운동 카탈로그";
+  if (pathname.startsWith("/settings/data-export")) return "데이터 내보내기";
+  if (pathname.startsWith("/settings/offline-help")) return "오프라인 도움말";
+  if (pathname.startsWith("/settings/about")) return "앱 정보";
+  if (pathname.startsWith("/settings")) return "설정";
+  return "운동 기록";
 }
 
 export function TopBackButton() {

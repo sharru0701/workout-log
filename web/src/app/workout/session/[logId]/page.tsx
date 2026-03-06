@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { formatExerciseLoadLabel, computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
@@ -115,7 +116,7 @@ export default function WorkoutSessionDetailPage() {
       } catch (e: any) {
         if (!cancelled) {
           setItem(null);
-          setError(e?.message ?? "Failed to load session detail");
+          setError(e?.message ?? "세션 상세를 불러오지 못했습니다.");
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -181,9 +182,9 @@ export default function WorkoutSessionDetailPage() {
       <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <a
           className="haptic-tap rounded-xl border px-4 py-2 text-center font-medium md:col-span-2"
-          href="/workout/today"
+          href={APP_ROUTES.todayLog}
         >
-          Back to today
+          오늘 기록으로 돌아가기
         </a>
 
         <button
@@ -194,11 +195,11 @@ export default function WorkoutSessionDetailPage() {
             setLoading(true);
             apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
               .then((res) => setItem(res.item))
-              .catch((e: any) => setError(e?.message ?? "Failed to reload"))
+              .catch((e: any) => setError(e?.message ?? "세션 상세를 다시 불러오지 못했습니다."))
               .finally(() => setLoading(false));
           }}
         >
-          Reload
+          다시 불러오기
         </button>
       </div>
 

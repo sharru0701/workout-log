@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput, AppTextarea } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -763,15 +766,15 @@ export default function WorkoutRecordPage() {
   const noPlan = isPlansSettled && !error && plans.length === 0;
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
       <LoadingStateRows
         active={loading}
         delayMs={160}
-        label="Workout Record 로딩 중"
+        label="기록 화면 불러오는 중"
       />
       <ErrorStateRows
         message={error}
-        title="Workout Record 데이터를 불러오지 못했습니다"
+        title="기록 화면 데이터를 불러오지 못했습니다"
         onRetry={() => {
           if (selectedPlan && selectedPlan.id) {
             void loadWorkoutContext(selectedPlan.id, selectedPlan.name, query.date, workoutPreferences);
@@ -791,6 +794,20 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
+          <DashboardHero
+            eyebrow="기록"
+            title="운동 기록 워크스페이스"
+            description="이 화면은 플랜 기반 기록을 다시 보거나 세부 편집이 필요할 때 쓰는 보조 입력 화면입니다. 기본 시작은 오늘 기록 화면이고, 여기서는 편집과 보강에 집중합니다."
+            primaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록으로 이동", tone: "secondary" }}
+            secondaryAction={{ href: APP_ROUTES.stats1rm, label: "1RM 보기", tone: "primary" }}
+            metrics={[
+              { label: "플랜", value: selectedPlan?.name ?? draft.session.planName },
+              { label: "주차/세션", value: `W${draft.session.week} / ${draft.session.sessionType}` },
+              { label: "편집 상태", value: hasWorkoutEdits(draft) ? "변경 있음" : "변경 없음" },
+            ]}
+            tone="accent"
+          />
+
           <section className="grid gap-2">
             <h2 className="ios-section-heading">선택된 플랜</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-2">
@@ -988,141 +1005,147 @@ export default function WorkoutRecordPage() {
         }
       >
         <div className="grid gap-3">
-          <label className="grid gap-1">
-            <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
-            <div className="workout-combobox" data-no-swipe="true">
-              <div className="app-search-shell">
-                <span className="app-search-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.8-3.8" />
-                  </svg>
-                </span>
-                <input
-                  type="search"
-                  inputMode="search"
-                  className="app-search-input"
-                  value={exerciseQuery}
-                  placeholder="예: Squat"
-                  onChange={(event) => {
-                    const nextQuery = event.target.value;
-                    setExerciseQuery(nextQuery);
-                    setExerciseOptionsError(null);
-                    setAddDraft((prev) => {
-                      if (!prev.exerciseId) return prev;
-                      if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                      return { ...prev, exerciseId: null, exerciseName: "" };
-                    });
-                  }}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter") return;
-                    event.preventDefault();
-                    const first = filteredExerciseOptions[0] ?? null;
-                    if (!first) return;
-                    selectExerciseOption(first);
-                  }}
-                />
-                {exerciseQuery.trim().length > 0 ? (
-                  <button
-                    type="button"
-                    className="app-search-clear"
-                    aria-label="검색어 지우기"
-                    onClick={() => {
-                      setExerciseQuery("");
-                      setExerciseOptionsError(null);
-                    }}
-                  >
-                    ×
-                  </button>
-                ) : null}
-              </div>
-
-              {selectedExerciseOption ? (
-                <div className="workout-combobox-selected" role="status" aria-live="polite">
-                  <span className="workout-combobox-selected-kicker">선택됨</span>
-                  <strong className="workout-combobox-selected-name">
-                    {selectedExerciseOption.category
-                      ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
-                      : selectedExerciseOption.name}
-                  </strong>
-                  <button
-                    type="button"
-                    className="haptic-tap workout-combobox-selected-edit"
-                    onClick={() => selectExerciseOption(null)}
-                  >
-                    선택 변경
-                  </button>
-                </div>
-              ) : null}
-
-              {!selectedExerciseOption ? (
-                <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
-                  {exerciseOptionsLoading ? (
-                    <span className="workout-combobox-empty">검색 중...</span>
-                  ) : filteredExerciseOptions.length === 0 ? (
-                    <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
-                  ) : (
-                    filteredExerciseOptions.map((option) => (
+          <Card padding="md" elevated={false}>
+            <CardContent>
+              <label className="grid gap-1">
+                <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
+                <div className="workout-combobox" data-no-swipe="true">
+                  <div className="app-search-shell">
+                    <span className="app-search-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" focusable="false">
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="m20 20-3.8-3.8" />
+                      </svg>
+                    </span>
+                    <input
+                      type="search"
+                      inputMode="search"
+                      className="app-search-input"
+                      value={exerciseQuery}
+                      placeholder="예: Squat"
+                      onChange={(event) => {
+                        const nextQuery = event.target.value;
+                        setExerciseQuery(nextQuery);
+                        setExerciseOptionsError(null);
+                        setAddDraft((prev) => {
+                          if (!prev.exerciseId) return prev;
+                          if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                          return { ...prev, exerciseId: null, exerciseName: "" };
+                        });
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key !== "Enter") return;
+                        event.preventDefault();
+                        const first = filteredExerciseOptions[0] ?? null;
+                        if (!first) return;
+                        selectExerciseOption(first);
+                      }}
+                    />
+                    {exerciseQuery.trim().length > 0 ? (
                       <button
-                        key={option.id}
                         type="button"
-                        className={`haptic-tap workout-combobox-option${addDraft.exerciseId === option.id ? " is-active" : ""}`}
+                        className="app-search-clear"
+                        aria-label="검색어 지우기"
                         onClick={() => {
-                          selectExerciseOption(option);
+                          setExerciseQuery("");
+                          setExerciseOptionsError(null);
                         }}
                       >
-                        {option.category ? `${option.name} · ${option.category}` : option.name}
+                        ×
                       </button>
-                    ))
-                  )}
+                    ) : null}
+                  </div>
+
+                  {selectedExerciseOption ? (
+                    <div className="workout-combobox-selected" role="status" aria-live="polite">
+                      <span className="workout-combobox-selected-kicker">선택됨</span>
+                      <strong className="workout-combobox-selected-name">
+                        {selectedExerciseOption.category
+                          ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
+                          : selectedExerciseOption.name}
+                      </strong>
+                      <button
+                        type="button"
+                        className="haptic-tap workout-combobox-selected-edit"
+                        onClick={() => selectExerciseOption(null)}
+                      >
+                        선택 변경
+                      </button>
+                    </div>
+                  ) : null}
+
+                  {!selectedExerciseOption ? (
+                    <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                      {exerciseOptionsLoading ? (
+                        <span className="workout-combobox-empty">검색 중...</span>
+                      ) : filteredExerciseOptions.length === 0 ? (
+                        <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                      ) : (
+                        filteredExerciseOptions.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className={`haptic-tap workout-combobox-option${addDraft.exerciseId === option.id ? " is-active" : ""}`}
+                            onClick={() => {
+                              selectExerciseOption(option);
+                            }}
+                          >
+                            {option.category ? `${option.name} · ${option.category}` : option.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-          </label>
+              </label>
+            </CardContent>
+          </Card>
 
           {exerciseOptionsError ? <p className="text-sm text-[var(--color-warning)]">{exerciseOptionsError}</p> : null}
 
-          <AppNumberStepper
-            label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
-            value={addDraft.weightKg}
-            min={0}
-            max={1000}
-            step={addDraftIncrementKg}
-            inputMode="decimal"
-            onChange={(value) =>
-              setAddDraft((prev) => ({
-                ...prev,
-                weightKg: resolveWeightWithCurrentPreferences(
-                  value,
-                  prev.exerciseId,
-                  prev.exerciseName,
-                ),
-              }))
-            }
-          />
-          {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-            <p className="px-1 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
-          ) : null}
+          <Card padding="md" elevated={false}>
+            <CardContent>
+              <AppNumberStepper
+                label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
+                value={addDraft.weightKg}
+                min={0}
+                max={1000}
+                step={addDraftIncrementKg}
+                inputMode="decimal"
+                onChange={(value) =>
+                  setAddDraft((prev) => ({
+                    ...prev,
+                    weightKg: resolveWeightWithCurrentPreferences(
+                      value,
+                      prev.exerciseId,
+                      prev.exerciseName,
+                    ),
+                  }))
+                }
+              />
+              {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
+                <p className="px-1 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
+              ) : null}
 
-          <div className="grid gap-2">
-            <div className="grid gap-2">
-              {addDraft.repsPerSet.map((setReps, index) => (
-                <AppNumberStepper
-                  key={`add-set-${index}`}
-                  label={`${index + 1}세트`}
-                  value={setReps}
-                  min={1}
-                  max={100}
-                  onChange={(value) =>
-                    setAddDraft((prev) => ({
-                      ...prev,
-                      repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
-                    }))
-                  }
-                />
-              ))}
-            </div>
-            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2">
+                <div className="grid gap-2">
+                  {addDraft.repsPerSet.map((setReps, index) => (
+                    <AppNumberStepper
+                      key={`add-set-${index}`}
+                      label={`${index + 1}세트`}
+                      value={setReps}
+                      min={1}
+                      max={100}
+                      onChange={(value) =>
+                        setAddDraft((prev) => ({
+                          ...prev,
+                          repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
+                        }))
+                      }
+                    />
+                  ))}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
               <button
               type="button"
               className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
@@ -1150,16 +1173,18 @@ export default function WorkoutRecordPage() {
               <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
               <span>마지막 세트</span>
             </button>
-          </div>
-          </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
-            <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
+            <Card tone="subtle" padding="sm" elevated={false} className="text-xs text-[var(--text-secondary)]">
               {addDraftIncrementInfo.source === "RULE" ? <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span> : null}
               {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
                 <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
               ) : null}
-            </div>
+            </Card>
           ) : null}
 
           <label className="grid gap-1">

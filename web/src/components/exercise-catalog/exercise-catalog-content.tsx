@@ -5,6 +5,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
 
 type ExerciseItem = {
   id: string;
@@ -95,75 +96,79 @@ export function ExerciseCatalogContent() {
 
       <section className="grid gap-2">
         <h2 className="ios-section-heading">운동종목 CRUD</h2>
-        <article className="motion-card rounded-2xl border p-4 grid gap-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">검색</span>
-            <input
-              className="workout-set-input workout-set-input-text"
-              value={query}
-              placeholder="운동종목 검색"
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </label>
-          <button
-            type="button"
-            className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
-            onClick={() => {
-              void loadExercises(query);
-            }}
-          >
-            검색
-          </button>
-        </article>
+        <Card padding="md" elevated={false}>
+          <CardContent className="gap-2">
+            <label className="grid gap-1">
+              <span className="ui-card-label">검색</span>
+              <input
+                className="workout-set-input workout-set-input-text"
+                value={query}
+                placeholder="운동종목 검색"
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
+              onClick={() => {
+                void loadExercises(query);
+              }}
+            >
+              검색
+            </button>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-2">
         <h2 className="ios-section-heading">추가 (Create)</h2>
-        <article className="motion-card rounded-2xl border p-4 grid gap-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">운동종목명</span>
-            <input
-              className="workout-set-input workout-set-input-text"
-              value={createName}
-              onChange={(event) => setCreateName(event.target.value)}
-              placeholder="예: Incline Bench Press"
-            />
-          </label>
-          <label className="grid gap-1">
-            <span className="ui-card-label">카테고리 (선택)</span>
-            <input
-              className="workout-set-input workout-set-input-text"
-              value={createCategory}
-              onChange={(event) => setCreateCategory(event.target.value)}
-              placeholder="예: Chest"
-            />
-          </label>
-          <button
-            type="button"
-            className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
-            disabled={savingCreate || !createName.trim()}
-            onClick={async () => {
-              try {
-                setSavingCreate(true);
-                setNotice(null);
-                const res = await apiPost<ExerciseCreateResponse>("/api/exercises", {
-                  name: createName.trim(),
-                  category: createCategory.trim() || null,
-                });
-                setCreateName("");
-                setCreateCategory("");
-                setNotice(res.created ? "운동종목이 추가되었습니다." : "이미 존재하는 운동종목입니다.");
-                await loadExercises(query);
-              } catch (e: any) {
-                setError(e?.message ?? "운동종목 추가에 실패했습니다.");
-              } finally {
-                setSavingCreate(false);
-              }
-            }}
-          >
-            {savingCreate ? "추가 중..." : "운동종목 추가"}
-          </button>
-        </article>
+        <Card padding="md" elevated={false}>
+          <CardContent className="gap-2">
+            <label className="grid gap-1">
+              <span className="ui-card-label">운동종목명</span>
+              <input
+                className="workout-set-input workout-set-input-text"
+                value={createName}
+                onChange={(event) => setCreateName(event.target.value)}
+                placeholder="예: Incline Bench Press"
+              />
+            </label>
+            <label className="grid gap-1">
+              <span className="ui-card-label">카테고리 (선택)</span>
+              <input
+                className="workout-set-input workout-set-input-text"
+                value={createCategory}
+                onChange={(event) => setCreateCategory(event.target.value)}
+                placeholder="예: Chest"
+              />
+            </label>
+            <button
+              type="button"
+              className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
+              disabled={savingCreate || !createName.trim()}
+              onClick={async () => {
+                try {
+                  setSavingCreate(true);
+                  setNotice(null);
+                  const res = await apiPost<ExerciseCreateResponse>("/api/exercises", {
+                    name: createName.trim(),
+                    category: createCategory.trim() || null,
+                  });
+                  setCreateName("");
+                  setCreateCategory("");
+                  setNotice(res.created ? "운동종목이 추가되었습니다." : "이미 존재하는 운동종목입니다.");
+                  await loadExercises(query);
+                } catch (e: any) {
+                  setError(e?.message ?? "운동종목 추가에 실패했습니다.");
+                } finally {
+                  setSavingCreate(false);
+                }
+              }}
+            >
+              {savingCreate ? "추가 중..." : "운동종목 추가"}
+            </button>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="grid gap-2">
@@ -177,116 +182,118 @@ export function ExerciseCatalogContent() {
         {visibleItems.map((item) => {
           const editingThis = editing?.id === item.id;
           return (
-            <article key={item.id} className="motion-card rounded-2xl border p-4 grid gap-2">
-              {!editingThis ? (
-                <>
-                  <div className="grid gap-1 text-sm">
-                    <strong>{item.name}</strong>
-                    <span className="text-[var(--text-secondary)]">카테고리: {item.category ?? "미지정"}</span>
-                    <span className="text-[var(--text-secondary)]">별칭: {item.aliases.join(", ") || "-"}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-                      onClick={() =>
-                        setEditing({
-                          id: item.id,
-                          name: item.name,
-                          category: item.category ?? "",
-                        })
-                      }
-                    >
-                      수정
-                    </button>
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold text-[var(--color-danger)]"
-                      disabled={deletingId === item.id}
-                      onClick={async () => {
-                        const confirmDelete = await confirm({
-                          title: "운동종목 삭제",
-                          message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
-                          confirmText: "삭제",
-                          cancelText: "취소",
-                          tone: "danger",
-                        });
-                        if (!confirmDelete) return;
-                        try {
-                          setDeletingId(item.id);
-                          setNotice(null);
-                          await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
-                          setNotice("운동종목이 삭제되었습니다.");
-                          await loadExercises(query);
-                        } catch (e: any) {
-                          setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
-                        } finally {
-                          setDeletingId(null);
+            <Card key={item.id} padding="md" elevated={false} tone={editingThis ? "accent" : "default"}>
+              <CardContent className="gap-2">
+                {!editingThis ? (
+                  <>
+                    <div className="grid gap-1 text-sm">
+                      <strong>{item.name}</strong>
+                      <span className="text-[var(--text-secondary)]">카테고리: {item.category ?? "미지정"}</span>
+                      <span className="text-[var(--text-secondary)]">별칭: {item.aliases.join(", ") || "-"}</span>
+                    </div>
+                    <CardActionGroup className="grid-cols-2">
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+                        onClick={() =>
+                          setEditing({
+                            id: item.id,
+                            name: item.name,
+                            category: item.category ?? "",
+                          })
                         }
-                      }}
-                    >
-                      {deletingId === item.id ? "삭제 중..." : "삭제"}
-                    </button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <label className="grid gap-1">
-                    <span className="ui-card-label">운동종목명</span>
-                    <input
-                      className="workout-set-input workout-set-input-text"
-                      value={editing.name}
-                      onChange={(event) =>
-                        setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
-                      }
-                    />
-                  </label>
-                  <label className="grid gap-1">
-                    <span className="ui-card-label">카테고리</span>
-                    <input
-                      className="workout-set-input workout-set-input-text"
-                      value={editing.category}
-                      onChange={(event) =>
-                        setEditing((prev) => (prev ? { ...prev, category: event.target.value } : prev))
-                      }
-                    />
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-                      disabled={savingEdit || !editing.name.trim()}
-                      onClick={async () => {
-                        try {
-                          setSavingEdit(true);
-                          setNotice(null);
-                          await apiPatch(`/api/exercises/${encodeURIComponent(editing.id)}`, {
-                            name: editing.name.trim(),
-                            category: editing.category.trim() || null,
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold text-[var(--color-danger)]"
+                        disabled={deletingId === item.id}
+                        onClick={async () => {
+                          const confirmDelete = await confirm({
+                            title: "운동종목 삭제",
+                            message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
+                            confirmText: "삭제",
+                            cancelText: "취소",
+                            tone: "danger",
                           });
-                          setEditing(null);
-                          setNotice("운동종목이 수정되었습니다.");
-                          await loadExercises(query);
-                        } catch (e: any) {
-                          setError(e?.message ?? "운동종목 수정에 실패했습니다.");
-                        } finally {
-                          setSavingEdit(false);
+                          if (!confirmDelete) return;
+                          try {
+                            setDeletingId(item.id);
+                            setNotice(null);
+                            await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
+                            setNotice("운동종목이 삭제되었습니다.");
+                            await loadExercises(query);
+                          } catch (e: any) {
+                            setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
+                          } finally {
+                            setDeletingId(null);
+                          }
+                        }}
+                      >
+                        {deletingId === item.id ? "삭제 중..." : "삭제"}
+                      </button>
+                    </CardActionGroup>
+                  </>
+                ) : (
+                  <>
+                    <label className="grid gap-1">
+                      <span className="ui-card-label">운동종목명</span>
+                      <input
+                        className="workout-set-input workout-set-input-text"
+                        value={editing.name}
+                        onChange={(event) =>
+                          setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
                         }
-                      }}
-                    >
-                      {savingEdit ? "저장 중..." : "수정 저장"}
-                    </button>
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
-                      onClick={() => setEditing(null)}
-                    >
-                      취소
-                    </button>
-                  </div>
-                </>
-              )}
-            </article>
+                      />
+                    </label>
+                    <label className="grid gap-1">
+                      <span className="ui-card-label">카테고리</span>
+                      <input
+                        className="workout-set-input workout-set-input-text"
+                        value={editing.category}
+                        onChange={(event) =>
+                          setEditing((prev) => (prev ? { ...prev, category: event.target.value } : prev))
+                        }
+                      />
+                    </label>
+                    <CardActionGroup className="grid-cols-2">
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+                        disabled={savingEdit || !editing.name.trim()}
+                        onClick={async () => {
+                          try {
+                            setSavingEdit(true);
+                            setNotice(null);
+                            await apiPatch(`/api/exercises/${encodeURIComponent(editing.id)}`, {
+                              name: editing.name.trim(),
+                              category: editing.category.trim() || null,
+                            });
+                            setEditing(null);
+                            setNotice("운동종목이 수정되었습니다.");
+                            await loadExercises(query);
+                          } catch (e: any) {
+                            setError(e?.message ?? "운동종목 수정에 실패했습니다.");
+                          } finally {
+                            setSavingEdit(false);
+                          }
+                        }}
+                      >
+                        {savingEdit ? "저장 중..." : "수정 저장"}
+                      </button>
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold"
+                        onClick={() => setEditing(null)}
+                      >
+                        취소
+                      </button>
+                    </CardActionGroup>
+                  </>
+                )}
+              </CardContent>
+            </Card>
           );
         })}
       </section>

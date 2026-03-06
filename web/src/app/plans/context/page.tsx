@@ -1,10 +1,9 @@
 import {
-  BaseGroupedList,
-  RowIcon,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
+  DashboardActionSection,
+  DashboardHero,
+  DashboardScreen,
+} from "@/components/dashboard/dashboard-primitives";
+import { APP_ROUTES } from "@/lib/app-routes";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -46,59 +45,79 @@ export default async function PlanContextPage({
   returnQuery.set("sessionKeyMode", sessionKeyMode);
   returnQuery.set("week", String(week));
   returnQuery.set("day", String(day));
-  const returnTo = `/plans/context?${returnQuery.toString()}`;
+  const returnTo = `${APP_ROUTES.plansContext}?${returnQuery.toString()}`;
+
+  const contextCards = [
+    {
+      href: toSelectionHref("/plans/context/select/user-id", returnTo),
+      title: "사용자 ID",
+      description: "생성 대상 사용자 범위를 선택합니다.",
+      meta: userId,
+      symbol: "US",
+      tone: "neutral" as const,
+    },
+    {
+      href: toSelectionHref("/plans/context/picker/start-date", returnTo),
+      title: "시작 날짜",
+      description: "생성 기준 날짜를 설정합니다.",
+      meta: startDate,
+      symbol: "DT",
+      tone: "accent" as const,
+    },
+    {
+      href: toSelectionHref("/plans/context/select/timezone", returnTo),
+      title: "시간대",
+      description: "날짜 경계 계산 시간대를 설정합니다.",
+      meta: timezone,
+      symbol: "TZ",
+      tone: "default" as const,
+    },
+    {
+      href: toSelectionHref("/plans/context/select/session-key-mode", returnTo),
+      title: "세션 키 방식",
+      description: "세션 키 포맷을 선택합니다.",
+      meta: sessionKeyMode,
+      symbol: "SK",
+      tone: "success" as const,
+    },
+    {
+      href: toSelectionHref("/plans/context/picker/week", returnTo),
+      title: "주차",
+      description: "주차 인덱스를 설정합니다.",
+      meta: String(week),
+      symbol: "WK",
+      tone: "default" as const,
+    },
+    {
+      href: toSelectionHref("/plans/context/picker/day", returnTo),
+      title: "일차",
+      description: "일차 인덱스를 설정합니다.",
+      meta: String(day),
+      symbol: "DY",
+      tone: "warning" as const,
+    },
+  ];
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <DashboardScreen>
+      <DashboardHero
+        eyebrow="플랜 기준"
+        title="고급 생성 기준 확인"
+        description="이 화면은 플랜 생성에 쓰이는 날짜, 시간대, 세션 키 기준을 점검하는 용도입니다. 실제 시작은 프로그램 선택 또는 커스텀 프로그램 만들기 흐름에서 진행합니다."
+        primaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 고르기", tone: "primary" }}
+        secondaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
+        metrics={[
+          { label: "시작일", value: startDate },
+          { label: "시간대", value: timezone },
+          { label: "세션 키", value: sessionKeyMode },
+        ]}
+      />
 
-      <section className="grid gap-2">
-        <SectionHeader title="컨텍스트 항목" />
-        <BaseGroupedList ariaLabel="Generation context settings">
-          <ValueRow
-            href={toSelectionHref("/plans/context/select/user-id", returnTo)}
-            label="사용자 ID"
-            description="생성 대상 사용자 범위를 선택합니다."
-            value={userId}
-            leading={<RowIcon symbol="US" tone="neutral" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/plans/context/picker/start-date", returnTo)}
-            label="시작 날짜"
-            description="생성 기준 날짜를 설정합니다."
-            value={startDate}
-            leading={<RowIcon symbol="DT" tone="blue" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/plans/context/select/timezone", returnTo)}
-            label="시간대"
-            description="날짜 경계 계산 시간대를 설정합니다."
-            value={timezone}
-            leading={<RowIcon symbol="TZ" tone="blue" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/plans/context/select/session-key-mode", returnTo)}
-            label="세션 키 방식"
-            description="세션 키 포맷을 선택합니다."
-            value={sessionKeyMode}
-            leading={<RowIcon symbol="SK" tone="tint" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/plans/context/picker/week", returnTo)}
-            label="주차"
-            description="주차 인덱스를 설정합니다."
-            value={String(week)}
-            leading={<RowIcon symbol="WK" tone="green" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/plans/context/picker/day", returnTo)}
-            label="일차"
-            description="일차 인덱스를 설정합니다."
-            value={String(day)}
-            leading={<RowIcon symbol="DY" tone="green" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>하위 화면에서 돌아오면 변경값이 즉시 반영됩니다.</SectionFootnote>
-      </section>
-    </div>
+      <DashboardActionSection
+        title="기준 항목"
+        description="현재 값과 수정 진입점을 한 카드에 묶어 두었습니다."
+        items={contextCards}
+      />
+    </DashboardScreen>
   );
 }

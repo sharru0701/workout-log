@@ -9,6 +9,7 @@ import {
   SectionHeader,
 } from "@/components/ui/settings-list";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import { Card, CardContent } from "@/components/ui/card";
 
 type ExportFormat = "json" | "csv";
 
@@ -130,7 +131,11 @@ export default function SettingsDataExportPage() {
 
       {exportingLabel ? (
         <section className="grid gap-2">
-          <article className="motion-card rounded-2xl border p-4 text-sm text-[var(--text-secondary)]">{exportingLabel}</article>
+          <Card tone="subtle" padding="md" elevated={false}>
+            <CardContent>
+              <p className="m-0 text-sm text-[var(--text-secondary)]">{exportingLabel}</p>
+            </CardContent>
+          </Card>
         </section>
       ) : null}
     </div>

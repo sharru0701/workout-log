@@ -5,7 +5,7 @@ export default function SettingsOfflineHelpPage() {
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
       <section className="grid gap-2">
         <SectionHeader title="오프라인 도움말" description="오프라인 상태에서도 기록이 유실되지 않도록 동작합니다." />
-        <BaseGroupedList ariaLabel="Offline help summary">
+        <BaseGroupedList ariaLabel="오프라인 도움말 요약">
           <InfoRow
             label="오프라인 기록 저장"
             description="운동 기록은 네트워크가 없어도 로컬 큐에 먼저 저장됩니다."

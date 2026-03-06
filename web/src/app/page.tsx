@@ -1,15 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  BaseGroupedList,
-  NavigationRow,
-  RowIcon,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { HomeDashboard } from "@/components/home/home-dashboard";
+import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import {
   ApiHomeDataSource,
   HOME_PREVIEW_DATA,
@@ -42,7 +35,7 @@ export default function HomePage() {
       const nextData = await dataSource.load();
       setHomeData(nextData);
     } catch (e: any) {
-      setError(e?.message ?? "Home 데이터를 불러오지 못했습니다.");
+      setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -59,7 +52,7 @@ export default function HomePage() {
         const nextData = await dataSource.load();
         if (!cancelled) setHomeData(nextData);
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Home 데이터를 불러오지 못했습니다.");
+        if (!cancelled) setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -76,118 +69,40 @@ export default function HomePage() {
   if (!hasResolvedHomeData) {
     return (
       <div className="native-page native-page-enter home-screen momentum-scroll">
-        <LoadingStateRows active={loading} delayMs={80} label="Home 데이터 불러오는 중" ariaLabel="Home loading state" />
+        <LoadingStateRows active={loading} delayMs={80} label="홈 데이터 불러오는 중" ariaLabel="홈 로딩 상태" />
         <ErrorStateRows
           message={error}
           onRetry={() => {
             void loadHomeData();
           }}
           retryLabel="다시 불러오기"
-          ariaLabel="Home error state"
+          ariaLabel="홈 오류 상태"
         />
       </div>
     );
   }
 
   const resolvedViewData = viewData ?? HOME_PREVIEW_DATA;
-  const showRecentEmpty = !loading && !error && resolvedViewData.recentSessions.length === 0;
 
   return (
-    <div className="native-page native-page-enter home-screen momentum-scroll">
+    <div className="native-page native-page-enter home-screen home-dashboard momentum-scroll">
       <LoadingStateRows
         active={loading}
         delayMs={180}
-        label="Home 데이터 불러오는 중"
+        label="홈 데이터 불러오는 중"
         description="오늘 요약과 최근 운동 요약을 조회하고 있습니다."
-        ariaLabel="Home loading state"
+        ariaLabel="홈 로딩 상태"
       />
       <ErrorStateRows
         message={error}
         onRetry={() => {
           void loadHomeData();
         }}
-        title="Home 데이터를 불러오지 못했습니다"
+        title="홈 데이터를 불러오지 못했습니다"
         retryLabel="다시 불러오기"
-        ariaLabel="Home error state"
+        ariaLabel="홈 오류 상태"
       />
-
-      <section className="grid gap-2">
-        <SectionHeader
-          title="오늘의 운동 요약"
-          description="탭하면 Workout Record의 오늘 컨텍스트로 이동합니다."
-        />
-        <BaseGroupedList ariaLabel="Today workout summary">
-          <NavigationRow
-            href={resolvedViewData.today.href}
-            label={resolvedViewData.today.headline}
-            subtitle={resolvedViewData.today.programName}
-            description={resolvedViewData.today.meta}
-            value="기록하기"
-            leading={<RowIcon symbol="TD" tone="blue" />}
-          />
-          <ValueRow
-            label="완료 세트"
-            description="오늘 완료한 총 세트 수"
-            value={`${resolvedViewData.today.completedSets}세트`}
-            showChevron={false}
-            leading={<RowIcon symbol="ST" tone="green" />}
-          />
-          <ValueRow
-            label="예상 e1RM"
-            description="오늘 기록 기반 추정값"
-            value={resolvedViewData.today.estimatedE1rmKg === null ? "-" : `${Math.round(resolvedViewData.today.estimatedE1rmKg)}kg`}
-            showChevron={false}
-            leading={<RowIcon symbol="RM" tone="tint" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>오늘 기록이 없어도 동일한 진입점으로 바로 시작할 수 있습니다.</SectionFootnote>
-      </section>
-
-      <section className="grid gap-2">
-        <SectionHeader title="프로그램 스토어 진입" description="프로그램 탐색/선택/커스터마이징 진입 CTA" />
-        <BaseGroupedList ariaLabel="Program store entry">
-          <NavigationRow
-            href="/program-store"
-            label="프로그램 스토어 열기"
-            subtitle="Program Store"
-            description="시중 프로그램 + 사용자 커스터마이징 프로그램을 한 화면에서 확인합니다."
-            value="열기"
-            leading={<RowIcon symbol="PS" tone="tint" />}
-          />
-        </BaseGroupedList>
-      </section>
-
-      <section className="grid gap-2">
-        <SectionHeader
-          title={`지난 운동 요약 (최근 ${resolvedViewData.recentLimit}개)`}
-          description="가장 최근 완료한 세션 요약 목록"
-        />
-
-        <EmptyStateRows
-          when={showRecentEmpty}
-          label="지난 운동 기록이 없습니다"
-          description="첫 운동 기록을 저장하면 최근 요약이 여기에 표시됩니다."
-          ariaLabel="Recent workout empty state"
-        />
-
-        {!showRecentEmpty && (
-          <BaseGroupedList ariaLabel="Recent workout summaries">
-            {resolvedViewData.recentSessions.map((session) => (
-              <NavigationRow
-                key={session.id}
-                href={session.href}
-                label={session.title}
-                subtitle={session.subtitle}
-                description={session.description}
-                value="열기"
-                leading={<RowIcon symbol="RC" tone="neutral" />}
-              />
-            ))}
-          </BaseGroupedList>
-        )}
-
-        <SectionFootnote>최근 세션은 최신 순으로 노출됩니다.</SectionFootnote>
-      </section>
+      {!error && <HomeDashboard data={resolvedViewData} />}
     </div>
   );
 }

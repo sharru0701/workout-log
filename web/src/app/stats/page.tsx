@@ -1,79 +1,87 @@
 import {
-  BaseGroupedList,
-  NavigationRow,
-  RowIcon,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
+  DashboardActionSection,
+  DashboardHero,
+  DashboardScreen,
+} from "@/components/dashboard/dashboard-primitives";
+import { APP_ROUTES } from "@/lib/app-routes";
+
+const summaryCards = [
+  {
+    href: APP_ROUTES.statsDashboard,
+    title: "전체 통계 대시보드",
+    subtitle: "종합 보기",
+    description: "볼륨, 준수율, PR, UX 지표를 한 화면에서 요약합니다.",
+    meta: "기본 진입",
+    symbol: "DB",
+    tone: "accent" as const,
+  },
+  {
+    href: APP_ROUTES.stats1rm,
+    title: "1RM 추세",
+    subtitle: "강도 변화",
+    description: "운동별 e1RM 추이와 최고 기록을 차트로 확인합니다.",
+    meta: "성능 지표",
+    symbol: "RM",
+    tone: "success" as const,
+  },
+  {
+    href: APP_ROUTES.statsFilters,
+    title: "필터 조정",
+    subtitle: "분석 범위",
+    description: "플랜, 기간, 운동 조건을 설정해 분석 범위를 좁힙니다.",
+    meta: "입력 분리",
+    symbol: "FL",
+    tone: "default" as const,
+  },
+];
+
+const detailCards = [
+  {
+    href: APP_ROUTES.todayLog,
+    title: "오늘 기록으로 돌아가기",
+    description: "새 기록을 저장해야 통계가 갱신됩니다. 오늘 세션 입력이 먼저라면 여기로 돌아갑니다.",
+    meta: "데이터 추가",
+    symbol: "TD",
+    tone: "warning" as const,
+  },
+  {
+    href: APP_ROUTES.plansManage,
+    title: "플랜 기준으로 다시 보기",
+    description: "특정 플랜 기준으로 기록 흐름을 복기하고 싶다면 플랜 화면에서 출발합니다.",
+    meta: "범위 전환",
+    symbol: "PL",
+    tone: "neutral" as const,
+  },
+];
 
 export default function StatsIndexPage() {
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <DashboardScreen>
+      <DashboardHero
+        eyebrow="통계"
+        title="저장된 기록을 다시 보는 화면"
+        description="통계는 오늘 기록을 저장한 뒤 변화와 성과를 확인하는 후속 화면입니다. 실제 데이터가 쌓일수록 여기서 보는 정보가 늘어납니다."
+        primaryAction={{ href: APP_ROUTES.statsDashboard, label: "대시보드 열기", tone: "primary" }}
+        secondaryAction={{ href: APP_ROUTES.statsFilters, label: "필터 조정", tone: "secondary" }}
+        metrics={[
+          { label: "데이터 원본", value: "저장된 세션" },
+          { label: "핵심 보기", value: "1RM / 볼륨 / 준수율" },
+          { label: "조정", value: "필터" },
+        ]}
+      />
 
-      <section className="grid gap-2">
-        <SectionHeader title="대시보드" />
-        <BaseGroupedList ariaLabel="Stats dashboard">
-          <NavigationRow
-            href="/stats/dashboard"
-            label="지표 대시보드"
-            subtitle="기본"
-            description="추세 요약을 확인합니다."
-            leading={<RowIcon symbol="DB" tone="tint" />}
-          />
-          <NavigationRow
-            href="/stats/filters"
-            label="필터"
-            subtitle="입력"
-            description="플랜, 범위, 운동 조건을 설정합니다."
-            leading={<RowIcon symbol="FL" tone="blue" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>필터에서 대시보드 범위를 좁혀 보세요.</SectionFootnote>
-      </section>
+      <DashboardActionSection
+        title="분석 시작"
+        description="가장 많이 쓰는 분석 흐름을 먼저 노출했습니다."
+        items={summaryCards}
+      />
 
-      <section className="grid gap-2">
-        <SectionHeader title="세부 지표" />
-        <BaseGroupedList ariaLabel="Stats details">
-          <NavigationRow
-            href="/stats/dashboard"
-            label="볼륨 상세"
-            description="운동 볼륨 상세를 확인합니다."
-            leading={<RowIcon symbol="VL" tone="blue" />}
-          />
-          <NavigationRow
-            href="/stats/dashboard"
-            label="플랜 준수율"
-            description="완료율 상세를 확인합니다."
-            leading={<RowIcon symbol="CP" tone="green" />}
-          />
-          <NavigationRow
-            href="/stats/dashboard"
-            label="PR 추적"
-            description="PR 기록 상세를 확인합니다."
-            leading={<RowIcon symbol="PR" tone="orange" />}
-          />
-          <NavigationRow
-            href="/stats/dashboard"
-            label="UX 퍼널"
-            description="전환 퍼널과 오늘/7일/14일 UX 스냅샷을 확인합니다."
-            leading={<RowIcon symbol="UX" tone="tint" />}
-          />
-          <NavigationRow
-            href="/stats/dashboard"
-            label="운영 마이그레이션 상태"
-            description="배포 마이그레이션 실행 상태와 최근 실패/락 타임아웃을 확인합니다."
-            leading={<RowIcon symbol="OP" tone="neutral" />}
-          />
-          <ValueRow
-            label="필터 입력 방식"
-            description="입력은 하위 화면에서 처리합니다."
-            value="Push"
-            leading={<RowIcon symbol="IA" tone="neutral" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>상세 표는 대시보드 화면에서 확인할 수 있습니다.</SectionFootnote>
-      </section>
-    </div>
+      <DashboardActionSection
+        title="데이터 보강"
+        description="통계가 비어 있거나 범위를 바꾸고 싶을 때 돌아갈 경로를 함께 배치했습니다."
+        items={detailCards}
+        gridClassName="app-dashboard-action-grid--two"
+      />
+    </DashboardScreen>
   );
 }

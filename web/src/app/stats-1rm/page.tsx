@@ -1,10 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
 type ExerciseOption = {
@@ -391,11 +394,27 @@ export default function Stats1RMPage() {
   const showChartSection = hasChartData;
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+      <DashboardHero
+        eyebrow="1RM"
+        title="1RM 추세와 최고 기록"
+        description="오늘 기록에서 저장된 세트를 기준으로 운동별 강도 변화를 확인하는 화면입니다. 어떤 운동과 기간을 볼지 정한 뒤 차트로 확인합니다."
+        primaryAction={{ href: APP_ROUTES.statsFilters, label: "필터 설정", tone: "secondary" }}
+        secondaryAction={{ href: APP_ROUTES.statsDashboard, label: "대시보드", tone: "primary" }}
+        metrics={[
+          { label: "운동", value: selectedExercise?.name ?? "선택 필요" },
+          { label: "기간", value: formatRangeLabel(rangeFilter) },
+          { label: "프로그램", value: selectedProgramLabel },
+        ]}
+        tone="accent"
+      />
+
       {hasResolvedFilterOptions && (
-        <section className="grid gap-2">
-          <h2 className="ios-section-heading">1RM Stats / Graph</h2>
-          <article className="motion-card rounded-2xl border p-4 grid gap-3">
+        <DashboardSection
+          title="필터 요약"
+          description="현재 선택된 운동, 기간, 프로그램 범위를 상단 칩으로 유지합니다."
+        >
+          <DashboardSurface className="grid gap-3">
             <div className="stats-filter-chip-row">
               <FilterChip
                 title="운동종목"
@@ -405,8 +424,8 @@ export default function Stats1RMPage() {
               <FilterChip title="기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
               <FilterChip title="프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
             </div>
-          </article>
-        </section>
+          </DashboardSurface>
+        </DashboardSection>
       )}
 
       <LoadingStateRows
@@ -456,8 +475,11 @@ export default function Stats1RMPage() {
       )}
 
       {showChartSection && (
-        <section className="grid gap-2">
-          <article className="motion-card rounded-2xl border p-4 grid gap-3">
+        <DashboardSection
+          title="차트"
+          description="선택된 필터 조합의 e1RM 변화와 요약 지표를 한 섹션에 묶었습니다."
+        >
+          <DashboardSurface className="grid gap-3">
             <header className="stats-chart-header">
               <div>
                 <h3 className="ios-inline-heading">그래프 영역</h3>
@@ -491,8 +513,8 @@ export default function Stats1RMPage() {
                 <span>{selectedProgramLabel}</span>
               </article>
             </div>
-          </article>
-        </section>
+          </DashboardSurface>
+        </DashboardSection>
       )}
 
       <BottomSheet
@@ -503,28 +525,30 @@ export default function Stats1RMPage() {
         closeLabel="닫기"
         className="stats-sheet stats-sheet--large"
       >
-        <div className="stats-sheet-list">
-          {exercises.map((exercise) => {
-            const active = exercise.id === selectedExerciseId;
-            return (
-              <button
-                key={exercise.id}
-                type="button"
-                className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
-                onClick={() => {
-                  setSelectedExerciseId(exercise.id);
-                  setActiveSheet(null);
-                }}
-              >
-                <span>{exercise.name}</span>
-                <span aria-hidden="true">{active ? "✓" : ""}</span>
-              </button>
-            );
-          })}
-          {isOptionsSettled && exercises.length === 0 ? (
-            <div className="stats-sheet-empty">선택 가능한 운동종목이 없습니다.</div>
-          ) : null}
-        </div>
+        <Card tone="subtle" padding="sm" elevated={false}>
+          <CardContent className="stats-sheet-list">
+            {exercises.map((exercise) => {
+              const active = exercise.id === selectedExerciseId;
+              return (
+                <button
+                  key={exercise.id}
+                  type="button"
+                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
+                  onClick={() => {
+                    setSelectedExerciseId(exercise.id);
+                    setActiveSheet(null);
+                  }}
+                >
+                  <span>{exercise.name}</span>
+                  <span aria-hidden="true">{active ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+            {isOptionsSettled && exercises.length === 0 ? (
+              <div className="stats-sheet-empty">선택 가능한 운동종목이 없습니다.</div>
+            ) : null}
+          </CardContent>
+        </Card>
       </BottomSheet>
 
       <BottomSheet
@@ -540,65 +564,67 @@ export default function Stats1RMPage() {
           </button>
         }
       >
-        <div className="stats-sheet-list">
-          {RANGE_PRESETS.map((preset) => {
-            const active = rangeDraft.preset === preset.value;
-            return (
-              <button
-                key={preset.value}
-                type="button"
-                className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
-                onClick={() => {
-                  setRangeDraft((prev) => ({ ...prev, preset: preset.value }));
-                  setRangeDraftError(null);
-                }}
-              >
-                <span>{preset.label}</span>
-                <span aria-hidden="true">{active ? "✓" : ""}</span>
-              </button>
-            );
-          })}
-          <button
-            type="button"
-            className={`haptic-tap stats-sheet-option${rangeDraft.preset === "CUSTOM" ? " is-active" : ""}`}
-            onClick={() => {
-              setRangeDraft((prev) => ({ ...prev, preset: "CUSTOM" }));
-              setRangeDraftError(null);
-            }}
-          >
-            <span>사용자 지정</span>
-            <span aria-hidden="true">{rangeDraft.preset === "CUSTOM" ? "✓" : ""}</span>
-          </button>
-          {rangeDraft.preset === "CUSTOM" ? (
-            <div className="stats-range-input-grid">
-              <label className="stats-range-input">
-                <span className="ui-card-label">시작일</span>
-                <AppTextInput
-                  variant="compact"
-                  type="date"
-                  value={rangeDraft.from}
-                  onChange={(event) => {
-                    setRangeDraft((prev) => ({ ...prev, from: event.target.value }));
+        <Card tone="subtle" padding="sm" elevated={false}>
+          <CardContent className="stats-sheet-list">
+            {RANGE_PRESETS.map((preset) => {
+              const active = rangeDraft.preset === preset.value;
+              return (
+                <button
+                  key={preset.value}
+                  type="button"
+                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
+                  onClick={() => {
+                    setRangeDraft((prev) => ({ ...prev, preset: preset.value }));
                     setRangeDraftError(null);
                   }}
-                />
-              </label>
-              <label className="stats-range-input">
-                <span className="ui-card-label">종료일</span>
-                <AppTextInput
-                  variant="compact"
-                  type="date"
-                  value={rangeDraft.to}
-                  onChange={(event) => {
-                    setRangeDraft((prev) => ({ ...prev, to: event.target.value }));
-                    setRangeDraftError(null);
-                  }}
-                />
-              </label>
-              {rangeDraftError ? <p className="stats-range-error">{rangeDraftError}</p> : null}
-            </div>
-          ) : null}
-        </div>
+                >
+                  <span>{preset.label}</span>
+                  <span aria-hidden="true">{active ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              className={`haptic-tap stats-sheet-option${rangeDraft.preset === "CUSTOM" ? " is-active" : ""}`}
+              onClick={() => {
+                setRangeDraft((prev) => ({ ...prev, preset: "CUSTOM" }));
+                setRangeDraftError(null);
+              }}
+            >
+              <span>사용자 지정</span>
+              <span aria-hidden="true">{rangeDraft.preset === "CUSTOM" ? "✓" : ""}</span>
+            </button>
+            {rangeDraft.preset === "CUSTOM" ? (
+              <div className="stats-range-input-grid">
+                <label className="stats-range-input">
+                  <span className="ui-card-label">시작일</span>
+                  <AppTextInput
+                    variant="compact"
+                    type="date"
+                    value={rangeDraft.from}
+                    onChange={(event) => {
+                      setRangeDraft((prev) => ({ ...prev, from: event.target.value }));
+                      setRangeDraftError(null);
+                    }}
+                  />
+                </label>
+                <label className="stats-range-input">
+                  <span className="ui-card-label">종료일</span>
+                  <AppTextInput
+                    variant="compact"
+                    type="date"
+                    value={rangeDraft.to}
+                    onChange={(event) => {
+                      setRangeDraft((prev) => ({ ...prev, to: event.target.value }));
+                      setRangeDraftError(null);
+                    }}
+                  />
+                </label>
+                {rangeDraftError ? <p className="stats-range-error">{rangeDraftError}</p> : null}
+              </div>
+            ) : null}
+          </CardContent>
+        </Card>
       </BottomSheet>
 
       <BottomSheet
@@ -609,37 +635,41 @@ export default function Stats1RMPage() {
         closeLabel="닫기"
         className="stats-sheet stats-sheet--large"
       >
-        <div className="stats-sheet-list">
-          <button
-            type="button"
-            className={`haptic-tap stats-sheet-option${selectedPlanId === "" ? " is-active" : ""}`}
-            onClick={() => {
-              setSelectedPlanId("");
-              setActiveSheet(null);
-            }}
-          >
-            <span>전체 프로그램</span>
-            <span aria-hidden="true">{selectedPlanId === "" ? "✓" : ""}</span>
-          </button>
-          {plans.map((plan) => {
-            const active = plan.id === selectedPlanId;
-            return (
-              <button
-                key={plan.id}
-                type="button"
-                className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
-                onClick={() => {
-                  setSelectedPlanId(plan.id);
-                  setActiveSheet(null);
-                }}
-              >
-                <span>{plan.name}</span>
-                <span aria-hidden="true">{active ? "✓" : ""}</span>
-              </button>
-            );
-          })}
-          {isOptionsSettled && plans.length === 0 ? <div className="stats-sheet-empty">등록된 프로그램이 없습니다.</div> : null}
-        </div>
+        <Card tone="subtle" padding="sm" elevated={false}>
+          <CardContent className="stats-sheet-list">
+            <button
+              type="button"
+              className={`haptic-tap stats-sheet-option${selectedPlanId === "" ? " is-active" : ""}`}
+              onClick={() => {
+                setSelectedPlanId("");
+                setActiveSheet(null);
+              }}
+            >
+              <span>전체 프로그램</span>
+              <span aria-hidden="true">{selectedPlanId === "" ? "✓" : ""}</span>
+            </button>
+            {plans.map((plan) => {
+              const active = plan.id === selectedPlanId;
+              return (
+                <button
+                  key={plan.id}
+                  type="button"
+                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
+                  onClick={() => {
+                    setSelectedPlanId(plan.id);
+                    setActiveSheet(null);
+                  }}
+                >
+                  <span>{plan.name}</span>
+                  <span aria-hidden="true">{active ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+            {isOptionsSettled && plans.length === 0 ? (
+              <div className="stats-sheet-empty">등록된 프로그램이 없습니다.</div>
+            ) : null}
+          </CardContent>
+        </Card>
       </BottomSheet>
     </div>
   );

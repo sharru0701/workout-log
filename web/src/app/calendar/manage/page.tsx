@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { apiGet, apiPost } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate } from "@/lib/session-key";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
+import { buildTodayLogHref } from "@/lib/workout-links";
 
 type Plan = {
   id: string;
@@ -22,7 +25,7 @@ type RecentGeneratedSession = {
   updatedAt: string;
 };
 
-const WEEKDAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
+const WEEKDAY_SHORT = ["일", "월", "화", "수", "목", "금", "토"] as const;
 
 function dateOnlyInTimezone(date: Date, timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -133,6 +136,7 @@ export default function CalendarPage() {
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
+  const openActionLabel = openAutoGenerate ? "자동 생성" : "열기만";
 
   useEffect(() => {
     let cancelled = false;
@@ -148,7 +152,7 @@ export default function CalendarPage() {
           return res.items[0]?.id ?? "";
         });
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Failed to load plans");
+        if (!cancelled) setError(e?.message ?? "플랜을 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -174,7 +178,7 @@ export default function CalendarPage() {
         const res = await apiGet<{ items: RecentGeneratedSession[] }>(`/api/generated-sessions?${sp.toString()}`);
         if (!cancelled) setRecentSessions(res.items);
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "Failed to load generated sessions");
+        if (!cancelled) setError(e?.message ?? "생성된 세션을 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -211,7 +215,7 @@ export default function CalendarPage() {
   const today = dateOnlyInTimezone(new Date(), timezone);
 
   async function generateForDate(dateOnly: string) {
-    if (!planId) throw new Error("Select a plan");
+    if (!planId) throw new Error("플랜을 먼저 선택하세요.");
     setLoading(true);
     setError(null);
     try {
@@ -247,23 +251,38 @@ export default function CalendarPage() {
   }
 
   function workoutTodayHrefForDate(dateOnly: string) {
-    const sp = new URLSearchParams();
-    sp.set("planId", planId);
-    sp.set("date", dateOnly);
-    if (openAutoGenerate) {
-      sp.set("autoGenerate", "1");
-    }
-    return `/workout/today?${sp.toString()}`;
+    return buildTodayLogHref({
+      planId,
+      date: dateOnly,
+      autoGenerate: openAutoGenerate,
+    });
   }
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+      <DashboardHero
+        eyebrow="캘린더 작업"
+        title="날짜 기준 세션 관리"
+        description="이 화면은 선택한 플랜을 날짜와 연결하는 작업 화면입니다. 날짜를 눌러 오늘 기록 화면으로 열거나 자동 생성까지 이어질 수 있습니다."
+        primaryAction={{ href: APP_ROUTES.calendarOptions, label: "열기 규칙 설정", tone: "secondary" }}
+        secondaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록", tone: "primary" }}
+        metrics={[
+          { label: "선택 플랜", value: selectedPlan?.name ?? "없음" },
+          { label: "보기", value: viewMode === "month" ? "월" : "주" },
+          { label: "열기", value: openActionLabel },
+        ]}
+        tone="accent"
+      />
 
-      <section className="motion-card rounded-2xl border bg-white p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <DashboardSection
+        title="캘린더 컨트롤"
+        description="플랜, 보기, 날짜, 열기 동작을 한 묶음으로 유지해 상단 인지 부하를 줄였습니다."
+      >
+        <DashboardSurface className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <label className="flex flex-col gap-1 lg:col-span-2">
-          <span className="ui-card-label">plan</span>
+          <span className="ui-card-label">플랜</span>
           <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
-            {plans.length === 0 && <option value="">(no plans)</option>}
+            {plans.length === 0 && <option value="">플랜 없음</option>}
             {plans.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.name} [{p.type}]
@@ -273,52 +292,52 @@ export default function CalendarPage() {
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="ui-card-label">view</span>
+          <span className="ui-card-label">보기 방식</span>
           <AppSelect
             value={viewMode}
             onChange={(e) => setViewMode(e.target.value as "month" | "week")}
           >
-            <option value="month">month</option>
-            <option value="week">week</option>
+            <option value="month">월</option>
+            <option value="week">주</option>
           </AppSelect>
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="ui-card-label">anchor date</span>
+          <span className="ui-card-label">기준 날짜</span>
           <AppTextInput type="date" value={anchorDate} onChange={(e) => setAnchorDate(e.target.value)} />
         </label>
 
         <label className="flex flex-col gap-1">
-          <span className="ui-card-label">open action</span>
+          <span className="ui-card-label">날짜 열기 동작</span>
           <AppSelect
             value={openAutoGenerate ? "AUTO_GENERATE" : "OPEN_ONLY"}
             onChange={(e) => setOpenAutoGenerate(e.target.value === "AUTO_GENERATE")}
           >
-            <option value="OPEN_ONLY">Open day only</option>
-            <option value="AUTO_GENERATE">Open + auto-generate in Today</option>
+            <option value="OPEN_ONLY">해당 날짜만 열기</option>
+            <option value="AUTO_GENERATE">열고 바로 세션 생성</option>
           </AppSelect>
         </label>
 
         <label className="flex flex-col gap-1 sm:col-span-2 lg:col-span-5">
-          <span className="ui-card-label">timezone</span>
+          <span className="ui-card-label">시간대</span>
           <AppTextInput value={timezone} onChange={(e) => setTimezone(e.target.value)} />
         </label>
+        </DashboardSurface>
 
-      </section>
-
-      <section className="motion-card rounded-2xl border bg-white calendar-nav-card">
-        <div className="calendar-nav-row">
+        <DashboardSurface className="calendar-nav-card">
+          <div className="calendar-nav-row">
           <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => shift(-1)}>
-            Prev
+            이전
           </button>
           <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => setAnchorDate(today)}>
-            Today
+            오늘
           </button>
           <button className="haptic-tap rounded-xl border px-4 py-3 text-sm font-medium" onClick={() => shift(1)}>
-            Next
+            다음
           </button>
-        </div>
-      </section>
+          </div>
+        </DashboardSurface>
+      </DashboardSection>
 
       <LoadingStateRows
         active={loading}
@@ -362,7 +381,11 @@ export default function CalendarPage() {
         description="플랜을 선택하면 날짜별 생성/열기 동작이 활성화됩니다."
       />
 
-      <section className="motion-card rounded-2xl border bg-white p-3 space-y-3">
+      <DashboardSection
+        title="캘린더 그리드"
+        description="날짜별 생성 상태와 바로 열기 동작을 같은 그리드에서 유지합니다."
+      >
+        <DashboardSurface className="p-3 space-y-3">
         <div className="calendar-grid-scroll">
           <div className="calendar-weekdays">
             {WEEKDAY_SHORT.map((name) => (
@@ -426,10 +449,14 @@ export default function CalendarPage() {
             })}
           </div>
         </div>
-      </section>
+        </DashboardSurface>
+      </DashboardSection>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-2">
-        <div className="ios-section-heading">생성 세션</div>
+      <DashboardSection
+        title="생성 세션"
+        description="선택한 날짜로 생성한 세션 스냅샷을 유지합니다."
+      >
+        <DashboardSurface className="space-y-2">
         {generatedSession ? (
           <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
             {JSON.stringify(generatedSession.snapshot, null, 2)}
@@ -441,7 +468,8 @@ export default function CalendarPage() {
             description="날짜를 선택한 뒤 생성을 실행하면 세션 스냅샷이 표시됩니다."
           />
         )}
-      </section>
+        </DashboardSurface>
+      </DashboardSection>
     </div>
   );
 }

@@ -1,10 +1,9 @@
 import {
-  BaseGroupedList,
-  RowIcon,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
+  DashboardActionSection,
+  DashboardHero,
+  DashboardScreen,
+} from "@/components/dashboard/dashboard-primitives";
+import { APP_ROUTES } from "@/lib/app-routes";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -36,59 +35,63 @@ export default async function CalendarOptionsPage({
   returnQuery.set("timezone", timezone);
   returnQuery.set("autoOpen", autoOpenMode);
   returnQuery.set("openTime", openTime);
-  const returnTo = `/calendar/options?${returnQuery.toString()}`;
+  const returnTo = `${APP_ROUTES.calendarOptions}?${returnQuery.toString()}`;
+
+  const optionCards = [
+    {
+      href: toSelectionHref("/calendar/options/select/view-mode", returnTo),
+      title: "보기 방식",
+      description: "기본 그리드 보기를 설정합니다.",
+      meta: viewMode,
+      symbol: "VM",
+      tone: "accent" as const,
+    },
+    {
+      href: toSelectionHref("/calendar/options/select/timezone", returnTo),
+      title: "시간대",
+      description: "날짜 경계 계산 시간대를 설정합니다.",
+      meta: timezone,
+      symbol: "TZ",
+      tone: "default" as const,
+    },
+    {
+      href: toSelectionHref("/calendar/options/select/auto-open", returnTo),
+      title: "열기 동작",
+      description: "날짜 열기 시 동작을 선택합니다.",
+      meta: autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만",
+      symbol: "AO",
+      tone: "success" as const,
+    },
+    {
+      href: toSelectionHref("/calendar/options/picker/open-time", returnTo),
+      title: "기본 열기 시간",
+      description: "날짜 열기 기본 시간을 설정합니다.",
+      meta: openTime,
+      symbol: "TM",
+      tone: "warning" as const,
+    },
+  ];
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <DashboardScreen>
+      <DashboardHero
+        eyebrow="캘린더 설정"
+        title="날짜를 눌렀을 때 어떻게 열지 정하기"
+        description="캘린더에서 날짜를 눌렀을 때 열기만 할지, 세션 생성까지 이어질지 정하는 화면입니다."
+        primaryAction={{ href: APP_ROUTES.calendarManage, label: "캘린더 열기", tone: "primary" }}
+        secondaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더 홈", tone: "secondary" }}
+        metrics={[
+          { label: "보기", value: viewMode },
+          { label: "열기", value: autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만" },
+          { label: "시간", value: openTime },
+        ]}
+      />
 
-      <section className="grid gap-2">
-        <SectionHeader title="보기 및 열기" />
-        <BaseGroupedList ariaLabel="Calendar options">
-          <ValueRow
-            href={toSelectionHref("/calendar/options/select/view-mode", returnTo)}
-            label="보기 방식"
-            description="기본 그리드 보기를 설정합니다."
-            value={viewMode}
-            leading={<RowIcon symbol="VM" tone="blue" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/calendar/options/select/timezone", returnTo)}
-            label="시간대"
-            description="날짜 경계 계산 시간대를 설정합니다."
-            value={timezone}
-            leading={<RowIcon symbol="TZ" tone="blue" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/calendar/options/select/auto-open", returnTo)}
-            label="열기 동작"
-            description="날짜 열기 시 동작을 선택합니다."
-            value={autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만"}
-            leading={<RowIcon symbol="AO" tone="tint" />}
-          />
-          <ValueRow
-            href={toSelectionHref("/calendar/options/picker/open-time", returnTo)}
-            label="기본 열기 시간"
-            description="날짜 열기 기본 시간을 설정합니다."
-            value={openTime}
-            leading={<RowIcon symbol="TM" tone="green" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>하위 화면에서 돌아오면 값이 즉시 반영됩니다.</SectionFootnote>
-      </section>
-
-      <section className="grid gap-2">
-        <SectionHeader title="적용" />
-        <BaseGroupedList ariaLabel="Calendar options apply">
-          <ValueRow
-            href={`/calendar/manage?${returnQuery.toString()}`}
-            label="캘린더 워크스페이스 열기"
-            description="현재 값으로 워크스페이스를 엽니다."
-            value="열기"
-            leading={<RowIcon symbol="GO" tone="neutral" />}
-          />
-        </BaseGroupedList>
-        <SectionFootnote>설정을 확인한 뒤 워크스페이스를 열어 진행하세요.</SectionFootnote>
-      </section>
-    </div>
+      <DashboardActionSection
+        title="옵션 항목"
+        description="현재 값을 확인하면서 바로 수정 화면으로 이동할 수 있습니다."
+        items={optionCards}
+      />
+    </DashboardScreen>
   );
 }

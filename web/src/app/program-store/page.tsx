@@ -2,11 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
@@ -931,6 +934,10 @@ export default function ProgramStorePage() {
     () => listItems.find((entry) => entry.template.id === detailTargetId) ?? null,
     [detailTargetId, listItems],
   );
+  const customProgramCount = useMemo(
+    () => listItems.filter((entry) => entry.source === "CUSTOM").length,
+    [listItems],
+  );
   const isOperatorCustomization = useMemo(
     () => isOperatorTemplate(customizeDraft?.baseTemplate),
     [customizeDraft],
@@ -977,7 +984,7 @@ export default function ProgramStorePage() {
       setTemplates(templatesRes.items ?? []);
       setPlans(plansRes.items ?? []);
     } catch (e: any) {
-      setError(e?.message ?? "Program Store 데이터를 불러오지 못했습니다.");
+      setError(e?.message ?? "프로그램 데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -1337,29 +1344,45 @@ export default function ProgramStorePage() {
   const isStoreSettled = useQuerySettled(storeLoadKey, loading);
 
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+      <DashboardHero
+        eyebrow="프로그램"
+        title="프로그램 탐색과 시작"
+        description="이 화면에서 프로그램을 고르고 시작하면 플랜이 생성되어 오늘 기록 흐름으로 이어집니다. 커스텀 프로그램 만들기도 같은 시작 단계에 있습니다."
+        primaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
+        secondaryAction={{ href: APP_ROUTES.plansManage, label: "보유 플랜 보기", tone: "primary" }}
+        metrics={[
+          { label: "전체 프로그램", value: `${listItems.length}개` },
+          { label: "커스텀", value: `${customProgramCount}개` },
+          { label: "시작 방식", value: "선택 후 플랜 생성" },
+        ]}
+        tone="accent"
+      />
+
       <LoadingStateRows
         active={loading}
         delayMs={160}
-        label="Program Store 로딩 중"
+        label="프로그램 불러오는 중"
       />
       <ErrorStateRows
         message={error}
-        title="Program Store 처리 실패"
+        title="프로그램 화면을 불러오지 못했습니다"
         onRetry={() => {
           void loadStore();
         }}
       />
-      <NoticeStateRows message={notice} label="Program Store 안내" />
+      <NoticeStateRows message={notice} label="프로그램 안내" />
 
-      <section className="grid gap-2">
-        <h2 className="ios-section-heading">프로그램 목록 (시중 + 커스텀)</h2>
+      <DashboardSection
+        title="프로그램 목록"
+        description="시중 프로그램과 커스텀 프로그램을 같은 카드 톤으로 묶어 탐색 흐름을 단순화했습니다."
+      >
         <EmptyStateRows
           when={isStoreSettled && !error && listItems.length === 0}
           label="표시할 프로그램이 없습니다"
         />
         {listItems.length > 0 && (
-          <article className="motion-card rounded-2xl border p-4 grid gap-2">
+          <DashboardSurface className="grid gap-2">
             {listItems.map((item) => {
               const badge = sourceBadgeMeta(item.source);
               return (
@@ -1378,20 +1401,24 @@ export default function ProgramStorePage() {
                 </button>
               );
             })}
-          </article>
+          </DashboardSurface>
         )}
-      </section>
+      </DashboardSection>
 
-      <section className="grid gap-2">
-        <h2 className="ios-section-heading">나만의 커스터마이징 프로그램 추가</h2>
-        <button
-          type="button"
-          className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
-          onClick={openCreateSheet}
-        >
-          프로그램 커스터마이징 모달 열기
-        </button>
-      </section>
+      <DashboardSection
+        title="커스터마이징 시작"
+        description="새 프로그램 생성 진입점도 동일한 서피스 안에서 유지합니다."
+      >
+        <DashboardSurface>
+          <button
+            type="button"
+            className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
+            onClick={openCreateSheet}
+          >
+            프로그램 커스터마이징 모달 열기
+          </button>
+        </DashboardSurface>
+      </DashboardSection>
 
       <BottomSheet
         open={Boolean(detailTarget)}
@@ -1444,19 +1471,19 @@ export default function ProgramStorePage() {
       >
         {detailTarget && (
           <div className="grid gap-2">
-            <article className="rounded-xl border p-3 text-sm">
+            <Card padding="sm" elevated={false}>
               <div className="flex items-center justify-between gap-2">
-                <strong>{formatProgramDisplayName(detailTarget.template.name)}</strong>
+                <CardTitle>{formatProgramDisplayName(detailTarget.template.name)}</CardTitle>
                 {(() => {
                   const badge = sourceBadgeMeta(detailTarget.source);
                   return <span className={`ui-badge ${badge.className}`}>{badge.label}</span>;
                 })()}
               </div>
-              <p className="mt-1 text-[var(--text-secondary)]">
+              <CardDescription className="mt-1">
                 타입: {detailTarget.template.type} / 최신 버전:{" "}
                 {detailTarget.template.latestVersion ? `v${detailTarget.template.latestVersion.version}` : "-"}
-              </p>
-            </article>
+              </CardDescription>
+            </Card>
           </div>
         )}
       </BottomSheet>
@@ -1487,12 +1514,14 @@ export default function ProgramStorePage() {
       >
         {startProgramDraft ? (
           <div className="grid gap-3">
-            <article className="rounded-xl border p-3 text-sm grid gap-1">
-              <strong>{formatProgramDisplayName(startProgramDraft.template.name)}</strong>
-              <span className="ui-card-label">
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>{formatProgramDisplayName(startProgramDraft.template.name)}</CardTitle>
+                <div className="ui-card-label">
                 TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
-              </span>
-            </article>
+                </div>
+              </CardHeader>
+            </Card>
             {startProgramDraft.recommendationStatus === "loading" ? (
               <p className="ui-card-label">운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
             ) : null}
@@ -1603,15 +1632,20 @@ export default function ProgramStorePage() {
             </label>
 
             {isOperatorCustomization ? (
-              <article className="rounded-xl border bg-neutral-50 p-3 grid gap-1 text-sm text-neutral-700">
-                <strong>Operator 기본 구성</strong>
-                <span>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</span>
-                <span>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</span>
-              </article>
+              <Card tone="subtle" padding="sm" elevated={false} className="text-sm text-neutral-700">
+                <CardHeader>
+                  <CardTitle>Operator 기본 구성</CardTitle>
+                  <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
+                  <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
+                </CardHeader>
+              </Card>
             ) : null}
 
-            <article className="rounded-xl border p-3 grid gap-3">
-              <strong>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</strong>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</CardTitle>
+              </CardHeader>
+              <CardContent>
               {customizeDraft.sessions.map((session) => {
                 const meta = operatorSessionMeta(session.key);
                 const summary = session.exercises
@@ -1780,7 +1814,8 @@ export default function ProgramStorePage() {
                 </div>
               );
             })}
-          </article>
+              </CardContent>
+            </Card>
           </div>
         )}
       </BottomSheet>
@@ -1891,8 +1926,11 @@ export default function ProgramStorePage() {
               </label>
             )}
 
-            <article className="rounded-xl border p-3 grid gap-2">
-              <strong>세션 규칙 생성</strong>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>세션 규칙 생성</CardTitle>
+              </CardHeader>
+              <CardContent>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
@@ -1958,10 +1996,14 @@ export default function ProgramStorePage() {
                   />
                 </label>
               )}
-            </article>
+              </CardContent>
+            </Card>
 
-            <article className="rounded-xl border p-3 grid gap-2">
-              <strong>세션 안에 운동종목 배치</strong>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>세션 안에 운동종목 배치</CardTitle>
+              </CardHeader>
+              <CardContent>
               {createDraft.sessions.map((session) => (
                 <div
                   key={session.id}
@@ -2103,7 +2145,8 @@ export default function ProgramStorePage() {
                   </button>
                 </div>
               ))}
-            </article>
+              </CardContent>
+            </Card>
           </div>
         )}
       </BottomSheet>

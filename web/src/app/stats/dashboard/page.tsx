@@ -7,6 +7,7 @@ import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
+import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 
@@ -686,7 +687,7 @@ export default function StatsPage() {
         setCompliance(compRes);
       } catch (e: unknown) {
         if (cancelled) return;
-        setError(e instanceof Error ? e.message : "Failed to load stats");
+        setError(e instanceof Error ? e.message : "통계 데이터를 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -744,7 +745,7 @@ export default function StatsPage() {
         setUxSummaryWindows(uxSnapshotRes.windows);
       } catch (e: unknown) {
         if (cancelled) return;
-        setDetailsError(e instanceof Error ? e.message : "Failed to load detailed stats");
+        setDetailsError(e instanceof Error ? e.message : "상세 통계 데이터를 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setDetailsLoading(false);
       }
@@ -1816,62 +1817,73 @@ export default function StatsPage() {
         description="범위를 정하고 추세 구간을 비교합니다."
       >
         <div className="space-y-4 pb-2">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={resetFilters}>
-              기본값으로 재설정
-            </button>
-            <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={() => setFiltersOpen(false)}>
-              적용
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">플랜</span>
-              <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
-                <option value="">전체 플랜</option>
-                {plans.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} [{p.type}]
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">집계 단위</span>
-              <AppSelect
-                value={bucket}
-                onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
+          <Card tone="subtle" padding="sm" elevated={false}>
+            <CardActionGroup className="grid-cols-1 sm:grid-cols-2">
+              <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={resetFilters}>
+                기본값으로 재설정
+              </button>
+              <button
+                className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium"
+                onClick={() => setFiltersOpen(false)}
               >
-                <option value="day">일</option>
-                <option value="week">주</option>
-                <option value="month">월</option>
-              </AppSelect>
-            </label>
-          </div>
+                적용
+              </button>
+            </CardActionGroup>
+          </Card>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">시작일(선택)</span>
-              <AppTextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">종료일(선택)</span>
-              <AppTextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-            </label>
-          </div>
+          <Card padding="md" elevated={false}>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">플랜</span>
+                <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
+                  <option value="">전체 플랜</option>
+                  {plans.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} [{p.type}]
+                    </option>
+                  ))}
+                </AppSelect>
+              </label>
 
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">e1RM exerciseId</span>
-              <AppTextInput value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
-            </label>
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">e1RM exercise</span>
-              <AppTextInput value={exercise} onChange={(e) => setExercise(e.target.value)} />
-            </label>
-          </div>
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">집계 단위</span>
+                <AppSelect
+                  value={bucket}
+                  onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
+                >
+                  <option value="day">일</option>
+                  <option value="week">주</option>
+                  <option value="month">월</option>
+                </AppSelect>
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card padding="md" elevated={false}>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">시작일(선택)</span>
+                <AppTextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">종료일(선택)</span>
+                <AppTextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card padding="md" elevated={false}>
+            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">e1RM exerciseId</span>
+                <AppTextInput value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
+              </label>
+              <label className="flex flex-col gap-1">
+                <span className="ui-card-label">e1RM exercise</span>
+                <AppTextInput value={exercise} onChange={(e) => setExercise(e.target.value)} />
+              </label>
+            </CardContent>
+          </Card>
         </div>
       </BottomSheet>
     </div>

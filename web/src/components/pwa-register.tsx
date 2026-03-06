@@ -186,10 +186,10 @@ export function PwaRegister() {
     <div className="app-pwa-stack" aria-live="polite">
       {canShowIosInstallHint && !isStandalone && !deferredPrompt && !dismissedIosHint && (
         <div className="app-pwa-banner">
-          <span className="app-pwa-text">In Safari: Share menu → Add to Home Screen.</span>
+          <span className="app-pwa-text">Safari에서는 공유 메뉴에서 홈 화면에 추가를 선택하세요.</span>
           <div className="app-pwa-actions">
             <button className="app-pwa-button is-subtle" onClick={() => setDismissedIosHint(true)}>
-              Dismiss
+              닫기
             </button>
           </div>
         </div>
