@@ -69,6 +69,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .select({
       id: programVersion.id,
       templateId: programVersion.templateId,
+      definition: programVersion.definition,
     })
     .from(programVersion)
     .where(eq(programVersion.id, plan.rootProgramVersionId))
@@ -87,7 +88,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
   const template = templateRows[0];
   if (!template) return { applied: false, reason: "skip:template-missing" as const };
 
-  const program = resolveAutoProgressionProgram(template.slug);
+  const program = resolveAutoProgressionProgram(template.slug, version.definition);
   if (!program) return { applied: false, reason: "skip:unsupported-program" as const };
   const progressionProgram = program;
   const logRows = await input.tx

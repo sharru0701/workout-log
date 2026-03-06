@@ -2,18 +2,20 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput, AppTextarea } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
+import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
+import { formatSessionKeyLabel } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
   computeBodyweightTotalLoadKg,
-  isBodyweightRelatedExerciseName,
   readWorkoutPreferences,
+  resolveMinimumPlateIncrement,
   resolveMinimumPlateIncrementKg,
   snapWeightToIncrementKg,
   toDefaultWorkoutPreferences,
@@ -161,6 +163,13 @@ function stateLabel(state: WorkoutWorkflowState) {
   return "Done";
 }
 
+function workoutExerciseBadgeMeta(badge: WorkoutExerciseViewModel["badge"]) {
+  if (badge === "AUTO") return { label: "Auto", className: "ui-badge-info" };
+  if (badge === "CUSTOM") return { label: "Custom", className: "ui-badge-neutral" };
+  if (badge === "ADDED") return { label: "Added", className: "ui-badge-info" };
+  return null;
+}
+
 function clampReps(value: number) {
   return Math.min(100, Math.max(1, Math.round(value)));
 }
@@ -192,14 +201,10 @@ function removeLastSetReps(values: number[]) {
   return next.slice(0, next.length - 1);
 }
 
-function isSwipeDisabledTarget(target: EventTarget | null) {
-  if (!(target instanceof Element)) return false;
-  return Boolean(target.closest("input, textarea, select, button, a, [role='button'], [data-no-swipe='true']"));
-}
-
 function ExerciseRow({
   exercise,
   minimumPlateIncrementKg,
+  showMinimumPlateInfo,
   bodyweightKg,
   onChangeWeight,
   onChangeSetReps,
@@ -210,6 +215,7 @@ function ExerciseRow({
 }: {
   exercise: WorkoutExerciseViewModel;
   minimumPlateIncrementKg: number;
+  showMinimumPlateInfo: boolean;
   bodyweightKg: number | null;
   onChangeWeight: (value: number) => void;
   onChangeSetReps: (setIndex: number, value: number) => void;
@@ -218,189 +224,135 @@ function ExerciseRow({
   onChangeMemo: (value: string) => void;
   onDelete: () => void;
 }) {
-  const swipeStateRef = useRef<{
-    pointerId: number | null;
-    startX: number;
-    startY: number;
-    startOffset: number;
-    isHorizontal: boolean | null;
-  }>({
-    pointerId: null,
-    startX: 0,
-    startY: 0,
-    startOffset: 0,
-    isHorizontal: null,
-  });
-  const [swipeOffset, setSwipeOffset] = useState(0);
-  const [isSwiping, setIsSwiping] = useState(false);
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
-  const revealDelete = swipeOffset <= -44;
-
-  const resetSwipeGesture = useCallback(() => {
-    swipeStateRef.current = {
-      pointerId: null,
-      startX: 0,
-      startY: 0,
-      startOffset: 0,
-      isHorizontal: null,
-    };
-    setIsSwiping(false);
-  }, []);
-
-  const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (event.button !== 0 || isSwipeDisabledTarget(event.target)) return;
-    swipeStateRef.current = {
-      pointerId: event.pointerId,
-      startX: event.clientX,
-      startY: event.clientY,
-      startOffset: swipeOffset,
-      isHorizontal: null,
-    };
-  }, [swipeOffset]);
-
-  const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (swipeStateRef.current.pointerId !== event.pointerId) return;
-    const deltaX = event.clientX - swipeStateRef.current.startX;
-    const deltaY = event.clientY - swipeStateRef.current.startY;
-
-    if (swipeStateRef.current.isHorizontal === null) {
-      if (Math.abs(deltaX) < 6 && Math.abs(deltaY) < 6) return;
-      swipeStateRef.current.isHorizontal = Math.abs(deltaX) > Math.abs(deltaY);
-      if (!swipeStateRef.current.isHorizontal) {
-        resetSwipeGesture();
-        return;
-      }
-    }
-
-    event.preventDefault();
-    const nextOffset = Math.max(-88, Math.min(0, swipeStateRef.current.startOffset + deltaX));
-    setIsSwiping(true);
-    setSwipeOffset(nextOffset);
-  }, [resetSwipeGesture]);
-
-  const handlePointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
-    if (swipeStateRef.current.pointerId !== event.pointerId) return;
-    if (swipeStateRef.current.isHorizontal) {
-      setSwipeOffset((prev) => (prev <= -44 ? -88 : 0));
-    }
-    resetSwipeGesture();
-  }, [resetSwipeGesture]);
+  const isBodyweightExercise = isBodyweightExerciseName(exercise.exerciseName);
+  const badgeMeta = workoutExerciseBadgeMeta(exercise.badge);
+  const circleActionButtonStyle = {
+    width: "var(--touch-target)",
+    height: "var(--touch-target)",
+    minWidth: "var(--touch-target)",
+    minHeight: "var(--touch-target)",
+    padding: 0,
+    aspectRatio: "1 / 1",
+  } as const;
 
   return (
-    <div
-      className={`workout-swipe-shell${isSwiping ? " is-dragging" : ""}${revealDelete ? " is-open" : ""}`}
-      style={{ ["--workout-swipe-offset" as any]: `${swipeOffset}px` }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onPointerCancel={handlePointerUp}
-      onPointerLeave={(event) => {
-        if (!isSwiping) return;
-        handlePointerUp(event);
-      }}
-    >
-      <button
-        type="button"
-        className="workout-swipe-delete haptic-tap"
-        onClick={() => {
-          onDelete();
-          setSwipeOffset(0);
-        }}
-        data-no-swipe="true"
-      >
-        삭제
-      </button>
-
-      <article
-        className="workout-set-card grid gap-2"
-        onClick={(event) => {
-          if (!revealDelete || isSwipeDisabledTarget(event.target)) return;
-          event.preventDefault();
-          setSwipeOffset(0);
-        }}
-      >
-        {exercise.source !== "PROGRAM" ? (
-          <div className="flex items-center justify-end">
-            <span className="ui-badge ui-badge-info">사용자 추가</span>
-          </div>
-        ) : null}
-
-        <label className="grid gap-1">
-          <span className="ui-card-label">운동종목</span>
-          <AppTextInput
-            variant="workout"
-            className="cursor-default"
-            value={exercise.exerciseName}
-            readOnly
-            aria-readonly="true"
-            tabIndex={-1}
-          />
-        </label>
-
-        <AppNumberStepper
-          label="무게 (kg)"
-          value={exercise.set.weightKg}
-          min={0}
-          max={1000}
-          step={minimumPlateIncrementKg}
-          inputMode="decimal"
-          onChange={onChangeWeight}
-        />
-
-        <div className="grid gap-2">
-          <div className="grid gap-2">
-            {exercise.set.repsPerSet.map((setReps, index) => (
-              <AppNumberStepper
-                key={`${exercise.id}-set-${index}`}
-                label={`${index + 1}세트`}
-                value={setReps}
-                min={1}
-                max={100}
-                onChange={(value) => onChangeSetReps(index, value)}
-                inputMode="numeric"
-              />
-            ))}
-          </div>
-          <div className="grid grid-cols-2 gap-2" data-no-swipe="true">
-            <button
-              type="button"
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
-              onClick={onAddSet}
-            >
-              <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
-              <span>세트 추가</span>
-            </button>
-            <button
-              type="button"
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
-              onClick={onRemoveSet}
-              disabled={exercise.set.repsPerSet.length <= 1}
-            >
-              <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
-              <span>마지막 세트</span>
-            </button>
-          </div>
+    <article className="workout-set-card grid gap-2">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {badgeMeta ? (
+            <span className={`ui-badge ${badgeMeta.className}`}>{badgeMeta.label}</span>
+          ) : null}
         </div>
+        <button
+          type="button"
+          className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--color-warning)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)]"
+          style={circleActionButtonStyle}
+          aria-label="운동 삭제"
+          title="운동 삭제"
+          onClick={onDelete}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.1"
+            className="h-6 w-6"
+            aria-hidden="true"
+          >
+            <path d="M4.5 7.5h15" strokeLinecap="round" />
+            <path d="M9.75 3.75h4.5" strokeLinecap="round" />
+            <path
+              d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path d="M10.5 10.5v5.25" strokeLinecap="round" />
+            <path d="M13.5 10.5v5.25" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
 
+      <label className="grid gap-1">
+        <span className="ui-card-label">운동종목</span>
+        <AppTextInput
+          variant="workout"
+          className="cursor-default"
+          value={exercise.exerciseName}
+          readOnly
+          aria-readonly="true"
+          tabIndex={-1}
+        />
+      </label>
+
+      <AppNumberStepper
+        label={isBodyweightExercise && bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
+        value={exercise.set.weightKg}
+        min={0}
+        max={1000}
+        step={minimumPlateIncrementKg}
+        inputMode="decimal"
+        onChange={onChangeWeight}
+      />
+      {isBodyweightExercise && bodyweightKg ? (
+        <p className="px-1 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(totalLoadKg)}</p>
+      ) : null}
+
+      <div className="grid gap-2">
+        <div className="grid gap-2">
+          {exercise.set.repsPerSet.map((setReps, index) => (
+            <AppNumberStepper
+              key={`${exercise.id}-set-${index}`}
+              label={`${index + 1}세트`}
+              value={setReps}
+              min={1}
+              max={100}
+              onChange={(value) => onChangeSetReps(index, value)}
+              inputMode="numeric"
+            />
+          ))}
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            type="button"
+            className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+            onClick={onAddSet}
+          >
+            <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+            <span>세트 추가</span>
+          </button>
+          <button
+            type="button"
+            className="haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold inline-flex items-center justify-center gap-1.5"
+            onClick={onRemoveSet}
+            disabled={exercise.set.repsPerSet.length <= 1}
+          >
+            <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
+            <span>마지막 세트</span>
+          </button>
+        </div>
+      </div>
+
+      {showMinimumPlateInfo || (isBodyweightExercise && bodyweightKg) ? (
         <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
-          <span>최소 원판 Increment: {minimumPlateIncrementKg.toFixed(2)}kg</span>
-          {isBodyweightRelatedExerciseName(exercise.exerciseName) && bodyweightKg ? (
+          {showMinimumPlateInfo ? <span>최소 원판 Increment: {minimumPlateIncrementKg.toFixed(2)}kg</span> : null}
+          {isBodyweightExercise && bodyweightKg ? (
             <span>{`총 부하(외부중량 + 체중): ${totalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
           ) : null}
         </div>
+      ) : null}
 
-        <label className="grid gap-1">
-          <span className="ui-card-label">메모</span>
-          <AppTextarea
-            variant="workout"
-            className="min-h-20"
-            value={exercise.note.memo}
-            onChange={(event) => onChangeMemo(event.target.value)}
-            placeholder="세트 메모를 입력하세요."
-          />
-        </label>
-      </article>
-    </div>
+      <label className="grid gap-1">
+        <span className="ui-card-label">메모</span>
+        <AppTextarea
+          variant="workout"
+          className="min-h-20"
+          value={exercise.note.memo}
+          onChange={(event) => onChangeMemo(event.target.value)}
+          placeholder="세트 메모를 입력하세요."
+        />
+      </label>
+    </article>
   );
 }
 
@@ -466,7 +418,16 @@ export default function WorkoutRecordPage() {
           set: {
             ...exercise.set,
             weightKg: resolveWeightWithPreferences(
-              exercise.set.weightKg,
+              computeExternalLoadFromTotalKg(
+                exercise.exerciseName,
+                typeof exercise.prescribedWeightKg === "number"
+                  ? exercise.prescribedWeightKg
+                  : exercise.set.weightKg,
+                preferences.bodyweightKg,
+              ) ??
+                (typeof exercise.prescribedWeightKg === "number"
+                  ? exercise.prescribedWeightKg
+                  : exercise.set.weightKg),
               exercise.exerciseId,
               exercise.exerciseName,
               preferences,
@@ -494,6 +455,14 @@ export default function WorkoutRecordPage() {
   const addDraftIncrementKg = useMemo(
     () =>
       resolveMinimumPlateIncrementKg(workoutPreferences, {
+        exerciseId: addDraft.exerciseId,
+        exerciseName: addDraft.exerciseName,
+      }),
+    [addDraft.exerciseId, addDraft.exerciseName, workoutPreferences],
+  );
+  const addDraftIncrementInfo = useMemo(
+    () =>
+      resolveMinimumPlateIncrement(workoutPreferences, {
         exerciseId: addDraft.exerciseId,
         exerciseName: addDraft.exerciseName,
       }),
@@ -779,7 +748,7 @@ export default function WorkoutRecordPage() {
       setSaveError(null);
       const payload = toWorkoutLogPayload(draft, {
         bodyweightKg: workoutPreferences.bodyweightKg,
-        isBodyweightExercise: isBodyweightRelatedExerciseName,
+        isBodyweightExercise: isBodyweightExerciseName,
       });
       await apiPost("/api/logs", payload);
       setWorkflowState("done");
@@ -862,7 +831,7 @@ export default function WorkoutRecordPage() {
               <span>예상 TM: {draft.session.estimatedTmKg === null ? "-" : `${draft.session.estimatedTmKg}kg`}</span>
               <span>주차: Week {draft.session.week}</span>
               <span>세션: {draft.session.sessionType}</span>
-              <span>Session Key: {draft.session.sessionKey}</span>
+              <span>Session Key: {formatSessionKeyLabel(draft.session.sessionKey)}</span>
               <span>Bodyweight: {workoutPreferences.bodyweightKg ? `${workoutPreferences.bodyweightKg.toFixed(1)}kg` : "미설정"}</span>
               <span className="text-[var(--accent-primary)]">
                 편집 상태: {stateLabel(workflowState)} / 변경사항: {hasWorkoutEdits(draft) ? "있음" : "없음"}
@@ -881,6 +850,12 @@ export default function WorkoutRecordPage() {
                     exerciseId: exercise.exerciseId,
                     exerciseName: exercise.exerciseName,
                   })}
+                  showMinimumPlateInfo={
+                    resolveMinimumPlateIncrement(workoutPreferences, {
+                      exerciseId: exercise.exerciseId,
+                      exerciseName: exercise.exerciseName,
+                    }).source === "RULE"
+                  }
                   bodyweightKg={workoutPreferences.bodyweightKg}
                   onChangeWeight={(value) => {
                     if (!Number.isFinite(value)) return;
@@ -1108,7 +1083,7 @@ export default function WorkoutRecordPage() {
           {exerciseOptionsError ? <p className="text-sm text-[var(--color-warning)]">{exerciseOptionsError}</p> : null}
 
           <AppNumberStepper
-            label="무게 (kg)"
+            label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
             value={addDraft.weightKg}
             min={0}
             max={1000}
@@ -1125,6 +1100,9 @@ export default function WorkoutRecordPage() {
               }))
             }
           />
+          {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
+            <p className="px-1 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
+          ) : null}
 
           <div className="grid gap-2">
             <div className="grid gap-2">
@@ -1175,12 +1153,14 @@ export default function WorkoutRecordPage() {
           </div>
           </div>
 
-          <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
-            <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span>
-            {isBodyweightRelatedExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-              <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
-            ) : null}
-          </div>
+          {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
+            <div className="grid gap-1 rounded-xl border p-2 text-xs text-[var(--text-secondary)]">
+              {addDraftIncrementInfo.source === "RULE" ? <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span> : null}
+              {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
+                <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
+              ) : null}
+            </div>
+          ) : null}
 
           <label className="grid gap-1">
             <span className="ui-card-label">메모</span>

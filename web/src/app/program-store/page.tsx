@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -13,15 +13,21 @@ import {
   extractOneRmTargetsFromTemplate,
   hasAtLeastOneExercise,
   inferSessionDraftsFromTemplate,
+  inferProgressionTargetFromExerciseName,
+  isOperatorTemplate,
+  isOperatorAutoRowType,
   makeForkSlug,
   makeSessionKeys,
   moveExerciseBetweenSessions,
   reconcileSessionsByKeys,
   reorderExercises,
+  resolveOperatorExerciseDefaults,
   toManualDefinition,
   toProgramListItems,
   type ProgramExerciseDraft,
   type ProgramListItem,
+  type ProgramProgressionTarget,
+  type ProgramRowType,
   type ProgramSessionDraft,
   type ProgramTemplate,
   type SessionRule,
@@ -199,6 +205,9 @@ function buildInitialCreateDraft(templates: ProgramTemplate[]): CreateDraft {
 }
 
 function exerciseValidity(exercise: ProgramExerciseDraft) {
+  if (exercise.rowType === "AUTO") {
+    return exercise.exerciseName.trim().length > 0 && Boolean(exercise.progressionTarget);
+  }
   return exercise.exerciseName.trim().length > 0 && exercise.sets > 0 && exercise.reps > 0;
 }
 
@@ -250,6 +259,10 @@ function targetRecommendationNames(target: OneRmTarget) {
   const key = String(target.key).trim().toUpperCase();
 
   const candidates = new Set<string>([fromLabel, fromKey].filter(Boolean));
+
+  if (key.startsWith("EX_")) {
+    return Array.from(candidates).map(normalizeExerciseLookupKey).filter(Boolean);
+  }
 
   if (key === "SQUAT") {
     ["back squat", "squat", "스쿼트"].forEach((name) => candidates.add(name));
@@ -346,14 +359,94 @@ function buildOneRmRecommendations(targets: OneRmTarget[], statsItems: PrStatsRe
   return out;
 }
 
-function readOneRmFromPlanParams(params: any, key: string, tmPercent: number) {
-  const oneRmRaw = Number(params?.oneRepMaxKg?.[key]);
-  if (Number.isFinite(oneRmRaw) && oneRmRaw > 0) return oneRmRaw;
-  const tmRaw = Number(params?.trainingMaxKg?.[key]);
-  if (Number.isFinite(tmRaw) && tmRaw > 0 && tmPercent > 0) {
-    return Math.round((tmRaw / tmPercent) * 100) / 100;
+function readOneRmFromPlanParams(params: any, key: string, tmPercent: number, fallbackKey?: string | null) {
+  const lookupKeys = [key, fallbackKey].filter((value): value is string => Boolean(String(value ?? "").trim()));
+
+  for (const lookupKey of lookupKeys) {
+    const oneRmRaw = Number(params?.oneRepMaxKg?.[lookupKey]);
+    if (Number.isFinite(oneRmRaw) && oneRmRaw > 0) return oneRmRaw;
+  }
+
+  if (tmPercent > 0) {
+    for (const lookupKey of lookupKeys) {
+      const tmRaw = Number(params?.trainingMaxKg?.[lookupKey]);
+      if (Number.isFinite(tmRaw) && tmRaw > 0) {
+        return Math.round((tmRaw / tmPercent) * 100) / 100;
+      }
+    }
   }
   return null;
+}
+
+function defaultStartPlanParamsFromTemplate(template: ProgramTemplate) {
+  const params: Record<string, unknown> = {};
+  const definition = template.latestVersion?.definition as
+    | {
+        kind?: unknown;
+        sessions?: Array<{ key?: unknown }>;
+        schedule?: { sessionsPerWeek?: unknown };
+      }
+    | undefined;
+  const scheduleDef = definition?.schedule;
+  const sessionsPerWeek = Number(scheduleDef?.sessionsPerWeek);
+  if (Number.isFinite(sessionsPerWeek) && sessionsPerWeek > 0) {
+    params.sessionsPerWeek = Math.max(1, Math.floor(sessionsPerWeek));
+  }
+  if (String(template.slug).trim().toLowerCase() === "operator") {
+    params.schedule = ["D1", "D2", "D3"];
+  } else if (String(definition?.kind ?? "").trim().toLowerCase() === "manual") {
+    const manualKeys = (Array.isArray(definition?.sessions) ? definition.sessions : [])
+      .map((session) => String(session?.key ?? "").trim())
+      .filter(Boolean);
+    if (manualKeys.length > 0) {
+      params.schedule = manualKeys;
+      params.sessionsPerWeek = manualKeys.length;
+    }
+  }
+  return params;
+}
+
+function operatorSessionMeta(sessionKey: string) {
+  const key = String(sessionKey ?? "").trim().toUpperCase();
+  if (key === "D1") return { title: "D1", description: "Squat + Bench + Pull-Up" };
+  if (key === "D2") return { title: "D2", description: "Squat + Bench + Pull-Up" };
+  if (key === "D3") return { title: "D3", description: "Squat + Bench + Deadlift" };
+  return { title: sessionKey, description: "" };
+}
+
+function progressionTargetLabel(target: ProgramProgressionTarget | null | undefined) {
+  if (target === "SQUAT") return "Squat";
+  if (target === "BENCH") return "Bench";
+  if (target === "DEADLIFT") return "Deadlift";
+  if (target === "PULL") return "Pull";
+  if (target === "OHP") return "OHP";
+  return "미설정";
+}
+
+function operatorRowTypeLabel(rowType: ProgramRowType | null | undefined) {
+  if (rowType === "AUTO") return "Auto";
+  if (rowType === "CUSTOM") return "Custom";
+  return "Custom";
+}
+
+function operatorRowTypeHelp(rowType: ProgramRowType | null | undefined) {
+  if (rowType === "AUTO") return "Operator 자동 행입니다. 선택한 운동과 진행 타겟 기준으로 중량/반복수/세트가 자동 적용됩니다.";
+  if (rowType === "CUSTOM") return "Operator 자동 로직을 따르지 않는 자유 행입니다. 이 경우만 세트/횟수를 직접 입력합니다.";
+  return "행 타입을 선택하세요.";
+}
+
+function operatorRowTypeTone(rowType: ProgramRowType | null | undefined) {
+  if (rowType === "AUTO") return "ui-badge-info";
+  if (rowType === "CUSTOM") return "ui-badge-neutral";
+  return "ui-badge-neutral";
+}
+
+function resolveStartTmPercent(template: ProgramTemplate) {
+  const tmPercentRaw = Number(template.latestVersion?.defaults?.tmPercent);
+  if (isOperatorTemplate(template)) {
+    if (!Number.isFinite(tmPercentRaw) || tmPercentRaw <= 0 || tmPercentRaw >= 1) return 0.9;
+  }
+  return Number.isFinite(tmPercentRaw) && tmPercentRaw > 0 ? tmPercentRaw : 1;
 }
 
 async function putProgramVersionDefinition(versionId: string, definition: any) {
@@ -365,7 +458,13 @@ function ExerciseEditorRow({
   publicTemplates,
   exerciseOptions,
   exerciseOptionsLoading,
+  operatorStyle = false,
+  highlighted = false,
+  canMoveUp = false,
+  canMoveDown = false,
   onPatch,
+  onMoveUp,
+  onMoveDown,
   onDelete,
   onDragStart,
   onDragOver,
@@ -375,13 +474,30 @@ function ExerciseEditorRow({
   publicTemplates: ProgramTemplate[];
   exerciseOptions: ExerciseOption[];
   exerciseOptionsLoading: boolean;
+  operatorStyle?: boolean;
+  highlighted?: boolean;
+  canMoveUp?: boolean;
+  canMoveDown?: boolean;
   onPatch: (patch: Partial<ProgramExerciseDraft>) => void;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
   onDelete: () => void;
   onDragStart: () => void;
   onDragOver: () => void;
   onDrop: () => void;
 }) {
   const [exerciseQuery, setExerciseQuery] = useState(exercise.exerciseName);
+  const [exercisePickerOpen, setExercisePickerOpen] = useState(() => exercise.exerciseName.trim().length === 0);
+  const exerciseInputRef = useRef<HTMLInputElement | null>(null);
+  const lastResolvedExerciseNameRef = useRef(exercise.exerciseName.trim().toLowerCase());
+  const circleActionButtonStyle = {
+    width: "var(--touch-target)",
+    height: "var(--touch-target)",
+    minWidth: "var(--touch-target)",
+    minHeight: "var(--touch-target)",
+    padding: 0,
+    aspectRatio: "1 / 1",
+  } as const;
 
   useEffect(() => {
     const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
@@ -411,190 +527,358 @@ function ExerciseEditorRow({
       return haystack.includes(normalizedQuery);
     });
   }, [exerciseOptions, exerciseQuery]);
+  const operatorAutoRow = operatorStyle && isOperatorAutoRowType(exercise.rowType ?? null);
+  const operatorAutoDefaults = useMemo(() => {
+    if (!operatorAutoRow) return null;
+    return resolveOperatorExerciseDefaults(exercise.exerciseName, exercise.rowType ?? "AUTO");
+  }, [exercise.exerciseName, exercise.rowType, operatorAutoRow]);
 
   const selectExerciseOption = useCallback(
     (option: ExerciseOption | null) => {
-      onPatch({ exerciseName: option?.name ?? "" });
+      const nextExerciseName = option?.name ?? "";
+      const inferredTarget = inferProgressionTargetFromExerciseName(nextExerciseName);
+      onPatch(
+        operatorStyle && isOperatorAutoRowType(exercise.rowType ?? null)
+          ? {
+              exerciseName: nextExerciseName,
+              progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
+              ...resolveOperatorExerciseDefaults(nextExerciseName, exercise.rowType ?? "AUTO"),
+            }
+          : { exerciseName: nextExerciseName },
+      );
       setExerciseQuery(option?.name ?? "");
+      exerciseInputRef.current?.blur();
+      setExercisePickerOpen(!option);
     },
-    [onPatch],
+    [exercise.progressionTarget, exercise.rowType, onPatch, operatorStyle],
   );
 
-  return (
-    <div className="workout-swipe-shell">
-      <button type="button" className="workout-swipe-delete haptic-tap" onClick={onDelete}>
-        삭제
-      </button>
-      <article
-        className="workout-set-card grid gap-2"
-        draggable
-        onDragStart={onDragStart}
-        onDragOver={(event) => {
-          event.preventDefault();
-          onDragOver();
-        }}
-        onDrop={(event) => {
-          event.preventDefault();
-          onDrop();
-        }}
-      >
-        <div className="program-store-row-head">
-          <span className="ui-badge ui-badge-neutral">편집 모드</span>
-          <span className="program-store-drag-handle" aria-hidden="true">
-            ≡
-          </span>
-        </div>
+  useEffect(() => {
+    const normalizedExerciseName = exercise.exerciseName.trim().toLowerCase();
+    if (!normalizedExerciseName) {
+      lastResolvedExerciseNameRef.current = "";
+      setExercisePickerOpen(true);
+      return;
+    }
+    if (lastResolvedExerciseNameRef.current !== normalizedExerciseName) {
+      lastResolvedExerciseNameRef.current = normalizedExerciseName;
+      setExercisePickerOpen(false);
+    }
+  }, [exercise.exerciseName]);
 
-        <label className="grid gap-1">
+  useEffect(() => {
+    if (!exercisePickerOpen) return;
+    const frame = window.requestAnimationFrame(() => {
+      exerciseInputRef.current?.focus();
+      exerciseInputRef.current?.select();
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [exercisePickerOpen]);
+
+  return (
+    <article
+      className={`workout-set-card grid gap-2 transition-[box-shadow,border-color,background-color] duration-300 ${
+        highlighted
+          ? "border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_10%,var(--bg-elevated))] shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
+          : ""
+      }`}
+      draggable
+      onDragStart={onDragStart}
+      onDragOver={(event) => {
+        event.preventDefault();
+        onDragOver();
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        onDrop();
+      }}
+    >
+      <div className="program-store-row-head">
+        <div className="flex items-center gap-2">
+          {operatorStyle ? (
+            <>
+              <span className={`ui-badge ${operatorRowTypeTone(exercise.rowType)}`}>
+                {operatorRowTypeLabel(exercise.rowType)}
+              </span>
+              {operatorAutoRow && exercise.progressionTarget ? (
+                <span className="ui-badge ui-badge-neutral">
+                  {progressionTargetLabel(exercise.progressionTarget)}
+                </span>
+              ) : null}
+            </>
+          ) : null}
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--text-secondary)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)] disabled:cursor-default disabled:opacity-35"
+            style={circleActionButtonStyle}
+            aria-label="운동 위로 이동"
+            title="운동 위로 이동"
+            onClick={onMoveUp}
+            disabled={!canMoveUp}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
+              <path d="m6.75 14.25 5.25-5.25 5.25 5.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--text-secondary)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)] disabled:cursor-default disabled:opacity-35"
+            style={circleActionButtonStyle}
+            aria-label="운동 아래로 이동"
+            title="운동 아래로 이동"
+            onClick={onMoveDown}
+            disabled={!canMoveDown}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
+              <path d="m6.75 9.75 5.25 5.25 5.25-5.25" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--color-warning)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)]"
+            style={circleActionButtonStyle}
+            aria-label="운동 삭제"
+            title="운동 삭제"
+            onClick={onDelete}
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.1"
+              className="h-6 w-6"
+              aria-hidden="true"
+            >
+              <path d="M4.5 7.5h15" strokeLinecap="round" />
+              <path d="M9.75 3.75h4.5" strokeLinecap="round" />
+              <path d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M10.5 10.5v5.25" strokeLinecap="round" />
+              <path d="M13.5 10.5v5.25" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+        <div className="grid gap-1">
           <span className="ui-card-label">운동종목</span>
           <div className="workout-combobox" data-no-swipe="true">
-            <div className="app-search-shell">
-              <span className="app-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.8-3.8" />
-                </svg>
-              </span>
-              <input
-                type="search"
-                inputMode="search"
-                className="app-search-input"
-                value={exerciseQuery}
-                placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
-                onChange={(event) => {
-                  const nextQuery = event.target.value;
-                  setExerciseQuery(nextQuery);
-                  const normalizedQuery = nextQuery.trim().toLowerCase();
-                  const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
-                  if (!normalizedSelectedName) return;
-                  if (normalizedQuery === normalizedSelectedName) return;
-                  onPatch({ exerciseName: "" });
+            {selectedExerciseOption && !exercisePickerOpen ? (
+              <button
+                type="button"
+                className="haptic-tap flex items-center justify-between gap-3 rounded-[0.9rem] border border-[color:color-mix(in_srgb,var(--accent-primary)_34%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-primary)_13%,transparent)] px-3 py-3 text-left"
+                onClick={() => {
+                  setExerciseQuery(selectedExerciseOption.name);
+                  setExercisePickerOpen(true);
                 }}
-                onKeyDown={(event) => {
-                  if (event.key !== "Enter") return;
-                  event.preventDefault();
-                  const first = filteredExerciseOptions[0] ?? null;
-                  if (!first) return;
-                  selectExerciseOption(first);
-                }}
-              />
-              {exerciseQuery.trim().length > 0 ? (
-                <button
-                  type="button"
-                  className="app-search-clear"
-                  aria-label="검색어 지우기"
-                  onClick={() => {
-                    setExerciseQuery("");
-                    onPatch({ exerciseName: "" });
-                  }}
-                >
-                  ×
-                </button>
-              ) : null}
-            </div>
-
-            {selectedExerciseOption ? (
-              <div className="workout-combobox-selected" role="status" aria-live="polite">
-                <span className="workout-combobox-selected-kicker">선택됨</span>
-                <strong className="workout-combobox-selected-name">
+              >
+                <strong className="min-w-0 truncate text-[0.96rem] text-[var(--text-primary)]">
                   {formatExerciseOptionLabel(selectedExerciseOption)}
                 </strong>
-                <button
-                  type="button"
-                  className="haptic-tap workout-combobox-selected-edit"
-                  onClick={() => {
-                    selectExerciseOption(null);
-                  }}
-                >
-                  선택 변경
-                </button>
-              </div>
-            ) : null}
-
-            {!selectedExerciseOption ? (
-              <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
-                {exerciseOptionsLoading ? (
-                  <span className="workout-combobox-empty">검색 중...</span>
-                ) : filteredExerciseOptions.length === 0 ? (
-                  <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
-                ) : (
-                  filteredExerciseOptions.map((option) => (
+                <span className="rounded-full border border-[color:color-mix(in_srgb,var(--accent-primary)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--bg-surface)_68%,transparent)] px-3 py-1 text-[0.78rem] font-semibold text-[color:color-mix(in_srgb,var(--accent-primary)_88%,var(--text-primary))]">
+                  변경
+                </span>
+              </button>
+            ) : (
+              <>
+                <div className="app-search-shell">
+                  <span className="app-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.8-3.8" />
+                    </svg>
+                  </span>
+                  <input
+                    ref={exerciseInputRef}
+                    type="search"
+                    inputMode="search"
+                    className="app-search-input"
+                    value={exerciseQuery}
+                    placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
+                    onChange={(event) => {
+                      const nextQuery = event.target.value;
+                      setExerciseQuery(nextQuery);
+                      const normalizedQuery = nextQuery.trim().toLowerCase();
+                      const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
+                      if (!normalizedSelectedName) return;
+                      if (normalizedQuery === normalizedSelectedName) return;
+                      onPatch({ exerciseName: "" });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter") return;
+                      event.preventDefault();
+                      const first = filteredExerciseOptions[0] ?? null;
+                      if (!first) return;
+                      selectExerciseOption(first);
+                    }}
+                  />
+                  {exerciseQuery.trim().length > 0 ? (
                     <button
-                      key={option.id}
                       type="button"
-                      className={`haptic-tap workout-combobox-option${
-                        exercise.exerciseName.trim().toLowerCase() === option.name.trim().toLowerCase()
-                          ? " is-active"
-                          : ""
-                      }`}
+                      className="app-search-clear"
+                      aria-label="검색어 지우기"
                       onClick={() => {
-                        selectExerciseOption(option);
+                        setExerciseQuery("");
+                        onPatch({ exerciseName: "" });
+                        setExercisePickerOpen(true);
                       }}
                     >
-                      {formatExerciseOptionLabel(option)}
+                      ×
                     </button>
-                  ))
-                )}
+                  ) : null}
+                </div>
+
+                <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                  {exerciseOptionsLoading ? (
+                    <span className="workout-combobox-empty">검색 중...</span>
+                  ) : filteredExerciseOptions.length === 0 ? (
+                    <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                  ) : (
+                    filteredExerciseOptions.map((option) => (
+                      <button
+                        key={option.id}
+                        type="button"
+                        className={`haptic-tap workout-combobox-option${
+                          exercise.exerciseName.trim().toLowerCase() === option.name.trim().toLowerCase()
+                            ? " is-active"
+                            : ""
+                        }`}
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                        }}
+                        onClick={() => {
+                          selectExerciseOption(option);
+                        }}
+                      >
+                        {formatExerciseOptionLabel(option)}
+                      </button>
+                    ))
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+
+        {!operatorStyle ? (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <label className="grid gap-1">
+              <span className="ui-card-label">수행 방식</span>
+              <AppSelect
+                variant="workout"
+                value={exercise.mode}
+                onChange={(event) =>
+                  onPatch({
+                    mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
+                    marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
+                  })
+                }
+              >
+                <option value="MARKET">시중 프로그램 기반</option>
+                <option value="MANUAL">완전 수동</option>
+              </AppSelect>
+            </label>
+
+            {exercise.mode === "MARKET" && (
+              <label className="grid gap-1">
+                <span className="ui-card-label">기반 프로그램</span>
+                <AppSelect
+                  variant="workout"
+                  value={exercise.marketTemplateSlug ?? ""}
+                  onChange={(event) => onPatch({ marketTemplateSlug: event.target.value || null })}
+                >
+                  <option value="">선택</option>
+                  {publicTemplates.map((template) => (
+                    <option key={template.id} value={template.slug}>
+                      {formatProgramDisplayName(template.name)}
+                    </option>
+                  ))}
+                </AppSelect>
+              </label>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-2">
+            <label className="grid gap-1">
+              <span className="ui-card-label">행 타입</span>
+              <AppSelect
+                variant="workout"
+                value={exercise.rowType ?? "CUSTOM"}
+                onChange={(event) => {
+                  const nextValue = String(event.target.value ?? "").trim().toUpperCase();
+                  const nextRowType: ProgramRowType = nextValue === "AUTO" ? "AUTO" : "CUSTOM";
+                  const inferredTarget =
+                    nextRowType === "AUTO"
+                      ? inferProgressionTargetFromExerciseName(exercise.exerciseName)
+                      : null;
+                  onPatch(
+                    isOperatorAutoRowType(nextRowType)
+                      ? {
+                          rowType: nextRowType,
+                          progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
+                          ...resolveOperatorExerciseDefaults(exercise.exerciseName, nextRowType),
+                        }
+                      : { rowType: nextRowType, progressionTarget: null },
+                  );
+                }}
+              >
+                <option value="AUTO">Auto</option>
+                <option value="CUSTOM">Custom</option>
+              </AppSelect>
+            </label>
+            {operatorAutoRow ? (
+              <label className="grid gap-1">
+                <span className="ui-card-label">진행 타겟</span>
+                <AppSelect
+                  variant="workout"
+                  value={exercise.progressionTarget ?? ""}
+                  onChange={(event) =>
+                    onPatch({
+                      progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
+                    })
+                  }
+                >
+                  <option value="">선택</option>
+                  <option value="SQUAT">Squat</option>
+                  <option value="BENCH">Bench</option>
+                  <option value="DEADLIFT">Deadlift</option>
+                  <option value="PULL">Pull</option>
+                  <option value="OHP">OHP</option>
+                </AppSelect>
+              </label>
+            ) : null}
+            <div className="rounded-lg border border-dashed px-3 py-2 text-xs text-[var(--text-secondary)]">
+              {operatorRowTypeHelp(exercise.rowType)}
+            </div>
+            {operatorAutoDefaults ? (
+              <div className="rounded-lg border px-3 py-2 text-sm text-[var(--text-secondary)]">
+                Operator 자동 설정: <strong className="text-[var(--text-primary)]">{operatorAutoDefaults.sets}세트 x {operatorAutoDefaults.reps}회</strong>
               </div>
             ) : null}
           </div>
-        </label>
+        )}
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">수행 방식</span>
-            <AppSelect
-              variant="workout"
-              value={exercise.mode}
-              onChange={(event) =>
-                onPatch({
-                  mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
-                  marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
-                })
-              }
-            >
-              <option value="MARKET">시중 프로그램 기반</option>
-              <option value="MANUAL">완전 수동</option>
-            </AppSelect>
-          </label>
-
-          {exercise.mode === "MARKET" && (
-            <label className="grid gap-1">
-              <span className="ui-card-label">기반 프로그램</span>
-              <AppSelect
-                variant="workout"
-                value={exercise.marketTemplateSlug ?? ""}
-                onChange={(event) => onPatch({ marketTemplateSlug: event.target.value || null })}
-              >
-                <option value="">선택</option>
-                {publicTemplates.map((template) => (
-                  <option key={template.id} value={template.slug}>
-                    {formatProgramDisplayName(template.name)}
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <AppNumberStepper
-            label="세트"
-            value={exercise.sets}
-            min={1}
-            max={50}
-            step={1}
-            onChange={(next) => onPatch({ sets: next })}
-          />
-          <AppNumberStepper
-            label="횟수"
-            value={exercise.reps}
-            min={1}
-            max={100}
-            step={1}
-            onChange={(next) => onPatch({ reps: next })}
-          />
-        </div>
+        {!operatorAutoRow ? (
+          <div className="grid grid-cols-2 gap-2">
+            <AppNumberStepper
+              label="세트"
+              value={exercise.sets}
+              min={1}
+              max={50}
+              step={1}
+              onChange={(next) => onPatch({ sets: next })}
+            />
+            <AppNumberStepper
+              label="횟수"
+              value={exercise.reps}
+              min={1}
+              max={100}
+              step={1}
+              onChange={(next) => onPatch({ reps: next })}
+            />
+          </div>
+        ) : null}
 
         <label className="grid gap-1">
           <span className="ui-card-label">메모</span>
@@ -605,8 +889,7 @@ function ExerciseEditorRow({
             placeholder="세션 메모"
           />
         </label>
-      </article>
-    </div>
+    </article>
   );
 }
 
@@ -630,6 +913,9 @@ export default function ProgramStorePage() {
   const [createDraft, setCreateDraft] = useState<CreateDraft | null>(null);
   const [dragContext, setDragContext] = useState<DragContext | null>(null);
   const [queryState, setQueryState] = useState(() => readSearchQueryFromLocation());
+  const customizeExerciseRefs = useRef(new Map<string, HTMLDivElement>());
+  const [pendingCustomizeScrollId, setPendingCustomizeScrollId] = useState<string | null>(null);
+  const [recentlyAddedCustomizeExerciseId, setRecentlyAddedCustomizeExerciseId] = useState<string | null>(null);
 
   const listItems = useMemo(() => toProgramListItems(templates), [templates]);
   const publicTemplates = useMemo(
@@ -645,6 +931,10 @@ export default function ProgramStorePage() {
     () => listItems.find((entry) => entry.template.id === detailTargetId) ?? null,
     [detailTargetId, listItems],
   );
+  const isOperatorCustomization = useMemo(
+    () => isOperatorTemplate(customizeDraft?.baseTemplate),
+    [customizeDraft],
+  );
 
   const loadOneRmRecommendations = useCallback(async (templateId: string, targets: OneRmTarget[]) => {
     try {
@@ -653,23 +943,14 @@ export default function ProgramStorePage() {
 
       setStartProgramDraft((prev) => {
         if (!prev || prev.template.id !== templateId) return prev;
-        const nextInputs = { ...prev.oneRmInputs };
-
-        for (const target of prev.targets) {
-          const current = String(nextInputs[target.key] ?? "").trim();
-          const recommendation = recommendations[target.key];
-          if (!current && recommendation) {
-            nextInputs[target.key] = String(recommendation.recommendedKg);
-          }
-        }
-
         const hasAnyRecommendation = Object.keys(recommendations).length > 0;
         return {
           ...prev,
-          oneRmInputs: nextInputs,
           recommendations,
           recommendationStatus: "ready",
-          recommendationMessage: hasAnyRecommendation ? null : "추천 가능한 1RM 통계가 없습니다.",
+          recommendationMessage: hasAnyRecommendation
+            ? "추천값을 찾았습니다. 필요하면 종목별 '추천값 적용'을 누르세요."
+            : "추천 가능한 1RM 통계가 없습니다.",
         };
       });
     } catch (e: any) {
@@ -732,6 +1013,28 @@ export default function ProgramStorePage() {
   }, []);
 
   useEffect(() => {
+    if (!pendingCustomizeScrollId) return;
+    const node = customizeExerciseRefs.current.get(pendingCustomizeScrollId);
+    if (!node) return;
+    const frame = window.requestAnimationFrame(() => {
+      node.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+      setRecentlyAddedCustomizeExerciseId(pendingCustomizeScrollId);
+      setPendingCustomizeScrollId(null);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pendingCustomizeScrollId, customizeDraft]);
+
+  useEffect(() => {
+    if (!recentlyAddedCustomizeExerciseId) return;
+    const timeout = window.setTimeout(() => {
+      setRecentlyAddedCustomizeExerciseId((current) =>
+        current === recentlyAddedCustomizeExerciseId ? null : current,
+      );
+    }, 1800);
+    return () => window.clearTimeout(timeout);
+  }, [recentlyAddedCustomizeExerciseId]);
+
+  useEffect(() => {
     const detailSlug = parseSearchValue(queryState.detail);
     const customizeSlug = parseSearchValue(queryState.customize);
     const createFlag = parseSearchValue(queryState.create);
@@ -767,12 +1070,11 @@ export default function ProgramStorePage() {
       const existing = plans.find(
         (plan) => plan.rootProgramVersionId === template.latestVersion?.id && plan.type === expectedType,
       );
-      const tmPercentRaw = Number(template.latestVersion.defaults?.tmPercent);
-      const tmPercent = Number.isFinite(tmPercentRaw) && tmPercentRaw > 0 ? tmPercentRaw : 1;
+      const tmPercent = resolveStartTmPercent(template);
       const targets = extractOneRmTargetsFromTemplate(template);
       const oneRmInputs: Record<string, string> = {};
       for (const target of targets) {
-        const preset = existing ? readOneRmFromPlanParams(existing.params, target.key, tmPercent) : null;
+        const preset = existing ? readOneRmFromPlanParams(existing.params, target.key, tmPercent, target.fallbackKey) : null;
         oneRmInputs[target.key] = preset !== null ? String(preset) : "";
       }
 
@@ -800,6 +1102,7 @@ export default function ProgramStorePage() {
     if (!startProgramDraft) return;
 
     const oneRepMaxKg: Record<string, number> = {};
+    const trainingMaxKg: Record<string, number> = {};
     for (const target of startProgramDraft.targets) {
       const parsed = parsePositiveNumber(startProgramDraft.oneRmInputs[target.key] ?? "");
       if (parsed === null) {
@@ -807,11 +1110,13 @@ export default function ProgramStorePage() {
         return;
       }
       oneRepMaxKg[target.key] = parsed;
+      trainingMaxKg[target.key] = roundToNearest2p5(parsed * startProgramDraft.tmPercent);
+      const fallbackKey = String(target.fallbackKey ?? "").trim().toUpperCase();
+      if (fallbackKey && oneRepMaxKg[fallbackKey] === undefined) {
+        oneRepMaxKg[fallbackKey] = parsed;
+        trainingMaxKg[fallbackKey] = trainingMaxKg[target.key]!;
+      }
     }
-
-    const trainingMaxKg = Object.fromEntries(
-      Object.entries(oneRepMaxKg).map(([key, oneRm]) => [key, roundToNearest2p5(oneRm * startProgramDraft.tmPercent)]),
-    );
 
     try {
       setSaving(true);
@@ -821,10 +1126,12 @@ export default function ProgramStorePage() {
         : null;
 
       let targetPlanId = startProgramDraft.existingPlanId;
+      const defaultPlanParams = defaultStartPlanParamsFromTemplate(startProgramDraft.template);
       if (existing && targetPlanId) {
         await apiPatch<{ plan: PlanItem }>(`/api/plans/${encodeURIComponent(targetPlanId)}`, {
           params: {
             ...(existing.params ?? {}),
+            ...defaultPlanParams,
             startDate: startProgramDraft.today,
             timezone: startProgramDraft.timezone,
             sessionKeyMode: "DATE",
@@ -838,6 +1145,7 @@ export default function ProgramStorePage() {
           type: startProgramDraft.expectedPlanType,
           rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
           params: {
+            ...defaultPlanParams,
             startDate: startProgramDraft.today,
             timezone: startProgramDraft.timezone,
             sessionKeyMode: "DATE",
@@ -916,12 +1224,21 @@ export default function ProgramStorePage() {
       try {
         setSaving(true);
         setError(null);
-        const fork = await apiPost<ForkResponse>(`/api/templates/${encodeURIComponent(draft.baseTemplate.slug)}/fork`, {
+        const forkSourceTemplate =
+          draft.baseTemplate.type === "MANUAL" ? draft.baseTemplate : manualPublicTemplate;
+        if (!forkSourceTemplate) {
+          throw new Error("세션 커스터마이징용 Manual 템플릿을 찾지 못했습니다.");
+        }
+
+        const fork = await apiPost<ForkResponse>(`/api/templates/${encodeURIComponent(forkSourceTemplate.slug)}/fork`, {
           newName: draft.name.trim(),
           newSlug: makeForkSlug(draft.name),
         });
 
-        const definition = toManualDefinition(draft.sessions);
+        const definition = toManualDefinition(draft.sessions, {
+          operatorStyle: isOperatorTemplate(draft.baseTemplate),
+          programFamily: isOperatorTemplate(draft.baseTemplate) ? "operator" : null,
+        });
         await putProgramVersionDefinition(fork.version.id, definition);
 
         setNotice(`커스터마이징 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
@@ -934,7 +1251,7 @@ export default function ProgramStorePage() {
         setSaving(false);
       }
     },
-    [loadStore],
+    [loadStore, manualPublicTemplate],
   );
 
   const saveCreateDraft = useCallback(
@@ -1074,16 +1391,6 @@ export default function ProgramStorePage() {
         >
           프로그램 커스터마이징 모달 열기
         </button>
-      </section>
-
-      <section className="grid gap-2">
-        <h2 className="ios-section-heading">플랜 관리</h2>
-        <a
-          href="/plans/manage"
-          className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
-        >
-          플랜 조회/수정/삭제 열기
-        </a>
       </section>
 
       <BottomSheet
@@ -1254,8 +1561,14 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(customizeDraft)}
-        title="커스터마이징 모달"
-        description={customizeDraft ? `컨텍스트: ${customizeDraft.baseTemplate.name}` : ""}
+        title={isOperatorCustomization ? "Operator 커스터마이징" : "커스터마이징 모달"}
+        description={
+          customizeDraft
+            ? isOperatorCustomization
+              ? `기본 3일 구성 편집 · ${customizeDraft.baseTemplate.name}`
+              : `컨텍스트: ${customizeDraft.baseTemplate.name}`
+            : ""
+        }
         onClose={() => setCustomizeDraft(null)}
         closeLabel="닫기"
         className="program-store-sheet program-store-sheet--large"
@@ -1289,13 +1602,24 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            <article className="rounded-xl border p-3 grid gap-2">
-              <strong>종목 순서 변경</strong>
-            </article>
+            {isOperatorCustomization ? (
+              <article className="rounded-xl border bg-neutral-50 p-3 grid gap-1 text-sm text-neutral-700">
+                <strong>Operator 기본 구성</strong>
+                <span>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</span>
+                <span>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</span>
+              </article>
+            ) : null}
 
             <article className="rounded-xl border p-3 grid gap-3">
-              <strong>세션별 종목 변경 (수정/삭제/추가)</strong>
-              {customizeDraft.sessions.map((session) => (
+              <strong>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</strong>
+              {customizeDraft.sessions.map((session) => {
+                const meta = operatorSessionMeta(session.key);
+                const summary = session.exercises
+                  .map((exercise) => exercise.exerciseName.trim())
+                  .filter(Boolean)
+                  .join(" + ");
+
+                return (
                 <div
                   key={session.id}
                   className="program-store-session-card"
@@ -1322,88 +1646,141 @@ export default function ProgramStorePage() {
                   }}
                 >
                   <header className="program-store-session-head">
-                    <strong>세션 {session.key}</strong>
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-lg border px-3 py-2 text-sm"
-                      onClick={() =>
-                        setCustomizeDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: [...entry.exercises, createEmptyExerciseDraft(prev.baseTemplate.slug)],
-                              };
-                            }),
-                          };
-                        })
-                      }
-                    >
-                      + 운동 추가
-                    </button>
+                    <div className="grid gap-0.5">
+                      <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
+                      {isOperatorCustomization ? (
+                        <span className="text-xs text-[var(--text-secondary)]">
+                          {summary || meta.description}
+                        </span>
+                      ) : null}
+                    </div>
                   </header>
 
                   {session.exercises.length === 0 && (
                     <div className="rounded-lg border p-3 text-sm text-[var(--text-secondary)]">운동이 없습니다.</div>
                   )}
 
-                  {session.exercises.map((exercise) => (
-                    <ExerciseEditorRow
+                  {session.exercises.map((exercise, exerciseIndex) => (
+                    <div
                       key={exercise.id}
-                      exercise={exercise}
-                      publicTemplates={publicTemplates}
-                      exerciseOptions={exerciseOptions}
-                      exerciseOptionsLoading={exerciseOptionsLoading}
-                      onPatch={(patch) =>
-                        setCustomizeDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: entry.exercises.map((item) =>
-                                  item.id === exercise.id ? { ...item, ...patch } : item,
-                                ),
-                              };
-                            }),
-                          };
-                        })
-                      }
-                      onDelete={() =>
-                        setCustomizeDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: entry.exercises.filter((item) => item.id !== exercise.id),
-                              };
-                            }),
-                          };
-                        })
-                      }
-                      onDragStart={() =>
-                        setDragContext({
-                          sourceSessionId: session.id,
-                          sourceExerciseId: exercise.id,
-                        })
-                      }
-                      onDragOver={() => {
-                        // no-op: preventDefault handled in row.
+                      ref={(node) => {
+                        if (node) {
+                          customizeExerciseRefs.current.set(exercise.id, node);
+                        } else {
+                          customizeExerciseRefs.current.delete(exercise.id);
+                        }
                       }}
-                      onDrop={() => applyDragReorder(session.id, exercise.id)}
-                    />
+                    >
+                      <ExerciseEditorRow
+                        exercise={exercise}
+                        publicTemplates={publicTemplates}
+                        exerciseOptions={exerciseOptions}
+                        exerciseOptionsLoading={exerciseOptionsLoading}
+                        operatorStyle={isOperatorCustomization}
+                        highlighted={recentlyAddedCustomizeExerciseId === exercise.id}
+                        canMoveUp={exerciseIndex > 0}
+                        canMoveDown={exerciseIndex < session.exercises.length - 1}
+                        onPatch={(patch) =>
+                          setCustomizeDraft((prev) => {
+                            if (!prev) return prev;
+                            return {
+                              ...prev,
+                              sessions: prev.sessions.map((entry) => {
+                                if (entry.id !== session.id) return entry;
+                                return {
+                                  ...entry,
+                                  exercises: entry.exercises.map((item) =>
+                                    item.id === exercise.id ? { ...item, ...patch } : item,
+                                  ),
+                                };
+                              }),
+                            };
+                          })
+                        }
+                        onMoveUp={() =>
+                          setCustomizeDraft((prev) => {
+                            if (!prev || exerciseIndex <= 0) return prev;
+                            const targetExerciseId = session.exercises[exerciseIndex - 1]?.id;
+                            if (!targetExerciseId) return prev;
+                            return {
+                              ...prev,
+                              sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
+                            };
+                          })
+                        }
+                        onMoveDown={() =>
+                          setCustomizeDraft((prev) => {
+                            if (!prev || exerciseIndex >= session.exercises.length - 1) return prev;
+                            const targetExerciseId = session.exercises[exerciseIndex + 1]?.id;
+                            if (!targetExerciseId) return prev;
+                            return {
+                              ...prev,
+                              sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
+                            };
+                          })
+                        }
+                        onDelete={() =>
+                          setCustomizeDraft((prev) => {
+                            if (!prev) return prev;
+                            return {
+                              ...prev,
+                              sessions: prev.sessions.map((entry) => {
+                                if (entry.id !== session.id) return entry;
+                                return {
+                                  ...entry,
+                                  exercises: entry.exercises.filter((item) => item.id !== exercise.id),
+                                };
+                              }),
+                            };
+                          })
+                        }
+                        onDragStart={() =>
+                          setDragContext({
+                            sourceSessionId: session.id,
+                            sourceExerciseId: exercise.id,
+                          })
+                        }
+                        onDragOver={() => {
+                          // no-op: preventDefault handled in row.
+                        }}
+                        onDrop={() => applyDragReorder(session.id, exercise.id)}
+                      />
+                    </div>
                   ))}
+
+                  <button
+                    type="button"
+                    className="haptic-tap mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
+                    onClick={() => {
+                      const addedExercise = createEmptyExerciseDraft(
+                        isOperatorCustomization ? null : customizeDraft.baseTemplate.slug,
+                        isOperatorCustomization ? "CUSTOM" : null,
+                      );
+                      setPendingCustomizeScrollId(addedExercise.id);
+                      setCustomizeDraft((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          sessions: prev.sessions.map((entry) => {
+                            if (entry.id !== session.id) return entry;
+                            return {
+                              ...entry,
+                              exercises: [...entry.exercises, addedExercise],
+                            };
+                          }),
+                        };
+                      });
+                    }}
+                  >
+                    <span className="text-lg leading-none text-[var(--accent-primary)]" aria-hidden="true">
+                      +
+                    </span>
+                    <span>운동 추가</span>
+                  </button>
                 </div>
-              ))}
-            </article>
+              );
+            })}
+          </article>
           </div>
         )}
       </BottomSheet>
@@ -1613,45 +1990,21 @@ export default function ProgramStorePage() {
                 >
                   <header className="program-store-session-head">
                     <strong>세션 {session.key}</strong>
-                    <button
-                      type="button"
-                      className="haptic-tap rounded-lg border px-3 py-2 text-sm"
-                      onClick={() =>
-                        setCreateDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: [
-                                  ...entry.exercises,
-                                  createEmptyExerciseDraft(
-                                    prev.mode === "MARKET_BASED" ? prev.sourceTemplateSlug : null,
-                                  ),
-                                ],
-                              };
-                            }),
-                          };
-                        })
-                      }
-                    >
-                      + 운동종목 추가
-                    </button>
                   </header>
 
                   {session.exercises.length === 0 && (
                     <div className="rounded-lg border p-3 text-sm text-[var(--text-secondary)]">운동이 없습니다.</div>
                   )}
 
-                  {session.exercises.map((exercise) => (
+                  {session.exercises.map((exercise, exerciseIndex) => (
                     <ExerciseEditorRow
                       key={exercise.id}
                       exercise={exercise}
                       publicTemplates={publicTemplates}
                       exerciseOptions={exerciseOptions}
                       exerciseOptionsLoading={exerciseOptionsLoading}
+                      canMoveUp={exerciseIndex > 0}
+                      canMoveDown={exerciseIndex < session.exercises.length - 1}
                       onPatch={(patch) =>
                         setCreateDraft((prev) => {
                           if (!prev) return prev;
@@ -1666,6 +2019,28 @@ export default function ProgramStorePage() {
                                 ),
                               };
                             }),
+                          };
+                        })
+                      }
+                      onMoveUp={() =>
+                        setCreateDraft((prev) => {
+                          if (!prev || exerciseIndex <= 0) return prev;
+                          const targetExerciseId = session.exercises[exerciseIndex - 1]?.id;
+                          if (!targetExerciseId) return prev;
+                          return {
+                            ...prev,
+                            sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
+                          };
+                        })
+                      }
+                      onMoveDown={() =>
+                        setCreateDraft((prev) => {
+                          if (!prev || exerciseIndex >= session.exercises.length - 1) return prev;
+                          const targetExerciseId = session.exercises[exerciseIndex + 1]?.id;
+                          if (!targetExerciseId) return prev;
+                          return {
+                            ...prev,
+                            sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
                           };
                         })
                       }
@@ -1696,6 +2071,36 @@ export default function ProgramStorePage() {
                       onDrop={() => applyDragReorder(session.id, exercise.id)}
                     />
                   ))}
+
+                  <button
+                    type="button"
+                    className="haptic-tap mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
+                    onClick={() =>
+                      setCreateDraft((prev) => {
+                        if (!prev) return prev;
+                        return {
+                          ...prev,
+                          sessions: prev.sessions.map((entry) => {
+                            if (entry.id !== session.id) return entry;
+                            return {
+                              ...entry,
+                              exercises: [
+                                ...entry.exercises,
+                                createEmptyExerciseDraft(
+                                  prev.mode === "MARKET_BASED" ? prev.sourceTemplateSlug : null,
+                                ),
+                              ],
+                            };
+                          }),
+                        };
+                      })
+                    }
+                  >
+                    <span className="text-lg leading-none text-[var(--accent-primary)]" aria-hidden="true">
+                      +
+                    </span>
+                    <span>운동 추가</span>
+                  </button>
                 </div>
               ))}
             </article>

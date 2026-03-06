@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import { extractSessionDate } from "@/lib/session-key";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -186,7 +187,22 @@ export default function CalendarPage() {
 
   const generatedByKey = useMemo(() => {
     const map = new Map<string, RecentGeneratedSession>();
-    for (const s of recentSessions) map.set(s.sessionKey, s);
+    for (const session of recentSessions) {
+      map.set(session.sessionKey, session);
+    }
+    return map;
+  }, [recentSessions]);
+
+  const generatedByDate = useMemo(() => {
+    const map = new Map<string, RecentGeneratedSession>();
+    for (const session of recentSessions) {
+      const dateOnly = extractSessionDate(session.sessionKey);
+      if (!dateOnly) continue;
+      const current = map.get(dateOnly);
+      if (!current || new Date(current.updatedAt).getTime() < new Date(session.updatedAt).getTime()) {
+        map.set(dateOnly, session);
+      }
+    }
     return map;
   }, [recentSessions]);
 
@@ -356,7 +372,10 @@ export default function CalendarPage() {
           <div className="calendar-grid">
             {cells.map((dateOnly) => {
               const ctx = computePlanContextForDate(selectedPlan, dateOnly);
-              const generated = ctx ? generatedByKey.get(ctx.sessionKey) : undefined;
+              const generated =
+                String(selectedPlan?.params?.sessionKeyMode ?? "").toUpperCase() === "DATE"
+                  ? generatedByDate.get(dateOnly)
+                  : (ctx ? generatedByKey.get(ctx.sessionKey) : undefined);
               const dayLabel =
                 selectedPlan?.type === "MANUAL" && ctx?.scheduleKey
                   ? ctx.scheduleKey

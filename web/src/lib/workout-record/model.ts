@@ -12,12 +12,15 @@ export type WorkoutNoteModel = {
 };
 
 export type WorkoutExerciseSource = "PROGRAM" | "USER";
+export type WorkoutExerciseBadge = "AUTO" | "CUSTOM" | "ADDED";
 
 export type WorkoutExerciseModel = {
   id: string;
   exerciseId: string | null;
   exerciseName: string;
   source: WorkoutExerciseSource;
+  badge?: WorkoutExerciseBadge | null;
+  prescribedWeightKg?: number | null;
   set: WorkoutSetModel;
   note: WorkoutNoteModel;
 };
@@ -102,6 +105,10 @@ type SnapshotExercise = {
   exerciseId?: string | null;
   exerciseName?: string;
   name?: string;
+  rowType?: string | null;
+  slotRole?: string | null;
+  progressionTarget?: string | null;
+  progressionKey?: string | null;
   sets?: SnapshotSet[];
 };
 
@@ -192,11 +199,20 @@ function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerc
     sets.length,
   );
 
+  const normalizedRowType = String(exercise.rowType ?? exercise.slotRole ?? "").trim().toUpperCase();
+
   return {
     id: `seed-${index + 1}`,
     exerciseId: typeof exercise.exerciseId === "string" ? exercise.exerciseId : null,
     exerciseName: nonEmpty(String(exercise.exerciseName ?? exercise.name ?? ""), `Exercise ${index + 1}`),
     source: "PROGRAM",
+    badge:
+      normalizedRowType === "AUTO" || normalizedRowType === "ANCHOR" || normalizedRowType === "FLEX"
+        ? "AUTO"
+        : normalizedRowType === "CUSTOM"
+          ? "CUSTOM"
+          : null,
+    prescribedWeightKg: Math.max(0, toNumber(first.targetWeightKg ?? first.weightKg, 0)),
     set: {
       count: repsPerSet.length,
       reps: repsPerSet[0] ?? 5,
@@ -364,6 +380,8 @@ export function addUserExercise(
     exerciseId: input.exerciseId ?? null,
     exerciseName: nonEmpty(input.exerciseName, `Custom Exercise ${userIndex}`),
     source: "USER",
+    badge: "ADDED",
+    prescribedWeightKg: null,
     set: {
       count: repsPerSet.length,
       reps: repsPerSet[0] ?? 5,

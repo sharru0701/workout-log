@@ -6,11 +6,74 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef } from "react";
 
+type TabIconProps = {
+  className?: string;
+};
+
+function HomeIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M3.75 10.5L12 4l8.25 6.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.75 9.75v9h10.5v-9" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function RecordIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M3.75 12h16.5" strokeLinecap="round" />
+      <path d="M6 9.75v4.5" strokeLinecap="round" />
+      <path d="M8.25 8.25v7.5" strokeLinecap="round" />
+      <path d="M15.75 8.25v7.5" strokeLinecap="round" />
+      <path d="M18 9.75v4.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PlanIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M7.5 3.75v3" strokeLinecap="round" />
+      <path d="M16.5 3.75v3" strokeLinecap="round" />
+      <path d="M4.5 9h15" strokeLinecap="round" />
+      <path d="M8.25 12.75h3" strokeLinecap="round" />
+      <path d="M8.25 16.5h3" strokeLinecap="round" />
+      <path d="M15 12.15l.9.9 1.85-2.1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15 15.9l.9.9 1.85-2.1" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6.75 5.25h10.5A2.25 2.25 0 0 1 19.5 7.5v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18V7.5a2.25 2.25 0 0 1 2.25-2.25Z" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StoreIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4.5 9.75h15" strokeLinecap="round" />
+      <path d="M6.75 9.75v8.25h10.5V9.75" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M5.25 9.75 6.75 5.25h10.5l1.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.75 12.75h4.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function StatsIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M5.25 18.75h13.5" strokeLinecap="round" />
+      <path d="M7.5 16.5v-4.5" strokeLinecap="round" />
+      <path d="M12 16.5v-8.25" strokeLinecap="round" />
+      <path d="M16.5 16.5V10.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const tabs = [
-  { href: "/", label: "홈" },
-  { href: "/workout-record", label: "운동기록" },
-  { href: "/program-store", label: "프로그램 스토어" },
-  { href: "/stats-1rm", label: "1RM 통계" },
+  { href: "/", label: "홈", ariaLabel: "홈", Icon: HomeIcon },
+  { href: "/workout-record", label: "기록", ariaLabel: "운동기록", Icon: RecordIcon },
+  { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
+  { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },
+  { href: "/stats-1rm", label: "1RM", ariaLabel: "1RM 통계", Icon: StatsIcon },
 ];
 
 function tabIsActive(pathname: string, href: string) {
@@ -181,6 +244,7 @@ export function BottomNav() {
       {tabs.map((tab, tabIndex) => {
         const pathActive = tabIsActive(pathname, tab.href);
         const visualActive = tabIndex === visualActiveTabIndex;
+        const Icon = tab.Icon;
         return (
           <Link
             key={tab.href}
@@ -190,9 +254,12 @@ export function BottomNav() {
             }}
             className={`app-bottom-nav-tab${visualActive ? " is-active" : ""}`}
             aria-current={pathActive ? "page" : undefined}
+            aria-label={tab.ariaLabel}
+            title={tab.ariaLabel}
             onClick={(event) => onTabPress(event, tabIndex, tab.href)}
           >
-            <span>{tab.label}</span>
+            <Icon className="app-bottom-nav-icon" />
+            <span className="app-bottom-nav-label">{tab.label}</span>
           </Link>
         );
       })}

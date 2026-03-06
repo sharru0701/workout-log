@@ -126,11 +126,11 @@ async function main() {
         const map = toMapByExercise(session);
         const squat = map.get("Back Squat");
         const bench = map.get("Bench Press");
-        const deadlift = map.get("Deadlift");
-        assert.ok(squat && bench && deadlift, "Operator base exercises missing");
+        const pull = map.get("Pull-Up");
+        assert.ok(squat && bench && pull, "Operator D1 base exercises missing");
         assertSetCount(squat, 3);
         assertSetCount(bench, 3);
-        assertSetCount(deadlift, 1);
+        assertSetCount(pull, 3);
         assertReps(squat, [5, 5, 5]);
         assert.deepEqual(
           squat.sets.map((set) => Number(Number(set.percent ?? 0).toFixed(2))),
@@ -141,6 +141,21 @@ async function main() {
           true,
           "Operator W1 note missing",
         );
+      },
+    },
+    {
+      name: "Program Tactical Barbell Operator",
+      date: "2026-01-07",
+      checks: (session) => {
+        const map = toMapByExercise(session);
+        const squat = map.get("Back Squat");
+        const bench = map.get("Bench Press");
+        const deadlift = map.get("Deadlift");
+        assert.ok(squat && bench && deadlift, "Operator D3 base exercises missing");
+        assertSetCount(squat, 3);
+        assertSetCount(bench, 3);
+        assertSetCount(deadlift, 3);
+        assertReps(deadlift, [5, 5, 5]);
       },
     },
     {

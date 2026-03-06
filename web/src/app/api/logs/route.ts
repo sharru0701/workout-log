@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { generatedSession, plan, workoutLog, workoutSet } from "@/server/db/schema";
+import { generatedSession, plan, planProgressEvent, workoutLog, workoutSet } from "@/server/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
 import { applyAutoProgressionFromLog } from "@/server/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
@@ -107,9 +107,64 @@ async function GETImpl(req: Request) {
       }
     }
 
+    const generatedSessionIds = Array.from(
+      new Set(pageLogs.map((log) => log.generatedSessionId).filter((value): value is string => Boolean(value))),
+    );
+    const generatedSessionsById = new Map<string, { id: string; sessionKey: string }>();
+
+    if (generatedSessionIds.length > 0) {
+      const sessions = await db
+        .select({
+          id: generatedSession.id,
+          sessionKey: generatedSession.sessionKey,
+        })
+        .from(generatedSession)
+        .where(inArray(generatedSession.id, generatedSessionIds));
+
+      for (const session of sessions) {
+        generatedSessionsById.set(session.id, session);
+      }
+    }
+
+    const progressionSummaryByLogId = new Map<string, ReturnType<typeof buildProgressionSummary>>();
+
+    if (logIds.length > 0) {
+      const events = await db
+        .select({
+          id: planProgressEvent.id,
+          logId: planProgressEvent.logId,
+          eventType: planProgressEvent.eventType,
+          programSlug: planProgressEvent.programSlug,
+          reason: planProgressEvent.reason,
+          beforeState: planProgressEvent.beforeState,
+          afterState: planProgressEvent.afterState,
+          meta: planProgressEvent.meta,
+          createdAt: planProgressEvent.createdAt,
+        })
+        .from(planProgressEvent)
+        .where(inArray(planProgressEvent.logId, logIds))
+        .orderBy(desc(planProgressEvent.createdAt), desc(planProgressEvent.id));
+
+      for (const event of events) {
+        if (!event.logId) continue;
+        if (progressionSummaryByLogId.has(event.logId)) continue;
+        progressionSummaryByLogId.set(
+          event.logId,
+          buildProgressionSummary({
+            mode: "upsert",
+            eventRow: event,
+          }),
+        );
+      }
+    }
+
     const items = pageLogs.map((log) => ({
       ...log,
       sets: setsByLogId.get(log.id) ?? [],
+      generatedSession: log.generatedSessionId
+        ? (generatedSessionsById.get(log.generatedSessionId) ?? null)
+        : null,
+      progression: progressionSummaryByLogId.get(log.id) ?? null,
     }));
 
     const last = pageLogs[pageLogs.length - 1];

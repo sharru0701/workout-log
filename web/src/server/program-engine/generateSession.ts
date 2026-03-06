@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { buildSessionKey } from "@/lib/session-key";
 import { db } from "@/server/db/client";
 import {
   generatedSession,
@@ -70,6 +71,9 @@ type PlannedExercise = {
   sets: PlannedSet[];
   sourceBlockTarget?: string;
   order?: number;
+  rowType?: "AUTO" | "CUSTOM" | null;
+  progressionTarget?: "SQUAT" | "BENCH" | "DEADLIFT" | "OHP" | "PULL" | null;
+  progressionKey?: string | null;
 };
 
 type GeneratorCtx = {
@@ -81,7 +85,10 @@ type GeneratorCtx = {
   orderBase: number;
 };
 
+type ProgressionTarget = NonNullable<PlannedExercise["progressionTarget"]>;
+
 type SessionContext = {
+  cycle: number;
   week: number;
   day: number;
   sessionDate: string;
@@ -129,6 +136,23 @@ function inferTargetFromExerciseName(exerciseName: string) {
   return null;
 }
 
+function normalizeProgressionTarget(value: unknown): "SQUAT" | "BENCH" | "DEADLIFT" | "OHP" | "PULL" | null {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized === "SQUAT" || normalized === "BENCH" || normalized === "DEADLIFT" || normalized === "OHP" || normalized === "PULL") {
+    return normalized;
+  }
+  return inferTargetFromExerciseName(String(value ?? ""));
+}
+
+function manualExerciseKey(exerciseName: string) {
+  return `EX_${String(exerciseName)
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, 48)}`;
+}
+
 function roundToNearest2p5(v: number) {
   return Math.round(v / 2.5) * 2.5;
 }
@@ -168,8 +192,13 @@ function deriveSessionContext(input: {
   day?: number;
   sessionDate?: string;
   timezone?: string;
+  runtimeState?: unknown;
 }) {
   const params = (input.plan?.params ?? {}) as any;
+  const runtimeState =
+    input.runtimeState && typeof input.runtimeState === "object" && !Array.isArray(input.runtimeState)
+      ? (input.runtimeState as Record<string, unknown>)
+      : null;
   const timezone =
     (typeof input.timezone === "string" && input.timezone.trim()) ||
     (typeof params?.timezone === "string" && params.timezone.trim()) ||
@@ -183,21 +212,45 @@ function deriveSessionContext(input: {
 
   let week = clampPositiveInt(input.week, 1);
   let day = clampPositiveInt(input.day, 1);
+  let cycle = 1;
+  const hasExplicitWeek = typeof input.week === "number" && Number.isFinite(input.week);
+  const hasExplicitDay = typeof input.day === "number" && Number.isFinite(input.day);
+  const autoProgressionEnabled = params?.autoProgression === true;
+  const hasRuntimeCycle = toNumberOrNull(runtimeState?.cycle) !== null;
+  const hasRuntimeWeek = toNumberOrNull(runtimeState?.week) !== null;
+  const hasRuntimeDay = toNumberOrNull(runtimeState?.day) !== null;
+  const useRuntimeProgression = autoProgressionEnabled && !hasExplicitWeek && !hasExplicitDay && (hasRuntimeWeek || hasRuntimeDay);
 
-  if (startDate) {
-    const deltaDays = Math.floor((dateOnlyToUtcMs(dateFromInput) - dateOnlyToUtcMs(startDate)) / 86_400_000);
-    const schedule = Array.isArray(params?.schedule) ? params.schedule : [];
-    const sessionsPerWeek = schedule.length > 0 ? schedule.length : clampPositiveInt(params?.sessionsPerWeek, 7);
-    const normalizedDelta = Math.max(0, deltaDays);
-    week = Math.floor(normalizedDelta / sessionsPerWeek) + 1;
-    day = (normalizedDelta % sessionsPerWeek) + 1;
+  if (useRuntimeProgression) {
+    cycle = clampPositiveInt(runtimeState?.cycle, cycle);
+    week = clampPositiveInt(runtimeState?.week, week);
+    day = clampPositiveInt(runtimeState?.day, day);
+  } else {
+    if (autoProgressionEnabled && hasRuntimeCycle) {
+      cycle = clampPositiveInt(runtimeState?.cycle, cycle);
+    }
+    if (startDate && !hasExplicitWeek && !hasExplicitDay) {
+      const deltaDays = Math.floor((dateOnlyToUtcMs(dateFromInput) - dateOnlyToUtcMs(startDate)) / 86_400_000);
+      const schedule = Array.isArray(params?.schedule) ? params.schedule : [];
+      const sessionsPerWeek = schedule.length > 0 ? schedule.length : clampPositiveInt(params?.sessionsPerWeek, 7);
+      const normalizedDelta = Math.max(0, deltaDays);
+      week = Math.floor(normalizedDelta / sessionsPerWeek) + 1;
+      day = (normalizedDelta % sessionsPerWeek) + 1;
+    }
   }
 
   const mode = String(params?.sessionKeyMode ?? "").toUpperCase();
-  const useDateKey = mode === "DATE";
-  const sessionKey = useDateKey ? dateFromInput : `W${week}D${day}`;
+  const sessionKey = buildSessionKey({
+    mode,
+    sessionDate: dateFromInput,
+    cycle,
+    week,
+    day,
+    autoProgression: autoProgressionEnabled,
+  });
 
   return {
+    cycle,
     week,
     day,
     sessionDate: dateFromInput,
@@ -206,8 +259,22 @@ function deriveSessionContext(input: {
   } satisfies SessionContext;
 }
 
-function pickTrainingMaxKg(params: any, defaults: any, target: string) {
-  const keys = [target, target.toLowerCase()];
+function normalizeLookupKeys(keys: Array<string | null | undefined>) {
+  return Array.from(
+    new Set(
+      keys
+        .flatMap((key) => {
+          const normalized = String(key ?? "").trim();
+          return normalized ? [normalized, normalized.toLowerCase()] : [];
+        })
+        .filter(Boolean),
+    ),
+  );
+}
+
+function pickTrainingMaxKgByKeys(params: any, defaults: any, rawKeys: Array<string | null | undefined>) {
+  const keys = normalizeLookupKeys(rawKeys);
+  if (keys.length < 1) return null;
   const scoped = (obj: any): number | null => {
     if (!obj) return null;
     const asNum = toNumberOrNull(obj);
@@ -230,6 +297,39 @@ function pickTrainingMaxKg(params: any, defaults: any, target: string) {
   );
   if (value === null || value <= 0) return null;
   return value;
+}
+
+function pickTrainingMaxKg(params: any, defaults: any, target: string) {
+  return pickTrainingMaxKgByKeys(params, defaults, [target]);
+}
+
+function resolveOperatorExerciseTrainingMax(input: {
+  effectiveParams: any;
+  baseParams: any;
+  defaults: any;
+  exerciseName: string;
+  fallbackTarget: string | null;
+}) {
+  const exactKey = manualExerciseKey(input.exerciseName);
+  const exactTm =
+    pickTrainingMaxKgByKeys(input.effectiveParams, input.defaults, [exactKey]) ??
+    pickTrainingMaxKgByKeys(input.baseParams, input.defaults, [exactKey]);
+
+  if (!input.fallbackTarget) {
+    return exactTm;
+  }
+
+  const effectiveFamilyTm = pickTrainingMaxKg(input.effectiveParams, input.defaults, input.fallbackTarget);
+  if (exactTm === null) {
+    return effectiveFamilyTm;
+  }
+
+  const baseFamilyTm = pickTrainingMaxKg(input.baseParams, input.defaults, input.fallbackTarget);
+  if (baseFamilyTm === null || effectiveFamilyTm === null) {
+    return exactTm;
+  }
+
+  return roundToNearest2p5(exactTm + (effectiveFamilyTm - baseFamilyTm));
 }
 
 function requireTrainingMaxKg(params: any, defaults: any, target: string) {
@@ -286,6 +386,36 @@ function buildRepeatedSets(
   }));
 }
 
+function buildRepeatedRepOnlySets(
+  count: number,
+  row: { reps: number; note?: string; rpe?: number },
+) {
+  return Array.from({ length: count }, () => ({
+    reps: row.reps,
+    rpe: row.rpe,
+    note: row.note,
+  }));
+}
+
+function normalizeManualRowType(value: unknown): "AUTO" | "CUSTOM" | null {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized === "AUTO" || normalized === "ANCHOR" || normalized === "FLEX") return "AUTO";
+  if (normalized === "CUSTOM") return "CUSTOM";
+  return null;
+}
+
+function operatorSchemeByWeek(week: number) {
+  const scheme: Record<number, { reps: number; percent: number; note: string }> = {
+    1: { reps: 5, percent: 0.7, note: "Operator W1" },
+    2: { reps: 5, percent: 0.8, note: "Operator W2" },
+    3: { reps: 3, percent: 0.9, note: "Operator W3" },
+    4: { reps: 5, percent: 0.75, note: "Operator W4" },
+    5: { reps: 3, percent: 0.85, note: "Operator W5" },
+    6: { reps: 1, percent: 0.95, note: "Operator W6" },
+  };
+  return scheme[((week - 1) % 6) + 1] ?? scheme[1];
+}
+
 function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
   const targets = ctx.forcedTarget
     ? [normalizeTarget(ctx.forcedTarget)]
@@ -329,38 +459,40 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
 }
 
 function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
-  const targets = ctx.forcedTarget
-    ? [normalizeTarget(ctx.forcedTarget)]
-    : normalizeTargets(def, ["SQUAT", "BENCH", "DEADLIFT"]);
+  const dayInWeek = ((ctx.day - 1) % 3) + 1;
+  const forcedTarget = normalizeProgressionTarget(ctx.forcedTarget);
+  const targets: ProgressionTarget[] = forcedTarget
+    ? [forcedTarget]
+    : dayInWeek === 3
+      ? ["SQUAT", "BENCH", "DEADLIFT"]
+      : ["SQUAT", "BENCH", "PULL"];
   const weekInCycle = ((ctx.week - 1) % 6) + 1;
   const mainSets = Math.min(
     5,
     Math.max(3, clampPositiveInt(def.progression?.mainSets ?? 3, 3)),
   );
   const deadliftSets = Math.min(
-    3,
-    Math.max(1, clampPositiveInt(def.progression?.deadliftSets ?? 1, 1)),
+    5,
+    Math.max(1, clampPositiveInt(def.progression?.deadliftSets ?? 3, 3)),
   );
 
-  const schemeByWeek: Record<number, { reps: number; percent: number; note: string }> = {
-    1: { reps: 5, percent: 0.7, note: "Operator W1" },
-    2: { reps: 5, percent: 0.8, note: "Operator W2" },
-    3: { reps: 3, percent: 0.9, note: "Operator W3" },
-    4: { reps: 5, percent: 0.75, note: "Operator W4" },
-    5: { reps: 3, percent: 0.85, note: "Operator W5" },
-    6: { reps: 1, percent: 0.95, note: "Operator W6" },
-  };
-  const scheme = schemeByWeek[weekInCycle] ?? schemeByWeek[1];
+  const scheme = operatorSchemeByWeek(weekInCycle);
 
   return targets.map((target, i) => {
-    const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
     const setCount = target === "DEADLIFT" ? deadliftSets : mainSets;
+    const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
     return {
       exerciseName: defaultExerciseNameForTarget(target),
       role: "MAIN" as const,
       sourceBlockTarget: target,
       order: ctx.orderBase + i,
-      sets: buildRepeatedSets(setCount, scheme, tm),
+      rowType: "AUTO",
+      progressionTarget: target,
+      progressionKey: target,
+      sets:
+        tm !== null
+          ? buildRepeatedSets(setCount, scheme, tm)
+          : buildRepeatedRepOnlySets(setCount, scheme),
     };
   });
 }
@@ -448,10 +580,76 @@ function plannedExercisesFromManualSession(manualSession: any): PlannedExercise[
       sets,
       sourceBlockTarget: "MANUAL",
       order: toNumberOrNull(item?.order) ?? i,
+      rowType: normalizeManualRowType(item?.rowType ?? item?.slotRole ?? item?.meta?.rowType ?? item?.meta?.slotRole),
+      progressionTarget: normalizeProgressionTarget(item?.progressionTarget ?? item?.meta?.progressionTarget),
+      progressionKey: null,
     });
   }
 
   return out;
+}
+
+function plannedExercisesFromOperatorManualSession(
+  manualSession: any,
+  week: number,
+  effectiveParams: any,
+  baseParams: any,
+  defaults: any,
+): PlannedExercise[] {
+  const items = Array.isArray(manualSession?.items) ? manualSession.items : [];
+  const scheme = operatorSchemeByWeek(week);
+  const mainSets = 3;
+  const deadliftSets = 3;
+
+  return items
+    .map((item: any, index: number) => {
+      const exerciseName = String(item?.exerciseName ?? item?.name ?? "").trim();
+      if (!exerciseName) return null;
+
+      const rowType = normalizeManualRowType(item?.rowType ?? item?.slotRole ?? item?.meta?.rowType ?? item?.meta?.slotRole);
+      const progressionTarget =
+        normalizeProgressionTarget(item?.progressionTarget ?? item?.meta?.progressionTarget) ??
+        inferTargetFromExerciseName(exerciseName);
+
+      if (rowType === "AUTO") {
+        const setCount = progressionTarget === "DEADLIFT" ? deadliftSets : mainSets;
+        const tm = resolveOperatorExerciseTrainingMax({
+          effectiveParams,
+          baseParams,
+          defaults,
+          exerciseName,
+          fallbackTarget: progressionTarget,
+        });
+        return {
+          exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
+          exerciseName,
+          role: "MAIN" as const,
+          sourceBlockTarget: progressionTarget ?? "CUSTOM",
+          order: toNumberOrNull(item?.order) ?? index,
+          rowType,
+          progressionTarget: progressionTarget ?? null,
+          progressionKey: manualExerciseKey(exerciseName),
+          sets:
+            tm !== null
+              ? buildRepeatedSets(setCount, scheme, tm)
+              : buildRepeatedRepOnlySets(setCount, scheme),
+        } satisfies PlannedExercise;
+      }
+
+      const setRows = Array.isArray(item?.sets) && item.sets.length > 0 ? item.sets : [item];
+      return {
+        exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
+        exerciseName,
+        role: item?.role === "ASSIST" ? "ASSIST" : "MAIN",
+        sets: setRows.map(mapManualSet),
+        sourceBlockTarget: progressionTarget ?? "CUSTOM",
+        order: toNumberOrNull(item?.order) ?? index,
+        rowType: rowType ?? "CUSTOM",
+        progressionTarget: progressionTarget ?? null,
+        progressionKey: null,
+      } satisfies PlannedExercise;
+    })
+    .filter((exercise: PlannedExercise | null): exercise is PlannedExercise => Boolean(exercise));
 }
 
 function plannedExercisesFromBlocks(snapshot: any, week: number, day: number, planParams: any) {
@@ -680,6 +878,7 @@ export async function generateAndSaveSession(input: {
     day: input.day,
     sessionDate: input.sessionDate,
     timezone: input.timezone,
+    runtimeState,
   });
   const sessionKey = sessionCtx.sessionKey;
 
@@ -786,12 +985,26 @@ export async function generateAndSaveSession(input: {
         if (!snapshot.manualSession) {
           snapshot.manualError = `Manual session '${chosenKey}' not found in program definition`;
         }
-        snapshot.exercises = plannedExercisesFromManualSession(snapshot.manualSession);
-        snapshot.exercises = applyManualRuntimeWeightOverrides(
-          template.slug,
-          snapshot.exercises,
-          runtimeState,
-        );
+        const manualDefinition = (version.definition ?? {}) as Record<string, unknown>;
+        const isOperatorManual =
+          manualDefinition.operatorStyle === true ||
+          String(manualDefinition.programFamily ?? "").trim().toLowerCase() === "operator";
+        snapshot.exercises = isOperatorManual
+          ? plannedExercisesFromOperatorManualSession(
+              snapshot.manualSession,
+              sessionCtx.week,
+              effectivePlanParams,
+              p.params ?? {},
+              version.defaults ?? {},
+            )
+          : plannedExercisesFromManualSession(snapshot.manualSession);
+        snapshot.exercises = isOperatorManual
+          ? snapshot.exercises
+          : applyManualRuntimeWeightOverrides(
+              template.slug,
+              snapshot.exercises,
+              runtimeState,
+            );
       }
 
       snapshot.program = {

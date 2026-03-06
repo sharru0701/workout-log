@@ -47,6 +47,7 @@ type NoticeStateRowsProps = {
   message: ReactNode | null;
   tone?: "neutral" | "success" | "warning" | "critical";
   label?: ReactNode;
+  preferInline?: boolean;
   ariaLabel?: string;
   className?: string;
 };
@@ -246,6 +247,7 @@ export function NoticeStateRows({
   message,
   tone = "neutral",
   label = "안내",
+  preferInline = false,
   ariaLabel = "Notice state",
   className,
 }: NoticeStateRowsProps) {
@@ -255,9 +257,10 @@ export function NoticeStateRows({
   const messageText = hasMessage ? toDialogText(message) : "";
   const titleText = toDialogText(label, "안내");
   const dialogKey = messageText ? `${titleText}::${messageText}` : "";
+  const shouldUseDialog = Boolean(dialog && dialogKey && !preferInline);
 
   useEffect(() => {
-    if (!dialog || !dialogKey) return;
+    if (!shouldUseDialog || !dialog || !dialogKey) return;
     if (lastShownMessageRef.current === dialogKey) return;
     lastShownMessageRef.current = dialogKey;
 
@@ -267,7 +270,7 @@ export function NoticeStateRows({
       buttonText: "확인",
       tone: tone === "warning" || tone === "critical" ? "danger" : "default",
     });
-  }, [dialog, dialogKey, messageText, titleText, tone]);
+  }, [dialog, dialogKey, messageText, shouldUseDialog, titleText, tone]);
 
   useEffect(() => {
     if (dialogKey) return;
@@ -276,7 +279,7 @@ export function NoticeStateRows({
 
   if (!message) return null;
 
-  if (dialog) return null;
+  if (shouldUseDialog) return null;
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>

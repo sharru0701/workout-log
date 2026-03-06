@@ -262,7 +262,13 @@ function PlansManagePageContent() {
               />
             </label>
 
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              <a
+                className="haptic-tap rounded-xl border px-4 py-3 text-center text-base font-semibold"
+                href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
+              >
+                수행 히스토리
+              </a>
               <button
                 type="button"
                 className="haptic-tap ui-primary-button min-h-12 px-4 text-base font-semibold"

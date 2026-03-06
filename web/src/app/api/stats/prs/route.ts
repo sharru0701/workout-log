@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
+import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { parseDateRangeFromSearchParams } from "@/server/stats/range";
@@ -118,6 +119,7 @@ async function GETImpl(req: Request) {
         exerciseName: sql<string>`coalesce(${exercise.name}, ${workoutSet.exerciseName})`,
         weightKg: workoutSet.weightKg,
         reps: workoutSet.reps,
+        meta: workoutSet.meta,
       })
       .from(workoutLog)
       .innerJoin(workoutSet, eq(workoutSet.logId, workoutLog.id))
@@ -127,7 +129,11 @@ async function GETImpl(req: Request) {
 
     const byExercise = new Map<string, PrItemInternal>();
     for (const r of rows) {
-      const weightKg = Number(r.weightKg ?? 0);
+      const weightKg = resolveLoggedTotalLoadKg({
+        exerciseName: String(r.exerciseName ?? ""),
+        weightKg: r.weightKg,
+        meta: r.meta as Record<string, unknown> | null | undefined,
+      });
       const reps = Number(r.reps ?? 0);
       if (!weightKg || !reps) continue;
 

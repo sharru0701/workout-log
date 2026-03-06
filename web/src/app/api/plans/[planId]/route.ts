@@ -1,10 +1,11 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray, or } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { plan as planTable } from "@/server/db/schema";
+import { generatedSession, plan as planTable, workoutLog } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
@@ -87,8 +88,40 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
     if (!found) return NextResponse.json({ error: "plan not found" }, { status: 404 });
     if (found.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
 
-    await db.delete(planTable).where(eq(planTable.id, planId));
-    return NextResponse.json({ deleted: true, planId }, { status: 200 });
+    const result = await db.transaction(async (tx) => {
+      const sessionRows = await tx
+        .select({ id: generatedSession.id })
+        .from(generatedSession)
+        .where(eq(generatedSession.planId, planId));
+      const sessionIds = sessionRows.map((row) => row.id);
+
+      const deletedLogs = await tx
+        .delete(workoutLog)
+        .where(
+          sessionIds.length > 0
+            ? or(eq(workoutLog.planId, planId), inArray(workoutLog.generatedSessionId, sessionIds))
+            : eq(workoutLog.planId, planId),
+        )
+        .returning({ id: workoutLog.id });
+
+      await tx.delete(planTable).where(eq(planTable.id, planId));
+      await invalidateStatsCacheForUser(userId, tx);
+
+      return {
+        deletedLogCount: deletedLogs.length,
+        deletedGeneratedSessionCount: sessionIds.length,
+      };
+    });
+
+    return NextResponse.json(
+      {
+        deleted: true,
+        planId,
+        deletedLogCount: result.deletedLogCount,
+        deletedGeneratedSessionCount: result.deletedGeneratedSessionCount,
+      },
+      { status: 200 },
+    );
   } catch (e: any) {
     logError("api.handler_error", { error: e });
     return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });

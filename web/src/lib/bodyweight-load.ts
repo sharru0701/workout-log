@@ -1,0 +1,100 @@
+function toFiniteNumber(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function roundTo2(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+export function isBodyweightExerciseName(exerciseName: string): boolean {
+  const normalized = exerciseName.trim().toLowerCase();
+  if (!normalized) return false;
+  return (
+    normalized.includes("pull-up") ||
+    normalized.includes("pull up") ||
+    normalized.includes("chin-up") ||
+    normalized.includes("chin up") ||
+    normalized.includes("풀업") ||
+    normalized.includes("친업")
+  );
+}
+
+export function computeBodyweightTotalLoadKg(
+  exerciseName: string,
+  externalWeightKg: number,
+  bodyweightKg: number | null,
+): number | null {
+  if (!isBodyweightExerciseName(exerciseName)) return null;
+  if (bodyweightKg === null || bodyweightKg <= 0) return null;
+  const external = Number.isFinite(externalWeightKg) ? Math.max(0, externalWeightKg) : 0;
+  return roundTo2(bodyweightKg + external);
+}
+
+export function computeExternalLoadFromTotalKg(
+  exerciseName: string,
+  totalLoadKg: number,
+  bodyweightKg: number | null,
+): number | null {
+  if (!isBodyweightExerciseName(exerciseName)) return null;
+  if (bodyweightKg === null || bodyweightKg <= 0) return null;
+  const total = Number.isFinite(totalLoadKg) ? Math.max(0, totalLoadKg) : 0;
+  return roundTo2(Math.max(0, total - bodyweightKg));
+}
+
+export function resolveLoggedTotalLoadKg(input: {
+  exerciseName: string;
+  weightKg?: number | null;
+  meta?: Record<string, unknown> | null | undefined;
+}): number | null {
+  const loggedWeightKg = toFiniteNumber(input.weightKg);
+  if (!isBodyweightExerciseName(input.exerciseName)) return loggedWeightKg;
+  const metaTotalLoadKg = toFiniteNumber(input.meta?.totalLoadKg);
+  if (metaTotalLoadKg !== null && metaTotalLoadKg > 0) return roundTo2(metaTotalLoadKg);
+  return loggedWeightKg;
+}
+
+export function formatKgValue(value: number | null | undefined) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
+  return `${Number(value.toFixed(2))}kg`;
+}
+
+export function formatExerciseLoadLabel(input: {
+  exerciseName: string;
+  weightKg: number | null | undefined;
+  bodyweightKg: number | null;
+  source?: "external" | "total";
+  showTotal?: boolean;
+}) {
+  const weightKg = toFiniteNumber(input.weightKg);
+  if (weightKg === null) return "-";
+  const source = input.source ?? "external";
+  const bodyweightKg =
+    typeof input.bodyweightKg === "number" && Number.isFinite(input.bodyweightKg) && input.bodyweightKg > 0
+      ? roundTo2(input.bodyweightKg)
+      : null;
+
+  if (!isBodyweightExerciseName(input.exerciseName) || bodyweightKg === null) {
+    return formatKgValue(weightKg);
+  }
+
+  const externalWeightKg =
+    source === "total"
+      ? computeExternalLoadFromTotalKg(input.exerciseName, weightKg, bodyweightKg)
+      : roundTo2(Math.max(0, weightKg));
+  const totalLoadKg =
+    source === "total"
+      ? roundTo2(Math.max(0, weightKg))
+      : computeBodyweightTotalLoadKg(input.exerciseName, weightKg, bodyweightKg);
+
+  const externalLabel =
+    externalWeightKg !== null && externalWeightKg > 0
+      ? `+${formatKgValue(externalWeightKg).replace("kg", "")}kg`
+      : "체중만";
+
+  if (input.showTotal === false || totalLoadKg === null) {
+    return externalLabel;
+  }
+
+  return `${externalLabel} (총 ${formatKgValue(totalLoadKg)})`;
+}

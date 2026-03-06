@@ -3,7 +3,17 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
+import {
+  computeBodyweightTotalLoadKg,
+  computeExternalLoadFromTotalKg,
+  formatExerciseLoadLabel,
+  formatKgValue,
+  isBodyweightExerciseName,
+} from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
+import { buildSessionKey, formatSessionKeyLabel, parseSessionKey } from "@/lib/session-key";
+import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
+import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import {
   enqueueWorkoutLog,
   getPendingWorkoutLogCount,
@@ -41,8 +51,13 @@ type SetRow = {
   plannedRef?: {
     exerciseName: string;
     setNumber: number;
+    rowType?: string;
+    progressionTarget?: string;
+    progressionKey?: string;
+    progressionLabel?: string;
     reps?: number;
     targetWeightKg?: number;
+    totalTargetWeightKg?: number;
     rpe?: number;
     percent?: number;
     note?: string;
@@ -90,7 +105,7 @@ type SaveLogResponse = {
   progression?: ProgressionSummaryPayload | null;
 };
 
-function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
+function toSetRowsFromPlannedExercises(snapshot: any, bodyweightKg: number | null): SetRow[] {
   const planned = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
   const rows: SetRow[] = [];
 
@@ -100,7 +115,14 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
     const sets = Array.isArray(ex?.sets) && ex.sets.length > 0 ? ex.sets : [{}];
     sets.forEach((s: any, idx: number) => {
       const reps = Number(s?.reps ?? 0);
-      const weightKg = Number(s?.targetWeightKg ?? 0);
+      const totalTargetWeightKg = Number(s?.targetWeightKg ?? 0);
+      const weightKg =
+        computeExternalLoadFromTotalKg(
+          exerciseName,
+          Number.isFinite(totalTargetWeightKg) ? totalTargetWeightKg : 0,
+          bodyweightKg,
+        ) ??
+        totalTargetWeightKg;
       const rpe = Number(s?.rpe ?? 0);
       const percent = Number(s?.percent ?? 0);
       rows.push({
@@ -115,8 +137,13 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
         plannedRef: {
           exerciseName,
           setNumber: idx + 1,
+          rowType: typeof ex?.rowType === "string" ? ex.rowType : undefined,
+          progressionTarget: typeof ex?.progressionTarget === "string" ? ex.progressionTarget : undefined,
+          progressionKey: typeof ex?.progressionKey === "string" ? ex.progressionKey : undefined,
+          progressionLabel: exerciseName,
           reps: Number.isFinite(reps) ? reps : undefined,
           targetWeightKg: Number.isFinite(weightKg) ? weightKg : undefined,
+          totalTargetWeightKg: Number.isFinite(totalTargetWeightKg) ? totalTargetWeightKg : undefined,
           rpe: Number.isFinite(rpe) ? rpe : undefined,
           percent: Number.isFinite(percent) && percent > 0 ? percent : undefined,
           note: typeof s?.note === "string" ? s.note : undefined,
@@ -128,35 +155,22 @@ function toSetRowsFromPlannedExercises(snapshot: any): SetRow[] {
   return rows;
 }
 
-function formatPlannedRef(ref: SetRow["plannedRef"]) {
+function formatPlannedRef(ref: SetRow["plannedRef"], bodyweightKg: number | null) {
   if (!ref) return "";
   const reps = ref.reps ?? "-";
-  const weight = ref.targetWeightKg ?? 0;
+  const displayWeight = formatExerciseLoadLabel({
+    exerciseName: ref.exerciseName,
+    weightKg: ref.totalTargetWeightKg ?? ref.targetWeightKg ?? 0,
+    bodyweightKg,
+    source: ref.totalTargetWeightKg !== undefined ? "total" : "external",
+  });
   const percent =
     typeof ref.percent === "number" && Number.isFinite(ref.percent) && ref.percent > 0
       ? `${Math.round(ref.percent * 100)}%`
       : null;
   const note = typeof ref.note === "string" && ref.note.trim() ? ref.note.trim() : null;
   const meta = [percent, note].filter(Boolean).join(" · ");
-  return `${reps}회 @ ${weight}kg${meta ? ` (${meta})` : ""}`;
-}
-
-function parseSessionKey(sessionKey: string) {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(sessionKey)) {
-    return {
-      week: 1,
-      day: 1,
-      sessionDate: sessionKey,
-    };
-  }
-
-  const m = /^W(\d+)D(\d+)$/.exec(sessionKey);
-  if (!m) return null;
-  return {
-    week: Number(m[1]),
-    day: Number(m[2]),
-    sessionDate: null,
-  };
+  return `${reps}회 @ ${displayWeight}${meta ? ` (${meta})` : ""}`;
 }
 
 function dateOnlyInTimezone(date: Date, timezone: string) {
@@ -176,6 +190,7 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
 function WorkoutSetRow({
   idx,
   row,
+  bodyweightKg,
   setCellKey,
   setInputRefs,
   handleSetGridKeyDown,
@@ -188,6 +203,7 @@ function WorkoutSetRow({
 }: {
   idx: number;
   row: SetRow;
+  bodyweightKg: number | null;
   setCellKey: (row: number, col: number) => string;
   setInputRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
   handleSetGridKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
@@ -200,6 +216,8 @@ function WorkoutSetRow({
 }) {
   const [isRemoving, setIsRemoving] = useState(false);
   const removeTimerRef = useRef<number | null>(null);
+  const isBodyweightExercise = isBodyweightExerciseName(row.exerciseName);
+  const totalLoadKg = computeBodyweightTotalLoadKg(row.exerciseName, row.weightKg, bodyweightKg);
 
   useEffect(() => {
     return () => {
@@ -270,7 +288,9 @@ function WorkoutSetRow({
           </label>
 
           <label className="flex flex-col gap-1">
-            <span className="ui-card-label">중량(kg)</span>
+            <span className="ui-card-label">
+              {isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "중량(kg)"}
+            </span>
             <AppTextInput
               variant="workout-number"
               type="number"
@@ -299,6 +319,10 @@ function WorkoutSetRow({
             />
           </label>
         </div>
+
+        {isBodyweightExercise && bodyweightKg ? (
+          <div className="mt-2 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(totalLoadKg)}</div>
+        ) : null}
 
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <label className="workout-toggle">
@@ -332,7 +356,10 @@ function WorkoutSetRow({
 
         {row.plannedRef ? (
           <div className="mt-2 rounded-lg border px-2 py-1 text-xs text-[var(--text-secondary)]">
-            처방: {formatPlannedRef(row.plannedRef)}
+            처방: {formatPlannedRef(row.plannedRef, bodyweightKg)}
+            {isBodyweightExercise && bodyweightKg ? (
+              <div className="pt-1">현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
+            ) : null}
           </div>
         ) : null}
 
@@ -366,6 +393,7 @@ export default function WorkoutTodayPage() {
   const [sessionDate, setSessionDate] = useState(() =>
     dateOnlyInTimezone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
   );
+  const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
@@ -415,10 +443,34 @@ export default function WorkoutTodayPage() {
   const sessionKey =
     generatedSession?.sessionKey ??
     snapshot?.sessionKey ??
-    (sessionKeyMode === "DATE" ? sessionDate : `W${week}D${day}`);
+    buildSessionKey({
+      mode: sessionKeyMode,
+      sessionDate,
+      week,
+      day,
+      autoProgression: selectedPlan?.params?.autoProgression === true,
+    });
 
   const isPowerMode = focusMode === "POWER";
   const setCellKey = (row: number, col: number) => `${row}:${col}`;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetchSettingsSnapshot()
+      .then((snapshot) => {
+        if (cancelled) return;
+        setBodyweightKg(readWorkoutPreferences(snapshot).bodyweightKg);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setBodyweightKg(toDefaultWorkoutPreferences().bodyweightKg);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function mergeUxSummary(base: WorkoutUxSummary, extra: WorkoutUxSummary): WorkoutUxSummary {
     return {
@@ -569,8 +621,12 @@ export default function WorkoutTodayPage() {
     if (!picked) return;
     const parsed = parseSessionKey(picked.sessionKey);
     if (!parsed) return;
-    setWeek(parsed.week);
-    setDay(parsed.day);
+    if (parsed.kind === "date") {
+      setWeek(1);
+      setDay(1);
+    }
+    if (parsed.week !== null) setWeek(parsed.week);
+    if (parsed.day !== null) setDay(parsed.day);
     if (parsed.sessionDate) setSessionDate(parsed.sessionDate);
   }
 
@@ -846,8 +902,9 @@ export default function WorkoutTodayPage() {
   function applyGeneratedSession(session: any) {
     setGeneratedSession(session);
     const sKey = typeof session?.sessionKey === "string" ? session.sessionKey : null;
-    if (sKey && /^\d{4}-\d{2}-\d{2}$/.test(sKey)) {
-      setSessionDate(sKey);
+    const parsedKey = sKey ? parseSessionKey(sKey) : null;
+    if (parsedKey?.sessionDate) {
+      setSessionDate(parsedKey.sessionDate);
     }
     const nextWeek = Number(session?.snapshot?.week);
     const nextDay = Number(session?.snapshot?.day);
@@ -888,7 +945,7 @@ export default function WorkoutTodayPage() {
   async function generateAndApplyForDate(date: string) {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) throw new Error("날짜 형식은 YYYY-MM-DD여야 합니다.");
     const session = await generateSessionAt(week, day, { date });
-    const generatedRows = toSetRowsFromPlannedExercises(session?.snapshot);
+    const generatedRows = toSetRowsFromPlannedExercises(session?.snapshot, bodyweightKg);
     if (generatedRows.length === 0) throw new Error("생성된 세션에 계획 운동이 없습니다.");
     setSets(generatedRows);
     setSelectedSetIdx(null);
@@ -1072,7 +1129,7 @@ export default function WorkoutTodayPage() {
   }
 
   function applyPlannedSets() {
-    const generatedRows = toSetRowsFromPlannedExercises(snapshot);
+    const generatedRows = toSetRowsFromPlannedExercises(snapshot, bodyweightKg);
     if (generatedRows.length === 0) throw new Error("스냅샷에 계획 운동이 없습니다.");
     setSets(generatedRows);
     setSelectedSetIdx(null);
@@ -1333,7 +1390,7 @@ export default function WorkoutTodayPage() {
     await generateSessionAt(week, day, {
       date: sessionKeyMode === "DATE" ? sessionDate : undefined,
     });
-    setSuccess(`보조 운동 오버라이드를 적용하고 ${sessionKey}를 다시 생성했습니다.`);
+    setSuccess(`보조 운동 오버라이드를 적용하고 ${formatSessionKeyLabel(sessionKey)}를 다시 생성했습니다.`);
   }
 
   async function replaceExercisePermanent() {
@@ -1355,11 +1412,11 @@ export default function WorkoutTodayPage() {
     await generateSessionAt(week, day, {
       date: sessionKeyMode === "DATE" ? sessionDate : undefined,
     });
-    setSuccess(`운동 교체 오버라이드를 적용하고 ${sessionKey}를 다시 생성했습니다.`);
+    setSuccess(`운동 교체 오버라이드를 적용하고 ${formatSessionKeyLabel(sessionKey)}를 다시 생성했습니다.`);
   }
 
   const compareRows = useMemo(() => {
-    const plannedRows = toSetRowsFromPlannedExercises(snapshot);
+    const plannedRows = toSetRowsFromPlannedExercises(snapshot, bodyweightKg);
     const performedMap = new Map<string, SetRow>();
     for (const s of sets) {
       const key = `${s.exerciseName.trim().toLowerCase()}#${s.setNumber}`;
@@ -1388,7 +1445,7 @@ export default function WorkoutTodayPage() {
       }));
 
     return [...rows, ...extras];
-  }, [sets, snapshot]);
+  }, [bodyweightKg, sets, snapshot]);
 
   return (
     <div
@@ -1573,7 +1630,7 @@ export default function WorkoutTodayPage() {
                   <option value="">(선택)</option>
                   {recentSessions.map((s) => (
                     <option key={s.id} value={s.id}>
-                      {s.sessionKey} - {new Date(s.updatedAt).toLocaleString()}
+                      {formatSessionKeyLabel(s.sessionKey)} - {new Date(s.updatedAt).toLocaleString()}
                     </option>
                   ))}
                 </AppSelect>
@@ -1954,6 +2011,7 @@ export default function WorkoutTodayPage() {
                   key={`${idx}-${s.exerciseName}-${s.setNumber}`}
                   idx={idx}
                   row={s}
+                  bodyweightKg={bodyweightKg}
                   setCellKey={setCellKey}
                   setInputRefs={setInputRefs}
                   handleSetGridKeyDown={handleSetGridKeyDown}
@@ -2011,15 +2069,31 @@ export default function WorkoutTodayPage() {
                             Number.isFinite(r.planned.plannedRef.percent)
                               ? `${Math.round(r.planned.plannedRef.percent * 100)}%`
                               : null;
+                          const plannedLoadText = r.planned
+                            ? formatExerciseLoadLabel({
+                                exerciseName: r.exerciseName,
+                                weightKg:
+                                  r.planned.plannedRef?.totalTargetWeightKg ??
+                                  r.planned.plannedRef?.targetWeightKg ??
+                                  r.planned.weightKg,
+                                bodyweightKg,
+                                source: r.planned.plannedRef?.totalTargetWeightKg !== undefined ? "total" : "external",
+                              })
+                            : "-";
                           const plannedText = r.planned
-                            ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg${
+                            ? `${r.planned.reps || "-"}회 @ ${plannedLoadText}${
                                 plannedPercent || plannedMeta
                                   ? ` (${[plannedPercent, plannedMeta].filter(Boolean).join(" · ")})`
                                   : ""
                               }`
                             : "-";
                           const performedText = r.actual
-                            ? `${r.actual.reps || "-"}회 @ ${r.actual.weightKg || 0}kg`
+                            ? `${r.actual.reps || "-"}회 @ ${formatExerciseLoadLabel({
+                                exerciseName: r.exerciseName,
+                                weightKg: r.actual.weightKg,
+                                bodyweightKg,
+                                source: "external",
+                              })}`
                             : "-";
                           const status = !r.planned
                             ? "추가"
@@ -2163,7 +2237,7 @@ export default function WorkoutTodayPage() {
         open={overridesSheetOpen}
         onClose={() => setOverridesSheetOpen(false)}
         title="세션 오버라이드"
-        description={`대상 세션: ${sessionKey}`}
+        description={`대상 세션: ${formatSessionKeyLabel(sessionKey)}`}
       >
         <div className="space-y-4 pb-2">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-end">

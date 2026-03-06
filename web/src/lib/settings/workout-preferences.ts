@@ -1,3 +1,8 @@
+import {
+  computeBodyweightTotalLoadKg,
+  isBodyweightExerciseName,
+} from "@/lib/bodyweight-load";
+
 export type SettingValue = string | number | boolean | null;
 export type SettingsSnapshot = Record<string, SettingValue>;
 
@@ -14,6 +19,11 @@ export type WorkoutPreferences = {
   minimumPlateDefaultKg: number;
   minimumPlateRules: MinimumPlateRule[];
   bodyweightKg: number | null;
+};
+
+export type ResolvedMinimumPlateIncrement = {
+  incrementKg: number;
+  source: "DEFAULT" | "RULE";
 };
 
 export const SETTINGS_KEYS = {
@@ -151,10 +161,25 @@ export function resolveMinimumPlateIncrementKg(
     exerciseName: string;
   },
 ): number {
+  return resolveMinimumPlateIncrement(preferences, input).incrementKg;
+}
+
+export function resolveMinimumPlateIncrement(
+  preferences: Pick<WorkoutPreferences, "minimumPlateDefaultKg" | "minimumPlateRules">,
+  input: {
+    exerciseId?: string | null;
+    exerciseName: string;
+  },
+): ResolvedMinimumPlateIncrement {
   const byId = input.exerciseId
     ? preferences.minimumPlateRules.find((rule) => rule.exerciseId === input.exerciseId)
     : null;
-  if (byId) return byId.incrementKg;
+  if (byId) {
+    return {
+      incrementKg: byId.incrementKg,
+      source: "RULE",
+    };
+  }
 
   const nameKey = toExerciseNameKey(input.exerciseName);
   if (nameKey) {
@@ -162,15 +187,28 @@ export function resolveMinimumPlateIncrementKg(
     const byNameOnlyRule = preferences.minimumPlateRules.find(
       (rule) => !rule.exerciseId && toExerciseNameKey(rule.exerciseName) === nameKey,
     );
-    if (byNameOnlyRule) return byNameOnlyRule.incrementKg;
+    if (byNameOnlyRule) {
+      return {
+        incrementKg: byNameOnlyRule.incrementKg,
+        source: "RULE",
+      };
+    }
 
     const byAnyNameRule = preferences.minimumPlateRules.find(
       (rule) => toExerciseNameKey(rule.exerciseName) === nameKey,
     );
-    if (byAnyNameRule) return byAnyNameRule.incrementKg;
+    if (byAnyNameRule) {
+      return {
+        incrementKg: byAnyNameRule.incrementKg,
+        source: "RULE",
+      };
+    }
   }
 
-  return preferences.minimumPlateDefaultKg;
+  return {
+    incrementKg: preferences.minimumPlateDefaultKg,
+    source: "DEFAULT",
+  };
 }
 
 export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): number {
@@ -180,29 +218,8 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
   return toRounded2(Math.round(safeWeight / safeIncrement) * safeIncrement);
 }
 
-export function isBodyweightRelatedExerciseName(exerciseName: string): boolean {
-  const normalized = exerciseName.trim().toLowerCase();
-  if (!normalized) return false;
-  return (
-    normalized.includes("pull-up") ||
-    normalized.includes("pull up") ||
-    normalized.includes("chin-up") ||
-    normalized.includes("chin up") ||
-    normalized.includes("풀업") ||
-    normalized.includes("친업")
-  );
-}
-
-export function computeBodyweightTotalLoadKg(
-  exerciseName: string,
-  externalWeightKg: number,
-  bodyweightKg: number | null,
-): number | null {
-  if (!isBodyweightRelatedExerciseName(exerciseName)) return null;
-  if (bodyweightKg === null || bodyweightKg <= 0) return null;
-  const external = Number.isFinite(externalWeightKg) ? Math.max(0, externalWeightKg) : 0;
-  return toRounded2(bodyweightKg + external);
-}
+export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
+export { computeBodyweightTotalLoadKg };
 
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;

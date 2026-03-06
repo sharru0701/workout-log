@@ -36,7 +36,7 @@
 ### 3) 샘플 테스트 데이터 파라미터
 - `sessionKeyMode: "DATE"` 적용 (프로그램 기반 날짜 재진입 테스트 용이)
 - `startDate: "2026-01-05"` 고정
-- Operator: `%TM` 기반 6주 파형(70/80/90/75/85/95), 기본 `mainSets=3`, `deadliftSets=1`
+- Operator: `TM=90% 1RM` 기반 6주 파형(70/80/90/75/85/95), `SQUAT/BENCH/DEADLIFT/PULL` TM 입력 지원, `D1/D2=Squat+Bench+Pull-Up`, `D3=Squat+Bench+Deadlift`, 기본 `mainSets=3`, `deadliftSets=3`
 - Greyskull: 마지막 세트 `AMRAP 5+` note 노출 확인
 - GZCLP: `percent` + `T3 AMRAP` note 노출 확인
 
@@ -88,7 +88,7 @@ WORKOUT_SEED_RESET_ALL=1 pnpm db:seed
 1. `Program Tactical Barbell Operator`
 2. `Program Greyskull LP`
 - 기본 정책
-1. Operator: 성공 누적 시 증량, 실패 누적 시 감산/reset, 3일 완료 시 day/week/cycle 전진
+1. Operator: 블록 내 증량 없이 3일 완료 시 day/week/cycle 전진, 6주 블록 완료 후 증량
 2. Greyskull: 성공 시 선형 증량, 실패 누적 시 reset
 3. `PATCH /api/logs/[logId]` 시 해당 로그 이벤트를 재계산하고 이후 이벤트까지 순차 replay
 

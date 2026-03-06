@@ -35,6 +35,13 @@ export default function PlansIndexPage() {
             description="날짜, 시간대, 주차, 일차를 설정합니다."
             leading={<RowIcon symbol="GC" tone="tint" />}
           />
+          <NavigationRow
+            href="/plans/history"
+            label="수행 히스토리"
+            subtitle="기록"
+            description="플랜별 수행 로그와 세션 상세 이력을 확인합니다."
+            leading={<RowIcon symbol="HS" tone="blue" />}
+          />
         </BaseGroupedList>
         <SectionFootnote>필요한 경우 생성 전에 컨텍스트를 먼저 맞추세요.</SectionFootnote>
       </section>

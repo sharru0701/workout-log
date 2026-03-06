@@ -26,15 +26,21 @@ export type ProgramListItem = {
 export type OneRmTarget = {
   key: string;
   label: string;
+  fallbackKey?: string | null;
 };
 
 export type ProgramExerciseMode = "MARKET" | "MANUAL";
+export type ProgramRowType = "AUTO" | "CUSTOM";
+export type ProgramProgressionTarget = "SQUAT" | "BENCH" | "DEADLIFT" | "OHP" | "PULL";
+export type ProgramSetRepDefaults = { sets: number; reps: number };
 
 export type ProgramExerciseDraft = {
   id: string;
   exerciseName: string;
   mode: ProgramExerciseMode;
   marketTemplateSlug: string | null;
+  rowType?: ProgramRowType | null;
+  progressionTarget?: ProgramProgressionTarget | null;
   sets: number;
   reps: number;
   note: string;
@@ -59,6 +65,9 @@ type ManualDefinitionSession = {
   items: Array<{
     exerciseName: string;
     role: "MAIN" | "ASSIST";
+    rowType?: ProgramRowType;
+    progressionTarget?: ProgramProgressionTarget;
+    slotRole?: "ANCHOR" | "FLEX" | "CUSTOM";
     sets: Array<{
       setNumber: number;
       reps: number;
@@ -67,6 +76,25 @@ type ManualDefinitionSession = {
     }>;
   }>;
 };
+
+function isProgramRowType(value: unknown): value is ProgramRowType {
+  return value === "AUTO" || value === "CUSTOM";
+}
+
+function normalizeProgramRowType(value: unknown): ProgramRowType | null {
+  if (isProgramRowType(value)) return value;
+  if (value === "ANCHOR" || value === "FLEX") return "AUTO";
+  if (value === "CUSTOM") return "CUSTOM";
+  return null;
+}
+
+export function isOperatorAutoRowType(rowType: ProgramRowType | null | undefined) {
+  return rowType === "AUTO";
+}
+
+function isProgramProgressionTarget(value: unknown): value is ProgramProgressionTarget {
+  return value === "SQUAT" || value === "BENCH" || value === "DEADLIFT" || value === "OHP" || value === "PULL";
+}
 
 function uid(prefix: string) {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -85,7 +113,7 @@ function defaultExerciseNameForTarget(targetRaw: string) {
   return targetRaw || "Exercise";
 }
 
-function inferTargetFromExerciseName(exerciseName: string) {
+export function inferProgressionTargetFromExerciseName(exerciseName: string): ProgramProgressionTarget | null {
   const normalized = String(exerciseName).trim().toLowerCase();
   if (!normalized) return null;
   if (normalized.includes("squat")) return "SQUAT";
@@ -103,6 +131,11 @@ function inferTargetFromExerciseName(exerciseName: string) {
     return "PULL";
   }
   return null;
+}
+
+function normalizeProgressionTarget(value: unknown): ProgramProgressionTarget | null {
+  if (isProgramProgressionTarget(value)) return value;
+  return inferProgressionTargetFromExerciseName(String(value ?? ""));
 }
 
 export function toProgramListItems(templates: ProgramTemplate[]): ProgramListItem[] {
@@ -172,6 +205,18 @@ function targetLabel(target: string) {
   return defaultExerciseNameForTarget(canonical || target);
 }
 
+export function isOperatorTemplate(template: ProgramTemplate | null | undefined) {
+  if (!template) return false;
+  const slug = String(template.slug ?? "").trim().toLowerCase();
+  const kind = String(template.latestVersion?.definition?.kind ?? "").trim().toLowerCase();
+  return (
+    slug === "operator" ||
+    kind === "operator" ||
+    template.latestVersion?.definition?.operatorStyle === true ||
+    String(template.latestVersion?.definition?.programFamily ?? "").trim().toLowerCase() === "operator"
+  );
+}
+
 function manualExerciseKey(exerciseName: string) {
   return `EX_${exerciseName
     .trim()
@@ -183,13 +228,31 @@ function manualExerciseKey(exerciseName: string) {
 
 function oneRmTargetsFromManualDefinition(definition: any): OneRmTarget[] {
   if (definition?.kind !== "manual" || !Array.isArray(definition.sessions)) return [];
+  const operatorStyle = definition?.operatorStyle === true || String(definition?.programFamily ?? "").trim().toLowerCase() === "operator";
   const out: OneRmTarget[] = [];
   for (const session of definition.sessions) {
     const items = Array.isArray(session?.items) ? session.items : [];
     for (const item of items) {
+      const rowType =
+        normalizeProgramRowType(item?.rowType) ??
+        normalizeProgramRowType(item?.slotRole) ??
+        normalizeProgramRowType(item?.meta?.rowType) ??
+        normalizeProgramRowType(item?.meta?.slotRole);
+      if (operatorStyle && !isOperatorAutoRowType(rowType)) continue;
       const exerciseName = String(item?.exerciseName ?? item?.name ?? "").trim();
       if (!exerciseName) continue;
-      const inferred = inferTargetFromExerciseName(exerciseName);
+      if (operatorStyle) {
+        const key = manualExerciseKey(exerciseName);
+        if (!out.some((entry) => entry.key === key)) {
+          out.push({
+            key,
+            label: exerciseName,
+            fallbackKey: normalizeProgressionTarget(item?.progressionTarget) ?? inferProgressionTargetFromExerciseName(exerciseName),
+          });
+        }
+        continue;
+      }
+      const inferred = inferProgressionTargetFromExerciseName(exerciseName);
       const key = inferred ? inferred : manualExerciseKey(exerciseName);
       const label = inferred ? targetLabel(inferred) : exerciseName;
       if (!out.some((entry) => entry.key === key)) {
@@ -214,6 +277,13 @@ export function extractOneRmTargetsFromTemplate(template: ProgramTemplate): OneR
     }
   }
 
+  if (String(definition?.kind ?? "").trim().toLowerCase() === "operator") {
+    const hasPull = merged.some((entry) => entry.key === "PULL");
+    if (!hasPull) {
+      merged.push({ key: "PULL", label: targetLabel("PULL") });
+    }
+  }
+
   if (merged.length > 0) return merged;
   const fallback = template.type === "LOGIC" ? ["SQUAT", "BENCH", "DEADLIFT"] : ["SQUAT"];
   return fallback.map((key) => ({ key, label: targetLabel(key) }));
@@ -233,12 +303,84 @@ function sessionDraftFromManual(session: any): ProgramSessionDraft {
         exerciseName: String(item?.exerciseName ?? item?.name ?? "").trim() || `Exercise ${index + 1}`,
         mode: "MANUAL" as const,
         marketTemplateSlug: null,
+        rowType:
+          normalizeProgramRowType(item?.rowType) ??
+          normalizeProgramRowType(item?.slotRole) ??
+          normalizeProgramRowType(item?.meta?.rowType) ??
+          normalizeProgramRowType(item?.meta?.slotRole),
+        progressionTarget:
+          normalizeProgressionTarget(item?.progressionTarget) ??
+          normalizeProgressionTarget(item?.meta?.progressionTarget) ??
+          inferProgressionTargetFromExerciseName(String(item?.exerciseName ?? item?.name ?? "")),
         sets: Math.max(1, sets.length || Number(item?.setsCount) || 1),
         reps: Math.max(1, Number(first?.reps) || Number(item?.reps) || 5),
         note: typeof first?.note === "string" ? first.note : "",
       };
     }),
   };
+}
+
+function createFixedExerciseDraft(
+  exerciseName: string,
+  rowType: ProgramRowType,
+  progressionTarget: ProgramProgressionTarget | null,
+  sets = 3,
+  reps = 5,
+): ProgramExerciseDraft {
+  return {
+    id: uid("exercise"),
+    exerciseName,
+    mode: "MANUAL",
+    marketTemplateSlug: null,
+    rowType,
+    progressionTarget,
+    sets,
+    reps,
+    note: "",
+  };
+}
+
+export function resolveOperatorExerciseDefaults(
+  exerciseName: string,
+  rowType: ProgramRowType | null | undefined,
+): ProgramSetRepDefaults {
+  if (rowType === "CUSTOM") {
+    return { sets: 3, reps: 8 };
+  }
+
+  return { sets: 3, reps: 5 };
+}
+
+function operatorSessionDrafts(): ProgramSessionDraft[] {
+  return [
+    {
+      id: uid("session"),
+      key: "D1",
+      exercises: [
+        createFixedExerciseDraft("Back Squat", "AUTO", "SQUAT"),
+        createFixedExerciseDraft("Bench Press", "AUTO", "BENCH"),
+        createFixedExerciseDraft("Pull-Up", "AUTO", "PULL"),
+      ],
+    },
+    {
+      id: uid("session"),
+      key: "D2",
+      exercises: [
+        createFixedExerciseDraft("Back Squat", "AUTO", "SQUAT"),
+        createFixedExerciseDraft("Bench Press", "AUTO", "BENCH"),
+        createFixedExerciseDraft("Pull-Up", "AUTO", "PULL"),
+      ],
+    },
+    {
+      id: uid("session"),
+      key: "D3",
+      exercises: [
+        createFixedExerciseDraft("Back Squat", "AUTO", "SQUAT"),
+        createFixedExerciseDraft("Bench Press", "AUTO", "BENCH"),
+        createFixedExerciseDraft("Deadlift", "AUTO", "DEADLIFT"),
+      ],
+    },
+  ];
 }
 
 function sessionKeysFromTargets(targets: string[]): string[] {
@@ -253,6 +395,9 @@ export function inferSessionDraftsFromTemplate(template: ProgramTemplate): Progr
   if (definition?.kind === "manual" && Array.isArray(definition.sessions)) {
     const mapped = definition.sessions.map(sessionDraftFromManual).filter((entry: ProgramSessionDraft) => entry.key);
     if (mapped.length > 0) return mapped;
+  }
+  if (isOperatorTemplate(template)) {
+    return operatorSessionDrafts();
   }
 
   const targets = normalizeTargets(definition);
@@ -314,14 +459,20 @@ export function reconcileSessionsByKeys(
   });
 }
 
-export function createEmptyExerciseDraft(defaultSlug: string | null = null): ProgramExerciseDraft {
+export function createEmptyExerciseDraft(
+  defaultSlug: string | null = null,
+  rowType: ProgramRowType | null = null,
+): ProgramExerciseDraft {
+  const operatorDefaults = rowType && isOperatorAutoRowType(rowType) ? resolveOperatorExerciseDefaults("", rowType) : null;
   return {
     id: uid("exercise"),
     exerciseName: "",
     mode: defaultSlug ? "MARKET" : "MANUAL",
     marketTemplateSlug: defaultSlug,
-    sets: 3,
-    reps: 8,
+    rowType,
+    progressionTarget: null,
+    sets: operatorDefaults?.sets ?? 3,
+    reps: operatorDefaults?.reps ?? 8,
     note: "",
   };
 }
@@ -379,13 +530,18 @@ export function reorderExercises(
   });
 }
 
-export function toManualDefinition(sessions: ProgramSessionDraft[]) {
+export function toManualDefinition(
+  sessions: ProgramSessionDraft[],
+  options?: { operatorStyle?: boolean; programFamily?: string | null },
+) {
   const normalized: ManualDefinitionSession[] = sessions.map((session) => ({
     key: session.key,
     name: `Session ${session.key}`,
     items: session.exercises.map((exercise) => ({
       exerciseName: exercise.exerciseName.trim() || "Unnamed Exercise",
       role: "MAIN",
+      rowType: exercise.rowType ?? undefined,
+      progressionTarget: exercise.progressionTarget ?? undefined,
       sets: Array.from({ length: Math.max(1, exercise.sets) }, (_, index) => ({
         setNumber: index + 1,
         reps: Math.max(1, Math.round(exercise.reps)),
@@ -401,6 +557,8 @@ export function toManualDefinition(sessions: ProgramSessionDraft[]) {
 
   return {
     kind: "manual",
+    operatorStyle: options?.operatorStyle === true,
+    programFamily: options?.programFamily ?? undefined,
     sessions: normalized,
   };
 }

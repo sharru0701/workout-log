@@ -3,7 +3,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { apiGet } from "@/lib/api";
+import { formatExerciseLoadLabel, computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
+import { formatSessionKeyLabel } from "@/lib/session-key";
+import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
+import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type PlannedRow = {
@@ -11,6 +15,7 @@ type PlannedRow = {
   setNumber: number;
   reps: number;
   weightKg: number;
+  totalWeightKg: number | null;
   rpe: number;
   percent: number | null;
   note: string | null;
@@ -45,7 +50,7 @@ type LogItem = {
   progression?: ProgressionSummaryPayload | null;
 };
 
-function plannedRowsFromSnapshot(snapshot: any): PlannedRow[] {
+function plannedRowsFromSnapshot(snapshot: any, bodyweightKg: number | null): PlannedRow[] {
   const planned = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
   const rows: PlannedRow[] = [];
 
@@ -55,11 +60,14 @@ function plannedRowsFromSnapshot(snapshot: any): PlannedRow[] {
 
     const sets = Array.isArray(ex?.sets) && ex.sets.length > 0 ? ex.sets : [{}];
     sets.forEach((s: any, idx: number) => {
+      const totalWeightKg = Number(s?.targetWeightKg ?? 0) || 0;
       rows.push({
         exerciseName: name,
         setNumber: idx + 1,
         reps: Number(s?.reps ?? 0) || 0,
-        weightKg: Number(s?.targetWeightKg ?? 0) || 0,
+        weightKg:
+          computeExternalLoadFromTotalKg(name, totalWeightKg, bodyweightKg) ?? totalWeightKg,
+        totalWeightKg,
         rpe: Number(s?.rpe ?? 0) || 0,
         percent: Number.isFinite(Number(s?.percent)) && Number(s?.percent) > 0 ? Number(s?.percent) : null,
         note: typeof s?.note === "string" && s.note.trim() ? s.note.trim() : null,
@@ -79,6 +87,7 @@ export default function WorkoutSessionDetailPage() {
   const logId = String(params?.logId ?? "");
 
   const [item, setItem] = useState<LogItem | null>(null);
+  const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -93,8 +102,16 @@ export default function WorkoutSessionDetailPage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`);
-        if (!cancelled) setItem(res.item);
+        const [res, settings] = await Promise.all([
+          apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`),
+          fetchSettingsSnapshot().catch(() => null),
+        ]);
+        if (!cancelled) {
+          setItem(res.item);
+          setBodyweightKg(
+            settings ? readWorkoutPreferences(settings).bodyweightKg : toDefaultWorkoutPreferences().bodyweightKg,
+          );
+        }
       } catch (e: any) {
         if (!cancelled) {
           setItem(null);
@@ -110,7 +127,10 @@ export default function WorkoutSessionDetailPage() {
     };
   }, [logId]);
 
-  const plannedRows = useMemo(() => plannedRowsFromSnapshot(item?.generatedSession?.snapshot), [item]);
+  const plannedRows = useMemo(
+    () => plannedRowsFromSnapshot(item?.generatedSession?.snapshot, bodyweightKg),
+    [bodyweightKg, item],
+  );
 
   const compareRows = useMemo(() => {
     const performedMap = new Map<string, PerformedRow>();
@@ -214,7 +234,11 @@ export default function WorkoutSessionDetailPage() {
             </div>
             <div>
               <div className="ui-card-label">세션 키</div>
-              <div>{item.generatedSession?.sessionKey ?? "(수동 / 생성 세션 없음)"}</div>
+              <div>
+                {item.generatedSession?.sessionKey
+                  ? formatSessionKeyLabel(item.generatedSession.sessionKey)
+                  : "(수동 / 생성 세션 없음)"}
+              </div>
             </div>
           </div>
 
@@ -323,15 +347,28 @@ export default function WorkoutSessionDetailPage() {
                           : null;
                       const plannedMeta =
                         r.planned && r.planned.note ? r.planned.note : null;
+                      const plannedLoadText = r.planned
+                        ? formatExerciseLoadLabel({
+                            exerciseName: r.exerciseName,
+                            weightKg: r.planned.totalWeightKg ?? r.planned.weightKg,
+                            bodyweightKg,
+                            source: r.planned.totalWeightKg !== null ? "total" : "external",
+                          })
+                        : "-";
                       const plannedText = r.planned
-                        ? `${r.planned.reps || "-"}회 @ ${r.planned.weightKg || 0}kg${
+                        ? `${r.planned.reps || "-"}회 @ ${plannedLoadText}${
                             plannedPercent || plannedMeta
                               ? ` (${[plannedPercent, plannedMeta].filter(Boolean).join(" · ")})`
                               : ""
                           }`
                         : "-";
                       const performedText = r.actual
-                        ? `${r.actual.reps || "-"}회 @ ${r.actual.weightKg || 0}kg`
+                        ? `${r.actual.reps || "-"}회 @ ${formatExerciseLoadLabel({
+                            exerciseName: r.exerciseName,
+                            weightKg: r.actual.weightKg,
+                            bodyweightKg,
+                            source: "external",
+                          })}`
                         : "-";
 
                       const repsDiff = (r.actual?.reps ?? 0) - (r.planned?.reps ?? 0);

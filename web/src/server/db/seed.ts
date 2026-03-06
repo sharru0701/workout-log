@@ -36,7 +36,15 @@ async function main() {
         version,
         ...values,
       })
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: [programVersion.templateId, programVersion.version],
+        set: {
+          changelog: values.changelog ?? null,
+          definition: values.definition,
+          defaults: values.defaults ?? null,
+          isDeprecated: values.isDeprecated ?? false,
+        },
+      })
       .returning();
 
     if (inserted[0]) return inserted[0];
@@ -226,13 +234,13 @@ async function main() {
       schedule: { weeks: 6, sessionsPerWeek: 3 },
       modules: ["SQUAT", "BENCH", "DEADLIFT"],
       progression: {
-        profile: "operator-ia-base",
+        profile: "operator-base",
         mainSets: 3,
-        deadliftSets: 1,
+        deadliftSets: 3,
       },
     },
     defaults: {
-      tmPercent: 1,
+      tmPercent: 0.9,
     },
   });
 
@@ -654,6 +662,7 @@ async function main() {
           SQUAT: 150,
           BENCH: 110,
           DEADLIFT: 190,
+          PULL: 57.5,
         },
       },
     });
