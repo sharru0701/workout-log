@@ -488,7 +488,7 @@ button {
   z-index: 50;
   width: min(calc(100% - var(--space-4)), var(--layout-max));
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--bottom-nav-tabs-count, 5), minmax(0, 1fr));
   gap: var(--space-2);
   padding: var(--space-2);
   border-radius: var(--radius-surface);
@@ -822,6 +822,419 @@ button {
   padding: 0.55rem 0.75rem;
   background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
 }
+
+/* ─── iOS 26-style Calendar Screen ──────────────────────────────────────── */
+
+.ios-cal-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding-top: var(--space-3);
+  padding-bottom: calc(var(--space-12) + env(safe-area-inset-bottom));
+}
+
+/* Plan selector bar */
+.ios-cal-plan-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0 var(--space-4) var(--space-2);
+}
+
+.ios-cal-plan-select {
+  font-size: var(--font-caption);
+  font-weight: 700;
+  color: var(--accent);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+  max-width: 16rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ios-cal-plan-chevron {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--accent);
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+/* Month navigation header */
+.ios-cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-3) var(--space-2);
+}
+
+.ios-cal-month-label {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  line-height: 1;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.ios-cal-month-label:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+}
+
+.ios-cal-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: var(--radius-pill);
+  border: none;
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+  color: var(--accent);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background var(--duration-fast) var(--ease-standard);
+}
+
+.ios-cal-nav-btn svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.ios-cal-nav-btn:hover {
+  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+}
+
+/* Weekday labels */
+.ios-cal-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 0 var(--space-2);
+  margin-bottom: 0.2rem;
+}
+
+.ios-cal-weekday {
+  text-align: center;
+  font-size: 0.73rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-secondary);
+  padding: var(--space-1) 0;
+}
+
+.ios-cal-weekday.is-sun {
+  color: color-mix(in srgb, #ff453a 75%, var(--text-secondary));
+}
+
+/* Date grid */
+.ios-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  padding: 0 var(--space-2);
+  gap: 0.18rem;
+}
+
+.ios-cal-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 0.22rem;
+  padding-bottom: 0.28rem;
+  min-height: 3rem;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: background var(--duration-fast) var(--ease-standard);
+  gap: 0.18rem;
+}
+
+.ios-cal-day:hover:not(.is-today):not(.is-selected) {
+  background: color-mix(in srgb, var(--bg-elevated) 60%, transparent);
+}
+
+.ios-cal-day-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-pill);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--text-primary);
+  transition:
+    background var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard),
+    font-weight var(--duration-fast) var(--ease-standard);
+}
+
+/* Today: filled accent circle */
+.ios-cal-day.is-today .ios-cal-day-num {
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Selected (not today): subtle accent ring fill */
+.ios-cal-day.is-selected:not(.is-today) .ios-cal-day-num {
+  background: color-mix(in srgb, var(--accent) 20%, var(--bg-elevated));
+  color: var(--accent);
+  font-weight: 700;
+}
+
+/* Outside current month: fade */
+.ios-cal-day.is-outside .ios-cal-day-num {
+  opacity: 0.3;
+}
+
+.ios-cal-day.is-outside .ios-cal-day-dot {
+  opacity: 0.3;
+}
+
+/* Sunday column: red tint */
+.ios-cal-day.is-sun:not(.is-today):not(.is-selected) .ios-cal-day-num {
+  color: color-mix(in srgb, #ff453a 75%, var(--text-primary));
+}
+
+/* Session dot indicator */
+.ios-cal-day-dot {
+  width: 0.28rem;
+  height: 0.28rem;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+.ios-cal-day.is-today .ios-cal-day-dot {
+  background: #fff;
+}
+
+/* Divider between grid and detail panel */
+.ios-cal-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--border-subtle) 55%, transparent);
+  margin: var(--space-3) var(--space-4) 0;
+}
+
+/* Detail panel */
+.ios-cal-detail {
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  flex: 1;
+}
+
+.ios-cal-detail-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.ios-cal-detail-date {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.ios-cal-today-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 15%, transparent);
+  padding: 0.12rem 0.55rem;
+  border-radius: var(--radius-pill);
+}
+
+/* Session card (session exists) */
+.ios-cal-session-card,
+.ios-cal-no-session {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  background: color-mix(in srgb, var(--bg-elevated) 65%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+}
+
+.ios-cal-session-card-left {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  flex: 1;
+  min-width: 0;
+}
+
+.ios-cal-session-dot-accent,
+.ios-cal-session-dot-muted {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 0.35rem;
+}
+
+.ios-cal-session-dot-accent {
+  background: var(--accent);
+}
+
+.ios-cal-session-dot-muted {
+  background: color-mix(in srgb, var(--text-secondary) 50%, transparent);
+}
+
+.ios-cal-session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ios-cal-session-key {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+.ios-cal-session-key--muted {
+  color: var(--text-secondary);
+}
+
+.ios-cal-session-label {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+}
+
+.ios-cal-session-meta {
+  font-size: var(--font-micro);
+  color: var(--text-secondary);
+}
+
+/* Action buttons */
+.ios-cal-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--font-caption);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  white-space: nowrap;
+  min-height: var(--touch-target);
+  transition: opacity var(--duration-fast) var(--ease-standard);
+  flex-shrink: 0;
+}
+
+.ios-cal-action-btn--primary {
+  background: var(--accent);
+  color: #fff;
+}
+
+.ios-cal-action-btn--primary:hover {
+  opacity: 0.88;
+}
+
+.ios-cal-action-btn--secondary {
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 55%, transparent);
+}
+
+.ios-cal-action-btn--secondary:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.ios-cal-action-btn--secondary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.ios-cal-no-session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Empty / loading states */
+.ios-cal-empty-state {
+  padding: var(--space-4);
+  background: color-mix(in srgb, var(--bg-elevated) 50%, transparent);
+  border-radius: var(--radius-md);
+}
+
+.ios-cal-empty-text {
+  font-size: var(--font-body);
+  color: var(--text-secondary);
+  line-height: var(--line-normal);
+  margin: 0;
+}
+
+.ios-cal-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: var(--space-5);
+}
+
+.ios-cal-loading-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--text-secondary);
+  animation: ios-cal-pulse 1.2s ease-in-out infinite;
+}
+
+.ios-cal-loading-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.ios-cal-loading-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes ios-cal-pulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.85);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.ios-cal-error {
+  font-size: var(--font-caption);
+  color: #ff453a;
+  background: color-mix(in srgb, #ff453a 10%, transparent);
+  border: 1px solid color-mix(in srgb, #ff453a 25%, transparent);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+}
+
+/* ─── End iOS 26-style Calendar ──────────────────────────────────────────── */
 
 .settings-header {
   display: grid;
