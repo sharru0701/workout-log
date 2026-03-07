@@ -7,6 +7,7 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { MetricTile, SparklineChart } from "./_components/stats-dashboard-primitives";
+import type { StatsFilterValues } from "./_components/stats-filters-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 
@@ -429,6 +430,17 @@ function trendMeta(delta: number, digits = 1) {
   };
 }
 
+function createDefaultStatsFilters(): StatsFilterValues {
+  return {
+    planId: "",
+    bucket: "week",
+    from: "",
+    to: todayDateOnly(),
+    exerciseId: "",
+    exercise: "Back Squat",
+  };
+}
+
 export default function StatsPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
@@ -788,6 +800,17 @@ export default function StatsPage() {
   const selectedPlanName = useMemo(() => plans.find((p) => p.id === planId)?.name ?? null, [plans, planId]);
   const activePresetDays = PRESET_RANGES[rangeIndex];
   const rangeHeadline = from ? `${from} → ${to || todayDateOnly()}` : `${activePresetDays}일`;
+  const filterValues = useMemo<StatsFilterValues>(
+    () => ({
+      planId,
+      bucket,
+      from,
+      to,
+      exerciseId,
+      exercise,
+    }),
+    [bucket, exercise, exerciseId, from, planId, to],
+  );
   const activeTrend = useMemo(
     () => (from ? null : trendWindows.find((t) => t.days === activePresetDays) ?? null),
     [activePresetDays, from, trendWindows],
@@ -1024,16 +1047,26 @@ export default function StatsPage() {
     setBucket("day");
   }
 
-  function resetFilters() {
-    setPlanId("");
-    setExerciseId("");
-    setExercise("Back Squat");
-    setFrom("");
-    setTo(todayDateOnly());
-    setBucket("week");
+  const resetFilters = useCallback(() => {
+    const defaults = createDefaultStatsFilters();
+    setPlanId(defaults.planId);
+    setExerciseId(defaults.exerciseId);
+    setExercise(defaults.exercise);
+    setFrom(defaults.from);
+    setTo(defaults.to);
+    setBucket(defaults.bucket);
     setRangeIndex(2);
     setDays(90);
-  }
+  }, []);
+
+  const applyFilters = useCallback((next: StatsFilterValues) => {
+    setPlanId(next.planId);
+    setBucket(next.bucket);
+    setFrom(next.from);
+    setTo(next.to);
+    setExerciseId(next.exerciseId);
+    setExercise(next.exercise);
+  }, []);
 
   function openFiltersSheet() {
     setShouldRenderFiltersSheet(true);
@@ -1761,20 +1794,10 @@ export default function StatsPage() {
         <StatsFiltersSheet
           open={filtersOpen}
           plans={plans}
-          planId={planId}
-          bucket={bucket}
-          from={from}
-          to={to}
-          exerciseId={exerciseId}
-          exercise={exercise}
+          value={filterValues}
           onClose={() => setFiltersOpen(false)}
+          onApply={applyFilters}
           onResetFilters={resetFilters}
-          onPlanIdChange={setPlanId}
-          onBucketChange={setBucket}
-          onFromChange={setFrom}
-          onToChange={setTo}
-          onExerciseIdChange={setExerciseId}
-          onExerciseChange={setExercise}
         />
       ) : null}
     </div>
