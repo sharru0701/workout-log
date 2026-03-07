@@ -143,7 +143,7 @@ test.describe("stats-1rm async continuity", () => {
         id: "stats.e1rm",
         method: "GET",
         path: "/api/stats/e1rm",
-        body: (url) => {
+        body: (url: URL) => {
           const days = Number(url.searchParams.get("days") ?? "90");
           e1rmDaysRequests.push(days);
           return buildE1rmPayload(days);

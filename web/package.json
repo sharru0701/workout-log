@@ -32,6 +32,8 @@
     "test:settings:policy": "tsx --test src/lib/settings/update-setting.test.ts",
     "test:progression": "tsx --test src/server/progression/reducer.test.ts",
     "test:e2e": "bash scripts/playwright-wrapper.sh test",
+    "test:e2e:dev": "PLAYWRIGHT_SERVER_MODE=dev bash scripts/playwright-wrapper.sh test",
+    "test:e2e:prod": "PLAYWRIGHT_SERVER_MODE=prod bash scripts/playwright-wrapper.sh test",
     "test:e2e:ui": "bash scripts/playwright-wrapper.sh test --ui",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",

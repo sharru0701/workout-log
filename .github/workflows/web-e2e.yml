@@ -53,9 +53,14 @@ jobs:
       - name: Run PWA update E2E
         env:
           NEXT_PUBLIC_DISABLE_SW: "1"
+          NEXT_TELEMETRY_DISABLED: "1"
+          PLAYWRIGHT_SERVER_MODE: "dev"
         run: pnpm test:e2e -- e2e/pwa-update.spec.ts --project chromium
 
       - name: Run iOS Settings compliance gate
+        env:
+          NEXT_TELEMETRY_DISABLED: "1"
+          PLAYWRIGHT_SERVER_MODE: "dev"
         run: pnpm test:settings:compliance
 
       - name: Upload Playwright artifacts

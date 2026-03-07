@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useId, type ReactNode } from "react";
 import Link from "next/link";
 
 type DashboardScreenProps = {
@@ -36,11 +36,14 @@ type DashboardSectionProps = {
   description?: ReactNode;
   children: ReactNode;
   className?: string;
+  titleId?: string;
 };
 
 type DashboardActionGridProps = {
   children: ReactNode;
   className?: string;
+  ariaLabel?: string;
+  ariaLabelledBy?: string;
 };
 
 type DashboardActionCardProps = {
@@ -76,6 +79,7 @@ type DashboardActionSectionProps = {
   className?: string;
   gridClassName?: string;
   cardClassName?: string;
+  ariaLabel?: string;
 };
 
 function cx(...classes: Array<string | false | null | undefined>) {
@@ -170,11 +174,13 @@ export function DashboardMetricStrip({ items, className }: DashboardMetricStripP
   );
 }
 
-export function DashboardSection({ title, description, children, className }: DashboardSectionProps) {
+export function DashboardSection({ title, description, children, className, titleId }: DashboardSectionProps) {
   return (
     <section className={cx("app-dashboard-section", className)}>
       <div className="app-dashboard-section-head">
-        <h2 className="app-dashboard-section-title">{title}</h2>
+        <h2 id={titleId} className="app-dashboard-section-title">
+          {title}
+        </h2>
         {description ? <p className="app-dashboard-section-description">{description}</p> : null}
       </div>
       {children}
@@ -182,8 +188,17 @@ export function DashboardSection({ title, description, children, className }: Da
   );
 }
 
-export function DashboardActionGrid({ children, className }: DashboardActionGridProps) {
-  return <div className={cx("app-dashboard-action-grid", className)}>{children}</div>;
+export function DashboardActionGrid({ children, className, ariaLabel, ariaLabelledBy }: DashboardActionGridProps) {
+  return (
+    <div
+      className={cx("app-dashboard-action-grid", className)}
+      role="list"
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabel ? undefined : ariaLabelledBy}
+    >
+      {children}
+    </div>
+  );
 }
 
 function toActionItemKey(item: DashboardActionItem, index: number) {
@@ -204,7 +219,11 @@ export function DashboardActionCard({
   className,
 }: DashboardActionCardProps) {
   return (
-    <Link href={href} className={cx("app-dashboard-action-card", `app-dashboard-action-card--${tone}`, className)}>
+    <Link
+      href={href}
+      className={cx("app-dashboard-action-card", `app-dashboard-action-card--${tone}`, className)}
+      role="listitem"
+    >
       <div className="app-dashboard-action-top">
         {symbol ? <span className="app-dashboard-action-symbol">{symbol}</span> : null}
         {badge ? <span className="app-dashboard-action-badge">{badge}</span> : null}
@@ -224,10 +243,13 @@ export function DashboardActionSection({
   className,
   gridClassName,
   cardClassName,
+  ariaLabel,
 }: DashboardActionSectionProps) {
+  const titleId = useId();
+
   return (
-    <DashboardSection title={title} description={description} className={className}>
-      <DashboardActionGrid className={gridClassName}>
+    <DashboardSection title={title} description={description} className={className} titleId={titleId}>
+      <DashboardActionGrid className={gridClassName} ariaLabel={ariaLabel} ariaLabelledBy={titleId}>
         {items.map((item, index) => (
           <DashboardActionCard key={toActionItemKey(item, index)} {...item} className={cardClassName} />
         ))}

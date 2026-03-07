@@ -1,16 +1,14 @@
 "use client";
-/* eslint-disable react-hooks/immutability, react-hooks/exhaustive-deps */
+/* eslint-disable react-hooks/exhaustive-deps */
 
+import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 import {
-  computeBodyweightTotalLoadKg,
   computeExternalLoadFromTotalKg,
   formatExerciseLoadLabel,
-  formatKgValue,
-  isBodyweightExerciseName,
 } from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { buildSessionKey, formatSessionKeyLabel, parseSessionKey } from "@/lib/session-key";
@@ -35,12 +33,21 @@ import {
   type WorkoutUxGuidedHint,
   type WorkoutUxSummary,
 } from "@/lib/workout-ux-events";
+import WorkoutSetRow from "./_components/workout-set-row";
 import { AccordionSection } from "@/components/ui/accordion-section";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent } from "@/components/ui/card";
 import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+
+const WorkoutAddExerciseSheet = dynamic(() => import("./_components/workout-add-exercise-sheet"), {
+  ssr: false,
+  loading: () => null,
+});
+
+const WorkoutOverridesSheet = dynamic(() => import("./_components/workout-overrides-sheet"), {
+  ssr: false,
+  loading: () => null,
+});
 
 type SetRow = {
   exerciseName: string;
@@ -99,8 +106,6 @@ type UxSummaryResp = {
 
 type LogFocusMode = "BEGINNER" | "POWER";
 
-const MOTION_DURATION_FAST_MS = 160;
-
 type SaveLogResponse = {
   log: {
     id: string;
@@ -158,24 +163,6 @@ function toSetRowsFromPlannedExercises(snapshot: any, bodyweightKg: number | nul
   return rows;
 }
 
-function formatPlannedRef(ref: SetRow["plannedRef"], bodyweightKg: number | null) {
-  if (!ref) return "";
-  const reps = ref.reps ?? "-";
-  const displayWeight = formatExerciseLoadLabel({
-    exerciseName: ref.exerciseName,
-    weightKg: ref.totalTargetWeightKg ?? ref.targetWeightKg ?? 0,
-    bodyweightKg,
-    source: ref.totalTargetWeightKg !== undefined ? "total" : "external",
-  });
-  const percent =
-    typeof ref.percent === "number" && Number.isFinite(ref.percent) && ref.percent > 0
-      ? `${Math.round(ref.percent * 100)}%`
-      : null;
-  const note = typeof ref.note === "string" && ref.note.trim() ? ref.note.trim() : null;
-  const meta = [percent, note].filter(Boolean).join(" · ");
-  return `${reps}회 @ ${displayWeight}${meta ? ` (${meta})` : ""}`;
-}
-
 function dateOnlyInTimezone(date: Date, timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
     timeZone: timezone,
@@ -188,202 +175,6 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
   const m = parts.find((p) => p.type === "month")?.value ?? "01";
   const d = parts.find((p) => p.type === "day")?.value ?? "01";
   return `${y}-${m}-${d}`;
-}
-
-function WorkoutSetRow({
-  idx,
-  row,
-  bodyweightKg,
-  setCellKey,
-  setInputRefs,
-  handleSetGridKeyDown,
-  updateRow,
-  onCompleteAndNext,
-  onCopyPrevious,
-  onInsertBelow,
-  onRemove,
-  canCopyPrevious,
-}: {
-  idx: number;
-  row: SetRow;
-  bodyweightKg: number | null;
-  setCellKey: (row: number, col: number) => string;
-  setInputRefs: React.MutableRefObject<Record<string, HTMLInputElement | null>>;
-  handleSetGridKeyDown: (e: React.KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
-  updateRow: (updater: (row: SetRow) => SetRow) => void;
-  onCompleteAndNext: () => void;
-  onCopyPrevious: () => void;
-  onInsertBelow: () => void;
-  onRemove: () => void;
-  canCopyPrevious: boolean;
-}) {
-  const [isRemoving, setIsRemoving] = useState(false);
-  const removeTimerRef = useRef<number | null>(null);
-  const isBodyweightExercise = isBodyweightExerciseName(row.exerciseName);
-  const totalLoadKg = computeBodyweightTotalLoadKg(row.exerciseName, row.weightKg, bodyweightKg);
-
-  useEffect(() => {
-    return () => {
-      if (removeTimerRef.current !== null) {
-        window.clearTimeout(removeTimerRef.current);
-      }
-    };
-  }, []);
-
-  function handleRemoveWithMotion() {
-    if (isRemoving) return;
-    setIsRemoving(true);
-    removeTimerRef.current = window.setTimeout(() => {
-      onRemove();
-    }, MOTION_DURATION_FAST_MS);
-  }
-
-  return (
-    <div className={`workout-swipe-shell ui-list-item motion-list-item ${isRemoving ? "is-removing" : ""}`}>
-      <button className="workout-swipe-delete haptic-tap" type="button" onClick={handleRemoveWithMotion}>
-        삭제
-      </button>
-
-      <article className="workout-set-card">
-        <label className="flex flex-col gap-1">
-          <span className="ui-card-label">운동</span>
-          <AppTextInput
-            variant="workout"
-            list="exercise-options"
-            value={row.exerciseName}
-            ref={(el) => {
-              setInputRefs.current[setCellKey(idx, 0)] = el;
-            }}
-            onKeyDown={(e) => handleSetGridKeyDown(e, idx, 0)}
-            onChange={(e) => updateRow((prev) => ({ ...prev, exerciseName: e.target.value }))}
-          />
-        </label>
-
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">세트</span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="numeric"
-              value={row.setNumber}
-              ref={(el) => {
-                setInputRefs.current[setCellKey(idx, 1)] = el;
-              }}
-              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 1)}
-              onChange={(e) => updateRow((prev) => ({ ...prev, setNumber: Number(e.target.value) }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">반복</span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="numeric"
-              value={row.reps}
-              ref={(el) => {
-                setInputRefs.current[setCellKey(idx, 2)] = el;
-              }}
-              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 2)}
-              onChange={(e) => updateRow((prev) => ({ ...prev, reps: Number(e.target.value) }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">
-              {isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "중량(kg)"}
-            </span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="decimal"
-              value={row.weightKg}
-              ref={(el) => {
-                setInputRefs.current[setCellKey(idx, 3)] = el;
-              }}
-              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 3)}
-              onChange={(e) => updateRow((prev) => ({ ...prev, weightKg: Number(e.target.value) }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">RPE</span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="decimal"
-              value={row.rpe}
-              ref={(el) => {
-                setInputRefs.current[setCellKey(idx, 4)] = el;
-              }}
-              onKeyDown={(e) => handleSetGridKeyDown(e, idx, 4)}
-              onChange={(e) => updateRow((prev) => ({ ...prev, rpe: Number(e.target.value) }))}
-            />
-          </label>
-        </div>
-
-        {isBodyweightExercise && bodyweightKg ? (
-          <div className="mt-2 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(totalLoadKg)}</div>
-        ) : null}
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <label className="workout-toggle">
-            <input
-              type="checkbox"
-              checked={row.isExtra}
-              onChange={(e) =>
-                updateRow((prev) => ({
-                  ...prev,
-                  isExtra: e.target.checked,
-                  isPlanned: e.target.checked ? false : prev.isPlanned,
-                }))
-              }
-            />
-            <span>추가</span>
-          </label>
-
-          <label className="workout-toggle">
-            <input
-              type="checkbox"
-              checked={row.completed}
-              onChange={(e) => updateRow((prev) => ({ ...prev, completed: e.target.checked }))}
-            />
-            <span>완료</span>
-          </label>
-
-          <span className="ui-card-label">
-            {row.isExtra ? "추가" : row.isPlanned ? "계획" : "사용자"}
-          </span>
-        </div>
-
-        {row.plannedRef ? (
-          <div className="mt-2 rounded-lg border px-2 py-1 text-xs text-[var(--text-secondary)]">
-            처방: {formatPlannedRef(row.plannedRef, bodyweightKg)}
-            {isBodyweightExercise && bodyweightKg ? (
-              <div className="pt-1">현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
-            ) : null}
-          </div>
-        ) : null}
-
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onCompleteAndNext}>
-            완료 후 다음
-          </button>
-          <button
-            className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm"
-            onClick={onCopyPrevious}
-            disabled={!canCopyPrevious}
-          >
-            이전 복사
-          </button>
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" onClick={onInsertBelow}>
-            아래에 삽입
-          </button>
-        </div>
-      </article>
-    </div>
-  );
 }
 
 export default function WorkoutTodayPage() {
@@ -423,6 +214,8 @@ export default function WorkoutTodayPage() {
   const [replacementExerciseName, setReplacementExerciseName] = useState("");
   const [overridesSheetOpen, setOverridesSheetOpen] = useState(false);
   const [addExerciseSheetOpen, setAddExerciseSheetOpen] = useState(false);
+  const [shouldRenderOverridesSheet, setShouldRenderOverridesSheet] = useState(false);
+  const [shouldRenderAddExerciseSheet, setShouldRenderAddExerciseSheet] = useState(false);
   const [addExerciseQuery, setAddExerciseQuery] = useState("");
   const [selectedAddExerciseName, setSelectedAddExerciseName] = useState("");
   const [autoGeneratedFromQuery, setAutoGeneratedFromQuery] = useState(false);
@@ -456,6 +249,9 @@ export default function WorkoutTodayPage() {
 
   const isPowerMode = focusMode === "POWER";
   const setCellKey = (row: number, col: number) => `${row}:${col}`;
+  const registerSetInputRef = useCallback((key: string, element: HTMLInputElement | null) => {
+    setInputRefs.current[key] = element;
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -521,6 +317,7 @@ export default function WorkoutTodayPage() {
   }
 
   function openAddExerciseSheet(source: "quick" | "advanced" | "empty" | "shortcut") {
+    setShouldRenderAddExerciseSheet(true);
     setAddExerciseSheetOpen(true);
     trackEvent("workout_add_exercise_sheet_opened", { source });
   }
@@ -1882,6 +1679,7 @@ export default function WorkoutTodayPage() {
                   className="haptic-tap workout-action-pill is-secondary"
                   type="button"
                   onClick={() => {
+                    setShouldRenderOverridesSheet(true);
                     setOverridesSheetOpen(true);
                     trackEvent("workout_override_sheet_opened", { source: "advanced" });
                   }}
@@ -2034,7 +1832,7 @@ export default function WorkoutTodayPage() {
                   row={s}
                   bodyweightKg={bodyweightKg}
                   setCellKey={setCellKey}
-                  setInputRefs={setInputRefs}
+                  registerSetInputRef={registerSetInputRef}
                   handleSetGridKeyDown={handleSetGridKeyDown}
                   updateRow={(updater) => updateSetRow(idx, updater)}
                   onCompleteAndNext={() => completeSetAndAddNext(idx)}
@@ -2165,180 +1963,50 @@ export default function WorkoutTodayPage() {
         </button>
       </div>
 
-      <BottomSheet
-        open={addExerciseSheetOpen}
-        onClose={() => {
-          setAddExerciseSheetOpen(false);
-          setAddExerciseQuery("");
-          setSelectedAddExerciseName("");
-          trackEvent("workout_add_exercise_sheet_closed");
-        }}
-        title="운동 추가"
-        description="2탭으로 운동을 넣고 바로 기록하세요."
-      >
-        <div className="space-y-3 pb-2">
-          <Card padding="md" elevated={false}>
-            <CardContent>
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">추천/등록 운동 드롭다운 검색/선택</span>
-                <div className="workout-combobox" data-no-swipe="true">
-                  <div className="app-search-shell">
-                    <span className="app-search-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false">
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m20 20-3.8-3.8" />
-                      </svg>
-                    </span>
-                    <input
-                      type="search"
-                      inputMode="search"
-                      className="app-search-input"
-                      value={addExerciseQuery}
-                      placeholder="예: Bench Press"
-                      onChange={(event) => setAddExerciseQuery(event.target.value)}
-                      onKeyDown={(event) => {
-                        if (event.key !== "Enter") return;
-                        event.preventDefault();
-                        if (selectedAddExerciseName) {
-                          addExerciseFromSheet(selectedAddExerciseName);
-                          return;
-                        }
-                        addExerciseFromSheet(addExerciseQuery.trim());
-                      }}
-                    />
-                    {addExerciseQuery.trim().length > 0 ? (
-                      <button
-                        type="button"
-                        className="app-search-clear"
-                        aria-label="검색어 지우기"
-                        onClick={() => setAddExerciseQuery("")}
-                      >
-                        ×
-                      </button>
-                    ) : null}
-                  </div>
+      {shouldRenderAddExerciseSheet ? (
+        <WorkoutAddExerciseSheet
+          open={addExerciseSheetOpen}
+          addExerciseQuery={addExerciseQuery}
+          selectedAddExerciseName={selectedAddExerciseName}
+          addExerciseCandidates={addExerciseCandidates}
+          onClose={() => {
+            setAddExerciseSheetOpen(false);
+            setAddExerciseQuery("");
+            setSelectedAddExerciseName("");
+            trackEvent("workout_add_exercise_sheet_closed");
+          }}
+          onAddExerciseQueryChange={setAddExerciseQuery}
+          onSelectAddExerciseName={setSelectedAddExerciseName}
+          onClearAddExerciseQuery={() => setAddExerciseQuery("")}
+          onAddSelectedExercise={() => addExerciseFromSheet(selectedAddExerciseName)}
+          onAddExerciseFromQuery={() => addExerciseFromSheet(addExerciseQuery.trim())}
+        />
+      ) : null}
 
-                  <div className="workout-combobox-panel" role="listbox" aria-label="추천 운동 검색 결과">
-                    {addExerciseCandidates.length === 0 ? (
-                      <span className="workout-combobox-empty">검색 결과가 없습니다.</span>
-                    ) : (
-                      addExerciseCandidates.map((exerciseName) => (
-                        <button
-                          key={exerciseName}
-                          type="button"
-                          className={`haptic-tap workout-combobox-option${selectedAddExerciseName === exerciseName ? " is-active" : ""}`}
-                          onClick={() => setSelectedAddExerciseName(exerciseName)}
-                        >
-                          {exerciseName}
-                        </button>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </label>
-            </CardContent>
-          </Card>
-
-          {addExerciseCandidates.length === 0 ? (
-            <EmptyStateRows
-              when
-              label="설정 값 없음"
-              description="검색 결과가 없습니다. 이름을 직접 입력해 추가할 수 있습니다."
-            />
-          ) : (
-            <button
-              className="haptic-tap workout-action-pill is-secondary w-full text-left"
-              type="button"
-              disabled={!selectedAddExerciseName}
-              onClick={() => addExerciseFromSheet(selectedAddExerciseName)}
-            >
-              + 선택한 운동 추가
-            </button>
-          )}
-        </div>
-      </BottomSheet>
-
-      <BottomSheet
-        open={overridesSheetOpen}
-        onClose={() => setOverridesSheetOpen(false)}
-        title="세션 오버라이드"
-        description={`대상 세션: ${formatSessionKeyLabel(sessionKey)}`}
-      >
-        <div className="space-y-4 pb-2">
-          <Card padding="md" elevated={false}>
-            <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="ui-card-label">선택 세트 행(추가 상태 필수)</span>
-                <AppSelect
-                  variant="compact"
-                  value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
-                  onChange={(e) => {
-                    setSelectedSetIdx(e.target.value === "" ? null : Number(e.target.value));
-                  }}
-                >
-                  <option value="">(행 선택)</option>
-                  {sets.map((s, idx) => (
-                    <option key={idx} value={idx}>
-                      #{idx + 1} {s.exerciseName || "(비어 있음)"} [{s.isExtra ? "추가" : s.isPlanned ? "계획" : "사용자"}]
-                    </option>
-                  ))}
-                </AppSelect>
-              </label>
-              <button
-                className="haptic-tap workout-action-pill is-secondary workout-inline-action"
-                type="button"
-                onClick={() => {
-                  setSuccess(null);
-                  setError(null);
-                  makeAccessoryPermanent().catch((e) => setError(e.message));
-                }}
-              >
-                보조 운동 고정
-              </button>
-            </CardContent>
-          </Card>
-
-          <Card padding="md" elevated={false}>
-            <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">블록 대상</span>
-                <AppSelect
-                  variant="compact"
-                  value={blockTarget}
-                  onChange={(e) => setBlockTarget(e.target.value)}
-                >
-                  <option value="SQUAT">SQUAT</option>
-                  <option value="BENCH">BENCH</option>
-                  <option value="DEADLIFT">DEADLIFT</option>
-                  <option value="OHP">OHP</option>
-                  <option value="PULL">PULL</option>
-                  <option value="CUSTOM">CUSTOM</option>
-                </AppSelect>
-              </label>
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="ui-card-label">대체 운동 이름</span>
-                <AppTextInput
-                  variant="compact"
-                  value={replacementExerciseName}
-                  onChange={(e) => setReplacementExerciseName(e.target.value)}
-                  placeholder="예: Paused Bench Press"
-                />
-              </label>
-              <button
-                className="haptic-tap workout-action-pill is-secondary workout-inline-action"
-                type="button"
-                onClick={() => {
-                  setSuccess(null);
-                  setError(null);
-                  replaceExercisePermanent().catch((e) => setError(e.message));
-                }}
-              >
-                운동 교체
-              </button>
-            </CardContent>
-          </Card>
-        </div>
-      </BottomSheet>
+      {shouldRenderOverridesSheet ? (
+        <WorkoutOverridesSheet
+          open={overridesSheetOpen}
+          sessionKeyLabel={formatSessionKeyLabel(sessionKey)}
+          selectedSetIdx={selectedSetIdx}
+          sets={sets}
+          blockTarget={blockTarget}
+          replacementExerciseName={replacementExerciseName}
+          onClose={() => setOverridesSheetOpen(false)}
+          onSelectSetIdx={setSelectedSetIdx}
+          onMakeAccessoryPermanent={() => {
+            setSuccess(null);
+            setError(null);
+            void makeAccessoryPermanent().catch((e) => setError(e.message));
+          }}
+          onBlockTargetChange={setBlockTarget}
+          onReplacementExerciseNameChange={setReplacementExerciseName}
+          onReplaceExercisePermanent={() => {
+            setSuccess(null);
+            setError(null);
+            void replaceExercisePermanent().catch((e) => setError(e.message));
+          }}
+        />
+      ) : null}
 
     </div>
   );

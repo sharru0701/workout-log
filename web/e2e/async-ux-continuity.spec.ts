@@ -160,7 +160,7 @@ const plansManageEndpoints: MockEndpoint[] = [
     id: "templates.versions",
     method: "GET",
     path: /^\/api\/templates\/[^/]+\/versions$/,
-    body: (url) => {
+    body: (url: URL) => {
       const slug = decodeURIComponent(url.pathname.split("/")[3] ?? "program");
       return buildVersionsPayload(slug);
     },
@@ -230,7 +230,7 @@ const templatesManageEndpoints: MockEndpoint[] = [
     id: "templates.versions",
     method: "GET",
     path: /^\/api\/templates\/[^/]+\/versions$/,
-    body: (url) => {
+    body: (url: URL) => {
       const slug = decodeURIComponent(url.pathname.split("/")[3] ?? "template");
       return buildVersionsPayload(slug);
     },

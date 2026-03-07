@@ -31,7 +31,7 @@ async function registerServiceWorker(page: Page, version: string) {
 test.describe("PWA service worker update", () => {
   test("activates a new service worker version after an update", async ({ page }) => {
     await page.goto("/offline");
-    await expect(page.getByRole("list", { name: "Offline recovery" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1, name: "오프라인 복구 흐름" })).toBeVisible();
 
     await clearServiceWorkersAndCaches(page);
     const initialVersion = `e2e-initial-${Date.now()}`;

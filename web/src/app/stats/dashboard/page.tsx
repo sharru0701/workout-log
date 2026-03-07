@@ -1,15 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { MetricTile, SparklineChart } from "./_components/stats-dashboard-primitives";
 import { AccordionSection } from "@/components/ui/accordion-section";
-import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
-import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+
+const StatsFiltersSheet = dynamic(() => import("./_components/stats-filters-sheet"), {
+  ssr: false,
+  loading: () => null,
+});
 
 type Plan = {
   id: string;
@@ -425,69 +429,6 @@ function trendMeta(delta: number, digits = 1) {
   };
 }
 
-function MetricTile({
-  label,
-  value,
-  trend,
-}: {
-  label: string;
-  value: string;
-  trend?: { text: string; className: string };
-}) {
-  return (
-    <article className="motion-card rounded-2xl border bg-white p-4">
-      <div className="ui-card-label ui-card-label-caps">{label}</div>
-      <div className="mt-2 text-3xl font-semibold">{value}</div>
-      {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
-    </article>
-  );
-}
-
-function SparklineChart({
-  points,
-  labels,
-  width = 320,
-  height = 90,
-}: {
-  points: number[];
-  labels: string[];
-  width?: number;
-  height?: number;
-}) {
-  if (!points.length) return null;
-
-  const min = Math.min(...points);
-  const max = Math.max(...points);
-  const span = Math.max(1e-9, max - min);
-  const pad = 10;
-  const w = width - pad * 2;
-  const h = height - pad * 2;
-
-  const coords = points.map((v, i) => {
-    const x = pad + (points.length === 1 ? w / 2 : (i * w) / (points.length - 1));
-    const y = pad + h - ((v - min) / span) * h;
-    return { x, y };
-  });
-
-  const d = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ");
-  const last = coords[coords.length - 1];
-  const area = `${d} L ${last.x.toFixed(1)} ${(height - pad).toFixed(1)} L ${coords[0].x.toFixed(1)} ${(height - pad).toFixed(1)} Z`;
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border bg-white text-accent">
-      <path d={area} fill="currentColor" fillOpacity="0.12" />
-      <path d={d} fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx={last.x} cy={last.y} r="3.4" fill="currentColor" />
-      <text x={pad} y={height - 4} fontSize="10" fill="currentColor">
-        min {Math.round(min)}
-      </text>
-      <text x={width - pad} y={height - 4} textAnchor="end" fontSize="10" fill="currentColor">
-        {labels[labels.length - 1]} · max {Math.round(max)}
-      </text>
-    </svg>
-  );
-}
-
 export default function StatsPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
@@ -533,6 +474,7 @@ export default function StatsPage() {
   const [rangeIndex, setRangeIndex] = useState(2);
   const [refreshTick, setRefreshTick] = useState(0);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [shouldRenderFiltersSheet, setShouldRenderFiltersSheet] = useState(false);
   const [deferredDetailsReady, setDeferredDetailsReady] = useState(false);
   const [deferredBackgroundReady, setDeferredBackgroundReady] = useState(false);
   const swipeStartX = useRef<number | null>(null);
@@ -1093,6 +1035,11 @@ export default function StatsPage() {
     setDays(90);
   }
 
+  function openFiltersSheet() {
+    setShouldRenderFiltersSheet(true);
+    setFiltersOpen(true);
+  }
+
   function onRangeSwipeStart(e: React.TouchEvent<HTMLDivElement>) {
     swipeStartX.current = e.changedTouches[0]?.clientX ?? null;
   }
@@ -1142,7 +1089,7 @@ export default function StatsPage() {
               {d}일
             </button>
           ))}
-          <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold col-span-2 sm:col-span-1" onClick={() => setFiltersOpen(true)}>
+          <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold col-span-2 sm:col-span-1" onClick={openFiltersSheet}>
             필터
           </button>
         </div>
@@ -1169,7 +1116,7 @@ export default function StatsPage() {
           <div>
             <div className="ui-card-label ui-card-label-caps">활성 필터</div>
           </div>
-          <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={() => setFiltersOpen(true)}>
+          <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={openFiltersSheet}>
             수정
           </button>
         </div>
@@ -1810,82 +1757,26 @@ export default function StatsPage() {
         </AccordionSection>
       </section>
 
-      <BottomSheet
-        open={filtersOpen}
-        onClose={() => setFiltersOpen(false)}
-        title="통계 필터"
-        description="범위를 정하고 추세 구간을 비교합니다."
-      >
-        <div className="space-y-4 pb-2">
-          <Card tone="subtle" padding="sm" elevated={false}>
-            <CardActionGroup className="grid-cols-1 sm:grid-cols-2">
-              <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium" onClick={resetFilters}>
-                기본값으로 재설정
-              </button>
-              <button
-                className="haptic-tap rounded-xl border px-3 py-3 text-sm font-medium"
-                onClick={() => setFiltersOpen(false)}
-              >
-                적용
-              </button>
-            </CardActionGroup>
-          </Card>
-
-          <Card padding="md" elevated={false}>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">플랜</span>
-                <AppSelect value={planId} onChange={(e) => setPlanId(e.target.value)}>
-                  <option value="">전체 플랜</option>
-                  {plans.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} [{p.type}]
-                    </option>
-                  ))}
-                </AppSelect>
-              </label>
-
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">집계 단위</span>
-                <AppSelect
-                  value={bucket}
-                  onChange={(e) => setBucket(e.target.value as "day" | "week" | "month")}
-                >
-                  <option value="day">일</option>
-                  <option value="week">주</option>
-                  <option value="month">월</option>
-                </AppSelect>
-              </label>
-            </CardContent>
-          </Card>
-
-          <Card padding="md" elevated={false}>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">시작일(선택)</span>
-                <AppTextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">종료일(선택)</span>
-                <AppTextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-              </label>
-            </CardContent>
-          </Card>
-
-          <Card padding="md" elevated={false}>
-            <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">e1RM exerciseId</span>
-                <AppTextInput value={exerciseId} onChange={(e) => setExerciseId(e.target.value)} />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="ui-card-label">e1RM exercise</span>
-                <AppTextInput value={exercise} onChange={(e) => setExercise(e.target.value)} />
-              </label>
-            </CardContent>
-          </Card>
-        </div>
-      </BottomSheet>
+      {shouldRenderFiltersSheet ? (
+        <StatsFiltersSheet
+          open={filtersOpen}
+          plans={plans}
+          planId={planId}
+          bucket={bucket}
+          from={from}
+          to={to}
+          exerciseId={exerciseId}
+          exercise={exercise}
+          onClose={() => setFiltersOpen(false)}
+          onResetFilters={resetFilters}
+          onPlanIdChange={setPlanId}
+          onBucketChange={setBucket}
+          onFromChange={setFrom}
+          onToChange={setTo}
+          onExerciseIdChange={setExerciseId}
+          onExerciseChange={setExercise}
+        />
+      ) : null}
     </div>
   );
 }
