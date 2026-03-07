@@ -21,6 +21,13 @@ type ApiCacheEntry = {
   lastAccessedAt: number;
 };
 
+type ApiInflightRequest = {
+  controller: AbortController | null;
+  consumers: number;
+  promise: Promise<unknown>;
+  settled: boolean;
+};
+
 type ApiNetworkListener = (inflightCount: number) => void;
 
 const DEFAULT_MAX_AGE_MS = 8_000;
@@ -28,7 +35,7 @@ const DEFAULT_STALE_WHILE_REVALIDATE_MS = 52_000;
 const API_CACHE_MAX_ENTRIES = 180;
 
 const apiResponseCache = new Map<string, ApiCacheEntry>();
-const apiInflightRequests = new Map<string, Promise<unknown>>();
+const apiInflightRequests = new Map<string, ApiInflightRequest>();
 const apiNetworkListeners = new Set<ApiNetworkListener>();
 let apiNetworkInflightCount = 0;
 
@@ -104,6 +111,24 @@ function resolveApiErrorMessage(
   return fallbackMessage;
 }
 
+function createAbortError() {
+  if (typeof DOMException === "function") {
+    return new DOMException("The operation was aborted.", "AbortError");
+  }
+  const error = new Error("The operation was aborted.");
+  error.name = "AbortError";
+  return error;
+}
+
+export function isAbortError(error: unknown) {
+  return (
+    !!error &&
+    typeof error === "object" &&
+    "name" in error &&
+    (error as { name?: unknown }).name === "AbortError"
+  );
+}
+
 async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   const endNetworkRequest = beginApiNetworkRequest();
   try {
@@ -121,36 +146,109 @@ async function fetchJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   }
 }
 
+function releaseApiInflightConsumer(cacheKey: string, inflight: ApiInflightRequest) {
+  if (inflight.consumers > 0) {
+    inflight.consumers -= 1;
+  }
+  if (inflight.consumers > 0 || inflight.settled) return;
+  if (apiInflightRequests.get(cacheKey) === inflight) {
+    apiInflightRequests.delete(cacheKey);
+  }
+  inflight.controller?.abort();
+}
+
+async function awaitApiInflight<T>(
+  cacheKey: string,
+  inflight: ApiInflightRequest,
+  signal?: AbortSignal,
+) {
+  inflight.consumers += 1;
+
+  const release = () => {
+    releaseApiInflightConsumer(cacheKey, inflight);
+  };
+
+  try {
+    if (!signal) {
+      return cloneData((await inflight.promise) as T);
+    }
+
+    if (signal.aborted) {
+      release();
+      throw createAbortError();
+    }
+
+    const data = await new Promise<T>((resolve, reject) => {
+      const onAbort = () => {
+        release();
+        reject(createAbortError());
+      };
+
+      signal.addEventListener("abort", onAbort, { once: true });
+      inflight.promise.then(
+        (value) => {
+          signal.removeEventListener("abort", onAbort);
+          resolve(value as T);
+        },
+        (error) => {
+          signal.removeEventListener("abort", onAbort);
+          reject(error);
+        },
+      );
+    });
+
+    return cloneData(data);
+  } finally {
+    release();
+  }
+}
+
 async function requestAndCache<T>(
   path: string,
   cacheKey: string,
   { dedupe = true, signal }: Pick<ApiGetOptions, "dedupe" | "signal">,
 ): Promise<T> {
-  const shouldDedupe = dedupe && !signal;
+  const shouldDedupe = dedupe;
   if (shouldDedupe) {
     const inflight = apiInflightRequests.get(cacheKey);
     if (inflight) {
-      return cloneData((await inflight) as T);
+      return awaitApiInflight<T>(cacheKey, inflight, signal);
     }
   }
 
-  const request = (async () => {
+  if (!shouldDedupe) {
     const data = await fetchJson<T>(path, signal);
+    writeApiCache(cacheKey, data);
+    return cloneData(data);
+  }
+
+  const controller = new AbortController();
+  const dedupedRequest = (async () => {
+    const data = await fetchJson<T>(path, controller.signal);
     writeApiCache(cacheKey, data);
     return data;
   })();
 
-  if (shouldDedupe) {
-    apiInflightRequests.set(cacheKey, request as Promise<unknown>);
-  }
+  const inflight: ApiInflightRequest = {
+    controller,
+    consumers: 0,
+    promise: dedupedRequest as Promise<unknown>,
+    settled: false,
+  };
+  apiInflightRequests.set(cacheKey, inflight);
 
-  try {
-    return cloneData(await request);
-  } finally {
-    if (shouldDedupe) {
-      apiInflightRequests.delete(cacheKey);
-    }
-  }
+  void dedupedRequest
+    .finally(() => {
+      inflight.settled = true;
+      if (apiInflightRequests.get(cacheKey) === inflight) {
+        apiInflightRequests.delete(cacheKey);
+      }
+    })
+    .catch(() => {
+      // Consumers handle the request failure or abort path.
+    });
+
+  return awaitApiInflight<T>(cacheKey, inflight, signal);
 }
 
 export function apiInvalidateCache(cacheKeyPrefix?: string) {

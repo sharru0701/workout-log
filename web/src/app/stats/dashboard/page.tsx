@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
@@ -525,18 +525,20 @@ export default function StatsPage() {
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       try {
         setPlansLoading(true);
-        const res = await apiGet<{ items: Plan[] }>("/api/plans");
+        const res = await apiGet<{ items: Plan[] }>("/api/plans", { signal: controller.signal });
         if (cancelled) return;
         setPlans(res.items);
         setPlanId((prev) => {
           if (prev && res.items.some((p) => p.id === prev)) return prev;
           return "";
         });
-      } catch {
+      } catch (error) {
+        if (cancelled || isAbortError(error)) return;
         if (!cancelled) setPlans([]);
       } finally {
         if (!cancelled) setPlansLoading(false);
@@ -544,17 +546,20 @@ export default function StatsPage() {
     })();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       try {
-        const snapshot = await fetchSettingsSnapshot();
+        const snapshot = await fetchSettingsSnapshot(controller.signal);
         if (cancelled) return;
         setSettingsSnapshot(snapshot);
-      } catch {
+      } catch (error) {
+        if (cancelled || isAbortError(error)) return;
         if (!cancelled) {
           setSettingsSnapshot({});
         }
@@ -563,6 +568,7 @@ export default function StatsPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
@@ -606,6 +612,7 @@ export default function StatsPage() {
   }, [planId, settingsSnapshot]);
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       try {
@@ -630,9 +637,9 @@ export default function StatsPage() {
           comparePrev: 1,
         })}`;
         const [e1rmRes, volRes, compRes] = await Promise.all([
-          apiGet<E1RMResp>(e1rmPath),
-          apiGet<VolumeResp>(volumePath),
-          apiGet<ComplianceResp>(compliancePath),
+          apiGet<E1RMResp>(e1rmPath, { signal: controller.signal }),
+          apiGet<VolumeResp>(volumePath, { signal: controller.signal }),
+          apiGet<ComplianceResp>(compliancePath, { signal: controller.signal }),
         ]);
 
         if (cancelled) return;
@@ -640,7 +647,7 @@ export default function StatsPage() {
         setVolume(volRes);
         setCompliance(compRes);
       } catch (e: unknown) {
-        if (cancelled) return;
+        if (cancelled || isAbortError(e)) return;
         setError(e instanceof Error ? e.message : "통계 데이터를 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoading(false);
@@ -649,11 +656,13 @@ export default function StatsPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [exercise, exerciseId, planId, rangeQuery, refreshTick]);
 
   useEffect(() => {
     if (!deferredDetailsReady) return;
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       try {
@@ -686,9 +695,9 @@ export default function StatsPage() {
         })}`;
 
         const [seriesRes, prsRes, uxSnapshotRes] = await Promise.all([
-          apiGet<VolumeSeriesResp>(seriesPath),
-          apiGet<PRsResp>(prsPath),
-          apiGet<UxSnapshotResp>(uxSnapshotPath),
+          apiGet<VolumeSeriesResp>(seriesPath, { signal: controller.signal }),
+          apiGet<PRsResp>(prsPath, { signal: controller.signal }),
+          apiGet<UxSnapshotResp>(uxSnapshotPath, { signal: controller.signal }),
         ]);
 
         if (cancelled) return;
@@ -698,7 +707,7 @@ export default function StatsPage() {
         setUxFunnel(uxSnapshotRes.funnel);
         setUxSummaryWindows(uxSnapshotRes.windows);
       } catch (e: unknown) {
-        if (cancelled) return;
+        if (cancelled || isAbortError(e)) return;
         setDetailsError(e instanceof Error ? e.message : "상세 통계 데이터를 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setDetailsLoading(false);
@@ -707,6 +716,7 @@ export default function StatsPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [
     bucket,
@@ -723,6 +733,7 @@ export default function StatsPage() {
 
   useEffect(() => {
     if (!deferredBackgroundReady) return;
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       try {
@@ -730,13 +741,16 @@ export default function StatsPage() {
         const trendDays: Array<7 | 30 | 90> = [7, 30, 90];
         const trendCalls = trendDays.map(async (d) => {
           const [v, c] = await Promise.all([
-            apiGet<VolumeResp>(`/api/stats/volume?${toQuery({ days: d, comparePrev: 1 })}`),
+            apiGet<VolumeResp>(`/api/stats/volume?${toQuery({ days: d, comparePrev: 1 })}`, {
+              signal: controller.signal,
+            }),
             apiGet<ComplianceResp>(
               `/api/stats/compliance?${toQuery({
                 days: d,
                 planId: planId || undefined,
                 comparePrev: 1,
               })}`,
+              { signal: controller.signal },
             ),
           ]);
           return { days: d, volume: v, compliance: c } satisfies TrendWindow;
@@ -745,7 +759,8 @@ export default function StatsPage() {
         const trendRes = await Promise.all(trendCalls);
         if (cancelled) return;
         setTrendWindows(trendRes);
-      } catch {
+      } catch (error) {
+        if (cancelled || isAbortError(error)) return;
         if (!cancelled) setTrendWindows([]);
       } finally {
         if (!cancelled) setTrendLoading(false);
@@ -754,11 +769,13 @@ export default function StatsPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [deferredBackgroundReady, planId, refreshTick]);
 
   useEffect(() => {
     if (!deferredBackgroundReady) return;
+    const controller = new AbortController();
     let cancelled = false;
     (async () => {
       setMigrationTelemetryLoading(true);
@@ -769,14 +786,15 @@ export default function StatsPage() {
         runStatus: migrationRunStatusFilter === "ALL" ? undefined : migrationRunStatusFilter,
       })}`;
       try {
-        const body = await apiGet<unknown>(path);
+        const body = await apiGet<unknown>(path, { signal: controller.signal });
         if (cancelled) return;
         if (isMigrationTelemetryResp(body)) {
           setMigrationTelemetry(body);
         } else {
           setMigrationTelemetry(null);
         }
-      } catch {
+      } catch (error) {
+        if (cancelled || isAbortError(error)) return;
         if (!cancelled) setMigrationTelemetry(null);
       } finally {
         if (!cancelled) setMigrationTelemetryLoading(false);
@@ -785,6 +803,7 @@ export default function StatsPage() {
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [deferredBackgroundReady, migrationLookbackMinutes, migrationRunStatusFilter, refreshTick]);
 
