@@ -68,9 +68,26 @@ function StatsIcon({ className }: TabIconProps) {
   );
 }
 
+function CalendarIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <rect x="3.75" y="4.5" width="16.5" height="16.5" rx="2.25" strokeLinejoin="round" />
+      <path d="M3.75 9.75h16.5" strokeLinecap="round" />
+      <path d="M8.25 3.75v1.5" strokeLinecap="round" />
+      <path d="M15.75 3.75v1.5" strokeLinecap="round" />
+      <path d="M8.25 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M15.75 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8.25 17.25h.008" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 17.25h.008" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 const tabs = [
   { href: "/", label: "홈", ariaLabel: "홈", Icon: HomeIcon },
   { href: "/workout-record", label: "기록", ariaLabel: "운동기록", Icon: RecordIcon },
+  { href: "/calendar", label: "캘린더", ariaLabel: "캘린더", Icon: CalendarIcon },
   { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
   { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },
   { href: "/stats-1rm", label: "1RM", ariaLabel: "1RM 통계", Icon: StatsIcon },
