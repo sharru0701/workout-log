@@ -1,29 +1,29 @@
 .baseGroupedList {
-  --sl-section-header-padding-inline: var(--settings-section-header-padding-inline, 1.3rem);
-  --sl-section-header-gap: var(--settings-section-header-gap, 0.18rem);
-  --sl-row-min-height: var(--settings-row-min-height, max(44px, 2.72em));
-  --sl-row-padding-block: var(--settings-row-padding-block, 0.74em);
-  --sl-row-padding-inline: var(--settings-row-padding-inline, 1.04rem);
-  --sl-row-content-gap: var(--settings-row-content-gap, 0.78rem);
-  --sl-group-radius: var(--settings-group-radius, 1.1rem);
-  --sl-group-background: var(--settings-group-background, var(--bg-surface));
-  --sl-group-border-color: var(--settings-group-border-color, color-mix(in srgb, var(--border-subtle) 44%, transparent));
-  --sl-row-divider-color: var(--settings-row-divider-color, color-mix(in srgb, var(--border-subtle) 46%, transparent));
+  --sl-section-header-padding-inline: var(--settings-section-header-padding-inline, 1.25rem);
+  --sl-section-header-gap: var(--settings-section-header-gap, 0.22rem);
+  --sl-row-min-height: var(--settings-row-min-height, max(48px, 2.9em));
+  --sl-row-padding-block: var(--settings-row-padding-block, 0.78em);
+  --sl-row-padding-inline: var(--settings-row-padding-inline, 1.08rem);
+  --sl-row-content-gap: var(--settings-row-content-gap, 0.82rem);
+  --sl-group-radius: var(--settings-group-radius, var(--radius-lg, 1.8rem));
+  --sl-group-background: var(--settings-group-background, var(--glass-bg-strong, var(--bg-surface)));
+  --sl-group-border-color: var(--settings-group-border-color, var(--glass-border, rgba(255,255,255,0.085)));
+  --sl-row-divider-color: var(--settings-row-divider-color, var(--glass-border-subtle, rgba(255,255,255,0.045)));
   --sl-row-divider-inset-start: var(--sl-row-padding-inline);
   --sl-row-divider-inset-end: var(--settings-row-divider-inset-end, var(--sl-row-padding-inline));
   --sl-label-color: var(--settings-label-color, var(--text-primary));
   --sl-description-color: var(--settings-description-color, var(--text-secondary));
   --sl-value-color: var(--settings-value-color, color-mix(in srgb, var(--text-secondary) 88%, var(--text-primary) 12%));
   --sl-subtitle-color: var(--settings-subtitle-color, color-mix(in srgb, var(--text-primary) 82%, var(--text-secondary) 18%));
-  --sl-chevron-color: var(--settings-chevron-color, color-mix(in srgb, var(--text-secondary) 88%, transparent));
-  --sl-row-icon-size: var(--settings-row-icon-size, 1.8rem);
-  --sl-row-icon-radius: var(--settings-row-icon-radius, 0.48rem);
-  --sl-row-icon-font-size: var(--settings-row-icon-font-size, 0.92rem);
-  --sl-badge-height: var(--settings-badge-height, 1.15rem);
+  --sl-chevron-color: var(--settings-chevron-color, color-mix(in srgb, var(--text-secondary) 72%, transparent));
+  --sl-row-icon-size: var(--settings-row-icon-size, 1.9rem);
+  --sl-row-icon-radius: var(--settings-row-icon-radius, 0.52rem);
+  --sl-row-icon-font-size: var(--settings-row-icon-font-size, 0.95rem);
+  --sl-badge-height: var(--settings-badge-height, 1.25rem);
   --sl-badge-radius: var(--settings-badge-radius, 999px);
-  --sl-badge-padding-inline: var(--settings-badge-padding-inline, 0.4rem);
+  --sl-badge-padding-inline: var(--settings-badge-padding-inline, 0.5rem);
   --sl-switch-off-color: var(--settings-switch-off-color, #8e8e93);
-  --sl-switch-on-color: var(--settings-switch-on-color, #34c759);
+  --sl-switch-on-color: var(--settings-switch-on-color, #30d158);
   --sl-focus-ring-color: var(--settings-focus-ring-color, color-mix(in srgb, var(--accent-primary) 72%, transparent));
   list-style: none;
   margin: 0;
@@ -31,6 +31,8 @@
   border: 1px solid var(--sl-group-border-color);
   border-radius: var(--sl-group-radius);
   background: var(--sl-group-background);
+  -webkit-backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
+  backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
   overflow: clip;
 }
 
@@ -72,11 +74,11 @@
 
 .sectionHeaderTitle {
   margin: 0;
-  font-size: 1.03rem;
+  font-size: 1.1rem;
   line-height: 1.18;
-  font-weight: 600;
-  letter-spacing: -0.006em;
-  color: var(--sl-description-color, var(--settings-description-color, var(--text-secondary)));
+  font-weight: 700;
+  letter-spacing: -0.018em;
+  color: var(--sl-label-color, var(--text-primary));
 }
 
 .sectionHeaderDescription {
@@ -151,11 +153,18 @@
 .rowButton:not(:disabled):hover,
 .rowLink:hover,
 .rowToggleLabel:hover {
-  background: color-mix(in srgb, var(--bg-tertiary) 18%, transparent);
+  background: color-mix(in srgb, var(--accent-primary) 6%, var(--glass-border-subtle, transparent));
+}
+
+.rowButton:not(:disabled):active,
+.rowLink:active,
+.rowToggleLabel:active {
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  transition-duration: 80ms;
 }
 
 .leading {
-  display: none;
+  display: inline-flex;
 }
 
 .rowIcon {
@@ -166,9 +175,10 @@
   align-items: center;
   justify-content: center;
   font-size: var(--sl-row-icon-font-size);
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 34%, transparent);
+  border: 1px solid var(--glass-border-subtle, rgba(255,255,255,0.045));
+  flex-shrink: 0;
 }
 
 .rowIconNeutral {
@@ -311,9 +321,10 @@
   position: absolute;
   inset: 0;
   border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 72%, transparent);
-  background: color-mix(in srgb, var(--sl-switch-off-color) 62%, transparent);
-  transition: background-color var(--duration-normal) var(--ease-standard);
+  border: 1px solid color-mix(in srgb, var(--border-subtle, rgba(255,255,255,0.085)) 72%, transparent);
+  background: color-mix(in srgb, var(--sl-switch-off-color) 55%, transparent);
+  transition:
+    background-color var(--duration-normal, 250ms) var(--ease-standard, cubic-bezier(0.4,0,0.2,1));
 }
 
 .toggleThumb {
@@ -324,8 +335,8 @@
   height: max(1.36rem, 1.36em);
   border-radius: 999px;
   background: #ffffff;
-  box-shadow: none;
-  transition: transform var(--duration-normal) var(--ease-standard);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.26), 0 0 1px rgba(0,0,0,0.14);
+  transition: transform var(--duration-normal, 250ms) var(--ease-spring, cubic-bezier(0.34,1.56,0.64,1));
 }
 
 .toggleInput:checked + .toggleTrack {
@@ -335,6 +346,7 @@
 
 .toggleInput:checked + .toggleTrack .toggleThumb {
   transform: translateX(1.13rem);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.20), 0 0 1px rgba(0,0,0,0.10);
 }
 
 .toggleInput:disabled + .toggleTrack {
