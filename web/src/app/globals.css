@@ -3035,6 +3035,20 @@ button {
   --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1.0);
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
 
+  /* ── Component Spacing Tokens — iOS 26 unified layout system
+     모든 컴포넌트가 이 토큰을 참조하여 일관된 간격을 유지합니다.
+     @media 블록 안에서 :root 토큰을 재정의하면 전체 반영됩니다. */
+  --gap-page:    1.5rem;   /* 화면 레벨 섹션 간 간격 */
+  --gap-hero:    1.5rem;   /* 히어로 카드 내부 섹션 간 (title/actions/metrics) */
+  --gap-section: 1.1rem;   /* 섹션 헤더 ↔ 콘텐츠 간격 */
+  --gap-list:    0.85rem;  /* 카드/아이템 목록 간 간격 */
+  --gap-inner:   0.65rem;  /* 카드 내부 요소 간 간격 */
+  --gap-tight:   0.5rem;   /* 동일 그룹 내 밀접한 요소 간격 */
+
+  --card-pad-sm: 1rem 1.1rem;
+  --card-pad-md: 1.25rem 1.4rem;
+  --card-pad-lg: 1.5rem 1.5rem;
+
   /* ── Tailwind Neutral → iOS 26 adaptive surfaces (dark defaults)
      Overrides Tailwind v4's --color-neutral-* vars so that
      bg-neutral-*, text-neutral-*, border-neutral-* all
@@ -3146,7 +3160,7 @@ body {
 .settings-screen {
   width: min(100%, var(--layout-max-wide));
   padding: 0 0 var(--space-8);
-  gap: var(--space-6);
+  gap: var(--gap-page);
 }
 
 .home-screen {
@@ -5172,8 +5186,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 1.4rem;
-  padding: 1.5rem 1.4rem;
+  gap: var(--gap-hero);
+  padding: var(--card-pad-lg);
   border-radius: var(--radius-xl, 2.25rem);
   border: 1px solid var(--glass-border-strong, rgba(255,255,255,0.14));
   background:
@@ -5388,12 +5402,12 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 
 .home-dashboard-section {
   display: grid;
-  gap: 1.1rem;
+  gap: var(--gap-section);
 }
 
 .home-dashboard-section-head {
   display: grid;
-  gap: 0.4rem;
+  gap: var(--gap-tight);
   padding-inline: 0.25rem;
 }
 
@@ -5417,7 +5431,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 .home-dashboard-quick-grid,
 .home-dashboard-recent-list {
   display: grid;
-  gap: 0.9rem;
+  gap: var(--gap-list);
 }
 
 .home-dashboard-glance-card,
@@ -5433,10 +5447,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 
 .home-dashboard-glance-card {
   display: grid;
-  gap: 0.65rem;
+  gap: var(--gap-inner);
   min-width: 0;
   min-height: 11rem;
-  padding: 1.2rem;
+  padding: var(--card-pad-md);
   border-radius: var(--radius-xl, 2.25rem);
   text-decoration: none;
   color: inherit;
@@ -5541,10 +5555,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 .home-dashboard-quick-card {
   display: grid;
   align-content: start;
-  gap: 0.65rem;
+  gap: var(--gap-inner);
   min-width: 0;
   min-height: 8.9rem;
-  padding: 1.2rem;
+  padding: var(--card-pad-md);
   border-radius: var(--radius-xl, 2.25rem);
   text-decoration: none;
   color: inherit;
@@ -5621,9 +5635,9 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
+  gap: var(--gap-list);
   min-width: 0;
-  padding: 1.1rem 1.2rem;
+  padding: var(--card-pad-md);
   border-radius: var(--radius-xl, 2.25rem);
   text-decoration: none;
   color: inherit;
@@ -5713,11 +5727,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 }
 
 @media (max-width: 560px) {
-  .home-dashboard-hero {
-    padding: 1rem;
-    border-radius: 1.6rem;
-  }
-
   .home-dashboard-hero-top {
     flex-direction: column;
     align-items: flex-start;
@@ -5733,7 +5742,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
     gap: 0.3rem;
   }
 
-.home-dashboard-day {
+  .home-dashboard-day {
     padding-block: 0.42rem;
   }
 }
@@ -5748,8 +5757,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   position: relative;
   overflow: hidden;
   display: grid;
-  gap: 1.4rem;
-  padding: 1.5rem 1.4rem;
+  gap: var(--gap-hero);
+  padding: var(--card-pad-lg);
   border-radius: var(--radius-xl, 2.25rem);
   border: 1px solid var(--glass-border-strong, rgba(255,255,255,0.14));
   background:
@@ -5885,12 +5894,14 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 .app-dashboard-metric-strip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
+  gap: var(--gap-list);
+  border-top: 1px solid var(--glass-border-subtle, rgba(255,255,255,0.07));
+  padding-top: var(--gap-tight);
 }
 
 .app-dashboard-metric-pill {
   min-width: 0;
-  padding: 0.9rem 1rem;
+  padding: var(--card-pad-sm);
   border-radius: var(--radius-md, 1.35rem);
   border: 1px solid color-mix(in srgb, #ffffff 10%, transparent);
   background: color-mix(in srgb, #ffffff 6%, transparent);
@@ -5913,12 +5924,12 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 
 .app-dashboard-section {
   display: grid;
-  gap: 1rem;
+  gap: var(--gap-section);
 }
 
 .app-dashboard-section-head {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--gap-tight);
   padding-inline: 0.25rem;
 }
 
@@ -5941,7 +5952,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 .app-dashboard-action-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.72rem;
+  gap: var(--gap-list);
 }
 
 .app-dashboard-action-grid--two {
@@ -5965,9 +5976,9 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 .app-dashboard-action-card {
   display: grid;
   align-content: start;
-  gap: 0.56rem;
+  gap: var(--gap-inner);
   min-height: 10rem;
-  padding: 1.2rem;
+  padding: var(--card-pad-md);
   border-radius: var(--radius-xl, 2.25rem);
   text-decoration: none;
   color: inherit;
@@ -6076,11 +6087,15 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
 }
 
 @media (max-width: 560px) {
-  .app-dashboard-hero,
-  .home-dashboard-hero {
-    padding: 1.4rem 1.3rem;
-    border-radius: var(--radius-xl, 2.25rem);
-    gap: 1.6rem;
+  /* ── Token overrides: all components pick up new values automatically */
+  :root {
+    --gap-page:    1.25rem;
+    --gap-hero:    1.4rem;
+    --gap-section: 1rem;
+    --gap-list:    0.75rem;
+    --card-pad-lg: 1.4rem 1.3rem;
+    --card-pad-md: 1.1rem 1.2rem;
+    --card-pad-sm: 0.85rem 1.1rem;
   }
 
   .app-dashboard-metric-strip {
@@ -6089,8 +6104,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   }
 
   .app-dashboard-metric-pill {
-    padding: 0.85rem 1.1rem;
-    border-radius: var(--radius-md, 1.35rem);
     /* horizontal layout on mobile: label left, value right */
     display: flex;
     align-items: center;
@@ -6112,12 +6125,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   .app-dashboard-action-grid,
   .app-dashboard-action-grid--two {
     grid-template-columns: 1fr;
-  }
-
-  /* section gap on mobile screens */
-  .tab-screen,
-  .settings-screen {
-    gap: var(--space-5);
   }
 }
 
