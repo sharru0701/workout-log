@@ -901,14 +901,16 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  border-radius: var(--radius-pill);
+  width: 2.6rem;
+  height: 2.6rem;
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
   border: none;
   background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
   color: var(--accent);
   cursor: pointer;
   flex-shrink: 0;
+  padding: 0;
   transition: background var(--duration-fast) var(--ease-standard);
 }
 
@@ -5128,8 +5130,8 @@ html[data-tab-route-direction="backward"] .native-page-enter {
 }
 
 /* fallback chevron for native selects not migrated to AppSelect yet */
-select:not(.app-form-select):not([multiple]):not([size]),
-select:not(.app-form-select):not([multiple])[size="1"] {
+select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple]):not([size]),
+select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"] {
   -webkit-appearance: none !important;
   appearance: none !important;
   padding-inline-end: 2.56rem !important;
@@ -5139,8 +5141,8 @@ select:not(.app-form-select):not([multiple])[size="1"] {
   background-position: calc(100% - 0.92rem) 50% !important;
 }
 
-select:not(.app-form-select):not([multiple]):not([size])::-ms-expand,
-select:not(.app-form-select):not([multiple])[size="1"]::-ms-expand {
+select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple]):not([size])::-ms-expand,
+select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]::-ms-expand {
   display: none;
 }
 
