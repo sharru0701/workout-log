@@ -851,6 +851,7 @@ button {
   font-weight: 700;
   color: var(--accent);
   background: transparent;
+  background-image: none !important;
   border: none;
   cursor: pointer;
   appearance: none;
@@ -860,6 +861,7 @@ button {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  padding-inline-end: 0 !important;
 }
 
 .ios-cal-plan-chevron {
