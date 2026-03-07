@@ -3,7 +3,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPost, isAbortError } from "@/lib/api";
 import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 import {
@@ -245,6 +245,8 @@ export default function WorkoutTodayPage() {
   const setsLengthRef = useRef(0);
   const pendingSyncInFlight = useRef(false);
   const uxSyncInFlight = useRef(false);
+  const uxSyncControllerRef = useRef<AbortController | null>(null);
+  const isMountedRef = useRef(true);
   const sessionSwipeStartX = useRef<number | null>(null);
 
   const derivedGeneratedId = generatedSession?.id as string | undefined;
@@ -271,20 +273,29 @@ export default function WorkoutTodayPage() {
   setsLengthRef.current = sets.length;
 
   useEffect(() => {
+    const controller = new AbortController();
     let cancelled = false;
 
-    fetchSettingsSnapshot()
+    fetchSettingsSnapshot(controller.signal)
       .then((snapshot) => {
         if (cancelled) return;
         setBodyweightKg(readWorkoutPreferences(snapshot).bodyweightKg);
       })
-      .catch(() => {
-        if (cancelled) return;
+      .catch((error) => {
+        if (cancelled || isAbortError(error)) return;
         setBodyweightKg(toDefaultWorkoutPreferences().bodyweightKg);
       });
 
     return () => {
       cancelled = true;
+      controller.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      isMountedRef.current = false;
+      uxSyncControllerRef.current?.abort();
     };
   }, []);
 
@@ -358,6 +369,9 @@ export default function WorkoutTodayPage() {
     }
     if (uxSyncInFlight.current) return;
     uxSyncInFlight.current = true;
+    const controller = new AbortController();
+    uxSyncControllerRef.current?.abort();
+    uxSyncControllerRef.current = controller;
     setIsUxSyncing(true);
     if (reason === "manual") {
       setUxSyncNotice(null);
@@ -370,7 +384,8 @@ export default function WorkoutTodayPage() {
           acceptedIds: string[];
           acceptedCount: number;
           droppedCount: number;
-        }>("/api/ux-events", { events: unsynced });
+        }>("/api/ux-events", { events: unsynced }, { signal: controller.signal });
+        if (!isMountedRef.current || uxSyncControllerRef.current !== controller) return;
         markWorkoutUxEventsSynced(syncRes.acceptedIds);
         if (reason === "manual") {
           setUxSyncNotice(`행동 로그 ${syncRes.acceptedCount}건을 동기화했습니다.`);
@@ -379,16 +394,25 @@ export default function WorkoutTodayPage() {
         setUxSyncNotice("동기화할 행동 로그가 없습니다.");
       }
 
-      const summaryRes = await apiGet<UxSummaryResp>("/api/stats/ux-events-summary?days=14");
+      const summaryRes = await apiGet<UxSummaryResp>("/api/stats/ux-events-summary?days=14", {
+        signal: controller.signal,
+      });
+      if (!isMountedRef.current || uxSyncControllerRef.current !== controller) return;
       setServerUxSummary(summaryRes.summary);
       refreshGuidedHint(summaryRes.summary);
-    } catch {
+    } catch (error) {
+      if (isAbortError(error)) return;
       if (reason === "manual") {
         setUxSyncNotice("행동 로그 동기화에 실패했습니다. 잠시 후 다시 시도하세요.");
       }
     } finally {
+      if (uxSyncControllerRef.current === controller) {
+        uxSyncControllerRef.current = null;
+      }
       uxSyncInFlight.current = false;
-      setIsUxSyncing(false);
+      if (isMountedRef.current) {
+        setIsUxSyncing(false);
+      }
     }
   }
 
@@ -587,10 +611,11 @@ export default function WorkoutTodayPage() {
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
         setLoadingPlans(true);
-        const res = await apiGet<{ items: Plan[] }>("/api/plans");
+        const res = await apiGet<{ items: Plan[] }>("/api/plans", { signal: controller.signal });
         if (cancelled) return;
         setPlans(res.items);
         setPlanId((prev) => {
@@ -598,7 +623,7 @@ export default function WorkoutTodayPage() {
           return res.items[0]?.id ?? "";
         });
       } catch (e: any) {
-        if (cancelled) return;
+        if (cancelled || isAbortError(e)) return;
         setError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
       } finally {
         if (!cancelled) {
@@ -609,11 +634,13 @@ export default function WorkoutTodayPage() {
     })();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, []);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
         setLoadingRecentSessions(true);
@@ -621,12 +648,14 @@ export default function WorkoutTodayPage() {
         sp.set("limit", "20");
         if (planId) sp.set("planId", planId);
 
-        const res = await apiGet<{ items: RecentGeneratedSession[] }>(`/api/generated-sessions?${sp.toString()}`);
+        const res = await apiGet<{ items: RecentGeneratedSession[] }>(`/api/generated-sessions?${sp.toString()}`, {
+          signal: controller.signal,
+        });
         if (cancelled) return;
         setRecentSessions(res.items);
         setSelectedRecentSessionId((prev) => (res.items.some((s) => s.id === prev) ? prev : ""));
       } catch (e: any) {
-        if (cancelled) return;
+        if (cancelled || isAbortError(e)) return;
         setError(e?.message ?? "최근 세션을 불러오지 못했습니다.");
       } finally {
         if (!cancelled) setLoadingRecentSessions(false);
@@ -634,21 +663,27 @@ export default function WorkoutTodayPage() {
     })();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [planId, refreshTick]);
 
   useEffect(() => {
     let cancelled = false;
+    const controller = new AbortController();
     (async () => {
       try {
-        const res = await apiGet<{ items: ExerciseOption[] }>("/api/exercises?limit=200");
+        const res = await apiGet<{ items: ExerciseOption[] }>("/api/exercises?limit=200", {
+          signal: controller.signal,
+        });
         if (!cancelled) setExerciseOptions(res.items);
-      } catch {
+      } catch (error) {
+        if (cancelled || isAbortError(error)) return;
         if (!cancelled) setExerciseOptions([]);
       }
     })();
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [refreshTick]);
 

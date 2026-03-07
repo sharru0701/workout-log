@@ -3,9 +3,11 @@ import path from "node:path";
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
+import { getAuthenticatedUserId } from "@/server/auth/user";
 import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
 const MIGRATION_FILE_PATTERN = /^\d+_.+\.sql$/;
@@ -162,164 +164,194 @@ async function readLocalMigrationCount() {
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
+    const userId = getAuthenticatedUserId();
     const lookbackMinutes = parseBoundedInt(searchParams.get("lookbackMinutes"), 720, 30, 10080);
     const limit = parseBoundedInt(searchParams.get("limit"), 8, 1, 50);
     const runStatus = parseRunStatusFilter(searchParams.get("runStatus"));
     const format = parseExportFormat(searchParams.get("format"));
-
-    const [localCount, migrationLedger, telemetryTableRow] = await Promise.all([
-      readLocalMigrationCount(),
-      readMigrationLedgerSnapshot(),
-      db.execute<{ regclass: string | null }>(sql`select to_regclass('public.migration_run_log') as regclass`),
-    ]);
-
-    const appliedCount = migrationLedger.appliedCount;
-    const pending = migrationLedger.tableQualifiedName ? Math.max(0, localCount - appliedCount) : localCount;
-    const telemetryAvailable = Boolean(telemetryTableRow.rows[0]?.regclass);
-
-    const alerts = {
-      lockTimeoutCount: 0,
-      failedCount: 0,
-      skippedCount: 0,
-      latestFailureAt: null as string | null,
-      avgLockWaitMs: 0,
-      maxLockWaitMs: 0,
+    const cacheParams = {
+      lookbackMinutes,
+      limit,
+      runStatus,
     };
-    let recentRuns: DashboardMigrationTelemetryPayload["checks"]["telemetry"]["recentRuns"] = [];
 
-    if (telemetryAvailable) {
-      const runStatusSql = runStatusFilterSql(runStatus);
-      const [recentRunsRow, alertsRow] = await Promise.all([
-        db.execute<{
-          run_id: string;
-          runner: string;
-          host: string | null;
-          status: string;
-          error_code: string | null;
-          message: string | null;
-          started_at: string;
-          finished_at: string | null;
-          lock_wait_ms: number | string;
-        }>(
-          sql`
-            select
-              run_id,
-              runner,
-              host,
-              status,
-              error_code,
-              message,
-              started_at,
-              finished_at,
-              lock_wait_ms
-            from migration_run_log
-            where started_at >= now() - (${lookbackMinutes} * interval '1 minute')
-            ${runStatusSql}
-            order by started_at desc
-            limit ${limit}
-          `,
-        ),
-        db.execute<{
-          lock_timeout_count: number | string;
-          failed_count: number | string;
-          skipped_count: number | string;
-          latest_failure_at: string | null;
-          avg_lock_wait_ms: number | string;
-          max_lock_wait_ms: number | string;
-        }>(
-          sql`
-            select
-              count(*) filter (where status = 'LOCK_TIMEOUT')::int as lock_timeout_count,
-              count(*) filter (where status = 'FAILED')::int as failed_count,
-              count(*) filter (where status = 'SKIPPED')::int as skipped_count,
-              max(case when status in ('FAILED', 'LOCK_TIMEOUT') then started_at end) as latest_failure_at,
-              coalesce(avg(lock_wait_ms), 0)::float as avg_lock_wait_ms,
-              coalesce(max(lock_wait_ms), 0)::int as max_lock_wait_ms
-            from migration_run_log
-            where started_at >= now() - (${lookbackMinutes} * interval '1 minute')
-          `,
-        ),
+    let payload = await getStatsCache<DashboardMigrationTelemetryPayload>({
+      userId,
+      metric: "migration_telemetry",
+      params: cacheParams,
+      maxAgeSeconds: 30,
+    });
+
+    if (!payload) {
+      const [localCount, migrationLedger, telemetryTableRow] = await Promise.all([
+        readLocalMigrationCount(),
+        readMigrationLedgerSnapshot(),
+        db.execute<{ regclass: string | null }>(sql`select to_regclass('public.migration_run_log') as regclass`),
       ]);
 
-      recentRuns = recentRunsRow.rows.map((row) => ({
-        runId: row.run_id,
-        runner: row.runner,
-        host: row.host,
-        status: row.status,
-        errorCode: row.error_code,
-        message: row.message,
-        startedAt: row.started_at,
-        finishedAt: row.finished_at,
-        lockWaitMs: parseNumber(row.lock_wait_ms, 0),
-      }));
+      const appliedCount = migrationLedger.appliedCount;
+      const pending = migrationLedger.tableQualifiedName ? Math.max(0, localCount - appliedCount) : localCount;
+      const telemetryAvailable = Boolean(telemetryTableRow.rows[0]?.regclass);
 
-      const summary = alertsRow.rows[0];
-      alerts.lockTimeoutCount = parseNumber(summary?.lock_timeout_count, 0);
-      alerts.failedCount = parseNumber(summary?.failed_count, 0);
-      alerts.skippedCount = parseNumber(summary?.skipped_count, 0);
-      alerts.latestFailureAt = summary?.latest_failure_at ?? null;
-      alerts.avgLockWaitMs = Math.round(parseNumber(summary?.avg_lock_wait_ms, 0));
-      alerts.maxLockWaitMs = parseNumber(summary?.max_lock_wait_ms, 0);
-    }
+      const alerts = {
+        lockTimeoutCount: 0,
+        failedCount: 0,
+        skippedCount: 0,
+        latestFailureAt: null as string | null,
+        avgLockWaitMs: 0,
+        maxLockWaitMs: 0,
+      };
+      let recentRuns: DashboardMigrationTelemetryPayload["checks"]["telemetry"]["recentRuns"] = [];
 
-    const reasons: string[] = [];
-    let status: DashboardMigrationStatus = "ok";
+      if (telemetryAvailable) {
+        const runStatusSql = runStatusFilterSql(runStatus);
+        const [recentRunsRow, alertsRow] = await Promise.all([
+          db.execute<{
+            run_id: string;
+            runner: string;
+            host: string | null;
+            status: string;
+            error_code: string | null;
+            message: string | null;
+            started_at: string;
+            finished_at: string | null;
+            lock_wait_ms: number | string;
+          }>(
+            sql`
+              select
+                run_id,
+                runner,
+                host,
+                status,
+                error_code,
+                message,
+                started_at,
+                finished_at,
+                lock_wait_ms
+              from migration_run_log
+              where started_at >= now() - (${lookbackMinutes} * interval '1 minute')
+              ${runStatusSql}
+              order by started_at desc
+              limit ${limit}
+            `,
+          ),
+          db.execute<{
+            lock_timeout_count: number | string;
+            failed_count: number | string;
+            skipped_count: number | string;
+            latest_failure_at: string | null;
+            avg_lock_wait_ms: number | string;
+            max_lock_wait_ms: number | string;
+          }>(
+            sql`
+              select
+                count(*) filter (where status = 'LOCK_TIMEOUT')::int as lock_timeout_count,
+                count(*) filter (where status = 'FAILED')::int as failed_count,
+                count(*) filter (where status = 'SKIPPED')::int as skipped_count,
+                max(case when status in ('FAILED', 'LOCK_TIMEOUT') then started_at end) as latest_failure_at,
+                coalesce(avg(lock_wait_ms), 0)::float as avg_lock_wait_ms,
+                coalesce(max(lock_wait_ms), 0)::int as max_lock_wait_ms
+              from migration_run_log
+              where started_at >= now() - (${lookbackMinutes} * interval '1 minute')
+            `,
+          ),
+        ]);
 
-    if (pending > 0) {
-      status = "critical";
-      reasons.push("pending_migrations");
-    }
-    if (!telemetryAvailable) {
-      if (status === "ok") status = "warn";
-      reasons.push("telemetry_table_missing");
-    }
-    if (alerts.lockTimeoutCount > 0) {
-      status = "critical";
-      reasons.push("lock_timeout_recent");
-    }
-    if (alerts.failedCount > 0) {
-      status = "critical";
-      reasons.push("migration_failed_recent");
-    }
-    if (status === "ok" && alerts.skippedCount > 0) {
-      status = "warn";
-      reasons.push("migration_skipped_recent");
-    }
-    if (status === "ok" && alerts.maxLockWaitMs >= 30000) {
-      status = "warn";
-      reasons.push("lock_wait_high_recent");
-    }
+        recentRuns = recentRunsRow.rows.map((row) => ({
+          runId: row.run_id,
+          runner: row.runner,
+          host: row.host,
+          status: row.status,
+          errorCode: row.error_code,
+          message: row.message,
+          startedAt: row.started_at,
+          finishedAt: row.finished_at,
+          lockWaitMs: parseNumber(row.lock_wait_ms, 0),
+        }));
 
-    const payload: DashboardMigrationTelemetryPayload = {
-      ts: new Date().toISOString(),
-      status,
-      reasons,
-      filters: {
-        lookbackMinutes,
-        limit,
-        runStatus,
-        format,
-      },
-      checks: {
-        migrations: {
-          localCount,
-          appliedCount,
-          pending,
-          tableQualifiedName: migrationLedger.tableQualifiedName,
-          latestAppliedAt: migrationLedger.latestAppliedAt,
-          latestAppliedHash: migrationLedger.latestAppliedHash,
-        },
-        telemetry: {
-          available: telemetryAvailable,
+        const summary = alertsRow.rows[0];
+        alerts.lockTimeoutCount = parseNumber(summary?.lock_timeout_count, 0);
+        alerts.failedCount = parseNumber(summary?.failed_count, 0);
+        alerts.skippedCount = parseNumber(summary?.skipped_count, 0);
+        alerts.latestFailureAt = summary?.latest_failure_at ?? null;
+        alerts.avgLockWaitMs = Math.round(parseNumber(summary?.avg_lock_wait_ms, 0));
+        alerts.maxLockWaitMs = parseNumber(summary?.max_lock_wait_ms, 0);
+      }
+
+      const reasons: string[] = [];
+      let status: DashboardMigrationStatus = "ok";
+
+      if (pending > 0) {
+        status = "critical";
+        reasons.push("pending_migrations");
+      }
+      if (!telemetryAvailable) {
+        if (status === "ok") status = "warn";
+        reasons.push("telemetry_table_missing");
+      }
+      if (alerts.lockTimeoutCount > 0) {
+        status = "critical";
+        reasons.push("lock_timeout_recent");
+      }
+      if (alerts.failedCount > 0) {
+        status = "critical";
+        reasons.push("migration_failed_recent");
+      }
+      if (status === "ok" && alerts.skippedCount > 0) {
+        status = "warn";
+        reasons.push("migration_skipped_recent");
+      }
+      if (status === "ok" && alerts.maxLockWaitMs >= 30000) {
+        status = "warn";
+        reasons.push("lock_wait_high_recent");
+      }
+
+      payload = {
+        ts: new Date().toISOString(),
+        status,
+        reasons,
+        filters: {
           lookbackMinutes,
-          alerts,
-          recentRuns,
+          limit,
+          runStatus,
+          format: "json",
         },
+        checks: {
+          migrations: {
+            localCount,
+            appliedCount,
+            pending,
+            tableQualifiedName: migrationLedger.tableQualifiedName,
+            latestAppliedAt: migrationLedger.latestAppliedAt,
+            latestAppliedHash: migrationLedger.latestAppliedHash,
+          },
+          telemetry: {
+            available: telemetryAvailable,
+            lookbackMinutes,
+            alerts,
+            recentRuns,
+          },
+        },
+      };
+
+      await setStatsCache({
+        userId,
+        metric: "migration_telemetry",
+        params: cacheParams,
+        payload,
+      });
+    }
+
+    const responsePayload: DashboardMigrationTelemetryPayload = {
+      ...payload,
+      filters: {
+        ...payload.filters,
+        format,
       },
     };
 
     if (format === "csv") {
-      const csv = buildCsv(payload);
+      const csv = buildCsv(responsePayload);
       return new Response(csv, {
         status: 200,
         headers: {
@@ -330,7 +362,9 @@ async function GETImpl(req: Request) {
       });
     }
 
-    return NextResponse.json(payload, { status: status === "critical" ? 503 : 200 });
+    return NextResponse.json(responsePayload, {
+      status: responsePayload.status === "critical" ? 503 : 200,
+    });
   } catch (error: unknown) {
     logError("api.handler_error", { error });
     return NextResponse.json(

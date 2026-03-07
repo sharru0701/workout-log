@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
@@ -471,6 +471,13 @@ async function putProgramVersionDefinition(versionId: string, definition: any) {
   await apiPut(`/api/program-versions/${encodeURIComponent(versionId)}`, { definition });
 }
 
+function replaceAbortController(ref: { current: AbortController | null }) {
+  ref.current?.abort();
+  const controller = new AbortController();
+  ref.current = controller;
+  return controller;
+}
+
 export default function ProgramStorePage() {
   const router = useRouter();
   const { confirm } = useAppDialog();
@@ -492,6 +499,9 @@ export default function ProgramStorePage() {
   const [dragContext, setDragContext] = useState<DragContext | null>(null);
   const [queryState, setQueryState] = useState(() => readSearchQueryFromLocation());
   const customizeExerciseRefs = useRef(new Map<string, HTMLDivElement>());
+  const storeLoadControllerRef = useRef<AbortController | null>(null);
+  const exerciseOptionsControllerRef = useRef<AbortController | null>(null);
+  const oneRmRecommendationControllerRef = useRef<AbortController | null>(null);
   const [pendingCustomizeScrollId, setPendingCustomizeScrollId] = useState<string | null>(null);
   const [recentlyAddedCustomizeExerciseId, setRecentlyAddedCustomizeExerciseId] = useState<string | null>(null);
 
@@ -519,8 +529,12 @@ export default function ProgramStorePage() {
   );
 
   const loadOneRmRecommendations = useCallback(async (templateId: string, targets: OneRmTarget[]) => {
+    const controller = replaceAbortController(oneRmRecommendationControllerRef);
     try {
-      const response = await apiGet<PrStatsResponse>("/api/stats/prs?days=3650&limit=100");
+      const response = await apiGet<PrStatsResponse>("/api/stats/prs?days=3650&limit=100", {
+        signal: controller.signal,
+      });
+      if (oneRmRecommendationControllerRef.current !== controller) return;
       const recommendations = buildOneRmRecommendations(targets, response.items);
 
       setStartProgramDraft((prev) => {
@@ -536,6 +550,7 @@ export default function ProgramStorePage() {
         };
       });
     } catch (e: any) {
+      if (isAbortError(e) || oneRmRecommendationControllerRef.current !== controller) return;
       setStartProgramDraft((prev) => {
         if (!prev || prev.template.id !== templateId) return prev;
         return {
@@ -544,36 +559,54 @@ export default function ProgramStorePage() {
           recommendationMessage: e?.message ?? "1RM 통계 추천값 조회에 실패했습니다.",
         };
       });
+    } finally {
+      if (oneRmRecommendationControllerRef.current === controller) {
+        oneRmRecommendationControllerRef.current = null;
+      }
     }
   }, []);
 
   const loadStore = useCallback(async () => {
+    const controller = replaceAbortController(storeLoadControllerRef);
     try {
       setLoading(true);
       setError(null);
       setStoreLoadKey(`program-store:${Date.now()}`);
       const [templatesRes, plansRes] = await Promise.all([
-        apiGet<TemplatesResponse>("/api/templates?limit=200"),
-        apiGet<PlansResponse>("/api/plans"),
+        apiGet<TemplatesResponse>("/api/templates?limit=200", { signal: controller.signal }),
+        apiGet<PlansResponse>("/api/plans", { signal: controller.signal }),
       ]);
+      if (storeLoadControllerRef.current !== controller) return;
       setTemplates(templatesRes.items ?? []);
       setPlans(plansRes.items ?? []);
     } catch (e: any) {
+      if (isAbortError(e) || storeLoadControllerRef.current !== controller) return;
       setError(e?.message ?? "프로그램 데이터를 불러오지 못했습니다.");
     } finally {
-      setLoading(false);
+      if (storeLoadControllerRef.current === controller) {
+        storeLoadControllerRef.current = null;
+        setLoading(false);
+      }
     }
   }, []);
 
   const loadExerciseOptions = useCallback(async () => {
+    const controller = replaceAbortController(exerciseOptionsControllerRef);
     try {
       setExerciseOptionsLoading(true);
-      const res = await apiGet<ExerciseResponse>("/api/exercises?limit=250");
+      const res = await apiGet<ExerciseResponse>("/api/exercises?limit=250", {
+        signal: controller.signal,
+      });
+      if (exerciseOptionsControllerRef.current !== controller) return;
       setExerciseOptions(res.items ?? []);
-    } catch {
+    } catch (error) {
+      if (isAbortError(error) || exerciseOptionsControllerRef.current !== controller) return;
       setExerciseOptions([]);
     } finally {
-      setExerciseOptionsLoading(false);
+      if (exerciseOptionsControllerRef.current === controller) {
+        exerciseOptionsControllerRef.current = null;
+        setExerciseOptionsLoading(false);
+      }
     }
   }, []);
 
@@ -584,6 +617,20 @@ export default function ProgramStorePage() {
   useEffect(() => {
     void loadExerciseOptions();
   }, [loadExerciseOptions]);
+
+  useEffect(() => {
+    if (startProgramDraft) return;
+    oneRmRecommendationControllerRef.current?.abort();
+    oneRmRecommendationControllerRef.current = null;
+  }, [startProgramDraft]);
+
+  useEffect(() => {
+    return () => {
+      storeLoadControllerRef.current?.abort();
+      exerciseOptionsControllerRef.current?.abort();
+      oneRmRecommendationControllerRef.current?.abort();
+    };
+  }, []);
 
   useEffect(() => {
     setQueryState(readSearchQueryFromLocation());
