@@ -156,12 +156,13 @@ jobs:
           set -euo pipefail
           cd /opt/workout-log/deploy
           export WEB_IMAGE_TAG=${{ env.TARGET_SHA }}
+          export KEEP_IMAGES=5
+          export MIN_FREE_MB=4096
+          export MAX_ROOT_USAGE_PERCENT=90
+          ./scripts/ensure_docker_headroom.sh
           if ! docker compose pull web; then
-            echo "[deploy] docker pull failed; pruning unused Docker data and retrying once"
-            docker image prune -af || true
-            docker builder prune -af || true
-            docker container prune -f || true
-            docker system df || true
+            echo "[deploy] docker pull failed; forcing aggressive docker cleanup and retrying once"
+            AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
             docker compose pull web
           fi
           echo "[deploy] running dedicated migration job before switching web container"

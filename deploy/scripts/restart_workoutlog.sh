@@ -30,12 +30,22 @@ fi
 
 if [[ "${PULL_WEB}" == "1" ]]; then
   echo "[restart] pulling web image"
-  docker compose pull web migrate
+  ./scripts/ensure_docker_headroom.sh
+  if ! docker compose pull web migrate; then
+    echo "[restart] docker pull failed; forcing aggressive docker cleanup and retrying once"
+    AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
+    docker compose pull web migrate
+  fi
 elif [[ -n "${WEB_IMAGE_TAG:-}" ]]; then
   image_ref="ghcr.io/sharru0701/workout-log-web:${WEB_IMAGE_TAG}"
   if ! docker image inspect "${image_ref}" >/dev/null 2>&1; then
     echo "[restart] image not found locally (${image_ref}); pulling web image"
-    docker compose pull web migrate
+    ./scripts/ensure_docker_headroom.sh
+    if ! docker compose pull web migrate; then
+      echo "[restart] docker pull failed; forcing aggressive docker cleanup and retrying once"
+      AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
+      docker compose pull web migrate
+    fi
   fi
 fi
 

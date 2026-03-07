@@ -194,6 +194,16 @@ Prune old web images safely (keep 10 newest by default):
     cd /opt/workout-log/deploy
     ./scripts/prune_old_images.sh
 
+Check docker disk headroom before pulling a new image:
+
+    cd /opt/workout-log/deploy
+    ./scripts/ensure_docker_headroom.sh
+
+Require at least 6 GB free on `/` and keep only 3 recent web images:
+
+    cd /opt/workout-log/deploy
+    MIN_FREE_MB=6144 KEEP_IMAGES=3 ./scripts/ensure_docker_headroom.sh
+
 Keep only 5 images:
 
     cd /opt/workout-log/deploy
