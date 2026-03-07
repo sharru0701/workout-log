@@ -3030,6 +3030,23 @@ button {
   --ease-natural: cubic-bezier(0.25, 1.0, 0.5, 1.0);
   --ease-decelerate: cubic-bezier(0.0, 0.0, 0.2, 1.0);
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
+
+  /* ── Tailwind Neutral → iOS 26 adaptive surfaces (dark defaults)
+     Overrides Tailwind v4's --color-neutral-* vars so that
+     bg-neutral-*, text-neutral-*, border-neutral-* all
+     respect the iOS 26 design token system globally. */
+  --color-white: var(--bg-secondary);
+  --color-neutral-50: var(--bg-secondary);
+  --color-neutral-100: var(--bg-tertiary);
+  --color-neutral-200: rgba(255, 255, 255, 0.09);
+  --color-neutral-300: rgba(255, 255, 255, 0.14);
+  --color-neutral-400: rgba(210, 218, 238, 0.26);
+  --color-neutral-500: var(--text-tertiary);
+  --color-neutral-600: var(--text-secondary);
+  --color-neutral-700: rgba(210, 218, 238, 0.72);
+  --color-neutral-800: rgba(210, 218, 238, 0.86);
+  --color-neutral-900: var(--text-primary);
+  --color-neutral-950: var(--text-primary);
 }
 
 @media (prefers-color-scheme: light) {
@@ -3082,6 +3099,20 @@ button {
     --shadow-soft: 0 4px 16px -6px rgba(0,0,0,0.14);
     --shadow-float: 0 14px 44px -10px rgba(0,0,0,0.20), 0 0 0 0.5px rgba(0,0,0,0.055);
     --shadow-glow: 0 0 24px rgba(0, 150, 136, 0.18);
+
+    /* ── Tailwind Neutral → iOS 26 Light surfaces */
+    --color-white: #ffffff;
+    --color-neutral-50: #f5f7fb;
+    --color-neutral-100: #edf0f7;
+    --color-neutral-200: rgba(0, 0, 0, 0.08);
+    --color-neutral-300: rgba(0, 0, 0, 0.12);
+    --color-neutral-400: rgba(30, 36, 56, 0.26);
+    --color-neutral-500: rgba(30, 36, 56, 0.36);
+    --color-neutral-600: rgba(30, 36, 56, 0.54);
+    --color-neutral-700: rgba(30, 36, 56, 0.72);
+    --color-neutral-800: rgba(30, 36, 56, 0.88);
+    --color-neutral-900: var(--text-primary);
+    --color-neutral-950: var(--text-primary);
   }
 }
 

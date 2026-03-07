@@ -17,7 +17,7 @@ type SparklineChartProps = {
 
 export const MetricTile = memo(function MetricTile({ label, value, trend }: MetricTileProps) {
   return (
-    <article className="motion-card rounded-2xl border bg-white p-4">
+    <article className="motion-card rounded-2xl border p-4">
       <div className="ui-card-label ui-card-label-caps">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
       {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
@@ -59,7 +59,7 @@ export const SparklineChart = memo(function SparklineChart({ points, labels, wid
   if (!chart) return null;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border bg-white text-accent">
+    <svg viewBox={`0 0 ${width} ${height}`} className="h-24 w-full rounded-xl border text-accent" style={{ background: "var(--glass-bg-subtle)" }}>
       <path d={chart.area} fill="currentColor" fillOpacity="0.12" />
       <path d={chart.d} fill="none" stroke="currentColor" strokeWidth="2.5" />
       <circle cx={chart.last.x} cy={chart.last.y} r="3.4" fill="currentColor" />
