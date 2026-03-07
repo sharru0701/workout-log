@@ -221,6 +221,56 @@ function validateCustomSessions(sessions: ProgramSessionDraft[]) {
   return errors;
 }
 
+function patchExerciseInSessions(
+  sessions: ProgramSessionDraft[],
+  sessionId: string,
+  exerciseId: string,
+  patch: Partial<ProgramExerciseDraft>,
+) {
+  return sessions.map((session) => {
+    if (session.id !== sessionId) return session;
+    return {
+      ...session,
+      exercises: session.exercises.map((exercise) =>
+        exercise.id === exerciseId ? { ...exercise, ...patch } : exercise,
+      ),
+    };
+  });
+}
+
+function deleteExerciseFromSessions(
+  sessions: ProgramSessionDraft[],
+  sessionId: string,
+  exerciseId: string,
+) {
+  return sessions.map((session) => {
+    if (session.id !== sessionId) return session;
+    return {
+      ...session,
+      exercises: session.exercises.filter((exercise) => exercise.id !== exerciseId),
+    };
+  });
+}
+
+function moveExerciseWithinSession(
+  sessions: ProgramSessionDraft[],
+  sessionId: string,
+  exerciseId: string,
+  direction: "up" | "down",
+) {
+  const session = sessions.find((entry) => entry.id === sessionId);
+  if (!session) return sessions;
+
+  const currentIndex = session.exercises.findIndex((exercise) => exercise.id === exerciseId);
+  if (currentIndex < 0) return sessions;
+
+  const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+  const targetExerciseId = session.exercises[targetIndex]?.id;
+  if (!targetExerciseId) return sessions;
+
+  return reorderExercises(sessions, sessionId, exerciseId, targetExerciseId);
+}
+
 function roundToNearest2p5(value: number) {
   return Math.round(value / 2.5) * 2.5;
 }
@@ -861,6 +911,92 @@ export default function ProgramStorePage() {
     [dragContext],
   );
 
+  const patchCustomizeExercise = useCallback(
+    (sessionId: string, exerciseId: string, patch: Partial<ProgramExerciseDraft>) => {
+      setCustomizeDraft((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sessions: patchExerciseInSessions(prev.sessions, sessionId, exerciseId, patch),
+        };
+      });
+    },
+    [],
+  );
+
+  const moveCustomizeExercise = useCallback(
+    (sessionId: string, exerciseId: string, direction: "up" | "down") => {
+      setCustomizeDraft((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sessions: moveExerciseWithinSession(prev.sessions, sessionId, exerciseId, direction),
+        };
+      });
+    },
+    [],
+  );
+
+  const deleteCustomizeExercise = useCallback((sessionId: string, exerciseId: string) => {
+    setCustomizeDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sessions: deleteExerciseFromSessions(prev.sessions, sessionId, exerciseId),
+      };
+    });
+  }, []);
+
+  const patchCreateExercise = useCallback(
+    (sessionId: string, exerciseId: string, patch: Partial<ProgramExerciseDraft>) => {
+      setCreateDraft((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sessions: patchExerciseInSessions(prev.sessions, sessionId, exerciseId, patch),
+        };
+      });
+    },
+    [],
+  );
+
+  const moveCreateExercise = useCallback(
+    (sessionId: string, exerciseId: string, direction: "up" | "down") => {
+      setCreateDraft((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          sessions: moveExerciseWithinSession(prev.sessions, sessionId, exerciseId, direction),
+        };
+      });
+    },
+    [],
+  );
+
+  const deleteCreateExercise = useCallback((sessionId: string, exerciseId: string) => {
+    setCreateDraft((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        sessions: deleteExerciseFromSessions(prev.sessions, sessionId, exerciseId),
+      };
+    });
+  }, []);
+
+  const startExerciseDrag = useCallback((sessionId: string, exerciseId: string) => {
+    setDragContext({
+      sourceSessionId: sessionId,
+      sourceExerciseId: exerciseId,
+    });
+  }, []);
+
+  const dropExerciseOnTarget = useCallback(
+    (sessionId: string, exerciseId: string) => {
+      applyDragReorder(sessionId, exerciseId);
+    },
+    [applyDragReorder],
+  );
+
   const openCreateSheet = () => {
     setError(null);
     setCreateDraft(buildInitialCreateDraft(templates));
@@ -1232,6 +1368,7 @@ export default function ProgramStorePage() {
                     >
                       <ExerciseEditorRow
                         exercise={exercise}
+                        sessionId={session.id}
                         publicTemplates={publicTemplates}
                         exerciseOptions={exerciseOptions}
                         exerciseOptionsLoading={exerciseOptionsLoading}
@@ -1239,70 +1376,11 @@ export default function ProgramStorePage() {
                         highlighted={recentlyAddedCustomizeExerciseId === exercise.id}
                         canMoveUp={exerciseIndex > 0}
                         canMoveDown={exerciseIndex < session.exercises.length - 1}
-                        onPatch={(patch) =>
-                          setCustomizeDraft((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              sessions: prev.sessions.map((entry) => {
-                                if (entry.id !== session.id) return entry;
-                                return {
-                                  ...entry,
-                                  exercises: entry.exercises.map((item) =>
-                                    item.id === exercise.id ? { ...item, ...patch } : item,
-                                  ),
-                                };
-                              }),
-                            };
-                          })
-                        }
-                        onMoveUp={() =>
-                          setCustomizeDraft((prev) => {
-                            if (!prev || exerciseIndex <= 0) return prev;
-                            const targetExerciseId = session.exercises[exerciseIndex - 1]?.id;
-                            if (!targetExerciseId) return prev;
-                            return {
-                              ...prev,
-                              sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
-                            };
-                          })
-                        }
-                        onMoveDown={() =>
-                          setCustomizeDraft((prev) => {
-                            if (!prev || exerciseIndex >= session.exercises.length - 1) return prev;
-                            const targetExerciseId = session.exercises[exerciseIndex + 1]?.id;
-                            if (!targetExerciseId) return prev;
-                            return {
-                              ...prev,
-                              sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
-                            };
-                          })
-                        }
-                        onDelete={() =>
-                          setCustomizeDraft((prev) => {
-                            if (!prev) return prev;
-                            return {
-                              ...prev,
-                              sessions: prev.sessions.map((entry) => {
-                                if (entry.id !== session.id) return entry;
-                                return {
-                                  ...entry,
-                                  exercises: entry.exercises.filter((item) => item.id !== exercise.id),
-                                };
-                              }),
-                            };
-                          })
-                        }
-                        onDragStart={() =>
-                          setDragContext({
-                            sourceSessionId: session.id,
-                            sourceExerciseId: exercise.id,
-                          })
-                        }
-                        onDragOver={() => {
-                          // no-op: preventDefault handled in row.
-                        }}
-                        onDrop={() => applyDragReorder(session.id, exercise.id)}
+                        onPatch={patchCustomizeExercise}
+                        onMove={moveCustomizeExercise}
+                        onDelete={deleteCustomizeExercise}
+                        onDragStart={startExerciseDrag}
+                        onDrop={dropExerciseOnTarget}
                       />
                     </div>
                   ))}
@@ -1566,76 +1644,18 @@ export default function ProgramStorePage() {
                   {session.exercises.map((exercise, exerciseIndex) => (
                     <ExerciseEditorRow
                       key={exercise.id}
+                      sessionId={session.id}
                       exercise={exercise}
                       publicTemplates={publicTemplates}
                       exerciseOptions={exerciseOptions}
                       exerciseOptionsLoading={exerciseOptionsLoading}
                       canMoveUp={exerciseIndex > 0}
                       canMoveDown={exerciseIndex < session.exercises.length - 1}
-                      onPatch={(patch) =>
-                        setCreateDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: entry.exercises.map((item) =>
-                                  item.id === exercise.id ? { ...item, ...patch } : item,
-                                ),
-                              };
-                            }),
-                          };
-                        })
-                      }
-                      onMoveUp={() =>
-                        setCreateDraft((prev) => {
-                          if (!prev || exerciseIndex <= 0) return prev;
-                          const targetExerciseId = session.exercises[exerciseIndex - 1]?.id;
-                          if (!targetExerciseId) return prev;
-                          return {
-                            ...prev,
-                            sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
-                          };
-                        })
-                      }
-                      onMoveDown={() =>
-                        setCreateDraft((prev) => {
-                          if (!prev || exerciseIndex >= session.exercises.length - 1) return prev;
-                          const targetExerciseId = session.exercises[exerciseIndex + 1]?.id;
-                          if (!targetExerciseId) return prev;
-                          return {
-                            ...prev,
-                            sessions: reorderExercises(prev.sessions, session.id, exercise.id, targetExerciseId),
-                          };
-                        })
-                      }
-                      onDelete={() =>
-                        setCreateDraft((prev) => {
-                          if (!prev) return prev;
-                          return {
-                            ...prev,
-                            sessions: prev.sessions.map((entry) => {
-                              if (entry.id !== session.id) return entry;
-                              return {
-                                ...entry,
-                                exercises: entry.exercises.filter((item) => item.id !== exercise.id),
-                              };
-                            }),
-                          };
-                        })
-                      }
-                      onDragStart={() =>
-                        setDragContext({
-                          sourceSessionId: session.id,
-                          sourceExerciseId: exercise.id,
-                        })
-                      }
-                      onDragOver={() => {
-                        // no-op
-                      }}
-                      onDrop={() => applyDragReorder(session.id, exercise.id)}
+                      onPatch={patchCreateExercise}
+                      onMove={moveCreateExercise}
+                      onDelete={deleteCreateExercise}
+                      onDragStart={startExerciseDrag}
+                      onDrop={dropExerciseOnTarget}
                     />
                   ))}
 

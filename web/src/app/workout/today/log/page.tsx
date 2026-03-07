@@ -50,6 +50,7 @@ const WorkoutOverridesSheet = dynamic(() => import("./_components/workout-overri
 });
 
 type SetRow = {
+  id: string;
   exerciseName: string;
   setNumber: number;
   reps: number;
@@ -73,6 +74,20 @@ type SetRow = {
     note?: string;
   } | null;
 };
+
+let workoutSetRowSequence = 0;
+
+function createSetRowId() {
+  workoutSetRowSequence += 1;
+  return `set-row-${workoutSetRowSequence}`;
+}
+
+function createSetRow(row: Omit<SetRow, "id">): SetRow {
+  return {
+    id: createSetRowId(),
+    ...row,
+  };
+}
 
 type Plan = {
   id: string;
@@ -133,7 +148,7 @@ function toSetRowsFromPlannedExercises(snapshot: any, bodyweightKg: number | nul
         totalTargetWeightKg;
       const rpe = Number(s?.rpe ?? 0);
       const percent = Number(s?.percent ?? 0);
-      rows.push({
+      rows.push(createSetRow({
         exerciseName,
         setNumber: idx + 1,
         reps: Number.isFinite(reps) ? reps : 0,
@@ -156,7 +171,7 @@ function toSetRowsFromPlannedExercises(snapshot: any, bodyweightKg: number | nul
           percent: Number.isFinite(percent) && percent > 0 ? percent : undefined,
           note: typeof s?.note === "string" ? s.note : undefined,
         },
-      });
+      }));
     });
   }
 
@@ -227,6 +242,7 @@ export default function WorkoutTodayPage() {
   const [uxSyncNotice, setUxSyncNotice] = useState<string | null>(null);
   const [pendingFocus, setPendingFocus] = useState<{ row: number; col: number } | null>(null);
   const setInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const setsLengthRef = useRef(0);
   const pendingSyncInFlight = useRef(false);
   const uxSyncInFlight = useRef(false);
   const sessionSwipeStartX = useRef<number | null>(null);
@@ -248,10 +264,11 @@ export default function WorkoutTodayPage() {
     });
 
   const isPowerMode = focusMode === "POWER";
-  const setCellKey = (row: number, col: number) => `${row}:${col}`;
+  const setCellKey = useCallback((row: number, col: number) => `${row}:${col}`, []);
   const registerSetInputRef = useCallback((key: string, element: HTMLInputElement | null) => {
     setInputRefs.current[key] = element;
   }, []);
+  setsLengthRef.current = sets.length;
 
   useEffect(() => {
     let cancelled = false;
@@ -699,6 +716,15 @@ export default function WorkoutTodayPage() {
     );
   }, [addExerciseCandidates]);
 
+  const exerciseOptionList = useMemo(
+    () =>
+      exerciseOptions.flatMap((ex) => [
+        <option key={`n-${ex.id}`} value={ex.name} />,
+        ...ex.aliases.map((alias) => <option key={`a-${ex.id}-${alias}`} value={alias} />),
+      ]),
+    [exerciseOptions],
+  );
+
   function applyGeneratedSession(session: any) {
     setGeneratedSession(session);
     const sKey = typeof session?.sessionKey === "string" ? session.sessionKey : null;
@@ -752,13 +778,13 @@ export default function WorkoutTodayPage() {
     setSuccess(`계획 세트 ${generatedRows.length}개를 불러와 적용했습니다 (${date})`);
   }
 
-  function makeNextSetFromRow(baseRow: SetRow, rows: SetRow[]): SetRow {
+  const makeNextSetFromRow = useCallback((baseRow: SetRow, rows: SetRow[]): SetRow => {
     const nextSetNumber =
       rows
         .filter((r) => r.exerciseName.trim().toLowerCase() === baseRow.exerciseName.trim().toLowerCase())
         .reduce((max, r) => Math.max(max, r.setNumber), 0) + 1;
 
-    return {
+    return createSetRow({
       exerciseName: baseRow.exerciseName,
       setNumber: nextSetNumber,
       reps: baseRow.reps,
@@ -768,16 +794,16 @@ export default function WorkoutTodayPage() {
       isPlanned: false,
       completed: false,
       plannedRef: null,
-    };
-  }
+    });
+  }, []);
 
-  function moveFocusInSetGrid(row: number, col: number) {
-    if (row < 0 || row >= sets.length) return;
+  const moveFocusInSetGrid = useCallback((row: number, col: number) => {
+    if (row < 0 || row >= setsLengthRef.current) return;
     const safeCol = Math.max(0, Math.min(setGridColCount - 1, col));
     setPendingFocus({ row, col: safeCol });
-  }
+  }, [setGridColCount]);
 
-  function insertSetBelow(idx: number, focusCol = 0) {
+  const insertSetBelow = useCallback((idx: number, focusCol = 0) => {
     setSets((prev) => {
       const row = prev[idx];
       if (!row) return prev;
@@ -786,13 +812,13 @@ export default function WorkoutTodayPage() {
       return next;
     });
     setPendingFocus({ row: idx + 1, col: focusCol });
-  }
+  }, [makeNextSetFromRow]);
 
-  function handleSetGridKeyDown(
+  const handleSetGridKeyDown = useCallback((
     e: React.KeyboardEvent<HTMLInputElement>,
     row: number,
     col: number,
-  ) {
+  ) => {
     if (e.key === "Enter") {
       e.preventDefault();
       insertSetBelow(row, col);
@@ -818,13 +844,16 @@ export default function WorkoutTodayPage() {
       e.preventDefault();
       moveFocusInSetGrid(row, col + 1);
     }
-  }
+  }, [insertSetBelow, moveFocusInSetGrid]);
 
-  function addSetRow() {
+  const addSetRow = useCallback(() => {
     const ex = defaultExercisesFromSnapshot[0] ?? "Accessory";
-    setSets((s) => [
-      ...s,
-      {
+    let nextFocusRow = 0;
+    setSets((prev) => {
+      nextFocusRow = prev.length;
+      return [
+        ...prev,
+        createSetRow({
         exerciseName: ex,
         setNumber: 1,
         reps: 10,
@@ -834,22 +863,25 @@ export default function WorkoutTodayPage() {
         isPlanned: false,
         completed: false,
         plannedRef: null,
-      },
-    ]);
-    setPendingFocus({ row: sets.length, col: 0 });
-  }
+        }),
+      ];
+    });
+    setPendingFocus({ row: nextFocusRow, col: 0 });
+  }, [defaultExercisesFromSnapshot]);
 
-  function addExerciseByName(exerciseName: string) {
+  const addExerciseByName = useCallback((exerciseName: string) => {
     const trimmedName = exerciseName.trim();
     if (!trimmedName) throw new Error("운동 이름을 입력하세요.");
+    let nextFocusRow = 0;
     setSets((prev) => {
+      nextFocusRow = prev.length;
       const nextSetNumber =
         prev
           .filter((row) => row.exerciseName.trim().toLowerCase() === trimmedName.toLowerCase())
           .reduce((max, row) => Math.max(max, row.setNumber), 0) + 1;
       return [
         ...prev,
-        {
+        createSetRow({
           exerciseName: trimmedName,
           setNumber: nextSetNumber,
           reps: 10,
@@ -859,11 +891,11 @@ export default function WorkoutTodayPage() {
           isPlanned: false,
           completed: false,
           plannedRef: null,
-        },
+        }),
       ];
     });
-    setPendingFocus({ row: sets.length, col: 0 });
-  }
+    setPendingFocus({ row: nextFocusRow, col: 0 });
+  }, []);
 
   function addExerciseFromSheet(exerciseName: string) {
     try {
@@ -928,15 +960,16 @@ export default function WorkoutTodayPage() {
     setFocusModeWithTracking("POWER", "shortcut");
   }
 
-  function applyPlannedSets() {
+  const applyPlannedSets = useCallback(() => {
     const generatedRows = toSetRowsFromPlannedExercises(snapshot, bodyweightKg);
     if (generatedRows.length === 0) throw new Error("스냅샷에 계획 운동이 없습니다.");
     setSets(generatedRows);
     setSelectedSetIdx(null);
     setSuccess(`계획 세트 ${generatedRows.length}개를 적용했습니다.`);
-  }
+  }, [bodyweightKg, snapshot]);
 
-  function completeSetAndAddNext(idx: number) {
+  const completeSetAndAddNext = useCallback((idx: number) => {
+    let nextFocusRow: number | null = null;
     setSets((prev) => {
       const row = prev[idx];
       if (!row) return prev;
@@ -946,12 +979,15 @@ export default function WorkoutTodayPage() {
       next[idx] = { ...row, completed: true };
       if (wasCompleted) return next;
       next.push(makeNextSetFromRow(row, next));
+      nextFocusRow = next.length - 1;
       return next;
     });
-    setPendingFocus({ row: sets.length, col: 0 });
-  }
+    if (nextFocusRow !== null) {
+      setPendingFocus({ row: nextFocusRow, col: 0 });
+    }
+  }, [makeNextSetFromRow]);
 
-  function copyPreviousSet(idx: number) {
+  const copyPreviousSet = useCallback((idx: number) => {
     setSets((prev) => {
       const current = prev[idx];
       if (!current || idx < 1) return prev;
@@ -979,28 +1015,36 @@ export default function WorkoutTodayPage() {
       return next;
     });
     setPendingFocus({ row: idx, col: 2 });
-  }
+  }, []);
 
   function quickAddFromSelected() {
     if (selectedSetIdx === null) throw new Error("먼저 세트 행을 선택하세요.");
     const row = sets[selectedSetIdx];
     if (!row) throw new Error("선택한 세트 행을 찾을 수 없습니다.");
 
-    setSets((prev) => [
-      ...prev,
-      makeNextSetFromRow(row, prev),
-    ]);
-    setPendingFocus({ row: sets.length, col: 0 });
+    let nextFocusRow = 0;
+    setSets((prev) => {
+      nextFocusRow = prev.length;
+      return [
+        ...prev,
+        makeNextSetFromRow(row, prev),
+      ];
+    });
+    setPendingFocus({ row: nextFocusRow, col: 0 });
   }
 
-  function updateSetRow(idx: number, updater: (row: SetRow) => SetRow) {
+  const updateSetRow = useCallback((idx: number, updater: (row: SetRow) => SetRow) => {
     setSets((prev) => {
       if (!prev[idx]) return prev;
       const copy = [...prev];
       copy[idx] = updater(copy[idx]);
       return copy;
     });
-  }
+  }, []);
+
+  const removeSetRow = useCallback((idx: number) => {
+    setSets((prev) => prev.filter((_, rowIdx) => rowIdx !== idx));
+  }, []);
 
   async function repeatLastWorkout() {
     const sp = new URLSearchParams();
@@ -1014,7 +1058,7 @@ export default function WorkoutTodayPage() {
     const last = res.items[0];
     if (!last) throw new Error("이전 운동 기록이 없습니다.");
 
-    const rows: SetRow[] = (last.sets ?? []).map((s: any) => ({
+    const rows: SetRow[] = (last.sets ?? []).map((s: any) => createSetRow({
       exerciseName: String(s.exerciseName ?? ""),
       setNumber: Number(s.setNumber ?? 1) || 1,
       reps: Number(s.reps ?? 0) || 0,
@@ -1078,7 +1122,14 @@ export default function WorkoutTodayPage() {
           }
         }
         return {
-          ...s,
+          exerciseName: s.exerciseName,
+          setNumber: s.setNumber,
+          reps: s.reps,
+          weightKg: s.weightKg,
+          rpe: s.rpe,
+          isExtra: s.isExtra,
+          isPlanned: s.isPlanned,
+          completed: s.completed,
           exerciseId: exerciseIdCache.get(key) ?? null,
           meta: {
             planned: Boolean(s.isPlanned),
@@ -1827,28 +1878,25 @@ export default function WorkoutTodayPage() {
             <div className="space-y-3 ui-height-animate">
               {sets.map((s, idx) => (
                 <WorkoutSetRow
-                  key={`${idx}-${s.exerciseName}-${s.setNumber}`}
+                  key={s.id}
                   idx={idx}
                   row={s}
                   bodyweightKg={bodyweightKg}
                   setCellKey={setCellKey}
                   registerSetInputRef={registerSetInputRef}
                   handleSetGridKeyDown={handleSetGridKeyDown}
-                  updateRow={(updater) => updateSetRow(idx, updater)}
-                  onCompleteAndNext={() => completeSetAndAddNext(idx)}
-                  onCopyPrevious={() => copyPreviousSet(idx)}
-                  onInsertBelow={() => insertSetBelow(idx, 0)}
-                  onRemove={() => setSets((prev) => prev.filter((_, i) => i !== idx))}
+                  updateRow={updateSetRow}
+                  onCompleteAndNext={completeSetAndAddNext}
+                  onCopyPrevious={copyPreviousSet}
+                  onInsertBelow={insertSetBelow}
+                  onRemove={removeSetRow}
                   canCopyPrevious={idx !== 0}
                 />
               ))}
             </div>
           )}
           <datalist id="exercise-options">
-            {exerciseOptions.flatMap((ex) => [
-              <option key={`n-${ex.id}`} value={ex.name} />,
-              ...ex.aliases.map((a) => <option key={`a-${ex.id}-${a}`} value={a} />),
-            ])}
+            {exerciseOptionList}
           </datalist>
 
           {isPowerMode ? (

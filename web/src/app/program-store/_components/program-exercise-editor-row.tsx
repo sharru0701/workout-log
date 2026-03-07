@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import {
   inferProgressionTargetFromExerciseName,
@@ -19,6 +19,7 @@ type ExerciseOption = {
 };
 
 type ProgramExerciseEditorRowProps = {
+  sessionId: string;
   exercise: ProgramExerciseDraft;
   publicTemplates: ProgramTemplate[];
   exerciseOptions: ExerciseOption[];
@@ -27,13 +28,11 @@ type ProgramExerciseEditorRowProps = {
   highlighted?: boolean;
   canMoveUp?: boolean;
   canMoveDown?: boolean;
-  onPatch: (patch: Partial<ProgramExerciseDraft>) => void;
-  onMoveUp: () => void;
-  onMoveDown: () => void;
-  onDelete: () => void;
-  onDragStart: () => void;
-  onDragOver: () => void;
-  onDrop: () => void;
+  onPatch: (sessionId: string, exerciseId: string, patch: Partial<ProgramExerciseDraft>) => void;
+  onMove: (sessionId: string, exerciseId: string, direction: "up" | "down") => void;
+  onDelete: (sessionId: string, exerciseId: string) => void;
+  onDragStart: (sessionId: string, exerciseId: string) => void;
+  onDrop: (sessionId: string, exerciseId: string) => void;
 };
 
 function formatProgramDisplayName(name: string) {
@@ -74,7 +73,8 @@ function operatorRowTypeTone(rowType: ProgramRowType | null | undefined) {
   return "ui-badge-neutral";
 }
 
-export default function ProgramExerciseEditorRow({
+const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
+  sessionId,
   exercise,
   publicTemplates,
   exerciseOptions,
@@ -84,14 +84,13 @@ export default function ProgramExerciseEditorRow({
   canMoveUp = false,
   canMoveDown = false,
   onPatch,
-  onMoveUp,
-  onMoveDown,
+  onMove,
   onDelete,
   onDragStart,
-  onDragOver,
   onDrop,
 }: ProgramExerciseEditorRowProps) {
   const [exerciseQuery, setExerciseQuery] = useState(exercise.exerciseName);
+  const deferredExerciseQuery = useDeferredValue(exerciseQuery);
   const [exercisePickerOpen, setExercisePickerOpen] = useState(() => exercise.exerciseName.trim().length === 0);
   const exerciseInputRef = useRef<HTMLInputElement | null>(null);
   const lastResolvedExerciseNameRef = useRef(exercise.exerciseName.trim().toLowerCase());
@@ -125,13 +124,17 @@ export default function ProgramExerciseEditorRow({
   }, [exercise.exerciseName, exerciseOptions]);
 
   const filteredExerciseOptions = useMemo(() => {
-    const normalizedQuery = exerciseQuery.trim().toLowerCase();
-    if (!normalizedQuery) return exerciseOptions;
-    return exerciseOptions.filter((option) => {
+    const normalizedQuery = deferredExerciseQuery.trim().toLowerCase();
+    if (!normalizedQuery) return exerciseOptions.slice(0, 40);
+    const filtered: ExerciseOption[] = [];
+    for (const option of exerciseOptions) {
       const haystack = [option.name, option.category ?? ""].join(" ").toLowerCase();
-      return haystack.includes(normalizedQuery);
-    });
-  }, [exerciseOptions, exerciseQuery]);
+      if (!haystack.includes(normalizedQuery)) continue;
+      filtered.push(option);
+      if (filtered.length >= 40) break;
+    }
+    return filtered;
+  }, [deferredExerciseQuery, exerciseOptions]);
 
   const operatorAutoRow = operatorStyle && isOperatorAutoRowType(exercise.rowType ?? null);
   const operatorAutoDefaults = useMemo(() => {
@@ -144,6 +147,8 @@ export default function ProgramExerciseEditorRow({
       const nextExerciseName = option?.name ?? "";
       const inferredTarget = inferProgressionTargetFromExerciseName(nextExerciseName);
       onPatch(
+        sessionId,
+        exercise.id,
         operatorStyle && isOperatorAutoRowType(exercise.rowType ?? null)
           ? {
               exerciseName: nextExerciseName,
@@ -156,7 +161,7 @@ export default function ProgramExerciseEditorRow({
       exerciseInputRef.current?.blur();
       setExercisePickerOpen(!option);
     },
-    [exercise.progressionTarget, exercise.rowType, onPatch, operatorStyle],
+    [exercise.id, exercise.progressionTarget, exercise.rowType, onPatch, operatorStyle, sessionId],
   );
 
   useEffect(() => {
@@ -189,14 +194,13 @@ export default function ProgramExerciseEditorRow({
           : ""
       }`}
       draggable
-      onDragStart={onDragStart}
+      onDragStart={() => onDragStart(sessionId, exercise.id)}
       onDragOver={(event) => {
         event.preventDefault();
-        onDragOver();
       }}
       onDrop={(event) => {
         event.preventDefault();
-        onDrop();
+        onDrop(sessionId, exercise.id);
       }}
     >
       <div className="program-store-row-head">
@@ -219,7 +223,7 @@ export default function ProgramExerciseEditorRow({
             style={circleActionButtonStyle}
             aria-label="운동 위로 이동"
             title="운동 위로 이동"
-            onClick={onMoveUp}
+            onClick={() => onMove(sessionId, exercise.id, "up")}
             disabled={!canMoveUp}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
@@ -232,7 +236,7 @@ export default function ProgramExerciseEditorRow({
             style={circleActionButtonStyle}
             aria-label="운동 아래로 이동"
             title="운동 아래로 이동"
-            onClick={onMoveDown}
+            onClick={() => onMove(sessionId, exercise.id, "down")}
             disabled={!canMoveDown}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
@@ -245,7 +249,7 @@ export default function ProgramExerciseEditorRow({
             style={circleActionButtonStyle}
             aria-label="운동 삭제"
             title="운동 삭제"
-            onClick={onDelete}
+            onClick={() => onDelete(sessionId, exercise.id)}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" className="h-6 w-6" aria-hidden="true">
               <path d="M4.5 7.5h15" strokeLinecap="round" />
@@ -300,7 +304,7 @@ export default function ProgramExerciseEditorRow({
                     const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
                     if (!normalizedSelectedName) return;
                     if (normalizedQuery === normalizedSelectedName) return;
-                    onPatch({ exerciseName: "" });
+                    onPatch(sessionId, exercise.id, { exerciseName: "" });
                   }}
                   onKeyDown={(event) => {
                     if (event.key !== "Enter") return;
@@ -317,7 +321,7 @@ export default function ProgramExerciseEditorRow({
                     aria-label="검색어 지우기"
                     onClick={() => {
                       setExerciseQuery("");
-                      onPatch({ exerciseName: "" });
+                      onPatch(sessionId, exercise.id, { exerciseName: "" });
                       setExercisePickerOpen(true);
                     }}
                   >
@@ -364,7 +368,7 @@ export default function ProgramExerciseEditorRow({
               variant="workout"
               value={exercise.mode}
               onChange={(event) =>
-                onPatch({
+                onPatch(sessionId, exercise.id, {
                   mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
                   marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
                 })
@@ -381,7 +385,7 @@ export default function ProgramExerciseEditorRow({
               <AppSelect
                 variant="workout"
                 value={exercise.marketTemplateSlug ?? ""}
-                onChange={(event) => onPatch({ marketTemplateSlug: event.target.value || null })}
+                onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
               >
                 <option value="">선택</option>
                 {publicTemplates.map((template) => (
@@ -406,6 +410,8 @@ export default function ProgramExerciseEditorRow({
                 const inferredTarget =
                   nextRowType === "AUTO" ? inferProgressionTargetFromExerciseName(exercise.exerciseName) : null;
                 onPatch(
+                  sessionId,
+                  exercise.id,
                   isOperatorAutoRowType(nextRowType)
                     ? {
                         rowType: nextRowType,
@@ -427,7 +433,7 @@ export default function ProgramExerciseEditorRow({
                 variant="workout"
                 value={exercise.progressionTarget ?? ""}
                 onChange={(event) =>
-                  onPatch({
+                  onPatch(sessionId, exercise.id, {
                     progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
                   })
                 }
@@ -454,15 +460,17 @@ export default function ProgramExerciseEditorRow({
 
       {!operatorAutoRow ? (
         <div className="grid grid-cols-2 gap-2">
-          <AppNumberStepper label="세트" value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch({ sets: next })} />
-          <AppNumberStepper label="횟수" value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch({ reps: next })} />
+          <AppNumberStepper label="세트" value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
+          <AppNumberStepper label="횟수" value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
         </div>
       ) : null}
 
       <label className="grid gap-1">
         <span className="ui-card-label">메모</span>
-        <AppTextInput variant="workout" value={exercise.note} onChange={(event) => onPatch({ note: event.target.value })} placeholder="세션 메모" />
+        <AppTextInput variant="workout" value={exercise.note} onChange={(event) => onPatch(sessionId, exercise.id, { note: event.target.value })} placeholder="세션 메모" />
       </label>
     </article>
   );
-}
+});
+
+export default ProgramExerciseEditorRow;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { AppTextInput } from "@/components/ui/form-controls";
 import {
   computeBodyweightTotalLoadKg,
@@ -10,6 +10,7 @@ import {
 } from "@/lib/bodyweight-load";
 
 type WorkoutSetRowData = {
+  id: string;
   exerciseName: string;
   setNumber: number;
   reps: number;
@@ -41,11 +42,11 @@ type WorkoutSetRowProps = {
   setCellKey: (row: number, col: number) => string;
   registerSetInputRef: (key: string, element: HTMLInputElement | null) => void;
   handleSetGridKeyDown: (event: KeyboardEvent<HTMLInputElement>, row: number, col: number) => void;
-  updateRow: (updater: (row: WorkoutSetRowData) => WorkoutSetRowData) => void;
-  onCompleteAndNext: () => void;
-  onCopyPrevious: () => void;
-  onInsertBelow: () => void;
-  onRemove: () => void;
+  updateRow: (idx: number, updater: (row: WorkoutSetRowData) => WorkoutSetRowData) => void;
+  onCompleteAndNext: (idx: number) => void;
+  onCopyPrevious: (idx: number) => void;
+  onInsertBelow: (idx: number, focusCol?: number) => void;
+  onRemove: (idx: number) => void;
   canCopyPrevious: boolean;
 };
 
@@ -69,7 +70,7 @@ function formatPlannedRef(ref: WorkoutSetRowData["plannedRef"], bodyweightKg: nu
   return `${reps}회 @ ${displayWeight}${meta ? ` (${meta})` : ""}`;
 }
 
-export default function WorkoutSetRow({
+const WorkoutSetRow = memo(function WorkoutSetRow({
   idx,
   row,
   bodyweightKg,
@@ -100,7 +101,7 @@ export default function WorkoutSetRow({
     if (isRemoving) return;
     setIsRemoving(true);
     removeTimerRef.current = window.setTimeout(() => {
-      onRemove();
+      onRemove(idx);
     }, MOTION_DURATION_FAST_MS);
   }
 
@@ -119,7 +120,7 @@ export default function WorkoutSetRow({
             value={row.exerciseName}
             ref={(element) => registerSetInputRef(setCellKey(idx, 0), element)}
             onKeyDown={(event) => handleSetGridKeyDown(event, idx, 0)}
-            onChange={(event) => updateRow((prev) => ({ ...prev, exerciseName: event.target.value }))}
+            onChange={(event) => updateRow(idx, (prev) => ({ ...prev, exerciseName: event.target.value }))}
           />
         </label>
 
@@ -133,7 +134,7 @@ export default function WorkoutSetRow({
               value={row.setNumber}
               ref={(element) => registerSetInputRef(setCellKey(idx, 1), element)}
               onKeyDown={(event) => handleSetGridKeyDown(event, idx, 1)}
-              onChange={(event) => updateRow((prev) => ({ ...prev, setNumber: Number(event.target.value) }))}
+              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, setNumber: Number(event.target.value) }))}
             />
           </label>
 
@@ -146,7 +147,7 @@ export default function WorkoutSetRow({
               value={row.reps}
               ref={(element) => registerSetInputRef(setCellKey(idx, 2), element)}
               onKeyDown={(event) => handleSetGridKeyDown(event, idx, 2)}
-              onChange={(event) => updateRow((prev) => ({ ...prev, reps: Number(event.target.value) }))}
+              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, reps: Number(event.target.value) }))}
             />
           </label>
 
@@ -161,7 +162,7 @@ export default function WorkoutSetRow({
               value={row.weightKg}
               ref={(element) => registerSetInputRef(setCellKey(idx, 3), element)}
               onKeyDown={(event) => handleSetGridKeyDown(event, idx, 3)}
-              onChange={(event) => updateRow((prev) => ({ ...prev, weightKg: Number(event.target.value) }))}
+              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, weightKg: Number(event.target.value) }))}
             />
           </label>
 
@@ -174,7 +175,7 @@ export default function WorkoutSetRow({
               value={row.rpe}
               ref={(element) => registerSetInputRef(setCellKey(idx, 4), element)}
               onKeyDown={(event) => handleSetGridKeyDown(event, idx, 4)}
-              onChange={(event) => updateRow((prev) => ({ ...prev, rpe: Number(event.target.value) }))}
+              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, rpe: Number(event.target.value) }))}
             />
           </label>
         </div>
@@ -189,7 +190,7 @@ export default function WorkoutSetRow({
               type="checkbox"
               checked={row.isExtra}
               onChange={(event) =>
-                updateRow((prev) => ({
+                updateRow(idx, (prev) => ({
                   ...prev,
                   isExtra: event.target.checked,
                   isPlanned: event.target.checked ? false : prev.isPlanned,
@@ -203,7 +204,7 @@ export default function WorkoutSetRow({
             <input
               type="checkbox"
               checked={row.completed}
-              onChange={(event) => updateRow((prev) => ({ ...prev, completed: event.target.checked }))}
+              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, completed: event.target.checked }))}
             />
             <span>완료</span>
           </label>
@@ -221,22 +222,24 @@ export default function WorkoutSetRow({
         ) : null}
 
         <div className="mt-3 grid grid-cols-3 gap-2">
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={onCompleteAndNext}>
+          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={() => onCompleteAndNext(idx)}>
             완료 후 다음
           </button>
           <button
             className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm"
             type="button"
-            onClick={onCopyPrevious}
+            onClick={() => onCopyPrevious(idx)}
             disabled={!canCopyPrevious}
           >
             이전 복사
           </button>
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={onInsertBelow}>
+          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={() => onInsertBelow(idx, 0)}>
             아래에 삽입
           </button>
         </div>
       </article>
     </div>
   );
-}
+});
+
+export default WorkoutSetRow;
