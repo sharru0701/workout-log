@@ -78,7 +78,7 @@ export default async function CalendarOptionsPage({
         eyebrow="캘린더 설정"
         title="날짜를 눌렀을 때 어떻게 열지 정하기"
         description="캘린더에서 날짜를 눌렀을 때 열기만 할지, 세션 생성까지 이어질지 정하는 화면입니다."
-        primaryAction={{ href: APP_ROUTES.calendarManage, label: "캘린더 열기", tone: "primary" }}
+        primaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더", tone: "primary" }}
         secondaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더 홈", tone: "secondary" }}
         metrics={[
           { label: "보기", value: viewMode },
