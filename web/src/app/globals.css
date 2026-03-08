@@ -527,6 +527,7 @@ button {
   margin-inline: auto;
   padding: var(--space-6) var(--space-1) var(--space-5);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
 }
 
@@ -667,7 +668,8 @@ button {
   color: var(--text-secondary);
 }
 
-.tab-screen > * {
+.tab-screen > *,
+.tab-screen > * > * {
   min-width: 0;
 }
 
