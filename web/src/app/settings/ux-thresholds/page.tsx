@@ -338,21 +338,18 @@ export default function SettingsUxThresholdsPage() {
       <section className="grid gap-2">
         <SectionHeader title="플랜별 기준치 프로필(선택)" />
         <div className="rounded-2xl border bg-white p-4 space-y-3">
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">플랜 선택</span>
-            <AppSelect
-              variant="compact"
-              value={selectedPlanId}
-              onChange={(event) => setSelectedPlanId(event.target.value)}
-            >
-              {plans.length === 0 && <option value="">(플랜 없음)</option>}
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name} [{plan.type}]
-                </option>
-              ))}
-            </AppSelect>
-          </label>
+          <AppSelect
+            label="플랜 선택"
+            value={selectedPlanId}
+            onChange={(event) => setSelectedPlanId(event.target.value)}
+          >
+            {plans.length === 0 && <option value="">(플랜 없음)</option>}
+            {plans.map((plan) => (
+              <option key={plan.id} value={plan.id}>
+                {plan.name} [{plan.type}]
+              </option>
+            ))}
+          </AppSelect>
 
           <BaseGroupedList ariaLabel="Plan threshold settings">
             <ValueRow

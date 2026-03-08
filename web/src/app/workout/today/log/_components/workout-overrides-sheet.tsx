@@ -44,23 +44,21 @@ export default function WorkoutOverridesSheet({
       <div className="space-y-4 pb-2">
         <Card padding="md" elevated={false}>
           <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="ui-card-label">선택 세트 행(추가 상태 필수)</span>
-              <AppSelect
-                variant="compact"
-                value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
-                onChange={(event) => {
-                  onSelectSetIdx(event.target.value === "" ? null : Number(event.target.value));
-                }}
-              >
-                <option value="">(행 선택)</option>
-                {sets.map((set, idx) => (
-                  <option key={idx} value={idx}>
-                    #{idx + 1} {set.exerciseName || "(비어 있음)"} [{set.isExtra ? "추가" : set.isPlanned ? "계획" : "사용자"}]
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
+            <AppSelect
+              label="선택 세트 행(추가 상태 필수)"
+              wrapperClassName="md:col-span-2"
+              value={selectedSetIdx === null ? "" : String(selectedSetIdx)}
+              onChange={(event) => {
+                onSelectSetIdx(event.target.value === "" ? null : Number(event.target.value));
+              }}
+            >
+              <option value="">(행 선택)</option>
+              {sets.map((set, idx) => (
+                <option key={idx} value={idx}>
+                  #{idx + 1} {set.exerciseName || "(비어 있음)"} [{set.isExtra ? "추가" : set.isPlanned ? "계획" : "사용자"}]
+                </option>
+              ))}
+            </AppSelect>
             <button
               className="haptic-tap workout-action-pill is-secondary workout-inline-action"
               type="button"
@@ -73,17 +71,14 @@ export default function WorkoutOverridesSheet({
 
         <Card padding="md" elevated={false}>
           <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">블록 대상</span>
-              <AppSelect variant="compact" value={blockTarget} onChange={(event) => onBlockTargetChange(event.target.value)}>
-                <option value="SQUAT">SQUAT</option>
-                <option value="BENCH">BENCH</option>
-                <option value="DEADLIFT">DEADLIFT</option>
-                <option value="OHP">OHP</option>
-                <option value="PULL">PULL</option>
-                <option value="CUSTOM">CUSTOM</option>
-              </AppSelect>
-            </label>
+            <AppSelect label="블록 대상" value={blockTarget} onChange={(event) => onBlockTargetChange(event.target.value)}>
+              <option value="SQUAT">SQUAT</option>
+              <option value="BENCH">BENCH</option>
+              <option value="DEADLIFT">DEADLIFT</option>
+              <option value="OHP">OHP</option>
+              <option value="PULL">PULL</option>
+              <option value="CUSTOM">CUSTOM</option>
+            </AppSelect>
             <label className="flex flex-col gap-1 md:col-span-2">
               <span className="ui-card-label">대체 운동 이름</span>
               <AppTextInput

@@ -3,14 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput, AppTextarea } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
-import { APP_ROUTES } from "@/lib/app-routes";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -794,20 +792,6 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <DashboardHero
-            eyebrow="기록"
-            title="운동 기록 워크스페이스"
-            description="이 화면은 플랜 기반 기록을 다시 보거나 세부 편집이 필요할 때 쓰는 보조 입력 화면입니다. 기본 시작은 오늘 기록 화면이고, 여기서는 편집과 보강에 집중합니다."
-            primaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록으로 이동", tone: "secondary" }}
-            secondaryAction={{ href: APP_ROUTES.stats1rm, label: "1RM 보기", tone: "primary" }}
-            metrics={[
-              { label: "플랜", value: selectedPlan?.name ?? draft.session.planName },
-              { label: "주차/세션", value: `W${draft.session.week} / ${draft.session.sessionType}` },
-              { label: "편집 상태", value: hasWorkoutEdits(draft) ? "변경 있음" : "변경 없음" },
-            ]}
-            tone="accent"
-          />
-
           <section className="grid gap-2">
             <h2 className="ios-section-heading">선택된 플랜</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-2">
@@ -815,22 +799,19 @@ export default function WorkoutRecordPage() {
               <span className="ui-card-label">
                 기반 프로그램: {inferProgramNameFromPlanName(draft.session.planName)}
               </span>
-              <label className="grid gap-1">
-                <span className="ui-card-label">플랜 변경</span>
-                <AppSelect
-                  variant="workout"
-                  value={selectedPlanId}
-                  onChange={(event) => {
-                    void handlePlanChange(event.target.value);
-                  }}
-                >
-                  {plans.map((plan) => (
-                    <option key={plan.id} value={plan.id}>
-                      {plan.name}
-                    </option>
-                  ))}
-                </AppSelect>
-              </label>
+              <AppSelect
+                label="플랜 변경"
+                value={selectedPlanId}
+                onChange={(event) => {
+                  void handlePlanChange(event.target.value);
+                }}
+              >
+                {plans.map((plan) => (
+                  <option key={plan.id} value={plan.id}>
+                    {plan.name}
+                  </option>
+                ))}
+              </AppSelect>
             </article>
           </section>
 

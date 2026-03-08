@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
-import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -1053,20 +1053,6 @@ export default function ProgramStorePage() {
 
   return (
     <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
-      <DashboardHero
-        eyebrow="프로그램"
-        title="프로그램 탐색과 시작"
-        description="이 화면에서 프로그램을 고르고 시작하면 플랜이 생성되어 오늘 기록 흐름으로 이어집니다. 커스텀 프로그램 만들기도 같은 시작 단계에 있습니다."
-        primaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
-        secondaryAction={{ href: APP_ROUTES.plansManage, label: "보유 플랜 보기", tone: "primary" }}
-        metrics={[
-          { label: "전체 프로그램", value: `${listItems.length}개` },
-          { label: "커스텀", value: `${customProgramCount}개` },
-          { label: "시작 방식", value: "선택 후 플랜 생성" },
-        ]}
-        tone="accent"
-      />
-
       <LoadingStateRows
         active={loading}
         delayMs={160}
@@ -1548,32 +1534,29 @@ export default function ProgramStorePage() {
             </div>
 
             {createDraft.mode === "MARKET_BASED" && (
-              <label className="grid gap-1">
-                <span className="ui-card-label">기반 시중 프로그램</span>
-                <AppSelect
-                  variant="workout"
-                  value={createDraft.sourceTemplateSlug ?? ""}
-                  onChange={(event) =>
-                    setCreateDraft((prev) => {
-                      if (!prev) return prev;
-                      const nextSlug = event.target.value || null;
-                      const source = templates.find((template) => template.slug === nextSlug) ?? null;
-                      return {
-                        ...prev,
-                        sourceTemplateSlug: nextSlug,
-                        sessions: source ? inferSessionDraftsFromTemplate(source) : prev.sessions,
-                      };
-                    })
-                  }
-                >
-                  <option value="">선택</option>
-                  {publicTemplates.map((template) => (
-                    <option key={template.id} value={template.slug}>
-                      {formatProgramDisplayName(template.name)}
-                    </option>
-                  ))}
-                </AppSelect>
-              </label>
+              <AppSelect
+                label="기반 시중 프로그램"
+                value={createDraft.sourceTemplateSlug ?? ""}
+                onChange={(event) =>
+                  setCreateDraft((prev) => {
+                    if (!prev) return prev;
+                    const nextSlug = event.target.value || null;
+                    const source = templates.find((template) => template.slug === nextSlug) ?? null;
+                    return {
+                      ...prev,
+                      sourceTemplateSlug: nextSlug,
+                      sessions: source ? inferSessionDraftsFromTemplate(source) : prev.sessions,
+                    };
+                  })
+                }
+              >
+                <option value="">선택</option>
+                {publicTemplates.map((template) => (
+                  <option key={template.id} value={template.slug}>
+                    {formatProgramDisplayName(template.name)}
+                  </option>
+                ))}
+              </AppSelect>
             )}
 
             <Card padding="sm" elevated={false}>

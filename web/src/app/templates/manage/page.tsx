@@ -361,21 +361,19 @@ export default function TemplatesPage() {
             ) : null}
           </div>
         </label>
-        <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="ui-card-label">태그 필터</span>
-          <AppSelect
-            variant="compact"
-            value={selectedTag}
-            onChange={(e) => setSelectedTag(e.target.value)}
-          >
-            <option value="">전체 태그</option>
-            {allTags.map((tag) => (
-              <option key={tag} value={tag}>
-                {tag}
-              </option>
-            ))}
-          </AppSelect>
-        </label>
+        <AppSelect
+          label="태그 필터"
+          wrapperClassName="md:col-span-3"
+          value={selectedTag}
+          onChange={(e) => setSelectedTag(e.target.value)}
+        >
+          <option value="">전체 태그</option>
+          {allTags.map((tag) => (
+            <option key={tag} value={tag}>
+              {tag}
+            </option>
+          ))}
+        </AppSelect>
         <div className="md:col-span-4 text-sm text-neutral-600">{`${filteredTemplates.length}/${templates.length}개 표시 중`}</div>
         <div className="md:col-span-4 flex gap-2">
           <button
@@ -510,20 +508,18 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              <label className="flex flex-col gap-1 md:col-span-2">
-                <span className="ui-card-label">기준 버전</span>
-                <AppSelect
-                  variant="compact"
-                  value={selectedBaseVersionId}
-                  onChange={(e) => setSelectedBaseVersionId(e.target.value)}
-                >
-                  {versions.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      v{v.version} - {new Date(v.createdAt).toLocaleString()}
-                    </option>
-                  ))}
-                </AppSelect>
-              </label>
+              <AppSelect
+                label="기준 버전"
+                wrapperClassName="md:col-span-2"
+                value={selectedBaseVersionId}
+                onChange={(e) => setSelectedBaseVersionId(e.target.value)}
+              >
+                {versions.map((v) => (
+                  <option key={v.id} value={v.id}>
+                    v{v.version} - {new Date(v.createdAt).toLocaleString()}
+                  </option>
+                ))}
+              </AppSelect>
             </div>
 
             <LoadingStateRows

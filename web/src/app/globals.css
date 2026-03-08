@@ -5106,6 +5106,82 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   outline: none;
 }
 
+/* iOS settings-row style select */
+.app-select-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  padding: 0 1rem;
+  min-height: 2.875rem;
+  background: var(--bg-surface, #fff);
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent);
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.app-select-row:focus-within {
+  border-color: color-mix(in srgb, var(--accent-primary) 35%, var(--border-subtle));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+}
+
+.app-select-row-label {
+  flex: 0 0 auto;
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--text-primary);
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.app-select-row-right {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 60%;
+  overflow: hidden;
+}
+
+.app-select-row-native {
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  background: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0;
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+  text-align: right;
+  cursor: pointer;
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+  font-family: inherit;
+}
+
+.app-select-row-native:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.app-select-row-chevron {
+  flex-shrink: 0;
+  color: color-mix(in srgb, var(--text-secondary) 55%, transparent);
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none;
+  line-height: 1;
+}
+
 /* shared select shell for explicit chevron rendering */
 .app-form-select-shell {
   position: relative;
@@ -5144,8 +5220,8 @@ html[data-tab-route-direction="backward"] .native-page-enter {
 }
 
 /* fallback chevron for native selects not migrated to AppSelect yet */
-select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple]):not([size]),
-select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"] {
+select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-native):not([multiple]):not([size]),
+select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-native):not([multiple])[size="1"] {
   -webkit-appearance: none !important;
   appearance: none !important;
   padding-inline-end: 2.56rem !important;
@@ -5155,8 +5231,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]
   background-position: calc(100% - 0.92rem) 50% !important;
 }
 
-select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple]):not([size])::-ms-expand,
-select:not(.app-form-select):not(.ios-cal-plan-select):not([multiple])[size="1"]::-ms-expand {
+select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-native):not([multiple]):not([size])::-ms-expand,
+select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-native):not([multiple])[size="1"]::-ms-expand {
   display: none;
 }
 

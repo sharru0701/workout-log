@@ -2,33 +2,10 @@
 
 import type { JSX, SVGProps } from "react";
 import Link from "next/link";
-import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type { HomeData } from "@/lib/home/home-data-source";
 
 type ActionIconProps = SVGProps<SVGSVGElement>;
-
-type HeroAction = {
-  href: string;
-  label: string;
-};
-
-type HeroTone = "ready" | "active" | "setup";
-
-type HeroContent = {
-  badge: string;
-  title: string;
-  description: string;
-  primaryAction: HeroAction;
-  secondaryAction: HeroAction;
-  tone: HeroTone;
-};
-
-function toDashboardHeroTone(tone: HeroTone) {
-  if (tone === "active") return "accent" as const;
-  if (tone === "setup") return "quiet" as const;
-  return "default" as const;
-}
 
 type QuickAction = {
   href: string;
@@ -58,16 +35,6 @@ function CalendarIcon(props: ActionIconProps) {
   );
 }
 
-function TrendIcon(props: ActionIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M5.25 18.75h13.5" />
-      <path d="m7.25 14.75 3.5-3.5 2.75 2.75 4.25-5.25" />
-      <path d="M17.75 8.75h.01" />
-    </svg>
-  );
-}
-
 function PlanIcon(props: ActionIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -90,82 +57,16 @@ function StoreIcon(props: ActionIconProps) {
   );
 }
 
-function formatTodayLabel() {
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "long",
-    day: "numeric",
-    weekday: "long",
-  }).format(new Date());
-}
-
-function buildHeroContent(data: HomeData): HeroContent {
-  const hasPlans = data.planOverview.totalPlans > 0;
-  const hasTodayActivity = data.today.completedSets > 0;
-
-  if (hasTodayActivity) {
-    return {
-      badge: "오늘 세션 진행 중",
-      title: "오늘 기록 화면으로 돌아가기",
-      description: `${data.today.programName} 기준으로 오늘 ${data.today.completedSets}세트를 기록했습니다. 같은 세션에서 계속 입력하고 저장 상태를 확인할 수 있습니다.`,
-      primaryAction: {
-        href: data.today.href,
-        label: "오늘 운동 이어서 하기",
-      },
-      secondaryAction: {
-        href: APP_ROUTES.plansManage,
-        label: "보유 플랜 보기",
-      },
-      tone: "active",
-    };
-  }
-
-  if (hasPlans) {
-    const highlightedPlan = data.planOverview.highlightedPlanName ?? data.today.programName;
-    return {
-      badge: "빠른 시작 가능",
-      title: "플랜에서 오늘 세션을 생성하세요",
-      description: `${highlightedPlan} 플랜이 준비되어 있습니다. 오늘 운동은 플랜 기반으로 생성되므로 오늘 기록 화면에서 세션을 만들고 바로 입력을 시작합니다.`,
-      primaryAction: {
-        href: data.today.href,
-        label: "오늘 운동 시작",
-      },
-      secondaryAction: {
-        href: APP_ROUTES.programStore,
-        label: "다른 프로그램 보기",
-      },
-      tone: "ready",
-    };
-  }
-
-  return {
-    badge: "플랜 준비 필요",
-    title: "먼저 프로그램을 선택하세요",
-    description: "이 앱은 플랜을 먼저 준비한 뒤 기록을 시작합니다. 프로그램 스토어에서 고르거나 커스텀 프로그램을 만든 다음 오늘 운동으로 넘어가는 흐름이 기본입니다.",
-    primaryAction: {
-      href: APP_ROUTES.programStore,
-      label: "프로그램 선택 후 시작",
-    },
-    secondaryAction: {
-      href: APP_ROUTES.programCreate,
-      label: "커스텀 프로그램 만들기",
-    },
-    tone: "setup",
-  };
-}
-
 function buildStartActions(data: HomeData): QuickAction[] {
-  const hasPlans = data.planOverview.totalPlans > 0;
   const hasTodayActivity = data.today.completedSets > 0;
 
   return [
     {
-      href: hasPlans ? data.today.href : APP_ROUTES.programStore,
-      label: hasPlans ? (hasTodayActivity ? "오늘 운동 이어서 하기" : "오늘 운동 시작") : "프로그램 선택 후 시작",
-      description: hasPlans
-        ? hasTodayActivity
-          ? "오늘 기록 화면으로 돌아가 입력과 저장을 계속합니다."
-          : "준비된 플랜으로 오늘 세션을 생성하고 기록을 시작합니다."
-        : "보유 플랜이 없으면 먼저 프로그램 스토어에서 프로그램을 선택해야 합니다.",
+      href: data.today.href,
+      label: hasTodayActivity ? "오늘 운동 이어서 하기" : "오늘 운동 시작",
+      description: hasTodayActivity
+        ? "오늘 기록 화면으로 돌아가 입력과 저장을 계속합니다."
+        : "준비된 플랜으로 오늘 세션을 생성하고 기록을 시작합니다.",
       Icon: BoltIcon,
     },
     {
@@ -179,35 +80,6 @@ function buildStartActions(data: HomeData): QuickAction[] {
       label: "커스텀 프로그램 만들기",
       description: "내 루틴 구성을 직접 만들고 시작 프로그램으로 연결합니다.",
       Icon: PlanIcon,
-    },
-  ];
-}
-
-function buildToolActions(data: HomeData): QuickAction[] {
-  return [
-    {
-      href: APP_ROUTES.plansManage,
-      label: "보유 플랜 관리",
-      description: data.planOverview.totalPlans > 0 ? "기존 플랜 이름, 히스토리, 정리를 진행합니다." : "준비된 플랜이 생기면 여기서 관리합니다.",
-      Icon: PlanIcon,
-    },
-    {
-      href: APP_ROUTES.calendarManage,
-      label: "날짜 기준 세션",
-      description: "특정 날짜로 세션을 생성하거나 캘린더에서 확인합니다.",
-      Icon: CalendarIcon,
-    },
-    {
-      href: APP_ROUTES.stats1rm,
-      label: "1RM 추세",
-      description: "저장된 운동 기록의 최고 기록과 추정치를 확인합니다.",
-      Icon: TrendIcon,
-    },
-    {
-      href: APP_ROUTES.templatesManage,
-      label: "템플릿 편집",
-      description: "템플릿 포크와 버전 편집 작업을 진행합니다.",
-      Icon: StoreIcon,
     },
   ];
 }
@@ -250,58 +122,13 @@ function weeklySummaryDescription(data: HomeData) {
 }
 
 export function HomeDashboard({ data }: { data: HomeData }) {
-  const hero = buildHeroContent(data);
   const startActions = buildStartActions(data);
-  const toolActions = buildToolActions(data);
-  const metrics = [
-    {
-      label: "보유 플랜",
-      value: `${data.planOverview.totalPlans}개`,
-    },
-    {
-      label: "오늘 상태",
-      value: data.today.completedSets > 0 ? `${data.today.completedSets}세트 기록` : data.planOverview.totalPlans > 0 ? "시작 전" : "플랜 없음",
-    },
-    {
-      label: "최근 7일",
-      value: `${data.weeklySummary.activeDays}/${data.weeklySummary.days.length}일`,
-    },
-  ];
   const showRecentEmpty = data.recentSessions.length === 0;
   const planHref = data.planOverview.totalPlans > 0 ? APP_ROUTES.plansManage : APP_ROUTES.programStore;
   const planActionLabel = data.planOverview.totalPlans > 0 ? "플랜 보기" : "플랜 준비";
 
   return (
     <>
-      <DashboardHero
-        eyebrow="오늘 대시보드"
-        title={hero.title}
-        description={hero.description}
-        topSlot={
-          <>
-            <p className="home-dashboard-date">{formatTodayLabel()}</p>
-            <span className={`home-dashboard-badge home-dashboard-badge--${hero.tone}`}>{hero.badge}</span>
-          </>
-        }
-        primaryAction={{
-          href: hero.primaryAction.href,
-          label: (
-            <>
-              <BoltIcon className="home-dashboard-cta-icon" aria-hidden="true" />
-              <span>{hero.primaryAction.label}</span>
-            </>
-          ),
-          tone: "primary",
-        }}
-        secondaryAction={{
-          href: hero.secondaryAction.href,
-          label: hero.secondaryAction.label,
-          tone: "secondary",
-        }}
-        metrics={metrics}
-        tone={toDashboardHeroTone(hero.tone)}
-      />
-
       <section className="home-dashboard-section">
         <div className="home-dashboard-section-head">
           <h2 className="home-dashboard-section-title">빠른 시작</h2>
@@ -358,28 +185,6 @@ export function HomeDashboard({ data }: { data: HomeData }) {
               ))}
             </div>
           </div>
-        </div>
-      </section>
-
-      <section className="home-dashboard-section">
-        <div className="home-dashboard-section-head">
-          <h2 className="home-dashboard-section-title">보조 화면</h2>
-          <p className="home-dashboard-section-copy">캘린더, 플랜 관리, 통계, 템플릿은 시작 흐름 아래 보조 도구로 분리했습니다.</p>
-        </div>
-
-        <div className="home-dashboard-quick-grid">
-          {toolActions.map((action) => {
-            const Icon = action.Icon;
-            return (
-              <Link key={action.label} className="home-dashboard-quick-card" href={action.href}>
-                <span className="home-dashboard-quick-icon" aria-hidden="true">
-                  <Icon className="home-dashboard-quick-icon-svg" />
-                </span>
-                <span className="home-dashboard-quick-label">{action.label}</span>
-                <span className="home-dashboard-quick-copy">{action.description}</span>
-              </Link>
-            );
-          })}
         </div>
       </section>
 

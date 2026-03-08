@@ -362,90 +362,78 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
 
       {!operatorStyle ? (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">수행 방식</span>
-            <AppSelect
-              variant="workout"
-              value={exercise.mode}
-              onChange={(event) =>
-                onPatch(sessionId, exercise.id, {
-                  mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
-                  marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
-                })
-              }
-            >
-              <option value="MARKET">시중 프로그램 기반</option>
-              <option value="MANUAL">완전 수동</option>
-            </AppSelect>
-          </label>
+          <AppSelect
+            label="수행 방식"
+            value={exercise.mode}
+            onChange={(event) =>
+              onPatch(sessionId, exercise.id, {
+                mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
+                marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
+              })
+            }
+          >
+            <option value="MARKET">시중 프로그램 기반</option>
+            <option value="MANUAL">완전 수동</option>
+          </AppSelect>
 
           {exercise.mode === "MARKET" && (
-            <label className="grid gap-1">
-              <span className="ui-card-label">기반 프로그램</span>
-              <AppSelect
-                variant="workout"
-                value={exercise.marketTemplateSlug ?? ""}
-                onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
-              >
-                <option value="">선택</option>
-                {publicTemplates.map((template) => (
-                  <option key={template.id} value={template.slug}>
-                    {formatProgramDisplayName(template.name)}
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
+            <AppSelect
+              label="기반 프로그램"
+              value={exercise.marketTemplateSlug ?? ""}
+              onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
+            >
+              <option value="">선택</option>
+              {publicTemplates.map((template) => (
+                <option key={template.id} value={template.slug}>
+                  {formatProgramDisplayName(template.name)}
+                </option>
+              ))}
+            </AppSelect>
           )}
         </div>
       ) : (
         <div className="grid gap-2">
-          <label className="grid gap-1">
-            <span className="ui-card-label">행 타입</span>
-            <AppSelect
-              variant="workout"
-              value={exercise.rowType ?? "CUSTOM"}
-              onChange={(event) => {
-                const nextValue = String(event.target.value ?? "").trim().toUpperCase();
-                const nextRowType: ProgramRowType = nextValue === "AUTO" ? "AUTO" : "CUSTOM";
-                const inferredTarget =
-                  nextRowType === "AUTO" ? inferProgressionTargetFromExerciseName(exercise.exerciseName) : null;
-                onPatch(
-                  sessionId,
-                  exercise.id,
-                  isOperatorAutoRowType(nextRowType)
-                    ? {
-                        rowType: nextRowType,
-                        progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
-                        ...resolveOperatorExerciseDefaults(exercise.exerciseName, nextRowType),
-                      }
-                    : { rowType: nextRowType, progressionTarget: null },
-                );
-              }}
-            >
-              <option value="AUTO">Auto</option>
-              <option value="CUSTOM">Custom</option>
-            </AppSelect>
-          </label>
+          <AppSelect
+            label="행 타입"
+            value={exercise.rowType ?? "CUSTOM"}
+            onChange={(event) => {
+              const nextValue = String(event.target.value ?? "").trim().toUpperCase();
+              const nextRowType: ProgramRowType = nextValue === "AUTO" ? "AUTO" : "CUSTOM";
+              const inferredTarget =
+                nextRowType === "AUTO" ? inferProgressionTargetFromExerciseName(exercise.exerciseName) : null;
+              onPatch(
+                sessionId,
+                exercise.id,
+                isOperatorAutoRowType(nextRowType)
+                  ? {
+                      rowType: nextRowType,
+                      progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
+                      ...resolveOperatorExerciseDefaults(exercise.exerciseName, nextRowType),
+                    }
+                  : { rowType: nextRowType, progressionTarget: null },
+              );
+            }}
+          >
+            <option value="AUTO">Auto</option>
+            <option value="CUSTOM">Custom</option>
+          </AppSelect>
           {operatorAutoRow ? (
-            <label className="grid gap-1">
-              <span className="ui-card-label">진행 타겟</span>
-              <AppSelect
-                variant="workout"
-                value={exercise.progressionTarget ?? ""}
-                onChange={(event) =>
-                  onPatch(sessionId, exercise.id, {
-                    progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
-                  })
-                }
-              >
-                <option value="">선택</option>
-                <option value="SQUAT">Squat</option>
-                <option value="BENCH">Bench</option>
-                <option value="DEADLIFT">Deadlift</option>
-                <option value="PULL">Pull</option>
-                <option value="OHP">OHP</option>
-              </AppSelect>
-            </label>
+            <AppSelect
+              label="진행 타겟"
+              value={exercise.progressionTarget ?? ""}
+              onChange={(event) =>
+                onPatch(sessionId, exercise.id, {
+                  progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
+                })
+              }
+            >
+              <option value="">선택</option>
+              <option value="SQUAT">Squat</option>
+              <option value="BENCH">Bench</option>
+              <option value="DEADLIFT">Deadlift</option>
+              <option value="PULL">Pull</option>
+              <option value="OHP">OHP</option>
+            </AppSelect>
           ) : null}
           <div className="rounded-lg border border-dashed px-3 py-2 text-xs text-[var(--text-secondary)]">
             {operatorRowTypeHelp(exercise.rowType)}

@@ -11,7 +11,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
   {
     key: "workout.today.log",
     title: "오늘 운동 로그",
-    path: "/workout/today/log",
+    path: "/workout-record",
     section: "훈련",
     keywords: ["운동", "로그", "세트", "저장", "sync", "today"],
     description: "오늘 세션 생성, 기록, 저장",
@@ -23,14 +23,6 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     section: "훈련",
     keywords: ["오버라이드", "교체", "보조 운동", "override"],
     description: "교체/보조 운동 규칙 설정",
-  },
-  {
-    key: "calendar.manage",
-    title: "캘린더 워크스페이스",
-    path: "/calendar/manage",
-    section: "훈련",
-    keywords: ["캘린더", "날짜", "세션 생성", "calendar"],
-    description: "날짜별 세션 생성/열기",
   },
   {
     key: "calendar.options",

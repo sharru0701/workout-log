@@ -76,7 +76,7 @@ export const AppTextarea = forwardRef<
 
 export const AppSelect = forwardRef<
   HTMLSelectElement,
-  SelectHTMLAttributes<HTMLSelectElement> & { variant?: FormControlVariant; wrapperClassName?: string }
+  SelectHTMLAttributes<HTMLSelectElement> & { variant?: FormControlVariant; wrapperClassName?: string; label?: string }
 >(function AppSelect(
   {
     variant = "default",
@@ -85,11 +85,39 @@ export const AppSelect = forwardRef<
     children,
     multiple,
     size,
+    label,
     ...props
   },
   ref,
 ) {
   const supportsSingleChevron = !multiple && (typeof size !== "number" || size <= 1);
+
+  // iOS settings-row mode: label on left, value + up-down chevron on right
+  if (label && supportsSingleChevron) {
+    return (
+      <label className={cx("app-select-row", wrapperClassName)}>
+        <span className="app-select-row-label">{label}</span>
+        <span className="app-select-row-right">
+          <select
+            ref={ref}
+            {...props}
+            multiple={multiple}
+            size={size}
+            className={cx("app-select-row-native", className)}
+          >
+            {children}
+          </select>
+          <span className="app-select-row-chevron" aria-hidden="true">
+            <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+              <path d="M2 5.5L6 2L10 5.5" />
+              <path d="M2 10.5L6 14L10 10.5" />
+            </svg>
+          </span>
+        </span>
+      </label>
+    );
+  }
+
   const resolvedClassName = cx(
     resolveControlClassName(variant),
     supportsSingleChevron && "app-form-select",

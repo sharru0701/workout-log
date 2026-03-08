@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
-import { APP_ROUTES } from "@/lib/app-routes";
 import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
@@ -184,20 +183,6 @@ function PlansManagePageContent() {
               ? "당겨서 새로고침"
               : ""}
         </div>
-
-        <DashboardHero
-          eyebrow="플랜 관리"
-          title="보유 플랜 관리와 실행"
-          description="이 화면은 이미 시작한 플랜을 정리하고, 필요할 때 바로 오늘 기록이나 히스토리로 이어지는 운영 화면입니다."
-          primaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 스토어", tone: "primary" }}
-          secondaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
-          metrics={[
-            { label: "전체 플랜", value: `${plans.length}개` },
-            { label: "기록 이력", value: `${activeHistoryCount}개` },
-            { label: "빠른 이동", value: "오늘 기록 / 히스토리" },
-          ]}
-          tone="accent"
-        />
 
         <DashboardSection
           title="플랜 목록"

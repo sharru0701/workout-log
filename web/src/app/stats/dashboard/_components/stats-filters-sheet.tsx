@@ -85,26 +85,20 @@ const StatsFiltersSheet = memo(function StatsFiltersSheet({
 
         <Card padding="md" elevated={false}>
           <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">플랜</span>
-              <AppSelect value={draft.planId} onChange={(event) => updateDraft("planId", event.target.value)}>
-                <option value="">전체 플랜</option>
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name} [{plan.type}]
-                  </option>
-                ))}
-              </AppSelect>
-            </label>
+            <AppSelect label="플랜" value={draft.planId} onChange={(event) => updateDraft("planId", event.target.value)}>
+              <option value="">전체 플랜</option>
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} [{plan.type}]
+                </option>
+              ))}
+            </AppSelect>
 
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">집계 단위</span>
-              <AppSelect value={draft.bucket} onChange={(event) => updateDraft("bucket", event.target.value as "day" | "week" | "month")}>
-                <option value="day">일</option>
-                <option value="week">주</option>
-                <option value="month">월</option>
-              </AppSelect>
-            </label>
+            <AppSelect label="집계 단위" value={draft.bucket} onChange={(event) => updateDraft("bucket", event.target.value as "day" | "week" | "month")}>
+              <option value="day">일</option>
+              <option value="week">주</option>
+              <option value="month">월</option>
+            </AppSelect>
           </CardContent>
         </Card>
 

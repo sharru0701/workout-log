@@ -269,20 +269,18 @@ function PlanHistoryPageContent() {
         />
 
         {plans.length > 0 ? (
-          <label className="grid gap-1">
-            <span className="ui-card-label">플랜 선택</span>
-            <AppSelect
-              value={selectedPlanId}
-              onChange={(event) => setSelectedPlanId(event.target.value)}
-              disabled={plansLoading}
-            >
-              {plans.map((plan) => (
-                <option key={plan.id} value={plan.id}>
-                  {plan.name}
-                </option>
-              ))}
-            </AppSelect>
-          </label>
+          <AppSelect
+            label="플랜 선택"
+            value={selectedPlanId}
+            onChange={(event) => setSelectedPlanId(event.target.value)}
+            disabled={plansLoading}
+          >
+            {plans.map((plan) => (
+              <option key={plan.id} value={plan.id}>
+                {plan.name}
+              </option>
+            ))}
+          </AppSelect>
         ) : null}
 
         {selectedPlan ? (

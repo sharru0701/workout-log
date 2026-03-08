@@ -4,7 +4,6 @@
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost, isAbortError } from "@/lib/api";
-import { DashboardHero } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 import {
   computeExternalLoadFromTotalKg,
@@ -1346,24 +1345,6 @@ export default function WorkoutTodayPage() {
             : ""}
       </div>
 
-      <DashboardHero
-        eyebrow="오늘 기록"
-        title="오늘 세션 생성과 기록"
-        description="이 화면이 실제 핵심 입력 화면입니다. 선택한 플랜으로 세션을 만들고 세트 입력, 오버라이드, 저장까지 한 흐름으로 이어집니다."
-        primaryAction={{
-          href: selectedPlan ? APP_ROUTES.plansManage : APP_ROUTES.programStore,
-          label: selectedPlan ? "보유 플랜 보기" : "프로그램 선택",
-          tone: "secondary",
-        }}
-        secondaryAction={{ href: APP_ROUTES.workoutRecord, label: "기록 워크스페이스", tone: "primary" }}
-        metrics={[
-          { label: "플랜", value: selectedPlan?.name ?? "미선택" },
-          { label: "세션 날짜", value: sessionDate },
-          { label: "동기화 대기", value: `${pendingSyncCount}개` },
-        ]}
-        tone="accent"
-      />
-
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="ios-section-heading">기록 모드</div>
         <div className="grid grid-cols-2 gap-2">
@@ -1466,25 +1447,23 @@ export default function WorkoutTodayPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <label className="flex flex-col gap-1 md:col-span-2">
-            <span className="ui-card-label">플랜</span>
-            <AppSelect
-              variant="compact"
-              value={planId}
-              onChange={(e) => {
-                const nextPlanId = e.target.value;
-                setPlanId(nextPlanId);
-                trackEvent("workout_plan_changed", { hasPlan: Boolean(nextPlanId) });
-              }}
-            >
-              {plans.length === 0 && <option value="">(플랜 없음)</option>}
-              {plans.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.name} [{p.type}]
-                </option>
-              ))}
-            </AppSelect>
-          </label>
+          <AppSelect
+            label="플랜"
+            wrapperClassName="md:col-span-2"
+            value={planId}
+            onChange={(e) => {
+              const nextPlanId = e.target.value;
+              setPlanId(nextPlanId);
+              trackEvent("workout_plan_changed", { hasPlan: Boolean(nextPlanId) });
+            }}
+          >
+            {plans.length === 0 && <option value="">(플랜 없음)</option>}
+            {plans.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name} [{p.type}]
+              </option>
+            ))}
+          </AppSelect>
           <label className="flex flex-col gap-1">
             <span className="ui-card-label">세션 날짜</span>
             <AppTextInput

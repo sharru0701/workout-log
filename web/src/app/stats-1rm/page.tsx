@@ -1,13 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DashboardHero, DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
-import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
 type ExerciseOption = {
@@ -395,20 +394,6 @@ export default function Stats1RMPage() {
 
   return (
     <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
-      <DashboardHero
-        eyebrow="1RM"
-        title="1RM 추세와 최고 기록"
-        description="오늘 기록에서 저장된 세트를 기준으로 운동별 강도 변화를 확인하는 화면입니다. 어떤 운동과 기간을 볼지 정한 뒤 차트로 확인합니다."
-        primaryAction={{ href: APP_ROUTES.statsFilters, label: "필터 설정", tone: "secondary" }}
-        secondaryAction={{ href: APP_ROUTES.statsDashboard, label: "대시보드", tone: "primary" }}
-        metrics={[
-          { label: "운동", value: selectedExercise?.name ?? "선택 필요" },
-          { label: "기간", value: formatRangeLabel(rangeFilter) },
-          { label: "프로그램", value: selectedProgramLabel },
-        ]}
-        tone="accent"
-      />
-
       {hasResolvedFilterOptions && (
         <DashboardSection
           title="필터 요약"

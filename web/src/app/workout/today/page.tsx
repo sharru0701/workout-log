@@ -28,7 +28,7 @@ const primaryFlowCards = [
 
 const supportCards = [
   {
-    href: APP_ROUTES.calendarManage,
+    href: APP_ROUTES.calendarHome,
     title: "날짜로 열기",
     subtitle: "캘린더",
     description: "오늘이 아닌 특정 날짜 기준으로 세션을 열거나 생성합니다.",

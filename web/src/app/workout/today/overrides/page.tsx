@@ -34,7 +34,7 @@ export default function WorkoutOverridesPage() {
         title="세션 오버라이드"
         description="오버라이드는 독립된 시작 화면이 아니라 오늘 기록 중 필요할 때 쓰는 보조 기능입니다. 실제 적용은 오늘 기록 화면에서 이어집니다."
         primaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록으로 돌아가기", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.calendarManage, label: "날짜 기준 세션", tone: "secondary" }}
+        secondaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더", tone: "secondary" }}
         metrics={[
           { label: "대상", value: "교체 / 보조 운동" },
           { label: "사용 시점", value: "기록 중간" },

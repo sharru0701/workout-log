@@ -299,7 +299,7 @@ export const HOME_PREVIEW_DATA: HomeData = {
     meta: "오늘 1개 세션 / 14세트 완료 / 예상 e1RM 132kg",
     completedSets: 14,
     estimatedE1rmKg: 132,
-    href: "/workout/today/log?planId=preview-plan-531&date=2026-03-03",
+    href: "/workout-record?planId=preview-plan-531&date=2026-03-03",
   },
   planOverview: {
     totalPlans: 3,
