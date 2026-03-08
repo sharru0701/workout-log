@@ -792,11 +792,11 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <section className="grid gap-2">
+          <section className="grid grid-cols-1 gap-2">
             <h2 className="ios-section-heading">선택된 플랜</h2>
-            <article className="motion-card rounded-2xl border p-4 grid gap-3">
+            <article className="motion-card rounded-2xl border p-4 grid grid-cols-1 gap-3">
               <strong style={{ overflowWrap: "break-word", wordBreak: "break-word", minWidth: 0 }}>{selectedPlan?.name ?? draft.session.planName}</strong>
-              <span className="ui-card-label">
+              <span className="ui-card-label" style={{ overflowWrap: "break-word", wordBreak: "break-word" }}>
                 기반 프로그램: {inferProgramNameFromPlanName(draft.session.planName)}
               </span>
               <AppSelect
