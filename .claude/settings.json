@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh run list --limit 5)",
+      "Bash(gh run view 22816470513 --log-failed)",
+      "Bash(git add web/src/app/calendar/options/page.tsx)",
+      "Bash(docker compose -f docker-compose.dev.yml up --build -d)"
+    ]
+  }
+}
