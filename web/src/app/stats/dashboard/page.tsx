@@ -1124,7 +1124,7 @@ export default function StatsPage() {
             : ""}
       </div>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="ios-section-heading">기본 흐름</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRESET_RANGES.map((d, idx) => (
@@ -1163,7 +1163,7 @@ export default function StatsPage() {
         </div>
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">활성 필터</div>
@@ -1207,7 +1207,7 @@ export default function StatsPage() {
       </section>
 
       <section
-        className="motion-card rounded-2xl border bg-white p-4 space-y-3 touch-pan-y ui-height-animate"
+        className="motion-card rounded-2xl border p-4 space-y-3 touch-pan-y ui-height-animate"
         onTouchStart={onRangeSwipeStart}
         onTouchEnd={onRangeSwipeEnd}
       >
@@ -1290,7 +1290,7 @@ export default function StatsPage() {
         />
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">운영 마이그레이션 상태</div>
@@ -1461,7 +1461,7 @@ export default function StatsPage() {
         ) : null}
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 퍼널 (서버 집계)</div>
@@ -1527,7 +1527,7 @@ export default function StatsPage() {
         )}
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 행동 요약 (오늘/7일/14일)</div>
@@ -1666,7 +1666,7 @@ export default function StatsPage() {
         ) : null}
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
         <div className="flex items-end justify-between">
           <div>
             <div className="text-sm text-neutral-600">볼륨 추세선</div>
@@ -1685,7 +1685,7 @@ export default function StatsPage() {
         )}
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
         <AccordionSection
           title="운동별 볼륨 분해"
           description="운동별 톤수와 세트 분포를 확인합니다."
@@ -1724,7 +1724,7 @@ export default function StatsPage() {
         </AccordionSection>
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
         <AccordionSection
           title="플랜별 준수율"
           description="계획 세션 대비 완료 수를 비교합니다."
@@ -1763,7 +1763,7 @@ export default function StatsPage() {
         </AccordionSection>
       </section>
 
-      <section className="motion-card rounded-2xl border bg-white p-4 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
         <AccordionSection
           title="PR 추적"
           description="운동별 최고/최신 e1RM을 비교합니다."

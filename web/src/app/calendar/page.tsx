@@ -5,6 +5,7 @@ import { apiGet, apiPost } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate } from "@/lib/session-key";
 import { buildTodayLogHref } from "@/lib/workout-links";
+import { AppSelect } from "@/components/ui/form-controls";
 
 type Plan = {
   id: string;
@@ -292,8 +293,9 @@ export default function CalendarPage() {
       {/* Plan selector bar */}
       {plans.length > 0 && (
         <div className="ios-cal-plan-bar">
-          <select
+          <AppSelect
             className="ios-cal-plan-select"
+            wrapperClassName="ios-cal-plan-shell"
             value={planId}
             onChange={(e) => setPlanId(e.target.value)}
             aria-label="플랜 선택"
@@ -303,19 +305,7 @@ export default function CalendarPage() {
                 {p.name}
               </option>
             ))}
-          </select>
-          <svg
-            className="ios-cal-plan-chevron"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
+          </AppSelect>
         </div>
       )}
 

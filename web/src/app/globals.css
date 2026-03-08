@@ -1544,6 +1544,8 @@ button {
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .motion-card {
@@ -1552,6 +1554,8 @@ button {
   background: var(--bg-surface);
   box-shadow: var(--shadow-soft);
   transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), opacity var(--duration-normal) var(--ease-standard);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .app-card {
@@ -5193,6 +5197,25 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   appearance: none !important;
   padding-inline-end: 2.56rem !important;
   background-image: none !important;
+}
+
+/* Calendar plan bar: AppSelect overrides for compact accent style */
+.ios-cal-plan-shell {
+  width: auto;
+}
+.ios-cal-plan-shell .app-form-select {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  padding-inline-end: 1.2rem !important;
+  border-radius: 0 !important;
+}
+.ios-cal-plan-shell .app-form-select-chevron {
+  inset-inline-end: 0;
+  color: var(--accent);
+  width: 0.9rem;
+  height: 0.9rem;
 }
 
 .app-form-select-chevron {

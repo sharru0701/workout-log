@@ -794,7 +794,7 @@ export default function WorkoutRecordPage() {
         <>
           <section className="grid gap-2">
             <h2 className="ios-section-heading">선택된 플랜</h2>
-            <article className="motion-card rounded-2xl border p-4 grid gap-2">
+            <article className="motion-card rounded-2xl border p-4 grid gap-3">
               <strong>{selectedPlan?.name ?? draft.session.planName}</strong>
               <span className="ui-card-label">
                 기반 프로그램: {inferProgramNameFromPlanName(draft.session.planName)}
