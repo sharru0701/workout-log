@@ -1046,7 +1046,10 @@ export default function StatsPage() {
   const refreshStatsPage = useCallback(async () => {
     setRefreshTick((prev) => prev + 1);
   }, []);
-  const pullToRefresh = usePullToRefresh({ onRefresh: refreshStatsPage });
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: refreshStatsPage,
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
 
   useEffect(() => {
     if (from) return;
@@ -1125,7 +1128,7 @@ export default function StatsPage() {
         completeLabel="통계 갱신 완료"
       />
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate" data-pull-refresh-trigger="true">
         <div className="ios-section-heading">기본 흐름</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRESET_RANGES.map((d, idx) => (

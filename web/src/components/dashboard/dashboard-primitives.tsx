@@ -1,4 +1,4 @@
-import { useId, type ReactNode } from "react";
+import { useId, type HTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
 
 type DashboardScreenProps = {
@@ -37,6 +37,7 @@ type DashboardSectionProps = {
   children: ReactNode;
   className?: string;
   titleId?: string;
+  headerTrigger?: boolean;
 };
 
 type DashboardActionGridProps = {
@@ -62,7 +63,7 @@ export type DashboardActionItem = DashboardActionCardProps & {
   key?: string;
 };
 
-type DashboardSurfaceProps = {
+type DashboardSurfaceProps = HTMLAttributes<HTMLDivElement> & {
   children: ReactNode;
   className?: string;
 };
@@ -174,10 +175,17 @@ export function DashboardMetricStrip({ items, className }: DashboardMetricStripP
   );
 }
 
-export function DashboardSection({ title, description, children, className, titleId }: DashboardSectionProps) {
+export function DashboardSection({
+  title,
+  description,
+  children,
+  className,
+  titleId,
+  headerTrigger = false,
+}: DashboardSectionProps) {
   return (
     <section className={cx("app-dashboard-section", className)}>
-      <div className="app-dashboard-section-head">
+      <div className="app-dashboard-section-head" data-pull-refresh-trigger={headerTrigger ? "true" : undefined}>
         <h2 id={titleId} className="app-dashboard-section-title">
           {title}
         </h2>
@@ -258,6 +266,6 @@ export function DashboardActionSection({
   );
 }
 
-export function DashboardSurface({ children, className }: DashboardSurfaceProps) {
-  return <div className={cx("app-dashboard-surface", className)}>{children}</div>;
+export function DashboardSurface({ children, className, ...rest }: DashboardSurfaceProps) {
+  return <div className={cx("app-dashboard-surface", className)} {...rest}>{children}</div>;
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate } from "@/lib/session-key";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { buildTodayLogHref } from "@/lib/workout-links";
-import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 
 type Plan = {
   id: string;
@@ -176,6 +178,7 @@ export default function CalendarPage() {
   const [loading, setLoading] = useState(true);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -191,6 +194,12 @@ export default function CalendarPage() {
   }, [orderedPlans, planQuery]);
   const anchorMonthKey = useMemo(() => monthStart(anchorDate).slice(0, 7), [anchorDate]);
   const cells = useMemo(() => monthGrid(anchorDate), [anchorDate]);
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      setRefreshTick((prev) => prev + 1);
+    },
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
 
   // Load plans
   useEffect(() => {
@@ -214,7 +223,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshTick]);
 
   // Load sessions for selected plan
   useEffect(() => {
@@ -239,7 +248,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [planId]);
+  }, [planId, refreshTick]);
 
   useEffect(() => {
     if (!planId) {
@@ -275,7 +284,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [planId, selectedDate, timezone]);
+  }, [planId, refreshTick, selectedDate, timezone]);
 
   // Build lookup maps
   const generatedByDate = useMemo(() => {
@@ -339,10 +348,17 @@ export default function CalendarPage() {
       : APP_ROUTES.todayLog;
 
   return (
-    <div className="native-page native-page-enter tab-screen ios-cal-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen ios-cal-screen momentum-scroll" {...pullToRefresh.bind}>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="캘린더 새로고침 중..."
+        completeLabel="캘린더 갱신 완료"
+      />
       {/* Plan selector bar */}
       {plans.length > 0 && (
-        <div className="ios-cal-plan-bar">
+        <div className="ios-cal-plan-bar" data-pull-refresh-trigger="true">
           <button
             type="button"
             className="haptic-tap app-select-row app-select-row--standalone app-select-row-button ios-cal-plan-button"
@@ -368,7 +384,7 @@ export default function CalendarPage() {
       )}
 
       {/* Month navigation header */}
-      <div className="ios-cal-header">
+      <div className="ios-cal-header" data-pull-refresh-trigger="true">
         <button
           className="ios-cal-nav-btn"
           onClick={() => shiftMonth(-1)}

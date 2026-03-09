@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import {
   BaseGroupedList,
   NavigationRow,
@@ -7,6 +9,7 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 const rows = [
   {
@@ -68,13 +71,33 @@ const rows = [
 ];
 
 export function SettingsHomeContent({ className = "" }: { className?: string }) {
+  const router = useRouter();
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: () => {
+      router.refresh();
+    },
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
+
   return (
-    <div className={`native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll ${className}`.trim()}>
+    <div
+      className={`native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll ${className}`.trim()}
+      {...pullToRefresh.bind}
+    >
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="설정 새로고침 중..."
+        completeLabel="설정 다시 확인 완료"
+      />
       <section className="grid gap-2">
-        <SectionHeader
-          title="Settings"
-          description="iOS Settings Form + Section 패턴으로 설정 항목을 구성합니다."
-        />
+        <div data-pull-refresh-trigger="true">
+          <SectionHeader
+            title="Settings"
+            description="iOS Settings Form + Section 패턴으로 설정 항목을 구성합니다."
+          />
+        </div>
         <BaseGroupedList ariaLabel="Settings menu">
           {rows.map((row) => (
             <NavigationRow

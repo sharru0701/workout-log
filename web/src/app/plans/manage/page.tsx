@@ -96,6 +96,7 @@ function PlansManagePageContent() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
+    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   function openManageSheet(plan: Plan) {
@@ -199,6 +200,7 @@ function PlansManagePageContent() {
         <DashboardSection
           title="플랜 목록"
           description="진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요."
+          headerTrigger
         >
           {plans.length > 0 || searchQuery.trim().length > 0 ? (
             <DashboardSurface>

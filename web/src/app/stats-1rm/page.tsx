@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 type ExerciseOption = {
   id: string;
@@ -311,6 +313,14 @@ export default function Stats1RMPage() {
     }
   }, []);
 
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      await loadFilterOptions();
+      setRefreshTick((prev) => prev + 1);
+    },
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
+
   useEffect(() => {
     void loadFilterOptions();
   }, [loadFilterOptions]);
@@ -393,11 +403,19 @@ export default function Stats1RMPage() {
   const showChartSection = hasChartData;
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="1RM 통계 새로고침 중..."
+        completeLabel="1RM 통계 갱신 완료"
+      />
       {hasResolvedFilterOptions && (
         <DashboardSection
           title="필터 요약"
           description="현재 선택된 운동, 기간, 프로그램 범위를 상단 칩으로 유지합니다."
+          headerTrigger
         >
           <DashboardSurface className="grid gap-3">
             <div className="stats-filter-chip-row">

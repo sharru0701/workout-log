@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { parseSessionKey } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
   computeBodyweightTotalLoadKg,
@@ -472,7 +474,7 @@ function ExerciseRow({
 
 export default function WorkoutRecordPage() {
   const router = useRouter();
-  const { alert } = useAppDialog();
+  const { alert, confirm } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     [],
@@ -1094,12 +1096,65 @@ export default function WorkoutRecordPage() {
     }
   }, [draft, programEntryState, router, visibleExercises, workoutPreferences.bodyweightKg]);
 
+  const refreshRecordPage = useCallback(async () => {
+    if (workflowState === "saving") return;
+
+    if (workflowState === "editing") {
+      const shouldReload = await confirm({
+        title: "입력 내용 다시 불러오기",
+        message: "저장하지 않은 변경사항이 사라집니다.\n지금 화면 데이터를 다시 불러올까요?",
+        confirmText: "다시 불러오기",
+        cancelText: "취소",
+      });
+      if (!shouldReload) return;
+    }
+
+    const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
+    const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
+    if (query.logId) {
+      await loadWorkoutContext({
+        planId: resolvedPlanId,
+        planName: resolvedPlanName,
+        dateKey: query.hasExplicitDate ? query.date : "",
+        preferences: workoutPreferences,
+        planAutoProgression: selectedPlan?.params?.autoProgression === true,
+        planSchedule: selectedPlan?.params?.schedule,
+        planParams: selectedPlan?.params ?? null,
+        logId: query.logId,
+      });
+      return;
+    }
+
+    if (!resolvedPlanId) return;
+    await loadWorkoutContext({
+      planId: resolvedPlanId,
+      planName: resolvedPlanName,
+      dateKey: query.date,
+      preferences: workoutPreferences,
+      planAutoProgression: selectedPlan?.params?.autoProgression === true,
+      planSchedule: selectedPlan?.params?.schedule,
+      planParams: selectedPlan?.params ?? null,
+    });
+  }, [confirm, draft, loadWorkoutContext, query, selectedPlan, workoutPreferences, workflowState]);
+
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: refreshRecordPage,
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
+
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
   const noPlan = isPlansSettled && !error && plans.length === 0 && !query.logId;
   const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="기록 화면 새로고침 중..."
+        completeLabel="기록 화면 갱신 완료"
+      />
       <LoadingStateRows
         active={loading}
         delayMs={160}
@@ -1150,7 +1205,7 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <section className="grid grid-cols-1 gap-2">
+          <section className="grid grid-cols-1 gap-2" data-pull-refresh-trigger="true">
             <h2 className="ios-section-heading">선택된 플랜</h2>
             <article className="motion-card rounded-2xl border p-4 grid grid-cols-1 gap-2">
               <button

@@ -453,7 +453,10 @@ export default function WorkoutTodayPage() {
   const refreshPageData = useCallback(async () => {
     setRefreshTick((prev) => prev + 1);
   }, [refreshTick]);
-  const pullToRefresh = usePullToRefresh({ onRefresh: refreshPageData });
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: refreshPageData,
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
 
   function applyRecentSessionSelection(id: string) {
     setSelectedRecentSessionId(id);
@@ -1345,7 +1348,7 @@ export default function WorkoutTodayPage() {
         completeLabel="운동 데이터 갱신 완료"
       />
 
-      <div className="motion-card rounded-2xl border p-4 space-y-3">
+      <div className="motion-card rounded-2xl border p-4 space-y-3" data-pull-refresh-trigger="true">
         <div className="ios-section-heading">기록 모드</div>
         <div className="grid grid-cols-2 gap-2">
           <button

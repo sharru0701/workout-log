@@ -228,6 +228,7 @@ function PlanHistoryPageContent() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
+    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   const loadedLogCount = logs.length;
@@ -249,7 +250,7 @@ function PlanHistoryPageContent() {
         completeLabel="플랜 히스토리 갱신 완료"
       />
 
-      <section className="grid gap-2">
+      <section className="grid gap-2" data-pull-refresh-trigger="true">
         <div className="ios-section-heading">플랜 수행 히스토리</div>
         <p className="text-sm text-neutral-600">
           플랜별 수행 로그를 모아보고, 각 항목에서 세션 상세 화면으로 이동할 수 있습니다.

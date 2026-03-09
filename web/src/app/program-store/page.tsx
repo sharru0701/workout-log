@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -11,6 +12,7 @@ import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } fro
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
+import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import {
   createEmptyExerciseDraft,
   extractOneRmTargetsFromTemplate,
@@ -654,6 +656,13 @@ export default function ProgramStorePage() {
     void loadExerciseOptions();
   }, [loadExerciseOptions]);
 
+  const pullToRefresh = usePullToRefresh({
+    onRefresh: async () => {
+      await Promise.all([loadStore(), loadExerciseOptions()]);
+    },
+    triggerSelector: "[data-pull-refresh-trigger]",
+  });
+
   useEffect(() => {
     if (startProgramDraft) return;
     oneRmRecommendationControllerRef.current?.abort();
@@ -1089,7 +1098,14 @@ export default function ProgramStorePage() {
   const hasStoreQuery = storeQuery.trim().length > 0;
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
+    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="스토어 새로고침 중..."
+        completeLabel="스토어 갱신 완료"
+      />
       <LoadingStateRows
         active={loading}
         delayMs={160}
@@ -1105,7 +1121,7 @@ export default function ProgramStorePage() {
       <NoticeStateRows message={notice} label="프로그램 안내" />
 
       {listItems.length > 0 || hasStoreQuery ? (
-        <DashboardSurface>
+        <DashboardSurface data-pull-refresh-trigger="true">
           <div className="grid gap-1">
             <span className="ui-card-label">스토어 검색</span>
             <div className="app-search-shell" aria-label="스토어 검색 입력">
@@ -1146,7 +1162,11 @@ export default function ProgramStorePage() {
       />
 
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
-      <DashboardSection title="공식 프로그램" description="검증된 근력 훈련 프로그램 라이브러리">
+      <DashboardSection
+        title="공식 프로그램"
+        description="검증된 근력 훈련 프로그램 라이브러리"
+        headerTrigger
+      >
         <EmptyStateRows
           when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
           label="표시할 프로그램이 없습니다"

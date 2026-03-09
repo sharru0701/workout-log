@@ -8,6 +8,7 @@ type PullToRefreshOptions = {
   threshold?: number;
   maxPull?: number;
   completeDelayMs?: number;
+  triggerSelector?: string;
 };
 
 export type PullToRefreshStatus = "idle" | "pulling" | "armed" | "refreshing" | "complete";
@@ -17,6 +18,7 @@ export function usePullToRefresh({
   threshold = 68,
   maxPull = 108,
   completeDelayMs = 720,
+  triggerSelector,
 }: PullToRefreshOptions) {
   const [pullOffset, setPullOffset] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -54,11 +56,16 @@ export function usePullToRefresh({
     setIsCompleting(false);
     const target = event.currentTarget;
     if (target.scrollTop > 0) return;
+    if (triggerSelector) {
+      const source = event.target instanceof Element ? event.target : null;
+      const trigger = source?.closest(triggerSelector);
+      if (!trigger || !target.contains(trigger)) return;
+    }
     startXRef.current = event.touches[0]?.clientX ?? null;
     startYRef.current = event.touches[0]?.clientY ?? null;
     isPullingRef.current = startYRef.current !== null;
     scrollTargetRef.current = target;
-  }, [clearCompletionTimeout, isRefreshing]);
+  }, [clearCompletionTimeout, isRefreshing, triggerSelector]);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isPullingRef.current || startYRef.current === null || isRefreshing) return;

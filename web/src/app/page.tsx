@@ -45,6 +45,7 @@ export default function HomePage() {
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: loadHomeData,
+    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   useEffect(() => {

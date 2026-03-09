@@ -22,19 +22,6 @@ function BoltIcon(props: ActionIconProps) {
   );
 }
 
-function CalendarIcon(props: ActionIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M7.5 3.75v3" />
-      <path d="M16.5 3.75v3" />
-      <path d="M4.5 9h15" />
-      <rect x="4.5" y="5.25" width="15" height="14.25" rx="2.25" />
-      <path d="M8.5 12.5h3" />
-      <path d="M8.5 16h7" />
-    </svg>
-  );
-}
-
 function PlanIcon(props: ActionIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
@@ -130,7 +117,7 @@ export function HomeDashboard({ data }: { data: HomeData }) {
   return (
     <>
       <section className="home-dashboard-section">
-        <div className="home-dashboard-section-head">
+        <div className="home-dashboard-section-head" data-pull-refresh-trigger="true">
           <h2 className="home-dashboard-section-title">빠른 시작</h2>
           <p className="home-dashboard-section-copy">실제 앱 흐름에 맞춰 프로그램 준비, 오늘 운동 시작, 커스텀 프로그램 만들기를 가장 먼저 배치했습니다.</p>
         </div>
