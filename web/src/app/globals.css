@@ -1076,26 +1076,44 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-1) var(--space-3) var(--space-2);
+  padding: var(--space-1) var(--space-4) var(--space-1);
 }
 
-.ios-cal-month-label {
-  font-size: 1.2rem;
+.ios-cal-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.ios-cal-month-label-large {
+  font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
   background: none;
   border: none;
   cursor: pointer;
-  padding: var(--space-1) var(--space-2);
-  border-radius: var(--radius-md);
-  line-height: 1;
-  transition: background var(--duration-fast) var(--ease-standard);
+  padding: 0;
+  line-height: 1.1;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 @media (hover: hover) {
-  .ios-cal-month-label:hover {
-    background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  .ios-cal-month-label-large:hover {
+    opacity: 0.75;
   }
+}
+
+.ios-cal-year-label {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  line-height: 1;
+}
+
+.ios-cal-header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
 }
 
 .ios-cal-nav-btn {
@@ -1156,7 +1174,7 @@ button {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   padding: 0 var(--space-2);
-  gap: 0.18rem;
+  gap: 0.1rem;
 }
 
 .ios-cal-day {
@@ -1164,15 +1182,15 @@ button {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding-top: 0.22rem;
-  padding-bottom: 0.28rem;
-  min-height: 3rem;
+  padding-top: 0.15rem;
+  padding-bottom: 0.15rem;
+  min-height: 2.4rem;
   border: none;
   background: transparent;
   cursor: pointer;
   border-radius: var(--radius-sm);
   transition: background var(--duration-fast) var(--ease-standard);
-  gap: 0.18rem;
+  gap: 0.12rem;
 }
 
 @media (hover: hover) {
@@ -1185,10 +1203,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.85rem;
+  height: 1.85rem;
   border-radius: var(--radius-pill);
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   font-weight: 500;
   line-height: 1;
   color: var(--text-primary);
@@ -1243,7 +1261,7 @@ button {
 .ios-cal-divider {
   height: 1px;
   background: color-mix(in srgb, var(--border-subtle) 55%, transparent);
-  margin: var(--space-3) var(--space-4) 0;
+  margin: var(--space-2) var(--space-4) 0;
 }
 
 /* Detail panel */
