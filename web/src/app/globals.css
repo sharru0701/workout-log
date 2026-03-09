@@ -1093,8 +1093,10 @@ button {
   transition: background var(--duration-fast) var(--ease-standard);
 }
 
-.ios-cal-month-label:hover {
-  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+@media (hover: hover) {
+  .ios-cal-month-label:hover {
+    background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  }
 }
 
 .ios-cal-nav-btn {
@@ -1123,8 +1125,10 @@ button {
   height: 1rem;
 }
 
-.ios-cal-nav-btn:hover {
-  background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+@media (hover: hover) {
+  .ios-cal-nav-btn:hover {
+    background: color-mix(in srgb, var(--accent) 18%, var(--bg-elevated));
+  }
 }
 
 /* Weekday labels */
@@ -1592,10 +1596,12 @@ button {
   }
 }
 
-.app-bottom-nav-tab:hover {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
-  transform: translateY(-1px);
+@media (hover: hover) {
+  .app-bottom-nav-tab:hover {
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--bg-elevated) 70%, transparent);
+    transform: translateY(-1px);
+  }
 }
 
 .app-bottom-nav-tab.is-active {
@@ -3569,10 +3575,12 @@ body {
     transform var(--duration-fast) var(--ease-spring);
 }
 
-.app-bottom-nav-tab:hover {
-  transform: translateY(-1px) scale(1.02);
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+@media (hover: hover) {
+  .app-bottom-nav-tab:hover {
+    transform: translateY(-1px) scale(1.02);
+    color: var(--text-primary);
+    background: color-mix(in srgb, var(--bg-tertiary) 60%, transparent);
+  }
 }
 
 .app-bottom-nav-tab.is-active {
