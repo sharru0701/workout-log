@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { NextResponse } from "next/server";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import pkg from "../../../../../package.json";
+import pkg from "../../../../package.json";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
