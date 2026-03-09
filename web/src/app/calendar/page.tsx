@@ -80,7 +80,7 @@ function monthGrid(dateOnly: string) {
   const d = dateOnlyToUtcDate(start);
   const offset = d.getUTCDay(); // Sunday start
   const gridStart = addDays(start, -offset);
-  return Array.from({ length: 42 }, (_, i) => addDays(gridStart, i));
+  return Array.from({ length: 35 }, (_, i) => addDays(gridStart, i));
 }
 
 function dayOfMonth(dateOnly: string) {
@@ -385,43 +385,46 @@ export default function CalendarPage() {
 
       {/* Month navigation header */}
       <div className="ios-cal-header" data-pull-refresh-trigger="true">
-        <button
-          className="ios-cal-nav-btn"
-          onClick={() => shiftMonth(-1)}
-          aria-label="이전 달"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        <div className="ios-cal-header-left">
+          <button className="ios-cal-month-label-large" onClick={goToToday} aria-label="오늘로 이동">
+            {MONTH_NAMES[getMonth(anchorDate) - 1]}
+          </button>
+          <span className="ios-cal-year-label">{getYear(anchorDate)}년</span>
+        </div>
+        <div className="ios-cal-header-right">
+          <button
+            className="ios-cal-nav-btn"
+            onClick={() => shiftMonth(-1)}
+            aria-label="이전 달"
           >
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-
-        <button className="ios-cal-month-label" onClick={goToToday} aria-label="오늘로 이동">
-          {getYear(anchorDate)}년 {MONTH_NAMES[getMonth(anchorDate) - 1]}
-        </button>
-
-        <button
-          className="ios-cal-nav-btn"
-          onClick={() => shiftMonth(1)}
-          aria-label="다음 달"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <button
+            className="ios-cal-nav-btn"
+            onClick={() => shiftMonth(1)}
+            aria-label="다음 달"
           >
-            <path d="M9 18l6-6-6-6" />
-          </svg>
-        </button>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Weekday header row */}
