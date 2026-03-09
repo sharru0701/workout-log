@@ -1174,8 +1174,10 @@ button {
   gap: 0.18rem;
 }
 
-.ios-cal-day:hover:not(.is-today):not(.is-selected) {
-  background: color-mix(in srgb, var(--bg-elevated) 60%, transparent);
+@media (hover: hover) {
+  .ios-cal-day:hover:not(.is-today):not(.is-selected) {
+    background: color-mix(in srgb, var(--bg-elevated) 60%, transparent);
+  }
 }
 
 .ios-cal-day-num {
