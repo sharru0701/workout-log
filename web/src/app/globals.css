@@ -4945,7 +4945,7 @@ html {
   bottom: 0;
   left: 0;
   width: 100%;
-  --bottom-nav-track-padding: 0.56rem;
+  --bottom-nav-track-padding: 1.8rem;
   --bottom-nav-track-gap: 0.32rem;
   padding: 0.5rem var(--bottom-nav-track-padding) calc(0.5rem + env(safe-area-inset-bottom));
   border-radius: var(--radius-surface) var(--radius-surface) 0 0;
