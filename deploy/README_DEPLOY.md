@@ -10,18 +10,22 @@ Start:
     cd /opt/workout-log/deploy
     docker compose up -d --build postgres
     docker compose run --rm migrate
+    docker compose run --rm -T migrate node scripts/seed-if-needed.mjs
     docker compose up -d web
     docker compose ps
     docker compose logs -f web
 
 Notes:
     - DB migration is executed by dedicated `migrate` job before web replacement.
+    - Seed sync is executed before web replacement when base seed data is missing or the seed hash changed.
     - web startup migration is disabled by default (`WEB_DB_MIGRATE_ENABLED=0`) to avoid multi-replica race.
-    - deploy pipeline/restart script both run dedicated migration job before web 교체.
+    - deploy pipeline/restart script both run dedicated migration + seed sync job before web 교체.
     - Look for log lines:
       - [migrate] run started
       - [migrate] advisory lock acquired
       - [migrate] migrations applied
+      - [seed-sync] running db seed
+      - [seed-sync] seed completed
 
 Stop:
     cd /opt/workout-log/deploy
@@ -132,6 +136,7 @@ Notes:
     cd deploy
     docker compose pull web migrate
     docker compose run --rm migrate
+    docker compose run --rm -T migrate node scripts/seed-if-needed.mjs
     docker compose up -d --no-deps web
 
 ------------------------------------------------------------
@@ -146,6 +151,7 @@ Notes:
 - Deploy behavior:
   - deploys by commit SHA image tag
   - runs dedicated migration job first (`docker compose run --rm migrate`)
+  - runs seed sync before web replacement when base data is missing or the seed hash changed
   - runs post-deploy healthcheck on deploy server (default: deep health with required tables)
   - optional migration telemetry alert check (`/api/ops/migrations`)
   - on healthcheck failure, rolls back to last successful SHA automatically
@@ -178,6 +184,11 @@ Restart + pull latest configured tag:
 
     cd /opt/workout-log/deploy
     PULL_WEB=1 ./scripts/restart_workoutlog.sh
+
+Restart without seed sync (only for emergency/manual recovery):
+
+    cd /opt/workout-log/deploy
+    SEED_SYNC_FIRST=0 ./scripts/restart_workoutlog.sh
 
 Restart without one-shot migration (not recommended):
 

@@ -4,6 +4,7 @@ set -euo pipefail
 DEPLOY_DIR="${DEPLOY_DIR:-/opt/workout-log/deploy}"
 PULL_WEB="${PULL_WEB:-0}"
 MIGRATE_FIRST="${MIGRATE_FIRST:-1}"
+SEED_SYNC_FIRST="${SEED_SYNC_FIRST:-1}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:3001/api/health?checkMigrations=1&requiredTables=program_template,user_setting,ux_event_log,migration_run_log}"
 OPS_TOKEN="${OPS_TOKEN:-${OPS_MIGRATION_TOKEN:-}}"
 MIGRATION_ALERT_LOOKBACK_MINUTES="${MIGRATION_ALERT_LOOKBACK_MINUTES:-120}"
@@ -52,6 +53,11 @@ fi
 if [[ "${MIGRATE_FIRST}" == "1" ]]; then
   echo "[restart] running dedicated migration job"
   docker compose run --rm migrate
+fi
+
+if [[ "${SEED_SYNC_FIRST}" == "1" ]]; then
+  echo "[restart] syncing seed data when base data is missing or seed hash changed"
+  docker compose run -e DB_SEED_RUNNER=ops-restart --rm -T migrate node scripts/seed-if-needed.mjs </dev/null
 fi
 
 echo "[restart] restarting stack"
