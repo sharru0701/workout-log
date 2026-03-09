@@ -347,7 +347,22 @@ export function PwaRegister() {
 
     const register = async () => {
       try {
-        const registration = await registerServiceWorker(currentBuildIdRef.current);
+        // Check the currently active SW build ID before registering.
+        // If the page loaded with stale cached HTML after an SW update,
+        // currentBuildIdRef.current holds the old build ID. Registering that
+        // old URL would install a downgrade SW in "waiting" state, which then
+        // bypasses shouldIgnoreBuildId (since currentBuildIdRef was already
+        // updated to the new build ID) and triggers a spurious update banner loop.
+        const existingRegistration = await getSettledServiceWorkerRegistration();
+        const existingActiveBuildId = getBuildIdFromServiceWorkerScriptUrl(
+          existingRegistration?.active?.scriptURL,
+        );
+        const buildIdToRegister = existingActiveBuildId ?? currentBuildIdRef.current;
+        if (existingActiveBuildId) {
+          currentBuildIdRef.current = existingActiveBuildId;
+        }
+
+        const registration = await registerServiceWorker(buildIdToRegister);
         await registration.update().catch(() => undefined);
         const settledRegistration = await getSettledServiceWorkerRegistration();
         const activeBuildId = getBuildIdFromServiceWorkerScriptUrl(settledRegistration?.active?.scriptURL);
