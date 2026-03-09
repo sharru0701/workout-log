@@ -4236,10 +4236,12 @@ textarea::placeholder {
   }
 
   .app-bottom-nav {
-    width: min(calc(100% - 0.94rem), var(--layout-max));
-    padding: 0.36rem;
+    width: 100%;
+    left: 0;
+    padding: 0.36rem 0.36rem calc(0.36rem + env(safe-area-inset-bottom));
     gap: 0.25rem;
-    bottom: calc(0.72rem + env(safe-area-inset-bottom));
+    bottom: 0;
+    border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   }
 
   .app-bottom-nav-tab {
@@ -4295,7 +4297,9 @@ textarea::placeholder {
   }
 
   .app-bottom-nav {
-    width: min(calc(100% - 0.8rem), var(--layout-max));
+    width: 100%;
+    left: 0;
+    bottom: 0;
   }
 
   .app-bottom-nav-tab {
@@ -4626,11 +4630,11 @@ body {
 }
 
 .app-bottom-nav {
-  background: color-mix(in srgb, var(--color-fill-surface) 94%, transparent);
-  border-color: color-mix(in srgb, var(--color-separator) 46%, transparent);
+  background: rgba(13,17,25,0.88);
+  border-color: rgba(255,255,255,0.06);
   box-shadow: none;
-  -webkit-backdrop-filter: blur(12px) saturate(1.02);
-  backdrop-filter: blur(12px) saturate(1.02);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  backdrop-filter: blur(40px) saturate(200%);
 }
 
 .app-bottom-nav-tab.is-active {
@@ -4938,20 +4942,20 @@ html {
 }
 
 .app-bottom-nav {
-  bottom: calc(1.72rem + env(safe-area-inset-bottom));
-  width: min(calc(100% - 1.38rem), var(--layout-max));
+  bottom: 0;
+  left: 0;
+  width: 100%;
   --bottom-nav-track-padding: 0.56rem;
   --bottom-nav-track-gap: 0.32rem;
-  padding: 0.5rem var(--bottom-nav-track-padding);
-  border-radius: var(--radius-surface);
+  padding: 0.5rem var(--bottom-nav-track-padding) calc(0.5rem + env(safe-area-inset-bottom));
+  border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   gap: var(--bottom-nav-track-gap);
   border: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
   box-shadow: none;
-  background: color-mix(
-    in srgb,
-    var(--surface-card-bg, var(--color-fill-surface, var(--bg-surface))) 92%,
-    transparent
-  );
+  background: rgba(13,17,25,0.88);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  backdrop-filter: blur(40px) saturate(200%);
   overflow: hidden;
   isolation: isolate;
 }
