@@ -97,6 +97,16 @@ async function fetchLatestVersion() {
   return (await response.json().catch(() => null)) as VersionPayload | null;
 }
 
+async function getSettledServiceWorkerRegistration() {
+  if (typeof window === "undefined") return null;
+  if (!("serviceWorker" in navigator)) return null;
+  const registration = await navigator.serviceWorker.getRegistration().catch(() => null);
+  if (registration?.active || registration?.waiting || registration?.installing) {
+    return registration;
+  }
+  return navigator.serviceWorker.ready.catch(() => null);
+}
+
 export function PwaRegister() {
   const disableServiceWorker = process.env.NEXT_PUBLIC_DISABLE_SW === "1";
   const canUseInstallPrompt = process.env.NODE_ENV === "production";
@@ -185,7 +195,7 @@ export function PwaRegister() {
         const latestBuildId = String(latestVersion?.buildId ?? "").trim();
         if (!latestBuildId) return;
 
-        const registration = await navigator.serviceWorker.getRegistration();
+        const registration = await getSettledServiceWorkerRegistration();
         const activeBuildId = getBuildIdFromServiceWorkerScriptUrl(registration?.active?.scriptURL);
         const waitingBuildId = getBuildIdFromServiceWorkerScriptUrl(registration?.waiting?.scriptURL);
         if (registration) {
@@ -197,6 +207,10 @@ export function PwaRegister() {
           }
         }
 
+        if (latestBuildId === activeBuildId && latestBuildId) {
+          currentBuildIdRef.current = latestBuildId;
+        }
+
         if (
           latestBuildId === currentBuildIdRef.current ||
           latestBuildId === activeBuildId ||
@@ -204,6 +218,13 @@ export function PwaRegister() {
         ) {
           setAvailableUpdateBuild(null);
           setUpdateReady(false);
+          if (
+            latestBuildId &&
+            recentlyAppliedBuildIdRef.current &&
+            latestBuildId === recentlyAppliedBuildIdRef.current
+          ) {
+            clearAppliedBuildMarker();
+          }
           return;
         }
 
@@ -280,11 +301,11 @@ export function PwaRegister() {
 
     currentBuildIdRef.current = getCurrentBuildId();
     const appliedBuildId = readAppliedBuildMarker();
-    if (appliedBuildId === currentBuildIdRef.current) {
+    if (appliedBuildId) {
       recentlyAppliedBuildIdRef.current = appliedBuildId;
-      clearAppliedBuildMarker();
-    } else if (appliedBuildId) {
-      clearAppliedBuildMarker();
+      if (appliedBuildId === currentBuildIdRef.current) {
+        clearAppliedBuildMarker();
+      }
     }
 
     const onControllerChange = () => {
@@ -328,6 +349,19 @@ export function PwaRegister() {
       try {
         const registration = await registerServiceWorker(currentBuildIdRef.current);
         await registration.update().catch(() => undefined);
+        const settledRegistration = await getSettledServiceWorkerRegistration();
+        const activeBuildId = getBuildIdFromServiceWorkerScriptUrl(settledRegistration?.active?.scriptURL);
+        if (activeBuildId) {
+          currentBuildIdRef.current = activeBuildId;
+          if (
+            recentlyAppliedBuildIdRef.current &&
+            activeBuildId === recentlyAppliedBuildIdRef.current
+          ) {
+            clearAppliedBuildMarker();
+            setAvailableUpdateBuild(null);
+            setUpdateReady(false);
+          }
+        }
         void checkForAppUpdate();
       } catch {
         // Fail silently; app should still function without offline support.
@@ -360,7 +394,7 @@ export function PwaRegister() {
       window.removeEventListener("online", onOnline);
       navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
     };
-  }, [checkForAppUpdate, disableServiceWorker, registerServiceWorker]);
+  }, [checkForAppUpdate, disableServiceWorker, registerServiceWorker, setAvailableUpdateBuild]);
 
   if (disableServiceWorker) return null;
 
@@ -378,7 +412,7 @@ export function PwaRegister() {
     setDismissedUpdateBuild(null);
     setIsCheckingForUpdate(true);
     try {
-      const registration = await navigator.serviceWorker.getRegistration();
+      const registration = await getSettledServiceWorkerRegistration();
       if (registration) {
         observeRegistration(registration);
         const waitingBuildId = getBuildIdFromServiceWorkerScriptUrl(registration.waiting?.scriptURL);
