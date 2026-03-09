@@ -709,9 +709,9 @@ button {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  bottom: calc(0.2rem + env(safe-area-inset-bottom));
   z-index: 50;
-  width: min(calc(100% - var(--space-4)), var(--layout-max));
+  width: min(calc(100% - 2.5rem), var(--layout-max));
   display: grid;
   grid-template-columns: repeat(var(--bottom-nav-tabs-count, 5), minmax(0, 1fr));
   gap: var(--space-2);
@@ -3552,7 +3552,7 @@ body {
 }
 
 .app-bottom-nav {
-  bottom: calc(0.88rem + env(safe-area-inset-bottom));
+  bottom: calc(0.2rem + env(safe-area-inset-bottom));
   gap: 0.28rem;
   padding: 0.42rem;
   border-radius: var(--radius-surface, 1.8rem);
