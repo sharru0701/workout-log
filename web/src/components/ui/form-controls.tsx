@@ -184,6 +184,11 @@ export function AppNumberStepper({
   step = 1,
   onChange,
   inputMode = "numeric",
+  placeholder,
+  allowEmpty = false,
+  displayValue,
+  onDisplayValueChange,
+  complete = false,
 }: {
   label: string;
   value: number;
@@ -192,9 +197,16 @@ export function AppNumberStepper({
   step?: number;
   onChange: (next: number) => void;
   inputMode?: "numeric" | "decimal";
+  placeholder?: string;
+  allowEmpty?: boolean;
+  displayValue?: string;
+  onDisplayValueChange?: (next: string) => void;
+  complete?: boolean;
 }) {
   const [draftValue, setDraftValue] = useState(() => String(value));
   const [isEditing, setIsEditing] = useState(false);
+  const usesExternalDraftValue = typeof displayValue === "string" && typeof onDisplayValueChange === "function";
+  const resolvedDraftValue = usesExternalDraftValue ? displayValue : draftValue;
 
   const stepPrecision = useMemo(() => {
     const raw = String(step);
@@ -203,9 +215,21 @@ export function AppNumberStepper({
   }, [step]);
 
   useEffect(() => {
+    if (usesExternalDraftValue) return;
     if (isEditing) return;
     setDraftValue(String(value));
-  }, [isEditing, value]);
+  }, [isEditing, usesExternalDraftValue, value]);
+
+  const syncDraftValue = useCallback(
+    (next: string) => {
+      if (usesExternalDraftValue) {
+        onDisplayValueChange?.(next);
+        return;
+      }
+      setDraftValue(next);
+    },
+    [onDisplayValueChange, usesExternalDraftValue],
+  );
 
   const clampValue = useCallback(
     (next: number) => {
@@ -220,37 +244,45 @@ export function AppNumberStepper({
     (rawValue: string) => {
       const normalized = rawValue.trim();
       if (!normalized) {
-        setDraftValue(String(value));
+        if (allowEmpty) {
+          syncDraftValue("");
+          return;
+        }
+        syncDraftValue(String(value));
         return;
       }
       const parsed = Number(normalized);
       if (!Number.isFinite(parsed)) {
-        setDraftValue(String(value));
+        if (allowEmpty) {
+          syncDraftValue("");
+          return;
+        }
+        syncDraftValue(String(value));
         return;
       }
       const clamped = clampValue(parsed);
       onChange(clamped);
-      setDraftValue(String(clamped));
+      syncDraftValue(String(clamped));
     },
-    [clampValue, onChange, value],
+    [allowEmpty, clampValue, onChange, syncDraftValue, value],
   );
 
   const handleStepDown = useCallback(() => {
     const next = clampValue(value - step);
     setIsEditing(false);
-    setDraftValue(String(next));
+    syncDraftValue(String(next));
     onChange(next);
-  }, [clampValue, onChange, step, value]);
+  }, [clampValue, onChange, step, syncDraftValue, value]);
 
   const handleStepUp = useCallback(() => {
     const next = clampValue(value + step);
     setIsEditing(false);
-    setDraftValue(String(next));
+    syncDraftValue(String(next));
     onChange(next);
-  }, [clampValue, onChange, step, value]);
+  }, [clampValue, onChange, step, syncDraftValue, value]);
 
   return (
-    <label className="workout-stepper">
+    <label className={cx("workout-stepper", complete && "is-complete")}>
       <span className="ui-card-label">{label}</span>
       <div className="workout-stepper-control">
         <button
@@ -268,23 +300,27 @@ export function AppNumberStepper({
           min={min}
           max={max}
           step={step}
-          value={draftValue}
+          value={resolvedDraftValue}
+          placeholder={placeholder}
           onFocus={() => setIsEditing(true)}
           onBlur={() => {
             setIsEditing(false);
-            commitDraftValue(draftValue);
+            commitDraftValue(resolvedDraftValue);
           }}
           onKeyDown={(event) => {
             if (event.key !== "Enter") return;
             event.preventDefault();
-            commitDraftValue(draftValue);
+            commitDraftValue(resolvedDraftValue);
             event.currentTarget.blur();
           }}
           onChange={(event) => {
             const nextRaw = event.target.value;
-            setDraftValue(nextRaw);
+            syncDraftValue(nextRaw);
             const normalized = nextRaw.trim();
-            if (!normalized) return;
+            if (!normalized) {
+              if (!allowEmpty) return;
+              return;
+            }
             const parsed = Number(normalized);
             if (!Number.isFinite(parsed)) return;
             onChange(clampValue(parsed));

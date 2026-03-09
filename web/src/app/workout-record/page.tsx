@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput, AppTextarea } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextarea } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
@@ -22,6 +22,12 @@ import {
   toDefaultWorkoutPreferences,
   type WorkoutPreferences,
 } from "@/lib/settings/workout-preferences";
+import {
+  prepareWorkoutRecordDraftForEntry,
+  validateWorkoutRecordEntryState,
+  type WorkoutProgramExerciseEntryState,
+  type WorkoutProgramExerciseEntryStateMap,
+} from "@/lib/workout-record/entry-state";
 import {
   addUserExercise,
   createWorkoutRecordDraft,
@@ -202,12 +208,25 @@ function removeLastSetReps(values: number[]) {
   return next.slice(0, next.length - 1);
 }
 
+function createFallbackProgramEntryState(
+  exercise: WorkoutExerciseViewModel,
+  current?: WorkoutProgramExerciseEntryState,
+): WorkoutProgramExerciseEntryState {
+  return {
+    repsInputs: Array.from({ length: exercise.set.repsPerSet.length }, (_, index) => current?.repsInputs[index] ?? ""),
+    memoInput: current?.memoInput ?? "",
+    memoPlaceholder: current?.memoPlaceholder ?? "",
+  };
+}
+
 function ExerciseRow({
   exercise,
   minimumPlateIncrementKg,
   showMinimumPlateInfo,
   bodyweightKg,
+  programEntryState,
   onChangeWeight,
+  onChangeProgramSetInput,
   onChangeSetReps,
   onAddSet,
   onRemoveSet,
@@ -218,7 +237,9 @@ function ExerciseRow({
   minimumPlateIncrementKg: number;
   showMinimumPlateInfo: boolean;
   bodyweightKg: number | null;
+  programEntryState?: WorkoutProgramExerciseEntryState;
   onChangeWeight: (value: number) => void;
+  onChangeProgramSetInput?: (setIndex: number, value: string) => void;
   onChangeSetReps: (setIndex: number, value: number) => void;
   onAddSet: () => void;
   onRemoveSet: () => void;
@@ -228,6 +249,7 @@ function ExerciseRow({
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
   const isBodyweightExercise = isBodyweightExerciseName(exercise.exerciseName);
   const badgeMeta = workoutExerciseBadgeMeta(exercise.badge);
+  const usesProgramPlaceholders = Boolean(programEntryState);
   const circleActionButtonStyle = {
     width: "var(--touch-target)",
     height: "var(--touch-target)",
@@ -276,14 +298,9 @@ function ExerciseRow({
 
       <label className="grid gap-1">
         <span className="ui-card-label">운동종목</span>
-        <AppTextInput
-          variant="workout"
-          className="cursor-default"
-          value={exercise.exerciseName}
-          readOnly
-          aria-readonly="true"
-          tabIndex={-1}
-        />
+        <div className="workout-static-field" aria-label={`운동종목 ${exercise.exerciseName}`}>
+          <strong className="workout-static-field-value">{exercise.exerciseName}</strong>
+        </div>
       </label>
 
       <AppNumberStepper
@@ -301,17 +318,37 @@ function ExerciseRow({
 
       <div className="grid gap-2">
         <div className="grid gap-2">
-          {exercise.set.repsPerSet.map((setReps, index) => (
-            <AppNumberStepper
-              key={`${exercise.id}-set-${index}`}
-              label={`${index + 1}세트`}
-              value={setReps}
-              min={1}
-              max={100}
-              onChange={(value) => onChangeSetReps(index, value)}
-              inputMode="numeric"
-            />
-          ))}
+          {exercise.set.repsPerSet.map((setReps, index) => {
+            const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
+            const parsedSetValue = Number(rawSetValue);
+            const isSetComplete =
+              usesProgramPlaceholders &&
+              rawSetValue.length > 0 &&
+              Number.isFinite(parsedSetValue) &&
+              parsedSetValue >= 1 &&
+              parsedSetValue <= 100;
+
+            return (
+              <AppNumberStepper
+                key={`${exercise.id}-set-${index}`}
+                label={`${index + 1}세트`}
+                value={setReps}
+                min={1}
+                max={100}
+                onChange={(value) => onChangeSetReps(index, value)}
+                displayValue={usesProgramPlaceholders ? (programEntryState?.repsInputs[index] ?? "") : undefined}
+                onDisplayValueChange={
+                  usesProgramPlaceholders && onChangeProgramSetInput
+                    ? (value) => onChangeProgramSetInput(index, value)
+                    : undefined
+                }
+                allowEmpty={usesProgramPlaceholders}
+                placeholder={usesProgramPlaceholders ? String(setReps) : undefined}
+                complete={isSetComplete}
+                inputMode="numeric"
+              />
+            );
+          })}
         </div>
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -348,9 +385,9 @@ function ExerciseRow({
         <AppTextarea
           variant="workout"
           className="min-h-20"
-          value={exercise.note.memo}
+          value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
           onChange={(event) => onChangeMemo(event.target.value)}
-          placeholder="세트 메모를 입력하세요."
+          placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "세트 메모를 입력하세요." : "세트 메모를 입력하세요."}
         />
       </label>
     </article>
@@ -378,6 +415,7 @@ export default function WorkoutRecordPage() {
   const [exerciseOptionsLoading, setExerciseOptionsLoading] = useState(false);
   const [exerciseOptionsError, setExerciseOptionsError] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState<AddExerciseDraft>(createDefaultAddExerciseDraft);
+  const [programEntryState, setProgramEntryState] = useState<WorkoutProgramExerciseEntryStateMap>({});
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
 
   const selectedPlan = useMemo(
@@ -544,16 +582,19 @@ export default function WorkoutRecordPage() {
           apiGet<LogsResponse>(`/api/logs?planId=${encodeURIComponent(planId)}&limit=6`),
         ]);
 
-        setDraft(
+        const prepared = prepareWorkoutRecordDraftForEntry(
           applyWeightRulesToDraft(
             createWorkoutRecordDraft(sessionRes.session, planName),
             preferences,
           ),
         );
+        setDraft(prepared.draft);
+        setProgramEntryState(prepared.programEntryState);
         setLastSession(buildLastSessionSummary(logsRes.items ?? [], dateKey));
         setWorkflowState("idle");
       } catch (e: any) {
         setDraft(null);
+        setProgramEntryState({});
         setLastSession(null);
         setError(e?.message ?? "운동기록 화면 데이터를 불러오지 못했습니다.");
       } finally {
@@ -590,6 +631,7 @@ export default function WorkoutRecordPage() {
         if (activePlans.length === 0) {
           setSelectedPlanId("");
           setDraft(null);
+          setProgramEntryState({});
           setLastSession(null);
           setWorkflowState("idle");
           setSaveError(null);
@@ -614,6 +656,8 @@ export default function WorkoutRecordPage() {
         }
       } catch (e: any) {
         if (!cancelled) {
+          setDraft(null);
+          setProgramEntryState({});
           setError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
           setLoading(false);
         }
@@ -737,6 +781,12 @@ export default function WorkoutRecordPage() {
 
   const handleSave = useCallback(async () => {
     if (!draft) return;
+    const entryErrors = validateWorkoutRecordEntryState(visibleExercises, programEntryState);
+    if (entryErrors.length > 0) {
+      setSaveError(entryErrors[0] ?? "입력값을 확인해 주세요.");
+      setWorkflowState("editing");
+      return;
+    }
     const validation = validateWorkoutDraft(draft);
     if (!validation.valid) {
       setSaveError(validation.errors[0] ?? "입력값을 확인해 주세요.");
@@ -758,7 +808,7 @@ export default function WorkoutRecordPage() {
       setSaveError(e?.message ?? "운동기록 저장에 실패했습니다.");
       setWorkflowState("editing");
     }
-  }, [draft, router, workoutPreferences.bodyweightKg]);
+  }, [draft, programEntryState, router, visibleExercises, workoutPreferences.bodyweightKg]);
 
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
   const noPlan = isPlansSettled && !error && plans.length === 0;
@@ -855,6 +905,11 @@ export default function WorkoutRecordPage() {
                     }).source === "RULE"
                   }
                   bodyweightKg={workoutPreferences.bodyweightKg}
+                  programEntryState={
+                    exercise.source === "PROGRAM"
+                      ? createFallbackProgramEntryState(exercise, programEntryState[exercise.id])
+                      : undefined
+                  }
                   onChangeWeight={(value) => {
                     if (!Number.isFinite(value)) return;
                     const snapped = resolveWeightWithCurrentPreferences(
@@ -868,6 +923,20 @@ export default function WorkoutRecordPage() {
                     }
                     applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { weightKg: snapped } }));
                   }}
+                  onChangeProgramSetInput={(setIndex, value) => {
+                    setProgramEntryState((prev) => {
+                      const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
+                      const repsInputs = current.repsInputs.slice();
+                      repsInputs[setIndex] = value;
+                      return {
+                        ...prev,
+                        [exercise.id]: {
+                          ...current,
+                          repsInputs,
+                        },
+                      };
+                    });
+                  }}
                   onChangeSetReps={(setIndex, value) => {
                     const repsPerSet = patchSetRepsAtIndex(exercise.set.repsPerSet, setIndex, value);
                     if (exercise.source === "PROGRAM") {
@@ -879,6 +948,16 @@ export default function WorkoutRecordPage() {
                   onAddSet={() => {
                     const repsPerSet = appendSetReps(exercise.set.repsPerSet);
                     if (exercise.source === "PROGRAM") {
+                      setProgramEntryState((prev) => {
+                        const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
+                        return {
+                          ...prev,
+                          [exercise.id]: {
+                            ...current,
+                            repsInputs: [...current.repsInputs, ""],
+                          },
+                        };
+                      });
                       applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
                       return;
                     }
@@ -887,6 +966,16 @@ export default function WorkoutRecordPage() {
                   onRemoveSet={() => {
                     const repsPerSet = removeLastSetReps(exercise.set.repsPerSet);
                     if (exercise.source === "PROGRAM") {
+                      setProgramEntryState((prev) => {
+                        const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
+                        return {
+                          ...prev,
+                          [exercise.id]: {
+                            ...current,
+                            repsInputs: current.repsInputs.slice(0, Math.max(repsPerSet.length, 1)),
+                          },
+                        };
+                      });
                       applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
                       return;
                     }
@@ -894,6 +983,16 @@ export default function WorkoutRecordPage() {
                   }}
                   onChangeMemo={(value) => {
                     if (exercise.source === "PROGRAM") {
+                      setProgramEntryState((prev) => {
+                        const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
+                        return {
+                          ...prev,
+                          [exercise.id]: {
+                            ...current,
+                            memoInput: value,
+                          },
+                        };
+                      });
                       applyEditing((prev) => patchSeedExercise(prev, exercise.id, { note: { memo: value } }));
                       return;
                     }
