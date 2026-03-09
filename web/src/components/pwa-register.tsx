@@ -20,7 +20,9 @@ type VersionPayload = {
   ts?: string;
 };
 
-const UPDATE_POLL_INTERVAL_MS = 60_000;
+const UPDATE_POLL_INITIAL_DELAY_MS = 5_000;
+const UPDATE_POLL_INTERVAL_MS = 15_000;
+const APPLIED_BUILD_STORAGE_KEY = "workout-log:pwa-applied-build";
 
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
@@ -59,6 +61,30 @@ function getServiceWorkerScriptUrl(buildId?: string) {
   return `/sw.js?v=${encodeURIComponent(resolvedBuildId)}`;
 }
 
+function getBuildIdFromServiceWorkerScriptUrl(scriptUrl: string | null | undefined) {
+  if (!scriptUrl) return null;
+  try {
+    return new URL(scriptUrl, window.location.origin).searchParams.get("v")?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function readAppliedBuildMarker() {
+  if (typeof window === "undefined") return null;
+  return window.sessionStorage.getItem(APPLIED_BUILD_STORAGE_KEY);
+}
+
+function writeAppliedBuildMarker(buildId: string) {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.setItem(APPLIED_BUILD_STORAGE_KEY, buildId);
+}
+
+function clearAppliedBuildMarker() {
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(APPLIED_BUILD_STORAGE_KEY);
+}
+
 async function fetchLatestVersion() {
   const response = await fetch("/api/version", {
     cache: "no-store",
@@ -84,8 +110,30 @@ export function PwaRegister() {
   const [isCheckingForUpdate, setIsCheckingForUpdate] = useState(false);
   const isReloadingForUpdate = useRef(false);
   const currentBuildIdRef = useRef("dev");
+  const targetBuildIdRef = useRef<string | null>(null);
+  const recentlyAppliedBuildIdRef = useRef<string | null>(null);
+  const dismissedUpdateBuildIdRef = useRef<string | null>(null);
   const observedRegistrationsRef = useRef<WeakSet<ServiceWorkerRegistration>>(new WeakSet());
   const updateCheckInFlightRef = useRef<Promise<void> | null>(null);
+  const availableBuildIdRef = useRef<string | null>(null);
+
+  const setAvailableUpdateBuild = useCallback((buildId: string | null) => {
+    availableBuildIdRef.current = buildId;
+    setAvailableBuildId(buildId);
+  }, []);
+
+  const setDismissedUpdateBuild = useCallback((buildId: string | null) => {
+    dismissedUpdateBuildIdRef.current = buildId;
+    setDismissedUpdateBuildId(buildId);
+  }, []);
+
+  const shouldIgnoreBuildId = useCallback((buildId: string | null) => {
+    if (!buildId) return true;
+    if (buildId === currentBuildIdRef.current) return true;
+    if (buildId === recentlyAppliedBuildIdRef.current) return true;
+    if (buildId === dismissedUpdateBuildIdRef.current) return true;
+    return false;
+  }, []);
 
   const observeRegistration = useCallback((registration: ServiceWorkerRegistration) => {
     if (observedRegistrationsRef.current.has(registration)) return;
@@ -95,19 +143,29 @@ export function PwaRegister() {
       const nextWorker = registration.installing;
       if (!nextWorker) return;
       nextWorker.addEventListener("statechange", () => {
-        if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+        const nextBuildId = getBuildIdFromServiceWorkerScriptUrl(nextWorker.scriptURL);
+        if (
+          nextWorker.state === "installed" &&
+          navigator.serviceWorker.controller &&
+          !shouldIgnoreBuildId(nextBuildId)
+        ) {
+          setAvailableUpdateBuild(nextBuildId);
           setUpdateReady(true);
         }
       });
     });
-  }, []);
+  }, [setAvailableUpdateBuild, shouldIgnoreBuildId]);
 
   const registerServiceWorker = useCallback(async (buildId?: string) => {
     const registration = await navigator.serviceWorker.register(getServiceWorkerScriptUrl(buildId));
     observeRegistration(registration);
-    if (registration.waiting) setUpdateReady(true);
+    const waitingBuildId = getBuildIdFromServiceWorkerScriptUrl(registration.waiting?.scriptURL);
+    if (!shouldIgnoreBuildId(waitingBuildId)) {
+      setAvailableUpdateBuild(waitingBuildId);
+      setUpdateReady(true);
+    }
     return registration;
-  }, [observeRegistration]);
+  }, [observeRegistration, setAvailableUpdateBuild, shouldIgnoreBuildId]);
 
   const checkForAppUpdate = useCallback(async () => {
     if (disableServiceWorker) return;
@@ -127,29 +185,30 @@ export function PwaRegister() {
         const latestBuildId = String(latestVersion?.buildId ?? "").trim();
         if (!latestBuildId) return;
 
-        const updateWasDismissed = dismissedUpdateBuildId === latestBuildId;
         const registration = await navigator.serviceWorker.getRegistration();
+        const activeBuildId = getBuildIdFromServiceWorkerScriptUrl(registration?.active?.scriptURL);
+        const waitingBuildId = getBuildIdFromServiceWorkerScriptUrl(registration?.waiting?.scriptURL);
         if (registration) {
           observeRegistration(registration);
-          if (registration.waiting) {
-            if (!updateWasDismissed) {
-              setAvailableBuildId(
-                latestBuildId !== currentBuildIdRef.current ? latestBuildId : availableBuildId,
-              );
-              setUpdateReady(true);
-            }
+          if (!shouldIgnoreBuildId(waitingBuildId)) {
+            setAvailableUpdateBuild(waitingBuildId);
+            setUpdateReady(true);
             return;
           }
         }
 
-        if (latestBuildId === currentBuildIdRef.current) {
-          setAvailableBuildId(null);
+        if (
+          latestBuildId === currentBuildIdRef.current ||
+          latestBuildId === activeBuildId ||
+          latestBuildId === recentlyAppliedBuildIdRef.current
+        ) {
+          setAvailableUpdateBuild(null);
           setUpdateReady(false);
           return;
         }
 
-        if (updateWasDismissed) return;
-        setAvailableBuildId(latestBuildId);
+        if (latestBuildId === dismissedUpdateBuildIdRef.current) return;
+        setAvailableUpdateBuild(latestBuildId);
       } finally {
         setIsCheckingForUpdate(false);
         updateCheckInFlightRef.current = null;
@@ -158,7 +217,7 @@ export function PwaRegister() {
 
     updateCheckInFlightRef.current = run;
     await run;
-  }, [availableBuildId, disableServiceWorker, dismissedUpdateBuildId, observeRegistration]);
+  }, [disableServiceWorker, observeRegistration, setAvailableUpdateBuild, shouldIgnoreBuildId]);
 
   useEffect(() => {
     if (disableServiceWorker) return;
@@ -220,10 +279,21 @@ export function PwaRegister() {
     }
 
     currentBuildIdRef.current = getCurrentBuildId();
+    const appliedBuildId = readAppliedBuildMarker();
+    if (appliedBuildId === currentBuildIdRef.current) {
+      recentlyAppliedBuildIdRef.current = appliedBuildId;
+      clearAppliedBuildMarker();
+    } else if (appliedBuildId) {
+      clearAppliedBuildMarker();
+    }
 
     const onControllerChange = () => {
       if (isReloadingForUpdate.current) return;
       isReloadingForUpdate.current = true;
+      if (targetBuildIdRef.current) {
+        writeAppliedBuildMarker(targetBuildIdRef.current);
+        recentlyAppliedBuildIdRef.current = targetBuildIdRef.current;
+      }
       window.location.reload();
     };
 
@@ -249,6 +319,10 @@ export function PwaRegister() {
       if (document.visibilityState !== "visible") return;
       void checkForAppUpdate();
     }, UPDATE_POLL_INTERVAL_MS);
+    const initialUpdateTimer = window.setTimeout(() => {
+      if (document.visibilityState !== "visible") return;
+      void checkForAppUpdate();
+    }, UPDATE_POLL_INITIAL_DELAY_MS);
 
     const register = async () => {
       try {
@@ -269,6 +343,7 @@ export function PwaRegister() {
       window.addEventListener("load", onLoad, { once: true });
       return () => {
         window.removeEventListener("load", onLoad);
+        window.clearTimeout(initialUpdateTimer);
         window.clearInterval(updateInterval);
         document.removeEventListener("visibilitychange", onVisibilityChange);
         window.removeEventListener("focus", onFocus);
@@ -278,6 +353,7 @@ export function PwaRegister() {
     }
 
     return () => {
+      window.clearTimeout(initialUpdateTimer);
       window.clearInterval(updateInterval);
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.removeEventListener("focus", onFocus);
@@ -299,19 +375,24 @@ export function PwaRegister() {
 
   async function handleUpdateNow() {
     if (!("serviceWorker" in navigator)) return;
-    setDismissedUpdateBuildId(null);
+    setDismissedUpdateBuild(null);
     setIsCheckingForUpdate(true);
     try {
       const registration = await navigator.serviceWorker.getRegistration();
       if (registration) {
         observeRegistration(registration);
-        if (registration.waiting) {
+        const waitingBuildId = getBuildIdFromServiceWorkerScriptUrl(registration.waiting?.scriptURL);
+        if (registration.waiting && waitingBuildId && !shouldIgnoreBuildId(waitingBuildId)) {
+          targetBuildIdRef.current = waitingBuildId;
           registration.waiting.postMessage({ type: "SKIP_WAITING" });
           return;
         }
       }
 
-      const nextRegistration = await registerServiceWorker(availableBuildId ?? undefined);
+      const targetBuildId = availableBuildIdRef.current;
+      if (!targetBuildId) return;
+      targetBuildIdRef.current = targetBuildId;
+      const nextRegistration = await registerServiceWorker(targetBuildId);
       await nextRegistration.update().catch(() => undefined);
       if (nextRegistration.waiting) {
         nextRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
@@ -322,10 +403,10 @@ export function PwaRegister() {
   }
 
   function dismissDetectedUpdate() {
-    if (availableBuildId) {
-      setDismissedUpdateBuildId(availableBuildId);
+    if (availableBuildIdRef.current) {
+      setDismissedUpdateBuild(availableBuildIdRef.current);
     }
-    setAvailableBuildId(null);
+    setAvailableUpdateBuild(null);
     setUpdateReady(false);
   }
 
