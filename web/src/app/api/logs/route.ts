@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { generatedSession, plan, planProgressEvent, workoutLog, workoutSet } from "@/server/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
@@ -14,6 +14,47 @@ type LogCursor = {
   performedAt: string;
   id: string;
 };
+
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+function normalizeTimezone(raw: string | null) {
+  const timezone = raw?.trim();
+  if (!timezone) return "UTC";
+
+  try {
+    Intl.DateTimeFormat("en-US", { timeZone: timezone }).format(new Date());
+    return timezone;
+  } catch {
+    return "UTC";
+  }
+}
+
+function dateOnlyInTimezone(date: Date, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: timezone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
+  const month = parts.find((part) => part.type === "month")?.value ?? "01";
+  const day = parts.find((part) => part.type === "day")?.value ?? "01";
+  return `${year}-${month}-${day}`;
+}
+
+function resolvePerformedAt(raw: unknown) {
+  if (typeof raw !== "string" || !raw.trim()) {
+    return new Date();
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return null;
+  }
+
+  return parsed;
+}
 
 function parseCursor(raw: string | null): LogCursor | null {
   if (!raw) return null;
@@ -36,6 +77,8 @@ async function GETImpl(req: Request) {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
     const planId = searchParams.get("planId")?.trim() ?? "";
+    const dateFilter = searchParams.get("date")?.trim() ?? "";
+    const timezone = normalizeTimezone(searchParams.get("timezone"));
     const cursor = parseCursor(searchParams.get("cursor"));
     const limitRaw = Number(searchParams.get("limit") ?? "20");
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;
@@ -44,6 +87,12 @@ async function GETImpl(req: Request) {
 
     if (planId) {
       filters.push(eq(workoutLog.planId, planId));
+    }
+
+    if (DATE_ONLY_PATTERN.test(dateFilter)) {
+      filters.push(
+        sql`date(${workoutLog.performedAt} at time zone ${timezone}) = to_date(${dateFilter}, 'YYYY-MM-DD')`,
+      );
     }
 
     if (cursor) {
@@ -182,10 +231,15 @@ async function POSTImpl(req: Request) {
   try {
     const body = await req.json();
     const userId = getAuthenticatedUserId();
+    const timezone = normalizeTimezone(typeof body.timezone === "string" ? body.timezone : null);
+    const performedAt = resolvePerformedAt(body.performedAt);
 
     const sets = Array.isArray(body.sets) ? body.sets : [];
     if (sets.length === 0) {
       return NextResponse.json({ error: "sets required" }, { status: 400 });
+    }
+    if (!performedAt) {
+      return NextResponse.json({ error: "performedAt must be a valid datetime" }, { status: 400 });
     }
 
     const submittedPlanId = typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : null;
@@ -193,15 +247,23 @@ async function POSTImpl(req: Request) {
       typeof body.generatedSessionId === "string" && body.generatedSessionId.trim()
         ? body.generatedSessionId.trim()
         : null;
+    let effectivePlan:
+      | {
+          id: string;
+          userId: string;
+          params: unknown;
+        }
+      | null = null;
 
     if (submittedPlanId) {
       const p = await db
-        .select({ id: plan.id, userId: plan.userId })
+        .select({ id: plan.id, userId: plan.userId, params: plan.params })
         .from(plan)
         .where(eq(plan.id, submittedPlanId))
         .limit(1);
       if (!p[0]) return NextResponse.json({ error: "plan not found" }, { status: 404 });
       if (p[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      effectivePlan = p[0];
     }
 
     if (submittedGeneratedSessionId) {
@@ -218,6 +280,27 @@ async function POSTImpl(req: Request) {
           { status: 400 },
         );
       }
+      if (!effectivePlan && s[0].planId) {
+        const p = await db
+          .select({ id: plan.id, userId: plan.userId, params: plan.params })
+          .from(plan)
+          .where(eq(plan.id, s[0].planId))
+          .limit(1);
+        if (!p[0]) return NextResponse.json({ error: "plan not found" }, { status: 404 });
+        if (p[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+        effectivePlan = p[0];
+      }
+    }
+
+    if ((effectivePlan?.params as { autoProgression?: unknown } | null)?.autoProgression === true) {
+      const performedDate = dateOnlyInTimezone(performedAt, timezone);
+      const todayDate = dateOnlyInTimezone(new Date(), timezone);
+      if (performedDate < todayDate) {
+        return NextResponse.json(
+          { error: "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록을 수정해 주세요." },
+          { status: 400 },
+        );
+      }
     }
 
     const resolvedByName = new Map<string, string | null>();
@@ -230,7 +313,7 @@ async function POSTImpl(req: Request) {
           userId,
           planId: submittedPlanId,
           generatedSessionId: submittedGeneratedSessionId,
-          performedAt: body.performedAt ? new Date(body.performedAt) : new Date(),
+          performedAt,
           durationMinutes: body.durationMinutes ?? null,
           notes: body.notes ?? null,
           tags: body.tags ?? null,

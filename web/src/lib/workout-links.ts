@@ -8,14 +8,17 @@ export function toLocalDateKey(date: Date = new Date()) {
 export function buildTodayLogHref({
   planId,
   date = toLocalDateKey(),
+  logId,
 }: {
   planId?: string | null;
   date?: string;
+  logId?: string | null;
   autoGenerate?: boolean;
 }) {
   const params = new URLSearchParams();
   if (planId) params.set("planId", planId);
   params.set("date", date);
+  if (logId) params.set("logId", logId);
   const query = params.toString();
   return `/workout-record${query ? `?${query}` : ""}`;
 }

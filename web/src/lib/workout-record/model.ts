@@ -26,7 +26,11 @@ export type WorkoutExerciseModel = {
 };
 
 export type WorkoutSessionModel = {
+  logId: string | null;
   generatedSessionId: string | null;
+  performedAt: string;
+  sessionDate: string;
+  timezone: string;
   planId: string;
   planName: string;
   sessionKey: string;
@@ -65,6 +69,25 @@ export type GeneratedSessionLike = {
   snapshot: any;
 };
 
+export type ExistingWorkoutLogLike = {
+  id: string;
+  planId: string | null;
+  generatedSessionId: string | null;
+  performedAt: string;
+  notes?: string | null;
+  sets: Array<{
+    exerciseId?: string | null;
+    exerciseName?: string | null;
+    sortOrder?: number | null;
+    setNumber?: number | null;
+    reps?: number | null;
+    weightKg?: number | null;
+    isExtra?: boolean | null;
+    meta?: unknown;
+  }>;
+  generatedSession?: (GeneratedSessionLike & { updatedAt?: string }) | null;
+};
+
 export type WorkoutRecordValidation = {
   valid: boolean;
   errors: string[];
@@ -74,6 +97,7 @@ export type WorkoutLogPayload = {
   planId: string;
   generatedSessionId: string | null;
   performedAt: string;
+  timezone?: string;
   durationMinutes: number | null;
   notes: string | null;
   sets: Array<{
@@ -158,6 +182,36 @@ function roundTo2(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function toLocalDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function toPerformedAtForSessionDate(sessionDate: string, now: Date = new Date()) {
+  const [year, month, day] = sessionDate.split("-").map((value) => Number(value));
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return now.toISOString();
+  }
+
+  return new Date(
+    year,
+    Math.max(0, month - 1),
+    Math.max(1, day),
+    now.getHours(),
+    now.getMinutes(),
+    now.getSeconds(),
+    now.getMilliseconds(),
+  ).toISOString();
+}
+
+function extractMemoFromMeta(meta: unknown) {
+  if (!meta || typeof meta !== "object" || Array.isArray(meta)) return "";
+  const memo = (meta as { memo?: unknown }).memo;
+  return typeof memo === "string" ? memo.trim() : "";
+}
+
 function deriveEstimateFromSnapshot(exercises: SnapshotExercise[]) {
   let estimatedE1rmKg: number | null = null;
   let estimatedTmKg: number | null = null;
@@ -186,8 +240,106 @@ function deriveEstimateFromSnapshot(exercises: SnapshotExercise[]) {
   };
 }
 
-function toSessionType(day: number) {
-  return day % 2 === 1 ? "A Session" : "B Session";
+function deriveEstimateFromLoggedExercises(exercises: WorkoutExerciseModel[]) {
+  let estimatedE1rmKg: number | null = null;
+
+  for (const exercise of exercises) {
+    for (const reps of exercise.set.repsPerSet) {
+      const e1rm = estimateE1rm(exercise.set.weightKg, reps);
+      if (e1rm !== null) {
+        estimatedE1rmKg = estimatedE1rmKg === null ? e1rm : Math.max(estimatedE1rmKg, e1rm);
+      }
+    }
+  }
+
+  return {
+    estimatedE1rmKg: estimatedE1rmKg === null ? null : Math.round(estimatedE1rmKg),
+    estimatedTmKg: null,
+  };
+}
+
+function normalizeScheduleEntries(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => String(entry ?? "").trim())
+    .filter(Boolean);
+}
+
+function sessionsPerWeekFromSnapshot(snapshot: any) {
+  const firstBlock = Array.isArray(snapshot?.blocks) ? snapshot.blocks[0] ?? null : null;
+  const candidates = [
+    snapshot?.program?.schedule?.sessionsPerWeek,
+    firstBlock?.definition?.schedule?.sessionsPerWeek,
+    snapshot?.schedule?.sessionsPerWeek,
+  ];
+
+  for (const candidate of candidates) {
+    const parsed = Number(candidate);
+    if (Number.isFinite(parsed) && parsed >= 1) {
+      return Math.max(1, Math.floor(parsed));
+    }
+  }
+
+  return null;
+}
+
+function isOperatorSnapshot(snapshot: any, planName: string) {
+  const firstBlock = Array.isArray(snapshot?.blocks) ? snapshot.blocks[0] ?? null : null;
+  const candidates = [
+    snapshot?.program?.slug,
+    snapshot?.program?.name,
+    firstBlock?.program?.slug,
+    firstBlock?.program?.name,
+    firstBlock?.definition?.kind,
+    firstBlock?.definition?.programFamily,
+    snapshot?.plan?.name,
+    planName,
+  ]
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .filter(Boolean);
+
+  return candidates.some((value) => value.includes("operator"));
+}
+
+function toSessionType(
+  day: number,
+  snapshot: any,
+  planName: string,
+  sessionKey: string,
+  planSchedule?: unknown,
+) {
+  const manualSessionKey = String(snapshot?.manualSessionKey ?? "").trim();
+  if (manualSessionKey) {
+    return manualSessionKey;
+  }
+
+  const explicitSessionLabel = String(snapshot?.sessionType ?? snapshot?.sessionLabel ?? "").trim();
+  if (explicitSessionLabel) {
+    return explicitSessionLabel;
+  }
+
+  const scheduleEntries = normalizeScheduleEntries(planSchedule);
+  if (scheduleEntries.length > 0) {
+    return scheduleEntries[(Math.max(1, day) - 1) % scheduleEntries.length] ?? scheduleEntries[0]!;
+  }
+
+  if (isOperatorSnapshot(snapshot, planName)) {
+    const matchedDay = /D(\d+)/i.exec(String(sessionKey ?? "").trim());
+    if (matchedDay?.[1]) {
+      return `D${matchedDay[1]}`;
+    }
+    return `D${((Math.max(1, day) - 1) % 3) + 1}`;
+  }
+
+  const sessionsPerWeek = sessionsPerWeekFromSnapshot(snapshot);
+  if (sessionsPerWeek !== null) {
+    if (sessionsPerWeek === 2) {
+      return ["A", "B"][(Math.max(1, day) - 1) % 2]!;
+    }
+    return `D${((Math.max(1, day) - 1) % sessionsPerWeek) + 1}`;
+  }
+
+  return day % 2 === 1 ? "A" : "B";
 }
 
 function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerciseModel {
@@ -275,22 +427,103 @@ function mergeSeedExercise(base: WorkoutExerciseModel, patch: SeedExerciseEditPa
   return next;
 }
 
-export function createWorkoutRecordDraft(session: GeneratedSessionLike, planName: string): WorkoutRecordDraft {
+function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExerciseModel[] {
+  const grouped: Array<{
+    exerciseId: string | null;
+    exerciseName: string;
+    isExtra: boolean;
+    repsPerSet: number[];
+    weightKg: number;
+    memo: string;
+  }> = [];
+
+  for (const rawSet of sets ?? []) {
+    const exerciseName = nonEmpty(String(rawSet?.exerciseName ?? ""), "운동 정보 없음");
+    const exerciseId =
+      typeof rawSet?.exerciseId === "string" && rawSet.exerciseId.trim() ? rawSet.exerciseId.trim() : null;
+    const setNumber = Math.max(1, Math.round(toNumber(rawSet?.setNumber, 1)));
+    const reps = normalizeRepsValue(rawSet?.reps, 5);
+    const weightKg = Math.max(0, toNumber(rawSet?.weightKg, 0));
+    const memo = extractMemoFromMeta(rawSet?.meta);
+    const isExtra = Boolean(rawSet?.isExtra);
+    const previous = grouped[grouped.length - 1] ?? null;
+    const isContinuation =
+      previous !== null &&
+      previous.exerciseId === exerciseId &&
+      previous.exerciseName.trim().toLowerCase() === exerciseName.trim().toLowerCase() &&
+      setNumber === previous.repsPerSet.length + 1;
+
+    if (isContinuation && previous) {
+      previous.repsPerSet.push(reps);
+      if (!previous.memo && memo) {
+        previous.memo = memo;
+      }
+      continue;
+    }
+
+    grouped.push({
+      exerciseId,
+      exerciseName,
+      isExtra,
+      repsPerSet: [reps],
+      weightKg,
+      memo,
+    });
+  }
+
+  return grouped.map((exercise, index) => ({
+    id: `log-${index + 1}`,
+    exerciseId: exercise.exerciseId,
+    exerciseName: exercise.exerciseName,
+    source: "USER",
+    badge: exercise.isExtra ? "ADDED" : "AUTO",
+    prescribedWeightKg: null,
+    set: {
+      count: exercise.repsPerSet.length,
+      reps: exercise.repsPerSet[0] ?? 5,
+      repsPerSet: exercise.repsPerSet,
+      weightKg: exercise.weightKg,
+    },
+    note: {
+      memo: exercise.memo,
+    },
+  }));
+}
+
+export function createWorkoutRecordDraft(
+  session: GeneratedSessionLike,
+  planName: string,
+  options: {
+    sessionDate?: string;
+    timezone?: string;
+    planSchedule?: unknown;
+  } = {},
+): WorkoutRecordDraft {
   const snapshot = session.snapshot ?? {};
   const week = Math.max(1, Math.round(toNumber(snapshot.week, 1)));
   const day = Math.max(1, Math.round(toNumber(snapshot.day, 1)));
   const exercises = (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[];
   const estimate = deriveEstimateFromSnapshot(exercises);
+  const sessionDate =
+    typeof options.sessionDate === "string" && options.sessionDate.trim()
+      ? options.sessionDate.trim()
+      : nonEmpty(String(snapshot.sessionDate ?? session.sessionKey ?? ""), toLocalDateKey(new Date()));
+  const timezone = nonEmpty(options.timezone ?? "", "UTC");
+  const resolvedSessionKey = nonEmpty(String(snapshot.sessionKey ?? session.sessionKey ?? ""), "W1D1");
 
   return {
     session: {
+      logId: null,
       generatedSessionId: session.id ?? null,
+      performedAt: toPerformedAtForSessionDate(sessionDate),
+      sessionDate,
+      timezone,
       planId: session.planId,
       planName: nonEmpty(planName, "프로그램 미선택"),
-      sessionKey: nonEmpty(String(snapshot.sessionKey ?? session.sessionKey ?? ""), "W1D1"),
+      sessionKey: resolvedSessionKey,
       week,
       day,
-      sessionType: toSessionType(day),
+      sessionType: toSessionType(day, snapshot, planName, resolvedSessionKey, options.planSchedule),
       estimatedE1rmKg: estimate.estimatedE1rmKg,
       estimatedTmKg: estimate.estimatedTmKg,
       note: { memo: "" },
@@ -298,6 +531,61 @@ export function createWorkoutRecordDraft(session: GeneratedSessionLike, planName
     seedExercises: exercises.map(toSeedExercise),
     seedEditLayer: {},
     userExercises: [],
+  };
+}
+
+export function createWorkoutRecordDraftFromLog(
+  log: ExistingWorkoutLogLike,
+  planName: string,
+  options: {
+    sessionDate?: string;
+    timezone?: string;
+    planSchedule?: unknown;
+  } = {},
+): WorkoutRecordDraft {
+  const snapshot = log.generatedSession?.snapshot ?? {};
+  const week = Math.max(1, Math.round(toNumber(snapshot.week, 1)));
+  const day = Math.max(1, Math.round(toNumber(snapshot.day, 1)));
+  const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : []);
+  const estimateFromSnapshot = deriveEstimateFromSnapshot(
+    (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[],
+  );
+  const estimateFromLog = deriveEstimateFromLoggedExercises(loggedExercises);
+  const parsedPerformedAt = new Date(log.performedAt);
+  const fallbackSessionDate =
+    Number.isNaN(parsedPerformedAt.getTime()) ? toLocalDateKey(new Date()) : toLocalDateKey(parsedPerformedAt);
+  const sessionDate =
+    typeof options.sessionDate === "string" && options.sessionDate.trim()
+      ? options.sessionDate.trim()
+      : fallbackSessionDate;
+  const timezone = nonEmpty(options.timezone ?? "", "UTC");
+  const resolvedSessionKey = nonEmpty(
+    String(snapshot.sessionKey ?? log.generatedSession?.sessionKey ?? sessionDate),
+    sessionDate,
+  );
+
+  return {
+    session: {
+      logId: log.id,
+      generatedSessionId: log.generatedSessionId ?? log.generatedSession?.id ?? null,
+      performedAt: log.performedAt,
+      sessionDate,
+      timezone,
+      planId: typeof log.planId === "string" ? log.planId : "",
+      planName: nonEmpty(planName, "프로그램 미선택"),
+      sessionKey: resolvedSessionKey,
+      week,
+      day,
+      sessionType: toSessionType(day, snapshot, planName, resolvedSessionKey, options.planSchedule),
+      estimatedE1rmKg: estimateFromLog.estimatedE1rmKg ?? estimateFromSnapshot.estimatedE1rmKg,
+      estimatedTmKg: estimateFromSnapshot.estimatedTmKg,
+      note: {
+        memo: typeof log.notes === "string" ? log.notes.trim() : "",
+      },
+    },
+    seedExercises: [],
+    seedEditLayer: {},
+    userExercises: loggedExercises,
   };
 }
 
@@ -510,7 +798,8 @@ export function toWorkoutLogPayload(
   return {
     planId: draft.session.planId,
     generatedSessionId: draft.session.generatedSessionId,
-    performedAt: new Date().toISOString(),
+    performedAt: draft.session.performedAt,
+    timezone: draft.session.timezone,
     durationMinutes: null,
     notes: note.length > 0 ? note : null,
     sets,

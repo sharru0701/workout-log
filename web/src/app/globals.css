@@ -115,6 +115,9 @@ html,
 body {
   min-height: 100%;
   height: 100%;
+  width: 100%;
+  overflow-x: clip;
+  overscroll-behavior-x: none;
 }
 
 body {
@@ -374,10 +377,12 @@ button {
 .app-shell {
   position: relative;
   height: 100svh;
+  width: 100%;
   max-width: var(--layout-max);
   margin: 0 auto;
   background: var(--bg-primary);
   color: var(--text-primary);
+  overflow-x: clip;
   transition: box-shadow var(--motion-duration) var(--motion-ease);
 }
 
@@ -393,6 +398,8 @@ button {
 
 .app-shell-route-frame {
   min-height: 100%;
+  min-width: 0;
+  overflow-x: clip;
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
 }

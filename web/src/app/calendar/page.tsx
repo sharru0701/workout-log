@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate } from "@/lib/session-key";
 import { buildTodayLogHref } from "@/lib/workout-links";
@@ -20,6 +20,17 @@ type RecentGeneratedSession = {
   id: string;
   sessionKey: string;
   updatedAt: string;
+};
+
+type WorkoutLogForDate = {
+  id: string;
+  performedAt: string;
+  generatedSessionId: string | null;
+  sets: Array<{
+    exerciseName: string;
+    reps: number | null;
+    weightKg: number | null;
+  }>;
 };
 
 const WEEKDAY_SHORT = ["일", "월", "화", "수", "목", "금", "토"] as const;
@@ -159,7 +170,8 @@ export default function CalendarPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState("");
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
-  const [generating, setGenerating] = useState(false);
+  const [selectedLog, setSelectedLog] = useState<WorkoutLogForDate | null>(null);
+  const [selectedLogLoading, setSelectedLogLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
@@ -229,6 +241,42 @@ export default function CalendarPage() {
     };
   }, [planId]);
 
+  useEffect(() => {
+    if (!planId) {
+      setSelectedLog(null);
+      setSelectedLogLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setSelectedLogLoading(true);
+        setError(null);
+        const sp = new URLSearchParams();
+        sp.set("planId", planId);
+        sp.set("date", selectedDate);
+        sp.set("timezone", timezone);
+        sp.set("limit", "1");
+        const res = await apiGet<{ items: WorkoutLogForDate[] }>(`/api/logs?${sp.toString()}`);
+        if (cancelled) return;
+        setSelectedLog(res.items[0] ?? null);
+      } catch (e: any) {
+        if (!cancelled) {
+          setSelectedLog(null);
+          setError(e?.message ?? "운동기록을 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!cancelled) setSelectedLogLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planId, selectedDate, timezone]);
+
   // Build lookup maps
   const generatedByDate = useMemo(() => {
     const map = new Map<string, RecentGeneratedSession>();
@@ -269,34 +317,14 @@ export default function CalendarPage() {
     setSelectedDate(today);
   }
 
-  async function generateForDate(dateOnly: string) {
-    if (!planId) return;
-    setGenerating(true);
-    setError(null);
-    try {
-      const res = await apiPost<{ session: any }>(`/api/plans/${planId}/generate`, {
-        sessionDate: dateOnly,
-        timezone,
-      });
-      setRecentSessions((prev) => {
-        const next = [
-          { id: res.session.id, sessionKey: res.session.sessionKey, updatedAt: res.session.updatedAt },
-          ...prev.filter((p) => p.id !== res.session.id),
-        ];
-        return next.slice(0, 200);
-      });
-    } catch (e: any) {
-      setError(e?.message ?? "세션 생성에 실패했습니다.");
-    } finally {
-      setGenerating(false);
-    }
-  }
-
   const selectedCtx = useMemo(
     () => computePlanContextForDate(selectedPlan, selectedDate),
     [selectedPlan, selectedDate],
   );
   const selectedSession = getSessionForDate(selectedDate);
+  const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
+  const isPastDate = selectedDate < today;
+  const isPastDateCreationBlocked = isAutoProgressionPlan && isPastDate && !selectedLog;
 
   const selectedDayLabel = (() => {
     if (!selectedCtx) return null;
@@ -304,9 +332,11 @@ export default function CalendarPage() {
     return `W${selectedCtx.week}D${selectedCtx.day}`;
   })();
 
-  const workoutHref = planId
-    ? buildTodayLogHref({ planId, date: selectedDate, autoGenerate: false })
-    : APP_ROUTES.todayLog;
+  const workoutHref = selectedLog
+    ? buildTodayLogHref({ planId, date: selectedDate, logId: selectedLog.id })
+    : planId
+      ? buildTodayLogHref({ planId, date: selectedDate, autoGenerate: false })
+      : APP_ROUTES.todayLog;
 
   return (
     <div className="native-page native-page-enter tab-screen ios-cal-screen momentum-scroll">
@@ -432,7 +462,7 @@ export default function CalendarPage() {
 
         {error && <div className="ios-cal-error">{error}</div>}
 
-        {loading ? (
+        {loading || selectedLogLoading ? (
           <div className="ios-cal-loading">
             <span className="ios-cal-loading-dot" />
             <span className="ios-cal-loading-dot" />
@@ -441,6 +471,26 @@ export default function CalendarPage() {
         ) : !selectedPlan ? (
           <div className="ios-cal-empty-state">
             <p className="ios-cal-empty-text">플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
+          </div>
+        ) : selectedLog ? (
+          <div className="ios-cal-session-card">
+            <div className="ios-cal-session-card-left">
+              <div className="ios-cal-session-dot-accent" aria-hidden="true" />
+              <div className="ios-cal-session-info">
+                <span className="ios-cal-session-key">
+                  {selectedSession?.sessionKey ?? `${selectedLog.sets.length}세트 기록됨`}
+                </span>
+                {selectedDayLabel && selectedSession && selectedDayLabel !== selectedSession.sessionKey && (
+                  <span className="ios-cal-session-label">{selectedDayLabel}</span>
+                )}
+                <span className="ios-cal-session-meta">
+                  기록 있음 · {selectedLog.sets.length}세트 · {new Date(selectedLog.performedAt).toLocaleDateString("ko-KR")}
+                </span>
+              </div>
+            </div>
+            <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
+              기록수정
+            </a>
           </div>
         ) : selectedSession ? (
           /* Session exists */
@@ -453,13 +503,17 @@ export default function CalendarPage() {
                   <span className="ios-cal-session-label">{selectedDayLabel}</span>
                 )}
                 <span className="ios-cal-session-meta">
-                  생성됨 · {new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}
+                  {isPastDateCreationBlocked
+                    ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
+                    : `생성됨 · ${new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}`}
                 </span>
               </div>
             </div>
-            <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
-              기록하기
-            </a>
+            {!isPastDateCreationBlocked ? (
+              <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
+                기록하기
+              </a>
+            ) : null}
           </div>
         ) : (
           /* No session yet */
@@ -467,32 +521,27 @@ export default function CalendarPage() {
             <div className="ios-cal-session-card-left">
               <div className="ios-cal-session-dot-muted" aria-hidden="true" />
               <div className="ios-cal-session-info">
-                <span className="ios-cal-session-key ios-cal-session-key--muted">
-                  {selectedCtx?.planned ? selectedDayLabel ?? "세션 없음" : "즉시 생성 가능"}
-                </span>
+                {isPastDateCreationBlocked ? null : (
+                  <span className="ios-cal-session-key ios-cal-session-key--muted">
+                    {selectedCtx?.planned ? selectedDayLabel ?? "세션 없음" : "즉시 기록 가능"}
+                  </span>
+                )}
                 <span className="ios-cal-session-meta">
-                  {selectedCtx?.planned
-                    ? "계획됐지만 아직 생성되지 않았습니다."
-                    : "이 날짜는 플랜 범위 밖이거나 즉시 열기가 가능합니다."}
+                  {isPastDateCreationBlocked
+                    ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
+                    : selectedCtx?.planned
+                    ? "기록하기를 누르면 이 날짜 세션을 준비하고 바로 기록을 시작합니다."
+                    : "기록하기를 누르면 이 날짜 기록 화면으로 바로 이동합니다."}
                 </span>
               </div>
             </div>
-            <div className="ios-cal-no-session-actions">
-              <button
-                className="ios-cal-action-btn ios-cal-action-btn--secondary"
-                onClick={() =>
-                  generateForDate(selectedDate).catch((e: any) =>
-                    setError(e?.message ?? "세션 생성에 실패했습니다."),
-                  )
-                }
-                disabled={generating}
-              >
-                {generating ? "생성 중…" : "세션 생성"}
-              </button>
-              <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
-                기록하기
-              </a>
-            </div>
+            {!isPastDateCreationBlocked ? (
+              <div className="ios-cal-no-session-actions">
+                <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
+                  기록하기
+                </a>
+              </div>
+            ) : null}
           </div>
         )}
       </div>

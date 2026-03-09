@@ -9,7 +9,11 @@ import type { WorkoutExerciseViewModel, WorkoutRecordDraft } from "./model";
 function createDraft(): WorkoutRecordDraft {
   return {
     session: {
+      logId: null,
       generatedSessionId: "session-1",
+      performedAt: "2026-03-09T09:00:00.000Z",
+      sessionDate: "2026-03-09",
+      timezone: "Asia/Seoul",
       planId: "plan-1",
       planName: "Test Plan",
       sessionKey: "W1D1",

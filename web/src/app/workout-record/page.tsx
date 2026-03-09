@@ -9,9 +9,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
 import { SearchSelectCombobox, SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
-import { formatSessionKeyLabel } from "@/lib/session-key";
+import { parseSessionKey } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
@@ -31,8 +31,8 @@ import {
 } from "@/lib/workout-record/entry-state";
 import {
   addUserExercise,
+  createWorkoutRecordDraftFromLog,
   createWorkoutRecordDraft,
-  hasWorkoutEdits,
   materializeWorkoutExercises,
   patchSeedExercise,
   removeSeedExercise,
@@ -40,6 +40,7 @@ import {
   toWorkoutLogPayload,
   updateUserExercise,
   validateWorkoutDraft,
+  type ExistingWorkoutLogLike,
   type GeneratedSessionLike,
   type WorkoutExerciseViewModel,
   type WorkoutRecordDraft,
@@ -49,13 +50,27 @@ import {
 type PlanItem = {
   id: string;
   name: string;
+  params?: Record<string, unknown> | null;
   isArchived?: boolean;
 };
 
-type LogItem = {
+type RecentLogItem = {
   id: string;
   performedAt: string;
-  sets: Array<{ exerciseName: string; reps: number | null; weightKg: number | null }>;
+  generatedSession?: {
+    id: string;
+    sessionKey: string;
+  } | null;
+  sets: Array<{
+    exerciseName: string;
+    reps: number | null;
+    weightKg: number | null;
+    meta?: unknown;
+  }>;
+};
+
+type DetailedLogItem = ExistingWorkoutLogLike & {
+  generatedSession: (ExistingWorkoutLogLike["generatedSession"] & { sessionKey: string; snapshot: any }) | null;
 };
 
 type ExerciseOption = {
@@ -74,7 +89,11 @@ type PlansResponse = {
 };
 
 type LogsResponse = {
-  items: LogItem[];
+  items: RecentLogItem[];
+};
+
+type LogDetailResponse = {
+  item: DetailedLogItem;
 };
 
 type ExerciseResponse = {
@@ -84,6 +103,8 @@ type ExerciseResponse = {
 type QueryContext = {
   planId: string | null;
   date: string;
+  hasExplicitDate: boolean;
+  logId: string | null;
   openAdd: boolean;
 };
 
@@ -117,6 +138,8 @@ function readQueryContext(): QueryContext {
     return {
       planId: null,
       date: toDateKey(new Date()),
+      hasExplicitDate: false,
+      logId: null,
       openAdd: false,
     };
   }
@@ -124,44 +147,103 @@ function readQueryContext(): QueryContext {
   const params = new URLSearchParams(window.location.search);
   const planId = params.get("planId");
   const date = params.get("date");
+  const logId = params.get("logId");
   return {
     planId: planId && planId.trim() ? planId : null,
     date: date && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : toDateKey(new Date()),
+    hasExplicitDate: Boolean(date && /^\d{4}-\d{2}-\d{2}$/.test(date)),
+    logId: logId && logId.trim() ? logId : null,
     openAdd: params.get("openAdd") === "1",
   };
 }
 
-function formatDateLabel(iso: string) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "날짜 미상";
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-    weekday: "short",
-  }).format(date);
+function isDateOnlyString(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
-function buildLastSessionSummary(logs: LogItem[], todayKey: string) {
+function daysBetweenDateKeys(dateKey: string, startDateKey: string) {
+  const dateMs = new Date(`${dateKey}T00:00:00Z`).getTime();
+  const startMs = new Date(`${startDateKey}T00:00:00Z`).getTime();
+  return Math.floor((dateMs - startMs) / 86_400_000);
+}
+
+function normalizeSchedule(value: unknown) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((entry) => String(entry ?? "").trim())
+    .filter(Boolean);
+}
+
+function resolveLastSessionWeekAndType(
+  log: RecentLogItem,
+  planParams: Record<string, unknown> | null | undefined,
+) {
+  const parsedSession = log.generatedSession?.sessionKey
+    ? parseSessionKey(log.generatedSession.sessionKey)
+    : null;
+  const schedule = normalizeSchedule(planParams?.schedule);
+  const sessionsPerWeekRaw = Number(planParams?.sessionsPerWeek ?? 0);
+  const sessionsPerWeek = Number.isFinite(sessionsPerWeekRaw) && sessionsPerWeekRaw > 0
+    ? Math.max(1, Math.floor(sessionsPerWeekRaw))
+    : Math.max(1, schedule.length || 1);
+
+  let week = parsedSession?.week ?? null;
+  let day = parsedSession?.day ?? null;
+
+  if ((week === null || day === null) && isDateOnlyString(planParams?.startDate)) {
+    const logDateKey = toDateKey(new Date(log.performedAt));
+    const delta = daysBetweenDateKeys(logDateKey, planParams.startDate);
+    if (delta >= 0) {
+      week = Math.floor(delta / sessionsPerWeek) + 1;
+      day = (delta % sessionsPerWeek) + 1;
+    }
+  }
+
+  const weekLabel = week !== null ? `Week ${week}` : "-";
+  let sessionLabel = "-";
+  if (schedule.length > 0 && day !== null) {
+    sessionLabel = schedule[(day - 1) % schedule.length] ?? schedule[0] ?? "-";
+  } else if (day !== null) {
+    sessionLabel = day <= 2 ? (["A", "B"][(day - 1) % 2] ?? "-") : `D${day}`;
+  }
+
+  return { weekLabel, sessionLabel };
+}
+
+function extractBodyweightLabel(log: RecentLogItem, fallbackBodyweightKg: number | null) {
+  for (const set of log.sets) {
+    const bodyweightKg = Number((set.meta as { bodyweightKg?: unknown } | null)?.bodyweightKg);
+    if (Number.isFinite(bodyweightKg) && bodyweightKg > 0) {
+      return `${bodyweightKg.toFixed(1)}kg`;
+    }
+  }
+
+  return fallbackBodyweightKg ? `${fallbackBodyweightKg.toFixed(1)}kg` : "미설정";
+}
+
+function buildLastSessionSummary(
+  logs: RecentLogItem[],
+  todayKey: string,
+  planParams: Record<string, unknown> | null | undefined,
+  fallbackBodyweightKg: number | null,
+) {
   const selected = logs.find((entry) => toDateKey(new Date(entry.performedAt)) !== todayKey) ?? logs[0] ?? null;
   if (!selected) {
     return {
-      title: "지난 세션 없음",
-      description: "아직 저장된 세션이 없습니다.",
+      dateLabel: "지난 세션 없음",
+      weekLabel: "-",
+      sessionLabel: "-",
+      bodyweightLabel: "미설정",
     };
   }
 
-  const topExercise = selected.sets[0]?.exerciseName ?? "운동 정보 없음";
+  const { weekLabel, sessionLabel } = resolveLastSessionWeekAndType(selected, planParams);
   return {
-    title: `${formatDateLabel(selected.performedAt)} / ${selected.sets.length}세트`,
-    description: `대표 운동: ${topExercise}`,
+    dateLabel: toDateKey(new Date(selected.performedAt)),
+    weekLabel,
+    sessionLabel,
+    bodyweightLabel: extractBodyweightLabel(selected, fallbackBodyweightKg),
   };
-}
-
-function stateLabel(state: WorkoutWorkflowState) {
-  if (state === "idle") return "Idle";
-  if (state === "editing") return "Editing";
-  if (state === "saving") return "Saving";
-  return "Done";
 }
 
 function workoutExerciseBadgeMeta(badge: WorkoutExerciseViewModel["badge"]) {
@@ -391,12 +473,21 @@ function ExerciseRow({
 export default function WorkoutRecordPage() {
   const router = useRouter();
   const { alert } = useAppDialog();
+  const browserTimezone = useMemo(
+    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    [],
+  );
 
   const [query, setQuery] = useState<QueryContext>(() => readQueryContext());
   const [plans, setPlans] = useState<PlanItem[]>([]);
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
-  const [lastSession, setLastSession] = useState<{ title: string; description: string } | null>(null);
+  const [lastSession, setLastSession] = useState<{
+    dateLabel: string;
+    weekLabel: string;
+    sessionLabel: string;
+    bodyweightLabel: string;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const [plansLoadKey, setPlansLoadKey] = useState("workout-record:init");
   const [error, setError] = useState<string | null>(null);
@@ -566,36 +657,122 @@ export default function WorkoutRecordPage() {
     }
   }, []);
 
+  type LoadWorkoutContextInput = {
+    planId: string;
+    planName: string;
+    dateKey: string;
+    preferences: WorkoutPreferences;
+    planAutoProgression?: boolean;
+    planSchedule?: unknown;
+    planParams?: Record<string, unknown> | null;
+    logId?: string | null;
+    initialLog?: DetailedLogItem | null;
+  };
+
   const loadWorkoutContext = useCallback(
     async (
-      planId: string,
-      planName: string,
-      dateKey: string,
-      preferences: WorkoutPreferences,
+      input: LoadWorkoutContextInput,
     ) => {
       try {
         setLoading(true);
         setError(null);
         setSaveError(null);
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+        const recentLogsPath = input.planId
+          ? `/api/logs?planId=${encodeURIComponent(input.planId)}&limit=6`
+          : "/api/logs?limit=6";
+
+        if (input.logId) {
+          const [logRes, logsRes] = await Promise.all([
+            input.initialLog
+              ? Promise.resolve({ item: input.initialLog })
+              : apiGet<LogDetailResponse>(`/api/logs/${encodeURIComponent(input.logId)}`),
+            apiGet<LogsResponse>(recentLogsPath),
+          ]);
+
+          const resolvedPlanId =
+            typeof logRes.item.planId === "string" && logRes.item.planId.trim()
+              ? logRes.item.planId
+              : input.planId;
+          const nextDraft = applyWeightRulesToDraft(
+            createWorkoutRecordDraftFromLog(logRes.item, input.planName, {
+              sessionDate: input.dateKey || undefined,
+              timezone: browserTimezone,
+              planSchedule: input.planSchedule,
+            }),
+            input.preferences,
+          );
+          const summaryDateKey = input.dateKey || nextDraft.session.sessionDate;
+          setSelectedPlanId(resolvedPlanId);
+          setDraft(nextDraft);
+          setProgramEntryState({});
+          setLastSession(
+            buildLastSessionSummary(
+              logsRes.items ?? [],
+              summaryDateKey,
+              input.planParams,
+              input.preferences.bodyweightKg,
+            ),
+          );
+          setWorkflowState("idle");
+          return;
+        }
+
+        if (input.planId && input.dateKey) {
+          const existingLogLookup = await apiGet<LogsResponse>(
+            `/api/logs?planId=${encodeURIComponent(input.planId)}&date=${encodeURIComponent(input.dateKey)}&timezone=${encodeURIComponent(browserTimezone)}&limit=1`,
+          );
+          const existingLogId = existingLogLookup.items[0]?.id ?? null;
+          if (existingLogId) {
+            await loadWorkoutContext({
+              ...input,
+              logId: existingLogId,
+            });
+            return;
+          }
+        }
+
+        const isPastAutoPlan =
+          input.planAutoProgression === true &&
+          Boolean(input.dateKey) &&
+          input.dateKey < toDateKey(new Date());
+        if (isPastAutoPlan) {
+          setDraft(null);
+          setProgramEntryState({});
+          setLastSession(null);
+          setError("자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록만 수정할 수 있습니다.");
+          setWorkflowState("idle");
+          return;
+        }
 
         const [sessionRes, logsRes] = await Promise.all([
-          apiPost<GeneratedSessionResponse>(`/api/plans/${encodeURIComponent(planId)}/generate`, {
-            sessionDate: dateKey,
-            timezone,
+          apiPost<GeneratedSessionResponse>(`/api/plans/${encodeURIComponent(input.planId)}/generate`, {
+            sessionDate: input.dateKey,
+            timezone: browserTimezone,
           }),
-          apiGet<LogsResponse>(`/api/logs?planId=${encodeURIComponent(planId)}&limit=6`),
+          apiGet<LogsResponse>(recentLogsPath),
         ]);
 
         const prepared = prepareWorkoutRecordDraftForEntry(
           applyWeightRulesToDraft(
-            createWorkoutRecordDraft(sessionRes.session, planName),
-            preferences,
+            createWorkoutRecordDraft(sessionRes.session, input.planName, {
+              sessionDate: input.dateKey,
+              timezone: browserTimezone,
+              planSchedule: input.planSchedule,
+            }),
+            input.preferences,
           ),
         );
+        setSelectedPlanId(input.planId);
         setDraft(prepared.draft);
         setProgramEntryState(prepared.programEntryState);
-        setLastSession(buildLastSessionSummary(logsRes.items ?? [], dateKey));
+        setLastSession(
+          buildLastSessionSummary(
+            logsRes.items ?? [],
+            input.dateKey,
+            input.planParams,
+            input.preferences.bodyweightKg,
+          ),
+        );
         setWorkflowState("idle");
       } catch (e: any) {
         setDraft(null);
@@ -606,7 +783,7 @@ export default function WorkoutRecordPage() {
         setLoading(false);
       }
     },
-    [applyWeightRulesToDraft],
+    [applyWeightRulesToDraft, browserTimezone],
   );
 
   useEffect(() => {
@@ -615,7 +792,9 @@ export default function WorkoutRecordPage() {
     (async () => {
       const nextQuery = readQueryContext();
       setQuery(nextQuery);
-      setPlansLoadKey(`workout-record:${nextQuery.date}:${nextQuery.planId ?? ""}:${Date.now()}`);
+      setPlansLoadKey(
+        `workout-record:${nextQuery.date}:${nextQuery.planId ?? ""}:${nextQuery.logId ?? ""}:${Date.now()}`,
+      );
       setLoading(true);
       setError(null);
 
@@ -630,6 +809,44 @@ export default function WorkoutRecordPage() {
         setWorkoutPreferences(nextPreferences);
 
         const items = planRes.items ?? [];
+        if (nextQuery.logId) {
+          const logRes = await apiGet<LogDetailResponse>(`/api/logs/${encodeURIComponent(nextQuery.logId)}`);
+          if (cancelled) return;
+
+          const editablePlans = items.filter(
+            (entry) => !entry.isArchived || entry.id === logRes.item.planId,
+          );
+          setPlans(editablePlans);
+
+          const matchedPlan =
+            editablePlans.find((entry) => entry.id === logRes.item.planId) ??
+            editablePlans.find((entry) => entry.id === nextQuery.planId) ??
+            editablePlans[0] ??
+            null;
+          const resolvedPlanId =
+            matchedPlan?.id ??
+            (typeof logRes.item.planId === "string" ? logRes.item.planId : "");
+          const resolvedPlanName = matchedPlan?.name ?? "프로그램 미선택";
+
+          setSelectedPlanId(resolvedPlanId);
+          await loadWorkoutContext({
+            planId: resolvedPlanId,
+            planName: resolvedPlanName,
+            dateKey: nextQuery.hasExplicitDate ? nextQuery.date : "",
+            preferences: nextPreferences,
+            planAutoProgression: matchedPlan?.params?.autoProgression === true,
+            planSchedule: matchedPlan?.params?.schedule,
+            planParams: matchedPlan?.params ?? null,
+            logId: nextQuery.logId,
+            initialLog: logRes.item,
+          });
+
+          if (nextQuery.openAdd) {
+            setAddSheetOpen(true);
+          }
+          return;
+        }
+
         const activePlans = items.filter((entry) => !entry.isArchived);
         setPlans(activePlans);
 
@@ -654,7 +871,15 @@ export default function WorkoutRecordPage() {
         const fallbackPlan = activePlans[0];
         const plan = activePlans.find((entry) => entry.id === nextQuery.planId) ?? fallbackPlan;
         setSelectedPlanId(plan.id);
-        await loadWorkoutContext(plan.id, plan.name, nextQuery.date, nextPreferences);
+        await loadWorkoutContext({
+          planId: plan.id,
+          planName: plan.name,
+          dateKey: nextQuery.date,
+          preferences: nextPreferences,
+          planAutoProgression: plan.params?.autoProgression === true,
+          planSchedule: plan.params?.schedule,
+          planParams: plan.params ?? null,
+        });
 
         if (nextQuery.openAdd) {
           setAddSheetOpen(true);
@@ -716,12 +941,21 @@ export default function WorkoutRecordPage() {
 
   const handlePlanChange = useCallback(
     async (planId: string) => {
+      if (query.logId) return;
       const plan = plans.find((entry) => entry.id === planId);
       if (!plan) return;
       setSelectedPlanId(plan.id);
-      await loadWorkoutContext(plan.id, plan.name, query.date, workoutPreferences);
+      await loadWorkoutContext({
+        planId: plan.id,
+        planName: plan.name,
+        dateKey: query.date,
+        preferences: workoutPreferences,
+        planAutoProgression: plan.params?.autoProgression === true,
+        planSchedule: plan.params?.schedule,
+        planParams: plan.params ?? null,
+      });
     },
-    [plans, loadWorkoutContext, query.date, workoutPreferences],
+    [plans, loadWorkoutContext, query.date, query.logId, workoutPreferences],
   );
   const openPlanSheet = useCallback(() => {
     setPlanQuery("");
@@ -847,7 +1081,11 @@ export default function WorkoutRecordPage() {
         bodyweightKg: workoutPreferences.bodyweightKg,
         isBodyweightExercise: isBodyweightExerciseName,
       });
-      await apiPost("/api/logs", payload);
+      if (draft.session.logId) {
+        await apiPatch(`/api/logs/${encodeURIComponent(draft.session.logId)}`, payload);
+      } else {
+        await apiPost("/api/logs", payload);
+      }
       setWorkflowState("done");
       router.push("/");
     } catch (e: any) {
@@ -857,7 +1095,8 @@ export default function WorkoutRecordPage() {
   }, [draft, programEntryState, router, visibleExercises, workoutPreferences.bodyweightKg]);
 
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
-  const noPlan = isPlansSettled && !error && plans.length === 0;
+  const noPlan = isPlansSettled && !error && plans.length === 0 && !query.logId;
+  const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
     <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
@@ -870,8 +1109,31 @@ export default function WorkoutRecordPage() {
         message={error}
         title="기록 화면 데이터를 불러오지 못했습니다"
         onRetry={() => {
-          if (selectedPlan && selectedPlan.id) {
-            void loadWorkoutContext(selectedPlan.id, selectedPlan.name, query.date, workoutPreferences);
+          const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
+          const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
+          if (query.logId) {
+            void loadWorkoutContext({
+              planId: resolvedPlanId,
+              planName: resolvedPlanName,
+              dateKey: query.hasExplicitDate ? query.date : "",
+              preferences: workoutPreferences,
+              planAutoProgression: selectedPlan?.params?.autoProgression === true,
+              planSchedule: selectedPlan?.params?.schedule,
+              planParams: selectedPlan?.params ?? null,
+              logId: query.logId,
+            });
+            return;
+          }
+          if (resolvedPlanId) {
+            void loadWorkoutContext({
+              planId: resolvedPlanId,
+              planName: resolvedPlanName,
+              dateKey: query.date,
+              preferences: workoutPreferences,
+              planAutoProgression: selectedPlan?.params?.autoProgression === true,
+              planSchedule: selectedPlan?.params?.schedule,
+              planParams: selectedPlan?.params ?? null,
+            });
           }
         }}
       />
@@ -896,8 +1158,9 @@ export default function WorkoutRecordPage() {
                 className="haptic-tap app-select-row app-select-row--standalone app-select-row-button"
                 aria-label="플랜 선택 열기"
                 aria-haspopup="dialog"
-                aria-expanded={planSheetOpen}
-                onClick={openPlanSheet}
+                aria-expanded={isEditingExistingLog ? false : planSheetOpen}
+                onClick={isEditingExistingLog ? undefined : openPlanSheet}
+                disabled={isEditingExistingLog}
               >
                 <span className="app-select-row-right">
                   <span className="app-select-trigger-value">{selectedPlan?.name ?? draft.session.planName}</span>
@@ -909,28 +1172,29 @@ export default function WorkoutRecordPage() {
                   </span>
                 </span>
               </button>
+              {isEditingExistingLog ? (
+                <p className="text-xs text-[var(--text-secondary)]">기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
+              ) : null}
             </article>
           </section>
 
           <section className="grid gap-2">
             <h2 className="ios-section-heading">지난 세션 요약</h2>
             <article className="motion-card rounded-2xl border p-4 text-sm grid gap-1">
-              <span>{lastSession?.title ?? "지난 세션 없음"}</span>
+              <span>기록 날짜: {lastSession?.dateLabel ?? "지난 세션 없음"}</span>
+              <span>주차: {lastSession?.weekLabel ?? "-"}</span>
+              <span>세션: {lastSession?.sessionLabel ?? "-"}</span>
+              <span>Bodyweight: {lastSession?.bodyweightLabel ?? "미설정"}</span>
             </article>
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">오늘 수행 세션 요약</h2>
+            <h2 className="ios-section-heading">{isEditingExistingLog ? "선택 날짜 기록 요약" : "오늘 수행 세션 요약"}</h2>
             <article className="motion-card rounded-2xl border p-4 grid gap-1 text-sm">
-              <span>예상 1RM: {draft.session.estimatedE1rmKg === null ? "-" : `${draft.session.estimatedE1rmKg}kg`}</span>
-              <span>예상 TM: {draft.session.estimatedTmKg === null ? "-" : `${draft.session.estimatedTmKg}kg`}</span>
+              <span>기록 날짜: {draft.session.sessionDate}</span>
               <span>주차: Week {draft.session.week}</span>
               <span>세션: {draft.session.sessionType}</span>
-              <span>Session Key: {formatSessionKeyLabel(draft.session.sessionKey)}</span>
               <span>Bodyweight: {workoutPreferences.bodyweightKg ? `${workoutPreferences.bodyweightKg.toFixed(1)}kg` : "미설정"}</span>
-              <span className="text-[var(--accent-primary)]">
-                편집 상태: {stateLabel(workflowState)} / 변경사항: {hasWorkoutEdits(draft) ? "있음" : "없음"}
-              </span>
             </article>
           </section>
 
@@ -1105,7 +1369,11 @@ export default function WorkoutRecordPage() {
                 }}
                 disabled={workflowState === "saving"}
               >
-                {workflowState === "saving" ? "저장 중..." : "운동기록 완료"}
+                {workflowState === "saving"
+                  ? "저장 중..."
+                  : isEditingExistingLog
+                    ? "운동기록 수정"
+                    : "운동기록 완료"}
               </button>
             </div>
           </section>
