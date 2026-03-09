@@ -6,7 +6,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
-import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextarea } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
+import { SearchSelectCombobox, SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
@@ -109,13 +110,6 @@ function toDateKey(date: Date) {
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
   return `${y}-${m}-${d}`;
-}
-
-function inferProgramNameFromPlanName(planName: string) {
-  return String(planName)
-    .replace(/^program\s+/i, "")
-    .replace(/\s+program$/i, "")
-    .trim();
 }
 
 function readQueryContext(): QueryContext {
@@ -408,6 +402,8 @@ export default function WorkoutRecordPage() {
   const [error, setError] = useState<string | null>(null);
   const [workflowState, setWorkflowState] = useState<WorkoutWorkflowState>("idle");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [planQuery, setPlanQuery] = useState("");
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -422,6 +418,15 @@ export default function WorkoutRecordPage() {
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
     [plans, selectedPlanId],
   );
+  const orderedPlans = useMemo(() => {
+    if (!selectedPlan) return plans;
+    return [selectedPlan, ...plans.filter((entry) => entry.id !== selectedPlan.id)];
+  }, [plans, selectedPlan]);
+  const filteredPlans = useMemo(() => {
+    const normalizedQuery = planQuery.trim().toLowerCase();
+    if (!normalizedQuery) return orderedPlans;
+    return orderedPlans.filter((plan) => plan.name.toLowerCase().includes(normalizedQuery));
+  }, [orderedPlans, planQuery]);
 
   const resolveWeightWithPreferences = useCallback(
     (
@@ -718,6 +723,22 @@ export default function WorkoutRecordPage() {
     },
     [plans, loadWorkoutContext, query.date, workoutPreferences],
   );
+  const openPlanSheet = useCallback(() => {
+    setPlanQuery("");
+    setPlanSheetOpen(true);
+  }, []);
+  const closePlanSheet = useCallback(() => {
+    setPlanSheetOpen(false);
+    setPlanQuery("");
+  }, []);
+  const handlePlanSheetSelect = useCallback(
+    (planId: string) => {
+      closePlanSheet();
+      if (planId === selectedPlanId) return;
+      void handlePlanChange(planId);
+    },
+    [closePlanSheet, handlePlanChange, selectedPlanId],
+  );
 
   const resetAddExerciseSheetState = useCallback(() => {
     setExerciseQuery("");
@@ -746,6 +767,31 @@ export default function WorkoutRecordPage() {
       setExerciseQuery("");
     },
     [resolveWeightWithCurrentPreferences],
+  );
+  const planSheetOptions = useMemo(
+    () =>
+      filteredPlans.map((plan) => ({
+        key: plan.id,
+        label: plan.name,
+        active: selectedPlanId === plan.id,
+        ariaCurrent: selectedPlanId === plan.id,
+        onSelect: () => {
+          handlePlanSheetSelect(plan.id);
+        },
+      })),
+    [filteredPlans, handlePlanSheetSelect, selectedPlanId],
+  );
+  const exerciseSearchOptions = useMemo(
+    () =>
+      filteredExerciseOptions.map((option) => ({
+        key: option.id,
+        label: option.category ? `${option.name} · ${option.category}` : option.name,
+        active: addDraft.exerciseId === option.id,
+        onSelect: () => {
+          selectExerciseOption(option);
+        },
+      })),
+    [addDraft.exerciseId, filteredExerciseOptions, selectExerciseOption],
   );
 
   const handleAddExercise = useCallback(() => {
@@ -844,24 +890,25 @@ export default function WorkoutRecordPage() {
         <>
           <section className="grid grid-cols-1 gap-2">
             <h2 className="ios-section-heading">선택된 플랜</h2>
-            <article className="motion-card rounded-2xl border p-4 grid grid-cols-1 gap-3">
-              <strong style={{ overflowWrap: "break-word", wordBreak: "break-word", minWidth: 0 }}>{selectedPlan?.name ?? draft.session.planName}</strong>
-              <span className="ui-card-label" style={{ overflowWrap: "break-word", wordBreak: "break-word" }}>
-                기반 프로그램: {inferProgramNameFromPlanName(draft.session.planName)}
-              </span>
-              <AppSelect
-                label="플랜 변경"
-                value={selectedPlanId}
-                onChange={(event) => {
-                  void handlePlanChange(event.target.value);
-                }}
+            <article className="motion-card rounded-2xl border p-4 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                className="haptic-tap app-select-row app-select-row--standalone app-select-row-button"
+                aria-label="플랜 선택 열기"
+                aria-haspopup="dialog"
+                aria-expanded={planSheetOpen}
+                onClick={openPlanSheet}
               >
-                {plans.map((plan) => (
-                  <option key={plan.id} value={plan.id}>
-                    {plan.name}
-                  </option>
-                ))}
-              </AppSelect>
+                <span className="app-select-row-right">
+                  <span className="app-select-trigger-value">{selectedPlan?.name ?? draft.session.planName}</span>
+                  <span className="app-select-row-chevron" aria-hidden="true">
+                    <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
+                      <path d="M2 5.5L6 2L10 5.5" />
+                      <path d="M2 10.5L6 14L10 10.5" />
+                    </svg>
+                  </span>
+                </span>
+              </button>
             </article>
           </section>
 
@@ -1065,6 +1112,27 @@ export default function WorkoutRecordPage() {
         </>
       )}
 
+      <SearchSelectSheet
+        open={planSheetOpen}
+        title="플랜 선택"
+        description="보유 플랜을 검색해 오늘 기록에 사용할 플랜으로 전환합니다."
+        onClose={closePlanSheet}
+        closeLabel="닫기"
+        label="플랜 드롭다운 검색/선택"
+        query={planQuery}
+        placeholder="플랜 검색"
+        onQueryChange={setPlanQuery}
+        onQuerySubmit={() => {
+          const first = filteredPlans[0] ?? null;
+          if (!first) return;
+          handlePlanSheetSelect(first.id);
+        }}
+        resultsAriaLabel="플랜 검색 결과"
+        emptyText="검색 조건에 맞는 플랜이 없습니다."
+        options={planSheetOptions}
+      >
+      </SearchSelectSheet>
+
       <BottomSheet
         open={addSheetOpen}
         title="운동 추가"
@@ -1087,56 +1155,35 @@ export default function WorkoutRecordPage() {
         <div className="grid gap-3">
           <Card padding="md" elevated={false}>
             <CardContent>
-              <label className="grid gap-1">
-                <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
-                <div className="workout-combobox" data-no-swipe="true">
-                  <div className="app-search-shell">
-                    <span className="app-search-icon" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false">
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m20 20-3.8-3.8" />
-                      </svg>
-                    </span>
-                    <input
-                      type="search"
-                      inputMode="search"
-                      className="app-search-input"
-                      value={exerciseQuery}
-                      placeholder="예: Squat"
-                      onChange={(event) => {
-                        const nextQuery = event.target.value;
-                        setExerciseQuery(nextQuery);
-                        setExerciseOptionsError(null);
-                        setAddDraft((prev) => {
-                          if (!prev.exerciseId) return prev;
-                          if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                          return { ...prev, exerciseId: null, exerciseName: "" };
-                        });
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key !== "Enter") return;
-                        event.preventDefault();
-                        const first = filteredExerciseOptions[0] ?? null;
-                        if (!first) return;
-                        selectExerciseOption(first);
-                      }}
-                    />
-                    {exerciseQuery.trim().length > 0 ? (
-                      <button
-                        type="button"
-                        className="app-search-clear"
-                        aria-label="검색어 지우기"
-                        onClick={() => {
-                          setExerciseQuery("");
-                          setExerciseOptionsError(null);
-                        }}
-                      >
-                        ×
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {selectedExerciseOption ? (
+              <SearchSelectCombobox
+                label="운동종목 드롭다운 검색/선택"
+                query={exerciseQuery}
+                placeholder="예: Squat"
+                onQueryChange={(nextQuery) => {
+                  setExerciseQuery(nextQuery);
+                  setExerciseOptionsError(null);
+                  setAddDraft((prev) => {
+                    if (!prev.exerciseId) return prev;
+                    if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                    return { ...prev, exerciseId: null, exerciseName: "" };
+                  });
+                }}
+                onQuerySubmit={() => {
+                  const first = filteredExerciseOptions[0] ?? null;
+                  if (!first) return;
+                  selectExerciseOption(first);
+                }}
+                onClearQuery={() => {
+                  setExerciseQuery("");
+                  setExerciseOptionsError(null);
+                }}
+                resultsAriaLabel="운동종목 검색 결과"
+                options={exerciseSearchOptions}
+                emptyText="검색 조건에 맞는 운동종목이 없습니다."
+                loading={exerciseOptionsLoading}
+                loadingText="검색 중..."
+                selectionSummary={
+                  selectedExerciseOption ? (
                     <div className="workout-combobox-selected" role="status" aria-live="polite">
                       <span className="workout-combobox-selected-kicker">선택됨</span>
                       <strong className="workout-combobox-selected-name">
@@ -1152,32 +1199,10 @@ export default function WorkoutRecordPage() {
                         선택 변경
                       </button>
                     </div>
-                  ) : null}
-
-                  {!selectedExerciseOption ? (
-                    <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
-                      {exerciseOptionsLoading ? (
-                        <span className="workout-combobox-empty">검색 중...</span>
-                      ) : filteredExerciseOptions.length === 0 ? (
-                        <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
-                      ) : (
-                        filteredExerciseOptions.map((option) => (
-                          <button
-                            key={option.id}
-                            type="button"
-                            className={`haptic-tap workout-combobox-option${addDraft.exerciseId === option.id ? " is-active" : ""}`}
-                            onClick={() => {
-                              selectExerciseOption(option);
-                            }}
-                          >
-                            {option.category ? `${option.name} · ${option.category}` : option.name}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  ) : null}
-                </div>
-              </label>
+                  ) : null
+                }
+                hideOptions={Boolean(selectedExerciseOption)}
+              />
             </CardContent>
           </Card>
 

@@ -10,7 +10,6 @@ import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
-import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
@@ -152,10 +151,6 @@ function todayKeyInTimezone(timezone: string) {
   return `${y}-${m}-${d}`;
 }
 
-function toContextLabel(item: ProgramListItem) {
-  return `${formatProgramDisplayName(item.name)} / ${item.subtitle}`;
-}
-
 function formatProgramDisplayName(name: string) {
   return String(name)
     .replace(/\s*\(base[^)]*\)\s*/gi, " ")
@@ -293,6 +288,13 @@ function parsePositiveNumber(input: string) {
   const n = Number(input);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.round(n * 100) / 100;
+}
+
+function normalizeSearchText(...values: Array<string | null | undefined>) {
+  return values
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
 }
 
 function formatKg(value: number) {
@@ -501,6 +503,7 @@ export default function ProgramStorePage() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [storeQuery, setStoreQuery] = useState("");
 
   const [detailTargetId, setDetailTargetId] = useState<string | null>(null);
   const [startProgramDraft, setStartProgramDraft] = useState<StartProgramDraft | null>(null);
@@ -516,6 +519,21 @@ export default function ProgramStorePage() {
   const [recentlyAddedCustomizeExerciseId, setRecentlyAddedCustomizeExerciseId] = useState<string | null>(null);
 
   const listItems = useMemo(() => toProgramListItems(templates), [templates]);
+  const filteredListItems = useMemo(() => {
+    const normalizedQuery = storeQuery.trim().toLowerCase();
+    if (!normalizedQuery) return listItems;
+    return listItems.filter((item) => {
+      const scheduleLabel = getProgramScheduleLabel(item.template);
+      const tags = Array.isArray(item.template.tags) ? item.template.tags.join(" ") : "";
+      return normalizeSearchText(
+        formatProgramDisplayName(item.name),
+        item.subtitle,
+        item.description,
+        scheduleLabel,
+        tags,
+      ).includes(normalizedQuery);
+    });
+  }, [listItems, storeQuery]);
   const publicTemplates = useMemo(
     () => templates.filter((template) => template.visibility === "PUBLIC"),
     [templates],
@@ -532,6 +550,14 @@ export default function ProgramStorePage() {
   const customProgramCount = useMemo(
     () => listItems.filter((entry) => entry.source === "CUSTOM").length,
     [listItems],
+  );
+  const marketListItems = useMemo(
+    () => filteredListItems.filter((entry) => entry.source === "MARKET"),
+    [filteredListItems],
+  );
+  const customListItems = useMemo(
+    () => filteredListItems.filter((entry) => entry.source === "CUSTOM"),
+    [filteredListItems],
   );
   const isOperatorCustomization = useMemo(
     () => isOperatorTemplate(customizeDraft?.baseTemplate),
@@ -1060,6 +1086,7 @@ export default function ProgramStorePage() {
   };
 
   const isStoreSettled = useQuerySettled(storeLoadKey, loading);
+  const hasStoreQuery = storeQuery.trim().length > 0;
 
   return (
     <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll">
@@ -1077,16 +1104,56 @@ export default function ProgramStorePage() {
       />
       <NoticeStateRows message={notice} label="프로그램 안내" />
 
+      {listItems.length > 0 || hasStoreQuery ? (
+        <DashboardSurface>
+          <div className="grid gap-1">
+            <span className="ui-card-label">스토어 검색</span>
+            <div className="app-search-shell" aria-label="스토어 검색 입력">
+              <span className="app-search-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="m20 20-3.8-3.8" />
+                </svg>
+              </span>
+              <input
+                type="search"
+                inputMode="search"
+                className="app-search-input"
+                value={storeQuery}
+                onChange={(event) => setStoreQuery(event.target.value)}
+                placeholder="프로그램명, 설명, 태그 검색"
+                aria-label="스토어 검색"
+              />
+              {hasStoreQuery ? (
+                <button
+                  type="button"
+                  className="app-search-clear"
+                  aria-label="검색어 지우기"
+                  onClick={() => setStoreQuery("")}
+                >
+                  ×
+                </button>
+              ) : null}
+            </div>
+          </div>
+        </DashboardSurface>
+      ) : null}
+
+      <EmptyStateRows
+        when={isStoreSettled && !error && listItems.length > 0 && filteredListItems.length === 0}
+        label="검색 결과가 없습니다"
+        description="프로그램명, 태그, 설명으로 다시 검색해 보세요."
+      />
+
+      {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
       <DashboardSection title="공식 프로그램" description="검증된 근력 훈련 프로그램 라이브러리">
         <EmptyStateRows
-          when={isStoreSettled && !error && listItems.filter((i) => i.source === "MARKET").length === 0}
+          when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
           label="표시할 프로그램이 없습니다"
         />
-        {listItems.filter((i) => i.source === "MARKET").length > 0 && (
+        {marketListItems.length > 0 && (
           <DashboardSurface className="grid gap-2">
-            {listItems
-              .filter((item) => item.source === "MARKET")
-              .map((item) => {
+            {marketListItems.map((item) => {
                 const badge = sourceBadgeMeta(item.source);
                 const scheduleLabel = getProgramScheduleLabel(item.template);
                 const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
@@ -1148,13 +1215,12 @@ export default function ProgramStorePage() {
           </DashboardSurface>
         )}
       </DashboardSection>
+      )}
 
-      {listItems.filter((i) => i.source === "CUSTOM").length > 0 && (
+      {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
           <DashboardSurface className="grid gap-2">
-            {listItems
-              .filter((item) => item.source === "CUSTOM")
-              .map((item) => {
+            {customListItems.map((item) => {
                 const badge = sourceBadgeMeta(item.source);
                 const scheduleLabel = getProgramScheduleLabel(item.template);
                 const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
@@ -1215,7 +1281,7 @@ export default function ProgramStorePage() {
               })}
           </DashboardSurface>
         </DashboardSection>
-      )}
+      ) : null}
 
       <DashboardSection title="프로그램 만들기" description="기존 프로그램 기반으로 커스터마이징하거나 직접 구성">
         <DashboardSurface>

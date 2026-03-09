@@ -844,34 +844,11 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.25rem;
   padding: 0 var(--space-4) var(--space-2);
 }
 
-.ios-cal-plan-select {
-  font-size: var(--font-caption);
-  font-weight: 700;
-  color: var(--accent);
-  background: transparent;
-  background-image: none !important;
-  border: none;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
-  text-align: center;
-  max-width: 16rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  padding-inline-end: 0 !important;
-}
-
-.ios-cal-plan-chevron {
-  width: 0.9rem;
-  height: 0.9rem;
-  color: var(--accent);
-  flex-shrink: 0;
-  pointer-events: none;
+.ios-cal-plan-button {
+  width: 100%;
 }
 
 /* Month navigation header */
@@ -900,19 +877,23 @@ button {
 }
 
 .ios-cal-nav-btn {
+  --ios-cal-nav-size: max(var(--touch-target-min, 44px), 2.75rem);
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.6rem;
-  height: 2.6rem;
+  width: var(--ios-cal-nav-size);
+  height: var(--ios-cal-nav-size);
+  min-width: var(--ios-cal-nav-size);
+  min-height: var(--ios-cal-nav-size);
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   border: none;
   background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
   color: var(--accent);
   cursor: pointer;
-  flex-shrink: 0;
+  flex: 0 0 var(--ios-cal-nav-size);
   padding: 0;
+  line-height: 1;
   transition: background var(--duration-fast) var(--ease-standard);
 }
 
@@ -5174,6 +5155,16 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 15%, transparent);
 }
 
+.app-select-row--standalone {
+  gap: 0;
+}
+
+.app-select-row-button {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
 .app-select-row-label {
   flex: 0 0 auto;
   font-size: 1rem;
@@ -5214,6 +5205,31 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: inherit;
+}
+
+.app-select-row-native--standalone {
+  display: block;
+  width: 100%;
+  text-align: left;
+  text-align-last: left;
+  color: var(--text-primary);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  padding-inline-start: 0.125rem;
+  text-indent: 0;
+}
+
+.app-select-trigger-value {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-primary);
+  text-align: left;
+  font-size: 1.0625rem;
+  font-weight: 600;
 }
 
 .app-select-row-native:focus {

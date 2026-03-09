@@ -30,6 +30,13 @@ function formatDateTime(value: string) {
   return date.toLocaleString();
 }
 
+function normalizeSearchText(...values: Array<string | null | undefined>) {
+  return values
+    .map((value) => String(value ?? "").trim().toLowerCase())
+    .filter(Boolean)
+    .join(" ");
+}
+
 function PlansManagePageContent() {
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -37,6 +44,7 @@ function PlansManagePageContent() {
   const [loadKey, setLoadKey] = useState("plans-manage:load:init");
   const [error, setError] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [managePlanId, setManagePlanId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
@@ -48,11 +56,14 @@ function PlansManagePageContent() {
     [managePlanId, plans],
   );
   const isSettled = useQuerySettled(loadKey, loading);
-  const activeHistoryCount = useMemo(
-    () => plans.filter((item) => Boolean(item.lastPerformedAt)).length,
-    [plans],
-  );
   const todayDateKey = useMemo(() => toLocalDateKey(), []);
+  const filteredPlans = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    if (!normalizedQuery) return plans;
+    return plans.filter((plan) =>
+      normalizeSearchText(plan.name, plan.baseProgramName, plan.type).includes(normalizedQuery),
+    );
+  }, [plans, searchQuery]);
 
   const loadPlans = useCallback(async () => {
     try {
@@ -188,6 +199,40 @@ function PlansManagePageContent() {
           title="플랜 목록"
           description="진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요."
         >
+          {plans.length > 0 || searchQuery.trim().length > 0 ? (
+            <DashboardSurface>
+              <div className="grid gap-1">
+                <span className="ui-card-label">플랜 검색</span>
+                <div className="app-search-shell" aria-label="플랜 검색 입력">
+                  <span className="app-search-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                      <circle cx="11" cy="11" r="7" />
+                      <path d="m20 20-3.8-3.8" />
+                    </svg>
+                  </span>
+                  <input
+                    type="search"
+                    inputMode="search"
+                    className="app-search-input"
+                    value={searchQuery}
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                    placeholder="플랜명 또는 기반 프로그램 검색"
+                    aria-label="플랜 검색"
+                  />
+                  {searchQuery.trim().length > 0 ? (
+                    <button
+                      type="button"
+                      className="app-search-clear"
+                      aria-label="검색어 지우기"
+                      onClick={() => setSearchQuery("")}
+                    >
+                      ×
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </DashboardSurface>
+          ) : null}
 
           <LoadingStateRows
             active={loading}
@@ -205,10 +250,15 @@ function PlansManagePageContent() {
             label="플랜이 없습니다"
             description="프로그램 스토어에서 먼저 플랜을 생성하세요."
           />
+          <EmptyStateRows
+            when={isSettled && !error && plans.length > 0 && filteredPlans.length === 0}
+            label="검색 결과가 없습니다"
+            description="플랜명 또는 기반 프로그램명으로 다시 검색하세요."
+          />
 
-          {plans.length > 0 ? (
+          {filteredPlans.length > 0 ? (
             <DashboardSurface className="grid gap-2">
-              {plans.map((plan) => {
+              {filteredPlans.map((plan) => {
                 const todayWorkoutHref = buildTodayLogHref({
                   planId: plan.id,
                   date: todayDateKey,

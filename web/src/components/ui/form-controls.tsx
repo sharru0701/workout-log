@@ -76,7 +76,12 @@ export const AppTextarea = forwardRef<
 
 export const AppSelect = forwardRef<
   HTMLSelectElement,
-  SelectHTMLAttributes<HTMLSelectElement> & { variant?: FormControlVariant; wrapperClassName?: string; label?: string }
+  SelectHTMLAttributes<HTMLSelectElement> & {
+    variant?: FormControlVariant;
+    wrapperClassName?: string;
+    label?: string;
+    chrome?: "default" | "row";
+  }
 >(function AppSelect(
   {
     variant = "default",
@@ -86,24 +91,27 @@ export const AppSelect = forwardRef<
     multiple,
     size,
     label,
+    chrome = "default",
     ...props
   },
   ref,
 ) {
   const supportsSingleChevron = !multiple && (typeof size !== "number" || size <= 1);
+  const usesRowChrome = supportsSingleChevron && (chrome === "row" || Boolean(label));
+  const WrapperTag = label ? "label" : "div";
 
   // iOS settings-row mode: label on left, value + up-down chevron on right
-  if (label && supportsSingleChevron) {
+  if (usesRowChrome) {
     return (
-      <label className={cx("app-select-row", wrapperClassName)}>
-        <span className="app-select-row-label">{label}</span>
+      <WrapperTag className={cx("app-select-row", !label && "app-select-row--standalone", wrapperClassName)}>
+        {label ? <span className="app-select-row-label">{label}</span> : null}
         <span className="app-select-row-right">
           <select
             ref={ref}
             {...props}
             multiple={multiple}
             size={size}
-            className={cx("app-select-row-native", className)}
+            className={cx("app-select-row-native", !label && "app-select-row-native--standalone", className)}
           >
             {children}
           </select>
@@ -114,7 +122,7 @@ export const AppSelect = forwardRef<
             </svg>
           </span>
         </span>
-      </label>
+      </WrapperTag>
     );
   }
 
