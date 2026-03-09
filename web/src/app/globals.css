@@ -616,8 +616,6 @@ button {
   min-height: 100%;
   min-width: 0;
   overflow-x: clip;
-  transform: translate3d(0, 0, 0);
-  backface-visibility: hidden;
 }
 
 .app-launch-splash {
@@ -3429,12 +3427,12 @@ body {
   width: auto;
   margin-inline: -1rem;
   position: sticky;
-  top: 0;
+  top: -1px;
   z-index: 34;
   isolation: isolate;
   overflow: visible;
   padding-inline: 1rem;
-  padding-top: calc(var(--safe-top) + 11px);
+  padding-top: calc(var(--safe-top) + 12px);
   padding-bottom: calc(0.66rem + var(--app-top-nav-fade-active));
   min-height: 3.52rem;
   margin-bottom: var(--app-top-nav-content-offset);
@@ -3446,6 +3444,7 @@ body {
   border-bottom: 0;
   -webkit-backdrop-filter: var(--blur-lg, blur(40px) saturate(210%));
   backdrop-filter: var(--blur-lg, blur(40px) saturate(210%));
+  will-change: transform;
 }
 
 .app-top-nav.app-top-nav--ios {
