@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { AppSelect } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
@@ -240,13 +241,13 @@ function PlanHistoryPageContent() {
       className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
       {...pullToRefresh.bind}
     >
-      <div className="pull-refresh-indicator">
-        {pullToRefresh.isRefreshing
-          ? "플랜 히스토리 새로고침 중..."
-          : pullToRefresh.pullOffset > 0
-            ? "당겨서 새로고침"
-            : ""}
-      </div>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="플랜 히스토리 새로고침 중..."
+        completeLabel="플랜 히스토리 갱신 완료"
+      />
 
       <section className="grid gap-2">
         <div className="ios-section-heading">플랜 수행 히스토리</div>

@@ -3,8 +3,8 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { apiGet, apiPost, isAbortError } from "@/lib/api";
-import { APP_ROUTES } from "@/lib/app-routes";
 import {
   computeExternalLoadFromTotalKg,
   formatExerciseLoadLabel,
@@ -1337,13 +1337,13 @@ export default function WorkoutTodayPage() {
       className="native-page native-page-enter tab-screen tab-screen-wide app-dashboard-screen momentum-scroll"
       {...pullToRefresh.bind}
     >
-      <div className="pull-refresh-indicator">
-        {pullToRefresh.isRefreshing
-          ? "운동 데이터 새로고침 중..."
-          : pullToRefresh.pullOffset > 0
-            ? "당겨서 새로고침"
-            : ""}
-      </div>
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
+        refreshingLabel="운동 데이터 새로고침 중..."
+        completeLabel="운동 데이터 갱신 완료"
+      />
 
       <div className="motion-card rounded-2xl border p-4 space-y-3">
         <div className="ios-section-heading">기록 모드</div>

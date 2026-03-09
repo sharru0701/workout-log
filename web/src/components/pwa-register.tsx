@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -12,6 +12,15 @@ type NextDataWindow = Window & {
     buildId?: string;
   };
 };
+
+type VersionPayload = {
+  buildId?: string;
+  version?: string;
+  serviceWorkerUrl?: string;
+  ts?: string;
+};
+
+const UPDATE_POLL_INTERVAL_MS = 60_000;
 
 function isStandaloneMode() {
   if (typeof window === "undefined") return false;
@@ -39,11 +48,27 @@ function getBuildIdFromScripts() {
   return null;
 }
 
-function getServiceWorkerScriptUrl() {
-  if (typeof window === "undefined") return "/sw.js?v=dev";
+function getCurrentBuildId() {
+  if (typeof window === "undefined") return "dev";
   const nextData = (window as NextDataWindow).__NEXT_DATA__;
-  const buildId = nextData?.buildId ?? getBuildIdFromScripts() ?? "dev";
-  return `/sw.js?v=${encodeURIComponent(buildId)}`;
+  return nextData?.buildId ?? getBuildIdFromScripts() ?? "dev";
+}
+
+function getServiceWorkerScriptUrl(buildId?: string) {
+  const resolvedBuildId = buildId?.trim() || getCurrentBuildId();
+  return `/sw.js?v=${encodeURIComponent(resolvedBuildId)}`;
+}
+
+async function fetchLatestVersion() {
+  const response = await fetch("/api/version", {
+    cache: "no-store",
+    headers: {
+      "cache-control": "no-cache",
+    },
+  }).catch(() => null);
+
+  if (!response?.ok) return null;
+  return (await response.json().catch(() => null)) as VersionPayload | null;
 }
 
 export function PwaRegister() {
@@ -52,9 +77,88 @@ export function PwaRegister() {
   const canShowIosInstallHint = !disableServiceWorker && canUseInstallPrompt && isIosSafariBrowser();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [updateReady, setUpdateReady] = useState(false);
+  const [availableBuildId, setAvailableBuildId] = useState<string | null>(null);
   const [isStandalone, setIsStandalone] = useState(false);
   const [dismissedIosHint, setDismissedIosHint] = useState(false);
+  const [dismissedUpdateBuildId, setDismissedUpdateBuildId] = useState<string | null>(null);
+  const [isCheckingForUpdate, setIsCheckingForUpdate] = useState(false);
   const isReloadingForUpdate = useRef(false);
+  const currentBuildIdRef = useRef("dev");
+  const observedRegistrationsRef = useRef<WeakSet<ServiceWorkerRegistration>>(new WeakSet());
+  const updateCheckInFlightRef = useRef<Promise<void> | null>(null);
+
+  const observeRegistration = useCallback((registration: ServiceWorkerRegistration) => {
+    if (observedRegistrationsRef.current.has(registration)) return;
+    observedRegistrationsRef.current.add(registration);
+
+    registration.addEventListener("updatefound", () => {
+      const nextWorker = registration.installing;
+      if (!nextWorker) return;
+      nextWorker.addEventListener("statechange", () => {
+        if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
+          setUpdateReady(true);
+        }
+      });
+    });
+  }, []);
+
+  const registerServiceWorker = useCallback(async (buildId?: string) => {
+    const registration = await navigator.serviceWorker.register(getServiceWorkerScriptUrl(buildId));
+    observeRegistration(registration);
+    if (registration.waiting) setUpdateReady(true);
+    return registration;
+  }, [observeRegistration]);
+
+  const checkForAppUpdate = useCallback(async () => {
+    if (disableServiceWorker) return;
+    if (typeof window === "undefined") return;
+    if (!("serviceWorker" in navigator)) return;
+    if (process.env.NODE_ENV !== "production") return;
+
+    if (updateCheckInFlightRef.current) {
+      await updateCheckInFlightRef.current;
+      return;
+    }
+
+    const run = (async () => {
+      setIsCheckingForUpdate(true);
+      try {
+        const latestVersion = await fetchLatestVersion();
+        const latestBuildId = String(latestVersion?.buildId ?? "").trim();
+        if (!latestBuildId) return;
+
+        const updateWasDismissed = dismissedUpdateBuildId === latestBuildId;
+        const registration = await navigator.serviceWorker.getRegistration();
+        if (registration) {
+          observeRegistration(registration);
+          if (registration.waiting) {
+            if (!updateWasDismissed) {
+              setAvailableBuildId(
+                latestBuildId !== currentBuildIdRef.current ? latestBuildId : availableBuildId,
+              );
+              setUpdateReady(true);
+            }
+            return;
+          }
+        }
+
+        if (latestBuildId === currentBuildIdRef.current) {
+          setAvailableBuildId(null);
+          setUpdateReady(false);
+          return;
+        }
+
+        if (updateWasDismissed) return;
+        setAvailableBuildId(latestBuildId);
+      } finally {
+        setIsCheckingForUpdate(false);
+        updateCheckInFlightRef.current = null;
+      }
+    })();
+
+    updateCheckInFlightRef.current = run;
+    await run;
+  }, [availableBuildId, disableServiceWorker, dismissedUpdateBuildId, observeRegistration]);
 
   useEffect(() => {
     if (disableServiceWorker) return;
@@ -115,27 +219,42 @@ export function PwaRegister() {
       return;
     }
 
+    currentBuildIdRef.current = getCurrentBuildId();
+
     const onControllerChange = () => {
       if (isReloadingForUpdate.current) return;
       isReloadingForUpdate.current = true;
       window.location.reload();
     };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+      void checkForAppUpdate();
+    };
+
+    const onFocus = () => {
+      void checkForAppUpdate();
+    };
+
+    const onOnline = () => {
+      void checkForAppUpdate();
+    };
+
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("focus", onFocus);
+    window.addEventListener("online", onOnline);
+
+    const updateInterval = window.setInterval(() => {
+      if (document.visibilityState !== "visible") return;
+      void checkForAppUpdate();
+    }, UPDATE_POLL_INTERVAL_MS);
 
     const register = async () => {
       try {
-        const registration = await navigator.serviceWorker.register(getServiceWorkerScriptUrl());
-        if (registration.waiting) setUpdateReady(true);
-
-        registration.addEventListener("updatefound", () => {
-          const nextWorker = registration.installing;
-          if (!nextWorker) return;
-          nextWorker.addEventListener("statechange", () => {
-            if (nextWorker.state === "installed" && navigator.serviceWorker.controller) {
-              setUpdateReady(true);
-            }
-          });
-        });
+        const registration = await registerServiceWorker(currentBuildIdRef.current);
+        await registration.update().catch(() => undefined);
+        void checkForAppUpdate();
       } catch {
         // Fail silently; app should still function without offline support.
       }
@@ -150,12 +269,22 @@ export function PwaRegister() {
       window.addEventListener("load", onLoad, { once: true });
       return () => {
         window.removeEventListener("load", onLoad);
+        window.clearInterval(updateInterval);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
+        window.removeEventListener("focus", onFocus);
+        window.removeEventListener("online", onOnline);
         navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
       };
     }
 
-    return () => navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
-  }, [disableServiceWorker]);
+    return () => {
+      window.clearInterval(updateInterval);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("online", onOnline);
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+    };
+  }, [checkForAppUpdate, disableServiceWorker, registerServiceWorker]);
 
   if (disableServiceWorker) return null;
 
@@ -170,15 +299,40 @@ export function PwaRegister() {
 
   async function handleUpdateNow() {
     if (!("serviceWorker" in navigator)) return;
-    const registration = await navigator.serviceWorker.getRegistration();
-    if (!registration?.waiting) {
-      await registration?.update();
-      return;
+    setDismissedUpdateBuildId(null);
+    setIsCheckingForUpdate(true);
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        observeRegistration(registration);
+        if (registration.waiting) {
+          registration.waiting.postMessage({ type: "SKIP_WAITING" });
+          return;
+        }
+      }
+
+      const nextRegistration = await registerServiceWorker(availableBuildId ?? undefined);
+      await nextRegistration.update().catch(() => undefined);
+      if (nextRegistration.waiting) {
+        nextRegistration.waiting.postMessage({ type: "SKIP_WAITING" });
+      }
+    } finally {
+      setIsCheckingForUpdate(false);
     }
-    registration.waiting.postMessage({ type: "SKIP_WAITING" });
   }
 
-  if ((isStandalone || !deferredPrompt) && !updateReady) {
+  function dismissDetectedUpdate() {
+    if (availableBuildId) {
+      setDismissedUpdateBuildId(availableBuildId);
+    }
+    setAvailableBuildId(null);
+    setUpdateReady(false);
+  }
+
+  const showDetectedUpdateBanner =
+    Boolean(availableBuildId) && dismissedUpdateBuildId !== availableBuildId;
+
+  if ((isStandalone || !deferredPrompt) && !updateReady && !showDetectedUpdateBanner) {
     if (!canShowIosInstallHint || isStandalone || dismissedIosHint) return null;
   }
 
@@ -207,15 +361,30 @@ export function PwaRegister() {
           </div>
         </div>
       )}
+      {showDetectedUpdateBanner && !updateReady && (
+        <div className="app-pwa-banner">
+          <span className="app-pwa-text">
+            새 배포를 확인했습니다. 업데이트를 누르면 최신 변경사항을 바로 반영합니다.
+          </span>
+          <div className="app-pwa-actions">
+            <button className="app-pwa-button" onClick={() => void handleUpdateNow()} disabled={isCheckingForUpdate}>
+              {isCheckingForUpdate ? "준비 중" : "업데이트"}
+            </button>
+            <button className="app-pwa-button is-subtle" onClick={dismissDetectedUpdate}>
+              나중에
+            </button>
+          </div>
+        </div>
+      )}
       {updateReady && (
         <div className="app-pwa-banner">
-          <span className="app-pwa-text">New version ready.</span>
+          <span className="app-pwa-text">새 버전이 준비되었습니다. 업데이트를 누르면 최신 화면으로 전환합니다.</span>
           <div className="app-pwa-actions">
-            <button className="app-pwa-button" onClick={() => void handleUpdateNow()}>
-              Update
+            <button className="app-pwa-button" onClick={() => void handleUpdateNow()} disabled={isCheckingForUpdate}>
+              {isCheckingForUpdate ? "반영 중" : "업데이트"}
             </button>
-            <button className="app-pwa-button is-subtle" onClick={() => setUpdateReady(false)}>
-              Later
+            <button className="app-pwa-button is-subtle" onClick={dismissDetectedUpdate}>
+              나중에
             </button>
           </div>
         </div>

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
@@ -187,13 +188,13 @@ function PlansManagePageContent() {
         className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
         {...pullToRefresh.bind}
       >
-        <div className="pull-refresh-indicator">
-          {pullToRefresh.isRefreshing
-            ? "플랜 새로고침 중..."
-            : pullToRefresh.pullOffset > 0
-              ? "당겨서 새로고침"
-              : ""}
-        </div>
+        <PullToRefreshIndicator
+          pullOffset={pullToRefresh.pullOffset}
+          progress={pullToRefresh.progress}
+          status={pullToRefresh.status}
+          refreshingLabel="플랜 새로고침 중..."
+          completeLabel="플랜 갱신 완료"
+        />
 
         <DashboardSection
           title="플랜 목록"
