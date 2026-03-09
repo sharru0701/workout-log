@@ -57,7 +57,7 @@ fi
 
 if [[ "${SEED_SYNC_FIRST}" == "1" ]]; then
   echo "[restart] syncing seed data when base data is missing or seed hash changed"
-  docker compose run -e DB_SEED_RUNNER=ops-restart --rm -T migrate node scripts/seed-if-needed.mjs </dev/null
+  docker compose run -e DB_SEED_RUNNER=ops-restart -e WORKOUT_SEED_INCLUDE_DEMO_PLANS=0 --rm -T migrate node scripts/seed-if-needed.mjs </dev/null
 fi
 
 echo "[restart] restarting stack"

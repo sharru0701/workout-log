@@ -50,6 +50,12 @@
 WORKOUT_SEED_RESET_ALL=1 pnpm db:seed
 ```
 
+검증용 샘플 플랜까지 다시 세팅하려면 아래처럼 실행:
+
+```bash
+WORKOUT_SEED_RESET_ALL=1 pnpm db:seed:demo-plans
+```
+
 ## 최소 수정 코드
 
 ### 1) 처방 표시 보강 (UI)
@@ -113,7 +119,7 @@ cd web
 pnpm test:progression
 pnpm build
 pnpm db:migrate
-pnpm db:seed
+pnpm db:seed:demo-plans
 pnpm db:verify:programs
 ```
 

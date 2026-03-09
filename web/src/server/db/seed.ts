@@ -24,7 +24,7 @@ export type SeedRunOptions = {
 export async function runSeed(options: SeedRunOptions = {}) {
   const legacyProgramSlugs = ["starter-fullbody-3day", "531", "candito-linear"] as const;
   const shouldHardReset = options.shouldHardReset === true;
-  const includeDemoPlans = options.includeDemoPlans !== false;
+  const includeDemoPlans = options.includeDemoPlans === true;
 
   async function upsertTemplate(slug: string, values: any) {
     const rows = await db
@@ -790,7 +790,7 @@ const isDirectExecution =
 if (isDirectExecution) {
   runSeed({
     shouldHardReset: process.env.WORKOUT_SEED_RESET_ALL === "1",
-    includeDemoPlans: process.env.WORKOUT_SEED_SKIP_DEMO_PLANS === "1" ? false : true,
+    includeDemoPlans: process.env.WORKOUT_SEED_INCLUDE_DEMO_PLANS === "1",
   }).catch((e) => {
     console.error(e);
     process.exit(1);

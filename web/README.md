@@ -54,6 +54,8 @@ pnpm db:seed
 pnpm dev
 ```
 
+`pnpm db:seed` seeds shared catalog data only. If you intentionally need sample plans for local verification, run `pnpm db:seed:demo-plans`.
+
 Required local env (`.env.local`):
 
 ```bash

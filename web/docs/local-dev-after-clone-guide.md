@@ -59,6 +59,8 @@ pnpm db:seed
 pnpm dev
 ```
 
+기본 `pnpm db:seed`는 템플릿/운동 카탈로그만 세팅합니다. 검증용 샘플 플랜까지 넣고 싶으면 `pnpm db:seed:demo-plans`를 사용하세요.
+
 ## 3) 자주 막히는 포인트
 - `5432` 충돌 시: `WEB_PORT=3001 POSTGRES_PORT=5433 ./dev up`
 - 컨테이너 재시작 후 이상할 때: `./dev down` 후 `./dev up`

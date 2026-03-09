@@ -18,6 +18,7 @@ Start:
 Notes:
     - DB migration is executed by dedicated `migrate` job before web replacement.
     - Seed sync is executed before web replacement when base seed data is missing or the seed hash changed.
+    - Deploy seed sync updates shared catalog data only; it does not auto-create user plans.
     - web startup migration is disabled by default (`WEB_DB_MIGRATE_ENABLED=0`) to avoid multi-replica race.
     - deploy pipeline/restart script both run dedicated migration + seed sync job before web 교체.
     - Look for log lines:
