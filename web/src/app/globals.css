@@ -709,7 +709,7 @@ button {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  bottom: 0;
   z-index: 50;
   width: min(calc(100% - 2.5rem), var(--layout-max));
   display: grid;
@@ -3552,10 +3552,10 @@ body {
 }
 
 .app-bottom-nav {
-  bottom: calc(0.2rem + env(safe-area-inset-bottom));
+  bottom: 0;
   gap: 0.28rem;
-  padding: 0.42rem;
-  border-radius: var(--radius-surface, 1.8rem);
+  padding: 0.42rem 0.42rem calc(0.42rem + env(safe-area-inset-bottom));
+  border-radius: var(--radius-surface, 1.8rem) var(--radius-surface, 1.8rem) 0 0;
   border: 1px solid var(--glass-border, rgba(255,255,255,0.085));
   background: var(--glass-bg, rgba(13,17,25,0.76));
   box-shadow: var(--glass-shadow), var(--shadow-float);
