@@ -166,6 +166,150 @@ export function toProgramListItems(templates: ProgramTemplate[]): ProgramListIte
     });
 }
 
+export function getProgramScheduleLabel(template: ProgramTemplate): string {
+  const def = template.latestVersion?.definition;
+  if (!def) return "";
+
+  if (def.kind === "operator") {
+    const parts: string[] = [];
+    const sessionsPerWeek = def.schedule?.sessionsPerWeek;
+    const weeks = def.schedule?.weeks;
+    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
+    if (weeks) parts.push(`${weeks}주 사이클`);
+    return parts.join(" · ");
+  }
+
+  if (def.kind === "manual" && Array.isArray(def.sessions) && def.sessions.length > 0) {
+    const keys = (def.sessions as Array<{ key: string }>).map((s) => s.key).join("/");
+    return `${def.sessions.length}분할 · ${keys}`;
+  }
+
+  return "";
+}
+
+export type ProgramStatItem = {
+  label: string;
+  value: string;
+};
+
+export type ProgramSessionBreakdown = {
+  key: string;
+  exercises: Array<{ name: string; setsReps: string; hasAmrap: boolean }>;
+};
+
+export type ProgramDetailInfo = {
+  scheduleLabel: string;
+  stats: ProgramStatItem[];
+  sessions: ProgramSessionBreakdown[] | null;
+  modules: string[] | null;
+  progressionNote: string | null;
+};
+
+export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailInfo {
+  const def = template.latestVersion?.definition;
+  const defaults = template.latestVersion?.defaults;
+  const tags = Array.isArray(template.tags) ? template.tags : [];
+
+  let difficultyValue = "일반";
+  if (tags.some((t) => t === "novice" || t === "beginner")) difficultyValue = "초급";
+  else if (tags.some((t) => t === "intermediate")) difficultyValue = "중급";
+  else if (tags.some((t) => t === "advanced")) difficultyValue = "고급";
+
+  const typeValue = template.type === "LOGIC" ? "자동 진행" : "세션 고정";
+
+  if (!def) {
+    return {
+      scheduleLabel: "",
+      stats: [
+        { label: "난이도", value: difficultyValue },
+        { label: "방식", value: typeValue },
+      ],
+      sessions: null,
+      modules: null,
+      progressionNote: null,
+    };
+  }
+
+  if (def.kind === "operator") {
+    const sessionsPerWeek = def.schedule?.sessionsPerWeek as number | undefined;
+    const weeks = def.schedule?.weeks as number | undefined;
+    const parts: string[] = [];
+    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
+    if (weeks) parts.push(`${weeks}주 사이클`);
+
+    const stats: ProgramStatItem[] = [
+      { label: "난이도", value: difficultyValue },
+      { label: "주간 빈도", value: sessionsPerWeek ? `주 ${sessionsPerWeek}회` : "-" },
+      { label: "사이클", value: weeks ? `${weeks}주` : "-" },
+      { label: "방식", value: typeValue },
+    ];
+
+    const modules = Array.isArray(def.modules) ? (def.modules as string[]) : null;
+
+    const tmPercent = typeof defaults?.tmPercent === "number" ? Math.round(defaults.tmPercent * 100) : null;
+    const mainSets = def.progression?.mainSets as number | undefined;
+    const progressionParts: string[] = [];
+    if (tmPercent) progressionParts.push(`TM ${tmPercent}%`);
+    if (mainSets) progressionParts.push(`메인 ${mainSets}세트`);
+
+    return {
+      scheduleLabel: parts.join(" · "),
+      stats,
+      sessions: null,
+      modules,
+      progressionNote: progressionParts.join(" · ") || null,
+    };
+  }
+
+  if (def.kind === "manual" && Array.isArray(def.sessions)) {
+    type RawSet = { reps?: number; note?: string };
+    type RawItem = { exerciseName: string; sets?: RawSet[] };
+    type RawSession = { key: string; items?: RawItem[] };
+
+    const rawSessions = def.sessions as RawSession[];
+    const sessions: ProgramSessionBreakdown[] = rawSessions.map((session) => ({
+      key: session.key,
+      exercises: (session.items ?? []).map((item) => {
+        const sets = item.sets ?? [];
+        const setCount = sets.length;
+        const firstReps = sets[0]?.reps;
+        const hasAmrap = sets.some((s) => String(s.note ?? "").toUpperCase().includes("AMRAP"));
+        const setsReps =
+          setCount > 0 && firstReps != null
+            ? `${setCount}×${firstReps}${hasAmrap ? "+" : ""}`
+            : setCount > 0
+              ? `${setCount}세트`
+              : "";
+        return { name: item.exerciseName, setsReps, hasAmrap };
+      }),
+    }));
+
+    const sessionCount = sessions.length;
+    const scheduleLabel =
+      sessionCount > 0 ? `${sessionCount}분할 · ${sessions.map((s) => s.key).join("/")}` : "";
+
+    const stats: ProgramStatItem[] = [
+      { label: "난이도", value: difficultyValue },
+      { label: "분할", value: sessionCount > 0 ? `${sessionCount}분할` : "-" },
+      { label: "기간", value: "무제한" },
+      { label: "방식", value: typeValue },
+    ];
+
+    return { scheduleLabel, stats, sessions, modules: null, progressionNote: null };
+  }
+
+  return {
+    scheduleLabel: "",
+    stats: [
+      { label: "난이도", value: difficultyValue },
+      { label: "방식", value: typeValue },
+    ],
+    sessions: null,
+    modules: null,
+    progressionNote: null,
+  };
+}
+
 function normalizeTargets(definition: any): string[] {
   const raw = [
     ...(Array.isArray(definition?.lifts) ? definition.lifts : []),

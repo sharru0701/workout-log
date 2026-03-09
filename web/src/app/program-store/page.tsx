@@ -15,6 +15,8 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
   createEmptyExerciseDraft,
   extractOneRmTargetsFromTemplate,
+  getProgramDetailInfo,
+  getProgramScheduleLabel,
   hasAtLeastOneExercise,
   inferSessionDraftsFromTemplate,
   isOperatorTemplate,
@@ -126,6 +128,14 @@ type DeleteTemplateResponse = {
     name: string;
   };
   deletedPlanCount: number;
+};
+
+const MODULE_NAMES: Record<string, string> = {
+  SQUAT: "스쿼트",
+  BENCH: "벤치프레스",
+  DEADLIFT: "데드리프트",
+  OHP: "오버헤드 프레스",
+  PULL: "풀업 / 로우",
 };
 
 function todayKeyInTimezone(timezone: string) {
@@ -1067,49 +1077,157 @@ export default function ProgramStorePage() {
       />
       <NoticeStateRows message={notice} label="프로그램 안내" />
 
-      <DashboardSection
-        title="프로그램 목록"
-        description="시중 프로그램과 커스텀 프로그램을 같은 카드 톤으로 묶어 탐색 흐름을 단순화했습니다."
-      >
+      <DashboardSection title="공식 프로그램" description="검증된 근력 훈련 프로그램 라이브러리">
         <EmptyStateRows
-          when={isStoreSettled && !error && listItems.length === 0}
+          when={isStoreSettled && !error && listItems.filter((i) => i.source === "MARKET").length === 0}
           label="표시할 프로그램이 없습니다"
         />
-        {listItems.length > 0 && (
+        {listItems.filter((i) => i.source === "MARKET").length > 0 && (
           <DashboardSurface className="grid gap-2">
-            {listItems.map((item) => {
-              const badge = sourceBadgeMeta(item.source);
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  className="haptic-tap rounded-xl border p-3 grid gap-1 text-left"
-                  onClick={() => {
-                    setDetailTargetId(item.template.id);
-                  }}
-                >
-                  <span className="flex items-center justify-between gap-2">
-                    <strong>{formatProgramDisplayName(item.name)}</strong>
-                    <span className={`ui-badge ${badge.className}`}>{badge.label}</span>
-                  </span>
-                </button>
-              );
-            })}
+            {listItems
+              .filter((item) => item.source === "MARKET")
+              .map((item) => {
+                const badge = sourceBadgeMeta(item.source);
+                const scheduleLabel = getProgramScheduleLabel(item.template);
+                const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="haptic-tap rounded-xl border p-4 grid gap-2 text-left"
+                    onClick={() => {
+                      setDetailTargetId(item.template.id);
+                    }}
+                  >
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="grid gap-0.5">
+                        <strong className="text-sm font-semibold leading-snug">
+                          {formatProgramDisplayName(item.name)}
+                        </strong>
+                        {scheduleLabel && (
+                          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                            {scheduleLabel}
+                          </span>
+                        )}
+                      </span>
+                      <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
+                    </span>
+                    {item.template.description && (
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{
+                          color: "var(--text-secondary)",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {item.template.description}
+                      </p>
+                    )}
+                    {tags.length > 0 && (
+                      <span className="flex flex-wrap gap-1">
+                        {tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{
+                              background: "color-mix(in srgb, var(--accent-primary) 14%, var(--bg-tertiary))",
+                              color: "var(--accent-primary)",
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
           </DashboardSurface>
         )}
       </DashboardSection>
 
-      <DashboardSection
-        title="커스터마이징 시작"
-        description="새 프로그램 생성 진입점도 동일한 서피스 안에서 유지합니다."
-      >
+      {listItems.filter((i) => i.source === "CUSTOM").length > 0 && (
+        <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
+          <DashboardSurface className="grid gap-2">
+            {listItems
+              .filter((item) => item.source === "CUSTOM")
+              .map((item) => {
+                const badge = sourceBadgeMeta(item.source);
+                const scheduleLabel = getProgramScheduleLabel(item.template);
+                const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
+                return (
+                  <button
+                    key={item.key}
+                    type="button"
+                    className="haptic-tap rounded-xl border p-4 grid gap-2 text-left"
+                    onClick={() => {
+                      setDetailTargetId(item.template.id);
+                    }}
+                  >
+                    <span className="flex items-start justify-between gap-2">
+                      <span className="grid gap-0.5">
+                        <strong className="text-sm font-semibold leading-snug">
+                          {formatProgramDisplayName(item.name)}
+                        </strong>
+                        {scheduleLabel && (
+                          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                            {scheduleLabel}
+                          </span>
+                        )}
+                      </span>
+                      <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
+                    </span>
+                    {item.template.description && (
+                      <p
+                        className="text-xs leading-relaxed"
+                        style={{
+                          color: "var(--text-secondary)",
+                          display: "-webkit-box",
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: "vertical",
+                          overflow: "hidden",
+                        }}
+                      >
+                        {item.template.description}
+                      </p>
+                    )}
+                    {tags.length > 0 && (
+                      <span className="flex flex-wrap gap-1">
+                        {tags.slice(0, 5).map((tag) => (
+                          <span
+                            key={tag}
+                            className="px-2 py-0.5 rounded-full text-xs font-medium"
+                            style={{
+                              background: "color-mix(in srgb, var(--bg-tertiary) 90%, transparent)",
+                              color: "var(--text-secondary)",
+                            }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+          </DashboardSurface>
+        </DashboardSection>
+      )}
+
+      <DashboardSection title="프로그램 만들기" description="기존 프로그램 기반으로 커스터마이징하거나 직접 구성">
         <DashboardSurface>
           <button
             type="button"
-            className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-left"
+            className="haptic-tap w-full rounded-xl border px-4 py-4 text-sm font-semibold text-left grid gap-0.5"
             onClick={openCreateSheet}
           >
-            프로그램 커스터마이징 모달 열기
+            <span>새 프로그램 만들기</span>
+            <span className="text-xs font-normal" style={{ color: "var(--text-secondary)" }}>
+              기존 프로그램 복사 또는 빈 템플릿에서 시작
+            </span>
           </button>
         </DashboardSurface>
       </DashboardSection>
@@ -1117,10 +1235,10 @@ export default function ProgramStorePage() {
       <BottomSheet
         open={Boolean(detailTarget)}
         title="프로그램 상세"
-        description={detailTarget ? toContextLabel(detailTarget) : ""}
+        description=""
         onClose={() => setDetailTargetId(null)}
         closeLabel="닫기"
-        className="program-store-sheet program-store-sheet--medium"
+        className="program-store-sheet program-store-sheet--large"
         footer={
           detailTarget ? (
             <div className="grid gap-2">
@@ -1132,7 +1250,7 @@ export default function ProgramStorePage() {
                   openStartProgramDraft(detailTarget.template);
                 }}
               >
-                프로그램 선택하여 시작하기
+                이 프로그램으로 시작하기
               </button>
               <button
                 type="button"
@@ -1145,7 +1263,7 @@ export default function ProgramStorePage() {
                   });
                 }}
               >
-                프로그램 커스터마이징
+                커스터마이징해서 사용하기
               </button>
               {detailTarget.source === "CUSTOM" ? (
                 <button
@@ -1163,23 +1281,196 @@ export default function ProgramStorePage() {
           ) : null
         }
       >
-        {detailTarget && (
-          <div className="grid gap-2">
-            <Card padding="sm" elevated={false}>
-              <div className="flex items-center justify-between gap-2">
-                <CardTitle>{formatProgramDisplayName(detailTarget.template.name)}</CardTitle>
-                {(() => {
-                  const badge = sourceBadgeMeta(detailTarget.source);
-                  return <span className={`ui-badge ${badge.className}`}>{badge.label}</span>;
-                })()}
+        {detailTarget && (() => {
+          const info = getProgramDetailInfo(detailTarget.template);
+          const badge = sourceBadgeMeta(detailTarget.source);
+          const tags = Array.isArray(detailTarget.template.tags) ? detailTarget.template.tags : [];
+          return (
+            <div className="grid gap-5">
+
+              {/* 헤더 */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="grid gap-1">
+                  <span className="text-base font-bold leading-snug">
+                    {formatProgramDisplayName(detailTarget.template.name)}
+                  </span>
+                  {info.scheduleLabel && (
+                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                      {info.scheduleLabel}
+                    </span>
+                  )}
+                </div>
+                <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
               </div>
-              <CardDescription className="mt-1">
-                타입: {detailTarget.template.type} / 최신 버전:{" "}
-                {detailTarget.template.latestVersion ? `v${detailTarget.template.latestVersion.version}` : "-"}
-              </CardDescription>
-            </Card>
-          </div>
-        )}
+
+              {/* 스탯 그리드 */}
+              <div className="grid grid-cols-4 gap-2">
+                {info.stats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="rounded-xl p-2.5 grid gap-1 text-center"
+                    style={{ background: "var(--bg-tertiary)" }}
+                  >
+                    <span
+                      className="text-[10px] font-medium leading-tight"
+                      style={{ color: "var(--text-secondary)" }}
+                    >
+                      {stat.label}
+                    </span>
+                    <span
+                      className="text-xs font-bold leading-tight"
+                      style={{ color: "var(--text-primary)" }}
+                    >
+                      {stat.value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* 프로그램 소개 */}
+              {detailTarget.template.description && (
+                <div className="grid gap-2">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-widest"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    프로그램 소개
+                  </span>
+                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                    {detailTarget.template.description}
+                  </p>
+                </div>
+              )}
+
+              {/* 진행 설정 (Operator) */}
+              {info.progressionNote && (
+                <div
+                  className="rounded-xl px-4 py-3 flex items-center gap-2 text-xs"
+                  style={{
+                    background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
+                  }}
+                >
+                  <span className="font-semibold" style={{ color: "var(--accent-primary)" }}>
+                    진행 설정
+                  </span>
+                  <span style={{ color: "var(--text-secondary)" }}>{info.progressionNote}</span>
+                </div>
+              )}
+
+              {/* 훈련 모듈 (Operator) */}
+              {info.modules && info.modules.length > 0 && (
+                <div className="grid gap-2">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-widest"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    훈련 모듈
+                  </span>
+                  <div className="grid gap-1.5">
+                    {info.modules.map((mod) => (
+                      <div
+                        key={mod}
+                        className="rounded-xl px-4 py-3 flex items-center gap-3"
+                        style={{ background: "var(--bg-tertiary)" }}
+                      >
+                        <span
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
+                          style={{
+                            background: "color-mix(in srgb, var(--accent-primary) 18%, var(--bg-tertiary))",
+                            color: "var(--accent-primary)",
+                          }}
+                        >
+                          {mod}
+                        </span>
+                        <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+                          {MODULE_NAMES[mod] ?? mod}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 세션 구성 (Manual) */}
+              {info.sessions && info.sessions.length > 0 && (
+                <div className="grid gap-2">
+                  <span
+                    className="text-[11px] font-semibold uppercase tracking-widest"
+                    style={{ color: "var(--text-secondary)" }}
+                  >
+                    세션 구성
+                  </span>
+                  <div className="grid gap-2">
+                    {info.sessions.map((session) => (
+                      <div
+                        key={session.key}
+                        className="rounded-xl overflow-hidden"
+                        style={{ background: "var(--bg-tertiary)" }}
+                      >
+                        <div
+                          className="px-4 py-2.5 flex items-center gap-2"
+                          style={{
+                            background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
+                            borderBottom: "1px solid var(--border-default)",
+                          }}
+                        >
+                          <span
+                            className="text-xs font-bold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: "color-mix(in srgb, var(--accent-primary) 22%, var(--bg-tertiary))",
+                              color: "var(--accent-primary)",
+                            }}
+                          >
+                            {session.key}
+                          </span>
+                          <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                            세션 {session.key}
+                          </span>
+                        </div>
+                        <div className="px-4 py-3 grid gap-2">
+                          {session.exercises.map((ex, i) => (
+                            <div key={i} className="flex items-center justify-between gap-2">
+                              <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+                                {ex.name}
+                              </span>
+                              {ex.setsReps && (
+                                <span
+                                  className="text-xs font-semibold shrink-0"
+                                  style={{ color: "var(--text-secondary)" }}
+                                >
+                                  {ex.setsReps}
+                                </span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 태그 */}
+              {tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {tags.map((tag) => (
+                    <span
+                      key={tag}
+                      className="px-2.5 py-1 rounded-full text-xs font-medium"
+                      style={{
+                        background: "color-mix(in srgb, var(--accent-primary) 12%, var(--bg-tertiary))",
+                        color: "var(--accent-primary)",
+                      }}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+            </div>
+          );
+        })()}
       </BottomSheet>
 
       <BottomSheet

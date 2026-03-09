@@ -2601,10 +2601,14 @@ textarea::placeholder {
   max-height: min(48svh, 440px);
 }
 
+.app-dialog-sheet .mobile-bottom-sheet-body {
+  flex: 0 0 auto;
+  padding-top: 0.5rem;
+}
+
 .app-dialog-content {
   display: grid;
   gap: 0.5rem;
-  padding-top: 0.15rem;
 }
 
 .app-dialog-message {

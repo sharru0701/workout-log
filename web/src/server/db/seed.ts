@@ -27,14 +27,20 @@ export async function runSeed(options: SeedRunOptions = {}) {
   const includeDemoPlans = options.includeDemoPlans !== false;
 
   async function upsertTemplate(slug: string, values: any) {
-    const inserted = await db
+    const rows = await db
       .insert(programTemplate)
       .values(values)
-      .onConflictDoNothing()
+      .onConflictDoUpdate({
+        target: programTemplate.slug,
+        set: {
+          name: values.name,
+          description: values.description ?? null,
+          tags: values.tags ?? null,
+          type: values.type,
+          visibility: values.visibility,
+        },
+      })
       .returning();
-
-    if (inserted[0]) return inserted[0];
-    const rows = await db.select().from(programTemplate).where(eq(programTemplate.slug, slug));
     return rows[0];
   }
 
@@ -235,8 +241,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "Tactical Barbell Operator (Base)",
     type: "LOGIC",
     visibility: "PUBLIC",
-    description: "Canonical Operator base wave using submax percentages across a 6-week cycle.",
-    tags: ["strength", "barbell", "operator", "logic"],
+    description:
+      "군인·경찰 등 전술 직업군을 위해 설계된 서브맥시멀 근력 프로그램. 실제 1RM의 90%를 트레이닝 맥스(TM)로 설정하고, TM의 70~95% 범위에서 스쿼트·벤치·데드리프트를 6주 웨이브 사이클로 수행한다. 실패 없이 안정적으로 강도를 쌓으며, 6주 완료 시 TM에 소폭 중량을 추가해 장기 점진적 과부하를 유지하는 것이 핵심이다.",
+    tags: ["strength", "barbell", "operator", "intermediate"],
   });
 
   const templateOperatorV1 = await upsertVersion(templateOperator.id, 1, {
@@ -262,8 +269,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "Manual Sessions",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "User-defined fixed sessions (no logic).",
-    tags: ["manual"],
+    description:
+      "운동 종목·세트·횟수를 직접 지정해 나만의 루틴을 만드는 완전 자유 구성 템플릿. 자동 진행 로직 없이 매 세션을 수동으로 기록하며, 기존 프로그램에 얽매이지 않고 자신의 훈련 철학대로 커스터마이징하고 싶은 훈련자에게 적합하다.",
+    tags: ["manual", "custom"],
   });
 
   await upsertVersion(templateManual.id, 1, {
@@ -327,7 +335,8 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "Starting Strength LP (Base)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "Canonical novice linear progression base (A/B split).",
+    description:
+      "마크 리피토(Mark Rippetoe)가 설계한 초급자용 선형 점진 프로그램. 스쿼트·벤치·데드리프트·오버헤드프레스·파워클린만으로 A/B 루틴을 주 3회 수행하며, 매 세션 2.5~5kg씩 중량을 올린다. 고립 운동을 배제하고 복합 다관절 운동에만 집중해 '노비스 이펙트'를 최대한 활용하도록 설계됐다.",
     tags: ["manual", "strength", "linear", "novice"],
   });
 
@@ -380,7 +389,8 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "StrongLifts 5x5 (Base)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "Canonical A/B fullbody 5x5 novice progression.",
+    description:
+      "Mehdi가 설계한 노비스 선형 점진 프로그램. Starting Strength와 유사하지만 데드리프트를 제외한 모든 주요 운동을 5×5로 수행하는 것이 핵심 차이점이다. 5세트 완성 시마다 2.5kg을 추가하고, 실패 시 명확한 리셋 프로토콜을 따르며, 단순한 규칙 덕분에 입문자가 처음 시작하기에 최적화된 프로그램이다.",
     tags: ["manual", "strength", "linear", "novice", "5x5"],
   });
 
@@ -433,7 +443,8 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "Texas Method (Base)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "Canonical weekly V/R/I structure.",
+    description:
+      "Starting Strength LP를 졸업한 중급자를 위한 주간 파동 주기화 프로그램. 월요일 볼륨 데이(5×5)→수요일 회복 데이(3×5)→금요일 강도 데이(1×5 PR)로 자극·회복·최대 발현 사이클을 한 주 안에 완성한다. 매주 금요일 PR 세트를 2.5kg씩 올리며, 선형 점진이 한계에 달한 훈련자가 주 단위로 강도 향상을 이어갈 수 있게 해준다.",
     tags: ["manual", "strength", "intermediate", "weekly-undulation"],
   });
 
@@ -503,8 +514,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "GZCLP (Base T1/T2/T3)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "Canonical GZCLP base tier structure for novice-intermediate progression.",
-    tags: ["manual", "strength", "tiers", "top-set", "amrap"],
+    description:
+      "Cody LeFever가 설계한 3계층(T1/T2/T3) 선형 점진 프로그램. T1(주요 복합 운동, 5×3)은 최대 근력, T2(보조 복합 운동, 3×10)는 근비대, T3(고반복 AMRAP, 3×15+)은 작업 용량을 담당한다. Starting Strength보다 볼륨이 많고 운동 다양성이 높아 근력과 체형을 동시에 발전시키려는 초급~중급자에게 적합하다.",
+    tags: ["manual", "strength", "tiers", "top-set", "amrap", "novice"],
   });
 
   const templateGzclpV1 = await upsertVersion(templateGzclp.id, 1, {
@@ -590,8 +602,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     name: "Greyskull LP (Base)",
     type: "MANUAL",
     visibility: "PUBLIC",
-    description: "Canonical A/B LP with 2x5 + 1x5+ AMRAP structure.",
-    tags: ["manual", "strength", "linear", "amrap"],
+    description:
+      "Starting Strength를 기반으로 '마지막 세트 AMRAP(+ 세트)'를 추가한 초급자 LP. 2×5 후 마지막 세트를 한계까지 수행해 컨디션에 따라 볼륨이 자동 조절되며, 실패 시 리셋이 아닌 10% 감량 후 재시도로 훈련을 이어간다. 플러그인 시스템으로 친업·복근 등 보조 운동을 모듈식으로 추가할 수 있어 체성분 개선을 원하는 초급자에게도 적합하다.",
+    tags: ["manual", "strength", "linear", "amrap", "novice"],
   });
 
   const templateGreyskullV1 = await upsertVersion(templateGreyskull.id, 1, {
