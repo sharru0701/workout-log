@@ -168,7 +168,7 @@ export function EmptyStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel} className={className}>
-      <InfoRow label={label} leading={<RowIcon symbol="EM" tone="neutral" />} />
+      <InfoRow label={label} />
     </BaseGroupedList>
   );
 }

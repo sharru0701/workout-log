@@ -1,5 +1,14 @@
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
+
+// ─── Types ──────────────────────────────────────────────────────────
+
+export type HomeTodayExercise = {
+  name: string;
+  role: "MAIN" | "ASSIST" | string;
+  totalSets: number;
+  summary: string; // e.g. "3x5 @ 110kg"
+};
 
 export type HomeTodaySummary = {
   headline: string;
@@ -8,6 +17,8 @@ export type HomeTodaySummary = {
   completedSets: number;
   estimatedE1rmKg: number | null;
   href: string;
+  plannedExercises: HomeTodayExercise[];
+  totalPlannedSets: number;
 };
 
 export type HomeRecentSession = {
@@ -42,17 +53,64 @@ export type HomeWeeklySummary = {
   days: HomeWeeklyDay[];
 };
 
+export type HomeLastSessionExercise = {
+  name: string;
+  sets: number;
+  bestSet: string;
+  weightDelta: number | null; // compared to today's planned weight
+};
+
+export type HomeLastSession = {
+  id: string;
+  planName: string;
+  date: string;
+  totalSets: number;
+  totalVolume: number;
+  exercises: HomeLastSessionExercise[];
+  href: string;
+};
+
+export type HomeStrengthItem = {
+  exerciseName: string;
+  exerciseId: string | null;
+  bestE1rm: number;
+  latestE1rm: number;
+  improvement: number;
+  trend: "up" | "down" | "flat";
+};
+
+export type HomeVolumeTrendPoint = {
+  period: string;
+  label: string;
+  tonnage: number;
+  sets: number;
+  reps: number;
+};
+
+export type HomeQuickStats = {
+  totalSessions: number;
+  totalVolume: number;
+  currentStreak: number;
+  thisMonthSessions: number;
+};
+
 export type HomeData = {
   today: HomeTodaySummary;
   planOverview: HomePlanOverview;
   weeklySummary: HomeWeeklySummary;
   recentLimit: number;
   recentSessions: HomeRecentSession[];
+  lastSession: HomeLastSession | null;
+  strengthProgress: HomeStrengthItem[];
+  volumeTrend: HomeVolumeTrendPoint[];
+  quickStats: HomeQuickStats;
 };
 
 export interface HomeDataSource {
   load(): Promise<HomeData>;
 }
+
+// ─── Internal types ─────────────────────────────────────────────────
 
 type PlanItem = {
   id: string;
@@ -75,8 +133,57 @@ type WorkoutLogItem = {
   sets: WorkoutSetItem[];
 };
 
+type PrApiItem = {
+  exerciseId: string | null;
+  exerciseName: string;
+  best: { date: string; e1rm: number; weightKg: number; reps: number };
+  latest: { date: string; e1rm: number; weightKg: number; reps: number };
+  improvement: number;
+};
+
+type VolumeSeriesPoint = {
+  period: string;
+  tonnage: number;
+  reps: number;
+  sets: number;
+};
+
+type SnapshotSet = {
+  reps?: number;
+  targetWeightKg?: number;
+  percent?: number;
+  rpe?: number;
+  note?: string;
+};
+
+type SnapshotExercise = {
+  exerciseId?: string | null;
+  exerciseName: string;
+  role: "MAIN" | "ASSIST" | string;
+  sets: SnapshotSet[];
+  sourceBlockTarget?: string;
+  progressionTarget?: string | null;
+};
+
+type GenerateSessionResponse = {
+  session: {
+    id: string;
+    sessionKey: string;
+    snapshot: {
+      schemaVersion: number;
+      exercises: SnapshotExercise[];
+      week?: number;
+      day?: number;
+    } | null;
+  };
+};
+
+// ─── Constants ──────────────────────────────────────────────────────
+
 const DEFAULT_RECENT_LIMIT = 3;
 const WEEKLY_WINDOW_DAYS = 7;
+
+// ─── Helpers ────────────────────────────────────────────────────────
 
 function parseDateKey(iso: string) {
   const parsed = new Date(iso);
@@ -107,6 +214,15 @@ function formatWeekdayShort(date: Date) {
   }).format(date);
 }
 
+function formatWeekLabel(period: string) {
+  const date = new Date(period);
+  if (Number.isNaN(date.getTime())) return period;
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+  }).format(date);
+}
+
 function estimateE1rm(weightKg: number | null | undefined, reps: number | null | undefined) {
   if (weightKg === null || reps === null || weightKg === undefined || reps === undefined) return null;
   if (weightKg <= 0 || reps <= 0) return null;
@@ -132,6 +248,8 @@ function resolveHighlightedPlan(plans: PlanItem[], latestTodayLog: WorkoutLogIte
     [...plans].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
   return planFromToday ?? planByLastPerformed ?? fallbackPlan;
 }
+
+// ─── Builders ───────────────────────────────────────────────────────
 
 function buildPlanOverview(plans: PlanItem[], latestTodayLog: WorkoutLogItem | null): HomePlanOverview {
   if (plans.length === 0) {
@@ -212,7 +330,87 @@ function buildWeeklySummary(logs: WorkoutLogItem[]): HomeWeeklySummary {
   };
 }
 
-function buildTodaySummary(plans: PlanItem[], logs: WorkoutLogItem[]): HomeTodaySummary {
+function buildPlannedExercises(snapshot: GenerateSessionResponse["session"]["snapshot"]): {
+  exercises: HomeTodayExercise[];
+  totalSets: number;
+  plannedWeightByExercise: Map<string, number>;
+} {
+  const empty = { exercises: [], totalSets: 0, plannedWeightByExercise: new Map<string, number>() };
+  if (!snapshot?.exercises) return empty;
+
+  let totalSets = 0;
+  const plannedWeightByExercise = new Map<string, number>();
+  const exercises: HomeTodayExercise[] = [];
+
+  for (const ex of snapshot.exercises) {
+    const sets = ex.sets ?? [];
+    totalSets += sets.length;
+
+    // Find max target weight for this exercise
+    let maxWeight = 0;
+    for (const s of sets) {
+      if (s.targetWeightKg && s.targetWeightKg > maxWeight) {
+        maxWeight = s.targetWeightKg;
+      }
+    }
+    if (maxWeight > 0) {
+      const key = ex.exerciseName.toLowerCase();
+      const existing = plannedWeightByExercise.get(key);
+      if (!existing || maxWeight > existing) {
+        plannedWeightByExercise.set(key, maxWeight);
+      }
+    }
+
+    // Build summary string
+    const summary = summarizeSets(sets);
+
+    exercises.push({
+      name: ex.exerciseName,
+      role: ex.role,
+      totalSets: sets.length,
+      summary,
+    });
+  }
+
+  return { exercises, totalSets, plannedWeightByExercise };
+}
+
+function summarizeSets(sets: SnapshotSet[]): string {
+  if (sets.length === 0) return "";
+
+  // Group consecutive sets with same reps/weight
+  const groups: Array<{ reps: number; weight: number; count: number }> = [];
+  for (const s of sets) {
+    const reps = s.reps ?? 0;
+    const weight = s.targetWeightKg ?? 0;
+    const last = groups[groups.length - 1];
+    if (last && last.reps === reps && last.weight === weight) {
+      last.count += 1;
+    } else {
+      groups.push({ reps, weight, count: 1 });
+    }
+  }
+
+  // If all sets are the same pattern
+  if (groups.length === 1) {
+    const g = groups[0];
+    const weightStr = g.weight > 0 ? ` @ ${g.weight}kg` : "";
+    return `${g.count}x${g.reps}${weightStr}`;
+  }
+
+  // Multiple patterns: show count x reps for each, with weight range
+  const maxWeight = Math.max(...groups.map((g) => g.weight));
+  const parts = groups.map((g) => `${g.count}x${g.reps}`);
+  const weightStr = maxWeight > 0 ? ` (max ${maxWeight}kg)` : "";
+  return parts.join(", ") + weightStr;
+}
+
+function buildTodaySummary(
+  plans: PlanItem[],
+  logs: WorkoutLogItem[],
+  plannedExercises: HomeTodayExercise[],
+  totalPlannedSets: number,
+): HomeTodaySummary {
   const nowKey = toLocalDateKey(new Date());
   const plansById = new Map(plans.map((entry) => [entry.id, entry.name]));
   const todayLogs = logs.filter((entry) => parseDateKey(entry.performedAt) === nowKey);
@@ -236,11 +434,21 @@ function buildTodaySummary(plans: PlanItem[], logs: WorkoutLogItem[]): HomeToday
   }
 
   const activePlanId = latestToday?.planId ?? highlightedPlan?.id ?? null;
-  const meta = activePlanId
-    ? todayLogCount > 0
-      ? `오늘 ${todayLogCount}개 세션 / ${completedSets}세트 완료 / 예상 e1RM ${formatE1rm(estimatedE1rmKg)}`
-      : "준비된 플랜으로 오늘 세션을 생성하고 기록을 시작합니다."
-    : "오늘 운동은 플랜 기반으로 동작합니다. 먼저 프로그램을 선택하거나 커스텀 프로그램을 만드세요.";
+
+  let meta: string;
+  if (!activePlanId) {
+    meta = "오늘 운동은 플랜 기반으로 동작합니다. 먼저 프로그램을 선택하거나 커스텀 프로그램을 만드세요.";
+  } else if (todayLogCount > 0) {
+    meta = `오늘 ${todayLogCount}개 세션 / ${completedSets}세트 완료 / 예상 e1RM ${formatE1rm(estimatedE1rmKg)}`;
+  } else if (plannedExercises.length > 0) {
+    const mainExercises = plannedExercises.filter((e) => e.role === "MAIN");
+    const mainNames = mainExercises.slice(0, 3).map((e) => e.name);
+    meta = mainNames.length > 0
+      ? `${mainNames.join(", ")} 외 ${totalPlannedSets}세트`
+      : `${totalPlannedSets}세트 예정`;
+  } else {
+    meta = "준비된 플랜으로 오늘 세션을 생성하고 기록을 시작합니다.";
+  }
 
   return {
     headline: "오늘의 운동 요약",
@@ -255,6 +463,8 @@ function buildTodaySummary(plans: PlanItem[], logs: WorkoutLogItem[]): HomeToday
           autoGenerate: todayLogCount === 0,
         })
       : "/program-store",
+    plannedExercises,
+    totalPlannedSets: totalPlannedSets,
   };
 }
 
@@ -279,27 +489,188 @@ function buildRecentSessions(plans: PlanItem[], logs: WorkoutLogItem[], recentLi
     });
 }
 
-function buildHomeData(plans: PlanItem[], logs: WorkoutLogItem[], recentLimit = DEFAULT_RECENT_LIMIT): HomeData {
+function buildLastSession(
+  plans: PlanItem[],
+  logs: WorkoutLogItem[],
+  plannedWeightByExercise: Map<string, number>,
+): HomeLastSession | null {
+  const nowKey = toLocalDateKey(new Date());
+  const plansById = new Map(plans.map((entry) => [entry.id, entry.name]));
+
+  const lastLog = logs.find((entry) => parseDateKey(entry.performedAt) !== nowKey);
+  if (!lastLog) return null;
+
+  const planName = lastLog.planId ? plansById.get(lastLog.planId) ?? "프로그램 미지정" : "프로그램 미지정";
+  const totalSets = lastLog.sets.length;
+
+  let totalVolume = 0;
+  const exerciseMap = new Map<string, { sets: number; bestWeight: number; bestReps: number }>();
+
+  for (const set of lastLog.sets) {
+    const w = set.weightKg ?? 0;
+    const r = set.reps ?? 0;
+    totalVolume += w * r;
+
+    const name = set.exerciseName;
+    const existing = exerciseMap.get(name);
+    if (!existing) {
+      exerciseMap.set(name, { sets: 1, bestWeight: w, bestReps: r });
+    } else {
+      existing.sets += 1;
+      if (w > existing.bestWeight || (w === existing.bestWeight && r > existing.bestReps)) {
+        existing.bestWeight = w;
+        existing.bestReps = r;
+      }
+    }
+  }
+
+  const exercises: HomeLastSessionExercise[] = Array.from(exerciseMap.entries()).map(([name, data]) => {
+    // Compute weight delta vs today's planned weight
+    let weightDelta: number | null = null;
+    const plannedWeight = plannedWeightByExercise.get(name.toLowerCase());
+    if (plannedWeight !== undefined && data.bestWeight > 0) {
+      weightDelta = plannedWeight - data.bestWeight;
+    }
+
+    return {
+      name,
+      sets: data.sets,
+      bestSet: data.bestWeight > 0 ? `${data.sets}x${data.bestReps} @ ${data.bestWeight}kg` : `${data.sets}x${data.bestReps}`,
+      weightDelta,
+    };
+  });
+
+  return {
+    id: lastLog.id,
+    planName,
+    date: formatDate(lastLog.performedAt),
+    totalSets,
+    totalVolume: Math.round(totalVolume),
+    exercises,
+    href: `/workout-record?context=recent&logId=${encodeURIComponent(lastLog.id)}`,
+  };
+}
+
+function buildStrengthProgress(prItems: PrApiItem[]): HomeStrengthItem[] {
+  return prItems.slice(0, 4).map((item) => {
+    const threshold = 1;
+    let trend: "up" | "down" | "flat" = "flat";
+    if (item.improvement > threshold) trend = "up";
+    else if (item.improvement < -threshold) trend = "down";
+
+    return {
+      exerciseName: item.exerciseName,
+      exerciseId: item.exerciseId,
+      bestE1rm: Math.round(item.best.e1rm),
+      latestE1rm: Math.round(item.latest.e1rm),
+      improvement: Math.round(item.improvement),
+      trend,
+    };
+  });
+}
+
+function buildVolumeTrend(series: VolumeSeriesPoint[]): HomeVolumeTrendPoint[] {
+  return series.map((point) => ({
+    period: point.period,
+    label: formatWeekLabel(point.period),
+    tonnage: Math.round(point.tonnage),
+    sets: Number(point.sets ?? 0),
+    reps: Number(point.reps ?? 0),
+  }));
+}
+
+function buildQuickStats(logs: WorkoutLogItem[]): HomeQuickStats {
+  const now = new Date();
+  const currentMonth = now.getMonth();
+  const currentYear = now.getFullYear();
+
+  const totalSessions = logs.length;
+  let totalVolume = 0;
+  let thisMonthSessions = 0;
+
+  for (const log of logs) {
+    for (const set of log.sets) {
+      totalVolume += (set.weightKg ?? 0) * (set.reps ?? 0);
+    }
+    const logDate = new Date(log.performedAt);
+    if (logDate.getMonth() === currentMonth && logDate.getFullYear() === currentYear) {
+      thisMonthSessions += 1;
+    }
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const logDateKeys = new Set(logs.map((l) => parseDateKey(l.performedAt)));
+  let streak = 0;
+  const checkDate = new Date(today);
+
+  const todayKey = toLocalDateKey(today);
+  if (!logDateKeys.has(todayKey)) {
+    checkDate.setDate(checkDate.getDate() - 1);
+  }
+
+  for (let i = 0; i < 365; i++) {
+    const key = toLocalDateKey(checkDate);
+    if (logDateKeys.has(key)) {
+      streak += 1;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
+
+  return {
+    totalSessions,
+    totalVolume: Math.round(totalVolume),
+    currentStreak: streak,
+    thisMonthSessions,
+  };
+}
+
+function buildHomeData(
+  plans: PlanItem[],
+  logs: WorkoutLogItem[],
+  prItems: PrApiItem[],
+  volumeSeries: VolumeSeriesPoint[],
+  snapshot: GenerateSessionResponse["session"]["snapshot"] | null,
+  recentLimit = DEFAULT_RECENT_LIMIT,
+): HomeData {
   const todayKey = toLocalDateKey(new Date());
   const latestTodayLog = logs.find((entry) => parseDateKey(entry.performedAt) === todayKey) ?? null;
 
+  const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } =
+    buildPlannedExercises(snapshot);
+
   return {
-    today: buildTodaySummary(plans, logs),
+    today: buildTodaySummary(plans, logs, plannedExercises, totalPlannedSets),
     planOverview: buildPlanOverview(plans, latestTodayLog),
     weeklySummary: buildWeeklySummary(logs),
     recentLimit,
     recentSessions: buildRecentSessions(plans, logs, recentLimit),
+    lastSession: buildLastSession(plans, logs, plannedWeightByExercise),
+    strengthProgress: buildStrengthProgress(prItems),
+    volumeTrend: buildVolumeTrend(volumeSeries),
+    quickStats: buildQuickStats(logs),
   };
 }
+
+// ─── Preview Data ───────────────────────────────────────────────────
 
 export const HOME_PREVIEW_DATA: HomeData = {
   today: {
     headline: "오늘의 운동 요약",
     programName: "5/3/1 BBB",
-    meta: "오늘 1개 세션 / 14세트 완료 / 예상 e1RM 132kg",
-    completedSets: 14,
-    estimatedE1rmKg: 132,
+    meta: "Back Squat, Bench Press 외 16세트",
+    completedSets: 0,
+    estimatedE1rmKg: null,
     href: "/workout-record?planId=preview-plan-531&date=2026-03-03",
+    plannedExercises: [
+      { name: "Back Squat", role: "MAIN", totalSets: 3, summary: "3x5 @ 110kg" },
+      { name: "Bench Press", role: "MAIN", totalSets: 3, summary: "3x5 @ 80kg" },
+      { name: "Back Squat (BBB)", role: "ASSIST", totalSets: 5, summary: "5x10 @ 65kg" },
+      { name: "Dumbbell Row", role: "ASSIST", totalSets: 5, summary: "5x10 @ 30kg" },
+    ],
+    totalPlannedSets: 16,
   },
   planOverview: {
     totalPlans: 3,
@@ -325,29 +696,44 @@ export const HOME_PREVIEW_DATA: HomeData = {
   },
   recentLimit: DEFAULT_RECENT_LIMIT,
   recentSessions: [
-    {
-      id: "preview-1",
-      title: "5/3/1 BBB",
-      subtitle: "3월 2일 (월)",
-      description: "16세트 / 대표 운동: Back Squat",
-      href: "/workout-record?context=recent&logId=preview-1",
-    },
-    {
-      id: "preview-2",
-      title: "My A/B Strength",
-      subtitle: "3월 1일 (일)",
-      description: "12세트 / 대표 운동: Deadlift",
-      href: "/workout-record?context=recent&logId=preview-2",
-    },
-    {
-      id: "preview-3",
-      title: "StrongLifts 5x5",
-      subtitle: "2월 28일 (토)",
-      description: "15세트 / 대표 운동: Bench Press",
-      href: "/workout-record?context=recent&logId=preview-3",
-    },
+    { id: "preview-1", title: "5/3/1 BBB", subtitle: "3월 2일 (월)", description: "16세트 / 대표 운동: Back Squat", href: "/workout-record?context=recent&logId=preview-1" },
+    { id: "preview-2", title: "My A/B Strength", subtitle: "3월 1일 (일)", description: "12세트 / 대표 운동: Deadlift", href: "/workout-record?context=recent&logId=preview-2" },
+    { id: "preview-3", title: "StrongLifts 5x5", subtitle: "2월 28일 (토)", description: "15세트 / 대표 운동: Bench Press", href: "/workout-record?context=recent&logId=preview-3" },
   ],
+  lastSession: {
+    id: "preview-1",
+    planName: "5/3/1 BBB",
+    date: "3월 2일 (월)",
+    totalSets: 16,
+    totalVolume: 8450,
+    exercises: [
+      { name: "Back Squat", sets: 8, bestSet: "8x3 @ 120kg", weightDelta: -10 },
+      { name: "Leg Press", sets: 5, bestSet: "5x10 @ 180kg", weightDelta: null },
+      { name: "Leg Curl", sets: 3, bestSet: "3x12 @ 40kg", weightDelta: null },
+    ],
+    href: "/workout-record?context=recent&logId=preview-1",
+  },
+  strengthProgress: [
+    { exerciseName: "Back Squat", exerciseId: "ex-squat", bestE1rm: 145, latestE1rm: 140, improvement: 12, trend: "up" },
+    { exerciseName: "Bench Press", exerciseId: "ex-bench", bestE1rm: 105, latestE1rm: 105, improvement: 8, trend: "up" },
+    { exerciseName: "Deadlift", exerciseId: "ex-dl", bestE1rm: 180, latestE1rm: 175, improvement: 15, trend: "up" },
+    { exerciseName: "Overhead Press", exerciseId: "ex-ohp", bestE1rm: 68, latestE1rm: 68, improvement: 0, trend: "flat" },
+  ],
+  volumeTrend: [
+    { period: "2026-02-10", label: "2월 10일", tonnage: 18200, sets: 48, reps: 320 },
+    { period: "2026-02-17", label: "2월 17일", tonnage: 21500, sets: 56, reps: 385 },
+    { period: "2026-02-24", label: "2월 24일", tonnage: 19800, sets: 52, reps: 350 },
+    { period: "2026-03-03", label: "3월 3일", tonnage: 22100, sets: 58, reps: 400 },
+  ],
+  quickStats: {
+    totalSessions: 47,
+    totalVolume: 312500,
+    currentStreak: 3,
+    thisMonthSessions: 5,
+  },
 };
+
+// ─── Data Sources ───────────────────────────────────────────────────
 
 export class PreviewHomeDataSource implements HomeDataSource {
   constructor(private readonly previewData: HomeData = HOME_PREVIEW_DATA) {}
@@ -361,11 +747,44 @@ export class ApiHomeDataSource implements HomeDataSource {
   constructor(private readonly recentLimit = DEFAULT_RECENT_LIMIT) {}
 
   async load(): Promise<HomeData> {
-    const [plansRes, logsRes] = await Promise.all([
+    const [plansRes, logsRes, prsRes, volumeSeriesRes] = await Promise.all([
       apiGet<{ items: PlanItem[] }>("/api/plans"),
       apiGet<{ items: WorkoutLogItem[] }>(`/api/logs?limit=${Math.max(this.recentLimit + 14, 40)}`),
+      apiGet<{ items: PrApiItem[] }>("/api/stats/prs?limit=4&rangeDays=365").catch(() => ({ items: [] as PrApiItem[] })),
+      apiGet<{ series: VolumeSeriesPoint[] }>("/api/stats/volume-series?bucket=week&rangeDays=28").catch(() => ({ series: [] as VolumeSeriesPoint[] })),
     ]);
 
-    return buildHomeData(plansRes.items ?? [], logsRes.items ?? [], this.recentLimit);
+    const plans = plansRes.items ?? [];
+    const logs = logsRes.items ?? [];
+
+    // Resolve highlighted plan for session generation
+    const nowKey = toLocalDateKey(new Date());
+    const latestTodayLog = logs.find((entry) => parseDateKey(entry.performedAt) === nowKey) ?? null;
+    const highlightedPlan = resolveHighlightedPlan(plans, latestTodayLog);
+
+    // Generate today's session to get exercise preview (idempotent upsert)
+    let snapshot: GenerateSessionResponse["session"]["snapshot"] | null = null;
+    if (highlightedPlan) {
+      try {
+        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const res = await apiPost<GenerateSessionResponse>(
+          `/api/plans/${encodeURIComponent(highlightedPlan.id)}/generate`,
+          { sessionDate: nowKey, timezone },
+          { invalidateCache: false },
+        );
+        snapshot = res.session?.snapshot ?? null;
+      } catch {
+        // Non-critical: fall back to no exercise preview
+      }
+    }
+
+    return buildHomeData(
+      plans,
+      logs,
+      prsRes.items ?? [],
+      volumeSeriesRes.series ?? [],
+      snapshot,
+      this.recentLimit,
+    );
   }
 }

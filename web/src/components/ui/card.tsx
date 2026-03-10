@@ -1,20 +1,24 @@
-import type { ComponentPropsWithoutRef, ReactNode } from "react";
+import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
 function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
 type CardTone = "default" | "subtle" | "accent" | "danger";
-type CardPadding = "sm" | "md" | "lg";
+type CardPadding = "none" | "sm" | "md" | "lg";
 
-type CardProps = {
+type CardOwnProps = {
   children: ReactNode;
   className?: string;
   elevated?: boolean;
   tone?: CardTone;
   padding?: CardPadding;
   interactive?: boolean;
-} & ComponentPropsWithoutRef<"div">;
+};
+
+type CardProps<T extends ElementType = "div"> = CardOwnProps & {
+  as?: T;
+} & Omit<ComponentPropsWithoutRef<T>, keyof CardOwnProps | "as">;
 
 type CardSectionProps = {
   children: ReactNode;
@@ -27,7 +31,8 @@ type CardMetaItemProps = {
   className?: string;
 };
 
-export function Card({
+export function Card<T extends ElementType = "div">({
+  as,
   children,
   className = "",
   elevated = true,
@@ -35,9 +40,11 @@ export function Card({
   padding = "md",
   interactive = false,
   ...props
-}: CardProps) {
+}: CardProps<T>) {
+  const Component = (as ?? "div") as ElementType;
+
   return (
-    <div
+    <Component
       className={cx(
         elevated ? "motion-card" : "ui-card",
         "app-card",
@@ -49,7 +56,7 @@ export function Card({
       {...props}
     >
       {children}
-    </div>
+    </Component>
   );
 }
 

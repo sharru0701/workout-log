@@ -223,6 +223,16 @@ function extractBodyweightLabel(log: RecentLogItem, fallbackBodyweightKg: number
   return fallbackBodyweightKg ? `${fallbackBodyweightKg.toFixed(1)}kg` : "미설정";
 }
 
+function formatDateFriendly(isoOrDateKey: string) {
+  const date = new Date(`${isoOrDateKey.slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return isoOrDateKey;
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  }).format(date);
+}
+
 function buildLastSessionSummary(
   logs: RecentLogItem[],
   todayKey: string,
@@ -232,19 +242,54 @@ function buildLastSessionSummary(
   const selected = logs.find((entry) => toDateKey(new Date(entry.performedAt)) !== todayKey) ?? logs[0] ?? null;
   if (!selected) {
     return {
-      dateLabel: "지난 세션 없음",
+      dateLabel: null as string | null,
       weekLabel: "-",
       sessionLabel: "-",
       bodyweightLabel: "미설정",
+      totalSets: 0,
+      totalVolume: 0,
+      exercises: [] as Array<{ name: string; sets: number; bestSet: string }>,
     };
   }
 
   const { weekLabel, sessionLabel } = resolveLastSessionWeekAndType(selected, planParams);
+
+  let totalVolume = 0;
+  const exerciseMap = new Map<string, { sets: number; bestWeight: number; bestReps: number }>();
+  for (const set of selected.sets) {
+    const w = set.weightKg ?? 0;
+    const r = set.reps ?? 0;
+    totalVolume += w * r;
+    const name = set.exerciseName;
+    const existing = exerciseMap.get(name);
+    if (!existing) {
+      exerciseMap.set(name, { sets: 1, bestWeight: w, bestReps: r });
+    } else {
+      existing.sets += 1;
+      if (w > existing.bestWeight || (w === existing.bestWeight && r > existing.bestReps)) {
+        existing.bestWeight = w;
+        existing.bestReps = r;
+      }
+    }
+  }
+
+  const exercises = Array.from(exerciseMap.entries()).map(([name, data]) => ({
+    name,
+    sets: data.sets,
+    bestSet:
+      data.bestWeight > 0
+        ? `${data.sets}x${data.bestReps} @ ${data.bestWeight}kg`
+        : `${data.sets}x${data.bestReps}`,
+  }));
+
   return {
-    dateLabel: toDateKey(new Date(selected.performedAt)),
+    dateLabel: formatDateFriendly(toDateKey(new Date(selected.performedAt))),
     weekLabel,
     sessionLabel,
     bodyweightLabel: extractBodyweightLabel(selected, fallbackBodyweightKg),
+    totalSets: selected.sets.length,
+    totalVolume: Math.round(totalVolume),
+    exercises,
   };
 }
 
@@ -485,10 +530,13 @@ export default function WorkoutRecordPage() {
   const [selectedPlanId, setSelectedPlanId] = useState("");
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
   const [lastSession, setLastSession] = useState<{
-    dateLabel: string;
+    dateLabel: string | null;
     weekLabel: string;
     sessionLabel: string;
     bodyweightLabel: string;
+    totalSets: number;
+    totalVolume: number;
+    exercises: Array<{ name: string; sets: number; bestSet: string }>;
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [plansLoadKey, setPlansLoadKey] = useState("workout-record:init");
@@ -1207,7 +1255,7 @@ export default function WorkoutRecordPage() {
         <>
           <section className="grid grid-cols-1 gap-2" data-pull-refresh-trigger="true">
             <h2 className="ios-section-heading">선택된 플랜</h2>
-            <article className="motion-card rounded-2xl border p-4 grid grid-cols-1 gap-2">
+            <Card as="article" padding="md" className="grid grid-cols-1 gap-2">
               <button
                 type="button"
                 className="haptic-tap app-select-row app-select-row--standalone app-select-row-button"
@@ -1230,32 +1278,81 @@ export default function WorkoutRecordPage() {
               {isEditingExistingLog ? (
                 <p className="text-xs text-[var(--text-secondary)]">기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
               ) : null}
-            </article>
+            </Card>
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">지난 세션 요약</h2>
-            <article className="motion-card rounded-2xl border p-4 text-sm grid gap-1">
-              <span>기록 날짜: {lastSession?.dateLabel ?? "지난 세션 없음"}</span>
-              <span>주차: {lastSession?.weekLabel ?? "-"}</span>
-              <span>세션: {lastSession?.sessionLabel ?? "-"}</span>
-              <span>Bodyweight: {lastSession?.bodyweightLabel ?? "미설정"}</span>
-            </article>
+            <h2 className="ios-section-heading">지난 세션</h2>
+            <Card as="article" padding="none" className="overflow-hidden">
+              {lastSession && lastSession.dateLabel ? (
+                <>
+                  <div className="wr-session-summary-header">
+                    <div className="wr-session-summary-meta">
+                      <span className="wr-session-summary-badge">{lastSession.weekLabel} · {lastSession.sessionLabel}</span>
+                      <span className="wr-session-summary-date">{lastSession.dateLabel}</span>
+                    </div>
+                    <div className="wr-session-summary-stats">
+                      <span className="wr-session-summary-stat">{lastSession.totalSets}세트</span>
+                      {lastSession.totalVolume > 0 && (
+                        <>
+                          <span className="wr-session-summary-sep">·</span>
+                          <span className="wr-session-summary-stat">
+                            {lastSession.totalVolume >= 1000
+                              ? `${(lastSession.totalVolume / 1000).toFixed(1)}t`
+                              : `${lastSession.totalVolume}kg`}
+                          </span>
+                        </>
+                      )}
+                      {lastSession.bodyweightLabel !== "미설정" && (
+                        <>
+                          <span className="wr-session-summary-sep">·</span>
+                          <span className="wr-session-summary-stat">BW {lastSession.bodyweightLabel}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  {lastSession.exercises.length > 0 && (
+                    <div className="wr-session-exercises">
+                      {lastSession.exercises.slice(0, 4).map((ex) => (
+                        <div key={ex.name} className="wr-session-exercise-row">
+                          <span className="wr-session-exercise-name">{ex.name}</span>
+                          <span className="wr-session-exercise-detail">{ex.bestSet}</span>
+                        </div>
+                      ))}
+                      {lastSession.exercises.length > 4 && (
+                        <div className="wr-session-exercise-more">+{lastSession.exercises.length - 4}개 더</div>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="wr-session-summary-empty">지난 세션 없음</div>
+              )}
+            </Card>
           </section>
 
           <section className="grid gap-2">
-            <h2 className="ios-section-heading">{isEditingExistingLog ? "선택 날짜 기록 요약" : "오늘 수행 세션 요약"}</h2>
-            <article className="motion-card rounded-2xl border p-4 grid gap-1 text-sm">
-              <span>기록 날짜: {draft.session.sessionDate}</span>
-              <span>주차: Week {draft.session.week}</span>
-              <span>세션: {draft.session.sessionType}</span>
-              <span>Bodyweight: {workoutPreferences.bodyweightKg ? `${workoutPreferences.bodyweightKg.toFixed(1)}kg` : "미설정"}</span>
-            </article>
+            <h2 className="ios-section-heading">{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
+            <Card as="article" padding="none" className="overflow-hidden">
+              <div className="wr-session-summary-header wr-session-summary-header--today">
+                <div className="wr-session-summary-meta">
+                  <span className="wr-session-summary-badge wr-session-summary-badge--today">
+                    Week {draft.session.week} · {draft.session.sessionType}
+                  </span>
+                  <span className="wr-session-summary-date">{formatDateFriendly(draft.session.sessionDate)}</span>
+                </div>
+                {workoutPreferences.bodyweightKg && (
+                  <span className="wr-session-summary-bw">
+                    BW {workoutPreferences.bodyweightKg.toFixed(1)}kg
+                  </span>
+                )}
+              </div>
+            </Card>
           </section>
 
           <section className="grid gap-2">
             <h2 className="ios-section-heading">기록 본문 영역</h2>
-            <article className="motion-card rounded-2xl border p-4 grid gap-3">
+            <Card as="article" padding="md" className="grid gap-3">
               {visibleExercises.map((exercise) => (
                 <ExerciseRow
                   key={exercise.id}
@@ -1413,7 +1510,7 @@ export default function WorkoutRecordPage() {
                   placeholder="오늘 세션 전체 메모"
                 />
               </label>
-            </article>
+            </Card>
 
             <div className="workout-save-dock">
               <button

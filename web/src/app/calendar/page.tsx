@@ -24,6 +24,23 @@ type RecentGeneratedSession = {
   updatedAt: string;
 };
 
+type SnapshotSet = {
+  reps?: number;
+  targetWeightKg?: number;
+};
+
+type SnapshotExercise = {
+  exerciseName?: string;
+  role?: "MAIN" | "ASSIST" | string;
+  sets?: SnapshotSet[];
+};
+
+type GeneratedSessionDetail = RecentGeneratedSession & {
+  snapshot: {
+    exercises?: SnapshotExercise[];
+  } | null;
+};
+
 type WorkoutLogForDate = {
   id: string;
   performedAt: string;
@@ -41,6 +58,12 @@ const MONTH_NAMES = [
   "7월", "8월", "9월", "10월", "11월", "12월",
 ] as const;
 const WEEKDAY_KOREAN = ["일", "월", "화", "수", "목", "금", "토"] as const;
+
+type CalendarExercisePreviewItem = {
+  name: string;
+  role: "MAIN" | "ASSIST" | string;
+  summary: string;
+};
 
 function dateOnlyInTimezone(date: Date, timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -120,6 +143,137 @@ function normalizeSearchText(...values: Array<string | null | undefined>) {
     .join(" ");
 }
 
+function formatVolume(kg: number) {
+  if (kg >= 1000) {
+    const tons = kg / 1000;
+    return Number.isInteger(tons) ? `${tons}t` : `${tons.toFixed(1)}t`;
+  }
+  return `${kg}kg`;
+}
+
+function summarizePlannedSets(sets: SnapshotSet[]) {
+  if (sets.length === 0) return "";
+
+  const groups: Array<{ reps: number; weight: number; count: number }> = [];
+  for (const set of sets) {
+    const reps = Number(set.reps ?? 0);
+    const weight = Number(set.targetWeightKg ?? 0);
+    const last = groups[groups.length - 1];
+    if (last && last.reps === reps && last.weight === weight) {
+      last.count += 1;
+      continue;
+    }
+    groups.push({ reps, weight, count: 1 });
+  }
+
+  if (groups.length === 1) {
+    const [group] = groups;
+    const weightSuffix = group.weight > 0 ? ` @ ${group.weight}kg` : "";
+    return `${group.count}x${group.reps}${weightSuffix}`;
+  }
+
+  const maxWeight = Math.max(...groups.map((group) => group.weight), 0);
+  const weightSuffix = maxWeight > 0 ? ` (max ${maxWeight}kg)` : "";
+  return `${groups.map((group) => `${group.count}x${group.reps}`).join(", ")}${weightSuffix}`;
+}
+
+function buildPlannedExercisePreview(snapshot: GeneratedSessionDetail["snapshot"]): CalendarExercisePreviewItem[] {
+  const exercises = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
+
+  return exercises
+    .map((exercise) => {
+      const name = String(exercise?.exerciseName ?? "").trim();
+      if (!name) return null;
+      const sets = Array.isArray(exercise?.sets) ? exercise.sets : [];
+      return {
+        name,
+        role: exercise?.role ?? "MAIN",
+        summary: summarizePlannedSets(sets),
+      } satisfies CalendarExercisePreviewItem;
+    })
+    .filter((exercise): exercise is CalendarExercisePreviewItem => exercise !== null);
+}
+
+function buildLoggedExercisePreview(sets: WorkoutLogForDate["sets"]): {
+  exercises: CalendarExercisePreviewItem[];
+  totalSets: number;
+  totalVolume: number;
+} {
+  let totalVolume = 0;
+  const grouped = new Map<string, { count: number; bestWeight: number; bestReps: number }>();
+
+  for (const set of sets) {
+    const name = String(set.exerciseName ?? "").trim();
+    if (!name) continue;
+
+    const reps = Number(set.reps ?? 0);
+    const weight = Number(set.weightKg ?? 0);
+    totalVolume += Math.max(0, reps) * Math.max(0, weight);
+
+    const current = grouped.get(name);
+    if (!current) {
+      grouped.set(name, { count: 1, bestWeight: weight, bestReps: reps });
+      continue;
+    }
+
+    current.count += 1;
+    if (weight > current.bestWeight || (weight === current.bestWeight && reps > current.bestReps)) {
+      current.bestWeight = weight;
+      current.bestReps = reps;
+    }
+  }
+
+  return {
+    exercises: Array.from(grouped.entries()).map(([name, value]) => ({
+      name,
+      role: "MAIN",
+      summary:
+        value.bestWeight > 0
+          ? `${value.count}x${value.bestReps} @ ${value.bestWeight}kg`
+          : `${value.count}x${value.bestReps}`,
+    })),
+    totalSets: sets.length,
+    totalVolume: Math.round(totalVolume),
+  };
+}
+
+function CalendarExercisePreview({ exercises }: { exercises: CalendarExercisePreviewItem[] }) {
+  if (exercises.length === 0) return null;
+
+  const mainExercises = exercises.filter((exercise) => exercise.role === "MAIN");
+  const assistExercises = exercises.filter((exercise) => exercise.role !== "MAIN");
+
+  return (
+    <div className="hd-today-exercises">
+      {mainExercises.length > 0 && (
+        <div className="hd-today-exercise-group">
+          {mainExercises.map((exercise) => (
+            <div key={exercise.name} className="hd-today-exercise hd-today-exercise--main">
+              <span className="hd-today-exercise-name">{exercise.name}</span>
+              <span className="hd-today-exercise-summary">{exercise.summary}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {assistExercises.length > 0 && (
+        <div className="hd-today-exercise-group">
+          {assistExercises.slice(0, 3).map((exercise) => (
+            <div key={exercise.name} className="hd-today-exercise">
+              <span className="hd-today-exercise-name">{exercise.name}</span>
+              <span className="hd-today-exercise-summary">{exercise.summary}</span>
+            </div>
+          ))}
+          {assistExercises.length > 3 && (
+            <div className="hd-today-exercise hd-today-exercise--more">
+              +{assistExercises.length - 3}개 보조 운동
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function computePlanContextForDate(plan: Plan | null, dateOnly: string) {
   if (!plan) return null;
   const params = plan.params ?? {};
@@ -174,6 +328,8 @@ export default function CalendarPage() {
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
   const [selectedLog, setSelectedLog] = useState<WorkoutLogForDate | null>(null);
   const [selectedLogLoading, setSelectedLogLoading] = useState(false);
+  const [selectedSessionDetail, setSelectedSessionDetail] = useState<GeneratedSessionDetail | null>(null);
+  const [selectedSessionLoading, setSelectedSessionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
@@ -370,6 +526,14 @@ export default function CalendarPage() {
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
   const isPastDate = selectedDate < today;
   const isPastDateCreationBlocked = isAutoProgressionPlan && isPastDate && !selectedLog;
+  const loggedSummary = useMemo(
+    () => buildLoggedExercisePreview(selectedLog?.sets ?? []),
+    [selectedLog],
+  );
+  const plannedExercises = useMemo(
+    () => buildPlannedExercisePreview(selectedSessionDetail?.snapshot ?? null),
+    [selectedSessionDetail],
+  );
 
   const selectedDayLabel = (() => {
     if (!selectedCtx) return null;
@@ -382,6 +546,43 @@ export default function CalendarPage() {
     : planId
       ? buildTodayLogHref({ planId, date: selectedDate, autoGenerate: false })
       : APP_ROUTES.todayLog;
+
+  useEffect(() => {
+    if (!selectedSession?.id || selectedLog) {
+      setSelectedSessionDetail(null);
+      setSelectedSessionLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        setSelectedSessionLoading(true);
+        const sp = new URLSearchParams();
+        sp.set("id", selectedSession.id);
+        sp.set("includeSnapshot", "1");
+        sp.set("limit", "1");
+        if (planId) sp.set("planId", planId);
+        const res = await apiGet<{ items: GeneratedSessionDetail[] }>(
+          `/api/generated-sessions?${sp.toString()}`,
+        );
+        if (cancelled) return;
+        setSelectedSessionDetail(res.items[0] ?? null);
+      } catch (e: any) {
+        if (!cancelled) {
+          setSelectedSessionDetail(null);
+          setError(e?.message ?? "세션 상세를 불러오지 못했습니다.");
+        }
+      } finally {
+        if (!cancelled) setSelectedSessionLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [planId, selectedLog, selectedSession?.id]);
 
   return (
     <div className="native-page native-page-enter tab-screen ios-cal-screen momentum-scroll" {...pullToRefresh.bind}>
@@ -537,7 +738,7 @@ export default function CalendarPage() {
 
         {error && <div className="ios-cal-error">{error}</div>}
 
-        {loading || selectedLogLoading ? (
+        {loading || selectedLogLoading || selectedSessionLoading ? (
           <div className="ios-cal-loading">
             <span className="ios-cal-loading-dot" />
             <span className="ios-cal-loading-dot" />
@@ -548,47 +749,55 @@ export default function CalendarPage() {
             <p className="ios-cal-empty-text">플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
           </div>
         ) : selectedLog ? (
-          <div className="ios-cal-session-card">
-            <div className="ios-cal-session-card-left">
-              <div className="ios-cal-session-dot-accent" aria-hidden="true" />
-              <div className="ios-cal-session-info">
-                <span className="ios-cal-session-key">
-                  {selectedSession?.sessionKey ?? `${selectedLog.sets.length}세트 기록됨`}
-                </span>
-                {selectedDayLabel && selectedSession && selectedDayLabel !== selectedSession.sessionKey && (
-                  <span className="ios-cal-session-label">{selectedDayLabel}</span>
-                )}
-                <span className="ios-cal-session-meta">
-                  기록 있음 · {selectedLog.sets.length}세트 · {new Date(selectedLog.performedAt).toLocaleDateString("ko-KR")}
-                </span>
+          <div className="hd-today-card ios-cal-summary-card">
+            <div className="hd-today-top">
+              <div className="hd-today-left">
+                <div className="hd-today-program">{selectedPlan.name}</div>
+                <p className="hd-today-meta">
+                  기록 있음 · {loggedSummary.totalSets}세트 · {formatVolume(loggedSummary.totalVolume)}
+                </p>
               </div>
+              {selectedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedDayLabel}</span>}
             </div>
-            <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
-              기록수정
+
+            <CalendarExercisePreview exercises={loggedSummary.exercises} />
+
+            <a className="hd-today-cta ios-cal-summary-cta" href={workoutHref}>
+              <span className="hd-today-cta-text">기록수정</span>
+              <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m9 18 6-6-6-6" />
+              </svg>
             </a>
           </div>
         ) : selectedSession ? (
-          /* Session exists */
-          <div className="ios-cal-session-card">
-            <div className="ios-cal-session-card-left">
-              <div className="ios-cal-session-dot-accent" aria-hidden="true" />
-              <div className="ios-cal-session-info">
-                <span className="ios-cal-session-key">{selectedSession.sessionKey}</span>
-                {selectedDayLabel && selectedDayLabel !== selectedSession.sessionKey && (
-                  <span className="ios-cal-session-label">{selectedDayLabel}</span>
-                )}
-                <span className="ios-cal-session-meta">
-                  {isPastDateCreationBlocked
-                    ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
-                    : `생성됨 · ${new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}`}
-                </span>
+          <div className="hd-today-card ios-cal-summary-card">
+            <div className="hd-today-top">
+              <div className="hd-today-left">
+                <div className="hd-today-program">{selectedPlan.name}</div>
+                <p className="hd-today-meta">
+                  {selectedSession.sessionKey !== selectedDayLabel && selectedSession.sessionKey
+                    ? `${selectedSession.sessionKey} · `
+                    : ""}
+                  생성됨 · {new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}
+                </p>
               </div>
+              {selectedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedDayLabel}</span>}
             </div>
-            {!isPastDateCreationBlocked ? (
-              <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
-                기록하기
+
+            <CalendarExercisePreview exercises={plannedExercises} />
+
+            {isPastDateCreationBlocked ? (
+              <p className="hd-today-meta ios-cal-summary-note">
+                자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
+              </p>
+            ) : (
+              <a className="hd-today-cta ios-cal-summary-cta" href={workoutHref}>
+                <span className="hd-today-cta-text">기록하기</span>
+                <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m9 18 6-6-6-6" />
+                </svg>
               </a>
-            ) : null}
+            )}
           </div>
         ) : (
           /* No session yet */

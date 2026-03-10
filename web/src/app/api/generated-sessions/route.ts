@@ -10,24 +10,42 @@ async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
-    const planId = searchParams.get("planId");
+    const planId = searchParams.get("planId")?.trim() ?? "";
+    const sessionId = searchParams.get("id")?.trim() ?? "";
+    const includeSnapshot =
+      searchParams.get("includeSnapshot") === "1" ||
+      searchParams.get("includeSnapshot")?.toLowerCase() === "true";
     const limitRaw = Number(searchParams.get("limit") ?? "20");
     const limit = Number.isFinite(limitRaw) ? Math.min(Math.max(Math.floor(limitRaw), 1), 100) : 20;
 
-    const where = planId
-      ? and(eq(generatedSession.userId, userId), eq(generatedSession.planId, planId))
-      : eq(generatedSession.userId, userId);
+    const filters = [eq(generatedSession.userId, userId)];
+    if (planId) filters.push(eq(generatedSession.planId, planId));
+    if (sessionId) filters.push(eq(generatedSession.id, sessionId));
 
-    const items = await db
-      .select({
-        id: generatedSession.id,
-        sessionKey: generatedSession.sessionKey,
-        updatedAt: generatedSession.updatedAt,
-      })
-      .from(generatedSession)
-      .where(where)
-      .orderBy(desc(generatedSession.updatedAt))
-      .limit(limit);
+    const where = and(...filters);
+
+    const items = includeSnapshot
+      ? await db
+          .select({
+            id: generatedSession.id,
+            sessionKey: generatedSession.sessionKey,
+            updatedAt: generatedSession.updatedAt,
+            snapshot: generatedSession.snapshot,
+          })
+          .from(generatedSession)
+          .where(where)
+          .orderBy(desc(generatedSession.updatedAt))
+          .limit(limit)
+      : await db
+          .select({
+            id: generatedSession.id,
+            sessionKey: generatedSession.sessionKey,
+            updatedAt: generatedSession.updatedAt,
+          })
+          .from(generatedSession)
+          .where(where)
+          .orderBy(desc(generatedSession.updatedAt))
+          .limit(limit);
 
     return NextResponse.json({ items });
   } catch (e: any) {

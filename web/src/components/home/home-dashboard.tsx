@@ -1,210 +1,360 @@
 "use client";
 
-import type { JSX, SVGProps } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
-import type { HomeData } from "@/lib/home/home-data-source";
+import type {
+  HomeData,
+  HomeLastSession,
+  HomeStrengthItem,
+  HomeVolumeTrendPoint,
+  HomeQuickStats,
+  HomeTodayExercise,
+} from "@/lib/home/home-data-source";
 
-type ActionIconProps = SVGProps<SVGSVGElement>;
+// ─── Section 1: Program Status ──────────────────────────────────────
 
-type QuickAction = {
-  href: string;
-  label: string;
-  description: string;
-  Icon: (props: ActionIconProps) => JSX.Element;
-};
+function ProgramStatusSection({ data }: { data: HomeData }) {
+  const { planOverview, weeklySummary } = data;
+  const hasPlan = planOverview.totalPlans > 0;
+  const planHref = hasPlan ? APP_ROUTES.calendarHome : APP_ROUTES.programStore;
 
-function BoltIcon(props: ActionIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="m13.5 2.75-7 10h4.75l-1 8.5 7-10H13l.5-8.5Z" />
-    </svg>
-  );
-}
-
-function PlanIcon(props: ActionIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <rect x="4.5" y="4.5" width="15" height="15" rx="2.25" />
-      <path d="M8 9h8" />
-      <path d="M8 13h4.5" />
-      <path d="m14.75 14.15 1 1 2.1-2.35" />
-    </svg>
-  );
-}
-
-function StoreIcon(props: ActionIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <path d="M5.25 9.75h13.5" />
-      <path d="M6.5 9.75v8.25h11V9.75" />
-      <path d="m6 9.75 1.35-4.5h9.3L18 9.75" />
-      <path d="M9.25 13.25h5.5" />
-    </svg>
-  );
-}
-
-function buildStartActions(data: HomeData): QuickAction[] {
-  const hasTodayActivity = data.today.completedSets > 0;
-
-  return [
-    {
-      href: data.today.href,
-      label: hasTodayActivity ? "오늘 운동 이어서 하기" : "오늘 운동 시작",
-      description: hasTodayActivity
-        ? "오늘 기록 화면으로 돌아가 입력과 저장을 계속합니다."
-        : "준비된 플랜으로 오늘 세션을 생성하고 기록을 시작합니다.",
-      Icon: BoltIcon,
-    },
-    {
-      href: APP_ROUTES.programStore,
-      label: "프로그램 선택",
-      description: "시중 프로그램을 둘러보고 시작할 프로그램을 정합니다.",
-      Icon: StoreIcon,
-    },
-    {
-      href: APP_ROUTES.programCreate,
-      label: "커스텀 프로그램 만들기",
-      description: "내 루틴 구성을 직접 만들고 시작 프로그램으로 연결합니다.",
-      Icon: PlanIcon,
-    },
-  ];
-}
-
-function planOverviewTitle(data: HomeData) {
-  if (data.planOverview.totalPlans === 0) {
-    return "보유 플랜이 없습니다";
-  }
-  return data.planOverview.highlightedPlanName ?? "최근 사용 플랜";
-}
-
-function planOverviewDescription(data: HomeData) {
-  if (data.planOverview.totalPlans === 0) {
-    return "프로그램 스토어에서 프로그램을 시작하면 플랜이 생성되고 오늘 운동 흐름과 연결됩니다.";
+  if (!hasPlan) {
+    return (
+      <section className="hd-section">
+        <Link className="hd-program-card" href={APP_ROUTES.programStore}>
+          <div className="hd-program-empty">
+            <div className="hd-program-empty-title">프로그램을 시작하세요</div>
+            <p className="hd-program-empty-copy">
+              프로그램 스토어에서 프로그램을 선택하면 오늘 운동이 자동으로 구성됩니다.
+            </p>
+            <span className="hd-program-empty-action">프로그램 둘러보기</span>
+          </div>
+        </Link>
+      </section>
+    );
   }
 
-  const details = [
-    data.planOverview.highlightedProgramName ? `기반 프로그램 ${data.planOverview.highlightedProgramName}` : null,
-    data.planOverview.lastPerformedAtLabel ? `마지막 수행 ${data.planOverview.lastPerformedAtLabel}` : "아직 수행 기록 없음",
-  ].filter(Boolean);
-  return details.join(" · ");
-}
-
-function planOverviewMeta(data: HomeData) {
-  if (data.planOverview.totalPlans === 0) {
-    return "스토어 또는 직접 생성";
-  }
-  return `보유 플랜 ${data.planOverview.totalPlans}개`;
-}
-
-function weeklySummaryTitle(data: HomeData) {
-  return `최근 7일 ${data.weeklySummary.activeDays}일 운동`;
-}
-
-function weeklySummaryDescription(data: HomeData) {
-  if (data.weeklySummary.sessionCount === 0) {
-    return "첫 세션을 저장하면 최근 7일 리듬이 여기에 표시됩니다.";
-  }
-  return `${data.weeklySummary.sessionCount}회 운동 · ${data.weeklySummary.completedSets}세트 · 휴식 ${data.weeklySummary.restDays}일`;
-}
-
-export function HomeDashboard({ data }: { data: HomeData }) {
-  const startActions = buildStartActions(data);
-  const showRecentEmpty = data.recentSessions.length === 0;
-  const planHref = data.planOverview.totalPlans > 0 ? APP_ROUTES.plansManage : APP_ROUTES.programStore;
-  const planActionLabel = data.planOverview.totalPlans > 0 ? "플랜 보기" : "플랜 준비";
-
   return (
-    <>
-      <section className="home-dashboard-section">
-        <div className="home-dashboard-section-head" data-pull-refresh-trigger="true">
-          <h2 className="home-dashboard-section-title">빠른 시작</h2>
-          <p className="home-dashboard-section-copy">실제 앱 흐름에 맞춰 프로그램 준비, 오늘 운동 시작, 커스텀 프로그램 만들기를 가장 먼저 배치했습니다.</p>
+    <section className="hd-section">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">현재 프로그램</h2>
+      </div>
+      <Link className="hd-program-card" href={planHref}>
+        <div className="hd-program-name">{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
+        {planOverview.highlightedProgramName && (
+          <div className="hd-program-base">{planOverview.highlightedProgramName}</div>
+        )}
+        <div className="hd-program-meta-row">
+          {planOverview.lastPerformedAtLabel && (
+            <span className="hd-program-meta">마지막 수행 {planOverview.lastPerformedAtLabel}</span>
+          )}
+          <span className="hd-program-meta">최근 7일 {weeklySummary.activeDays}일 운동</span>
         </div>
+        <div className="hd-week-strip" aria-label="최근 7일 운동 활동">
+          {weeklySummary.days.map((day) => (
+            <div
+              key={day.key}
+              className={`hd-week-day${day.hasWorkout ? " is-active" : ""}${day.isToday ? " is-today" : ""}`}
+              aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
+            >
+              <span className="hd-week-day-label">{day.shortLabel}</span>
+              <span className="hd-week-day-dot" aria-hidden="true" />
+            </div>
+          ))}
+        </div>
+      </Link>
+    </section>
+  );
+}
 
-        <div className="home-dashboard-quick-grid">
-          {startActions.map((action) => {
-            const Icon = action.Icon;
+// ─── Section 2: Today Session ──────────────────────────────────────
+
+function TodayExercisePreview({ exercises }: { exercises: HomeTodayExercise[] }) {
+  if (exercises.length === 0) return null;
+
+  const mainExercises = exercises.filter((e) => e.role === "MAIN");
+  const assistExercises = exercises.filter((e) => e.role !== "MAIN");
+
+  return (
+    <div className="hd-today-exercises">
+      {mainExercises.length > 0 && (
+        <div className="hd-today-exercise-group">
+          {mainExercises.map((ex) => (
+            <div key={ex.name} className="hd-today-exercise hd-today-exercise--main">
+              <span className="hd-today-exercise-name">{ex.name}</span>
+              <span className="hd-today-exercise-summary">{ex.summary}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      {assistExercises.length > 0 && (
+        <div className="hd-today-exercise-group">
+          {assistExercises.slice(0, 3).map((ex) => (
+            <div key={ex.name} className="hd-today-exercise">
+              <span className="hd-today-exercise-name">{ex.name}</span>
+              <span className="hd-today-exercise-summary">{ex.summary}</span>
+            </div>
+          ))}
+          {assistExercises.length > 3 && (
+            <div className="hd-today-exercise hd-today-exercise--more">
+              +{assistExercises.length - 3}개 보조 운동
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TodaySessionSection({ data }: { data: HomeData }) {
+  const { today, planOverview } = data;
+  const hasTodayActivity = today.completedSets > 0;
+  const hasPlan = planOverview.totalPlans > 0;
+  const hasPlannedExercises = today.plannedExercises.length > 0;
+
+  return (
+    <section className="hd-section" data-pull-refresh-trigger="true">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">오늘의 운동</h2>
+        {hasTodayActivity && (
+          <span className="hd-section-action">{today.completedSets}세트 완료</span>
+        )}
+      </div>
+      <Link className="hd-today-card" href={today.href}>
+        <div className="hd-today-program">{today.programName}</div>
+
+        {!hasTodayActivity && hasPlannedExercises && (
+          <TodayExercisePreview exercises={today.plannedExercises} />
+        )}
+
+        {hasTodayActivity && (
+          <>
+            <p className="hd-today-meta">{today.meta}</p>
+            {today.estimatedE1rmKg !== null && (
+              <div className="hd-today-metrics">
+                <div className="hd-today-metric">
+                  <span className="hd-today-metric-label">예상 e1RM</span>
+                  <span className="hd-today-metric-value">{Math.round(today.estimatedE1rmKg)}kg</span>
+                </div>
+                <div className="hd-today-metric">
+                  <span className="hd-today-metric-label">완료 세트</span>
+                  <span className="hd-today-metric-value">{today.completedSets}</span>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {!hasTodayActivity && !hasPlannedExercises && (
+          <p className="hd-today-meta">{today.meta}</p>
+        )}
+
+        <div className="hd-today-cta">
+          <span className="hd-today-cta-text">
+            {hasTodayActivity ? "이어서 하기" : hasPlan ? "운동 시작" : "프로그램 선택"}
+          </span>
+          <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m9 18 6-6-6-6" />
+          </svg>
+        </div>
+      </Link>
+    </section>
+  );
+}
+
+// ─── Section 3: Last Session ──────────────────────────────────────
+
+function WeightDeltaBadge({ delta }: { delta: number }) {
+  if (delta === 0) return null;
+  const isUp = delta > 0;
+  return (
+    <span className={`hd-last-delta ${isUp ? "hd-last-delta--up" : "hd-last-delta--down"}`}>
+      {isUp ? "+" : ""}{delta}kg
+    </span>
+  );
+}
+
+function LastSessionSection({ session }: { session: HomeLastSession }) {
+  return (
+    <section className="hd-section">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">지난 세션</h2>
+      </div>
+      <Link className="hd-last-card" href={session.href}>
+        <div className="hd-last-top">
+          <div>
+            <div className="hd-last-plan">{session.planName}</div>
+            <div className="hd-last-date">{session.date}</div>
+          </div>
+          <div className="hd-last-stats">
+            <span className="hd-last-stat">{session.totalSets}세트</span>
+            <span className="hd-last-stat-sep">/</span>
+            <span className="hd-last-stat">{formatVolume(session.totalVolume)}</span>
+          </div>
+        </div>
+        <div className="hd-last-exercises">
+          {session.exercises.slice(0, 4).map((ex) => (
+            <div key={ex.name} className="hd-last-exercise">
+              <span className="hd-last-exercise-name">{ex.name}</span>
+              <span className="hd-last-exercise-right">
+                {ex.weightDelta !== null && <WeightDeltaBadge delta={ex.weightDelta} />}
+                <span className="hd-last-exercise-detail">{ex.bestSet}</span>
+              </span>
+            </div>
+          ))}
+          {session.exercises.length > 4 && (
+            <div className="hd-last-exercise hd-last-exercise--more">
+              +{session.exercises.length - 4}개 더
+            </div>
+          )}
+        </div>
+      </Link>
+    </section>
+  );
+}
+
+// ─── Section 4: Strength Progress ──────────────────────────────────
+
+function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
+  if (items.length === 0) return null;
+
+  return (
+    <section className="hd-section">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">스트렝스 진행</h2>
+      </div>
+      <div className="hd-strength-grid">
+        {items.map((item) => {
+          const href = item.exerciseId
+            ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
+            : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
+          return (
+            <Link key={item.exerciseName} className="hd-strength-card" href={href}>
+              <div className="hd-strength-name">{item.exerciseName}</div>
+              <div className="hd-strength-value">{item.bestE1rm}kg</div>
+              <div className="hd-strength-label">Best e1RM</div>
+              {item.improvement !== 0 ? (
+                <div className={`hd-strength-trend hd-strength-trend--${item.trend}`}>
+                  {item.trend === "up" ? "+" : ""}{item.improvement}kg
+                </div>
+              ) : (
+                <div className="hd-strength-trend hd-strength-trend--flat">-</div>
+              )}
+            </Link>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ─── Section 5: Volume Trend ──────────────────────────────────────
+
+function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
+  const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+
+  if (points.length === 0) return null;
+
+  const maxTonnage = Math.max(...points.map((p) => p.tonnage), 1);
+  const selected = selectedIndex !== null ? points[selectedIndex] ?? null : null;
+
+  return (
+    <section className="hd-section">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">주간 볼륨</h2>
+      </div>
+      <div className="hd-volume-card">
+        {selected && (
+          <div className="hd-volume-detail">
+            <span className="hd-volume-detail-label">{selected.label} 주</span>
+            <span className="hd-volume-detail-value">{formatVolume(selected.tonnage)}</span>
+            <span className="hd-volume-detail-sub">{selected.sets}세트 · {selected.reps}회</span>
+          </div>
+        )}
+        <div className="hd-volume-bars">
+          {points.map((point, i) => {
+            const height = Math.max((point.tonnage / maxTonnage) * 100, 4);
+            const isLast = i === points.length - 1;
+            const isSelected = selectedIndex === i;
             return (
-              <Link key={action.label} className="home-dashboard-quick-card" href={action.href}>
-                <span className="home-dashboard-quick-icon" aria-hidden="true">
-                  <Icon className="home-dashboard-quick-icon-svg" />
-                </span>
-                <span className="home-dashboard-quick-label">{action.label}</span>
-                <span className="home-dashboard-quick-copy">{action.description}</span>
-              </Link>
+              <button
+                key={point.period}
+                type="button"
+                className={`hd-volume-col${isSelected ? " is-selected" : ""}`}
+                onClick={() => setSelectedIndex(isSelected ? null : i)}
+              >
+                <div className="hd-volume-value">{formatVolume(point.tonnage)}</div>
+                <div className="hd-volume-bar-track">
+                  <div
+                    className={`hd-volume-bar${isLast ? " hd-volume-bar--current" : ""}${isSelected ? " hd-volume-bar--selected" : ""}`}
+                    style={{ height: `${height}%` }}
+                  />
+                </div>
+                <div className="hd-volume-label">{point.label}</div>
+              </button>
             );
           })}
         </div>
-      </section>
+      </div>
+    </section>
+  );
+}
 
-      <section className="home-dashboard-section">
-        <div className="home-dashboard-section-head">
-          <h2 className="home-dashboard-section-title">현재 준비 상태</h2>
-          <p className="home-dashboard-section-copy">오늘 시작에 필요한 준비 정도와 최근 7일 운동 리듬을 한눈에 볼 수 있게 유지했습니다.</p>
+// ─── Section 6: Quick Stats ──────────────────────────────────────
+
+function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
+  const hasData = stats.totalSessions > 0;
+  if (!hasData) return null;
+
+  return (
+    <section className="hd-section">
+      <div className="hd-section-head">
+        <h2 className="hd-section-title">요약 통계</h2>
+      </div>
+      <div className="hd-stats-grid">
+        <div className="hd-stat-chip">
+          <span className="hd-stat-chip-value">{stats.totalSessions}</span>
+          <span className="hd-stat-chip-label">총 운동</span>
         </div>
-
-        <div className="home-dashboard-glance-grid">
-          <Link className="home-dashboard-glance-card" href={planHref}>
-            <div className="home-dashboard-glance-kicker">플랜 준비</div>
-            <div className="home-dashboard-glance-title">{planOverviewTitle(data)}</div>
-            <p className="home-dashboard-glance-copy">{planOverviewDescription(data)}</p>
-            <div className="home-dashboard-glance-footer">
-              <span>{planOverviewMeta(data)}</span>
-              <span>{planActionLabel}</span>
-            </div>
-          </Link>
-
-          <div className="home-dashboard-glance-card home-dashboard-glance-card--static">
-            <div className="home-dashboard-glance-kicker">최근 7일</div>
-            <div className="home-dashboard-glance-title">{weeklySummaryTitle(data)}</div>
-            <p className="home-dashboard-glance-copy">{weeklySummaryDescription(data)}</p>
-            <div className="home-dashboard-week-strip" aria-label="최근 7일 운동 활동">
-              {data.weeklySummary.days.map((day) => (
-                <div
-                  key={day.key}
-                  className={`home-dashboard-day${day.hasWorkout ? " is-active" : ""}${day.isToday ? " is-today" : ""}`}
-                  aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
-                >
-                  <span className="home-dashboard-day-label">{day.shortLabel}</span>
-                  <span className="home-dashboard-day-dot" aria-hidden="true" />
-                </div>
-              ))}
-            </div>
-          </div>
+        <div className="hd-stat-chip">
+          <span className="hd-stat-chip-value">{formatVolume(stats.totalVolume)}</span>
+          <span className="hd-stat-chip-label">누적 볼륨</span>
         </div>
-      </section>
-
-      <section className="home-dashboard-section">
-        <div className="home-dashboard-section-head">
-          <h2 className="home-dashboard-section-title">최근 운동</h2>
-          <p className="home-dashboard-section-copy">최근 완료한 세션을 홈에서 바로 다시 열 수 있게 유지했습니다.</p>
+        <div className="hd-stat-chip">
+          <span className="hd-stat-chip-value">{stats.currentStreak}일</span>
+          <span className="hd-stat-chip-label">연속 운동</span>
         </div>
+        <div className="hd-stat-chip">
+          <span className="hd-stat-chip-value">{stats.thisMonthSessions}</span>
+          <span className="hd-stat-chip-label">이번 달</span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
-        {showRecentEmpty ? (
-          <div className="home-dashboard-empty-card">
-            <div className="home-dashboard-empty-title">최근 기록이 없습니다</div>
-            <p className="home-dashboard-empty-copy">플랜을 준비한 뒤 오늘 기록 화면에서 첫 세션을 저장하면 최근 기록이 이 영역에 쌓입니다.</p>
-            <Link className="home-dashboard-inline-link" href={data.today.href}>
-              {data.planOverview.totalPlans > 0 ? "오늘 운동 열기" : "프로그램 선택하기"}
-            </Link>
-          </div>
-        ) : (
-          <div className="home-dashboard-recent-list">
-            {data.recentSessions.map((session, index) => (
-              <Link key={session.id} className="home-dashboard-recent-card" href={session.href}>
-                <div className="home-dashboard-recent-rank">{String(index + 1).padStart(2, "0")}</div>
-                <div className="home-dashboard-recent-body">
-                  <div className="home-dashboard-recent-meta">{session.subtitle}</div>
-                  <div className="home-dashboard-recent-title">{session.title}</div>
-                  <div className="home-dashboard-recent-copy">{session.description}</div>
-                </div>
-                <div className="home-dashboard-recent-action">열기</div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
-    </>
+// ─── Helpers ──────────────────────────────────────────────────────
+
+function formatVolume(kg: number): string {
+  if (kg >= 1000) {
+    const tons = kg / 1000;
+    return tons % 1 === 0 ? `${tons}t` : `${tons.toFixed(1)}t`;
+  }
+  return `${kg}kg`;
+}
+
+// ─── Main Dashboard ──────────────────────────────────────────────
+
+export function HomeDashboard({ data }: { data: HomeData }) {
+  return (
+    <div className="hd-layout">
+      <ProgramStatusSection data={data} />
+      <TodaySessionSection data={data} />
+      {data.lastSession && <LastSessionSection session={data.lastSession} />}
+      <StrengthProgressSection items={data.strengthProgress} />
+      <VolumeTrendSection points={data.volumeTrend} />
+      <QuickStatsSection stats={data.quickStats} />
+    </div>
   );
 }

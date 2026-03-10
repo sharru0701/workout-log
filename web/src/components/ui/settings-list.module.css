@@ -6,8 +6,8 @@
   --sl-row-padding-inline: var(--settings-row-padding-inline, 1.08rem);
   --sl-row-content-gap: var(--settings-row-content-gap, 0.82rem);
   --sl-group-radius: var(--settings-group-radius, var(--radius-lg, 1.8rem));
-  --sl-group-background: var(--settings-group-background, var(--glass-bg-strong, var(--bg-surface)));
-  --sl-group-border-color: var(--settings-group-border-color, var(--glass-border, rgba(255,255,255,0.085)));
+  --sl-group-background: var(--settings-group-background, var(--surface-card-bg, var(--glass-bg-strong, var(--bg-surface))));
+  --sl-group-border-color: var(--settings-group-border-color, var(--surface-border-color, var(--glass-border, rgba(255,255,255,0.085))));
   --sl-row-divider-color: var(--settings-row-divider-color, var(--glass-border-subtle, rgba(255,255,255,0.045)));
   --sl-row-divider-inset-start: var(--sl-row-padding-inline);
   --sl-row-divider-inset-end: var(--settings-row-divider-inset-end, var(--sl-row-padding-inline));
@@ -31,8 +31,9 @@
   border: 1px solid var(--sl-group-border-color);
   border-radius: var(--sl-group-radius);
   background: var(--sl-group-background);
-  -webkit-backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
-  backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
+  box-shadow: var(--surface-card-shadow, var(--glass-shadow, 0 8px 32px -8px rgba(0,0,0,0.54)));
+  -webkit-backdrop-filter: var(--surface-card-blur, var(--blur-sm, blur(12px) saturate(160%)));
+  backdrop-filter: var(--surface-card-blur, var(--blur-sm, blur(12px) saturate(160%)));
   overflow: clip;
 }
 
