@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
@@ -315,10 +315,31 @@ export default function CalendarPage() {
     return ctx ? (generatedByKey.get(ctx.sessionKey) ?? null) : null;
   }
 
+  const [animKey, setAnimKey] = useState(0);
+  const [animClass, setAnimClass] = useState<"" | "slide-from-below" | "slide-from-above">("");
+  const swipeTouchRef = useRef<{ startY: number; startX: number } | null>(null);
+
   function shiftMonth(delta: number) {
     const d = dateOnlyToUtcDate(anchorDate);
     d.setUTCMonth(d.getUTCMonth() + delta);
+    setAnimClass(delta > 0 ? "slide-from-below" : "slide-from-above");
+    setAnimKey((k) => k + 1);
     setAnchorDate(utcDateToDateOnly(d));
+  }
+
+  function handleCalSwipeTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0];
+    swipeTouchRef.current = { startY: t.clientY, startX: t.clientX };
+  }
+
+  function handleCalSwipeTouchEnd(e: React.TouchEvent) {
+    if (!swipeTouchRef.current) return;
+    const t = e.changedTouches[0];
+    const dy = swipeTouchRef.current.startY - t.clientY;
+    const dx = Math.abs(swipeTouchRef.current.startX - t.clientX);
+    swipeTouchRef.current = null;
+    if (Math.abs(dy) < 40 || dx > Math.abs(dy) * 0.8) return;
+    shiftMonth(dy > 0 ? 1 : -1);
   }
 
   function goToToday() {
@@ -384,7 +405,12 @@ export default function CalendarPage() {
       )}
 
       {/* Month navigation header */}
-      <div className="ios-cal-header" data-pull-refresh-trigger="true">
+      <div
+        className="ios-cal-header"
+        data-pull-refresh-trigger="true"
+        onTouchStart={handleCalSwipeTouchStart}
+        onTouchEnd={handleCalSwipeTouchEnd}
+      >
         <div className="ios-cal-header-left">
           <button className="ios-cal-month-label-large" onClick={goToToday} aria-label="오늘로 이동">
             {MONTH_NAMES[getMonth(anchorDate) - 1]}
@@ -437,36 +463,47 @@ export default function CalendarPage() {
       </div>
 
       {/* Date grid */}
-      <div className="ios-cal-grid" role="grid" aria-label="날짜 선택">
-        {cells.map((dateOnly) => {
-          const isToday = dateOnly === today;
-          const isSelected = dateOnly === selectedDate;
-          const isOutside = !dateOnly.startsWith(anchorMonthKey);
-          const hasDot = !!selectedPlan && getSessionForDate(dateOnly) !== null;
-          const dow = getDayOfWeek(dateOnly);
+      <div
+        key={animKey}
+        className={`ios-cal-grid ${animClass}`}
+        role="grid"
+        aria-label="날짜 선택"
+        onTouchStart={handleCalSwipeTouchStart}
+        onTouchEnd={handleCalSwipeTouchEnd}
+      >
+        {Array.from({ length: 5 }, (_, week) => (
+          <div key={week} className="ios-cal-week-row">
+            {cells.slice(week * 7, week * 7 + 7).map((dateOnly) => {
+              const isToday = dateOnly === today;
+              const isSelected = dateOnly === selectedDate;
+              const isOutside = !dateOnly.startsWith(anchorMonthKey);
+              const hasDot = !!selectedPlan && getSessionForDate(dateOnly) !== null;
+              const dow = getDayOfWeek(dateOnly);
 
-          return (
-            <button
-              key={dateOnly}
-              role="gridcell"
-              className={[
-                "ios-cal-day",
-                isToday ? "is-today" : "",
-                isSelected ? "is-selected" : "",
-                isOutside ? "is-outside" : "",
-                dow === 0 ? "is-sun" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-              onClick={() => setSelectedDate(dateOnly)}
-              aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
-              aria-selected={isSelected}
-            >
-              <span className="ios-cal-day-num">{dayOfMonth(dateOnly)}</span>
-              {hasDot && <span className="ios-cal-day-dot" aria-hidden="true" />}
-            </button>
-          );
-        })}
+              return (
+                <button
+                  key={dateOnly}
+                  role="gridcell"
+                  className={[
+                    "ios-cal-day",
+                    isToday ? "is-today" : "",
+                    isSelected ? "is-selected" : "",
+                    isOutside ? "is-outside" : "",
+                    dow === 0 ? "is-sun" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                  onClick={() => setSelectedDate(dateOnly)}
+                  aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
+                  aria-selected={isSelected}
+                >
+                  <span className="ios-cal-day-num">{dayOfMonth(dateOnly)}</span>
+                  {hasDot && <span className="ios-cal-day-dot" aria-hidden="true" />}
+                </button>
+              );
+            })}
+          </div>
+        ))}
       </div>
 
       {/* Divider */}

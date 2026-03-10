@@ -4,7 +4,6 @@ import { useMemo, useState } from "react";
 import {
   BaseGroupedList,
   NavigationRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
@@ -110,7 +109,6 @@ export default function SettingsDataExportPage() {
               void runExport("json");
             }}
             disabled={Boolean(exporting)}
-            leading={<RowIcon symbol="JS" tone="blue" />}
           />
           <NavigationRow
             label="CSV Export"
@@ -121,7 +119,6 @@ export default function SettingsDataExportPage() {
               void runExport("csv");
             }}
             disabled={Boolean(exporting)}
-            leading={<RowIcon symbol="CV" tone="neutral" />}
           />
         </BaseGroupedList>
         <SectionFootnote>

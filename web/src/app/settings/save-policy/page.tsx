@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from "react";
 import {
   BaseGroupedList,
   InfoRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
   ToggleRow,
@@ -77,7 +76,6 @@ export default function SettingsSavePolicyPage() {
             description="테스트용: 다음 저장 1회를 실패 처리."
             checked={simulateFailureOnNextSave}
             onCheckedChange={setSimulateFailureOnNextSave}
-            leading={<RowIcon symbol="FT" tone="orange" />}
             badge={simulateFailureOnNextSave ? "!" : undefined}
             badgeTone="warning"
           />
@@ -103,7 +101,6 @@ export default function SettingsSavePolicyPage() {
               void autoSync.commit(next);
             }}
             disabled={autoSync.pending}
-            leading={<RowIcon symbol="SY" tone="green" />}
           />
           <ValueRow
             rowId="row-timezone"
@@ -121,14 +118,12 @@ export default function SettingsSavePolicyPage() {
               void timezone.commit(nextTimezone(String(timezone.value)));
             }}
             disabled={timezone.pending}
-            leading={<RowIcon symbol="TZ" tone="blue" />}
           />
           <InfoRow
             rowId="row-policy"
             label="정책"
             description="즉시 반영, 행 잠금, 롤백 규칙을 적용합니다."
             value="표준화됨"
-            leading={<RowIcon symbol="OK" tone="green" />}
             tone="success"
           />
         </BaseGroupedList>

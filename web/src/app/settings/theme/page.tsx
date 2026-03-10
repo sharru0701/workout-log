@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   BaseGroupedList,
   NavigationRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
@@ -145,7 +144,6 @@ export default function SettingsThemePage() {
                 }}
                 disabled={themeSetting.pending}
                 showChevron={false}
-                leading={<RowIcon symbol={active ? "✓" : "TM"} tone={active ? "tint" : "neutral"} />}
               />
             );
           })}

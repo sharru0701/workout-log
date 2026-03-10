@@ -260,7 +260,7 @@ function PlansManagePageContent() {
           />
 
           {filteredPlans.length > 0 ? (
-            <DashboardSurface className="grid gap-2">
+            <DashboardSurface className="grid gap-2 sub-card-list">
               {filteredPlans.map((plan) => {
                 const todayWorkoutHref = buildTodayLogHref({
                   planId: plan.id,

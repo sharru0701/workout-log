@@ -7,7 +7,6 @@ import { AppNumberStepper } from "@/components/ui/form-controls";
 import {
   BaseGroupedList,
   NavigationRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
   ValueRow,
@@ -247,7 +246,6 @@ export default function SettingsMinimumPlatePage() {
             description="운동종목별 규칙이 없을 때 사용"
             value={`${normalizeIncrementKg(defaultIncrement.value).toFixed(2)} kg`}
             showChevron={false}
-            leading={<RowIcon symbol="DF" tone="neutral" />}
           />
         </BaseGroupedList>
       </section>
@@ -293,7 +291,6 @@ export default function SettingsMinimumPlatePage() {
               description="탭해서 increment 수정/삭제"
               value={`${rule.incrementKg.toFixed(2)}kg`}
               onPress={() => openEditSheet(rule)}
-              leading={<RowIcon symbol="PL" tone="blue" />}
             />
           ))}
           <NavigationRow
@@ -302,7 +299,6 @@ export default function SettingsMinimumPlatePage() {
             description="운동종목을 선택하고 최소 원판 무게를 지정합니다."
             onPress={openCreateSheet}
             value="추가"
-            leading={<RowIcon symbol="+R" tone="tint" />}
           />
         </BaseGroupedList>
         <EmptyStateRows

@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   BaseGroupedList,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
   ValueRow,
@@ -89,7 +88,6 @@ export default function SettingsBodyweightPage() {
             description="저장된 값"
             value={`${bodyweight.value.toFixed(1)} kg`}
             showChevron={false}
-            leading={<RowIcon symbol="BW" tone="green" />}
           />
         </BaseGroupedList>
       </section>

@@ -6,6 +6,7 @@ import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppTextInput } from "@/components/ui/form-controls";
+import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -261,14 +262,16 @@ export default function Stats1RMPage() {
   const [rangeDraftError, setRangeDraftError] = useState<string | null>(null);
   const [stats, setStats] = useState<E1RMResponse | null>(null);
   const [activePointIndex, setActivePointIndex] = useState(0);
+  const [exerciseQuery, setExerciseQuery] = useState("");
+  const [programQuery, setProgramQuery] = useState("");
 
   const selectedExercise = useMemo(
     () => exercises.find((entry) => entry.id === selectedExerciseId) ?? null,
     [exercises, selectedExerciseId],
   );
   const selectedProgramLabel = useMemo(() => {
-    if (!selectedPlanId) return "전체 프로그램";
-    return plans.find((entry) => entry.id === selectedPlanId)?.name ?? "선택된 프로그램";
+    if (!selectedPlanId) return "전체 플랜";
+    return plans.find((entry) => entry.id === selectedPlanId)?.name ?? "선택된 플랜";
   }, [plans, selectedPlanId]);
   const series = stats?.series ?? [];
   const hasChartData = series.length > 0;
@@ -330,6 +333,11 @@ export default function Stats1RMPage() {
     setRangeDraft(rangeFilter);
     setRangeDraftError(null);
   }, [activeSheet, rangeFilter]);
+
+  useEffect(() => {
+    if (activeSheet !== "exercise") setExerciseQuery("");
+    if (activeSheet !== "program") setProgramQuery("");
+  }, [activeSheet]);
 
   useEffect(() => {
     if (!selectedExerciseId || !activeDataQueryKey) {
@@ -397,6 +405,50 @@ export default function Stats1RMPage() {
     setActiveSheet(null);
   };
 
+  const filteredExerciseOptions = useMemo(() => {
+    const q = exerciseQuery.trim().toLowerCase();
+    return exercises
+      .filter((ex) => !q || ex.name.toLowerCase().includes(q))
+      .map((ex) => ({
+        key: ex.id,
+        label: ex.name,
+        active: ex.id === selectedExerciseId,
+        ariaCurrent: ex.id === selectedExerciseId,
+        onSelect: () => {
+          setSelectedExerciseId(ex.id);
+          setActiveSheet(null);
+        },
+      }));
+  }, [exercises, exerciseQuery, selectedExerciseId]);
+
+  const filteredProgramOptions = useMemo(() => {
+    const q = programQuery.trim().toLowerCase();
+    const allOption = {
+      key: "__all__",
+      label: "전체 플랜",
+      active: selectedPlanId === "",
+      ariaCurrent: selectedPlanId === "",
+      onSelect: () => {
+        setSelectedPlanId("");
+        setActiveSheet(null);
+      },
+    };
+    const planOptions = plans
+      .filter((plan) => !q || plan.name.toLowerCase().includes(q))
+      .map((plan) => ({
+        key: plan.id,
+        label: plan.name,
+        active: plan.id === selectedPlanId,
+        ariaCurrent: plan.id === selectedPlanId,
+        onSelect: () => {
+          setSelectedPlanId(plan.id);
+          setActiveSheet(null);
+        },
+      }));
+    if (q && !"전체 플랜".includes(q)) return planOptions;
+    return [allOption, ...planOptions];
+  }, [plans, programQuery, selectedPlanId]);
+
   const showNoExerciseState = isOptionsSettled && !optionsError && exercises.length === 0;
   const showDataEmptyState = isDataSettled && !error && !showNoExerciseState && series.length === 0;
   const hasResolvedFilterOptions = isOptionsSettled || optionsError !== null || exercises.length > 0;
@@ -414,7 +466,7 @@ export default function Stats1RMPage() {
       {hasResolvedFilterOptions && (
         <DashboardSection
           title="필터 요약"
-          description="현재 선택된 운동, 기간, 프로그램 범위를 상단 칩으로 유지합니다."
+          description="현재 선택된 운동, 기간, 플랜 범위를 상단 칩으로 유지합니다."
           headerTrigger
         >
           <DashboardSurface className="grid gap-3">
@@ -425,7 +477,7 @@ export default function Stats1RMPage() {
                 onPress={() => setActiveSheet("exercise")}
               />
               <FilterChip title="기간" value={formatRangeLabel(rangeFilter)} onPress={() => setActiveSheet("range")} />
-              <FilterChip title="프로그램" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
+              <FilterChip title="플랜" value={selectedProgramLabel} onPress={() => setActiveSheet("program")} />
             </div>
           </DashboardSurface>
         </DashboardSection>
@@ -435,7 +487,7 @@ export default function Stats1RMPage() {
         active={optionsLoading}
         delayMs={120}
         label="필터 옵션 로딩 중"
-        description="운동종목/프로그램 목록을 조회하고 있습니다."
+        description="운동종목/플랜 목록을 조회하고 있습니다."
         ariaLabel="Stats filter loading"
       />
       <ErrorStateRows
@@ -499,7 +551,7 @@ export default function Stats1RMPage() {
               onActiveIndexChange={setActivePointIndex}
             />
 
-            <div className="stats-chart-meta-grid">
+            <div className="stats-chart-meta-grid sub-card-list">
               <article className="stats-chart-meta-card">
                 <span className="ui-card-label">Best e1RM</span>
                 <strong>{stats?.best ? `${stats.best.e1rm.toFixed(1)} kg` : "-"}</strong>
@@ -520,39 +572,22 @@ export default function Stats1RMPage() {
         </DashboardSection>
       )}
 
-      <BottomSheet
+      <SearchSelectSheet
         open={activeSheet === "exercise"}
         title="운동종목 필터"
         description="그래프 대상 운동종목을 선택합니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
-        className="stats-sheet stats-sheet--large"
-      >
-        <Card tone="subtle" padding="sm" elevated={false}>
-          <CardContent className="stats-sheet-list">
-            {exercises.map((exercise) => {
-              const active = exercise.id === selectedExerciseId;
-              return (
-                <button
-                  key={exercise.id}
-                  type="button"
-                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
-                  onClick={() => {
-                    setSelectedExerciseId(exercise.id);
-                    setActiveSheet(null);
-                  }}
-                >
-                  <span>{exercise.name}</span>
-                  <span aria-hidden="true">{active ? "✓" : ""}</span>
-                </button>
-              );
-            })}
-            {isOptionsSettled && exercises.length === 0 ? (
-              <div className="stats-sheet-empty">선택 가능한 운동종목이 없습니다.</div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </BottomSheet>
+        label="운동종목 검색"
+        query={exerciseQuery}
+        placeholder="운동종목 검색..."
+        onQueryChange={setExerciseQuery}
+        resultsAriaLabel="운동종목 목록"
+        options={filteredExerciseOptions}
+        emptyText="검색 결과가 없습니다."
+        loading={optionsLoading}
+        loadingText="운동종목 불러오는 중..."
+      />
 
       <BottomSheet
         open={activeSheet === "range"}
@@ -630,50 +665,22 @@ export default function Stats1RMPage() {
         </Card>
       </BottomSheet>
 
-      <BottomSheet
+      <SearchSelectSheet
         open={activeSheet === "program"}
-        title="프로그램 필터"
-        description="특정 프로그램 기록만 보거나 전체를 볼 수 있습니다."
+        title="플랜 필터"
+        description="특정 플랜 기록만 보거나 전체를 볼 수 있습니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
-        className="stats-sheet stats-sheet--large"
-      >
-        <Card tone="subtle" padding="sm" elevated={false}>
-          <CardContent className="stats-sheet-list">
-            <button
-              type="button"
-              className={`haptic-tap stats-sheet-option${selectedPlanId === "" ? " is-active" : ""}`}
-              onClick={() => {
-                setSelectedPlanId("");
-                setActiveSheet(null);
-              }}
-            >
-              <span>전체 프로그램</span>
-              <span aria-hidden="true">{selectedPlanId === "" ? "✓" : ""}</span>
-            </button>
-            {plans.map((plan) => {
-              const active = plan.id === selectedPlanId;
-              return (
-                <button
-                  key={plan.id}
-                  type="button"
-                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
-                  onClick={() => {
-                    setSelectedPlanId(plan.id);
-                    setActiveSheet(null);
-                  }}
-                >
-                  <span>{plan.name}</span>
-                  <span aria-hidden="true">{active ? "✓" : ""}</span>
-                </button>
-              );
-            })}
-            {isOptionsSettled && plans.length === 0 ? (
-              <div className="stats-sheet-empty">등록된 프로그램이 없습니다.</div>
-            ) : null}
-          </CardContent>
-        </Card>
-      </BottomSheet>
+        label="플랜 검색"
+        query={programQuery}
+        placeholder="플랜 검색..."
+        onQueryChange={setProgramQuery}
+        resultsAriaLabel="플랜 목록"
+        options={filteredProgramOptions}
+        emptyText="검색 결과가 없습니다."
+        loading={optionsLoading}
+        loadingText="플랜 불러오는 중..."
+      />
     </div>
   );
 }

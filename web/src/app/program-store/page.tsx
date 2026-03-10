@@ -1172,7 +1172,7 @@ export default function ProgramStorePage() {
           label="표시할 프로그램이 없습니다"
         />
         {marketListItems.length > 0 && (
-          <DashboardSurface className="grid gap-2">
+          <DashboardSurface className="grid gap-2 sub-card-list">
             {marketListItems.map((item) => {
                 const badge = sourceBadgeMeta(item.source);
                 const scheduleLabel = getProgramScheduleLabel(item.template);
@@ -1239,7 +1239,7 @@ export default function ProgramStorePage() {
 
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
-          <DashboardSurface className="grid gap-2">
+          <DashboardSurface className="grid gap-2 sub-card-list">
             {customListItems.map((item) => {
                 const badge = sourceBadgeMeta(item.source);
                 const scheduleLabel = getProgramScheduleLabel(item.template);

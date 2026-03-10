@@ -5,7 +5,6 @@ import { apiGet } from "@/lib/api";
 import {
   BaseGroupedList,
   InfoRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
   ValueRow,
@@ -269,7 +268,6 @@ export default function SettingsUxThresholdsPage() {
               )
             }
             disabled={saveFromGenerate.pending}
-            leading={<RowIcon symbol="F1" tone="green" />}
           />
 
           <ValueRow
@@ -294,7 +292,6 @@ export default function SettingsUxThresholdsPage() {
               )
             }
             disabled={saveSuccessFromClicks7d.pending}
-            leading={<RowIcon symbol="F2" tone="blue" />}
           />
 
           <ValueRow
@@ -319,7 +316,6 @@ export default function SettingsUxThresholdsPage() {
               )
             }
             disabled={addAfterSheetOpen14d.pending}
-            leading={<RowIcon symbol="F3" tone="orange" />}
           />
 
           <ValueRow
@@ -329,7 +325,6 @@ export default function SettingsUxThresholdsPage() {
             value={isAnyGlobalPending ? "저장 중..." : "복원"}
             onPress={() => void resetDefaults()}
             disabled={isAnyGlobalPending}
-            leading={<RowIcon symbol="DF" tone="neutral" />}
           />
         </BaseGroupedList>
         <SectionFootnote>글로벌 기준치는 모든 플랜에 기본으로 적용됩니다.</SectionFootnote>
@@ -368,7 +363,6 @@ export default function SettingsUxThresholdsPage() {
                 )
               }
               disabled={!selectedPlanId || Boolean(planPendingField)}
-              leading={<RowIcon symbol="P1" tone="green" />}
             />
             <ValueRow
               rowId="row-plan-target-save-success-clicks-7d"
@@ -386,7 +380,6 @@ export default function SettingsUxThresholdsPage() {
                 )
               }
               disabled={!selectedPlanId || Boolean(planPendingField)}
-              leading={<RowIcon symbol="P2" tone="blue" />}
             />
             <ValueRow
               rowId="row-plan-target-add-after-sheet-open-14d"
@@ -404,7 +397,6 @@ export default function SettingsUxThresholdsPage() {
                 )
               }
               disabled={!selectedPlanId || Boolean(planPendingField)}
-              leading={<RowIcon symbol="P3" tone="orange" />}
             />
             <ValueRow
               rowId="row-plan-target-clear"
@@ -413,7 +405,6 @@ export default function SettingsUxThresholdsPage() {
               value={planPendingField === "clear" ? "해제 중..." : "해제"}
               onPress={() => void clearPlanOverrides()}
               disabled={!selectedPlanId || Boolean(planPendingField)}
-              leading={<RowIcon symbol="CL" tone="neutral" />}
             />
           </BaseGroupedList>
 
@@ -439,7 +430,6 @@ export default function SettingsUxThresholdsPage() {
             label="대상 화면"
             description="통계 대시보드 > UX 행동 요약"
             value="연동됨"
-            leading={<RowIcon symbol="UX" tone="tint" />}
             tone="neutral"
           />
         </BaseGroupedList>

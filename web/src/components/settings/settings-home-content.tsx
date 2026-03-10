@@ -5,7 +5,6 @@ import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import {
   BaseGroupedList,
   NavigationRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
@@ -107,7 +106,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
               subtitle={row.subtitle}
               description={row.description}
               value="열기"
-              leading={<RowIcon symbol={row.symbol} tone={row.tone} />}
             />
           ))}
         </BaseGroupedList>

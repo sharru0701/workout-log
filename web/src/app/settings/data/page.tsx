@@ -6,7 +6,6 @@ import {
   BaseGroupedList,
   InfoRow,
   NavigationRow,
-  RowIcon,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
@@ -130,7 +129,6 @@ export default function SettingsDataPage() {
             subtitle="Backup"
             description="초기화 전에 JSON / CSV 백업을 생성합니다."
             value="열기"
-            leading={<RowIcon symbol="EX" tone="blue" />}
           />
         </BaseGroupedList>
         <SectionFootnote>초기화 전에 먼저 Export로 백업 파일을 보관하는 편이 안전합니다.</SectionFootnote>
@@ -144,21 +142,18 @@ export default function SettingsDataPage() {
             description="운동기록, 세트, 생성 세션, 플랜, 커스텀 프로그램, 통계 캐시, 사용자 설정, UX 이벤트"
             value="전체"
             tone="critical"
-            leading={<RowIcon symbol="DL" tone="orange" />}
           />
           <InfoRow
             label="다시 세팅되는 데이터"
             description="기본 프로그램 템플릿과 기본 운동종목 카탈로그"
             value="Base Seed"
             tone="neutral"
-            leading={<RowIcon symbol="RS" tone="green" />}
           />
           <InfoRow
             label="생성되지 않는 데이터"
             description="예시 플랜이나 데모 기록은 다시 만들지 않습니다."
             value="Demo 없음"
             tone="neutral"
-            leading={<RowIcon symbol="OK" tone="neutral" />}
           />
         </BaseGroupedList>
 
