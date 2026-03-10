@@ -1057,6 +1057,10 @@ button {
   width: 100%;
 }
 
+.ios-cal-gesture-area {
+  touch-action: pan-x;
+}
+
 /* Month navigation header */
 .ios-cal-header {
   display: flex;

@@ -318,6 +318,7 @@ export default function CalendarPage() {
   const [animKey, setAnimKey] = useState(0);
   const [animClass, setAnimClass] = useState<"" | "slide-from-below" | "slide-from-above">("");
   const swipeTouchRef = useRef<{ startY: number; startX: number } | null>(null);
+  const calGestureRef = useRef<HTMLDivElement>(null);
 
   function shiftMonth(delta: number) {
     const d = dateOnlyToUtcDate(anchorDate);
@@ -341,6 +342,20 @@ export default function CalendarPage() {
     if (Math.abs(dy) < 40 || dx > Math.abs(dy) * 0.8) return;
     shiftMonth(dy > 0 ? 1 : -1);
   }
+
+  useEffect(() => {
+    const el = calGestureRef.current;
+    if (!el) return;
+    const onTouchMove = (e: TouchEvent) => {
+      if (!swipeTouchRef.current) return;
+      const t = e.touches[0];
+      const dy = Math.abs(swipeTouchRef.current.startY - t.clientY);
+      const dx = Math.abs(swipeTouchRef.current.startX - t.clientX);
+      if (dy > dx && dy > 8) e.preventDefault();
+    };
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    return () => el.removeEventListener("touchmove", onTouchMove);
+  }, []);
 
   function goToToday() {
     setAnchorDate(today);
@@ -406,10 +421,14 @@ export default function CalendarPage() {
 
       {/* Month navigation header */}
       <div
-        className="ios-cal-header"
-        data-pull-refresh-trigger="true"
+        ref={calGestureRef}
+        className="ios-cal-gesture-area"
         onTouchStart={handleCalSwipeTouchStart}
         onTouchEnd={handleCalSwipeTouchEnd}
+      >
+      <div
+        className="ios-cal-header"
+        data-pull-refresh-trigger="true"
       >
         <div className="ios-cal-header-left">
           <button className="ios-cal-month-label-large" onClick={goToToday} aria-label="오늘로 이동">
@@ -468,8 +487,6 @@ export default function CalendarPage() {
         className={`ios-cal-grid ${animClass}`}
         role="grid"
         aria-label="날짜 선택"
-        onTouchStart={handleCalSwipeTouchStart}
-        onTouchEnd={handleCalSwipeTouchEnd}
       >
         {Array.from({ length: 5 }, (_, week) => (
           <div key={week} className="ios-cal-week-row">
@@ -505,6 +522,8 @@ export default function CalendarPage() {
           </div>
         ))}
       </div>
+
+      </div>{/* /ios-cal-gesture-area */}
 
       {/* Divider */}
       <div className="ios-cal-divider" role="separator" />
