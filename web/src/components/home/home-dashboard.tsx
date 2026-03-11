@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { SessionSummaryCard } from "@/components/ui/session-summary-card";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   HomeData,
@@ -204,20 +203,26 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
       <div className="hd-section-head">
         <h2 className="hd-section-title">지난 세션</h2>
       </div>
-      <SessionSummaryCard
-        data={{
-          badgeLabel: session.planName,
-          dateLabel: session.date,
-          totalSets: session.totalSets,
-          totalVolume: session.totalVolume,
-          exercises: session.exercises.map((ex) => ({
+      <Link className="hd-last-card" href={session.href}>
+        <div className="hd-last-top">
+          <div>
+            <div className="hd-last-plan">{session.planName}</div>
+            <div className="hd-last-date">{session.date}</div>
+          </div>
+          <div className="hd-last-stats">
+            <span className="hd-last-stat">{session.totalSets}세트</span>
+            <span className="hd-last-stat-sep">·</span>
+            <span className="hd-last-stat">{formatVolume(session.totalVolume)}</span>
+          </div>
+        </div>
+        <SessionExerciseList
+          exercises={session.exercises.map((ex) => ({
             name: ex.name,
-            bestSet: ex.bestSet,
+            detail: ex.bestSet,
             weightDelta: ex.weightDelta,
-          })),
-          href: session.href,
-        }}
-      />
+          }))}
+        />
+      </Link>
     </section>
   );
 }
