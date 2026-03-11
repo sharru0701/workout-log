@@ -1896,7 +1896,7 @@ button {
   min-width: 0;
   overflow: hidden;
   /* iOS Safari: overflow:hidden is ignored when backdrop-filter is on the same element */
-  -webkit-mask-image: -webkit-radial-gradient(white, black);
+  -webkit-mask-image: linear-gradient(#fff 0%, #fff 100%);
 }
 
 .app-card {
