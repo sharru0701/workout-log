@@ -8,6 +8,7 @@ import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { StoreSearchInput } from "@/components/ui/store-search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -205,33 +206,13 @@ function PlansManagePageContent() {
             <DashboardSurface>
               <div className="grid gap-1">
                 <span className="ui-card-label">플랜 검색</span>
-                <div className="app-search-shell" aria-label="플랜 검색 입력">
-                  <span className="app-search-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" focusable="false">
-                      <circle cx="11" cy="11" r="7" />
-                      <path d="m20 20-3.8-3.8" />
-                    </svg>
-                  </span>
-                  <input
-                    type="search"
-                    inputMode="search"
-                    className="app-search-input"
-                    value={searchQuery}
-                    onChange={(event) => setSearchQuery(event.target.value)}
-                    placeholder="플랜명 또는 기반 프로그램 검색"
-                    aria-label="플랜 검색"
-                  />
-                  {searchQuery.trim().length > 0 ? (
-                    <button
-                      type="button"
-                      className="app-search-clear"
-                      aria-label="검색어 지우기"
-                      onClick={() => setSearchQuery("")}
-                    >
-                      ×
-                    </button>
-                  ) : null}
-                </div>
+                <StoreSearchInput
+                  value={searchQuery}
+                  onChange={setSearchQuery}
+                  placeholder="플랜명 또는 기반 프로그램 검색"
+                  ariaLabel="플랜 검색"
+                  shellAriaLabel="플랜 검색 입력"
+                />
               </div>
             </DashboardSurface>
           ) : null}
