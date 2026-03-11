@@ -15,10 +15,15 @@ export type HomeTodaySummary = {
   programName: string;
   meta: string;
   completedSets: number;
-  estimatedE1rmKg: number | null;
   href: string;
+  loggedExercises: HomeTodayLoggedExercise[];
   plannedExercises: HomeTodayExercise[];
   totalPlannedSets: number;
+};
+
+export type HomeTodayLoggedExercise = {
+  name: string;
+  bestSet: string;
 };
 
 export type HomeRecentSession = {
@@ -223,18 +228,6 @@ function formatWeekLabel(period: string) {
   }).format(date);
 }
 
-function estimateE1rm(weightKg: number | null | undefined, reps: number | null | undefined) {
-  if (weightKg === null || reps === null || weightKg === undefined || reps === undefined) return null;
-  if (weightKg <= 0 || reps <= 0) return null;
-  const effectiveReps = Math.min(reps, 15);
-  return weightKg * (1 + effectiveReps / 30);
-}
-
-function formatE1rm(value: number | null) {
-  if (value === null) return "-";
-  return `${Math.round(value)}kg`;
-}
-
 function resolveHighlightedPlan(plans: PlanItem[], latestTodayLog: WorkoutLogItem | null) {
   const planFromToday = latestTodayLog?.planId ? plans.find((entry) => entry.id === latestTodayLog.planId) ?? null : null;
   const planByLastPerformed = [...plans]
@@ -405,6 +398,46 @@ function summarizeSets(sets: SnapshotSet[]): string {
   return parts.join(", ") + weightStr;
 }
 
+function groupLoggedExercises(sets: WorkoutSetItem[]): Array<{
+  name: string;
+  sets: number;
+  bestWeight: number;
+  bestReps: number;
+}> {
+  const grouped = new Map<string, { sets: number; bestWeight: number; bestReps: number }>();
+
+  for (const set of sets) {
+    const name = String(set.exerciseName ?? "").trim();
+    if (!name) continue;
+
+    const weight = Number(set.weightKg ?? 0);
+    const reps = Number(set.reps ?? 0);
+    const current = grouped.get(name);
+
+    if (!current) {
+      grouped.set(name, { sets: 1, bestWeight: weight, bestReps: reps });
+      continue;
+    }
+
+    current.sets += 1;
+    if (weight > current.bestWeight || (weight === current.bestWeight && reps > current.bestReps)) {
+      current.bestWeight = weight;
+      current.bestReps = reps;
+    }
+  }
+
+  return Array.from(grouped.entries()).map(([name, data]) => ({
+    name,
+    sets: data.sets,
+    bestWeight: data.bestWeight,
+    bestReps: data.bestReps,
+  }));
+}
+
+function formatLoggedBestSet(sets: number, bestReps: number, bestWeight: number) {
+  return bestWeight > 0 ? `${sets}x${bestReps} @ ${bestWeight}kg` : `${sets}x${bestReps}`;
+}
+
 function buildTodaySummary(
   plans: PlanItem[],
   logs: WorkoutLogItem[],
@@ -419,19 +452,14 @@ function buildTodaySummary(
   const completedSets = todaySets.length;
   const todayLogCount = todayLogs.length;
   const latestToday = todayLogs[0] ?? null;
+  const loggedExercises = groupLoggedExercises(todaySets).map((exercise) => ({
+    name: exercise.name,
+    bestSet: formatLoggedBestSet(exercise.sets, exercise.bestReps, exercise.bestWeight),
+  }));
   const highlightedPlan = resolveHighlightedPlan(plans, latestToday);
   const selectedProgramName = latestToday?.planId
     ? plansById.get(latestToday.planId) ?? "선택된 프로그램"
     : highlightedPlan?.name ?? "플랜 준비 필요";
-
-  let estimatedE1rmKg: number | null = null;
-  for (const set of todaySets) {
-    const value = estimateE1rm(set.weightKg, set.reps);
-    if (value === null) continue;
-    if (estimatedE1rmKg === null || value > estimatedE1rmKg) {
-      estimatedE1rmKg = value;
-    }
-  }
 
   const activePlanId = latestToday?.planId ?? highlightedPlan?.id ?? null;
 
@@ -439,7 +467,7 @@ function buildTodaySummary(
   if (!activePlanId) {
     meta = "오늘 운동은 플랜 기반으로 동작합니다. 먼저 프로그램을 선택하거나 커스텀 프로그램을 만드세요.";
   } else if (todayLogCount > 0) {
-    meta = `오늘 ${todayLogCount}개 세션 / ${completedSets}세트 완료 / 예상 e1RM ${formatE1rm(estimatedE1rmKg)}`;
+    meta = `오늘 ${todayLogCount}개 세션 / ${completedSets}세트 완료`;
   } else if (plannedExercises.length > 0) {
     const mainExercises = plannedExercises.filter((e) => e.role === "MAIN");
     const mainNames = mainExercises.slice(0, 3).map((e) => e.name);
@@ -455,7 +483,6 @@ function buildTodaySummary(
     programName: selectedProgramName,
     meta,
     completedSets,
-    estimatedE1rmKg,
     href: activePlanId
       ? buildTodayLogHref({
           planId: activePlanId,
@@ -463,6 +490,7 @@ function buildTodaySummary(
           autoGenerate: todayLogCount === 0,
         })
       : "/program-store",
+    loggedExercises,
     plannedExercises,
     totalPlannedSets: totalPlannedSets,
   };
@@ -504,38 +532,24 @@ function buildLastSession(
   const totalSets = lastLog.sets.length;
 
   let totalVolume = 0;
-  const exerciseMap = new Map<string, { sets: number; bestWeight: number; bestReps: number }>();
-
   for (const set of lastLog.sets) {
     const w = set.weightKg ?? 0;
     const r = set.reps ?? 0;
     totalVolume += w * r;
-
-    const name = set.exerciseName;
-    const existing = exerciseMap.get(name);
-    if (!existing) {
-      exerciseMap.set(name, { sets: 1, bestWeight: w, bestReps: r });
-    } else {
-      existing.sets += 1;
-      if (w > existing.bestWeight || (w === existing.bestWeight && r > existing.bestReps)) {
-        existing.bestWeight = w;
-        existing.bestReps = r;
-      }
-    }
   }
 
-  const exercises: HomeLastSessionExercise[] = Array.from(exerciseMap.entries()).map(([name, data]) => {
+  const exercises: HomeLastSessionExercise[] = groupLoggedExercises(lastLog.sets).map((data) => {
     // Compute weight delta vs today's planned weight
     let weightDelta: number | null = null;
-    const plannedWeight = plannedWeightByExercise.get(name.toLowerCase());
+    const plannedWeight = plannedWeightByExercise.get(data.name.toLowerCase());
     if (plannedWeight !== undefined && data.bestWeight > 0) {
       weightDelta = plannedWeight - data.bestWeight;
     }
 
     return {
-      name,
+      name: data.name,
       sets: data.sets,
-      bestSet: data.bestWeight > 0 ? `${data.sets}x${data.bestReps} @ ${data.bestWeight}kg` : `${data.sets}x${data.bestReps}`,
+      bestSet: formatLoggedBestSet(data.sets, data.bestReps, data.bestWeight),
       weightDelta,
     };
   });
@@ -662,8 +676,8 @@ export const HOME_PREVIEW_DATA: HomeData = {
     programName: "5/3/1 BBB",
     meta: "Back Squat, Bench Press 외 16세트",
     completedSets: 0,
-    estimatedE1rmKg: null,
     href: "/workout-record?planId=preview-plan-531&date=2026-03-03",
+    loggedExercises: [],
     plannedExercises: [
       { name: "Back Squat", role: "MAIN", totalSets: 3, summary: "3x5 @ 110kg" },
       { name: "Bench Press", role: "MAIN", totalSets: 3, summary: "3x5 @ 80kg" },

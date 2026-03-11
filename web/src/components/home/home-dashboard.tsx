@@ -8,6 +8,7 @@ import type {
   HomeData,
   HomeLastSession,
   HomeStrengthItem,
+  HomeTodayLoggedExercise,
   HomeVolumeTrendPoint,
   HomeQuickStats,
   HomeTodayExercise,
@@ -108,6 +109,13 @@ function TodayExercisePreview({ exercises }: { exercises: HomeTodayExercise[] })
   );
 }
 
+function mapTodayLoggedExercises(exercises: HomeTodayLoggedExercise[]) {
+  return exercises.map((exercise) => ({
+    name: exercise.name,
+    detail: exercise.bestSet,
+  }));
+}
+
 function TodaySessionSection({ data }: { data: HomeData }) {
   const { today, planOverview } = data;
   const hasTodayActivity = today.completedSets > 0;
@@ -132,18 +140,7 @@ function TodaySessionSection({ data }: { data: HomeData }) {
         {hasTodayActivity && (
           <>
             <p className="hd-today-meta">{today.meta}</p>
-            {today.estimatedE1rmKg !== null && (
-              <div className="hd-today-metrics">
-                <div className="hd-today-metric">
-                  <span className="hd-today-metric-label">예상 e1RM</span>
-                  <span className="hd-today-metric-value">{Math.round(today.estimatedE1rmKg)}kg</span>
-                </div>
-                <div className="hd-today-metric">
-                  <span className="hd-today-metric-label">완료 세트</span>
-                  <span className="hd-today-metric-value">{today.completedSets}</span>
-                </div>
-              </div>
-            )}
+            <SessionExerciseList exercises={mapTodayLoggedExercises(today.loggedExercises)} />
           </>
         )}
 
@@ -176,6 +173,35 @@ function WeightDeltaBadge({ delta }: { delta: number }) {
   );
 }
 
+function SessionExerciseList({
+  exercises,
+}: {
+  exercises: Array<{ name: string; detail: string; weightDelta?: number | null }>;
+}) {
+  if (exercises.length === 0) return null;
+
+  return (
+    <div className="hd-last-exercises">
+      {exercises.slice(0, 4).map((exercise) => (
+        <div key={exercise.name} className="hd-last-exercise">
+          <span className="hd-last-exercise-name">{exercise.name}</span>
+          <span className="hd-last-exercise-right">
+            {exercise.weightDelta !== undefined && exercise.weightDelta !== null && (
+              <WeightDeltaBadge delta={exercise.weightDelta} />
+            )}
+            <span className="hd-last-exercise-detail">{exercise.detail}</span>
+          </span>
+        </div>
+      ))}
+      {exercises.length > 4 && (
+        <div className="hd-last-exercise hd-last-exercise--more">
+          +{exercises.length - 4}개 더
+        </div>
+      )}
+    </div>
+  );
+}
+
 function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
     <section className="hd-section">
@@ -194,22 +220,13 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
             <span className="hd-last-stat">{formatVolume(session.totalVolume)}</span>
           </div>
         </div>
-        <div className="hd-last-exercises">
-          {session.exercises.slice(0, 4).map((ex) => (
-            <div key={ex.name} className="hd-last-exercise">
-              <span className="hd-last-exercise-name">{ex.name}</span>
-              <span className="hd-last-exercise-right">
-                {ex.weightDelta !== null && <WeightDeltaBadge delta={ex.weightDelta} />}
-                <span className="hd-last-exercise-detail">{ex.bestSet}</span>
-              </span>
-            </div>
-          ))}
-          {session.exercises.length > 4 && (
-            <div className="hd-last-exercise hd-last-exercise--more">
-              +{session.exercises.length - 4}개 더
-            </div>
-          )}
-        </div>
+        <SessionExerciseList
+          exercises={session.exercises.map((exercise) => ({
+            name: exercise.name,
+            detail: exercise.bestSet,
+            weightDelta: exercise.weightDelta,
+          }))}
+        />
       </Link>
     </section>
   );

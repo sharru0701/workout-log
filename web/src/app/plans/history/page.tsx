@@ -3,9 +3,10 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiGet } from "@/lib/api";
+import { apiDelete, apiGet } from "@/lib/api";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
@@ -106,6 +107,7 @@ function progressionBadgeClass(tone: ReturnType<typeof progressionTone>) {
 }
 
 function PlanHistoryPageContent() {
+  const { alert, confirm } = useAppDialog();
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedPlanId = searchParams.get("planId")?.trim() ?? "";
@@ -121,6 +123,7 @@ function PlanHistoryPageContent() {
   const [logsError, setLogsError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? null,
@@ -236,6 +239,43 @@ function PlanHistoryPageContent() {
     () => logs.reduce((sum, log) => sum + countWorkSets(log.sets ?? []), 0),
     [logs],
   );
+
+  async function deleteLog(log: LogItem) {
+    const ok = await confirm({
+      title: "히스토리 삭제",
+      message: `이 수행 로그를 삭제하시겠습니까?\n${formatDateTime(log.performedAt)}\n삭제 후 자동 진행 상태도 남은 로그 기준으로 다시 계산됩니다.`,
+      confirmText: "삭제",
+      cancelText: "취소",
+      tone: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      setDeletingLogId(log.id);
+      setLogsError(null);
+      await apiDelete<{ deleted: boolean }>(`/api/logs/${encodeURIComponent(log.id)}`);
+      await Promise.all([
+        loadPlans(),
+        selectedPlanId ? loadLogs(selectedPlanId, null, false) : Promise.resolve(),
+      ]);
+      await alert({
+        title: "삭제 완료",
+        message: "수행 로그가 삭제되었습니다.",
+        buttonText: "확인",
+      });
+    } catch (e: any) {
+      const message = e?.message ?? "수행 로그 삭제에 실패했습니다.";
+      setLogsError(message);
+      await alert({
+        title: "삭제 실패",
+        message,
+        buttonText: "확인",
+        tone: "danger",
+      });
+    } finally {
+      setDeletingLogId(null);
+    }
+  }
 
   return (
     <div
@@ -374,12 +414,24 @@ function PlanHistoryPageContent() {
                         </div>
                       ) : null}
                     </div>
-                    <a
-                      className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
-                      href={`/workout/session/${encodeURIComponent(log.id)}`}
-                    >
-                      세션 상세
-                    </a>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <a
+                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
+                        href={`/workout/session/${encodeURIComponent(log.id)}`}
+                      >
+                        세션 상세
+                      </a>
+                      <button
+                        type="button"
+                        className="haptic-tap rounded-xl border border-red-200 bg-red-50/70 px-3 py-2 text-sm font-medium text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        disabled={deletingLogId === log.id}
+                        onClick={() => {
+                          void deleteLog(log);
+                        }}
+                      >
+                        {deletingLogId === log.id ? "삭제 중..." : "히스토리 삭제"}
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">

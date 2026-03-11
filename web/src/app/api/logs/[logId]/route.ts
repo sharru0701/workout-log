@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
-import { applyAutoProgressionFromLog } from "@/server/progression/autoProgression";
+import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
@@ -251,5 +251,56 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
   }
 }
 
+async function DELETEImpl(_req: Request, ctx: Ctx) {
+  try {
+    const { logId } = await ctx.params;
+    const userId = getAuthenticatedUserId();
+
+    const existingRows = await db
+      .select({
+        id: workoutLog.id,
+        userId: workoutLog.userId,
+        planId: workoutLog.planId,
+      })
+      .from(workoutLog)
+      .where(eq(workoutLog.id, logId))
+      .limit(1);
+
+    const existing = existingRows[0];
+    if (!existing) return NextResponse.json({ error: "log not found" }, { status: 404 });
+    if (existing.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+
+    const deleted = await db.transaction(async (tx) => {
+      await tx.delete(workoutLog).where(eq(workoutLog.id, logId));
+
+      const rebuildResult = existing.planId
+        ? await rebuildAutoProgressionForPlan({
+            tx,
+            userId,
+            planId: existing.planId,
+          })
+        : { applied: false as const, reason: "skip:no-plan" as const };
+
+      await invalidateStatsCacheForUser(userId, tx);
+
+      return rebuildResult;
+    });
+
+    return NextResponse.json(
+      {
+        deleted: true,
+        logId,
+        progressionRebuilt: deleted.applied,
+        progressionRebuildReason: deleted.reason,
+      },
+      { status: 200 },
+    );
+  } catch (e: any) {
+    logError("api.handler_error", { error: e });
+    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+  }
+}
+
 export const GET = withApiLogging(GETImpl);
 export const PATCH = withApiLogging(PATCHImpl);
+export const DELETE = withApiLogging(DELETEImpl);

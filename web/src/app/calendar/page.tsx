@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
@@ -117,6 +118,10 @@ function dayOfMonth(dateOnly: string) {
   return Number(dateOnly.slice(8, 10));
 }
 
+function dateOnlyFromParts(year: number, month: number, day: number) {
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
 function getYear(dateOnly: string) {
   return Number(dateOnly.slice(0, 4));
 }
@@ -127,6 +132,20 @@ function getMonth(dateOnly: string) {
 
 function getDayOfWeek(dateOnly: string) {
   return dateOnlyToUtcDate(dateOnly).getUTCDay();
+}
+
+function daysInMonth(year: number, month: number) {
+  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+}
+
+function setMonthOfDate(dateOnly: string, year: number, month: number) {
+  const day = Math.min(dayOfMonth(dateOnly), daysInMonth(year, month));
+  return dateOnlyFromParts(year, month, day);
+}
+
+function shiftDateByMonths(dateOnly: string, delta: number) {
+  const targetMonth = new Date(Date.UTC(getYear(dateOnly), getMonth(dateOnly) - 1 + delta, 1));
+  return setMonthOfDate(dateOnly, targetMonth.getUTCFullYear(), targetMonth.getUTCMonth() + 1);
 }
 
 function formatKoreanDate(dateOnly: string) {
@@ -355,6 +374,7 @@ export default function CalendarPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [refreshTick, setRefreshTick] = useState(0);
 
@@ -543,12 +563,23 @@ export default function CalendarPage() {
   const swipeTouchRef = useRef<{ startY: number; startX: number } | null>(null);
   const calGestureRef = useRef<HTMLDivElement>(null);
 
-  function shiftMonth(delta: number) {
-    const d = dateOnlyToUtcDate(anchorDate);
-    d.setUTCMonth(d.getUTCMonth() + delta);
-    setAnimClass(delta > 0 ? "slide-from-below" : "slide-from-above");
+  function setCalendarMonth(value: { year: number; month: number }) {
+    const currentMonthValue = getYear(anchorDate) * 12 + getMonth(anchorDate);
+    const nextMonthValue = value.year * 12 + value.month;
+    if (nextMonthValue === currentMonthValue) return;
+    setAnimClass(nextMonthValue > currentMonthValue ? "slide-from-below" : "slide-from-above");
     setAnimKey((k) => k + 1);
-    setAnchorDate(utcDateToDateOnly(d));
+    setAnchorDate((current) => setMonthOfDate(current, value.year, value.month));
+    setSelectedDate((current) => setMonthOfDate(current, value.year, value.month));
+  }
+
+  function shiftMonth(delta: number) {
+    const nextAnchorDate = shiftDateByMonths(anchorDate, delta);
+    setCalendarMonth({ year: getYear(nextAnchorDate), month: getMonth(nextAnchorDate) });
+  }
+
+  function handleMonthPickerChange(value: { year: number; month: number }) {
+    setCalendarMonth(value);
   }
 
   function handleCalSwipeTouchStart(e: React.TouchEvent) {
@@ -579,11 +610,6 @@ export default function CalendarPage() {
     el.addEventListener("touchmove", onTouchMove, { passive: false });
     return () => el.removeEventListener("touchmove", onTouchMove);
   }, []);
-
-  function goToToday() {
-    setAnchorDate(today);
-    setSelectedDate(today);
-  }
 
   const selectedCtx = useMemo(
     () => computePlanContextForDate(selectedPlan, selectedDate),
@@ -718,10 +744,17 @@ export default function CalendarPage() {
         data-pull-refresh-trigger="true"
       >
         <div className="ios-cal-header-left">
-          <button className="ios-cal-month-label-large" onClick={goToToday} aria-label="오늘로 이동">
-            {MONTH_NAMES[getMonth(anchorDate) - 1]}
+          <button
+            type="button"
+            className="ios-cal-month-picker-trigger"
+            onClick={() => setMonthPickerOpen(true)}
+            aria-label="연도와 월 선택 열기"
+            aria-haspopup="dialog"
+            aria-expanded={monthPickerOpen}
+          >
+            <span className="ios-cal-year-label">{getYear(anchorDate)}년</span>
+            <span className="ios-cal-month-label-large">{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
           </button>
-          <span className="ios-cal-year-label">{getYear(anchorDate)}년</span>
         </div>
         <div className="ios-cal-header-right">
           <button
@@ -946,6 +979,16 @@ export default function CalendarPage() {
             setPlanQuery("");
           },
         }))}
+      />
+      <MonthYearPickerSheet
+        open={monthPickerOpen}
+        onClose={() => setMonthPickerOpen(false)}
+        title="연도와 월 선택"
+        year={getYear(anchorDate)}
+        month={getMonth(anchorDate)}
+        minYear={getYear(today) - 10}
+        maxYear={getYear(today) + 10}
+        onChange={handleMonthPickerChange}
       />
     </div>
   );

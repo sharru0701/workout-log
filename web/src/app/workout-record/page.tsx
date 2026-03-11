@@ -514,12 +514,6 @@ function ExerciseRow({
       </div>
 
       <section className="workout-record-set-panel">
-        {usesProgramPlaceholders ? (
-          <div className="workout-record-control-head">
-            <span className="workout-record-control-meta ml-auto">TM 기반</span>
-          </div>
-        ) : null}
-
         <div className="workout-record-set-grid">
           <div className="workout-record-set-grid-head" aria-hidden="true">
             <span>세트</span>

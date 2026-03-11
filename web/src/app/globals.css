@@ -1094,24 +1094,30 @@ button {
 
 .ios-cal-header-left {
   display: flex;
+  align-items: flex-start;
+}
+
+.ios-cal-month-picker-trigger {
+  display: inline-flex;
   flex-direction: column;
-  gap: 0;
+  align-items: center;
+  gap: 0.08rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 .ios-cal-month-label-large {
   font-size: 2rem;
   font-weight: 700;
   color: var(--text-primary);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 0;
   line-height: 1.1;
-  transition: opacity var(--duration-fast) var(--ease-standard);
 }
 
 @media (hover: hover) {
-  .ios-cal-month-label-large:hover {
+  .ios-cal-month-picker-trigger:hover {
     opacity: 0.75;
   }
 }
@@ -6753,7 +6759,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .wr-session-summary-header:not(.wr-session-summary-header--today) {
-  padding-bottom: 0.32rem;
+  padding-bottom: 0.5rem;
 }
 
 .wr-session-summary-header--today {
@@ -6842,7 +6848,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .wr-session-exercises {
   border-top: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 10%, transparent);
-  padding: 0 1rem 0.64rem;
+  padding: 0.28rem 1rem 0.64rem;
   display: grid;
   gap: 0;
 }
@@ -6857,7 +6863,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .wr-session-exercise-row:first-child {
-  padding-top: 0.08rem;
+  padding-top: 0;
 }
 
 .wr-session-exercise-row:last-child {
@@ -7646,6 +7652,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
 }
 
+.month-year-picker-sheet-panel .mobile-bottom-sheet-body {
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+
 .sheet-action-header {
   display: grid;
   grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
@@ -7747,6 +7757,36 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   font-weight: 600;
   color: var(--text-secondary);
   flex-shrink: 0;
+}
+
+.month-year-picker-sheet-body {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-3) var(--space-4) 0;
+}
+
+.month-year-picker-wheel-group {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: var(--space-3);
+  width: min(100%, 22rem);
+}
+
+.month-year-picker-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.month-year-picker-column-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.month-year-picker-column .wheel-picker {
+  width: 100%;
 }
 
 /* ── NumberPickerField (tappable display) ─────────────────────────────── */

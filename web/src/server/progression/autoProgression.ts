@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, or } from "drizzle-orm";
+import { and, asc, eq, gt, inArray, or } from "drizzle-orm";
 import {
   plan as planTable,
   planProgressEvent,
@@ -10,6 +10,7 @@ import {
 } from "@/server/db/schema";
 import {
   LoggedSetInput,
+  ProgressionProgram,
   reduceProgressionState,
   resolveAutoProgressionProgram,
 } from "./reducer";
@@ -24,6 +25,27 @@ type ApplyAutoProgressionInput = {
   sets: unknown[];
   mode?: "upsert" | "replay";
 };
+
+type ResolvedAutoProgressionContext =
+  | {
+      ok: true;
+      planId: string;
+      userId: string;
+      params: Record<string, unknown>;
+      templateSlug: string;
+      progressionProgram: ProgressionProgram;
+    }
+  | {
+      ok: false;
+      reason:
+        | "skip:no-plan"
+        | "skip:forbidden-plan"
+        | "skip:disabled"
+        | "skip:no-root-program"
+        | "skip:version-missing"
+        | "skip:template-missing"
+        | "skip:unsupported-program";
+    };
 
 function toLoggedSetRows(sets: unknown[]): LoggedSetInput[] {
   const out: LoggedSetInput[] = [];
@@ -43,10 +65,13 @@ function toLoggedSetRows(sets: unknown[]): LoggedSetInput[] {
   return out;
 }
 
-export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInput) {
-  const mode = input.mode ?? "upsert";
+async function resolveAutoProgressionContext(input: {
+  tx: any;
+  userId: string;
+  planId: string | null | undefined;
+}): Promise<ResolvedAutoProgressionContext> {
   const planId = input.planId?.trim();
-  if (!planId) return { applied: false, reason: "skip:no-plan" as const };
+  if (!planId) return { ok: false, reason: "skip:no-plan" };
 
   const planRows = await input.tx
     .select({
@@ -59,11 +84,13 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .where(eq(planTable.id, planId))
     .limit(1);
   const plan = planRows[0];
-  if (!plan || plan.userId !== input.userId) return { applied: false, reason: "skip:forbidden-plan" as const };
+  if (!plan || plan.userId !== input.userId) {
+    return { ok: false, reason: "skip:forbidden-plan" };
+  }
 
   const params = (plan.params ?? {}) as Record<string, unknown>;
-  if (params.autoProgression !== true) return { applied: false, reason: "skip:disabled" as const };
-  if (!plan.rootProgramVersionId) return { applied: false, reason: "skip:no-root-program" as const };
+  if (params.autoProgression !== true) return { ok: false, reason: "skip:disabled" };
+  if (!plan.rootProgramVersionId) return { ok: false, reason: "skip:no-root-program" };
 
   const versionRows = await input.tx
     .select({
@@ -75,7 +102,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .where(eq(programVersion.id, plan.rootProgramVersionId))
     .limit(1);
   const version = versionRows[0];
-  if (!version) return { applied: false, reason: "skip:version-missing" as const };
+  if (!version) return { ok: false, reason: "skip:version-missing" };
 
   const templateRows = await input.tx
     .select({
@@ -86,11 +113,65 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .where(eq(programTemplate.id, version.templateId))
     .limit(1);
   const template = templateRows[0];
-  if (!template) return { applied: false, reason: "skip:template-missing" as const };
+  if (!template) return { ok: false, reason: "skip:template-missing" };
 
-  const program = resolveAutoProgressionProgram(template.slug, version.definition);
-  if (!program) return { applied: false, reason: "skip:unsupported-program" as const };
-  const progressionProgram = program;
+  const progressionProgram = resolveAutoProgressionProgram(template.slug, version.definition);
+  if (!progressionProgram) return { ok: false, reason: "skip:unsupported-program" };
+
+  return {
+    ok: true,
+    planId,
+    userId: input.userId,
+    params,
+    templateSlug: template.slug,
+    progressionProgram,
+  };
+}
+
+async function upsertAutoProgressionRuntimeState(input: {
+  tx: any;
+  planId: string;
+  userId: string;
+  nextState: unknown;
+}) {
+  await input.tx
+    .insert(planRuntimeState)
+    .values({
+      planId: input.planId,
+      userId: input.userId,
+      engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
+      state: input.nextState,
+    })
+    .onConflictDoUpdate({
+      target: planRuntimeState.planId,
+      set: {
+        userId: input.userId,
+        engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
+        state: input.nextState,
+        updatedAt: new Date(),
+      },
+    });
+}
+
+function toProgressionEventMeta(reduced: ReturnType<typeof reduceProgressionState>) {
+  return {
+    didAdvanceSession: reduced.didAdvanceSession,
+    targetDecisions: reduced.targetDecisions,
+    outcomes: reduced.outcomes,
+    engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
+  };
+}
+
+export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInput) {
+  const mode = input.mode ?? "upsert";
+  const context = await resolveAutoProgressionContext({
+    tx: input.tx,
+    userId: input.userId,
+    planId: input.planId,
+  });
+  if (!context.ok) return { applied: false, reason: context.reason };
+  const resolved = context;
+
   const logRows = await input.tx
     .select({
       id: workoutLog.id,
@@ -102,55 +183,31 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
   const currentLog = logRows[0];
   if (!currentLog) return { applied: false, reason: "skip:log-missing" as const };
 
-  async function upsertRuntimeState(nextState: unknown) {
-    await input.tx
-      .insert(planRuntimeState)
-      .values({
-        planId,
-        userId: input.userId,
-        engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
-        state: nextState,
-      })
-      .onConflictDoUpdate({
-        target: planRuntimeState.planId,
-        set: {
-          userId: input.userId,
-          engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
-          state: nextState,
-          updatedAt: new Date(),
-        },
-      });
-  }
-
-  function toEventMeta(reduced: ReturnType<typeof reduceProgressionState>) {
-    return {
-      didAdvanceSession: reduced.didAdvanceSession,
-      targetDecisions: reduced.targetDecisions,
-      outcomes: reduced.outcomes,
-      engineVersion: AUTO_PROGRESSION_ENGINE_VERSION,
-    };
-  }
-
   async function applySingleFromState(beforeState: Record<string, unknown>) {
     const reduced = reduceProgressionState({
-      program: progressionProgram,
+      program: resolved.progressionProgram,
       previousState: beforeState,
-      planParams: params,
+      planParams: resolved.params,
       sets: toLoggedSetRows(input.sets),
       logId: input.logId,
     });
     await input.tx.insert(planProgressEvent).values({
-      planId,
+      planId: resolved.planId,
       logId: input.logId,
       userId: input.userId,
       eventType: reduced.eventType,
-      programSlug: template.slug,
+      programSlug: resolved.templateSlug,
       reason: reduced.reason,
       beforeState,
       afterState: reduced.nextState,
-      meta: toEventMeta(reduced),
+      meta: toProgressionEventMeta(reduced),
     });
-    await upsertRuntimeState(reduced.nextState);
+    await upsertAutoProgressionRuntimeState({
+      tx: input.tx,
+      planId: resolved.planId,
+      userId: input.userId,
+      nextState: reduced.nextState,
+    });
     return reduced;
   }
 
@@ -163,9 +220,9 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .from(planProgressEvent)
     .where(
       and(
-        eq(planProgressEvent.planId, planId),
+        eq(planProgressEvent.planId, resolved.planId),
         eq(planProgressEvent.logId, input.logId),
-        eq(planProgressEvent.programSlug, template.slug),
+        eq(planProgressEvent.programSlug, resolved.templateSlug),
       ),
     )
     .limit(1);
@@ -180,7 +237,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
         state: planRuntimeState.state,
       })
       .from(planRuntimeState)
-      .where(eq(planRuntimeState.planId, planId))
+      .where(eq(planRuntimeState.planId, resolved.planId))
       .limit(1);
     const runtime = runtimeRows[0] ?? null;
     const beforeState = (runtime?.state ?? {}) as Record<string, unknown>;
@@ -189,7 +246,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       applied: true,
       reason: reduced.reason,
       eventType: reduced.eventType,
-      programSlug: template.slug,
+      programSlug: resolved.templateSlug,
     };
   }
 
@@ -200,7 +257,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
         state: planRuntimeState.state,
       })
       .from(planRuntimeState)
-      .where(eq(planRuntimeState.planId, planId))
+      .where(eq(planRuntimeState.planId, resolved.planId))
       .limit(1);
     const runtime = runtimeRows[0] ?? null;
     const beforeState = (runtime?.state ?? {}) as Record<string, unknown>;
@@ -209,14 +266,14 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       applied: true,
       reason: reduced.reason,
       eventType: reduced.eventType,
-      programSlug: template.slug,
+      programSlug: resolved.templateSlug,
     };
   }
 
   const replayFirst = reduceProgressionState({
-    program: progressionProgram,
+    program: resolved.progressionProgram,
     previousState: existingEvent.beforeState ?? {},
-    planParams: params,
+    planParams: resolved.params,
     sets: toLoggedSetRows(input.sets),
     logId: input.logId,
   });
@@ -227,7 +284,7 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       reason: replayFirst.reason,
       beforeState: existingEvent.beforeState ?? {},
       afterState: replayFirst.nextState,
-      meta: toEventMeta(replayFirst),
+      meta: toProgressionEventMeta(replayFirst),
     })
     .where(eq(planProgressEvent.id, existingEvent.id));
 
@@ -242,8 +299,8 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     .innerJoin(workoutLog, eq(planProgressEvent.logId, workoutLog.id))
     .where(
       and(
-        eq(planProgressEvent.planId, planId),
-        eq(planProgressEvent.programSlug, template.slug),
+        eq(planProgressEvent.planId, resolved.planId),
+        eq(planProgressEvent.programSlug, resolved.templateSlug),
         or(
           gt(workoutLog.performedAt, currentLog.performedAt),
           and(eq(workoutLog.performedAt, currentLog.performedAt), gt(workoutLog.id, currentLog.id)),
@@ -269,9 +326,9 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       .orderBy(asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id));
 
     const reduced = reduceProgressionState({
-      program: progressionProgram,
+      program: resolved.progressionProgram,
       previousState: runningState,
-      planParams: params,
+      planParams: resolved.params,
       sets: toLoggedSetRows(laterSets),
       logId,
     });
@@ -285,16 +342,115 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
         reason: reduced.reason,
         beforeState: beforeReplayState,
         afterState: runningState,
-        meta: toEventMeta(reduced),
+        meta: toProgressionEventMeta(reduced),
       })
       .where(eq(planProgressEvent.id, row.eventId));
   }
 
-  await upsertRuntimeState(runningState);
+  await upsertAutoProgressionRuntimeState({
+    tx: input.tx,
+    planId: resolved.planId,
+    userId: input.userId,
+    nextState: runningState,
+  });
   return {
     applied: true,
     reason: "replay:updated",
     eventType: replayFirst.eventType,
-    programSlug: template.slug,
+    programSlug: resolved.templateSlug,
+  };
+}
+
+export async function rebuildAutoProgressionForPlan(input: {
+  tx: any;
+  userId: string;
+  planId: string | null | undefined;
+}) {
+  const context = await resolveAutoProgressionContext(input);
+  if (!context.ok) return { applied: false, reason: context.reason };
+  const resolved = context;
+
+  const remainingLogs = await input.tx
+    .select({
+      id: workoutLog.id,
+      performedAt: workoutLog.performedAt,
+    })
+    .from(workoutLog)
+    .where(eq(workoutLog.planId, resolved.planId))
+    .orderBy(asc(workoutLog.performedAt), asc(workoutLog.id));
+
+  await input.tx.delete(planProgressEvent).where(eq(planProgressEvent.planId, resolved.planId));
+
+  if (remainingLogs.length === 0) {
+    await input.tx.delete(planRuntimeState).where(eq(planRuntimeState.planId, resolved.planId));
+    return {
+      applied: true,
+      reason: "rebuild:cleared" as const,
+      programSlug: resolved.templateSlug,
+      rebuiltLogCount: 0,
+    };
+  }
+
+  const logIds = remainingLogs.map((log: { id: string }) => log.id);
+  const setRows = await input.tx
+    .select({
+      logId: workoutSet.logId,
+      exerciseName: workoutSet.exerciseName,
+      reps: workoutSet.reps,
+      weightKg: workoutSet.weightKg,
+      isExtra: workoutSet.isExtra,
+      meta: workoutSet.meta,
+      sortOrder: workoutSet.sortOrder,
+      setNumber: workoutSet.setNumber,
+      id: workoutSet.id,
+    })
+    .from(workoutSet)
+    .where(inArray(workoutSet.logId, logIds))
+    .orderBy(asc(workoutSet.logId), asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id));
+
+  const setsByLogId = new Map<string, typeof setRows>();
+  for (const row of setRows) {
+    const list = setsByLogId.get(row.logId) ?? [];
+    list.push(row);
+    setsByLogId.set(row.logId, list);
+  }
+
+  let runningState: Record<string, unknown> = {};
+  for (const log of remainingLogs) {
+    const reduced = reduceProgressionState({
+      program: resolved.progressionProgram,
+      previousState: runningState,
+      planParams: resolved.params,
+      sets: toLoggedSetRows(setsByLogId.get(log.id) ?? []),
+      logId: log.id,
+    });
+
+    await input.tx.insert(planProgressEvent).values({
+      planId: resolved.planId,
+      logId: log.id,
+      userId: input.userId,
+      eventType: reduced.eventType,
+      programSlug: resolved.templateSlug,
+      reason: reduced.reason,
+      beforeState: runningState,
+      afterState: reduced.nextState,
+      meta: toProgressionEventMeta(reduced),
+    });
+
+    runningState = reduced.nextState;
+  }
+
+  await upsertAutoProgressionRuntimeState({
+    tx: input.tx,
+    planId: resolved.planId,
+    userId: input.userId,
+    nextState: runningState,
+  });
+
+  return {
+    applied: true,
+    reason: "rebuild:updated" as const,
+    programSlug: resolved.templateSlug,
+    rebuiltLogCount: remainingLogs.length,
   };
 }
