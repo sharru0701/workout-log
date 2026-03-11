@@ -1895,6 +1895,8 @@ button {
   transition: transform var(--duration-normal) var(--ease-standard), box-shadow var(--duration-normal) var(--ease-standard), opacity var(--duration-normal) var(--ease-standard);
   min-width: 0;
   overflow: hidden;
+  /* iOS Safari: overflow:hidden is ignored when backdrop-filter is on the same element */
+  -webkit-mask-image: -webkit-radial-gradient(white, black);
 }
 
 .app-card {
@@ -6771,7 +6773,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .wr-session-summary-meta {
   min-width: 0;
-  width: 100%;
+  align-self: stretch;
   overflow: hidden;
 }
 
