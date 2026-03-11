@@ -6778,7 +6778,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: center;
   gap: 0.66rem;
   min-width: 0;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
 }
 
 .wr-session-summary-badge {
@@ -6791,8 +6791,11 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   letter-spacing: 0.01em;
   background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
   color: var(--text-primary);
-  width: fit-content;
-  flex-shrink: 0;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .wr-session-summary-badge--today {
