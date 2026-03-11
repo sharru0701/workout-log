@@ -9,6 +9,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
@@ -1329,16 +1330,17 @@ export default function ProgramStorePage() {
         footer={
           detailTarget ? (
             <div className="grid gap-2">
-              <button
+              <PrimaryButton
                 type="button"
-                className="ui-primary-button"
+                variant="primary"
+                fullWidth
                 disabled={saving || !detailTarget.template.latestVersion}
                 onClick={() => {
                   openStartProgramDraft(detailTarget.template);
                 }}
               >
                 이 프로그램으로 시작하기
-              </button>
+              </PrimaryButton>
               <button
                 type="button"
                 className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   HomeData,
@@ -150,14 +151,14 @@ function TodaySessionSection({ data }: { data: HomeData }) {
           <p className="hd-today-meta">{today.meta}</p>
         )}
 
-        <div className="hd-today-cta">
+        <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false} className="hd-today-cta">
           <span className="hd-today-cta-text">
             {hasTodayActivity ? "이어서 하기" : hasPlan ? "운동 시작" : "프로그램 선택"}
           </span>
           <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m9 18 6-6-6-6" />
           </svg>
-        </div>
+        </PrimaryButton>
       </Link>
     </section>
   );

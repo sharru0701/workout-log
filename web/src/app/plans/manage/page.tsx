@@ -7,6 +7,7 @@ import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -282,12 +283,16 @@ function PlansManagePageContent() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-2">
-                      <a
-                        className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
+                      <PrimaryButton
+                        as="a"
+                        variant="primary"
+                        size="lg"
+                        fullWidth
+                        className="px-4 text-base font-semibold"
                         href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
                       >
                         수행 히스토리
-                      </a>
+                      </PrimaryButton>
                     </div>
                   </article>
                 );
@@ -330,22 +335,29 @@ function PlansManagePageContent() {
             </label>
 
             <CardActionGroup className="grid-cols-1 sm:grid-cols-3">
-              <a
-                className="haptic-tap rounded-xl border px-4 py-3 text-center text-base font-semibold"
+              <PrimaryButton
+                as="a"
+                variant="primary"
+                size="lg"
+                fullWidth
+                className="px-4 text-base font-semibold"
                 href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
               >
                 수행 히스토리
-              </a>
-              <button
+              </PrimaryButton>
+              <PrimaryButton
                 type="button"
-                className="haptic-tap ui-primary-button min-h-12 px-4 text-base font-semibold"
+                variant="primary"
+                size="lg"
+                fullWidth
+                className="min-h-12 px-4 text-base font-semibold"
                 disabled={saving || deleting}
                 onClick={() => {
                   void savePlanName();
                 }}
               >
                 {saving ? "저장 중..." : "이름 저장"}
-              </button>
+              </PrimaryButton>
               <button
                 type="button"
                 className="haptic-tap rounded-xl border px-4 py-3 text-base font-semibold text-[var(--color-danger)]"

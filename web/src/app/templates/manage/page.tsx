@@ -7,6 +7,7 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type TemplateItem = {
@@ -906,8 +907,9 @@ export default function TemplatesPage() {
                     onChange={(e) => setChangelog(e.target.value)}
                   />
                 </label>
-                <button
-                  className="haptic-tap ui-primary-button px-4 py-2 font-medium"
+                <PrimaryButton
+                  variant="primary"
+                  className="px-4 py-2 font-medium"
                   onClick={() => {
                     setError(null);
                     setSuccess(null);
@@ -916,7 +918,7 @@ export default function TemplatesPage() {
                   disabled={!selectedBaseVersion || !canEditSelectedTemplate}
                 >
                   버전 생성
-                </button>
+                </PrimaryButton>
                 <DisabledStateRows
                   when={!canEditSelectedTemplate}
                   label="편집 비활성"

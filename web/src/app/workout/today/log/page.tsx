@@ -37,6 +37,7 @@ import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 const WorkoutAddExerciseSheet = dynamic(() => import("./_components/workout-add-exercise-sheet"), {
@@ -2020,8 +2021,11 @@ export default function WorkoutTodayPage() {
       </div>
 
       <div className="workout-save-dock">
-        <button
-          className="ui-primary-button workout-save-button"
+        <PrimaryButton
+          variant="primary"
+          size="lg"
+          fullWidth
+          className="workout-save-button"
           onClick={handleSaveLog}
           disabled={!planId || sets.length === 0}
         >
@@ -2030,7 +2034,7 @@ export default function WorkoutTodayPage() {
             : pendingSyncCount > 0
               ? `로그 저장 (${pendingSyncCount}건 대기)`
               : "로그 저장"}
-        </button>
+        </PrimaryButton>
       </div>
 
       {shouldRenderAddExerciseSheet ? (

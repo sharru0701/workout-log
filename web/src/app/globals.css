@@ -66,6 +66,16 @@
   /* ── 서브카드 / 외곽선 요소 공통 표면색 ── */
   --surface-inset-bg: color-mix(in srgb, var(--border-default) 25%, var(--bg-elevated));
   --surface-inset-border: color-mix(in srgb, var(--border-default) 65%, transparent);
+  --app-cta-primary-fg: color-mix(in srgb, #ffffff 88%, var(--text-primary) 12%);
+  --app-cta-primary-bg: color-mix(in srgb, var(--accent-primary) 18%, var(--bg-elevated) 82%);
+  --app-cta-primary-bg-hover: color-mix(in srgb, var(--accent-primary) 24%, var(--bg-elevated) 76%);
+  --app-cta-primary-border: color-mix(in srgb, var(--accent-primary) 20%, var(--border-subtle) 80%);
+  --app-cta-primary-shadow: none;
+  --app-cta-secondary-fg: color-mix(in srgb, var(--accent-primary) 74%, var(--text-primary) 26%);
+  --app-cta-secondary-bg: color-mix(in srgb, var(--accent-primary) 10%, var(--surface-card-bg, var(--bg-surface)) 90%);
+  --app-cta-secondary-bg-hover: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-card-bg, var(--bg-surface)) 86%);
+  --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)) 82%);
+  --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
 @media (prefers-color-scheme: light) {
@@ -91,6 +101,16 @@
     --bg-elevated: var(--bg-tertiary);
     --accent: var(--accent-primary);
     --border-subtle: var(--border-default);
+    --app-cta-primary-fg: color-mix(in srgb, var(--accent-primary) 52%, var(--text-primary) 48%);
+    --app-cta-primary-bg: color-mix(in srgb, var(--accent-primary) 10%, var(--bg-surface) 90%);
+    --app-cta-primary-bg-hover: color-mix(in srgb, var(--accent-primary) 14%, var(--bg-surface) 86%);
+    --app-cta-primary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--border-subtle) 82%);
+    --app-cta-primary-shadow: none;
+    --app-cta-secondary-fg: color-mix(in srgb, var(--accent-primary) 68%, var(--text-primary) 32%);
+    --app-cta-secondary-bg: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface) 92%);
+    --app-cta-secondary-bg-hover: color-mix(in srgb, var(--accent-primary) 12%, var(--bg-surface) 88%);
+    --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 16%, var(--border-subtle) 84%);
+    --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.32);
   }
 }
 
@@ -2510,6 +2530,18 @@ textarea::placeholder {
   display: grid;
 }
 
+.workout-record-card-divider {
+  height: 1px;
+  margin-inline: 0.95rem;
+  background: color-mix(in srgb, var(--color-separator) 58%, transparent);
+}
+
+.workout-record-content-body {
+  display: grid;
+  gap: 0.95rem;
+  padding: 0.95rem;
+}
+
 .workout-record-exercise-item + .workout-record-exercise-item {
   margin-top: 1rem;
   padding-top: 1rem;
@@ -2687,6 +2719,14 @@ textarea::placeholder {
   gap: 0.5rem;
 }
 
+.workout-record-set-grid-body {
+  display: grid;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 46%, transparent);
+  border-radius: calc(var(--radius-surface) - 4px);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  overflow: hidden;
+}
+
 .workout-record-set-grid-head,
 .workout-record-set-grid-row {
   display: grid;
@@ -2712,41 +2752,37 @@ textarea::placeholder {
 }
 
 .workout-record-set-grid-row {
-  padding: 0.52rem;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 46%, transparent);
-  border-radius: calc(var(--radius-surface) - 4px);
-  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+  padding: 0.62rem 0.52rem;
+  background: transparent;
+}
+
+.workout-record-set-grid-row + .workout-record-set-grid-row {
+  border-top: 1px solid color-mix(in srgb, var(--border-subtle) 42%, transparent);
 }
 
 .workout-record-set-index,
 .workout-record-set-percent {
-  min-height: 2.7rem;
-  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem 0.45rem;
+  padding: 0;
   font-variant-numeric: tabular-nums;
+  line-height: 1.2;
 }
 
 .workout-record-set-index {
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
   color: var(--text-primary);
   font-size: 0.92rem;
   font-weight: 750;
 }
 
 .workout-record-set-percent {
-  border: 1px dashed color-mix(in srgb, var(--border-subtle) 56%, transparent);
   color: var(--text-secondary);
   font-size: 0.82rem;
   font-weight: 700;
 }
 
 .workout-record-set-percent.is-planned {
-  border-style: solid;
-  background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface));
   color: color-mix(in srgb, var(--accent-primary) 78%, var(--text-primary));
 }
 
@@ -2810,13 +2846,15 @@ textarea::placeholder {
   }
 
   .workout-record-set-grid-row {
-    padding: 0.42rem;
+    padding: 0.5rem 0.42rem;
   }
 
-  .workout-record-set-index,
-  .workout-record-set-percent,
   .workout-record-inline-picker-button {
     min-height: 2.5rem;
+  }
+
+  .workout-record-set-percent {
+    min-height: auto;
   }
 
   .workout-record-inline-picker-button {
@@ -3445,10 +3483,28 @@ textarea::placeholder {
 
 .stats-chart-meta-card {
   display: grid;
-  gap: 0.18rem;
   border-radius: 0.8rem;
+  overflow: hidden;
+  background: var(--surface-inset-bg);
   border: 1px solid transparent;
+  border-color: var(--surface-inset-border) !important;
+}
+
+.stats-chart-meta-item {
+  position: relative;
+  display: grid;
+  gap: 0.18rem;
   padding: 0.62rem 0.72rem;
+}
+
+.stats-chart-meta-item + .stats-chart-meta-item::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0.72rem;
+  right: 0.72rem;
+  height: 1px;
+  background: color-mix(in srgb, var(--surface-inset-border) 90%, transparent);
 }
 
 /* ── 공통 서브카드 (iOS tertiarySystemGroupedBackground 스타일) ── */
@@ -3457,19 +3513,19 @@ textarea::placeholder {
   border-color: var(--surface-inset-border) !important;
 }
 
-.stats-chart-meta-card strong {
+.stats-chart-meta-item strong {
   font-size: 1.02rem;
   color: var(--text-primary);
 }
 
-.stats-chart-meta-card span {
+.stats-chart-meta-item span {
   font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 @media (min-width: 520px) {
   .stats-chart-meta-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .stats-range-input-grid {
@@ -5048,15 +5104,15 @@ body {
 
 .ui-primary-button,
 .workout-action-pill.is-primary {
-  background: color-mix(in srgb, var(--color-fill-surface) 92%, transparent) !important;
-  color: var(--color-label-primary) !important;
-  border: 1px solid color-mix(in srgb, var(--color-separator) 62%, transparent) !important;
-  box-shadow: none !important;
+  background: var(--app-cta-primary-bg) !important;
+  color: var(--app-cta-primary-fg) !important;
+  border: 1px solid var(--app-cta-primary-border) !important;
+  box-shadow: var(--app-cta-primary-shadow) !important;
 }
 
 .workout-action-pill.workout-save-button {
-  background: var(--color-fill-surface) !important;
-  border-color: color-mix(in srgb, var(--color-separator) 54%, transparent) !important;
+  background: var(--app-cta-primary-bg) !important;
+  border-color: var(--app-cta-primary-border) !important;
 }
 
 .ui-primary-button:hover:not(:disabled),
@@ -5215,7 +5271,7 @@ html {
   }
 
   :where(.ui-primary-button, .workout-action-pill.is-primary) {
-    border-color: var(--color-label-primary) !important;
+    border-color: var(--app-cta-primary-border) !important;
   }
 }
 
@@ -6289,16 +6345,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
-  padding: 0.72rem 1rem;
-  border-radius: var(--radius-pill);
-  color: #06221f;
-  background: linear-gradient(160deg, color-mix(in srgb, #ffffff 18%, var(--accent-primary) 82%) 0%, var(--accent-primary) 100%);
-  box-shadow:
-    0 6px 24px -8px color-mix(in srgb, var(--accent-primary) 48%, transparent),
-    inset 0 1px 0 rgba(255,255,255,0.28);
-  font-weight: 700;
-  font-size: 0.92rem;
+  width: 100%;
 }
 
 .hd-today-cta-text {
@@ -6699,10 +6746,14 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .wr-session-summary-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 0.6rem;
   padding: 0.85rem 1rem;
+}
+
+.wr-session-summary-header:not(.wr-session-summary-header--today) {
+  padding-bottom: 0.32rem;
 }
 
 .wr-session-summary-header--today {
@@ -6710,21 +6761,29 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .wr-session-summary-meta {
-  display: grid;
-  gap: 0.18rem;
+  min-width: 0;
+}
+
+.wr-session-summary-line {
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
+  min-width: 0;
+  flex-wrap: nowrap;
 }
 
 .wr-session-summary-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.16rem 0.55rem;
+  padding: 0.3rem 0.82rem;
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 720;
+  font-size: 0.92rem;
+  font-weight: 780;
   letter-spacing: 0.01em;
   background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
   color: var(--text-primary);
   width: fit-content;
+  flex-shrink: 0;
 }
 
 .wr-session-summary-badge--today {
@@ -6733,10 +6792,14 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .wr-session-summary-date {
-  font-size: 0.76rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  font-size: 1.02rem;
+  font-weight: 720;
+  line-height: 1;
   color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
-  padding-left: 0.1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .wr-session-summary-stats {
@@ -6744,30 +6807,42 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: center;
   gap: 0.3rem;
   flex-shrink: 0;
+  line-height: 1;
+  transform: translateY(1px);
 }
 
 .wr-session-summary-stat {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.78rem;
   font-weight: 680;
+  line-height: 1;
   color: color-mix(in srgb, var(--text-primary) 85%, transparent);
 }
 
 .wr-session-summary-sep {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.68rem;
+  line-height: 1;
   color: color-mix(in srgb, var(--text-secondary) 45%, transparent);
 }
 
 .wr-session-summary-bw {
+  display: inline-flex;
+  align-items: center;
   font-size: 0.78rem;
   font-weight: 650;
+  line-height: 1;
   color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
   flex-shrink: 0;
   align-self: center;
+  transform: translateY(1px);
 }
 
 .wr-session-exercises {
   border-top: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 10%, transparent);
-  padding: 0.5rem 1rem 0.7rem;
+  padding: 0 1rem 0.64rem;
   display: grid;
   gap: 0;
 }
@@ -6777,8 +6852,12 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.28rem 0;
+  padding: 0.22rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 6%, transparent);
+}
+
+.wr-session-exercise-row:first-child {
+  padding-top: 0.08rem;
 }
 
 .wr-session-exercise-row:last-child {
@@ -7734,4 +7813,126 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .number-picker-field:active {
     background: color-mix(in srgb, var(--accent-primary) 6%, var(--field-bg));
   }
+}
+
+.app-pill-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: var(--touch-target);
+  padding: 0 var(--space-5);
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  text-decoration: none;
+  font-weight: 720;
+  letter-spacing: -0.012em;
+  white-space: nowrap;
+  transition:
+    transform var(--duration-fast) var(--ease-spring),
+    box-shadow var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard),
+    color var(--duration-fast) var(--ease-standard);
+}
+
+.app-pill-button--interactive {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-pill-button--md {
+  font-size: 0.94rem;
+}
+
+.app-pill-button--lg {
+  min-height: 2.95rem;
+  font-size: 0.96rem;
+}
+
+.app-pill-button--full {
+  width: 100%;
+}
+
+.app-pill-button:disabled,
+.app-pill-button[aria-disabled="true"] {
+  opacity: 0.46;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.app-pill-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 46%, transparent);
+  outline-offset: 2px;
+}
+
+:where(
+  .app-pill-button--primary,
+  .ui-primary-button:not(.app-dialog-button-danger),
+  .workout-action-pill.is-primary,
+  .ios-pill-button--accent,
+  .sheet-action-confirm-button,
+  .app-sync-action,
+  .app-pwa-button:not(.is-subtle)
+) {
+  color: var(--app-cta-primary-fg) !important;
+  background: none !important;
+  background-image: none !important;
+  background-color: var(--app-cta-primary-bg) !important;
+  border: 1px solid var(--app-cta-primary-border) !important;
+  box-shadow: var(--app-cta-primary-shadow) !important;
+}
+
+:where(
+  .app-pill-button--primary,
+  .ui-primary-button:not(.app-dialog-button-danger),
+  .workout-action-pill.is-primary,
+  .ios-pill-button--accent,
+  .sheet-action-confirm-button,
+  .app-sync-action,
+  .app-pwa-button:not(.is-subtle)
+):hover:not(:disabled):not([aria-disabled="true"]) {
+  background: none !important;
+  background-image: none !important;
+  background-color: var(--app-cta-primary-bg-hover) !important;
+  filter: none !important;
+  box-shadow: var(--app-cta-primary-shadow) !important;
+}
+
+:where(
+  .app-pill-button--primary,
+  .ui-primary-button:not(.app-dialog-button-danger),
+  .workout-action-pill.is-primary,
+  .ios-pill-button--accent,
+  .sheet-action-confirm-button,
+  .app-sync-action,
+  .app-pwa-button:not(.is-subtle)
+):active:not(:disabled):not([aria-disabled="true"]) {
+  transform: scale(0.99) translateY(0.5px) !important;
+}
+
+:where(
+  .app-pill-button--primary,
+  .ui-primary-button:not(.app-dialog-button-danger),
+  .workout-action-pill.is-primary,
+  .ios-pill-button--accent,
+  .sheet-action-confirm-button,
+  .app-sync-action,
+  .app-pwa-button:not(.is-subtle)
+):focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 50%, white 50%) !important;
+  outline-offset: 2px;
+}
+
+.app-pill-button--secondary,
+.app-dashboard-hero-action.app-pill-button--secondary {
+  color: var(--app-cta-secondary-fg);
+  background: var(--app-cta-secondary-bg);
+  border: 1px solid var(--app-cta-secondary-border);
+  box-shadow: var(--app-cta-secondary-shadow);
+}
+
+.app-pill-button--secondary:hover:not(:disabled):not([aria-disabled="true"]),
+.app-dashboard-hero-action.app-pill-button--secondary:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--app-cta-secondary-bg-hover);
 }

@@ -555,22 +555,24 @@ export default function Stats1RMPage() {
               onActiveIndexChange={setActivePointIndex}
             />
 
-            <div className="stats-chart-meta-grid sub-card-list">
-              <article className="stats-chart-meta-card">
-                <span className="ui-card-label">Best e1RM</span>
-                <strong>{stats?.best ? `${stats.best.e1rm.toFixed(1)} kg` : "-"}</strong>
-                <span>{stats?.best ? formatPointDate(stats.best.date) : "-"}</span>
-              </article>
-              <article className="stats-chart-meta-card">
-                <span className="ui-card-label">데이터 포인트</span>
-                <strong>{series.length}개</strong>
-                <span>{stats ? `${formatPointDate(stats.from)} ~ ${formatPointDate(stats.to)}` : "-"}</span>
-              </article>
-              <article className="stats-chart-meta-card">
-                <span className="ui-card-label">현재 필터</span>
-                <strong>{rangeLabelForPreset(rangeFilter.preset)}</strong>
-                <span>{selectedProgramLabel}</span>
-              </article>
+            <div className="stats-chart-meta-grid">
+              <div className="stats-chart-meta-card">
+                <article className="stats-chart-meta-item">
+                  <span className="ui-card-label">Best e1RM</span>
+                  <strong>{stats?.best ? `${stats.best.e1rm.toFixed(1)} kg` : "-"}</strong>
+                  <span>{stats?.best ? formatPointDate(stats.best.date) : "-"}</span>
+                </article>
+                <article className="stats-chart-meta-item">
+                  <span className="ui-card-label">데이터 포인트</span>
+                  <strong>{series.length}개</strong>
+                  <span>{stats ? `${formatPointDate(stats.from)} ~ ${formatPointDate(stats.to)}` : "-"}</span>
+                </article>
+                <article className="stats-chart-meta-item">
+                  <span className="ui-card-label">현재 필터</span>
+                  <strong>{rangeLabelForPreset(rangeFilter.preset)}</strong>
+                  <span>{selectedProgramLabel}</span>
+                </article>
+              </div>
             </div>
           </DashboardSurface>
         </DashboardSection>

@@ -1,5 +1,6 @@
 import { useId, type HTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
+import { PrimaryButton } from "@/components/ui/primary-button";
 
 type DashboardScreenProps = {
   children: ReactNode;
@@ -128,30 +129,26 @@ export function DashboardHero({
       {(primaryAction || secondaryAction) && (
         <div className="app-dashboard-hero-actions">
           {primaryAction ? (
-            <Link
+            <PrimaryButton
+              as={Link}
               href={primaryAction.href}
-              className={cx(
-                "app-dashboard-hero-action",
-                primaryAction.tone === "secondary"
-                  ? "app-dashboard-hero-action--secondary"
-                  : "app-dashboard-hero-action--primary",
-              )}
+              variant={primaryAction.tone === "secondary" ? "secondary" : "primary"}
+              size="lg"
+              className={cx("app-dashboard-hero-action")}
             >
               {primaryAction.label}
-            </Link>
+            </PrimaryButton>
           ) : null}
           {secondaryAction ? (
-            <Link
+            <PrimaryButton
+              as={Link}
               href={secondaryAction.href}
-              className={cx(
-                "app-dashboard-hero-action",
-                secondaryAction.tone === "secondary"
-                  ? "app-dashboard-hero-action--secondary"
-                  : "app-dashboard-hero-action--primary",
-              )}
+              variant={secondaryAction.tone === "secondary" ? "secondary" : "primary"}
+              size="lg"
+              className={cx("app-dashboard-hero-action")}
             >
               {secondaryAction.label}
-            </Link>
+            </PrimaryButton>
           ) : null}
         </div>
       )}

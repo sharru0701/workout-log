@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -847,12 +848,12 @@ export default function CalendarPage() {
 
             <CalendarExercisePreview exercises={loggedSummary.exercises} />
 
-            <a className="hd-today-cta ios-cal-summary-cta" href={workoutHref}>
+            <PrimaryButton as="a" href={workoutHref} variant="primary" size="lg" fullWidth className="hd-today-cta ios-cal-summary-cta">
               <span className="hd-today-cta-text">기록수정</span>
               <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="m9 18 6-6-6-6" />
               </svg>
-            </a>
+            </PrimaryButton>
           </div>
         ) : selectedSession ? (
           <div className="hd-today-card ios-cal-summary-card">
@@ -873,12 +874,12 @@ export default function CalendarPage() {
                 자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
               </p>
             ) : (
-              <a className="hd-today-cta ios-cal-summary-cta" href={workoutHref}>
+              <PrimaryButton as="a" href={workoutHref} variant="primary" size="lg" fullWidth className="hd-today-cta ios-cal-summary-cta">
                 <span className="hd-today-cta-text">기록하기</span>
                 <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
-              </a>
+              </PrimaryButton>
             )}
           </div>
         ) : (
