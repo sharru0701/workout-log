@@ -6771,6 +6771,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .wr-session-summary-meta {
   min-width: 0;
+  width: 100%;
+  overflow: hidden;
 }
 
 .wr-session-summary-line {
