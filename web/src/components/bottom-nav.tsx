@@ -13,8 +13,9 @@ type TabIconProps = {
 function HomeIcon({ className }: TabIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M3.75 10.5L12 4l8.25 6.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M6.75 9.75v9h10.5v-9" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 11L12 4.5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 9.5V20h12V9.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 20v-5.5h5V20" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -22,48 +23,11 @@ function HomeIcon({ className }: TabIconProps) {
 function RecordIcon({ className }: TabIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M3.75 12h16.5" strokeLinecap="round" />
-      <path d="M6 9.75v4.5" strokeLinecap="round" />
-      <path d="M8.25 8.25v7.5" strokeLinecap="round" />
-      <path d="M15.75 8.25v7.5" strokeLinecap="round" />
-      <path d="M18 9.75v4.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function PlanIcon({ className }: TabIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M7.5 3.75v3" strokeLinecap="round" />
-      <path d="M16.5 3.75v3" strokeLinecap="round" />
-      <path d="M4.5 9h15" strokeLinecap="round" />
-      <path d="M8.25 12.75h3" strokeLinecap="round" />
-      <path d="M8.25 16.5h3" strokeLinecap="round" />
-      <path d="M15 12.15l.9.9 1.85-2.1" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15 15.9l.9.9 1.85-2.1" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M6.75 5.25h10.5A2.25 2.25 0 0 1 19.5 7.5v10.5a2.25 2.25 0 0 1-2.25 2.25H6.75A2.25 2.25 0 0 1 4.5 18V7.5a2.25 2.25 0 0 1 2.25-2.25Z" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function StoreIcon({ className }: TabIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M4.5 9.75h15" strokeLinecap="round" />
-      <path d="M6.75 9.75v8.25h10.5V9.75" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5.25 9.75 6.75 5.25h10.5l1.5 4.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9.75 12.75h4.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function StatsIcon({ className }: TabIconProps) {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <path d="M5.25 18.75h13.5" strokeLinecap="round" />
-      <path d="M7.5 16.5v-4.5" strokeLinecap="round" />
-      <path d="M12 16.5v-8.25" strokeLinecap="round" />
-      <path d="M16.5 16.5V10.5" strokeLinecap="round" />
+      <path d="M4 12h16" strokeLinecap="round" />
+      <path d="M6.5 9.5v5" strokeLinecap="round" />
+      <path d="M9 7.5v9" strokeLinecap="round" />
+      <path d="M15 7.5v9" strokeLinecap="round" />
+      <path d="M17.5 9.5v5" strokeLinecap="round" />
     </svg>
   );
 }
@@ -71,15 +35,67 @@ function StatsIcon({ className }: TabIconProps) {
 function CalendarIcon({ className }: TabIconProps) {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
-      <rect x="3.75" y="4.5" width="16.5" height="16.5" rx="2.25" strokeLinejoin="round" />
-      <path d="M3.75 9.75h16.5" strokeLinecap="round" />
-      <path d="M8.25 3.75v1.5" strokeLinecap="round" />
-      <path d="M15.75 3.75v1.5" strokeLinecap="round" />
-      <path d="M8.25 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M15.75 13.5h.008" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8.25 17.25h.008" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 17.25h.008" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
+      <path d="M3.5 9.5h17" strokeLinecap="round" />
+      <path d="M8 2.5v3" strokeLinecap="round" />
+      <path d="M16 2.5v3" strokeLinecap="round" />
+      <path d="M8 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M16 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M8 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M12 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function PlanIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
+      <path d="M3.5 9.5h17" strokeLinecap="round" />
+      <path d="M8 2.5v3" strokeLinecap="round" />
+      <path d="M16 2.5v3" strokeLinecap="round" />
+      <path d="M7.5 13.5h4" strokeLinecap="round" />
+      <path d="M7.5 17.5h4" strokeLinecap="round" />
+      <path d="M14.5 12.5l1 1 2.5-2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14.5 16.5l1 1 2.5-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function StoreIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M6 2.5L3 8.5h18l-3-6H6z" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3 8.5v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-11" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 12.5a3 3 0 0 0 6 0" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function StatsIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M3 20h18" strokeLinecap="round" />
+      <path d="M7 20V10" strokeLinecap="round" />
+      <path d="M12 20V5" strokeLinecap="round" />
+      <path d="M17 20V13" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function SettingsIcon({ className }: TabIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+      <path d="M4 6h4" strokeLinecap="round" />
+      <circle cx="10" cy="6" r="2" />
+      <path d="M12 6h8" strokeLinecap="round" />
+      <path d="M4 12h10" strokeLinecap="round" />
+      <circle cx="16" cy="12" r="2" />
+      <path d="M18 12h2" strokeLinecap="round" />
+      <path d="M4 18h2" strokeLinecap="round" />
+      <circle cx="8" cy="18" r="2" />
+      <path d="M10 18h10" strokeLinecap="round" />
     </svg>
   );
 }
@@ -91,6 +107,7 @@ const tabs = [
   { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
   { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },
   { href: "/stats-1rm", label: "1RM", ariaLabel: "1RM 통계", Icon: StatsIcon },
+  { href: "/settings", label: "설정", ariaLabel: "설정", Icon: SettingsIcon },
 ];
 
 function tabIsActive(pathname: string, href: string) {

@@ -5,7 +5,7 @@ import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
-import { extractSessionDate } from "@/lib/session-key";
+import { extractSessionDate, parseSessionKey } from "@/lib/session-key";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { buildTodayLogHref } from "@/lib/workout-links";
 
@@ -39,6 +39,12 @@ type GeneratedSessionDetail = RecentGeneratedSession & {
   snapshot: {
     exercises?: SnapshotExercise[];
   } | null;
+};
+
+type WorkoutLogSummary = {
+  id: string;
+  performedAt: string;
+  generatedSessionId: string | null;
 };
 
 type WorkoutLogForDate = {
@@ -313,6 +319,20 @@ function computePlanContextForDate(plan: Plan | null, dateOnly: string) {
   return { planned, week, day, scheduleKey, sessionKey };
 }
 
+function sessionKeyToWDLabel(sessionKey: string): string | null {
+  const parsed = parseSessionKey(sessionKey);
+  if (!parsed || parsed.week === null || parsed.day === null) return null;
+  return `W${parsed.week}D${parsed.day}`;
+}
+
+function getNextSessionLabel(sessionKey: string, sessionsPerWeek: number): string | null {
+  const parsed = parseSessionKey(sessionKey);
+  if (!parsed || parsed.week === null || parsed.day === null) return null;
+  const nextDay = parsed.day < sessionsPerWeek ? parsed.day + 1 : 1;
+  const nextWeek = parsed.day < sessionsPerWeek ? parsed.week : parsed.week + 1;
+  return `W${nextWeek}D${nextDay}`;
+}
+
 export default function CalendarPage() {
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
   const today = useMemo(() => dateOnlyInTimezone(new Date(), timezone), [timezone]);
@@ -326,6 +346,7 @@ export default function CalendarPage() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState("");
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
+  const [allPlanLogs, setAllPlanLogs] = useState<WorkoutLogSummary[]>([]);
   const [selectedLog, setSelectedLog] = useState<WorkoutLogForDate | null>(null);
   const [selectedLogLoading, setSelectedLogLoading] = useState(false);
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<GeneratedSessionDetail | null>(null);
@@ -442,6 +463,27 @@ export default function CalendarPage() {
     };
   }, [planId, refreshTick, selectedDate, timezone]);
 
+  // Load all logs for selected plan (used for dot indicators and next session label)
+  useEffect(() => {
+    if (!planId) {
+      setAllPlanLogs([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const sp = new URLSearchParams();
+        sp.set("planId", planId);
+        sp.set("limit", "200");
+        const res = await apiGet<{ items: WorkoutLogSummary[] }>(`/api/logs?${sp.toString()}`);
+        if (!cancelled) setAllPlanLogs(res.items);
+      } catch {}
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [planId, refreshTick]);
+
   // Build lookup maps
   const generatedByDate = useMemo(() => {
     const map = new Map<string, RecentGeneratedSession>();
@@ -463,6 +505,30 @@ export default function CalendarPage() {
     }
     return map;
   }, [recentSessions]);
+
+  const generatedById = useMemo(() => {
+    const map = new Map<string, RecentGeneratedSession>();
+    for (const session of recentSessions) {
+      map.set(session.id, session);
+    }
+    return map;
+  }, [recentSessions]);
+
+  // Dates that have actual logged workouts (used for dot indicators)
+  const logDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const log of allPlanLogs) {
+      set.add(dateOnlyInTimezone(new Date(log.performedAt), timezone));
+    }
+    return set;
+  }, [allPlanLogs, timezone]);
+
+  // Session key of the most recently completed workout
+  const lastLogSessionKey = useMemo(() => {
+    const lastLog = allPlanLogs[0];
+    if (!lastLog?.generatedSessionId) return null;
+    return generatedById.get(lastLog.generatedSessionId)?.sessionKey ?? null;
+  }, [allPlanLogs, generatedById]);
 
   function getSessionForDate(dateOnly: string): RecentGeneratedSession | null {
     const ctx = computePlanContextForDate(selectedPlan, dateOnly);
@@ -540,6 +606,25 @@ export default function CalendarPage() {
     if (selectedPlan?.type === "MANUAL" && selectedCtx.scheduleKey) return selectedCtx.scheduleKey;
     return `W${selectedCtx.week}D${selectedCtx.day}`;
   })();
+
+  // WxDy label derived from the last completed log's session key (not calendar arithmetic)
+  const nextSessionLabel = useMemo(() => {
+    if (!lastLogSessionKey || !selectedPlan) return null;
+    const sessionsPerWeek = Math.max(1, Number(selectedPlan.params?.sessionsPerWeek ?? 7));
+    return getNextSessionLabel(lastLogSessionKey, sessionsPerWeek);
+  }, [lastLogSessionKey, selectedPlan]);
+
+  // WxDy label for the currently selected log (from actual session key, not calendar math)
+  const loggedDayLabel = useMemo(() => {
+    if (!selectedLog?.generatedSessionId) return selectedDayLabel;
+    return sessionKeyToWDLabel(generatedById.get(selectedLog.generatedSessionId)?.sessionKey ?? "") ?? selectedDayLabel;
+  }, [selectedLog, generatedById, selectedDayLabel]);
+
+  // WxDy label for a generated-but-unlogged session
+  const selectedSessionWDLabel = useMemo(() => {
+    if (!selectedSession) return null;
+    return sessionKeyToWDLabel(selectedSession.sessionKey);
+  }, [selectedSession]);
 
   const workoutHref = selectedLog
     ? buildTodayLogHref({ planId, date: selectedDate, logId: selectedLog.id })
@@ -695,7 +780,7 @@ export default function CalendarPage() {
               const isToday = dateOnly === today;
               const isSelected = dateOnly === selectedDate;
               const isOutside = !dateOnly.startsWith(anchorMonthKey);
-              const hasDot = !!selectedPlan && getSessionForDate(dateOnly) !== null;
+              const hasDot = !!selectedPlan && logDates.has(dateOnly);
               const dow = getDayOfWeek(dateOnly);
 
               return (
@@ -757,7 +842,7 @@ export default function CalendarPage() {
                   기록 있음 · {loggedSummary.totalSets}세트 · {formatVolume(loggedSummary.totalVolume)}
                 </p>
               </div>
-              {selectedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedDayLabel}</span>}
+              {loggedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{loggedDayLabel}</span>}
             </div>
 
             <CalendarExercisePreview exercises={loggedSummary.exercises} />
@@ -775,13 +860,10 @@ export default function CalendarPage() {
               <div className="hd-today-left">
                 <div className="hd-today-program">{selectedPlan.name}</div>
                 <p className="hd-today-meta">
-                  {selectedSession.sessionKey !== selectedDayLabel && selectedSession.sessionKey
-                    ? `${selectedSession.sessionKey} · `
-                    : ""}
                   생성됨 · {new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}
                 </p>
               </div>
-              {selectedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedDayLabel}</span>}
+              {selectedSessionWDLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedSessionWDLabel}</span>}
             </div>
 
             <CalendarExercisePreview exercises={plannedExercises} />
@@ -807,7 +889,7 @@ export default function CalendarPage() {
               <div className="ios-cal-session-info">
                 {isPastDateCreationBlocked ? null : (
                   <span className="ios-cal-session-key ios-cal-session-key--muted">
-                    {selectedCtx?.planned ? selectedDayLabel ?? "세션 없음" : "즉시 기록 가능"}
+                    {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
                   </span>
                 )}
                 <span className="ios-cal-session-meta">

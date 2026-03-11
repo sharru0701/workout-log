@@ -595,7 +595,7 @@ button {
   -webkit-overflow-scrolling: touch;
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
-  padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
+  padding: calc(var(--safe-top) + 1rem) var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
 }
 
 .app-shell-route-frame {
@@ -3482,7 +3482,7 @@ body {
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
   --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
   --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: 0 var(--space-4) calc(6.35rem + env(safe-area-inset-bottom));
+  padding: calc(var(--safe-top) + 1rem) var(--space-4) calc(6.35rem + env(safe-area-inset-bottom));
 }
 
 .home-screen,
@@ -4164,6 +4164,7 @@ textarea::placeholder {
     --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
     --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
+    padding-top: calc(var(--safe-top) + 1rem);
     padding-bottom: calc(6.28rem + env(safe-area-inset-bottom));
   }
 
