@@ -6765,6 +6765,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: flex-start;
   padding-bottom: 0.5rem;
   gap: 0.3rem;
+  overflow: hidden;
 }
 
 .wr-session-summary-header--today {
@@ -6862,6 +6863,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   display: grid;
   gap: 0;
   min-width: 0;
+  overflow: hidden;
 }
 
 .wr-session-exercise-row {
