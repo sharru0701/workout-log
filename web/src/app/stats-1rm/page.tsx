@@ -405,6 +405,10 @@ export default function Stats1RMPage() {
     setActiveSheet(null);
   };
 
+  const canApplyRangeDraft =
+    rangeDraft.preset !== "CUSTOM" ||
+    (Boolean(rangeDraft.from) && Boolean(rangeDraft.to) && rangeDraft.from <= rangeDraft.to);
+
   const filteredExerciseOptions = useMemo(() => {
     const q = exerciseQuery.trim().toLowerCase();
     return exercises
@@ -596,11 +600,12 @@ export default function Stats1RMPage() {
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
         className="stats-sheet stats-sheet--medium"
-        footer={
-          <button type="button" className="ui-primary-button" onClick={applyRangeDraft}>
-            기간 적용
-          </button>
-        }
+        primaryAction={{
+          ariaLabel: "기간 적용",
+          onPress: applyRangeDraft,
+          disabled: !canApplyRangeDraft,
+        }}
+        footer={null}
       >
         <Card tone="subtle" padding="sm" elevated={false}>
           <CardContent className="stats-sheet-list">

@@ -10,6 +10,7 @@ import {
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
 } from "react";
+import { NumberPickerField } from "./number-picker-sheet";
 
 type ClassValue = string | null | undefined | false;
 
@@ -192,10 +193,10 @@ export function AppNumberStepper({
   step = 1,
   onChange,
   inputMode = "numeric",
-  placeholder,
-  allowEmpty = false,
-  displayValue,
-  onDisplayValueChange,
+  placeholder: _placeholder,
+  allowEmpty: _allowEmpty = false,
+  displayValue: _displayValue,
+  onDisplayValueChange: _onDisplayValueChange,
   complete = false,
 }: {
   label: string;
@@ -211,138 +212,35 @@ export function AppNumberStepper({
   onDisplayValueChange?: (next: string) => void;
   complete?: boolean;
 }) {
-  const [draftValue, setDraftValue] = useState(() => String(value));
-  const [isEditing, setIsEditing] = useState(false);
-  const usesExternalDraftValue = typeof displayValue === "string" && typeof onDisplayValueChange === "function";
-  const resolvedDraftValue = usesExternalDraftValue ? displayValue : draftValue;
-
   const stepPrecision = useMemo(() => {
     const raw = String(step);
     if (!raw.includes(".")) return 0;
     return Math.min(4, raw.split(".")[1]?.length ?? 0);
   }, [step]);
 
-  useEffect(() => {
-    if (usesExternalDraftValue) return;
-    if (isEditing) return;
-    setDraftValue(String(value));
-  }, [isEditing, usesExternalDraftValue, value]);
-
-  const syncDraftValue = useCallback(
-    (next: string) => {
-      if (usesExternalDraftValue) {
-        onDisplayValueChange?.(next);
-        return;
-      }
-      setDraftValue(next);
+  const formatValue = useCallback(
+    (v: number) => {
+      if (stepPrecision > 0) return v.toFixed(stepPrecision);
+      if (inputMode === "decimal") return v.toFixed(1);
+      return String(v);
     },
-    [onDisplayValueChange, usesExternalDraftValue],
+    [stepPrecision, inputMode],
   );
-
-  const clampValue = useCallback(
-    (next: number) => {
-      const normalized = inputMode === "numeric" ? Math.round(next) : next;
-      const clamped = Math.min(max, Math.max(min, normalized));
-      return Number(clamped.toFixed(stepPrecision));
-    },
-    [inputMode, max, min, stepPrecision],
-  );
-
-  const commitDraftValue = useCallback(
-    (rawValue: string) => {
-      const normalized = rawValue.trim();
-      if (!normalized) {
-        if (allowEmpty) {
-          syncDraftValue("");
-          return;
-        }
-        syncDraftValue(String(value));
-        return;
-      }
-      const parsed = Number(normalized);
-      if (!Number.isFinite(parsed)) {
-        if (allowEmpty) {
-          syncDraftValue("");
-          return;
-        }
-        syncDraftValue(String(value));
-        return;
-      }
-      const clamped = clampValue(parsed);
-      onChange(clamped);
-      syncDraftValue(String(clamped));
-    },
-    [allowEmpty, clampValue, onChange, syncDraftValue, value],
-  );
-
-  const handleStepDown = useCallback(() => {
-    const next = clampValue(value - step);
-    setIsEditing(false);
-    syncDraftValue(String(next));
-    onChange(next);
-  }, [clampValue, onChange, step, syncDraftValue, value]);
-
-  const handleStepUp = useCallback(() => {
-    const next = clampValue(value + step);
-    setIsEditing(false);
-    syncDraftValue(String(next));
-    onChange(next);
-  }, [clampValue, onChange, step, syncDraftValue, value]);
 
   return (
     <label className={cx("workout-stepper", complete && "is-complete")}>
       <span className="ui-card-label">{label}</span>
-      <div className="workout-stepper-control">
-        <button
-          type="button"
-          className="haptic-tap workout-stepper-button"
-          onClick={handleStepDown}
-          aria-label={`${label} 줄이기`}
-        >
-          <AppPlusMinusIcon kind="minus" />
-        </button>
-        <input
-          className="workout-stepper-input"
-          type="number"
-          inputMode={inputMode}
-          min={min}
-          max={max}
-          step={step}
-          value={resolvedDraftValue}
-          placeholder={placeholder}
-          onFocus={() => setIsEditing(true)}
-          onBlur={() => {
-            setIsEditing(false);
-            commitDraftValue(resolvedDraftValue);
-          }}
-          onKeyDown={(event) => {
-            if (event.key !== "Enter") return;
-            event.preventDefault();
-            commitDraftValue(resolvedDraftValue);
-            event.currentTarget.blur();
-          }}
-          onChange={(event) => {
-            const nextRaw = event.target.value;
-            syncDraftValue(nextRaw);
-            const normalized = nextRaw.trim();
-            if (!normalized) {
-              if (!allowEmpty) return;
-              return;
-            }
-            const parsed = Number(normalized);
-            if (!Number.isFinite(parsed)) return;
-            onChange(clampValue(parsed));
-          }}
-        />
-        <button
-          type="button"
-          className="haptic-tap workout-stepper-button"
-          onClick={handleStepUp}
-          aria-label={`${label} 늘리기`}
-        >
-          <AppPlusMinusIcon kind="plus" />
-        </button>
-      </div>
+      <NumberPickerField
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={onChange}
+        formatValue={formatValue}
+        label={label}
+        variant="stepper"
+        complete={complete}
+      />
     </label>
   );
 }

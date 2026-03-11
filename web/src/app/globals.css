@@ -2222,7 +2222,7 @@ button {
 }
 
 .mobile-bottom-sheet-header {
-  padding: 0.42rem 0.95rem 0.65rem;
+  padding: 0.5rem 0.95rem 0.95rem;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -2468,6 +2468,21 @@ textarea::placeholder {
   transition: transform var(--motion-duration) var(--motion-ease), box-shadow var(--motion-duration) var(--motion-ease), block-size var(--motion-duration) var(--motion-ease);
 }
 
+.workout-record-exercise-list {
+  display: grid;
+}
+
+.workout-record-exercise-item + .workout-record-exercise-item {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid color-mix(in srgb, var(--color-separator) 58%, transparent);
+}
+
+.workout-record-list-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--color-separator) 72%, transparent);
+}
+
 .workout-swipe-shell.is-dragging .workout-set-card {
   transition: none;
 }
@@ -2539,6 +2554,281 @@ textarea::placeholder {
 .workout-stepper {
   display: grid;
   gap: 0.32rem;
+}
+
+.workout-record-control-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.workout-record-control-panel {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.82rem;
+  border: 1px solid var(--surface-inset-border);
+  border-radius: calc(var(--radius-surface) - 2px);
+  background: var(--surface-inset-bg);
+}
+
+.workout-record-control-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.workout-record-control-copy {
+  display: grid;
+  gap: 0.14rem;
+  min-width: 0;
+}
+
+.workout-record-control-title {
+  color: var(--text-primary);
+  font-size: 1rem;
+  line-height: 1.2;
+  font-weight: 740;
+  letter-spacing: -0.018em;
+}
+
+.workout-record-control-meta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.8rem;
+  padding: 0.32rem 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 52%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 680;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.workout-record-control-panel .workout-stepper {
+  gap: 0.34rem;
+  padding: 0.72rem 0.78rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 46%, transparent);
+  border-radius: calc(var(--radius-surface) - 4px);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+}
+
+.workout-record-control-panel .workout-stepper .ui-card-label {
+  font-size: 0.77rem;
+  letter-spacing: 0.01em;
+}
+
+.workout-record-control-panel .number-picker-field--stepper {
+  min-height: 3.15rem;
+  padding-inline: 1.12rem;
+  justify-content: space-between;
+}
+
+.workout-record-control-note {
+  margin: 0;
+  padding-inline: 0.1rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.workout-record-set-panel {
+  display: grid;
+  gap: 0.72rem;
+  padding: 0.82rem;
+  border: 1px solid var(--surface-inset-border);
+  border-radius: calc(var(--radius-surface) - 2px);
+  background: var(--surface-inset-bg);
+}
+
+.workout-record-set-grid {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.workout-record-set-grid-head,
+.workout-record-set-grid-row {
+  display: grid;
+  grid-template-columns: minmax(2.35rem, 0.62fr) minmax(2.8rem, 0.86fr) minmax(0, 1.15fr) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.46rem;
+}
+
+.workout-record-set-grid-head {
+  padding-inline: 0.52rem;
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+  font-weight: 720;
+  line-height: 1.1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.workout-record-set-grid-head > span {
+  min-width: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.workout-record-set-grid-row {
+  padding: 0.52rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 46%, transparent);
+  border-radius: calc(var(--radius-surface) - 4px);
+  background: color-mix(in srgb, var(--bg-surface) 94%, transparent);
+}
+
+.workout-record-set-index,
+.workout-record-set-percent {
+  min-height: 2.7rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem 0.45rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.workout-record-set-index {
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 50%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  font-size: 0.92rem;
+  font-weight: 750;
+}
+
+.workout-record-set-percent {
+  border: 1px dashed color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.workout-record-set-percent.is-planned {
+  border-style: solid;
+  background: color-mix(in srgb, var(--accent-primary) 8%, var(--bg-surface));
+  color: color-mix(in srgb, var(--accent-primary) 78%, var(--text-primary));
+}
+
+.workout-record-set-percent.is-empty {
+  opacity: 0.76;
+}
+
+.workout-record-set-grid-row > * {
+  min-width: 0;
+}
+
+.workout-record-inline-picker {
+  min-width: 0;
+}
+
+.workout-record-inline-picker-button {
+  width: 100%;
+  min-height: 2.7rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  border-radius: calc(var(--radius-surface) - 6px);
+  background: color-mix(in srgb, var(--bg-surface) 98%, transparent);
+  color: var(--text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.94rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  box-shadow: none;
+}
+
+.workout-record-inline-picker-button.is-complete {
+  background: color-mix(in srgb, #31c791 12%, var(--bg-surface));
+}
+
+.workout-record-inline-picker-button:active {
+  transform: scale(0.985);
+}
+
+.workout-record-inline-picker-value {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .workout-record-set-grid-head,
+  .workout-record-set-grid-row {
+    grid-template-columns: 2rem 2.7rem minmax(0, 1fr) minmax(0, 0.88fr);
+    gap: 0.38rem;
+  }
+
+  .workout-record-set-grid-head {
+    padding-inline: 0.42rem;
+    font-size: 0.62rem;
+    letter-spacing: 0.04em;
+  }
+
+  .workout-record-set-grid-row {
+    padding: 0.42rem;
+  }
+
+  .workout-record-set-index,
+  .workout-record-set-percent,
+  .workout-record-inline-picker-button {
+    min-height: 2.5rem;
+  }
+
+  .workout-record-inline-picker-button {
+    font-size: 0.88rem;
+  }
+}
+
+.workout-record-set-list {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.workout-record-set-item {
+  min-width: 0;
+}
+
+.workout-record-set-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.58rem;
+}
+
+.workout-record-set-action {
+  min-height: 2.9rem;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 58%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0.72rem 0.96rem;
+  font-size: 0.9rem;
+  font-weight: 680;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  box-shadow: none;
+}
+
+.workout-record-set-action:disabled {
+  opacity: 0.48;
+}
+
+.workout-record-set-action:not(:disabled):active {
+  transform: scale(0.985);
+}
+
+@media (min-width: 520px) {
+  .workout-record-set-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .workout-stepper-control {
@@ -4848,7 +5138,7 @@ html {
 }
 
 .settings-child-modal-panel {
-  max-width: min(100%, 760px);
+  max-width: min(100%, var(--layout-max));
 }
 
 .settings-child-modal-content .native-page,
@@ -5322,7 +5612,12 @@ html[data-tab-route-direction="backward"] .native-page-enter {
 }
 
 .settings-child-modal-panel {
-  max-width: min(calc(100% - 0.6rem), var(--layout-max));
+  max-width: min(100%, var(--layout-max));
+}
+
+.settings-child-modal-panel--fixed-height {
+  height: min(84svh, 760px);
+  max-height: min(84svh, 760px);
 }
 
 .settings-child-modal-content .tab-screen,
@@ -5342,6 +5637,14 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   line-height: 1.14;
   font-weight: 780;
   letter-spacing: -0.022em;
+}
+
+.settings-child-modal--exercise-management .mobile-bottom-sheet-body {
+  min-height: 0;
+}
+
+.settings-child-modal-content .ios-section-heading {
+  margin-bottom: 0.18rem;
 }
 
 .settings-child-modal-content [data-settings-section-header="true"] {
@@ -7149,5 +7452,248 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .app-bottom-nav-tab,
   .app-dashboard-action-card {
     transition-duration: 0ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+   Wheel Picker
+   ═══════════════════════════════════════════════════════════════════════════════ */
+
+.wheel-picker {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  cursor: grab;
+  position: relative;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 10%,
+    rgba(0, 0, 0, 0.72) 22%,
+    #000 38%,
+    #000 62%,
+    rgba(0, 0, 0, 0.72) 78%,
+    rgba(0, 0, 0, 0.18) 90%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.18) 10%,
+    rgba(0, 0, 0, 0.72) 22%,
+    #000 38%,
+    #000 62%,
+    rgba(0, 0, 0, 0.72) 78%,
+    rgba(0, 0, 0, 0.18) 90%,
+    transparent 100%
+  );
+}
+
+.wheel-picker:active {
+  cursor: grabbing;
+}
+
+.wheel-picker-highlight {
+  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 36%, transparent);
+  z-index: 0;
+}
+
+.wheel-picker-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: color-mix(in srgb, var(--text-primary) 82%, transparent);
+  z-index: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: none;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.wheel-picker-item.is-selected {
+  color: var(--text-primary);
+  font-size: 1.42rem;
+  font-weight: 700;
+}
+
+/* ── NumberPickerSheet ────────────────────────────────────────────────────── */
+
+.number-picker-sheet-panel .mobile-bottom-sheet-body {
+  padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom));
+}
+
+.sheet-action-header {
+  display: grid;
+  grid-template-columns: 2.75rem minmax(0, 1fr) 2.75rem;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.52rem 1rem 0.88rem;
+}
+
+.sheet-action-header-copy {
+  min-width: 0;
+  text-align: center;
+}
+
+.sheet-action-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-action-description {
+  margin-top: 0.2rem;
+  text-align: center;
+}
+
+.sheet-action-icon-button {
+  width: 2.75rem;
+  height: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+}
+
+.sheet-action-confirm-button {
+  border: 1px solid color-mix(in srgb, var(--accent-primary) 24%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-primary) 86%, white 14%);
+  color: white;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheet-action-confirm-button:hover {
+  background: color-mix(in srgb, var(--accent-primary) 92%, white 8%);
+}
+
+.sheet-action-confirm-button:active {
+  transform: scale(0.97);
+}
+
+.sheet-action-confirm-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent-primary) 34%, white 66%);
+  outline-offset: 3px;
+}
+
+.sheet-action-confirm-button:disabled {
+  opacity: 0.46;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.sheet-action-confirm-button:disabled:hover {
+  background: color-mix(in srgb, var(--accent-primary) 86%, white 14%);
+}
+
+.sheet-action-confirm-button svg {
+  width: 1.35rem;
+  height: 1.35rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.number-picker-sheet-body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3) 0 0;
+}
+
+.number-picker-wheel-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  min-width: 10rem;
+}
+
+.number-picker-wheel-wrapper .wheel-picker {
+  flex: 1;
+  max-width: 12rem;
+}
+
+.number-picker-unit {
+  font-size: var(--font-subtitle);
+  font-weight: 600;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── NumberPickerField (tappable display) ─────────────────────────────── */
+
+.number-picker-field {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  min-height: var(--touch-target);
+  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
+  border-radius: 0.8rem;
+  background: var(--field-bg);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: border-color var(--duration-fast) var(--ease-standard),
+    background var(--duration-fast) var(--ease-standard);
+  -webkit-tap-highlight-color: transparent;
+  padding: 0;
+  width: 100%;
+}
+
+.number-picker-field:active {
+  background: color-mix(in srgb, var(--accent-primary) 8%, var(--field-bg));
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, var(--border-subtle));
+}
+
+.number-picker-field--workout {
+  min-height: 3rem;
+  padding: 0.5rem 0.6rem;
+  text-align: center;
+  font-size: var(--font-body);
+  font-weight: 500;
+}
+
+.number-picker-field--stepper {
+  min-height: 3rem;
+  padding: 0.5rem 1rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.number-picker-field.is-complete {
+  background: color-mix(in srgb, #31c791 14%, var(--bg-surface)) !important;
+}
+
+.number-picker-field-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.number-picker-field-unit {
+  font-size: var(--font-caption);
+  color: var(--text-secondary);
+  font-weight: 400;
+}
+
+@media (prefers-color-scheme: light) {
+  .wheel-picker-highlight {
+    background: color-mix(in srgb, var(--bg-elevated) 84%, transparent);
+    border-color: color-mix(in srgb, var(--border-subtle) 30%, transparent);
+  }
+
+  .number-picker-field:active {
+    background: color-mix(in srgb, var(--accent-primary) 6%, var(--field-bg));
   }
 }

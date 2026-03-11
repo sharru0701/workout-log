@@ -9,7 +9,6 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
-import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
@@ -57,7 +56,6 @@ function PlansManagePageContent() {
     [managePlanId, plans],
   );
   const isSettled = useQuerySettled(loadKey, loading);
-  const todayDateKey = useMemo(() => toLocalDateKey(), []);
   const filteredPlans = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
     if (!normalizedQuery) return plans;
@@ -262,11 +260,6 @@ function PlansManagePageContent() {
           {filteredPlans.length > 0 ? (
             <DashboardSurface className="grid gap-2 sub-card-list">
               {filteredPlans.map((plan) => {
-                const todayWorkoutHref = buildTodayLogHref({
-                  planId: plan.id,
-                  date: todayDateKey,
-                  autoGenerate: true,
-                });
                 return (
                   <article key={plan.id} className="rounded-xl border p-3 grid gap-2">
                     <div className="flex items-start justify-between gap-3">
@@ -288,13 +281,7 @@ function PlansManagePageContent() {
                       </button>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <a
-                        className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
-                        href={todayWorkoutHref}
-                      >
-                        오늘 운동
-                      </a>
+                    <div className="grid grid-cols-1 gap-2">
                       <a
                         className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold"
                         href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}

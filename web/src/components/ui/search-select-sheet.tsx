@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -34,6 +35,8 @@ type SearchSelectSheetProps = SearchSelectComboboxProps & {
   onClose: () => void;
   description?: string;
   closeLabel?: string;
+  header?: ReactNode;
+  primaryAction?: BottomSheetPrimaryAction | null;
   footer?: ReactNode;
   children?: ReactNode;
 };
@@ -126,6 +129,8 @@ export function SearchSelectSheet({
   onClose,
   description,
   closeLabel = "닫기",
+  header,
+  primaryAction,
   footer,
   children,
   ...comboboxProps
@@ -137,6 +142,8 @@ export function SearchSelectSheet({
       description={description}
       onClose={onClose}
       closeLabel={closeLabel}
+      header={header}
+      primaryAction={primaryAction}
       footer={footer}
     >
       <div className="grid gap-3 pb-2">

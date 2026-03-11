@@ -2,6 +2,7 @@
 
 import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
 import { AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import {
   computeBodyweightTotalLoadKg,
   formatExerciseLoadLabel,
@@ -125,59 +126,62 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         </label>
 
         <div className="mt-2 grid grid-cols-4 gap-2">
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
             <span className="ui-card-label">세트</span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="numeric"
+            <NumberPickerField
+              label="세트"
               value={row.setNumber}
-              ref={(element) => registerSetInputRef(setCellKey(idx, 1), element)}
-              onKeyDown={(event) => handleSetGridKeyDown(event, idx, 1)}
-              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, setNumber: Number(event.target.value) }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">반복</span>
-            <AppTextInput
+              min={1}
+              max={30}
+              step={1}
               variant="workout-number"
-              type="number"
-              inputMode="numeric"
-              value={row.reps}
-              ref={(element) => registerSetInputRef(setCellKey(idx, 2), element)}
-              onKeyDown={(event) => handleSetGridKeyDown(event, idx, 2)}
-              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, reps: Number(event.target.value) }))}
+              onChange={(v) => updateRow(idx, (prev) => ({ ...prev, setNumber: v }))}
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1">
+            <span className="ui-card-label">반복</span>
+            <NumberPickerField
+              label="반복"
+              value={row.reps}
+              min={0}
+              max={100}
+              step={1}
+              variant="workout-number"
+              onChange={(v) => updateRow(idx, (prev) => ({ ...prev, reps: v }))}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
             <span className="ui-card-label">
               {isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "중량(kg)"}
             </span>
-            <AppTextInput
-              variant="workout-number"
-              type="number"
-              inputMode="decimal"
+            <NumberPickerField
+              label={isBodyweightExercise && bodyweightKg ? "추가중량" : "중량"}
               value={row.weightKg}
-              ref={(element) => registerSetInputRef(setCellKey(idx, 3), element)}
-              onKeyDown={(event) => handleSetGridKeyDown(event, idx, 3)}
-              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, weightKg: Number(event.target.value) }))}
-            />
-          </label>
-
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">RPE</span>
-            <AppTextInput
+              min={0}
+              max={500}
+              step={0.5}
+              unit="kg"
               variant="workout-number"
-              type="number"
-              inputMode="decimal"
-              value={row.rpe}
-              ref={(element) => registerSetInputRef(setCellKey(idx, 4), element)}
-              onKeyDown={(event) => handleSetGridKeyDown(event, idx, 4)}
-              onChange={(event) => updateRow(idx, (prev) => ({ ...prev, rpe: Number(event.target.value) }))}
+              formatValue={(v) => v.toFixed(1)}
+              onChange={(v) => updateRow(idx, (prev) => ({ ...prev, weightKg: v }))}
             />
-          </label>
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <span className="ui-card-label">RPE</span>
+            <NumberPickerField
+              label="RPE"
+              value={row.rpe}
+              min={0}
+              max={10}
+              step={0.5}
+              variant="workout-number"
+              formatValue={(v) => v.toFixed(1)}
+              onChange={(v) => updateRow(idx, (prev) => ({ ...prev, rpe: v }))}
+            />
+          </div>
         </div>
 
         {isBodyweightExercise && bodyweightKg ? (

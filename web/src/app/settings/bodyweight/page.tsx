@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSettingsModalHeaderAction } from "@/components/settings/settings-modal-header-action";
 import {
-  BaseGroupedList,
   SectionFootnote,
   SectionHeader,
-  ValueRow,
 } from "@/components/ui/settings-list";
 import { ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +62,30 @@ export default function SettingsBodyweightPage() {
     setDraftBodyweightKg(normalizeBodyweightKg(bodyweight.value));
   }, [bodyweight.pending, bodyweight.value]);
 
+  const normalizedDraftBodyweightKg = normalizeBodyweightKg(draftBodyweightKg);
+  const canSaveBodyweight = !bodyweight.pending && normalizedDraftBodyweightKg !== normalizeBodyweightKg(bodyweight.value);
+
+  const saveBodyweight = useCallback(async () => {
+    const result = await bodyweight.commit(normalizedDraftBodyweightKg);
+    if (!result.ignored && result.ok) {
+      setServerBodyweightKg(result.value);
+      setDraftBodyweightKg(normalizeBodyweightKg(result.value));
+    }
+  }, [bodyweight, normalizedDraftBodyweightKg]);
+
+  const headerAction = useMemo(
+    () => ({
+      ariaLabel: bodyweight.pending ? "몸무게 저장 중" : "몸무게 저장",
+      onPress: () => {
+        void saveBodyweight();
+      },
+      disabled: !canSaveBodyweight,
+    }),
+    [bodyweight.pending, canSaveBodyweight, saveBodyweight],
+  );
+
+  useSettingsModalHeaderAction(headerAction);
+
   return (
     <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
       <LoadingStateRows
@@ -81,21 +104,9 @@ export default function SettingsBodyweightPage() {
       <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label="몸무게 안내" />
 
       <section className="grid gap-2">
-        <SectionHeader title="몸무게 입력" description="중량 풀업 등 몸무게 연관 종목 계산/표시에 사용" />
-        <BaseGroupedList ariaLabel="Bodyweight setting">
-          <ValueRow
-            label="현재 몸무게"
-            description="저장된 값"
-            value={`${bodyweight.value.toFixed(1)} kg`}
-            showChevron={false}
-          />
-        </BaseGroupedList>
-      </section>
-
-      <section className="grid gap-2">
-        <SectionHeader title="몸무게 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
+        <SectionHeader title="몸무게 입력" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
         <Card padding="md" elevated={false}>
-          <CardContent className="gap-3">
+          <CardContent>
             <AppNumberStepper
               label="Bodyweight (kg)"
               value={draftBodyweightKg}
@@ -105,20 +116,6 @@ export default function SettingsBodyweightPage() {
               inputMode="decimal"
               onChange={(next) => setDraftBodyweightKg(normalizeBodyweightKg(next))}
             />
-            <button
-              type="button"
-              className="ui-primary-button"
-              disabled={bodyweight.pending}
-              onClick={async () => {
-                const result = await bodyweight.commit(normalizeBodyweightKg(draftBodyweightKg));
-                if (!result.ignored && result.ok) {
-                  setServerBodyweightKg(result.value);
-                  setDraftBodyweightKg(normalizeBodyweightKg(result.value));
-                }
-              }}
-            >
-              {bodyweight.pending ? "저장 중..." : "몸무게 저장"}
-            </button>
           </CardContent>
         </Card>
         <SectionFootnote>

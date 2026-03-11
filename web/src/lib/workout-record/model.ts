@@ -7,6 +7,11 @@ export type WorkoutSetModel = {
   weightKg: number;
 };
 
+export type WorkoutPlannedSetMeta = {
+  percentPerSet: Array<number | null>;
+  targetWeightKgPerSet: Array<number | null>;
+};
+
 export type WorkoutNoteModel = {
   memo: string;
 };
@@ -21,6 +26,7 @@ export type WorkoutExerciseModel = {
   source: WorkoutExerciseSource;
   badge?: WorkoutExerciseBadge | null;
   prescribedWeightKg?: number | null;
+  plannedSetMeta?: WorkoutPlannedSetMeta | null;
   set: WorkoutSetModel;
   note: WorkoutNoteModel;
 };
@@ -135,6 +141,69 @@ type SnapshotExercise = {
   progressionKey?: string | null;
   sets?: SnapshotSet[];
 };
+
+function normalizeExerciseLookupKey(exerciseId: string | null | undefined, exerciseName: string) {
+  const idPart = typeof exerciseId === "string" && exerciseId.trim() ? exerciseId.trim() : "";
+  return `${idPart}::${exerciseName.trim().toLowerCase()}`;
+}
+
+function toPlannedSetMeta(sets: SnapshotSet[] | undefined): WorkoutPlannedSetMeta | null {
+  if (!Array.isArray(sets) || sets.length === 0) return null;
+  return {
+    percentPerSet: sets.map((set) => {
+      const percent = Number(set?.percent);
+      return Number.isFinite(percent) && percent > 0 ? percent : null;
+    }),
+    targetWeightKgPerSet: sets.map((set) => {
+      const weightKg = Number(set?.targetWeightKg ?? set?.weightKg);
+      return Number.isFinite(weightKg) && weightKg >= 0 ? weightKg : null;
+    }),
+  };
+}
+
+function toSnapshotExerciseBadge(exercise: SnapshotExercise): WorkoutExerciseBadge | null {
+  const normalizedRowType = String(exercise.rowType ?? exercise.slotRole ?? "").trim().toUpperCase();
+  if (normalizedRowType === "AUTO" || normalizedRowType === "ANCHOR" || normalizedRowType === "FLEX") {
+    return "AUTO";
+  }
+  if (normalizedRowType === "CUSTOM") {
+    return "CUSTOM";
+  }
+  return null;
+}
+
+type PlannedSnapshotLookupEntry = {
+  plannedSetMeta: WorkoutPlannedSetMeta | null;
+  badge: WorkoutExerciseBadge | null;
+};
+
+function createPlannedSetMetaLookup(snapshotExercises: SnapshotExercise[]) {
+  const lookup = new Map<string, PlannedSnapshotLookupEntry>();
+
+  snapshotExercises.forEach((exercise) => {
+    const exerciseName = nonEmpty(String(exercise.exerciseName ?? exercise.name ?? ""), "");
+    if (!exerciseName) return;
+    const entry: PlannedSnapshotLookupEntry = {
+      plannedSetMeta: toPlannedSetMeta(exercise.sets),
+      badge: toSnapshotExerciseBadge(exercise),
+    };
+
+    const preferredKey = normalizeExerciseLookupKey(
+      typeof exercise.exerciseId === "string" ? exercise.exerciseId : null,
+      exerciseName,
+    );
+    if (!lookup.has(preferredKey)) {
+      lookup.set(preferredKey, entry);
+    }
+
+    const fallbackKey = normalizeExerciseLookupKey(null, exerciseName);
+    if (!lookup.has(fallbackKey)) {
+      lookup.set(fallbackKey, entry);
+    }
+  });
+
+  return lookup;
+}
 
 function toNumber(value: unknown, fallback: number) {
   const parsed = Number(value);
@@ -351,20 +420,14 @@ function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerc
     sets.length,
   );
 
-  const normalizedRowType = String(exercise.rowType ?? exercise.slotRole ?? "").trim().toUpperCase();
-
   return {
     id: `seed-${index + 1}`,
     exerciseId: typeof exercise.exerciseId === "string" ? exercise.exerciseId : null,
     exerciseName: nonEmpty(String(exercise.exerciseName ?? exercise.name ?? ""), `Exercise ${index + 1}`),
     source: "PROGRAM",
-    badge:
-      normalizedRowType === "AUTO" || normalizedRowType === "ANCHOR" || normalizedRowType === "FLEX"
-        ? "AUTO"
-        : normalizedRowType === "CUSTOM"
-          ? "CUSTOM"
-          : null,
+    badge: toSnapshotExerciseBadge(exercise),
     prescribedWeightKg: Math.max(0, toNumber(first.targetWeightKg ?? first.weightKg, 0)),
+    plannedSetMeta: toPlannedSetMeta(sets),
     set: {
       count: repsPerSet.length,
       reps: repsPerSet[0] ?? 5,
@@ -427,7 +490,11 @@ function mergeSeedExercise(base: WorkoutExerciseModel, patch: SeedExerciseEditPa
   return next;
 }
 
-function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExerciseModel[] {
+function groupLoggedExercises(
+  sets: ExistingWorkoutLogLike["sets"],
+  snapshotExercises: SnapshotExercise[] = [],
+): WorkoutExerciseModel[] {
+  const plannedSetMetaLookup = createPlannedSetMetaLookup(snapshotExercises);
   const grouped: Array<{
     exerciseId: string | null;
     exerciseName: string;
@@ -435,6 +502,8 @@ function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExer
     repsPerSet: number[];
     weightKg: number;
     memo: string;
+    plannedSetMeta: WorkoutPlannedSetMeta | null;
+    badge: WorkoutExerciseBadge;
   }> = [];
 
   for (const rawSet of sets ?? []) {
@@ -461,6 +530,11 @@ function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExer
       continue;
     }
 
+    const snapshotExerciseEntry =
+      plannedSetMetaLookup.get(normalizeExerciseLookupKey(exerciseId, exerciseName)) ??
+      plannedSetMetaLookup.get(normalizeExerciseLookupKey(null, exerciseName)) ??
+      null;
+
     grouped.push({
       exerciseId,
       exerciseName,
@@ -468,6 +542,8 @@ function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExer
       repsPerSet: [reps],
       weightKg,
       memo,
+      plannedSetMeta: snapshotExerciseEntry?.plannedSetMeta ?? null,
+      badge: snapshotExerciseEntry?.badge ?? (isExtra ? "ADDED" : "AUTO"),
     });
   }
 
@@ -476,8 +552,9 @@ function groupLoggedExercises(sets: ExistingWorkoutLogLike["sets"]): WorkoutExer
     exerciseId: exercise.exerciseId,
     exerciseName: exercise.exerciseName,
     source: "USER",
-    badge: exercise.isExtra ? "ADDED" : "AUTO",
+    badge: exercise.badge,
     prescribedWeightKg: null,
+    plannedSetMeta: exercise.plannedSetMeta,
     set: {
       count: exercise.repsPerSet.length,
       reps: exercise.repsPerSet[0] ?? 5,
@@ -546,9 +623,10 @@ export function createWorkoutRecordDraftFromLog(
   const snapshot = log.generatedSession?.snapshot ?? {};
   const week = Math.max(1, Math.round(toNumber(snapshot.week, 1)));
   const day = Math.max(1, Math.round(toNumber(snapshot.day, 1)));
-  const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : []);
+  const snapshotExercises = (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[];
+  const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : [], snapshotExercises);
   const estimateFromSnapshot = deriveEstimateFromSnapshot(
-    (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[],
+    snapshotExercises,
   );
   const estimateFromLog = deriveEstimateFromLoggedExercises(loggedExercises);
   const parsedPerformedAt = new Date(log.performedAt);
@@ -670,6 +748,7 @@ export function addUserExercise(
     source: "USER",
     badge: "ADDED",
     prescribedWeightKg: null,
+    plannedSetMeta: null,
     set: {
       count: repsPerSet.length,
       reps: repsPerSet[0] ?? 5,
@@ -788,7 +867,7 @@ export function toWorkoutLogPayload(
         reps: Math.max(1, Math.round(repsValue)),
         weightKg,
         rpe: 0,
-        isExtra: exercise.source === "USER",
+        isExtra: exercise.badge === "ADDED",
         meta,
       });
     });

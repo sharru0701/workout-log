@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { useSettingsModalHeaderAction } from "@/components/settings/settings-modal-header-action";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper } from "@/components/ui/form-controls";
 import {
@@ -111,6 +112,9 @@ export default function SettingsMinimumPlatePage() {
 
   const latestNotice = defaultIncrement.notice ?? rulesSetting.notice ?? null;
   const hasSaveError = Boolean(defaultIncrement.error || rulesSetting.error);
+  const normalizedDefaultDraftKg = normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG);
+  const canSaveDefault = !defaultIncrement.pending && normalizedDefaultDraftKg !== normalizeIncrementKg(defaultIncrement.value, DEFAULT_MINIMUM_PLATE_KG);
+  const canSaveRule = !rulesSetting.pending && Boolean(ruleDraft.exerciseId);
 
   const loadSettingsAndExercises = useCallback(async () => {
     try {
@@ -146,6 +150,26 @@ export default function SettingsMinimumPlatePage() {
     if (defaultIncrement.pending) return;
     setDefaultDraftKg(normalizeIncrementKg(defaultIncrement.value, DEFAULT_MINIMUM_PLATE_KG));
   }, [defaultIncrement.pending, defaultIncrement.value]);
+
+  const saveDefaultIncrement = useCallback(async () => {
+    const result = await defaultIncrement.commit(normalizedDefaultDraftKg);
+    if (!result.ignored && result.ok) {
+      setServerDefaultKg(result.value);
+    }
+  }, [defaultIncrement, normalizedDefaultDraftKg]);
+
+  const headerAction = useMemo(
+    () => ({
+      ariaLabel: defaultIncrement.pending ? "기본값 저장 중" : "기본값 저장",
+      onPress: () => {
+        void saveDefaultIncrement();
+      },
+      disabled: !canSaveDefault,
+    }),
+    [canSaveDefault, defaultIncrement.pending, saveDefaultIncrement],
+  );
+
+  useSettingsModalHeaderAction(headerAction);
 
   const openCreateSheet = () => {
     setEditingRuleKey(null);
@@ -251,9 +275,9 @@ export default function SettingsMinimumPlatePage() {
       </section>
 
       <section className="grid gap-2">
-        <SectionHeader title="기본값 조절" description="스테퍼로 간단히 조절 후 저장합니다." />
+        <SectionHeader title="기본값 조절" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
         <Card padding="md" elevated={false}>
-          <CardContent className="gap-3">
+          <CardContent>
             <AppNumberStepper
               label="기본 최소 원판 (kg)"
               value={defaultDraftKg}
@@ -263,19 +287,6 @@ export default function SettingsMinimumPlatePage() {
               inputMode="decimal"
               onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
             />
-            <button
-              type="button"
-              className="ui-primary-button"
-              disabled={defaultIncrement.pending}
-              onClick={async () => {
-                const result = await defaultIncrement.commit(normalizeIncrementKg(defaultDraftKg, DEFAULT_MINIMUM_PLATE_KG));
-                if (!result.ignored && result.ok) {
-                  setServerDefaultKg(result.value);
-                }
-              }}
-            >
-              {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
-            </button>
           </CardContent>
         </Card>
       </section>
@@ -319,12 +330,16 @@ export default function SettingsMinimumPlatePage() {
         onClose={() => setSheetOpen(false)}
         closeLabel="닫기"
         className="stats-sheet stats-sheet--large"
+        primaryAction={{
+          ariaLabel: rulesSetting.pending ? "규칙 저장 중" : "규칙 저장",
+          onPress: () => {
+            void saveRule();
+          },
+          disabled: !canSaveRule,
+        }}
         footer={
-          <div className="grid gap-2">
-            <button type="button" className="ui-primary-button" onClick={() => void saveRule()} disabled={rulesSetting.pending}>
-              {rulesSetting.pending ? "저장 중..." : "규칙 저장"}
-            </button>
-            {editingRuleKey ? (
+          editingRuleKey ? (
+            <div className="grid gap-2">
               <button
                 type="button"
                 className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-[var(--color-danger)]"
@@ -333,8 +348,8 @@ export default function SettingsMinimumPlatePage() {
               >
                 규칙 삭제
               </button>
-            ) : null}
-          </div>
+            </div>
+          ) : null
         }
       >
         <div className="grid gap-3">

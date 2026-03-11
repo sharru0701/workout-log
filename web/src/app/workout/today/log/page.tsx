@@ -35,6 +35,7 @@ import {
 import WorkoutSetRow from "./_components/workout-set-row";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
@@ -1548,29 +1549,33 @@ export default function WorkoutTodayPage() {
                 onChange={(e) => setTimezone(e.target.value)}
               />
             </label>
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <span className="ui-card-label">주차(고급)</span>
-              <AppTextInput
-                variant="compact"
-                type="number"
+              <NumberPickerField
+                label="주차"
                 value={week}
                 min={1}
-                onChange={(e) => setWeek(Number(e.target.value))}
+                max={52}
+                step={1}
+                variant="workout-number"
+                onChange={(v) => setWeek(v)}
               />
-            </label>
+            </div>
           </div>
 
           <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1">
               <span className="ui-card-label">일차(고급)</span>
-              <AppTextInput
-                variant="compact"
-                type="number"
+              <NumberPickerField
+                label="일차"
                 value={day}
                 min={1}
-                onChange={(e) => setDay(Number(e.target.value))}
+                max={7}
+                step={1}
+                variant="workout-number"
+                onChange={(v) => setDay(v)}
               />
-            </label>
+            </div>
             <div className="ui-card-label">선택된 플랜 ID: {planId || "(없음)"}</div>
             <div className="ui-card-label">운동 옵션 수: {exerciseOptions.length}</div>
           </div>

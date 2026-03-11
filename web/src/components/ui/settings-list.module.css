@@ -69,6 +69,7 @@
   display: grid;
   gap: var(--sl-section-header-gap, var(--settings-section-header-gap, 0.22rem));
   margin: 0;
+  padding-bottom: 0.18rem;
   padding-top: 0;
   padding-inline: var(--sl-section-header-padding-inline, var(--settings-section-header-padding-inline, 1.3rem));
 }

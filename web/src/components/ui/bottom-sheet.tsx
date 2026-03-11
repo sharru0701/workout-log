@@ -4,6 +4,7 @@ import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
+import { BottomSheetActionHeader, type BottomSheetPrimaryAction } from "./bottom-sheet-action-header";
 
 const SHEET_STACK_EVENT = "mobile-bottom-sheet-stack-change";
 const SHEET_STACK_DATA_KEY = "bottomSheetStack";
@@ -61,6 +62,8 @@ type BottomSheetProps = {
   className?: string;
   panelClassName?: string;
   closeLabel?: string;
+  header?: ReactNode;
+  primaryAction?: BottomSheetPrimaryAction | null;
   footer?: ReactNode;
 };
 
@@ -73,6 +76,8 @@ export function BottomSheet({
   className = "",
   panelClassName = "",
   closeLabel = "Close",
+  header,
+  primaryAction = null,
   footer,
 }: BottomSheetProps) {
   const sheetId = useId();
@@ -329,15 +334,25 @@ export function BottomSheet({
         <div className="mobile-bottom-sheet-handle-hit" onPointerDown={onHandlePointerDown}>
           <div className="mobile-bottom-sheet-handle" aria-hidden="true" />
         </div>
-        <header className={`mobile-bottom-sheet-header${hasDescription ? "" : " mobile-bottom-sheet-header--compact"}`}>
-          <div>
-            <h2 className="mobile-bottom-sheet-title">{title}</h2>
-            {hasDescription ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
-          </div>
-          <button type="button" className="haptic-tap mobile-bottom-sheet-close" onClick={onClose} aria-label={closeLabel}>
-            <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />
-          </button>
-        </header>
+        {header ?? (primaryAction ? (
+          <BottomSheetActionHeader
+            title={title}
+            description={hasDescription ? description : undefined}
+            closeLabel={closeLabel}
+            onClose={onClose}
+            action={primaryAction}
+          />
+        ) : (
+          <header className={`mobile-bottom-sheet-header${hasDescription ? "" : " mobile-bottom-sheet-header--compact"}`}>
+            <div>
+              <h2 className="mobile-bottom-sheet-title">{title}</h2>
+              {hasDescription ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
+            </div>
+            <button type="button" className="haptic-tap mobile-bottom-sheet-close" onClick={onClose} aria-label={closeLabel}>
+              <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />
+            </button>
+          </header>
+        ))}
         <div className="mobile-bottom-sheet-body">{children}</div>
         {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
       </section>

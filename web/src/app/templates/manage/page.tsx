@@ -6,6 +6,7 @@ import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type TemplateItem = {
@@ -620,13 +621,16 @@ export default function TemplatesPage() {
 
                         {item.sets.map((setRow, setIdx) => (
                           <div key={setIdx} className="grid grid-cols-4 gap-2 items-end">
-                            <label className="flex flex-col gap-1">
+                            <div className="flex flex-col gap-1">
                               <span className="ui-card-label">reps</span>
-                              <AppTextInput
-                                variant="dense"
-                                type="number"
+                              <NumberPickerField
+                                label="Reps"
                                 value={setRow.reps}
-                                onChange={(e) =>
+                                min={0}
+                                max={100}
+                                step={1}
+                                variant="workout-number"
+                                onChange={(v) =>
                                   setManualSessions((prev) =>
                                     prev.map((s, si) =>
                                       si === sessionIdx
@@ -637,9 +641,7 @@ export default function TemplatesPage() {
                                                 ? {
                                                     ...it,
                                                     sets: it.sets.map((ss, ssi) =>
-                                                      ssi === setIdx
-                                                        ? { ...ss, reps: Number(e.target.value) || 0 }
-                                                        : ss,
+                                                      ssi === setIdx ? { ...ss, reps: v } : ss,
                                                     ),
                                                   }
                                                 : it,
@@ -650,14 +652,19 @@ export default function TemplatesPage() {
                                   )
                                 }
                               />
-                            </label>
-                            <label className="flex flex-col gap-1">
+                            </div>
+                            <div className="flex flex-col gap-1">
                               <span className="ui-card-label">weightKg</span>
-                              <AppTextInput
-                                variant="dense"
-                                type="number"
+                              <NumberPickerField
+                                label="Weight (kg)"
                                 value={setRow.targetWeightKg}
-                                onChange={(e) =>
+                                min={0}
+                                max={500}
+                                step={0.5}
+                                unit="kg"
+                                variant="workout-number"
+                                formatValue={(v) => v.toFixed(1)}
+                                onChange={(v) =>
                                   setManualSessions((prev) =>
                                     prev.map((s, si) =>
                                       si === sessionIdx
@@ -668,9 +675,7 @@ export default function TemplatesPage() {
                                                 ? {
                                                     ...it,
                                                     sets: it.sets.map((ss, ssi) =>
-                                                      ssi === setIdx
-                                                        ? { ...ss, targetWeightKg: Number(e.target.value) || 0 }
-                                                        : ss,
+                                                      ssi === setIdx ? { ...ss, targetWeightKg: v } : ss,
                                                     ),
                                                   }
                                                 : it,
@@ -681,14 +686,18 @@ export default function TemplatesPage() {
                                   )
                                 }
                               />
-                            </label>
-                            <label className="flex flex-col gap-1">
+                            </div>
+                            <div className="flex flex-col gap-1">
                               <span className="ui-card-label">rpe</span>
-                              <AppTextInput
-                                variant="dense"
-                                type="number"
+                              <NumberPickerField
+                                label="RPE"
                                 value={setRow.rpe}
-                                onChange={(e) =>
+                                min={0}
+                                max={10}
+                                step={0.5}
+                                variant="workout-number"
+                                formatValue={(v) => v.toFixed(1)}
+                                onChange={(v) =>
                                   setManualSessions((prev) =>
                                     prev.map((s, si) =>
                                       si === sessionIdx
@@ -699,9 +708,7 @@ export default function TemplatesPage() {
                                                 ? {
                                                     ...it,
                                                     sets: it.sets.map((ss, ssi) =>
-                                                      ssi === setIdx
-                                                        ? { ...ss, rpe: Number(e.target.value) || 0 }
-                                                        : ss,
+                                                      ssi === setIdx ? { ...ss, rpe: v } : ss,
                                                     ),
                                                   }
                                                 : it,
@@ -712,7 +719,7 @@ export default function TemplatesPage() {
                                   )
                                 }
                               />
-                            </label>
+                            </div>
                             <button
                               className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                               onClick={() =>
@@ -795,36 +802,45 @@ export default function TemplatesPage() {
               >
                 <div className="ios-inline-heading">로직 안전 파라미터</div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <label className="flex flex-col gap-1">
+                  <div className="flex flex-col gap-1">
                     <span className="ui-card-label">TM % (defaults.tmPercent)</span>
-                    <AppTextInput
-                      variant="compact"
-                      type="number"
-                      step="0.01"
+                    <NumberPickerField
+                      label="TM %"
                       value={logicTmPercent}
-                      onChange={(e) => setLogicTmPercent(Number(e.target.value) || 0)}
+                      min={0}
+                      max={1}
+                      step={0.01}
+                      variant="workout-number"
+                      formatValue={(v) => v.toFixed(2)}
+                      onChange={(v) => setLogicTmPercent(v)}
                     />
-                  </label>
-                  <label className="flex flex-col gap-1">
+                  </div>
+                  <div className="flex flex-col gap-1">
                     <span className="ui-card-label">Frequency (sessions/week)</span>
-                    <AppTextInput
-                      variant="compact"
-                      type="number"
-                      min={1}
+                    <NumberPickerField
+                      label="Frequency"
                       value={logicFrequency}
-                      onChange={(e) => setLogicFrequency(Math.max(1, Number(e.target.value) || 1))}
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="ui-card-label">Cycle weeks</span>
-                    <AppTextInput
-                      variant="compact"
-                      type="number"
                       min={1}
-                      value={logicWeeks}
-                      onChange={(e) => setLogicWeeks(Math.max(1, Number(e.target.value) || 1))}
+                      max={7}
+                      step={1}
+                      variant="workout-number"
+                      unit="회/주"
+                      onChange={(v) => setLogicFrequency(v)}
                     />
-                  </label>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="ui-card-label">Cycle weeks</span>
+                    <NumberPickerField
+                      label="Cycle weeks"
+                      value={logicWeeks}
+                      min={1}
+                      max={52}
+                      step={1}
+                      variant="workout-number"
+                      unit="주"
+                      onChange={(v) => setLogicWeeks(v)}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">

@@ -3,6 +3,10 @@
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
+import {
+  SettingsModalHeaderActionProvider,
+  useSettingsModalHeaderActionState,
+} from "@/components/settings/settings-modal-header-action";
 import { SettingsHomeContent } from "@/components/settings/settings-home-content";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 
@@ -67,16 +71,42 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
   if (isRoot) return <>{children}</>;
 
   return (
+    <SettingsModalHeaderActionProvider>
+      <SettingsChildModal pathname={pathname} sheetOpen={sheetOpen} onClose={handleClose}>
+        {children}
+      </SettingsChildModal>
+    </SettingsModalHeaderActionProvider>
+  );
+}
+
+function SettingsChildModal({
+  pathname,
+  sheetOpen,
+  onClose,
+  children,
+}: {
+  pathname: string;
+  sheetOpen: boolean;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const headerAction = useSettingsModalHeaderActionState();
+  const isExerciseManagement = pathname.startsWith("/settings/exercise-management");
+  const modalClassName = `settings-child-modal${isExerciseManagement ? " settings-child-modal--exercise-management" : ""}`;
+  const panelClassName = `settings-child-modal-panel${isExerciseManagement ? " settings-child-modal-panel--fixed-height" : ""}`;
+
+  return (
     <>
       <SettingsHomeContent className="settings-child-modal-background" />
       <BottomSheet
         open={sheetOpen}
-        onClose={handleClose}
+        onClose={onClose}
         title={modalTitleFromPathname(pathname)}
         description={modalDescriptionFromPathname(pathname)}
         closeLabel="닫기"
-        className="settings-child-modal"
-        panelClassName="settings-child-modal-panel"
+        className={modalClassName}
+        panelClassName={panelClassName}
+        primaryAction={headerAction}
       >
         <div className="settings-child-modal-content">{children}</div>
       </BottomSheet>

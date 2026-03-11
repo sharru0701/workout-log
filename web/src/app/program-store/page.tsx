@@ -8,6 +8,7 @@ import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
@@ -1566,22 +1567,18 @@ export default function ProgramStorePage() {
         onClose={() => setStartProgramDraft(null)}
         closeLabel="닫기"
         className="program-store-sheet program-store-sheet--medium"
-        footer={
-          startProgramDraft ? (
-            <div className="grid gap-2">
-              <button
-                type="button"
-                className="ui-primary-button"
-                disabled={saving}
-                onClick={() => {
+        primaryAction={
+          startProgramDraft
+            ? {
+                ariaLabel: saving ? "1RM 저장 후 시작 중" : "1RM 저장 후 시작",
+                onPress: () => {
                   void submitStartProgram();
-                }}
-              >
-                1RM 저장 후 시작
-              </button>
-            </div>
-          ) : null
+                },
+                disabled: saving,
+              }
+            : null
         }
+        footer={null}
       >
         {startProgramDraft ? (
           <div className="grid gap-3">
@@ -1600,25 +1597,27 @@ export default function ProgramStorePage() {
               <p className="ui-card-label">{startProgramDraft.recommendationMessage}</p>
             ) : null}
             {startProgramDraft.targets.map((target) => (
-              <label key={target.key} className="grid gap-2">
+              <div key={target.key} className="grid gap-2">
                 <span className="ui-card-label">
                   {target.label} 1RM (kg)
                 </span>
-                <AppTextInput
+                <NumberPickerField
+                  label={`${target.label} 1RM`}
+                  value={Number(startProgramDraft.oneRmInputs[target.key]) || 0}
+                  min={0}
+                  max={500}
+                  step={0.5}
+                  unit="kg"
                   variant="workout-number"
-                  type="number"
-                  inputMode="decimal"
-                  min={1}
-                  step="0.5"
-                  value={startProgramDraft.oneRmInputs[target.key] ?? ""}
-                  onChange={(event) =>
+                  formatValue={(v) => v.toFixed(1)}
+                  onChange={(v) =>
                     setStartProgramDraft((prev) => {
                       if (!prev) return prev;
                       return {
                         ...prev,
                         oneRmInputs: {
                           ...prev.oneRmInputs,
-                          [target.key]: event.target.value,
+                          [target.key]: String(v),
                         },
                       };
                     })
@@ -1653,7 +1652,7 @@ export default function ProgramStorePage() {
                     </button>
                   </div>
                 ) : null}
-              </label>
+              </div>
             ))}
           </div>
         ) : null}
@@ -1672,22 +1671,18 @@ export default function ProgramStorePage() {
         onClose={() => setCustomizeDraft(null)}
         closeLabel="닫기"
         className="program-store-sheet program-store-sheet--large"
-        footer={
-          customizeDraft ? (
-            <div className="grid gap-2">
-              <button
-                type="button"
-                className="ui-primary-button"
-                disabled={saving}
-                onClick={() => {
+        primaryAction={
+          customizeDraft
+            ? {
+                ariaLabel: saving ? "커스터마이징 프로그램 저장 중" : "커스터마이징 프로그램 저장",
+                onPress: () => {
                   void saveCustomizationDraft(customizeDraft);
-                }}
-              >
-                커스터마이징 프로그램 저장
-              </button>
-            </div>
-          ) : null
+                },
+                disabled: saving,
+              }
+            : null
         }
+        footer={null}
       >
         {customizeDraft && (
           <div className="grid gap-3">
@@ -1840,22 +1835,18 @@ export default function ProgramStorePage() {
         onClose={() => setCreateDraft(null)}
         closeLabel="닫기"
         className="program-store-sheet program-store-sheet--large"
-        footer={
-          createDraft ? (
-            <div className="grid gap-2">
-              <button
-                type="button"
-                className="ui-primary-button"
-                disabled={saving}
-                onClick={() => {
+        primaryAction={
+          createDraft
+            ? {
+                ariaLabel: saving ? "프로그램 생성 중" : "프로그램 생성",
+                onPress: () => {
                   void saveCreateDraft(createDraft);
-                }}
-              >
-                프로그램 생성
-              </button>
-            </div>
-          ) : null
+                },
+                disabled: saving,
+              }
+            : null
         }
+        footer={null}
       >
         {createDraft && (
           <div className="grid gap-3">
@@ -1982,20 +1973,19 @@ export default function ProgramStorePage() {
                 </button>
               </div>
               {createDraft.rule.type === "NUMERIC" && (
-                <label className="grid gap-1">
+                <div className="grid gap-1">
                   <span className="ui-card-label">세션 개수 (1~4)</span>
-                  <AppTextInput
-                    variant="workout-number"
-                    type="number"
-                    inputMode="numeric"
+                  <NumberPickerField
+                    label="세션 개수"
+                    value={createDraft.rule.count}
                     min={1}
                     max={4}
-                    value={createDraft.rule.count}
-                    onChange={(event) =>
+                    step={1}
+                    variant="workout-number"
+                    onChange={(v) =>
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
-                        const nextCount = Math.max(1, Math.min(4, Number(event.target.value) || 1));
-                        const nextRule: SessionRule = { type: "NUMERIC", count: nextCount };
+                        const nextRule: SessionRule = { type: "NUMERIC", count: v };
                         return {
                           ...prev,
                           rule: nextRule,
@@ -2004,7 +1994,7 @@ export default function ProgramStorePage() {
                       })
                     }
                   />
-                </label>
+                </div>
               )}
               </CardContent>
             </Card>
