@@ -6808,6 +6808,14 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   color: color-mix(in srgb, var(--accent-primary) 90%, var(--text-primary) 10%);
 }
 
+.wr-session-summary-header:not(.wr-session-summary-header--today) .wr-session-summary-badge {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: initial;
+  border-radius: 0.6rem;
+  align-items: flex-start;
+}
+
 .wr-session-summary-date {
   display: inline-flex;
   align-items: center;
@@ -6871,7 +6879,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.22rem 0;
+  padding: 0.38rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 6%, transparent);
   min-width: 0;
 }
