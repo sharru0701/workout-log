@@ -6857,6 +6857,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   padding: 0.28rem 1rem 0.64rem;
   display: grid;
   gap: 0;
+  min-width: 0;
 }
 
 .wr-session-exercise-row {
@@ -6866,6 +6867,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   gap: 0.5rem;
   padding: 0.22rem 0;
   border-bottom: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 6%, transparent);
+  min-width: 0;
 }
 
 .wr-session-exercise-row:first-child {
