@@ -75,7 +75,7 @@ export function SessionSummaryCard({
           {data.exercises.map((ex) => (
             <div key={ex.name} className="wr-session-exercise-row">
               <span className="wr-session-exercise-name">{ex.name}</span>
-              <span style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexShrink: 0 }}>
+              <span className="wr-session-exercise-right">
                 {ex.weightDelta != null && ex.weightDelta !== 0 && (
                   <span className={`hd-last-delta hd-last-delta--${ex.weightDelta > 0 ? "up" : "down"}`}>
                     {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
