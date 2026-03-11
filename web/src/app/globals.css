@@ -6759,7 +6759,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .wr-session-summary-header:not(.wr-session-summary-header--today) {
+  flex-direction: column;
+  align-items: flex-start;
   padding-bottom: 0.5rem;
+  gap: 0.3rem;
 }
 
 .wr-session-summary-header--today {
@@ -6900,6 +6903,161 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   padding: 0.85rem 1rem;
   font-size: 0.82rem;
   color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+}
+
+/* ─── Session Summary Card (unified) ─── */
+
+.session-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.3rem;
+  padding: 0.85rem 1rem 0.5rem;
+}
+
+.session-card-header--today {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+}
+
+.session-card-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.66rem;
+  min-width: 0;
+}
+
+.session-card-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.82rem;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 780;
+  letter-spacing: 0.01em;
+  background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
+  color: var(--text-primary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.session-card-badge--today {
+  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  color: color-mix(in srgb, var(--accent-primary) 90%, var(--text-primary) 10%);
+}
+
+.session-card-date {
+  font-size: 1.02rem;
+  font-weight: 720;
+  line-height: 1;
+  color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
+  white-space: nowrap;
+}
+
+.session-card-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  line-height: 1;
+}
+
+.session-card-stat {
+  font-size: 0.78rem;
+  font-weight: 680;
+  color: color-mix(in srgb, var(--text-primary) 85%, transparent);
+}
+
+.session-card-sep {
+  font-size: 0.68rem;
+  color: color-mix(in srgb, var(--text-secondary) 45%, transparent);
+}
+
+.session-card-bw {
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
+  flex-shrink: 0;
+}
+
+.session-card-exercises {
+  border-top: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 10%, transparent);
+  padding: 0.28rem 1rem 0.64rem;
+  display: grid;
+}
+
+.session-card-exercise-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.22rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--hd-border, #ffffff) 6%, transparent);
+}
+
+.session-card-exercise-row:first-child {
+  padding-top: 0;
+}
+
+.session-card-exercise-row:last-child {
+  border-bottom: none;
+}
+
+.session-card-exercise-name {
+  font-size: 0.8rem;
+  font-weight: 620;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-card-exercise-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.session-card-exercise-detail {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
+  white-space: nowrap;
+}
+
+.session-card-delta {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.42rem;
+  border-radius: 999px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.session-card-delta--up {
+  color: var(--accent-primary);
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+.session-card-delta--down {
+  color: #f07070;
+  background: color-mix(in srgb, #f07070 10%, transparent);
+}
+
+.session-card-empty {
+  padding: 0.85rem 1rem;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+}
+
+.session-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
 }
 
 /* ─── Responsive ─── */

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { SessionSummaryCard } from "@/components/ui/session-summary-card";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   HomeData,
@@ -182,7 +183,7 @@ function SessionExerciseList({
 
   return (
     <div className="hd-last-exercises">
-      {exercises.slice(0, 4).map((exercise) => (
+      {exercises.map((exercise) => (
         <div key={exercise.name} className="hd-last-exercise">
           <span className="hd-last-exercise-name">{exercise.name}</span>
           <span className="hd-last-exercise-right">
@@ -193,11 +194,6 @@ function SessionExerciseList({
           </span>
         </div>
       ))}
-      {exercises.length > 4 && (
-        <div className="hd-last-exercise hd-last-exercise--more">
-          +{exercises.length - 4}개 더
-        </div>
-      )}
     </div>
   );
 }
@@ -208,26 +204,20 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
       <div className="hd-section-head">
         <h2 className="hd-section-title">지난 세션</h2>
       </div>
-      <Link className="hd-last-card" href={session.href}>
-        <div className="hd-last-top">
-          <div>
-            <div className="hd-last-plan">{session.planName}</div>
-            <div className="hd-last-date">{session.date}</div>
-          </div>
-          <div className="hd-last-stats">
-            <span className="hd-last-stat">{session.totalSets}세트</span>
-            <span className="hd-last-stat-sep">/</span>
-            <span className="hd-last-stat">{formatVolume(session.totalVolume)}</span>
-          </div>
-        </div>
-        <SessionExerciseList
-          exercises={session.exercises.map((exercise) => ({
-            name: exercise.name,
-            detail: exercise.bestSet,
-            weightDelta: exercise.weightDelta,
-          }))}
-        />
-      </Link>
+      <SessionSummaryCard
+        data={{
+          badgeLabel: session.planName,
+          dateLabel: session.date,
+          totalSets: session.totalSets,
+          totalVolume: session.totalVolume,
+          exercises: session.exercises.map((ex) => ({
+            name: ex.name,
+            bestSet: ex.bestSet,
+            weightDelta: ex.weightDelta,
+          })),
+          href: session.href,
+        }}
+      />
     </section>
   );
 }
