@@ -51,6 +51,7 @@ export function TopBackButton() {
       <div className="app-top-settings-wrap">
         <Link
           href="/settings"
+          prefetch={false}
           className={`haptic-tap app-top-settings-button${isSettingsRoute ? " is-active" : ""}`}
           aria-label="Settings"
           aria-current={isSettingsRoute ? "page" : undefined}

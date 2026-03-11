@@ -1,7 +1,7 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 import { BottomSheetActionHeader, type BottomSheetPrimaryAction } from "./bottom-sheet-action-header";
@@ -53,6 +53,10 @@ function topSheetId(body: HTMLElement) {
   return stack.length > 0 ? stack[stack.length - 1] : null;
 }
 
+function getActiveHtmlElement() {
+  return document.activeElement instanceof HTMLElement ? document.activeElement : null;
+}
+
 type BottomSheetProps = {
   open: boolean;
   title: string;
@@ -84,10 +88,12 @@ export function BottomSheet({
   const [mounted, setMounted] = useState(false);
   const [visualOpen, setVisualOpen] = useState(false);
   const [isTopSheet, setIsTopSheet] = useState(false);
+  const sheetRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const closeAnimationTimerRef = useRef<number | null>(null);
   const openAnimationFrameRef = useRef<number | null>(null);
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
   const closeAnimationMs = 400;
 
   useEffect(() => {
@@ -149,6 +155,60 @@ export function BottomSheet({
 
   const isInteractiveSheet = open && isTopSheet;
   const hasDescription = !MINIMAL_COPY_MODE && Boolean(description);
+
+  useLayoutEffect(() => {
+    if (isInteractiveSheet) return;
+
+    const sheet = sheetRef.current;
+    const activeElement = getActiveHtmlElement();
+    if (sheet && activeElement && sheet.contains(activeElement)) {
+      activeElement.blur();
+    }
+  }, [isInteractiveSheet]);
+
+  useLayoutEffect(() => {
+    if (!isInteractiveSheet) return;
+
+    const sheet = sheetRef.current;
+    const panel = panelRef.current;
+    if (!sheet || !panel) return;
+
+    const activeElement = getActiveHtmlElement();
+    if (activeElement && !sheet.contains(activeElement)) {
+      restoreFocusRef.current = activeElement;
+    }
+    if (activeElement && sheet.contains(activeElement)) return;
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      const currentActiveElement = getActiveHtmlElement();
+      if (currentActiveElement && sheet.contains(currentActiveElement)) return;
+      panel.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [isInteractiveSheet]);
+
+  useEffect(() => {
+    if (open) return;
+
+    const restoreTarget = restoreFocusRef.current;
+    if (!restoreTarget?.isConnected) return;
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      if (!restoreTarget.isConnected) return;
+
+      const ownerSheet = restoreTarget.closest(".mobile-bottom-sheet");
+      if (ownerSheet instanceof HTMLElement) {
+        if (ownerSheet.hasAttribute("inert")) return;
+      } else if (topSheetId(document.body) !== null) {
+        return;
+      }
+
+      restoreTarget.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(focusFrame);
+  }, [open]);
 
   const clearDragListeners = useCallback(() => {
     dragCleanupRef.current?.();
@@ -310,10 +370,11 @@ export function BottomSheet({
 
   const sheetElement = (
     <div
+      ref={sheetRef}
       className={`mobile-bottom-sheet ${visualOpen ? "is-open" : ""} ${isInteractiveSheet ? "pointer-events-auto" : "pointer-events-none"} ${
         open && !isInteractiveSheet ? "is-underlay" : ""
       } ${className}`.trim()}
-      aria-hidden={!isInteractiveSheet}
+      inert={!isInteractiveSheet}
     >
       <button
         type="button"
@@ -330,6 +391,7 @@ export function BottomSheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        tabIndex={-1}
       >
         <div className="mobile-bottom-sheet-handle-hit" onPointerDown={onHandlePointerDown}>
           <div className="mobile-bottom-sheet-handle" aria-hidden="true" />

@@ -283,6 +283,7 @@ export function BottomNav() {
           <Link
             key={tab.href}
             href={tab.href}
+            prefetch={false}
             ref={(element) => {
               tabRefs.current[tabIndex] = element;
             }}

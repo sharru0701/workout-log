@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 
 type ErrorWithDigest = Error & { digest?: string };
 
@@ -22,18 +21,28 @@ export default function RootError({
 
   return (
     <div className="native-page native-page-enter tab-screen">
-      <section className="motion-card rounded-2xl border p-5 space-y-3">
-        <h2 className="tab-screen-title">문제가 발생했습니다</h2>
-        <ErrorStateRows
-          message={error.message || "알 수 없는 렌더링 오류"}
-          onRetry={() => reset()}
-          retryLabel="다시 시도"
-          title="화면을 불러오지 못했습니다"
-        />
-        <NoticeStateRows
-          message={error.digest ? `Error ID: ${error.digest}` : null}
-          label="디버그"
-        />
+      <section className="motion-card rounded-2xl border p-5 space-y-4" role="alert" aria-live="assertive">
+        <div className="space-y-1">
+          <p className="ui-card-label">오류</p>
+          <h2 className="tab-screen-title">화면을 불러오지 못했습니다</h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            {error.message || "알 수 없는 렌더링 오류"}
+          </p>
+        </div>
+        <div className="flex flex-col gap-3">
+          <button
+            type="button"
+            className="ui-primary-button"
+            onClick={() => reset()}
+          >
+            다시 시도
+          </button>
+          {error.digest ? (
+            <p className="text-xs text-[var(--text-tertiary)]">
+              Error ID: {error.digest}
+            </p>
+          ) : null}
+        </div>
       </section>
     </div>
   );
