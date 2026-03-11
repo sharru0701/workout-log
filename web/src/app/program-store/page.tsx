@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { StoreSearchInput } from "@/components/ui/store-search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
@@ -1126,33 +1127,13 @@ export default function ProgramStorePage() {
         <DashboardSurface data-pull-refresh-trigger="true">
           <div className="grid gap-1">
             <span className="ui-card-label">스토어 검색</span>
-            <div className="app-search-shell" aria-label="스토어 검색 입력">
-              <span className="app-search-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <circle cx="11" cy="11" r="7" />
-                  <path d="m20 20-3.8-3.8" />
-                </svg>
-              </span>
-              <input
-                type="search"
-                inputMode="search"
-                className="app-search-input"
-                value={storeQuery}
-                onChange={(event) => setStoreQuery(event.target.value)}
-                placeholder="프로그램명, 설명, 태그 검색"
-                aria-label="스토어 검색"
-              />
-              {hasStoreQuery ? (
-                <button
-                  type="button"
-                  className="app-search-clear"
-                  aria-label="검색어 지우기"
-                  onClick={() => setStoreQuery("")}
-                >
-                  ×
-                </button>
-              ) : null}
-            </div>
+            <StoreSearchInput
+              value={storeQuery}
+              onChange={setStoreQuery}
+              placeholder="프로그램명, 설명, 태그 검색"
+              ariaLabel="스토어 검색"
+              shellAriaLabel="스토어 검색 입력"
+            />
           </div>
         </DashboardSurface>
       ) : null}
