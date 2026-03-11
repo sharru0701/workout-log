@@ -6871,7 +6871,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   display: grid;
   gap: 0;
   min-width: 0;
-  overflow: hidden;
 }
 
 .wr-session-exercise-row {
