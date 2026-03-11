@@ -1774,7 +1774,20 @@ button {
   animation: ui-card-in var(--duration-normal) var(--motion-ease);
 }
 
+.app-pwa-banner.is-stacked {
+  width: fit-content;
+  max-width: min(calc(100% - 0.6rem), 17.25rem);
+  justify-self: center;
+  align-items: center;
+  justify-content: flex-start;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.65rem 0.8rem;
+}
+
 .app-pwa-text {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text-secondary);
@@ -1782,15 +1795,40 @@ button {
 
 .app-pwa-actions {
   display: inline-flex;
+  flex: 0 0 auto;
   align-items: center;
+  flex-wrap: nowrap;
   gap: 0.35rem;
+}
+
+.app-pwa-banner.is-stacked .app-pwa-actions {
+  width: auto;
+  align-self: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.app-pwa-banner.is-stacked .app-pwa-text {
+  display: block;
+  width: min(100%, 14.75rem);
+  text-align: center;
+  text-wrap: balance;
+  line-height: 1.4;
+}
+
+.app-pwa-banner.is-stacked .app-pwa-button {
+  min-width: 5.75rem;
+  min-height: 2.3rem;
+  padding: 0 1rem;
 }
 
 .app-pwa-button {
   border: 1px solid transparent;
   border-radius: 999px;
+  flex-shrink: 0;
   min-height: 1.95rem;
   padding: 0 0.78rem;
+  white-space: nowrap;
   font-size: 0.76rem;
   font-weight: 700;
   color: var(--text-primary);

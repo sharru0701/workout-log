@@ -461,8 +461,9 @@ export function PwaRegister() {
 
   const showDetectedUpdateBanner =
     Boolean(availableBuildId) && dismissedUpdateBuildId !== availableBuildId;
+  const showUpdateReadyBanner = updateReady;
 
-  if ((isStandalone || !deferredPrompt) && !updateReady && !showDetectedUpdateBanner) {
+  if (!showUpdateReadyBanner && (isStandalone || !deferredPrompt) && !showDetectedUpdateBanner) {
     if (!canShowIosInstallHint || isStandalone || dismissedIosHint) return null;
   }
 
@@ -491,10 +492,12 @@ export function PwaRegister() {
           </div>
         </div>
       )}
-      {showDetectedUpdateBanner && !updateReady && (
-        <div className="app-pwa-banner">
+      {showDetectedUpdateBanner && !showUpdateReadyBanner && (
+        <div className="app-pwa-banner is-stacked">
           <span className="app-pwa-text">
-            새 배포를 확인했습니다. 업데이트를 누르면 최신 변경사항을 바로 반영합니다.
+            새 버전을 찾았습니다.
+            <br />
+            지금 업데이트할 수 있어요.
           </span>
           <div className="app-pwa-actions">
             <button className="app-pwa-button" onClick={() => void handleUpdateNow()} disabled={isCheckingForUpdate}>
@@ -506,9 +509,13 @@ export function PwaRegister() {
           </div>
         </div>
       )}
-      {updateReady && (
-        <div className="app-pwa-banner">
-          <span className="app-pwa-text">새 버전이 준비되었습니다. 업데이트를 누르면 최신 화면으로 전환합니다.</span>
+      {showUpdateReadyBanner && (
+        <div className="app-pwa-banner is-stacked">
+          <span className="app-pwa-text">
+            새 버전이 준비됐습니다.
+            <br />
+            업데이트하면 바로 반영됩니다.
+          </span>
           <div className="app-pwa-actions">
             <button className="app-pwa-button" onClick={() => void handleUpdateNow()} disabled={isCheckingForUpdate}>
               {isCheckingForUpdate ? "반영 중" : "업데이트"}
