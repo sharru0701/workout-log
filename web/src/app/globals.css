@@ -5664,6 +5664,12 @@ html {
   height: calc(env(safe-area-inset-bottom) + 1px);
 }
 
+@media (display-mode: standalone) {
+  .app-bottom-nav::after {
+    height: calc(env(safe-area-inset-bottom) + 1px);
+  }
+}
+
 .app-bottom-nav-tab {
   position: relative;
   z-index: 1;
