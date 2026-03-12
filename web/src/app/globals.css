@@ -5661,12 +5661,12 @@ html {
 }
 
 :root[data-standalone-pwa="true"] .app-bottom-nav::after {
-  height: calc(env(safe-area-inset-bottom) + 1px);
+  height: 0;
 }
 
 @media (display-mode: standalone) {
   .app-bottom-nav::after {
-    height: calc(env(safe-area-inset-bottom) + 1px);
+    height: 0;
   }
 }
 
