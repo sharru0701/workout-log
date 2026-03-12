@@ -89,12 +89,12 @@
 :root[data-standalone-pwa="true"] {
   --app-screen-bottom-padding: var(--space-5);
   --app-bottom-nav-top-padding: 0.4rem;
-  --app-bottom-nav-bottom-padding: 0rem;
-  --app-bottom-nav-reserved-space: 3.4rem;
-  --app-bottom-nav-reserved-space-compact: 3.3rem;
-  --app-sync-tray-offset: 3.8rem;
-  --app-sync-tray-offset-compact: 3.68rem;
-  --app-sync-tray-offset-narrow: 3.55rem;
+  --app-bottom-nav-bottom-padding: env(safe-area-inset-bottom);
+  --app-bottom-nav-reserved-space: calc(3.4rem + env(safe-area-inset-bottom));
+  --app-bottom-nav-reserved-space-compact: calc(3.3rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset: calc(3.8rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset-compact: calc(3.68rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset-narrow: calc(3.55rem + env(safe-area-inset-bottom));
 }
 
 /* CSS-native PWA detection: applies immediately without waiting for JS */
@@ -102,12 +102,12 @@
   :root {
     --app-screen-bottom-padding: var(--space-5);
     --app-bottom-nav-top-padding: 0.4rem;
-    --app-bottom-nav-bottom-padding: 0rem;
-    --app-bottom-nav-reserved-space: 3.4rem;
-    --app-bottom-nav-reserved-space-compact: 3.3rem;
-    --app-sync-tray-offset: 3.8rem;
-    --app-sync-tray-offset-compact: 3.68rem;
-    --app-sync-tray-offset-narrow: 3.55rem;
+    --app-bottom-nav-bottom-padding: env(safe-area-inset-bottom);
+    --app-bottom-nav-reserved-space: calc(3.4rem + env(safe-area-inset-bottom));
+    --app-bottom-nav-reserved-space-compact: calc(3.3rem + env(safe-area-inset-bottom));
+    --app-sync-tray-offset: calc(3.8rem + env(safe-area-inset-bottom));
+    --app-sync-tray-offset-compact: calc(3.68rem + env(safe-area-inset-bottom));
+    --app-sync-tray-offset-narrow: calc(3.55rem + env(safe-area-inset-bottom));
   }
 }
 
