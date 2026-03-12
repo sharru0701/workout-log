@@ -5677,12 +5677,39 @@ html {
 }
 
 :root[data-standalone-pwa="true"] .app-bottom-nav::after {
-  height: calc(env(safe-area-inset-bottom) + 1px);
+  /* Reposition INSIDE nav bar at bottom (safe area padding zone), not below it.
+     With viewport-fit=cover, bottom:0 is the physical screen edge so
+     extending further down is off-screen and useless. Instead fill the
+     safe-area padding zone with a solid (non-glass) background so it looks
+     like a natural continuation of the nav bar rather than blank space. */
+  top: auto;
+  bottom: 0;
+  height: env(safe-area-inset-bottom);
+  background: rgba(13, 17, 25, 0.99);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 @media (display-mode: standalone) {
   .app-bottom-nav::after {
-    height: calc(env(safe-area-inset-bottom) + 1px);
+    top: auto;
+    bottom: 0;
+    height: env(safe-area-inset-bottom);
+    background: rgba(13, 17, 25, 0.99);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
+@media (display-mode: standalone) and (prefers-color-scheme: light) {
+  .app-bottom-nav::after {
+    background: rgba(255, 255, 255, 0.99);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root[data-standalone-pwa="true"] .app-bottom-nav::after {
+    background: rgba(255, 255, 255, 0.99);
   }
 }
 
