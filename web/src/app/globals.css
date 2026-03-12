@@ -768,7 +768,7 @@ button {
   display: grid;
   grid-template-columns: repeat(var(--bottom-nav-tabs-count, 5), minmax(0, 1fr));
   gap: var(--space-2);
-  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom));
+  padding: var(--app-bottom-nav-top-padding) var(--space-2) var(--app-bottom-nav-bottom-padding);
   border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   border: 1px solid transparent;
   background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
