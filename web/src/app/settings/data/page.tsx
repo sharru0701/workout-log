@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/settings-list";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { apiInvalidateCache, apiPost } from "@/lib/api";
-import { offlineQueueUpdateEventName } from "@/lib/offlineLogQueue";
 
 type ResetAppDataResponse = {
   ok: boolean;
@@ -55,11 +54,7 @@ function clearLocalAppState() {
     // noop
   }
 
-  try {
-    window.dispatchEvent(new CustomEvent(offlineQueueUpdateEventName()));
-  } catch {
-    // noop
-  }
+
 }
 
 export default function SettingsDataPage() {
