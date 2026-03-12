@@ -9,6 +9,7 @@ import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { Card } from "@/components/ui/card";
 
 type TemplateItem = {
   id: string;
@@ -325,7 +326,7 @@ export default function TemplatesPage() {
   return (
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
 
-      <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
+      <Card className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
         <label className="flex flex-col gap-1 md:col-span-2">
           <span className="ui-card-label">사용자 ID</span>
           <AppTextInput
@@ -414,10 +415,10 @@ export default function TemplatesPage() {
         <div className="md:col-span-8">
           <NoticeStateRows message={success} tone="success" label="완료" />
         </div>
-      </div>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <div className="motion-card rounded-2xl border p-4 space-y-3">
+        <Card className="space-y-3">
           <AccordionSection
             title="공개 템플릿"
             description="공식 템플릿을 확인하고 포크합니다."
@@ -432,7 +433,7 @@ export default function TemplatesPage() {
             {publicTemplates.length > 0 ? (
               <ul className="space-y-2">
                 {publicTemplates.map((t) => (
-                  <li key={t.slug} className="motion-card rounded-lg border px-3 py-2">
+                  <Card as="li" key={t.slug} padding="sm">
                     <div className="flex items-center justify-between gap-2">
                       <button className="haptic-tap text-left" onClick={() => setSelectedSlug(t.slug)}>
                         <div className="font-medium">{t.name}</div>
@@ -454,14 +455,14 @@ export default function TemplatesPage() {
                         Fork
                       </button>
                     </div>
-                  </li>
+                  </Card>
                 ))}
               </ul>
             ) : null}
           </AccordionSection>
-        </div>
+        </Card>
 
-        <div className="motion-card rounded-2xl border p-4 space-y-3">
+        <Card className="space-y-3">
           <AccordionSection
             title="내 개인 템플릿"
             description="현재 사용자가 편집할 수 있는 템플릿입니다."
@@ -475,7 +476,7 @@ export default function TemplatesPage() {
             {myPrivateTemplates.length > 0 ? (
               <ul className="space-y-2">
                 {myPrivateTemplates.map((t) => (
-                  <li key={t.slug} className="motion-card rounded-lg border px-3 py-2">
+                  <Card as="li" key={t.slug} padding="sm">
                     <button className="haptic-tap w-full text-left" onClick={() => setSelectedSlug(t.slug)}>
                       <div className="font-medium">{t.name}</div>
                       <div className="ui-card-label">
@@ -485,15 +486,15 @@ export default function TemplatesPage() {
                         <div className="ui-card-label">tags: {t.tags.join(", ")}</div>
                       )}
                     </button>
-                  </li>
+                  </Card>
                 ))}
               </ul>
             ) : null}
           </AccordionSection>
-        </div>
+        </Card>
       </div>
 
-      <div className="motion-card rounded-2xl border p-4 space-y-4">
+      <Card padding="lg" className="space-y-4">
         <div className="ios-section-heading">템플릿 편집기</div>
         <EmptyStateRows
           when={showTemplateEditorEmpty}
@@ -897,7 +898,7 @@ export default function TemplatesPage() {
               description="선택한 기준 버전에서 파생합니다."
               summarySlot={<span className="ui-card-label">v{selectedBaseVersion?.version ?? "-"}</span>}
             >
-              <div className="motion-card rounded-xl border p-3 space-y-2">
+              <Card padding="sm" className="space-y-2">
                 <div className="ios-inline-heading">새 버전 생성</div>
                 <label className="flex flex-col gap-1">
                   <span className="ui-card-label">changelog</span>
@@ -925,7 +926,7 @@ export default function TemplatesPage() {
                   description="이 템플릿은 읽기 전용입니다. 포크 후 개인 템플릿에서 버전을 생성하세요."
                   className="mt-2"
                 />
-              </div>
+              </Card>
             </AccordionSection>
 
             <AccordionSection
@@ -933,7 +934,7 @@ export default function TemplatesPage() {
               description="시간순 변경 이력을 확인합니다."
               summarySlot={<span className="ui-card-label">{versions.length} versions</span>}
             >
-              <div className="motion-card rounded-xl border p-3">
+              <Card padding="sm">
                 <EmptyStateRows
                   when={showVersionsEmpty}
                   label="설정 값 없음"
@@ -961,11 +962,11 @@ export default function TemplatesPage() {
                     </table>
                   </div>
                 ) : null}
-              </div>
+              </Card>
             </AccordionSection>
           </>
         ) : null}
-      </div>
+      </Card>
     </div>
   );
 }

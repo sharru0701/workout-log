@@ -192,7 +192,7 @@ function E1RMInteractiveChart({
   const yGuides = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <div className="stats-chart-shell">
+    <Card as="div" tone="inset" elevated={false} padding="none" className="stats-chart-shell">
       <svg
         viewBox={`0 0 ${width} ${height}`}
         className="stats-chart-svg"
@@ -240,7 +240,7 @@ function E1RMInteractiveChart({
           </g>
         ) : null}
       </svg>
-    </div>
+    </Card>
   );
 }
 
@@ -556,7 +556,7 @@ export default function Stats1RMPage() {
             />
 
             <div className="stats-chart-meta-grid">
-              <div className="stats-chart-meta-card">
+              <Card as="div" tone="inset" elevated={false} padding="none" className="stats-chart-meta-card">
                 <article className="stats-chart-meta-item">
                   <span className="ui-card-label">Best e1RM</span>
                   <strong>{stats?.best ? `${stats.best.e1rm.toFixed(1)} kg` : "-"}</strong>
@@ -572,7 +572,7 @@ export default function Stats1RMPage() {
                   <strong>{rangeLabelForPreset(rangeFilter.preset)}</strong>
                   <span>{selectedProgramLabel}</span>
                 </article>
-              </div>
+              </Card>
             </div>
           </DashboardSurface>
         </DashboardSection>

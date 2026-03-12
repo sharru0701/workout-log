@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useEffect, useRef, useState, type KeyboardEvent } from "react";
+import { Card } from "@/components/ui/card";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import {
@@ -112,7 +113,7 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         삭제
       </button>
 
-      <article className="workout-set-card">
+      <Card as="article" padding="none" className="workout-set-card">
         <label className="flex flex-col gap-1">
           <span className="ui-card-label">운동</span>
           <AppTextInput
@@ -241,7 +242,7 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             아래에 삽입
           </button>
         </div>
-      </article>
+      </Card>
     </div>
   );
 });

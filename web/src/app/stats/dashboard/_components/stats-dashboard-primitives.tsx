@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useMemo } from "react";
+import { Card } from "@/components/ui/card";
 
 type MetricTileProps = {
   label: string;
@@ -17,11 +18,11 @@ type SparklineChartProps = {
 
 export const MetricTile = memo(function MetricTile({ label, value, trend }: MetricTileProps) {
   return (
-    <article className="motion-card rounded-2xl border p-4">
+    <Card as="article">
       <div className="ui-card-label ui-card-label-caps">{label}</div>
       <div className="mt-2 text-3xl font-semibold">{value}</div>
       {trend ? <div className={`mt-2 text-sm ${trend.className}`}>{trend.text}</div> : null}
-    </article>
+    </Card>
   );
 });
 

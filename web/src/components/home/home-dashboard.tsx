@@ -2,16 +2,15 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { PrimaryButton } from "@/components/ui/primary-button";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { Card } from "@/components/ui/card";
+import { SessionCard } from "@/components/ui/session-card";
 import type {
   HomeData,
   HomeLastSession,
   HomeStrengthItem,
-  HomeTodayLoggedExercise,
   HomeVolumeTrendPoint,
   HomeQuickStats,
-  HomeTodayExercise,
 } from "@/lib/home/home-data-source";
 
 // ─── Section 1: Program Status ──────────────────────────────────────
@@ -24,7 +23,7 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
   if (!hasPlan) {
     return (
       <section className="hd-section">
-        <Link className="hd-program-card" href={APP_ROUTES.programStore}>
+        <Card as={Link} href={APP_ROUTES.programStore} padding="none" className="hd-program-card">
           <div className="hd-program-empty">
             <div className="hd-program-empty-title">프로그램을 시작하세요</div>
             <p className="hd-program-empty-copy">
@@ -32,7 +31,7 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
             </p>
             <span className="hd-program-empty-action">프로그램 둘러보기</span>
           </div>
-        </Link>
+        </Card>
       </section>
     );
   }
@@ -42,7 +41,7 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
       <div className="hd-section-head">
         <h2 className="hd-section-title">현재 프로그램</h2>
       </div>
-      <Link className="hd-program-card" href={planHref}>
+      <Card as={Link} href={planHref} padding="none" className="hd-program-card">
         <div className="hd-program-name">{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
         {planOverview.highlightedProgramName && (
           <div className="hd-program-base">{planOverview.highlightedProgramName}</div>
@@ -65,62 +64,21 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
             </div>
           ))}
         </div>
-      </Link>
+      </Card>
     </section>
   );
 }
 
 // ─── Section 2: Today Session ──────────────────────────────────────
 
-function TodayExercisePreview({ exercises }: { exercises: HomeTodayExercise[] }) {
-  if (exercises.length === 0) return null;
-
-  const mainExercises = exercises.filter((e) => e.role === "MAIN");
-  const assistExercises = exercises.filter((e) => e.role !== "MAIN");
-
-  return (
-    <div className="hd-today-exercises">
-      {mainExercises.length > 0 && (
-        <div className="hd-today-exercise-group">
-          {mainExercises.map((ex) => (
-            <div key={ex.name} className="hd-today-exercise hd-today-exercise--main">
-              <span className="hd-today-exercise-name">{ex.name}</span>
-              <span className="hd-today-exercise-summary">{ex.summary}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {assistExercises.length > 0 && (
-        <div className="hd-today-exercise-group">
-          {assistExercises.slice(0, 3).map((ex) => (
-            <div key={ex.name} className="hd-today-exercise">
-              <span className="hd-today-exercise-name">{ex.name}</span>
-              <span className="hd-today-exercise-summary">{ex.summary}</span>
-            </div>
-          ))}
-          {assistExercises.length > 3 && (
-            <div className="hd-today-exercise hd-today-exercise--more">
-              +{assistExercises.length - 3}개 보조 운동
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function mapTodayLoggedExercises(exercises: HomeTodayLoggedExercise[]) {
-  return exercises.map((exercise) => ({
-    name: exercise.name,
-    detail: exercise.bestSet,
-  }));
-}
-
 function TodaySessionSection({ data }: { data: HomeData }) {
   const { today, planOverview } = data;
   const hasTodayActivity = today.completedSets > 0;
   const hasPlan = planOverview.totalPlans > 0;
-  const hasPlannedExercises = today.plannedExercises.length > 0;
+
+  const exercises = hasTodayActivity
+    ? today.loggedExercises.map((ex) => ({ name: ex.name, summary: ex.bestSet }))
+    : today.plannedExercises.map((ex) => ({ name: ex.name, role: ex.role, summary: ex.summary }));
 
   return (
     <section className="hd-section" data-pull-refresh-trigger="true">
@@ -130,72 +88,19 @@ function TodaySessionSection({ data }: { data: HomeData }) {
           <span className="hd-section-action">{today.completedSets}세트 완료</span>
         )}
       </div>
-      <Link className="hd-today-card" href={today.href}>
-        <div className="hd-today-program">{today.programName}</div>
-
-        {!hasTodayActivity && hasPlannedExercises && (
-          <TodayExercisePreview exercises={today.plannedExercises} />
-        )}
-
-        {hasTodayActivity && (
-          <>
-            <p className="hd-today-meta">{today.meta}</p>
-            <SessionExerciseList exercises={mapTodayLoggedExercises(today.loggedExercises)} />
-          </>
-        )}
-
-        {!hasTodayActivity && !hasPlannedExercises && (
-          <p className="hd-today-meta">{today.meta}</p>
-        )}
-
-        <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false} className="hd-today-cta">
-          <span className="hd-today-cta-text">
-            {hasTodayActivity ? "이어서 하기" : hasPlan ? "운동 시작" : "프로그램 선택"}
-          </span>
-          <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="m9 18 6-6-6-6" />
-          </svg>
-        </PrimaryButton>
-      </Link>
+      <SessionCard
+        variant="today"
+        href={today.href}
+        title={today.programName}
+        meta={(!hasTodayActivity && today.plannedExercises.length === 0) || hasTodayActivity ? today.meta : undefined}
+        exercises={exercises}
+        ctaLabel={hasTodayActivity ? "이어서 하기" : hasPlan ? "운동 시작" : "프로그램 선택"}
+      />
     </section>
   );
 }
 
 // ─── Section 3: Last Session ──────────────────────────────────────
-
-function WeightDeltaBadge({ delta }: { delta: number }) {
-  if (delta === 0) return null;
-  const isUp = delta > 0;
-  return (
-    <span className={`hd-last-delta ${isUp ? "hd-last-delta--up" : "hd-last-delta--down"}`}>
-      {isUp ? "+" : ""}{delta}kg
-    </span>
-  );
-}
-
-function SessionExerciseList({
-  exercises,
-}: {
-  exercises: Array<{ name: string; detail: string; weightDelta?: number | null }>;
-}) {
-  if (exercises.length === 0) return null;
-
-  return (
-    <div className="hd-last-exercises">
-      {exercises.map((exercise) => (
-        <div key={exercise.name} className="hd-last-exercise">
-          <span className="hd-last-exercise-name">{exercise.name}</span>
-          <span className="hd-last-exercise-right">
-            {exercise.weightDelta !== undefined && exercise.weightDelta !== null && (
-              <WeightDeltaBadge delta={exercise.weightDelta} />
-            )}
-            <span className="hd-last-exercise-detail">{exercise.detail}</span>
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-}
 
 function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
@@ -203,26 +108,19 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
       <div className="hd-section-head">
         <h2 className="hd-section-title">지난 세션</h2>
       </div>
-      <Link className="hd-last-card" href={session.href}>
-        <div className="hd-last-top">
-          <div>
-            <div className="hd-last-plan">{session.planName}</div>
-            <div className="hd-last-date">{session.date}</div>
-          </div>
-          <div className="hd-last-stats">
-            <span className="hd-last-stat">{session.totalSets}세트</span>
-            <span className="hd-last-stat-sep">·</span>
-            <span className="hd-last-stat">{formatVolume(session.totalVolume)}</span>
-          </div>
-        </div>
-        <SessionExerciseList
-          exercises={session.exercises.map((ex) => ({
-            name: ex.name,
-            detail: ex.bestSet,
-            weightDelta: ex.weightDelta,
-          }))}
-        />
-      </Link>
+      <SessionCard
+        variant="last"
+        href={session.href}
+        title={session.planName}
+        date={session.date}
+        totalSets={session.totalSets}
+        totalVolume={session.totalVolume}
+        exercises={session.exercises.map((ex) => ({
+          name: ex.name,
+          summary: ex.bestSet,
+          weightDelta: ex.weightDelta,
+        }))}
+      />
     </section>
   );
 }
@@ -243,7 +141,7 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
             ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
             : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
           return (
-            <Link key={item.exerciseName} className="hd-strength-card" href={href}>
+            <Card as={Link} key={item.exerciseName} href={href} padding="none" className="hd-strength-card">
               <div className="hd-strength-name">{item.exerciseName}</div>
               <div className="hd-strength-value">{item.bestE1rm}kg</div>
               <div className="hd-strength-label">Best e1RM</div>
@@ -254,7 +152,7 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
               ) : (
                 <div className="hd-strength-trend hd-strength-trend--flat">-</div>
               )}
-            </Link>
+            </Card>
           );
         })}
       </div>
@@ -277,7 +175,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
       <div className="hd-section-head">
         <h2 className="hd-section-title">주간 볼륨</h2>
       </div>
-      <div className="hd-volume-card">
+      <Card padding="none" className="hd-volume-card">
         {selected && (
           <div className="hd-volume-detail">
             <span className="hd-volume-detail-label">{selected.label} 주</span>
@@ -309,7 +207,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
             );
           })}
         </div>
-      </div>
+      </Card>
     </section>
   );
 }
@@ -326,22 +224,22 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
         <h2 className="hd-section-title">요약 통계</h2>
       </div>
       <div className="hd-stats-grid">
-        <div className="hd-stat-chip">
+        <Card padding="none" className="hd-stat-chip">
           <span className="hd-stat-chip-value">{stats.totalSessions}</span>
           <span className="hd-stat-chip-label">총 운동</span>
-        </div>
-        <div className="hd-stat-chip">
+        </Card>
+        <Card padding="none" className="hd-stat-chip">
           <span className="hd-stat-chip-value">{formatVolume(stats.totalVolume)}</span>
           <span className="hd-stat-chip-label">누적 볼륨</span>
-        </div>
-        <div className="hd-stat-chip">
+        </Card>
+        <Card padding="none" className="hd-stat-chip">
           <span className="hd-stat-chip-value">{stats.currentStreak}일</span>
           <span className="hd-stat-chip-label">연속 운동</span>
-        </div>
-        <div className="hd-stat-chip">
+        </Card>
+        <Card padding="none" className="hd-stat-chip">
           <span className="hd-stat-chip-value">{stats.thisMonthSessions}</span>
           <span className="hd-stat-chip-label">이번 달</span>
-        </div>
+        </Card>
       </div>
     </section>
   );

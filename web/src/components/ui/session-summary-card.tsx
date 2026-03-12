@@ -35,53 +35,58 @@ export function SessionSummaryCard({
 }) {
   const isToday = variant === "today";
   const hasData = data && data.dateLabel;
+  const hasStats =
+    data != null &&
+    (
+      data.totalSets !== undefined ||
+      (data.totalVolume !== undefined && data.totalVolume > 0) ||
+      data.bodyweightKg != null
+    );
 
   const inner = hasData ? (
     <>
-      <div className={`wr-session-summary-header${isToday ? " wr-session-summary-header--today" : ""}`}>
-        <div className="wr-session-summary-meta">
-          <div className="wr-session-summary-line">
-            <span className={`wr-session-summary-badge${isToday ? " wr-session-summary-badge--today" : ""}`}>
-              {data.badgeLabel}
-            </span>
-            <span className="wr-session-summary-date">{data.dateLabel}</span>
-          </div>
+      <div className={`session-card-header${isToday ? " session-card-header--today" : ""}`}>
+        <div className="session-card-meta">
+          <span className={`session-card-badge${isToday ? " session-card-badge--today" : ""}`}>
+            {data.badgeLabel}
+          </span>
+          <span className="session-card-date">{data.dateLabel}</span>
         </div>
-        {!isToday && (
-          <div className="wr-session-summary-stats">
+        {!isToday && hasStats ? (
+          <div className="session-card-stats">
             {data.totalSets !== undefined && (
-              <span className="wr-session-summary-stat">{data.totalSets}세트</span>
+              <span className="session-card-stat">{data.totalSets}세트</span>
             )}
             {data.totalVolume !== undefined && data.totalVolume > 0 && (
               <>
-                <span className="wr-session-summary-sep">·</span>
-                <span className="wr-session-summary-stat">{formatVolume(data.totalVolume)}</span>
+                <span className="session-card-sep">·</span>
+                <span className="session-card-stat">{formatVolume(data.totalVolume)}</span>
               </>
             )}
             {data.bodyweightKg != null && (
               <>
-                <span className="wr-session-summary-sep">·</span>
-                <span className="wr-session-summary-stat">BW {data.bodyweightKg.toFixed(1)}kg</span>
+                <span className="session-card-sep">·</span>
+                <span className="session-card-stat">BW {data.bodyweightKg.toFixed(1)}kg</span>
               </>
             )}
           </div>
-        )}
+        ) : null}
         {isToday && data.bodyweightKg != null && (
-          <span className="wr-session-summary-bw">BW {data.bodyweightKg.toFixed(1)}kg</span>
+          <span className="session-card-bw">BW {data.bodyweightKg.toFixed(1)}kg</span>
         )}
       </div>
       {data.exercises && data.exercises.length > 0 && (
-        <div className="wr-session-exercises">
+        <div className="session-card-exercises">
           {data.exercises.map((ex) => (
-            <div key={ex.name} className="wr-session-exercise-row">
-              <span className="wr-session-exercise-name">{ex.name}</span>
-              <span className="wr-session-exercise-right">
+            <div key={ex.name} className="session-card-exercise-row">
+              <span className="session-card-exercise-name">{ex.name}</span>
+              <span className="session-card-exercise-right">
                 {ex.weightDelta != null && ex.weightDelta !== 0 && (
-                  <span className={`hd-last-delta hd-last-delta--${ex.weightDelta > 0 ? "up" : "down"}`}>
+                  <span className={`session-card-delta session-card-delta--${ex.weightDelta > 0 ? "up" : "down"}`}>
                     {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
                   </span>
                 )}
-                <span className="wr-session-exercise-detail">{ex.bestSet}</span>
+                <span className="session-card-exercise-detail">{ex.bestSet}</span>
               </span>
             </div>
           ))}
@@ -91,14 +96,14 @@ export function SessionSummaryCard({
     </>
   ) : (
     <>
-      <div className="wr-session-summary-empty">{emptyMessage}</div>
+      <div className="session-card-empty">{emptyMessage}</div>
       {children}
     </>
   );
 
   if (data?.href) {
     return (
-      <Card as={Link} href={data.href} padding="none" interactive>
+      <Card as={Link} href={data.href} padding="none" interactive className="session-card-link">
         {inner}
       </Card>
     );

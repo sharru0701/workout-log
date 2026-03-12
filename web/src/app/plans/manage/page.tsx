@@ -26,6 +26,48 @@ type Plan = {
   lastPerformedAt?: string | null;
 };
 
+function PlanListCard({
+  plan,
+  onManage,
+}: {
+  plan: Plan;
+  onManage: () => void;
+}) {
+  return (
+    <Card padding="sm" tone="inset" elevated={false} className="grid gap-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="grid min-w-0 gap-1">
+          <strong className="truncate text-[0.98rem] font-semibold leading-snug text-[var(--text-primary)]">
+            {plan.name}
+          </strong>
+          <span className="ui-card-label">기반 프로그램: {plan.baseProgramName ?? "-"}</span>
+          <span className="text-sm text-[var(--text-secondary)]">
+            최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
+          </span>
+        </div>
+        <button
+          type="button"
+          className="haptic-tap shrink-0 rounded-full border px-3 py-1 text-sm font-medium"
+          onClick={onManage}
+        >
+          관리
+        </button>
+      </div>
+
+      <PrimaryButton
+        as="a"
+        variant="primary"
+        size="lg"
+        fullWidth
+        className="px-4 text-base font-semibold"
+        href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
+      >
+        수행 히스토리
+      </PrimaryButton>
+    </Card>
+  );
+}
+
 function formatDateTime(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
@@ -186,7 +228,7 @@ function PlansManagePageContent() {
   return (
     <>
       <div
-        className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
+        className="native-page native-page-enter tab-screen tab-screen-wide app-dashboard-screen momentum-scroll"
         {...pullToRefresh.bind}
       >
         <PullToRefreshIndicator
@@ -240,45 +282,15 @@ function PlansManagePageContent() {
           />
 
           {filteredPlans.length > 0 ? (
-            <DashboardSurface className="grid gap-2 sub-card-list">
-              {filteredPlans.map((plan) => {
-                return (
-                  <article key={plan.id} className="rounded-xl border p-3 grid gap-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="grid gap-1 min-w-0">
-                        <strong className="min-w-0 truncate">{plan.name}</strong>
-                        <span className="ui-card-label">
-                          기반 프로그램: {plan.baseProgramName ?? "-"}
-                        </span>
-                        <span className="text-sm text-[var(--text-secondary)]">
-                          최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        className="haptic-tap rounded-full border px-3 py-1 text-sm font-medium shrink-0"
-                        onClick={() => openManageSheet(plan)}
-                      >
-                        관리
-                      </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-2">
-                      <PrimaryButton
-                        as="a"
-                        variant="primary"
-                        size="lg"
-                        fullWidth
-                        className="px-4 text-base font-semibold"
-                        href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
-                      >
-                        수행 히스토리
-                      </PrimaryButton>
-                    </div>
-                  </article>
-                );
-              })}
-            </DashboardSurface>
+            <div className="grid gap-2">
+              {filteredPlans.map((plan) => (
+                <PlanListCard
+                  key={plan.id}
+                  plan={plan}
+                  onManage={() => openManageSheet(plan)}
+                />
+              ))}
+            </div>
           ) : null}
         </DashboardSection>
       </div>

@@ -7,6 +7,7 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet } from "@/lib/api";
+import { Card } from "@/components/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
@@ -326,7 +327,7 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+          <Card className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
             <div>
               <div className="ui-card-label">플랜 이름</div>
               <div className="font-semibold">{selectedPlan.name}</div>
@@ -343,7 +344,7 @@ function PlanHistoryPageContent() {
               <div className="ui-card-label">마지막 수행일</div>
               <div>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
             </div>
-          </div>
+          </Card>
         ) : null}
       </section>
 
@@ -392,7 +393,7 @@ function PlanHistoryPageContent() {
                 : null;
 
               return (
-                <article key={log.id} className="motion-card rounded-2xl border p-4 grid gap-3">
+                <Card as="article" key={log.id} className="grid gap-3">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="grid gap-1">
                       <strong>{formatDateTime(log.performedAt)}</strong>
@@ -459,7 +460,7 @@ function PlanHistoryPageContent() {
                       <div>{noteText}</div>
                     </div>
                   ) : null}
-                </article>
+                </Card>
               );
             })}
 

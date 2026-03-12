@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import { useId } from "react";
 import Link from "next/link";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
+import { Card } from "./card";
 import styles from "./settings-list.module.css";
 import type { SettingsListTokenOverrides } from "./settings-list.tokens";
 
@@ -150,14 +151,16 @@ function RowContent({
 
 export function BaseGroupedList({ children, className, ariaLabel, tokens }: BaseGroupedListProps) {
   return (
-    <ul
+    <Card
+      as="ul"
+      padding="none"
       className={cx(styles.baseGroupedList, className)}
       aria-label={ariaLabel}
       style={tokensToStyle(tokens)}
       data-settings-grouped-list="true"
     >
       {children}
-    </ul>
+    </Card>
   );
 }
 

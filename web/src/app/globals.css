@@ -1931,6 +1931,14 @@ button {
   box-shadow: none;
 }
 
+.app-card--inset {
+  background: var(--surface-inset-bg, color-mix(in srgb, var(--border-default) 25%, var(--bg-elevated)));
+  border-color: var(--surface-inset-border, color-mix(in srgb, var(--border-default) 65%, transparent));
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
 .app-card--accent {
   background: color-mix(in srgb, var(--surface-card-bg, var(--bg-surface)) 88%, var(--accent-primary) 12%);
   border-color: color-mix(in srgb, var(--accent-primary) 22%, var(--surface-border-color, var(--border-subtle)) 78%);
@@ -1950,7 +1958,7 @@ button {
 }
 
 .app-card--interactive:hover {
-  transform: translateY(-1px);
+  transform: none;
 }
 
 .app-card-header,
@@ -2909,6 +2917,17 @@ textarea::placeholder {
   transform: scale(0.985);
 }
 
+.workout-record-memo-field {
+  display: grid;
+  gap: 0.4rem;
+  margin-top: 1.12rem;
+}
+
+.workout-record-memo-input {
+  padding: 3rem 0.85rem 0.82rem !important;
+  line-height: 1.45;
+}
+
 @media (min-width: 520px) {
   .workout-record-set-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3200,10 +3219,9 @@ textarea::placeholder {
 .program-store-session-card {
   display: grid;
   gap: 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
-  border-radius: 0.9rem;
+  border-color: var(--surface-inset-border);
+  background: var(--surface-inset-bg);
   padding: 0.7rem;
-  background: color-mix(in srgb, var(--bg-elevated) 72%, transparent);
 }
 
 .program-store-session-head {
@@ -3230,6 +3248,111 @@ textarea::placeholder {
   border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
   color: var(--text-secondary);
   font-size: 1rem;
+}
+
+.program-store-list-card,
+.program-store-create-card {
+  width: 100%;
+  appearance: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.program-store-list-card {
+  align-items: stretch;
+  justify-items: stretch;
+  gap: 0.78rem;
+  text-align: left;
+}
+
+.program-store-list-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.program-store-list-card-copy {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 0;
+}
+
+.program-store-list-card-title {
+  font-size: 0.98rem;
+  font-weight: 700;
+  line-height: 1.34;
+  color: var(--text-primary);
+}
+
+.program-store-list-card-meta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--text-secondary) 88%, transparent);
+}
+
+.program-store-list-card-description {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.52;
+  color: color-mix(in srgb, var(--text-secondary) 88%, transparent);
+  text-align: left;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.program-store-list-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  justify-content: flex-start;
+}
+
+.program-store-list-card-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.68rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.program-store-list-card-tag--base {
+  background: color-mix(in srgb, var(--accent-primary) 14%, var(--bg-tertiary));
+  color: var(--accent-primary);
+}
+
+.program-store-list-card-tag--custom {
+  background: color-mix(in srgb, var(--bg-tertiary) 90%, transparent);
+  color: var(--text-secondary);
+}
+
+.program-store-list-card:hover,
+.program-store-create-card:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)));
+}
+
+.program-store-create-card {
+  gap: 0.28rem;
+}
+
+.program-store-create-card-title {
+  font-size: 0.96rem;
+  font-weight: 700;
+  line-height: 1.32;
+  color: var(--text-primary);
+}
+
+.program-store-create-card-description {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: color-mix(in srgb, var(--text-secondary) 88%, transparent);
 }
 
 .stats-sheet--medium .mobile-bottom-sheet-panel {
@@ -3427,9 +3550,8 @@ textarea::placeholder {
 }
 
 .stats-chart-shell {
-  border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--border-subtle) 56%, transparent);
-  background: color-mix(in srgb, var(--bg-surface) 78%, transparent);
+  border-color: var(--surface-inset-border);
+  background: var(--surface-inset-bg);
   padding: 0.35rem;
   touch-action: pan-y;
 }
@@ -3491,10 +3613,8 @@ textarea::placeholder {
 
 .stats-chart-meta-card {
   display: grid;
-  border-radius: 0.8rem;
   overflow: hidden;
   background: var(--surface-inset-bg);
-  border: 1px solid transparent;
   border-color: var(--surface-inset-border) !important;
 }
 
@@ -3519,6 +3639,27 @@ textarea::placeholder {
 .sub-card-list > * {
   background: var(--surface-inset-bg);
   border-color: var(--surface-inset-border) !important;
+}
+
+/* Legacy non-interactive utility cards: converge on shared inset surface */
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-orange-"]).rounded-2xl.border,
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-orange-"]).rounded-xl.border,
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card):not([class*="bg-emerald-"]):not([class*="bg-amber-"]):not([class*="bg-red-"]):not([class*="bg-blue-"]):not([class*="bg-green-"]):not([class*="bg-yellow-"]):not([class*="bg-orange-"]).rounded-lg.border {
+  background: var(--surface-inset-bg);
+  border-color: var(--surface-inset-border) !important;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card).rounded-2xl.bg-neutral-50,
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card).rounded-xl.bg-neutral-50,
+:where(article, div, section, aside, pre):not(.ui-card):not(.motion-card):not(.workout-set-card).rounded-lg.bg-neutral-50 {
+  background: var(--surface-inset-bg) !important;
+  border: 1px solid var(--surface-inset-border);
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .stats-chart-meta-item strong {
@@ -3693,7 +3834,7 @@ button {
   --glass-border-strong: rgba(255, 255, 255, 0.14);
   --glass-border-subtle: rgba(255, 255, 255, 0.045);
   --glass-highlight: linear-gradient(180deg, rgba(255,255,255,0.07) 0%, transparent 60%);
-  --glass-shadow: 0 8px 32px -8px rgba(0,0,0,0.56), inset 0 1px 0 rgba(255,255,255,0.075), inset 0 -1px 0 rgba(0,0,0,0.20);
+  --glass-shadow: none;
   --glass-inset: inset 0 1px 0 rgba(255,255,255,0.07);
 
   /* ── Text */
@@ -3724,8 +3865,8 @@ button {
   --border-default: rgba(255, 255, 255, 0.085);
 
   /* ── Shadows (Depth + Glow) */
-  --shadow-soft: 0 6px 24px -10px rgba(0,0,0,0.54);
-  --shadow-float: 0 18px 52px -14px rgba(0,0,0,0.70), 0 0 0 0.5px rgba(255,255,255,0.055);
+  --shadow-soft: none;
+  --shadow-float: none;
   --shadow-glow: 0 0 32px rgba(31, 221, 207, 0.20);
 
   /* ── Blur Presets */
@@ -3805,7 +3946,7 @@ button {
     --glass-border-strong: rgba(0, 0, 0, 0.12);
     --glass-border-subtle: rgba(0, 0, 0, 0.045);
     --glass-highlight: linear-gradient(180deg, rgba(255,255,255,0.88) 0%, rgba(255,255,255,0.18) 100%);
-    --glass-shadow: 0 4px 20px -4px rgba(0,0,0,0.14), inset 0 1px 0 rgba(255,255,255,0.92), inset 0 -1px 0 rgba(0,0,0,0.05);
+    --glass-shadow: none;
     --glass-inset: inset 0 1px 0 rgba(255,255,255,0.90);
 
     /* ── Text */
@@ -3836,8 +3977,8 @@ button {
     --border-default: rgba(0, 0, 0, 0.075);
 
     /* ── Shadows (lighter) */
-    --shadow-soft: 0 4px 16px -6px rgba(0,0,0,0.14);
-    --shadow-float: 0 14px 44px -10px rgba(0,0,0,0.20), 0 0 0 0.5px rgba(0,0,0,0.055);
+    --shadow-soft: none;
+    --shadow-float: none;
     --shadow-glow: 0 0 24px rgba(0, 150, 136, 0.18);
 
     /* ── Tailwind Neutral → iOS 26 Light surfaces */
@@ -5581,8 +5722,8 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   );
   --surface-muted-bg: color-mix(in srgb, var(--surface-card-bg) 82%, var(--color-fill-elevated, var(--bg-elevated)) 18%);
   --surface-border-color: color-mix(in srgb, var(--color-separator, var(--border-subtle)) 52%, transparent);
-  --surface-card-shadow: var(--glass-shadow, 0 8px 32px -8px rgba(0,0,0,0.54));
-  --surface-card-blur: var(--blur-sm, blur(12px) saturate(160%));
+  --surface-card-shadow: none;
+  --surface-card-blur: none;
   --sheet-panel-bg: color-mix(in srgb, var(--surface-card-bg) 94%, var(--color-fill-base, var(--bg-base)) 6%);
   --sheet-backdrop-color: color-mix(in srgb, #000000 38%, transparent);
   --status-neutral-bg: color-mix(in srgb, var(--color-label-secondary, var(--text-secondary)) 12%, var(--surface-card-bg) 88%);
@@ -5597,6 +5738,31 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   box-shadow: var(--surface-card-shadow) !important;
   -webkit-backdrop-filter: var(--surface-card-blur);
   backdrop-filter: var(--surface-card-blur);
+}
+
+:where(.ui-card, .motion-card).app-card--subtle {
+  background: var(--surface-muted-bg, color-mix(in srgb, var(--bg-tertiary) 68%, var(--bg-surface) 32%)) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:where(.ui-card, .motion-card).app-card--inset {
+  background: var(--surface-inset-bg, color-mix(in srgb, var(--border-default) 25%, var(--bg-elevated))) !important;
+  border-color: var(--surface-inset-border, color-mix(in srgb, var(--border-default) 65%, transparent)) !important;
+  box-shadow: none !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:where(.ui-card, .motion-card).app-card--accent {
+  background: color-mix(in srgb, var(--surface-card-bg, var(--bg-surface)) 88%, var(--accent-primary) 12%) !important;
+  border-color: color-mix(in srgb, var(--accent-primary) 22%, var(--surface-border-color, var(--border-subtle)) 78%) !important;
+}
+
+:where(.ui-card, .motion-card).app-card--danger {
+  background: color-mix(in srgb, var(--surface-card-bg, var(--bg-surface)) 90%, #ff6b6b 10%) !important;
+  border-color: color-mix(in srgb, #ff6b6b 24%, var(--surface-border-color, var(--border-subtle)) 76%) !important;
 }
 
 .bg-white {
@@ -6102,21 +6268,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   color: var(--text-secondary);
 }
 
-/* ─── Shared Card Base ─── */
-
-.hd-program-card,
-.hd-today-card,
-.hd-last-card,
-.hd-volume-card,
-.hd-strength-card,
-.hd-stat-chip {
-  border: 1px solid var(--hd-border);
-  background: var(--hd-surface);
-  box-shadow: var(--glass-shadow, 0 8px 32px -8px rgba(0,0,0,0.54));
-  -webkit-backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
-  backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
-}
-
 /* ─── Section 1: Program Status ─── */
 
 .hd-program-card {
@@ -6130,7 +6281,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .hd-program-card:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 18%, var(--hd-border));
+  border-color: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
 }
 
 .hd-program-top {
@@ -6269,14 +6420,14 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   gap: 0.7rem;
   padding: var(--card-pad-md);
   border-radius: var(--radius-lg, 1.25rem);
-  border-color: color-mix(in srgb, var(--accent-primary) 14%, var(--hd-border));
+  border-color: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
   text-decoration: none;
   color: inherit;
   transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .hd-today-card:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 28%, var(--hd-border));
+  border-color: color-mix(in srgb, var(--accent-primary) 28%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
 }
 
 .hd-today-top {
@@ -6432,16 +6583,17 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .hd-last-card {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.7rem;
   padding: var(--card-pad-md);
   border-radius: var(--radius-lg, 1.25rem);
   text-decoration: none;
   color: inherit;
+  border-color: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
   transition: border-color var(--duration-fast) var(--ease-standard);
 }
 
 .hd-last-card:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 14%, var(--hd-border));
+  border-color: color-mix(in srgb, var(--accent-primary) 28%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
 }
 
 .hd-last-top {
@@ -6452,7 +6604,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .hd-last-plan {
-  font-size: 0.96rem;
+  font-size: 1.0rem;
   font-weight: 720;
   color: var(--text-primary);
 }
@@ -6483,7 +6635,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .hd-last-exercises {
   display: grid;
-  gap: 0.28rem;
+  gap: 0.08rem;
 }
 
 .hd-last-exercise {
@@ -6491,17 +6643,12 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.32rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--hd-border) 50%, transparent);
-}
-
-.hd-last-exercise:last-child {
-  border-bottom: none;
+  padding: 0.26rem 0;
 }
 
 .hd-last-exercise-name {
   font-size: 0.84rem;
-  font-weight: 620;
+  font-weight: 640;
   color: var(--text-primary);
   min-width: 0;
   overflow: hidden;
@@ -6510,7 +6657,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .hd-last-exercise-detail {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 600;
   color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
   white-space: nowrap;
@@ -6552,6 +6699,12 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   border-bottom: none;
 }
 
+.hd-last-empty {
+  padding: 0.85rem 0;
+  font-size: 0.82rem;
+  color: color-mix(in srgb, var(--text-secondary) 70%, transparent);
+}
+
 /* ─── Section 4: Strength Progress ─── */
 
 .hd-strength-grid {
@@ -6572,7 +6725,7 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 }
 
 .hd-strength-card:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 16%, var(--hd-border));
+  border-color: color-mix(in srgb, var(--accent-primary) 16%, var(--surface-border-color, var(--hd-border, rgba(255,255,255,0.085))));
 }
 
 .hd-strength-name {
@@ -6789,10 +6942,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 .wr-session-summary-badge {
   display: inline-flex;
   align-items: center;
-  padding: 0.3rem 0.82rem;
+  padding: 0.28rem 0.72rem;
   border-radius: 999px;
-  font-size: 0.92rem;
-  font-weight: 780;
+  font-size: 0.78rem;
+  font-weight: 720;
   letter-spacing: 0.01em;
   background: color-mix(in srgb, var(--text-secondary) 12%, transparent);
   color: var(--text-primary);
@@ -6819,8 +6972,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 .wr-session-summary-date {
   display: inline-flex;
   align-items: center;
-  font-size: 1.02rem;
-  font-weight: 720;
+  font-size: 0.76rem;
+  font-weight: 600;
   line-height: 1;
   color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
   white-space: nowrap;
@@ -7320,16 +7473,13 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 
 .app-dashboard-action-card,
 .app-dashboard-surface {
-  border: 1px solid var(--app-dashboard-border);
-  background: var(--app-dashboard-surface);
-  box-shadow: var(--glass-shadow, 0 8px 32px -8px rgba(0,0,0,0.54));
-  -webkit-backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
-  backdrop-filter: var(--blur-sm, blur(12px) saturate(160%));
-  border-radius: var(--radius-xl, 2.25rem);
+  border-radius: var(--radius-lg, 1.8rem);
 }
 
 .app-dashboard-surface {
   padding: 0.75rem;
+  border-color: var(--app-dashboard-border, var(--surface-border-color, var(--glass-border, rgba(255,255,255,0.085))));
+  background: var(--app-dashboard-surface, var(--surface-card-bg, var(--glass-bg-strong, var(--bg-surface))));
 }
 
 .app-dashboard-action-card {
@@ -7338,7 +7488,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   gap: var(--gap-inner);
   min-height: 10rem;
   padding: var(--card-pad-md);
-  border-radius: var(--radius-xl, 2.25rem);
   text-decoration: none;
   color: inherit;
   transition:

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { Card } from "@/components/ui/card";
 
 type ErrorWithDigest = Error & { digest?: string };
 
@@ -21,7 +22,7 @@ export default function RootError({
 
   return (
     <div className="native-page native-page-enter tab-screen">
-      <section className="motion-card rounded-2xl border p-5 space-y-4" role="alert" aria-live="assertive">
+      <Card as="section" padding="lg" className="space-y-4" role="alert" aria-live="assertive">
         <div className="space-y-1">
           <p className="ui-card-label">오류</p>
           <h2 className="tab-screen-title">화면을 불러오지 못했습니다</h2>
@@ -43,7 +44,7 @@ export default function RootError({
             </p>
           ) : null}
         </div>
-      </section>
+      </Card>
     </div>
   );
 }

@@ -39,6 +39,7 @@ import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { Card } from "@/components/ui/card";
 
 const WorkoutAddExerciseSheet = dynamic(() => import("./_components/workout-add-exercise-sheet"), {
   ssr: false,
@@ -1350,7 +1351,7 @@ export default function WorkoutTodayPage() {
         completeLabel="운동 데이터 갱신 완료"
       />
 
-      <div className="motion-card rounded-2xl border p-4 space-y-3" data-pull-refresh-trigger="true">
+      <Card className="space-y-3" data-pull-refresh-trigger="true">
         <div className="ios-section-heading">기록 모드</div>
         <div className="grid grid-cols-2 gap-2">
           <button
@@ -1381,19 +1382,19 @@ export default function WorkoutTodayPage() {
           label="현재 모드"
           tone="neutral"
         />
-      </div>
+      </Card>
 
       {guidedHint ? (
-        <div className="motion-card rounded-2xl border p-4 space-y-3">
+        <Card className="space-y-3">
           <div className="ios-section-heading">실행 가이드</div>
           <div className="text-sm font-semibold">{guidedHint.title}</div>
           <button className="haptic-tap workout-action-pill is-primary w-full" type="button" onClick={runGuidedHintAction}>
             {guidedHint.actionLabel}
           </button>
-        </div>
+        </Card>
       ) : null}
 
-      <div className="motion-card rounded-2xl border p-4 space-y-3">
+      <Card className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <span
             className={`ui-badge ${isOfflineMode ? "ui-badge-warning" : "ui-badge-success"}`}
@@ -1806,11 +1807,11 @@ export default function WorkoutTodayPage() {
             세션 상세 열기
           </a>
         )}
-      </div>
+      </Card>
 
       <div className={`grid grid-cols-1 ${isPowerMode ? "lg:grid-cols-2" : ""} gap-4`}>
         {isPowerMode ? (
-          <div className="motion-card rounded-2xl border p-4 space-y-3">
+          <Card className="space-y-3">
             <AccordionSection
               title="생성 스냅샷"
               description="필요한 구조만 펼쳐서 확인하세요."
@@ -1852,10 +1853,10 @@ export default function WorkoutTodayPage() {
                 />
               )}
             </AccordionSection>
-          </div>
+          </Card>
         ) : null}
 
-        <div className="motion-card rounded-2xl border p-4 space-y-3">
+        <Card className="space-y-3">
           <div className="ios-section-heading">저장할 세트</div>
 
           {defaultExercisesFromSnapshot.length > 0 && (
@@ -1923,7 +1924,7 @@ export default function WorkoutTodayPage() {
           </datalist>
 
           {isPowerMode ? (
-            <div className="motion-card rounded-xl border p-3 space-y-2">
+            <Card padding="sm" className="space-y-2">
               <AccordionSection
                 title="세션 상세 비교"
                 description="계획 세트와 수행 세트를 비교합니다."
@@ -2007,7 +2008,7 @@ export default function WorkoutTodayPage() {
                   </div>
                 )}
               </AccordionSection>
-            </div>
+            </Card>
           ) : (
             <button
               className="haptic-tap workout-action-pill is-secondary w-full"
@@ -2017,7 +2018,7 @@ export default function WorkoutTodayPage() {
               세션 상세 비교 열기(고급 모드)
             </button>
           )}
-        </div>
+        </Card>
       </div>
 
       <div className="workout-save-dock">

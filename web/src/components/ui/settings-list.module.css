@@ -28,12 +28,9 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 1px solid var(--sl-group-border-color);
+  border-color: var(--sl-group-border-color);
   border-radius: var(--sl-group-radius);
   background: var(--sl-group-background);
-  box-shadow: var(--surface-card-shadow, var(--glass-shadow, 0 8px 32px -8px rgba(0,0,0,0.54)));
-  -webkit-backdrop-filter: var(--surface-card-blur, var(--blur-sm, blur(12px) saturate(160%)));
-  backdrop-filter: var(--surface-card-blur, var(--blur-sm, blur(12px) saturate(160%)));
   overflow: clip;
 }
 

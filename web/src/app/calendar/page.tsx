@@ -3,8 +3,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
-import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
+import { SessionCard } from "@/components/ui/session-card";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate, parseSessionKey } from "@/lib/session-key";
@@ -263,42 +263,6 @@ function buildLoggedExercisePreview(sets: WorkoutLogForDate["sets"]): {
   };
 }
 
-function CalendarExercisePreview({ exercises }: { exercises: CalendarExercisePreviewItem[] }) {
-  if (exercises.length === 0) return null;
-
-  const mainExercises = exercises.filter((exercise) => exercise.role === "MAIN");
-  const assistExercises = exercises.filter((exercise) => exercise.role !== "MAIN");
-
-  return (
-    <div className="hd-today-exercises">
-      {mainExercises.length > 0 && (
-        <div className="hd-today-exercise-group">
-          {mainExercises.map((exercise) => (
-            <div key={exercise.name} className="hd-today-exercise hd-today-exercise--main">
-              <span className="hd-today-exercise-name">{exercise.name}</span>
-              <span className="hd-today-exercise-summary">{exercise.summary}</span>
-            </div>
-          ))}
-        </div>
-      )}
-      {assistExercises.length > 0 && (
-        <div className="hd-today-exercise-group">
-          {assistExercises.slice(0, 3).map((exercise) => (
-            <div key={exercise.name} className="hd-today-exercise">
-              <span className="hd-today-exercise-name">{exercise.name}</span>
-              <span className="hd-today-exercise-summary">{exercise.summary}</span>
-            </div>
-          ))}
-          {assistExercises.length > 3 && (
-            <div className="hd-today-exercise hd-today-exercise--more">
-              +{assistExercises.length - 3}개 보조 운동
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
 
 function computePlanContextForDate(plan: Plan | null, dateOnly: string) {
   if (!plan) return null;
@@ -868,53 +832,28 @@ export default function CalendarPage() {
             <p className="ios-cal-empty-text">플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
           </div>
         ) : selectedLog ? (
-          <div className="hd-today-card ios-cal-summary-card">
-            <div className="hd-today-top">
-              <div className="hd-today-left">
-                <div className="hd-today-program">{selectedPlan.name}</div>
-                <p className="hd-today-meta">
-                  기록 있음 · {loggedSummary.totalSets}세트 · {formatVolume(loggedSummary.totalVolume)}
-                </p>
-              </div>
-              {loggedDayLabel && <span className="hd-today-badge hd-today-badge--planned">{loggedDayLabel}</span>}
-            </div>
-
-            <CalendarExercisePreview exercises={loggedSummary.exercises} />
-
-            <PrimaryButton as="a" href={workoutHref} variant="primary" size="lg" fullWidth className="hd-today-cta ios-cal-summary-cta">
-              <span className="hd-today-cta-text">기록수정</span>
-              <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m9 18 6-6-6-6" />
-              </svg>
-            </PrimaryButton>
-          </div>
+          <SessionCard
+            variant="today"
+            className="ios-cal-summary-card"
+            title={selectedPlan.name}
+            meta={`기록 있음 · ${loggedSummary.totalSets}세트 · ${formatVolume(loggedSummary.totalVolume)}`}
+            badge={loggedDayLabel ?? undefined}
+            exercises={loggedSummary.exercises}
+            ctaLabel="기록수정"
+            ctaHref={workoutHref}
+          />
         ) : selectedSession ? (
-          <div className="hd-today-card ios-cal-summary-card">
-            <div className="hd-today-top">
-              <div className="hd-today-left">
-                <div className="hd-today-program">{selectedPlan.name}</div>
-                <p className="hd-today-meta">
-                  생성됨 · {new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}
-                </p>
-              </div>
-              {selectedSessionWDLabel && <span className="hd-today-badge hd-today-badge--planned">{selectedSessionWDLabel}</span>}
-            </div>
-
-            <CalendarExercisePreview exercises={plannedExercises} />
-
-            {isPastDateCreationBlocked ? (
-              <p className="hd-today-meta ios-cal-summary-note">
-                자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
-              </p>
-            ) : (
-              <PrimaryButton as="a" href={workoutHref} variant="primary" size="lg" fullWidth className="hd-today-cta ios-cal-summary-cta">
-                <span className="hd-today-cta-text">기록하기</span>
-                <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="m9 18 6-6-6-6" />
-                </svg>
-              </PrimaryButton>
-            )}
-          </div>
+          <SessionCard
+            variant="today"
+            className="ios-cal-summary-card"
+            title={selectedPlan.name}
+            meta={`생성됨 · ${new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}`}
+            badge={selectedSessionWDLabel ?? undefined}
+            exercises={plannedExercises}
+            ctaLabel={isPastDateCreationBlocked ? undefined : "기록하기"}
+            ctaHref={isPastDateCreationBlocked ? undefined : workoutHref}
+            ctaNote={isPastDateCreationBlocked ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다." : undefined}
+          />
         ) : (
           /* No session yet */
           <div className="ios-cal-no-session">

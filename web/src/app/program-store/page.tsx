@@ -170,6 +170,61 @@ function sourceBadgeMeta(source: ProgramListItem["source"]) {
   return { label: "Base", className: "ui-badge-info" };
 }
 
+function ProgramListCard({
+  item,
+  onPress,
+}: {
+  item: ProgramListItem;
+  onPress: () => void;
+}) {
+  const badge = sourceBadgeMeta(item.source);
+  const scheduleLabel = getProgramScheduleLabel(item.template);
+  const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
+  const tagClassName =
+    item.source === "CUSTOM"
+      ? "program-store-list-card-tag program-store-list-card-tag--custom"
+      : "program-store-list-card-tag program-store-list-card-tag--base";
+
+  return (
+    <Card
+      as="button"
+      type="button"
+      padding="sm"
+      tone="inset"
+      elevated={false}
+      interactive
+      className="program-store-list-card haptic-tap"
+      onClick={onPress}
+    >
+      <div className="program-store-list-card-head">
+        <div className="program-store-list-card-copy">
+          <strong className="program-store-list-card-title">
+            {formatProgramDisplayName(item.name)}
+          </strong>
+          {scheduleLabel ? (
+            <span className="program-store-list-card-meta">{scheduleLabel}</span>
+          ) : null}
+        </div>
+        <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
+      </div>
+
+      {item.template.description ? (
+        <p className="program-store-list-card-description">{item.template.description}</p>
+      ) : null}
+
+      {tags.length > 0 ? (
+        <div className="program-store-list-card-tags">
+          {tags.slice(0, 5).map((tag) => (
+            <span key={tag} className={tagClassName}>
+              {tag}
+            </span>
+          ))}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
 function parseSearchValue(value: string | string[] | null) {
   if (Array.isArray(value)) return value[0] ?? "";
   return value ?? "";
@@ -1145,160 +1200,61 @@ export default function ProgramStorePage() {
       />
 
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
-      <DashboardSection
-        title="공식 프로그램"
-        description="검증된 근력 훈련 프로그램 라이브러리"
-        headerTrigger
-      >
-        <EmptyStateRows
-          when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
-          label="표시할 프로그램이 없습니다"
-        />
-        {marketListItems.length > 0 && (
-          <DashboardSurface className="grid gap-2 sub-card-list">
-            {marketListItems.map((item) => {
-                const badge = sourceBadgeMeta(item.source);
-                const scheduleLabel = getProgramScheduleLabel(item.template);
-                const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className="haptic-tap rounded-xl border p-4 grid gap-2 text-left"
-                    onClick={() => {
-                      setDetailTargetId(item.template.id);
-                    }}
-                  >
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="grid gap-0.5">
-                        <strong className="text-sm font-semibold leading-snug">
-                          {formatProgramDisplayName(item.name)}
-                        </strong>
-                        {scheduleLabel && (
-                          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                            {scheduleLabel}
-                          </span>
-                        )}
-                      </span>
-                      <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
-                    </span>
-                    {item.template.description && (
-                      <p
-                        className="text-xs leading-relaxed"
-                        style={{
-                          color: "var(--text-secondary)",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {item.template.description}
-                      </p>
-                    )}
-                    {tags.length > 0 && (
-                      <span className="flex flex-wrap gap-1">
-                        {tags.slice(0, 5).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 rounded-full text-xs font-medium"
-                            style={{
-                              background: "color-mix(in srgb, var(--accent-primary) 14%, var(--bg-tertiary))",
-                              color: "var(--accent-primary)",
-                            }}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-          </DashboardSurface>
-        )}
-      </DashboardSection>
+        <DashboardSection
+          title="공식 프로그램"
+          description="검증된 근력 훈련 프로그램 라이브러리"
+          headerTrigger
+        >
+          <EmptyStateRows
+            when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
+            label="표시할 프로그램이 없습니다"
+          />
+          {marketListItems.length > 0 && (
+            <div className="grid gap-2">
+              {marketListItems.map((item) => (
+                <ProgramListCard
+                  key={item.key}
+                  item={item}
+                  onPress={() => {
+                    setDetailTargetId(item.template.id);
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </DashboardSection>
       )}
 
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
-          <DashboardSurface className="grid gap-2 sub-card-list">
-            {customListItems.map((item) => {
-                const badge = sourceBadgeMeta(item.source);
-                const scheduleLabel = getProgramScheduleLabel(item.template);
-                const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
-                return (
-                  <button
-                    key={item.key}
-                    type="button"
-                    className="haptic-tap rounded-xl border p-4 grid gap-2 text-left"
-                    onClick={() => {
-                      setDetailTargetId(item.template.id);
-                    }}
-                  >
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="grid gap-0.5">
-                        <strong className="text-sm font-semibold leading-snug">
-                          {formatProgramDisplayName(item.name)}
-                        </strong>
-                        {scheduleLabel && (
-                          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-                            {scheduleLabel}
-                          </span>
-                        )}
-                      </span>
-                      <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
-                    </span>
-                    {item.template.description && (
-                      <p
-                        className="text-xs leading-relaxed"
-                        style={{
-                          color: "var(--text-secondary)",
-                          display: "-webkit-box",
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: "vertical",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {item.template.description}
-                      </p>
-                    )}
-                    {tags.length > 0 && (
-                      <span className="flex flex-wrap gap-1">
-                        {tags.slice(0, 5).map((tag) => (
-                          <span
-                            key={tag}
-                            className="px-2 py-0.5 rounded-full text-xs font-medium"
-                            style={{
-                              background: "color-mix(in srgb, var(--bg-tertiary) 90%, transparent)",
-                              color: "var(--text-secondary)",
-                            }}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-          </DashboardSurface>
+          <div className="grid gap-2">
+            {customListItems.map((item) => (
+              <ProgramListCard
+                key={item.key}
+                item={item}
+                onPress={() => {
+                  setDetailTargetId(item.template.id);
+                }}
+              />
+            ))}
+          </div>
         </DashboardSection>
       ) : null}
 
       <DashboardSection title="프로그램 만들기" description="기존 프로그램 기반으로 커스터마이징하거나 직접 구성">
-        <DashboardSurface>
-          <button
-            type="button"
-            className="haptic-tap w-full rounded-xl border px-4 py-4 text-sm font-semibold text-left grid gap-0.5"
-            onClick={openCreateSheet}
-          >
-            <span>새 프로그램 만들기</span>
-            <span className="text-xs font-normal" style={{ color: "var(--text-secondary)" }}>
-              기존 프로그램 복사 또는 빈 템플릿에서 시작
-            </span>
-          </button>
-        </DashboardSurface>
+        <Card
+          as="button"
+          type="button"
+          padding="md"
+          interactive
+          className="program-store-create-card haptic-tap"
+          onClick={openCreateSheet}
+        >
+          <span className="program-store-create-card-title">새 프로그램 만들기</span>
+          <span className="program-store-create-card-description">
+            기존 프로그램 복사 또는 빈 템플릿에서 시작
+          </span>
+        </Card>
       </DashboardSection>
 
       <BottomSheet
@@ -1703,8 +1659,11 @@ export default function ProgramStorePage() {
                   .join(" + ");
 
                 return (
-                <div
+                <Card
                   key={session.id}
+                  padding="none"
+                  tone="inset"
+                  elevated={false}
                   className="program-store-session-card"
                   onDragOver={(event) => {
                     event.preventDefault();
@@ -1802,7 +1761,7 @@ export default function ProgramStorePage() {
                     </span>
                     <span>운동 추가</span>
                   </button>
-                </div>
+                </Card>
               );
             })}
               </CardContent>
@@ -1988,8 +1947,11 @@ export default function ProgramStorePage() {
               </CardHeader>
               <CardContent>
               {createDraft.sessions.map((session) => (
-                <div
+                <Card
                   key={session.id}
+                  padding="none"
+                  tone="inset"
+                  elevated={false}
                   className="program-store-session-card"
                   onDragOver={(event) => {
                     event.preventDefault();
@@ -2068,7 +2030,7 @@ export default function ProgramStorePage() {
                     </span>
                     <span>운동 추가</span>
                   </button>
-                </div>
+                </Card>
               ))}
               </CardContent>
             </Card>

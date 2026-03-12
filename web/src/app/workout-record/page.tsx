@@ -7,6 +7,7 @@ import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
+import { SessionCard } from "@/components/ui/session-card";
 import { SessionSummaryCard } from "@/components/ui/session-summary-card";
 import { AppNumberStepper, AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
 import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
@@ -466,7 +467,7 @@ function ExerciseRow({
   } as const;
 
   return (
-    <article className="workout-set-card grid gap-2">
+    <Card as="article" padding="none" className="workout-set-card grid gap-2">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <strong
@@ -616,16 +617,16 @@ function ExerciseRow({
         ) : null}
       </section>
 
-      <label className="grid gap-1">
+      <label className="workout-record-memo-field">
         <AppTextarea
           variant="workout"
-          className="min-h-20"
+          className="min-h-20 workout-record-memo-input"
           value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
           onChange={(event) => onChangeMemo(event.target.value)}
           placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "세트 메모를 입력하세요." : "세트 메모를 입력하세요."}
         />
       </label>
-    </article>
+    </Card>
   );
 }
 
@@ -1395,15 +1396,14 @@ export default function WorkoutRecordPage() {
 
           <section className="grid gap-2">
             <h2 className="ios-section-heading">지난 세션</h2>
-            <SessionSummaryCard
-              data={lastSession && lastSession.dateLabel ? {
-                badgeLabel: `${lastSession.weekLabel} · ${lastSession.sessionLabel}`,
-                dateLabel: lastSession.dateLabel,
-                totalSets: lastSession.totalSets,
-                totalVolume: lastSession.totalVolume,
-                bodyweightKg: lastSession.bodyweightKg,
-                exercises: lastSession.exercises,
-              } : null}
+            <SessionCard
+              variant="last"
+              title={lastSession?.dateLabel ? `${lastSession.weekLabel} · ${lastSession.sessionLabel}` : ""}
+              date={lastSession?.dateLabel ?? null}
+              totalSets={lastSession?.totalSets}
+              totalVolume={lastSession?.totalVolume}
+              bodyweightKg={lastSession?.bodyweightKg}
+              exercises={lastSession?.exercises?.map((ex) => ({ name: ex.name, summary: ex.bestSet })) ?? []}
             />
           </section>
 
@@ -1561,10 +1561,10 @@ export default function WorkoutRecordPage() {
                   <span>Add Exercise</span>
                 </button>
 
-                <label className="grid gap-1">
+                <label className="workout-record-memo-field">
                   <AppTextarea
                     variant="workout"
-                    className="min-h-20"
+                    className="min-h-20 workout-record-memo-input"
                     value={draft.session.note.memo}
                     onChange={(event) => {
                       const next = event.target.value;
@@ -1801,11 +1801,11 @@ export default function WorkoutRecordPage() {
             </Card>
           ) : null}
 
-          <label className="grid gap-1">
+          <label className="workout-record-memo-field">
             <span className="ui-card-label">메모</span>
             <AppTextarea
               variant="workout"
-              className="min-h-20"
+              className="min-h-20 workout-record-memo-input"
               value={addDraft.memo}
               onChange={(event) => setAddDraft((prev) => ({ ...prev, memo: event.target.value }))}
             />

@@ -10,6 +10,7 @@ import { formatSessionKeyLabel } from "@/lib/session-key";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { Card } from "@/components/ui/card";
 
 type PlannedRow = {
   exerciseName: string;
@@ -179,7 +180,7 @@ export default function WorkoutSessionDetailPage() {
   return (
     <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
 
-      <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+      <Card className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
         <a
           className="haptic-tap rounded-xl border px-4 py-2 text-center font-medium md:col-span-2"
           href={APP_ROUTES.todayLog}
@@ -201,7 +202,7 @@ export default function WorkoutSessionDetailPage() {
         >
           다시 불러오기
         </button>
-      </div>
+      </Card>
 
       <LoadingStateRows
         active={loading}
@@ -224,7 +225,7 @@ export default function WorkoutSessionDetailPage() {
 
       {item && (
         <>
-          <div className="motion-card rounded-2xl border p-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <Card className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
               <div className="ui-card-label">로그 ID</div>
               <div className="font-mono break-all">{item.id}</div>
@@ -241,9 +242,9 @@ export default function WorkoutSessionDetailPage() {
                   : "(수동 / 생성 세션 없음)"}
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="motion-card rounded-2xl border p-4 grid grid-cols-3 gap-3 text-sm">
+          <Card className="grid grid-cols-3 gap-3 text-sm">
             <div>
               <div className="ui-card-label">일치</div>
               <div className="text-lg font-semibold">{stats.matched}</div>
@@ -256,9 +257,9 @@ export default function WorkoutSessionDetailPage() {
               <div className="ui-card-label">추가</div>
               <div className="text-lg font-semibold">{stats.extra}</div>
             </div>
-          </div>
+          </Card>
 
-          <div className="motion-card rounded-2xl border p-4 space-y-3 text-sm">
+          <Card className="space-y-3 text-sm">
             <div className="ios-section-heading">자동 진행</div>
             <NoticeStateRows
               message={summarizeProgression(item.progression ?? null)}
@@ -317,9 +318,9 @@ export default function WorkoutSessionDetailPage() {
             ) : (
               <EmptyStateRows when label="이 로그에는 자동 진행 이벤트가 없습니다." />
             )}
-          </div>
+          </Card>
 
-          <div className="motion-card rounded-2xl border p-4">
+          <Card>
             <div className="ios-section-heading mb-2">계획 대비 수행</div>
             {compareRows.length === 0 ? (
               <EmptyStateRows
@@ -399,7 +400,7 @@ export default function WorkoutSessionDetailPage() {
                 </table>
               </div>
             )}
-          </div>
+          </Card>
         </>
       )}
     </div>

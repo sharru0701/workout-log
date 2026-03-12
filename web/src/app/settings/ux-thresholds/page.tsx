@@ -9,6 +9,7 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
+import { Card } from "@/components/ui/card";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -332,7 +333,7 @@ export default function SettingsUxThresholdsPage() {
 
       <section className="grid gap-2">
         <SectionHeader title="플랜별 기준치 프로필(선택)" />
-        <div className="rounded-2xl border bg-white p-4 space-y-3">
+        <Card tone="subtle" padding="md" elevated={false} className="space-y-3">
           <AppSelect
             label="플랜 선택"
             value={selectedPlanId}
@@ -411,7 +412,7 @@ export default function SettingsUxThresholdsPage() {
           <div className="text-xs text-neutral-600">
             현재 플랜: {selectedPlan ? `${selectedPlan.name} [${selectedPlan.type}]` : "선택되지 않음"}
           </div>
-        </div>
+        </Card>
         <SectionFootnote>
           플랜별 값을 저장하면 해당 플랜으로 통계 조회할 때만 임계치가 덮어써집니다.
         </SectionFootnote>

@@ -11,6 +11,7 @@ import { MetricTile, SparklineChart } from "./_components/stats-dashboard-primit
 import type { StatsFilterValues } from "./_components/stats-filters-sheet";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { Card } from "@/components/ui/card";
 
 const StatsFiltersSheet = dynamic(() => import("./_components/stats-filters-sheet"), {
   ssr: false,
@@ -1128,7 +1129,7 @@ export default function StatsPage() {
         completeLabel="통계 갱신 완료"
       />
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate" data-pull-refresh-trigger="true">
+      <Card as="section" className="space-y-3 ui-height-animate" data-pull-refresh-trigger="true">
         <div className="ios-section-heading">기본 흐름</div>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {PRESET_RANGES.map((d, idx) => (
@@ -1165,9 +1166,9 @@ export default function StatsPage() {
             ))}
           </div>
         </div>
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <Card as="section" className="space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">활성 필터</div>
@@ -1208,10 +1209,11 @@ export default function StatsPage() {
             setRefreshTick((prev) => prev + 1);
           }}
         />
-      </section>
+      </Card>
 
-      <section
-        className="motion-card rounded-2xl border p-4 space-y-3 touch-pan-y ui-height-animate"
+      <Card
+        as="section"
+        className="space-y-3 touch-pan-y ui-height-animate"
         onTouchStart={onRangeSwipeStart}
         onTouchEnd={onRangeSwipeEnd}
       >
@@ -1261,7 +1263,7 @@ export default function StatsPage() {
             ) : null}
           </div>
         </div>
-      </section>
+      </Card>
 
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <MetricTile
@@ -1294,7 +1296,7 @@ export default function StatsPage() {
         />
       </section>
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <Card as="section" className="space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">운영 마이그레이션 상태</div>
@@ -1463,9 +1465,9 @@ export default function StatsPage() {
             description="마이그레이션 텔레메트리 응답이 없어 기본 통계만 표시합니다."
           />
         ) : null}
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <Card as="section" className="space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 퍼널 (서버 집계)</div>
@@ -1529,9 +1531,9 @@ export default function StatsPage() {
             description="선택한 조건에서 UX 퍼널 데이터를 집계하지 못했습니다."
           />
         )}
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <Card as="section" className="space-y-3 ui-height-animate">
         <div className="flex items-start justify-between gap-3">
           <div>
             <div className="ui-card-label ui-card-label-caps">UX 행동 요약 (오늘/7일/14일)</div>
@@ -1668,9 +1670,9 @@ export default function StatsPage() {
             />
           )
         ) : null}
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 space-y-3 ui-height-animate">
+      <Card as="section" className="space-y-3 ui-height-animate">
         <div className="flex items-end justify-between">
           <div>
             <div className="text-sm text-neutral-600">볼륨 추세선</div>
@@ -1687,9 +1689,9 @@ export default function StatsPage() {
             description="선택한 범위에 표시할 볼륨 시계열 데이터가 없습니다."
           />
         )}
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
+      <Card as="section" className="ui-height-animate">
         <AccordionSection
           title="운동별 볼륨 분해"
           description="운동별 톤수와 세트 분포를 확인합니다."
@@ -1726,9 +1728,9 @@ export default function StatsPage() {
             />
           )}
         </AccordionSection>
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
+      <Card as="section" className="ui-height-animate">
         <AccordionSection
           title="플랜별 준수율"
           description="계획 세션 대비 완료 수를 비교합니다."
@@ -1765,9 +1767,9 @@ export default function StatsPage() {
             />
           )}
         </AccordionSection>
-      </section>
+      </Card>
 
-      <section className="motion-card rounded-2xl border p-4 ui-height-animate">
+      <Card as="section" className="ui-height-animate">
         <AccordionSection
           title="PR 추적"
           description="운동별 최고/최신 e1RM을 비교합니다."
@@ -1811,7 +1813,7 @@ export default function StatsPage() {
             />
           )}
         </AccordionSection>
-      </section>
+      </Card>
 
       {shouldRenderFiltersSheet ? (
         <StatsFiltersSheet

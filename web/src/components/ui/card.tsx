@@ -4,7 +4,7 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-type CardTone = "default" | "subtle" | "accent" | "danger";
+type CardTone = "default" | "subtle" | "inset" | "accent" | "danger";
 type CardPadding = "none" | "sm" | "md" | "lg";
 
 type CardOwnProps = {

@@ -1,5 +1,6 @@
 import { useId, type HTMLAttributes, type ReactNode } from "react";
 import Link from "next/link";
+import { Card } from "@/components/ui/card";
 import { PrimaryButton } from "@/components/ui/primary-button";
 
 type DashboardScreenProps = {
@@ -224,8 +225,11 @@ export function DashboardActionCard({
   className,
 }: DashboardActionCardProps) {
   return (
-    <Link
+    <Card
+      as={Link}
       href={href}
+      padding="none"
+      interactive
       className={cx("app-dashboard-action-card", `app-dashboard-action-card--${tone}`, className)}
       role="listitem"
     >
@@ -237,7 +241,7 @@ export function DashboardActionCard({
       {subtitle ? <div className="app-dashboard-action-subtitle">{subtitle}</div> : null}
       <p className="app-dashboard-action-description">{description}</p>
       {meta ? <div className="app-dashboard-action-meta">{meta}</div> : null}
-    </Link>
+    </Card>
   );
 }
 
@@ -264,5 +268,9 @@ export function DashboardActionSection({
 }
 
 export function DashboardSurface({ children, className, ...rest }: DashboardSurfaceProps) {
-  return <div className={cx("app-dashboard-surface", className)} {...rest}>{children}</div>;
+  return (
+    <Card padding="none" className={cx("app-dashboard-surface", className)} {...rest}>
+      {children}
+    </Card>
+  );
 }
