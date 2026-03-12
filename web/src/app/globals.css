@@ -55,6 +55,14 @@
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
   --safe-top: max(env(safe-area-inset-top), 0px);
   --safe-bottom: calc(env(safe-area-inset-bottom) + var(--space-2));
+  --app-screen-bottom-padding: var(--space-8);
+  --app-bottom-nav-top-padding: 0.5rem;
+  --app-bottom-nav-bottom-padding: calc(0.5rem + env(safe-area-inset-bottom));
+  --app-bottom-nav-reserved-space: calc(6.35rem + env(safe-area-inset-bottom));
+  --app-bottom-nav-reserved-space-compact: calc(6.28rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset: calc(5.35rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset-compact: calc(4.85rem + env(safe-area-inset-bottom));
+  --app-sync-tray-offset-narrow: calc(4.72rem + env(safe-area-inset-bottom));
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -76,6 +84,19 @@
   --app-cta-secondary-bg-hover: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-card-bg, var(--bg-surface)) 86%);
   --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)) 82%);
   --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+@media (display-mode: standalone) {
+  :root {
+    --app-screen-bottom-padding: var(--space-5);
+    --app-bottom-nav-top-padding: 0.4rem;
+    --app-bottom-nav-bottom-padding: 0rem;
+    --app-bottom-nav-reserved-space: 3.4rem;
+    --app-bottom-nav-reserved-space-compact: 3.3rem;
+    --app-sync-tray-offset: 3.8rem;
+    --app-sync-tray-offset-compact: 3.68rem;
+    --app-sync-tray-offset-narrow: 3.55rem;
+  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -1728,7 +1749,7 @@ button {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(5.35rem + env(safe-area-inset-bottom));
+  bottom: var(--app-sync-tray-offset);
   z-index: 48;
   width: min(calc(100% - 1.4rem), 560px);
   min-height: 2.5rem;
@@ -4030,14 +4051,14 @@ body {
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
   --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
   --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: calc(var(--safe-top) + 1rem) var(--space-4) calc(6.35rem + env(safe-area-inset-bottom));
+  padding: calc(var(--safe-top) + 1rem) var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .home-screen,
 .tab-screen,
 .settings-screen {
   width: min(100%, var(--layout-max-wide));
-  padding: 0 0 var(--space-8);
+  padding: 0 0 var(--app-screen-bottom-padding);
   gap: var(--gap-page);
 }
 
@@ -4713,7 +4734,7 @@ textarea::placeholder {
     --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
     padding-top: calc(var(--safe-top) + 1rem);
-    padding-bottom: calc(6.28rem + env(safe-area-inset-bottom));
+    padding-bottom: var(--app-bottom-nav-reserved-space-compact);
   }
 
   .app-top-nav {
@@ -4877,7 +4898,7 @@ textarea::placeholder {
   .app-sync-tray {
     width: min(calc(100% - 1rem), var(--layout-max));
     min-height: 2.25rem;
-    bottom: calc(4.85rem + env(safe-area-inset-bottom));
+    bottom: var(--app-sync-tray-offset-compact);
   }
 }
 
@@ -4932,7 +4953,7 @@ textarea::placeholder {
   }
 
   .app-sync-tray {
-    bottom: calc(4.72rem + env(safe-area-inset-bottom));
+    bottom: var(--app-sync-tray-offset-narrow);
   }
 }
 
@@ -5576,7 +5597,7 @@ html {
   width: 100%;
   --bottom-nav-track-padding: 1.8rem;
   --bottom-nav-track-gap: 0.32rem;
-  padding: 0.5rem var(--bottom-nav-track-padding) calc(0.5rem + env(safe-area-inset-bottom));
+  padding: var(--app-bottom-nav-top-padding) var(--bottom-nav-track-padding) var(--app-bottom-nav-bottom-padding);
   border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   gap: var(--bottom-nav-track-gap);
   border: 0;
@@ -5593,8 +5614,8 @@ html {
   content: "";
   position: absolute;
   inset-inline-start: 0;
-  top: 0.5rem;
-  bottom: calc(0.5rem + env(safe-area-inset-bottom));
+  top: var(--app-bottom-nav-top-padding);
+  bottom: var(--app-bottom-nav-bottom-padding);
   width: var(--bottom-nav-indicator-width, 0px);
   border-radius: var(--radius-pill);
   background: var(--bottom-nav-active-bg, color-mix(in srgb, var(--color-fill-elevated, var(--bg-elevated)) 70%, var(--surface-card-bg, var(--color-fill-surface, var(--bg-surface))) 30%));
