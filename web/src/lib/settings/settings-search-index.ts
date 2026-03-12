@@ -256,12 +256,4 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     keywords: ["ux", "threshold", "baseline", "전환율", "임계치", "compare"],
     description: "UX 퍼널/행동 기준치 조정",
   },
-  {
-    key: "offline.help",
-    title: "오프라인 도움말",
-    path: "/offline",
-    section: "시스템",
-    keywords: ["offline", "queue", "sync", "복구"],
-    description: "오프라인 저장/복구 안내",
-  },
 ];

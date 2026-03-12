@@ -19,5 +19,4 @@ export const APP_ROUTES = {
   statsDashboard: "/stats/dashboard",
   stats1rm: "/stats-1rm",
   statsFilters: "/stats/filters",
-  offline: "/offline",
 } as const;

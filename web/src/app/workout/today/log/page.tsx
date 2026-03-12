@@ -13,14 +13,27 @@ import { progressionTone, summarizeProgression, type ProgressionSummaryPayload }
 import { buildSessionKey, formatSessionKeyLabel, parseSessionKey } from "@/lib/session-key";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import {
-  enqueueWorkoutLog,
-  getPendingWorkoutLogCount,
-  isLikelyNetworkError,
-  offlineQueueUpdateEventName,
-  syncPendingWorkoutLogsViaApi,
-  type WorkoutLogRequest,
-} from "@/lib/offlineLogQueue";
+type WorkoutLogRequest = {
+  planId: string;
+  generatedSessionId: string | null;
+  notes: string;
+  sets: {
+    exerciseName: string;
+    setNumber: number;
+    reps: number;
+    weightKg: number;
+    rpe: number;
+    isExtra: boolean;
+    isPlanned: boolean;
+    completed: boolean;
+    exerciseId: string | null;
+    meta: {
+      planned: boolean;
+      completed: boolean;
+      plannedRef: SetRow["plannedRef"] | null;
+    };
+  }[];
+};
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import {
   getUnsyncedWorkoutUxEvents,
@@ -220,11 +233,6 @@ export default function WorkoutTodayPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [progressionSummary, setProgressionSummary] = useState<ProgressionSummaryPayload | null>(null);
   const [lastSavedLogId, setLastSavedLogId] = useState<string | null>(null);
-  const [isOfflineMode, setIsOfflineMode] = useState(false);
-  const [pendingSyncCount, setPendingSyncCount] = useState(0);
-  const [isSyncingPending, setIsSyncingPending] = useState(false);
-  const [syncNotice, setSyncNotice] = useState<string | null>(null);
-
   const [sets, setSets] = useState<SetRow[]>([]);
   const [selectedSetIdx, setSelectedSetIdx] = useState<number | null>(null);
   const [blockTarget, setBlockTarget] = useState("BENCH");
@@ -245,7 +253,6 @@ export default function WorkoutTodayPage() {
   const [pendingFocus, setPendingFocus] = useState<{ row: number; col: number } | null>(null);
   const setInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const setsLengthRef = useRef(0);
-  const pendingSyncInFlight = useRef(false);
   const uxSyncInFlight = useRef(false);
   const uxSyncControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
@@ -418,41 +425,6 @@ export default function WorkoutTodayPage() {
     }
   }
 
-  const refreshPendingSyncCount = () => {
-    if (typeof window === "undefined") return;
-    setPendingSyncCount(getPendingWorkoutLogCount());
-  };
-
-  async function syncPendingQueuedLogs() {
-    if (typeof window === "undefined") return;
-    if (!navigator.onLine) return;
-    if (pendingSyncInFlight.current) return;
-    if (getPendingWorkoutLogCount() === 0) {
-      setPendingSyncCount(0);
-      setSyncNotice(null);
-      return;
-    }
-
-    pendingSyncInFlight.current = true;
-    setIsSyncingPending(true);
-    setSyncNotice("대기 로그 동기화 중...");
-    try {
-      const result = await syncPendingWorkoutLogsViaApi();
-      setPendingSyncCount(result.remaining);
-      if (result.synced > 0) {
-        if (result.lastSyncedLogId) setLastSavedLogId(result.lastSyncedLogId);
-        setSyncNotice(`${result.synced}건 동기화 완료`);
-      } else if (result.failed > 0) {
-        setSyncNotice(`동기화 대기: ${result.remaining}`);
-      } else {
-        setSyncNotice(null);
-      }
-    } finally {
-      pendingSyncInFlight.current = false;
-      setIsSyncingPending(false);
-    }
-  }
-
   const refreshPageData = useCallback(async () => {
     setRefreshTick((prev) => prev + 1);
   }, [refreshTick]);
@@ -504,44 +476,17 @@ export default function WorkoutTodayPage() {
     if (typeof window === "undefined") return;
 
     const handleOnline = () => {
-      setIsOfflineMode(false);
-      setSyncNotice(null);
-      refreshPendingSyncCount();
-      void syncPendingQueuedLogs();
       void syncUxEventsWithServer("online");
     };
 
-    const handleOffline = () => {
-      setIsOfflineMode(true);
-      setSyncNotice("오프라인 모드");
-      refreshPendingSyncCount();
-    };
-
-    const handleStorage = () => {
-      refreshPendingSyncCount();
-    };
-
-    const handleQueueUpdate = () => {
-      refreshPendingSyncCount();
-    };
-
-    setIsOfflineMode(!navigator.onLine);
-    refreshPendingSyncCount();
     if (navigator.onLine) {
-      void syncPendingQueuedLogs();
       void syncUxEventsWithServer("online");
     }
 
     window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-    window.addEventListener("storage", handleStorage);
-    window.addEventListener(offlineQueueUpdateEventName(), handleQueueUpdate);
 
     return () => {
       window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener(offlineQueueUpdateEventName(), handleQueueUpdate);
     };
   }, []);
 
@@ -1156,8 +1101,7 @@ export default function WorkoutTodayPage() {
               key,
               await resolveExerciseId(s.exerciseName, { allowRemoteLookup }),
             );
-          } catch (error) {
-            if (!isLikelyNetworkError(error)) throw error;
+          } catch {
             exerciseIdCache.set(key, null);
           }
         }
@@ -1197,51 +1141,20 @@ export default function WorkoutTodayPage() {
     setError(null);
     setProgressionSummary(null);
     setLastSavedLogId(null);
-    setSyncNotice(null);
     trackEvent("workout_save_clicked", { setCount: sets.length });
 
     try {
-      const isOnline = typeof window === "undefined" ? true : navigator.onLine;
-      const payload = await buildLogPayload({ allowRemoteLookup: isOnline });
-
-      if (typeof window !== "undefined" && !isOnline) {
-        enqueueWorkoutLog(payload);
-        refreshPendingSyncCount();
-        setIsOfflineMode(true);
-        setSuccess("오프라인으로 저장했습니다. 온라인 복귀 시 자동 동기화됩니다.");
-        setProgressionSummary(null);
-        setSyncNotice("동기화 대기");
-        trackEvent("workout_save_succeeded", { strategy: "offline-queued", setCount: payload.sets.length });
-        return;
-      }
-
-      try {
-        const saved = await saveLog(payload);
-        const log = saved.log;
-        setLastSavedLogId(log.id);
-        setSuccess(`로그를 저장했습니다: ${log.id}`);
-        setProgressionSummary(saved.progression ?? null);
-        setIsOfflineMode(false);
-        refreshPendingSyncCount();
-        void syncPendingQueuedLogs();
-        trackEvent("workout_save_succeeded", {
-          strategy: "online",
-          setCount: payload.sets.length,
-          hasGeneratedSession: Boolean(derivedGeneratedId),
-        });
-      } catch (error) {
-        if (isLikelyNetworkError(error)) {
-          enqueueWorkoutLog(payload);
-          refreshPendingSyncCount();
-          setIsOfflineMode(true);
-          setSuccess("네트워크가 불안정해 오프라인 저장 후 대기열에 추가했습니다.");
-          setProgressionSummary(null);
-          setSyncNotice("동기화 대기");
-          trackEvent("workout_save_succeeded", { strategy: "fallback-queued", setCount: payload.sets.length });
-          return;
-        }
-        throw error;
-      }
+      const payload = await buildLogPayload();
+      const saved = await saveLog(payload);
+      const log = saved.log;
+      setLastSavedLogId(log.id);
+      setSuccess(`로그를 저장했습니다: ${log.id}`);
+      setProgressionSummary(saved.progression ?? null);
+      trackEvent("workout_save_succeeded", {
+        strategy: "online",
+        setCount: payload.sets.length,
+        hasGeneratedSession: Boolean(derivedGeneratedId),
+      });
     } catch (e: any) {
       setError(e?.message ?? "로그 저장에 실패했습니다.");
       trackEvent("workout_save_failed");
@@ -1396,26 +1309,6 @@ export default function WorkoutTodayPage() {
 
       <Card className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs">
-          <span
-            className={`ui-badge ${isOfflineMode ? "ui-badge-warning" : "ui-badge-success"}`}
-          >
-            {isOfflineMode ? "오프라인" : "온라인"}
-          </span>
-          {pendingSyncCount > 0 && (
-            <span className="ui-badge ui-badge-info">
-              동기화 대기: {pendingSyncCount}
-            </span>
-          )}
-          {isSyncingPending && (
-            <span className="ui-badge ui-badge-neutral">
-              동기화 중...
-            </span>
-          )}
-          {!isSyncingPending && syncNotice && (
-            <span className="ui-badge ui-badge-neutral">
-              {syncNotice}
-            </span>
-          )}
           {isUxSyncing && (
             <span className="ui-badge ui-badge-neutral">
               행동 로그 동기화 중...
@@ -1426,30 +1319,15 @@ export default function WorkoutTodayPage() {
               {uxSyncNotice}
             </span>
           )}
-          {!isOfflineMode && pendingSyncCount > 0 && (
-            <button
-              className="haptic-tap rounded-full border px-2.5 py-1 font-medium"
-              onClick={() => {
-                setError(null);
-                setSuccess(null);
-                void syncPendingQueuedLogs();
-              }}
-              disabled={isSyncingPending}
-            >
-              지금 동기화
-            </button>
-          )}
-          {!isOfflineMode && (
-            <button
-              className="haptic-tap rounded-full border px-2.5 py-1 font-medium"
-              onClick={() => {
-                void syncUxEventsWithServer("manual");
-              }}
-              disabled={isUxSyncing}
-            >
-              행동 로그 동기화
-            </button>
-          )}
+          <button
+            className="haptic-tap rounded-full border px-2.5 py-1 font-medium"
+            onClick={() => {
+              void syncUxEventsWithServer("manual");
+            }}
+            disabled={isUxSyncing}
+          >
+            행동 로그 동기화
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -2030,11 +1908,7 @@ export default function WorkoutTodayPage() {
           onClick={handleSaveLog}
           disabled={!planId || sets.length === 0}
         >
-          {isOfflineMode
-            ? `오프라인 저장${pendingSyncCount > 0 ? ` (${pendingSyncCount}건 대기)` : ""}`
-            : pendingSyncCount > 0
-              ? `로그 저장 (${pendingSyncCount}건 대기)`
-              : "로그 저장"}
+          로그 저장
         </PrimaryButton>
       </div>
 

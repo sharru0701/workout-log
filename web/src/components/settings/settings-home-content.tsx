@@ -52,14 +52,6 @@ const rows = [
     tone: "tint" as const,
   },
   {
-    href: "/settings/offline-help",
-    label: "오프라인 도움말",
-    subtitle: "Offline Help",
-    description: "오프라인 동작 가이드",
-    symbol: "HP",
-    tone: "orange" as const,
-  },
-  {
     href: "/settings/about",
     label: "앱 정보",
     subtitle: "App Info",
