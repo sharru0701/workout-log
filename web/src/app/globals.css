@@ -89,12 +89,14 @@
 :root[data-standalone-pwa="true"] {
   --app-screen-bottom-padding: var(--space-5);
   --app-bottom-nav-top-padding: 0.4rem;
-  --app-bottom-nav-bottom-padding: env(safe-area-inset-bottom);
-  --app-bottom-nav-reserved-space: calc(3.4rem + env(safe-area-inset-bottom));
-  --app-bottom-nav-reserved-space-compact: calc(3.3rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset: calc(3.8rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset-compact: calc(3.68rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset-narrow: calc(3.55rem + env(safe-area-inset-bottom));
+  /* Use max() so that if env() returns 0 (iOS 26 standalone quirk), the
+     JS-injected --detected-safe-area-bottom is used as fallback. */
+  --app-bottom-nav-bottom-padding: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
+  --app-bottom-nav-reserved-space: calc(3.4rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-bottom-nav-reserved-space-compact: calc(3.3rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-sync-tray-offset: calc(3.8rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-sync-tray-offset-compact: calc(3.68rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-sync-tray-offset-narrow: calc(3.55rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
 }
 
 /* CSS-native PWA detection: applies immediately without waiting for JS */
@@ -102,12 +104,12 @@
   :root {
     --app-screen-bottom-padding: var(--space-5);
     --app-bottom-nav-top-padding: 0.4rem;
-    --app-bottom-nav-bottom-padding: env(safe-area-inset-bottom);
-    --app-bottom-nav-reserved-space: calc(3.4rem + env(safe-area-inset-bottom));
-    --app-bottom-nav-reserved-space-compact: calc(3.3rem + env(safe-area-inset-bottom));
-    --app-sync-tray-offset: calc(3.8rem + env(safe-area-inset-bottom));
-    --app-sync-tray-offset-compact: calc(3.68rem + env(safe-area-inset-bottom));
-    --app-sync-tray-offset-narrow: calc(3.55rem + env(safe-area-inset-bottom));
+    --app-bottom-nav-bottom-padding: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
+    --app-bottom-nav-reserved-space: calc(3.4rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-bottom-nav-reserved-space-compact: calc(3.3rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-sync-tray-offset: calc(3.8rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-sync-tray-offset-compact: calc(3.68rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-sync-tray-offset-narrow: calc(3.55rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
   }
   /* Safe area zone below the nav bar shows html background — match nav bar dark color */
   html {
@@ -5677,14 +5679,13 @@ html {
 }
 
 :root[data-standalone-pwa="true"] .app-bottom-nav::after {
-  /* Reposition INSIDE nav bar at bottom (safe area padding zone), not below it.
-     With viewport-fit=cover, bottom:0 is the physical screen edge so
-     extending further down is off-screen and useless. Instead fill the
-     safe-area padding zone with a solid (non-glass) background so it looks
-     like a natural continuation of the nav bar rather than blank space. */
+  /* Positioned INSIDE the nav bar at its bottom edge (the safe-area padding
+     zone).  Uses max() so it works whether env() returns the real value or 0.
+     --detected-safe-area-bottom is injected by JS (measureAndInjectSafeAreaBottom)
+     as a fallback for iOS 26+ where env() may return 0 in standalone mode. */
   top: auto;
   bottom: 0;
-  height: env(safe-area-inset-bottom);
+  height: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
   background: rgba(13, 17, 25, 0.99);
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
@@ -5694,7 +5695,7 @@ html {
   .app-bottom-nav::after {
     top: auto;
     bottom: 0;
-    height: env(safe-area-inset-bottom);
+    height: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
     background: rgba(13, 17, 25, 0.99);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
