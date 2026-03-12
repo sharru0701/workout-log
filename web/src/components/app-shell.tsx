@@ -16,7 +16,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </div>
         </main>
         <SyncStatusTray />
-        <div className="app-bottom-nav-safe-fill" aria-hidden="true" />
         <BottomNav />
       </div>
     </AppDialogProvider>
