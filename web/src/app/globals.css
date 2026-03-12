@@ -109,6 +109,16 @@
     --app-sync-tray-offset-compact: calc(3.68rem + env(safe-area-inset-bottom));
     --app-sync-tray-offset-narrow: calc(3.55rem + env(safe-area-inset-bottom));
   }
+  /* Safe area zone below the nav bar shows html background — match nav bar dark color */
+  html {
+    background: #0d1119;
+  }
+}
+
+@media (display-mode: standalone) and (prefers-color-scheme: light) {
+  html {
+    background: #ffffff;
+  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -5626,6 +5636,12 @@ html {
   overflow: visible;
 }
 
+@media (display-mode: standalone) {
+  .app-bottom-nav {
+    overflow: visible;
+  }
+}
+
 .app-bottom-nav::before {
   content: "";
   position: absolute;
@@ -5661,12 +5677,12 @@ html {
 }
 
 :root[data-standalone-pwa="true"] .app-bottom-nav::after {
-  height: 0;
+  height: calc(env(safe-area-inset-bottom) + 1px);
 }
 
 @media (display-mode: standalone) {
   .app-bottom-nav::after {
-    height: 0;
+    height: calc(env(safe-area-inset-bottom) + 1px);
   }
 }
 
