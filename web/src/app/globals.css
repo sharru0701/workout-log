@@ -5593,7 +5593,8 @@ html {
   content: "";
   position: absolute;
   inset-inline-start: 0;
-  inset-block: 0.5rem;
+  top: 0.5rem;
+  bottom: calc(0.5rem + env(safe-area-inset-bottom));
   width: var(--bottom-nav-indicator-width, 0px);
   border-radius: var(--radius-pill);
   background: var(--bottom-nav-active-bg, color-mix(in srgb, var(--color-fill-elevated, var(--bg-elevated)) 70%, var(--surface-card-bg, var(--color-fill-surface, var(--bg-surface))) 30%));
@@ -5614,7 +5615,7 @@ html {
   z-index: 1;
   display: flex;
   min-width: 0;
-  min-height: 4rem;
+  min-height: 2.78rem;
   flex-direction: column;
   align-items: center;
   justify-content: center;
