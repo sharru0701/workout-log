@@ -28,7 +28,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     title: "Workout Log",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
   icons: {
     icon: [
@@ -44,6 +44,7 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: viewportThemeColor,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
