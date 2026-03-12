@@ -54,15 +54,15 @@
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
   --safe-top: max(env(safe-area-inset-top), 0px);
-  --safe-bottom: calc(env(safe-area-inset-bottom) + var(--space-2));
+  --safe-bottom: var(--space-2);
   --app-screen-bottom-padding: var(--space-8);
   --app-bottom-nav-top-padding: 0.5rem;
-  --app-bottom-nav-bottom-padding: calc(0.5rem + env(safe-area-inset-bottom));
-  --app-bottom-nav-reserved-space: calc(6.35rem + env(safe-area-inset-bottom));
-  --app-bottom-nav-reserved-space-compact: calc(6.28rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset: calc(5.35rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset-compact: calc(4.85rem + env(safe-area-inset-bottom));
-  --app-sync-tray-offset-narrow: calc(4.72rem + env(safe-area-inset-bottom));
+  --app-bottom-nav-bottom-padding: 0.5rem;
+  --app-bottom-nav-reserved-space: 6.35rem;
+  --app-bottom-nav-reserved-space-compact: 6.28rem;
+  --app-sync-tray-offset: 5.35rem;
+  --app-sync-tray-offset-compact: 4.85rem;
+  --app-sync-tray-offset-narrow: 4.72rem;
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -86,42 +86,6 @@
   --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
-:root[data-standalone-pwa="true"] {
-  --app-screen-bottom-padding: var(--space-5);
-  --app-bottom-nav-top-padding: 0.4rem;
-  /* Use max() so that if env() returns 0 (iOS 26 standalone quirk), the
-     JS-injected --detected-safe-area-bottom is used as fallback. */
-  --app-bottom-nav-bottom-padding: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
-  --app-bottom-nav-reserved-space: calc(3.4rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-bottom-nav-reserved-space-compact: calc(3.3rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-sync-tray-offset: calc(3.8rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-sync-tray-offset-compact: calc(3.68rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-sync-tray-offset-narrow: calc(3.55rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-}
-
-/* CSS-native PWA detection: applies immediately without waiting for JS */
-@media (display-mode: standalone) {
-  :root {
-    --app-screen-bottom-padding: var(--space-5);
-    --app-bottom-nav-top-padding: 0.4rem;
-    --app-bottom-nav-bottom-padding: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
-    --app-bottom-nav-reserved-space: calc(3.4rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-    --app-bottom-nav-reserved-space-compact: calc(3.3rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-    --app-sync-tray-offset: calc(3.8rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-    --app-sync-tray-offset-compact: calc(3.68rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-    --app-sync-tray-offset-narrow: calc(3.55rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  }
-  /* Safe area zone below the nav bar shows html background — match nav bar dark color */
-  html {
-    background: #0d1119;
-  }
-}
-
-@media (display-mode: standalone) and (prefers-color-scheme: light) {
-  html {
-    background: #ffffff;
-  }
-}
 
 @media (prefers-color-scheme: light) {
   :root {
@@ -5634,15 +5598,6 @@ html {
   isolation: isolate;
 }
 
-:root[data-standalone-pwa="true"] .app-bottom-nav {
-  overflow: visible;
-}
-
-@media (display-mode: standalone) {
-  .app-bottom-nav {
-    overflow: visible;
-  }
-}
 
 .app-bottom-nav::before {
   content: "";
@@ -5665,54 +5620,6 @@ html {
   opacity: var(--bottom-nav-indicator-opacity, 0);
 }
 
-.app-bottom-nav::after {
-  content: "";
-  position: absolute;
-  inset-inline: 0;
-  top: calc(100% - 1px);
-  height: 0;
-  pointer-events: none;
-  background: inherit;
-  -webkit-backdrop-filter: inherit;
-  backdrop-filter: inherit;
-  z-index: 0;
-}
-
-:root[data-standalone-pwa="true"] .app-bottom-nav::after {
-  /* Positioned INSIDE the nav bar at its bottom edge (the safe-area padding
-     zone).  Uses max() so it works whether env() returns the real value or 0.
-     --detected-safe-area-bottom is injected by JS (measureAndInjectSafeAreaBottom)
-     as a fallback for iOS 26+ where env() may return 0 in standalone mode. */
-  top: auto;
-  bottom: 0;
-  height: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
-  background: rgba(13, 17, 25, 0.99);
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-}
-
-@media (display-mode: standalone) {
-  .app-bottom-nav::after {
-    top: auto;
-    bottom: 0;
-    height: max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px));
-    background: rgba(13, 17, 25, 0.99);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-}
-
-@media (display-mode: standalone) and (prefers-color-scheme: light) {
-  .app-bottom-nav::after {
-    background: rgba(255, 255, 255, 0.99);
-  }
-}
-
-@media (prefers-color-scheme: light) {
-  :root[data-standalone-pwa="true"] .app-bottom-nav::after {
-    background: rgba(255, 255, 255, 0.99);
-  }
-}
 
 .app-bottom-nav-tab {
   position: relative;

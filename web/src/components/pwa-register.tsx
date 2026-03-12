@@ -35,55 +35,6 @@ function syncStandaloneDocumentState(isStandalone: boolean) {
   document.documentElement.setAttribute("data-standalone-pwa", isStandalone ? "true" : "false");
 }
 
-/**
- * Measures the actual bottom safe-area gap that the browser/OS reserves.
- *
- * Two approaches in order of preference:
- *  1. CSS env(safe-area-inset-bottom) – works when viewport-fit=cover is
- *     honoured (standard behaviour).
- *  2. Geometric fallback – if env() returns 0, compare screen.height with the
- *     sum of (measured top inset + window.innerHeight) to find the gap that
- *     the OS is carving out below the viewport.  This handles iOS 26 / any
- *     engine that doesn't expose env() in standalone mode.
- *
- * The result is written to --detected-safe-area-bottom on <html> so CSS can
- * reference it as a guaranteed-non-zero value when env() fails.
- */
-function measureAndInjectSafeAreaBottom() {
-  if (typeof window === "undefined" || typeof document === "undefined") return;
-
-  const probe = (prop: string) => {
-    const el = document.createElement("div");
-    el.style.cssText = `position:fixed;top:0;left:0;height:${prop};visibility:hidden;pointer-events:none;`;
-    document.documentElement.appendChild(el);
-    const h = parseFloat(getComputedStyle(el).height) || 0;
-    el.remove();
-    return h;
-  };
-
-  const envBottom = probe("env(safe-area-inset-bottom)");
-
-  let safeBottom = envBottom;
-  if (safeBottom === 0) {
-    // env() returned 0 – try geometric measurement.
-    const envTop = probe("env(safe-area-inset-top)");
-    const gap = window.screen.height - envTop - window.innerHeight;
-    if (gap > 0) safeBottom = gap;
-  }
-
-  if (safeBottom > 0) {
-    document.documentElement.style.setProperty(
-      "--detected-safe-area-bottom",
-      `${Math.round(safeBottom)}px`,
-    );
-  }
-
-  // Ensure the html background colour matches the nav bar so the OS-rendered
-  // safe-area zone (outside the CSS viewport) is seamless.
-  const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.style.backgroundColor = isDark ? "#0d1119" : "#ffffff";
-}
-
 function isIosSafariBrowser() {
   if (typeof window === "undefined") return false;
   const ua = window.navigator.userAgent;
@@ -189,7 +140,6 @@ export function PwaRegister() {
       const nextStandalone = isStandaloneMode();
       setIsStandalone(nextStandalone);
       syncStandaloneDocumentState(nextStandalone);
-      if (nextStandalone) measureAndInjectSafeAreaBottom();
     };
 
     syncMode();
