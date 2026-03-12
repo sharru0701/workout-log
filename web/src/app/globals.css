@@ -5589,6 +5589,19 @@ html {
   isolation: isolate;
 }
 
+.app-bottom-nav-safe-fill {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-bottom);
+  z-index: 49;
+  pointer-events: none;
+  background: rgba(13,17,25,0.88);
+  -webkit-backdrop-filter: blur(40px) saturate(200%);
+  backdrop-filter: blur(40px) saturate(200%);
+}
+
 .app-bottom-nav::before {
   content: "";
   position: absolute;
@@ -7856,6 +7869,10 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 @media (prefers-color-scheme: light) {
   .app-bottom-nav {
     border-color: var(--glass-border, rgba(0,0,0,0.075));
+    background: var(--glass-bg, rgba(255,255,255,0.72));
+  }
+
+  .app-bottom-nav-safe-fill {
     background: var(--glass-bg, rgba(255,255,255,0.72));
   }
 
