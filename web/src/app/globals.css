@@ -97,6 +97,20 @@
   --app-sync-tray-offset-narrow: 3.55rem;
 }
 
+/* CSS-native PWA detection: applies immediately without waiting for JS */
+@media (display-mode: standalone) {
+  :root {
+    --app-screen-bottom-padding: var(--space-5);
+    --app-bottom-nav-top-padding: 0.4rem;
+    --app-bottom-nav-bottom-padding: 0rem;
+    --app-bottom-nav-reserved-space: 3.4rem;
+    --app-bottom-nav-reserved-space-compact: 3.3rem;
+    --app-sync-tray-offset: 3.8rem;
+    --app-sync-tray-offset-compact: 3.68rem;
+    --app-sync-tray-offset-narrow: 3.55rem;
+  }
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color-scheme: light;
