@@ -17,7 +17,6 @@ function modalTitleFromPathname(pathname: string) {
   if (pathname.startsWith("/settings/exercise-management")) return "운동종목 관리";
   if (pathname.startsWith("/settings/data-export")) return "데이터 Export";
   if (pathname.startsWith("/settings/data")) return "데이터 관리";
-  if (pathname.startsWith("/settings/offline-help")) return "오프라인 도움말";
   if (pathname.startsWith("/settings/about")) return "앱 정보";
   if (pathname.startsWith("/settings/save-policy")) return "저장 정책";
   if (pathname.startsWith("/settings/selection-template")) return "선택 템플릿";
