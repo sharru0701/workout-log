@@ -50,7 +50,6 @@ jobs:
       - name: Install Playwright browsers
         run: |
           pnpm exec playwright install --with-deps chromium
-          pnpm exec playwright install chromium-headless-shell
 
       - name: Run iOS Settings compliance gate
         env:
