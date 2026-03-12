@@ -30,6 +30,11 @@ function isStandaloneMode() {
   return window.matchMedia("(display-mode: standalone)").matches || nav.standalone === true;
 }
 
+function syncStandaloneDocumentState(isStandalone: boolean) {
+  if (typeof document === "undefined") return;
+  document.documentElement.setAttribute("data-standalone-pwa", isStandalone ? "true" : "false");
+}
+
 function isIosSafariBrowser() {
   if (typeof window === "undefined") return false;
   const ua = window.navigator.userAgent;
@@ -126,6 +131,33 @@ export function PwaRegister() {
   const observedRegistrationsRef = useRef<WeakSet<ServiceWorkerRegistration>>(new WeakSet());
   const updateCheckInFlightRef = useRef<Promise<void> | null>(null);
   const availableBuildIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const media = window.matchMedia("(display-mode: standalone)");
+    const syncMode = () => {
+      const nextStandalone = isStandaloneMode();
+      setIsStandalone(nextStandalone);
+      syncStandaloneDocumentState(nextStandalone);
+    };
+
+    syncMode();
+    if (typeof media.addEventListener === "function") {
+      media.addEventListener("change", syncMode);
+    } else if (typeof media.addListener === "function") {
+      media.addListener(syncMode);
+    }
+
+    return () => {
+      if (typeof media.removeEventListener === "function") {
+        media.removeEventListener("change", syncMode);
+      } else if (typeof media.removeListener === "function") {
+        media.removeListener(syncMode);
+      }
+      syncStandaloneDocumentState(false);
+    };
+  }, []);
 
   const setAvailableUpdateBuild = useCallback((buildId: string | null) => {
     availableBuildIdRef.current = buildId;
@@ -244,15 +276,6 @@ export function PwaRegister() {
     if (disableServiceWorker) return;
     if (typeof window === "undefined") return;
 
-    const media = window.matchMedia("(display-mode: standalone)");
-    const syncMode = () => setIsStandalone(isStandaloneMode());
-    syncMode();
-    if (typeof media.addEventListener === "function") {
-      media.addEventListener("change", syncMode);
-    } else if (typeof media.addListener === "function") {
-      media.addListener(syncMode);
-    }
-
     const onBeforeInstallPrompt = (event: Event) => {
       event.preventDefault();
       if (isStandaloneMode()) return;
@@ -262,6 +285,7 @@ export function PwaRegister() {
     const onAppInstalled = () => {
       setDeferredPrompt(null);
       setIsStandalone(true);
+      syncStandaloneDocumentState(true);
     };
 
     if (canUseInstallPrompt) {
@@ -270,11 +294,6 @@ export function PwaRegister() {
     }
 
     return () => {
-      if (typeof media.removeEventListener === "function") {
-        media.removeEventListener("change", syncMode);
-      } else if (typeof media.removeListener === "function") {
-        media.removeListener(syncMode);
-      }
       if (canUseInstallPrompt) {
         window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
         window.removeEventListener("appinstalled", onAppInstalled);
