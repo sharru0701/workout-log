@@ -499,6 +499,18 @@ export default function CalendarPage() {
     return map;
   }, [recentSessions]);
 
+  // For wave-mode sessions: maps generatedSessionId → the date it was actually logged
+  const sessionLoggedDateMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const log of allPlanLogs) {
+      if (log.generatedSessionId) {
+        const logDate = dateOnlyInTimezone(new Date(log.performedAt), timezone);
+        map.set(log.generatedSessionId, logDate);
+      }
+    }
+    return map;
+  }, [allPlanLogs, timezone]);
+
   // Dates that have actual logged workouts (used for dot indicators)
   const logDates = useMemo(() => {
     const set = new Set<string>();
@@ -519,7 +531,13 @@ export default function CalendarPage() {
     const ctx = computePlanContextForDate(selectedPlan, dateOnly);
     const mode = String(selectedPlan?.params?.sessionKeyMode ?? "").toUpperCase();
     if (mode === "DATE") return generatedByDate.get(dateOnly) ?? null;
-    return ctx ? (generatedByKey.get(ctx.sessionKey) ?? null) : null;
+    if (!ctx) return null;
+    const session = generatedByKey.get(ctx.sessionKey) ?? null;
+    if (!session) return null;
+    // Wave mode: if this session was already logged on a different date, don't show it here
+    const loggedDate = sessionLoggedDateMap.get(session.id);
+    if (loggedDate && loggedDate !== dateOnly) return null;
+    return session;
   }
 
   const [animKey, setAnimKey] = useState(0);
