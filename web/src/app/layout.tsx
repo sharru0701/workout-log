@@ -3,7 +3,6 @@ import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
-import { PwaRegister } from "@/components/pwa-register";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { viewportThemeColor } from "@/lib/theme";
 
@@ -24,22 +23,6 @@ const appMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Workout Log",
   description: "Workout tracking",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    title: "Workout Log",
-    statusBarStyle: "black-translucent",
-  },
-  icons: {
-    icon: [
-      { url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
-    ],
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
-  },
-  other: {
-    "mobile-web-app-capable": "yes",
-  },
 };
 
 export const viewport: Viewport = {
@@ -56,7 +39,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${appSans.variable} ${appMono.variable} antialiased`}>
         <AppLaunchSplash />
-        <PwaRegister />
         <ThemePreferenceSync />
         <AppShell>{children}</AppShell>
       </body>

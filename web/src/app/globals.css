@@ -60,9 +60,6 @@
   --app-bottom-nav-bottom-padding: 0.5rem;
   --app-bottom-nav-reserved-space: 6.35rem;
   --app-bottom-nav-reserved-space-compact: 6.28rem;
-  --app-sync-tray-offset: 5.35rem;
-  --app-sync-tray-offset-compact: 4.85rem;
-  --app-sync-tray-offset-narrow: 4.72rem;
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -1731,164 +1728,6 @@ button {
   letter-spacing: 0.01em;
   color: var(--text-primary);
   background: color-mix(in srgb, var(--accent) 45%, var(--bg-elevated));
-}
-
-.app-sync-tray {
-  position: fixed;
-  left: 50%;
-  transform: translateX(-50%);
-  bottom: var(--app-sync-tray-offset);
-  z-index: 48;
-  width: min(calc(100% - 1.4rem), 560px);
-  min-height: 2.5rem;
-  padding: 0.55rem 0.65rem 0.55rem 0.75rem;
-  border-radius: 999px;
-  border: 1px solid transparent;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
-  box-shadow: var(--shadow-soft);
-  animation: ui-card-in var(--duration-normal) var(--motion-ease);
-}
-
-.app-sync-dot {
-  width: 0.56rem;
-  height: 0.56rem;
-  border-radius: 999px;
-  flex: 0 0 auto;
-}
-
-.app-sync-dot.is-online {
-  background: #31c791;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #31c791 22%, transparent);
-}
-
-.app-sync-dot.is-offline {
-  background: #ff8f3f;
-  box-shadow: 0 0 0 3px color-mix(in srgb, #ff8f3f 22%, transparent);
-}
-
-.app-sync-text {
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  letter-spacing: 0.01em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.app-sync-action {
-  margin-left: auto;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  min-height: 1.85rem;
-  padding: 0 0.72rem;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--accent) 25%, var(--bg-elevated));
-  box-shadow: var(--shadow-soft);
-}
-
-.app-sync-action:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.app-pwa-stack {
-  position: fixed;
-  left: 50%;
-  top: max(0.7rem, env(safe-area-inset-top));
-  transform: translateX(-50%);
-  z-index: 60;
-  width: min(calc(100% - 1.4rem), 720px);
-  display: grid;
-  gap: 0.5rem;
-}
-
-.app-pwa-banner {
-  border: 1px solid transparent;
-  border-radius: 16px;
-  min-height: 2.5rem;
-  padding: 0.55rem 0.7rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
-  box-shadow: var(--shadow-soft);
-  animation: ui-card-in var(--duration-normal) var(--motion-ease);
-}
-
-.app-pwa-banner.is-stacked {
-  width: fit-content;
-  max-width: min(calc(100% - 0.6rem), 17.25rem);
-  justify-self: center;
-  align-items: center;
-  justify-content: flex-start;
-  flex-direction: column;
-  gap: 0.65rem;
-  padding: 0.65rem 0.8rem;
-}
-
-.app-pwa-text {
-  flex: 1 1 auto;
-  min-width: 0;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.app-pwa-actions {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 0.35rem;
-}
-
-.app-pwa-banner.is-stacked .app-pwa-actions {
-  width: auto;
-  align-self: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.app-pwa-banner.is-stacked .app-pwa-text {
-  display: block;
-  width: min(100%, 14.75rem);
-  text-align: center;
-  text-wrap: balance;
-  line-height: 1.4;
-}
-
-.app-pwa-banner.is-stacked .app-pwa-button {
-  min-width: 5.75rem;
-  min-height: 2.3rem;
-  padding: 0 1rem;
-}
-
-.app-pwa-button {
-  border: 1px solid transparent;
-  border-radius: 999px;
-  flex-shrink: 0;
-  min-height: 1.95rem;
-  padding: 0 0.78rem;
-  white-space: nowrap;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--accent) 26%, var(--bg-elevated));
-  box-shadow: var(--shadow-soft);
-}
-
-.app-pwa-button.is-subtle {
-  background: color-mix(in srgb, var(--bg-elevated) 66%, transparent);
-  color: var(--text-secondary);
 }
 
 @media (min-width: 721px) {
@@ -4240,27 +4079,6 @@ body {
   color: #ffffff;
 }
 
-.app-sync-tray,
-.app-pwa-banner {
-  border: 1px solid var(--glass-border, rgba(255,255,255,0.085));
-  background: var(--glass-bg, rgba(13,17,25,0.76));
-  box-shadow: var(--glass-shadow);
-  -webkit-backdrop-filter: var(--blur-md, blur(24px) saturate(185%));
-  backdrop-filter: var(--blur-md, blur(24px) saturate(185%));
-}
-
-.app-sync-action,
-.app-pwa-button {
-  background: var(--accent-primary);
-  color: #ffffff;
-  box-shadow: none;
-}
-
-.app-pwa-button.is-subtle {
-  background: color-mix(in srgb, var(--bg-tertiary) 76%, transparent);
-  color: var(--text-secondary);
-}
-
 .tab-screen-header,
 .settings-header {
   gap: 0.22rem;
@@ -4883,11 +4701,6 @@ textarea::placeholder {
     padding-inline: 0.14rem;
   }
 
-  .app-sync-tray {
-    width: min(calc(100% - 1rem), var(--layout-max));
-    min-height: 2.25rem;
-    bottom: var(--app-sync-tray-offset-compact);
-  }
 }
 
 @media (min-width: 390px) and (max-width: 430px) {
@@ -4940,9 +4753,6 @@ textarea::placeholder {
     font-size: 0.69rem;
   }
 
-  .app-sync-tray {
-    bottom: var(--app-sync-tray-offset-narrow);
-  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -5246,9 +5056,7 @@ body {
 .ui-card,
 .motion-card,
 .ui-list-item,
-.workout-set-card,
-.app-sync-tray,
-.app-pwa-banner {
+.workout-set-card {
   animation: none !important;
 }
 
@@ -5358,8 +5166,6 @@ html {
   .home-tool-link,
   .ui-accordion-trigger,
   .workout-action-pill,
-  .app-sync-action,
-  .app-pwa-button
 ) {
   min-height: var(--touch-target);
 }
@@ -5981,7 +5787,6 @@ html[data-tab-route-direction="backward"] .native-page-enter {
   .workout-set-card,
   .ui-list-item,
   .app-search-shell,
-  .app-pwa-banner,
   .app-bottom-nav-tab,
   .workout-set-input,
   .workout-stepper-control,
@@ -7832,21 +7637,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   font-weight: 700;
 }
 
-/* ── App sync tray improvements */
-.app-sync-action,
-.app-pwa-button {
-  background: var(--accent-primary);
-  color: #022220;
-  font-weight: 700;
-  border-radius: var(--radius-pill);
-  box-shadow: none;
-}
-
-.app-sync-action:hover,
-.app-pwa-button:hover {
-  filter: brightness(1.08);
-}
-
 /* ── Stats/workout action panel */
 .workout-action-panel {
   background: var(--glass-bg, rgba(13,17,25,0.76));
@@ -7916,11 +7706,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
     border-color: var(--glass-border, rgba(0,0,0,0.075));
   }
 
-  .app-sync-tray,
-  .app-pwa-banner {
-    background: var(--glass-bg, rgba(255,255,255,0.72));
-    border-color: var(--glass-border, rgba(0,0,0,0.075));
-  }
 }
 
 /* ── Reduced motion overrides */
@@ -8275,8 +8060,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .workout-action-pill.is-primary,
   .ios-pill-button--accent,
   .sheet-action-confirm-button,
-  .app-sync-action,
-  .app-pwa-button:not(.is-subtle)
 ) {
   color: var(--app-cta-primary-fg) !important;
   background: none !important;
@@ -8292,8 +8075,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .workout-action-pill.is-primary,
   .ios-pill-button--accent,
   .sheet-action-confirm-button,
-  .app-sync-action,
-  .app-pwa-button:not(.is-subtle)
 ):hover:not(:disabled):not([aria-disabled="true"]) {
   background: none !important;
   background-image: none !important;
@@ -8308,8 +8089,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .workout-action-pill.is-primary,
   .ios-pill-button--accent,
   .sheet-action-confirm-button,
-  .app-sync-action,
-  .app-pwa-button:not(.is-subtle)
 ):active:not(:disabled):not([aria-disabled="true"]) {
   transform: scale(0.99) translateY(0.5px) !important;
 }
@@ -8320,8 +8099,6 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
   .workout-action-pill.is-primary,
   .ios-pill-button--accent,
   .sheet-action-confirm-button,
-  .app-sync-action,
-  .app-pwa-button:not(.is-subtle)
 ):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--accent-primary) 50%, white 50%) !important;
   outline-offset: 2px;

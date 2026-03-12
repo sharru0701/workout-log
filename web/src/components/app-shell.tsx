@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { BottomNav } from "@/components/bottom-nav";
-import { SyncStatusTray } from "@/components/sync-status-tray";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -15,7 +14,6 @@ export function AppShell({ children }: { children: ReactNode }) {
             {children}
           </div>
         </main>
-        <SyncStatusTray />
         <BottomNav />
       </div>
     </AppDialogProvider>
