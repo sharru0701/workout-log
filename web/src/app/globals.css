@@ -622,9 +622,9 @@ button {
   height: calc(env(safe-area-inset-top) + 0.25rem);
   z-index: 200;
   pointer-events: none;
-  background: color-mix(in srgb, var(--bg-primary) 90%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  backdrop-filter: blur(20px) saturate(180%);
+  background: transparent;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
   -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
   mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
