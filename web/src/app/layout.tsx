@@ -31,7 +31,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: "transparent",
+  // Use the actual page background colors so Safari's address bar chrome
+  // visually blends with the page top (seamless "transparent" effect).
+  // "transparent" as a value is unreliable across Safari versions and often
+  // falls back to an opaque white/grey bar instead of sampling the page.
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "#0b121c" },
+    { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
+  ],
 };
 
 export default function RootLayout({

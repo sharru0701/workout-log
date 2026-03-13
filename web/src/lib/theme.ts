@@ -23,4 +23,9 @@ export const theme = {
   },
 } as const;
 
-export const viewportThemeColor: NonNullable<Viewport["themeColor"]> = "transparent";
+// These must stay in sync with --bg-primary in :root and @media (prefers-color-scheme: light)
+// in globals.css, and with the THEME_COLOR_OVERRIDE map in workout-preferences.ts.
+export const viewportThemeColor: NonNullable<Viewport["themeColor"]> = [
+  { media: "(prefers-color-scheme: dark)", color: "#0b121c" },
+  { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
+];
