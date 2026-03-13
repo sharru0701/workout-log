@@ -61,6 +61,7 @@
   --app-bottom-nav-bottom-padding: 0.5rem;
   --app-bottom-nav-reserved-space: 6.35rem;
   --app-bottom-nav-reserved-space-compact: 6.28rem;
+  --app-shell-main-top-padding: 1rem;
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -3867,17 +3868,21 @@ body {
 }
 
 @media (max-width: 720px) {
-  body {
-    background-color: transparent;
-    background-image: none;
+  :root {
+    --app-shell-main-top-padding: 0rem;
   }
 
-  .app-shell {
+  body {
     background-color: var(--bg-primary);
     background-image:
       radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
       radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
     background-repeat: no-repeat;
+  }
+
+  .app-shell {
+    background-color: transparent;
+    background-image: none;
   }
 }
 
@@ -3902,7 +3907,7 @@ body {
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
   --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
   --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: calc(var(--app-safe-top-inset) + 1rem) var(--space-4) var(--app-bottom-nav-reserved-space);
+  padding: calc(var(--app-safe-top-inset) + var(--app-shell-main-top-padding)) var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .home-screen,
@@ -4563,7 +4568,7 @@ textarea::placeholder {
     --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
     --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
-    padding-top: calc(var(--app-safe-top-inset) + 1rem);
+    padding-top: calc(var(--app-safe-top-inset) + var(--app-shell-main-top-padding));
     padding-bottom: var(--app-bottom-nav-reserved-space-compact);
   }
 
@@ -5179,11 +5184,15 @@ html {
 
 @media (max-width: 720px) {
   body {
-    background-color: transparent !important;
+    background-color: var(--bg-primary) !important;
+    background-image:
+      radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
+      radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%) !important;
+    background-repeat: no-repeat !important;
   }
 
   html {
-    background: transparent;
+    background: var(--bg-primary);
   }
 }
 
