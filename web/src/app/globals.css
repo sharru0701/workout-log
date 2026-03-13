@@ -150,20 +150,18 @@ body {
   padding: 0;
   overflow-x: clip;
   overscroll-behavior-x: none;
+  background: transparent;
 }
 
 html {
-  background: var(--app-root-background);
-  background-repeat: no-repeat;
+  color-scheme: dark light;
 }
 
 body {
-  min-height: 100dvh;
-  background: var(--app-root-background);
-  background-repeat: no-repeat;
+  min-height: 100svh;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: auto;
   interpolate-size: allow-keywords;
   font-size: var(--font-body);
   line-height: var(--line-normal);
@@ -613,19 +611,24 @@ button {
 
 .app-shell {
   position: relative;
-  min-height: 100dvh;
   width: 100%;
   max-width: var(--layout-max);
   margin: 0 auto;
-  background: transparent;
   color: var(--text-primary);
   overflow-x: clip;
   transition: box-shadow var(--motion-duration) var(--motion-ease);
 }
 
+.app-root-canvas {
+  min-height: 100svh;
+  background: var(--app-root-background);
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
 .app-shell-main {
   min-width: 0;
-  min-height: 100dvh;
+  min-height: 100svh;
   padding: 0 var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
@@ -712,10 +715,6 @@ button {
   text-transform: uppercase;
 }
 
-:root[data-bottom-sheet-open="true"] .app-shell-main {
-  overflow: hidden !important;
-  overscroll-behavior-y: none !important;
-}
 
 .app-bottom-nav {
   position: fixed;
@@ -3869,10 +3868,10 @@ body {
   grid-template-columns: auto 1fr auto;
   align-items: center;
   column-gap: 0.72rem;
-  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 42%, transparent);
-  -webkit-backdrop-filter: blur(18px) saturate(160%);
-  backdrop-filter: blur(18px) saturate(160%);
+  background: transparent;
+  border-bottom: 0;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
 }
 
 .app-top-nav > * {
