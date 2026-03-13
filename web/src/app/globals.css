@@ -57,12 +57,9 @@
   --safe-bottom: var(--space-2);
   --app-screen-bottom-padding: var(--space-8);
   --app-bottom-nav-top-padding: 0.5rem;
-  --app-safe-top-inset: var(--safe-top);
-  --app-bottom-nav-edge-inset: clamp(0.52rem, 3vw, 0.96rem);
-  --app-bottom-nav-floating-gap: 0.48rem;
   --app-bottom-nav-bottom-padding: 0.5rem;
-  --app-bottom-nav-reserved-space: calc(6.92rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-bottom-nav-reserved-space-compact: calc(6.78rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-bottom-nav-reserved-space: 6.35rem;
+  --app-bottom-nav-reserved-space-compact: 6.28rem;
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -3854,19 +3851,19 @@ body {
   background: transparent;
 }
 
-@media (max-width: 720px) {
-  body {
-    background-color: transparent;
-    background-image: none;
-  }
-
-  .app-shell {
-    background-color: var(--bg-primary);
-    background-image:
-      radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
-      radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
-    background-repeat: no-repeat;
-  }
+.app-status-bar-shield {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: calc(env(safe-area-inset-top) + 0.25rem);
+  z-index: 200;
+  pointer-events: none;
+  background: transparent;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
 .app-shell-main {
@@ -3875,7 +3872,7 @@ body {
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
   --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
   --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: 0 var(--space-4) var(--app-bottom-nav-reserved-space);
+  padding: calc(var(--safe-top) + 1rem) var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .home-screen,
@@ -3905,7 +3902,7 @@ body {
   isolation: isolate;
   overflow: visible;
   padding-inline: 1rem;
-  padding-top: calc(var(--app-safe-top-inset) + 12px);
+  padding-top: calc(var(--safe-top) + 12px);
   padding-bottom: calc(0.66rem + var(--app-top-nav-fade-active));
   min-height: 3.52rem;
   margin-bottom: var(--app-top-nav-content-offset);
@@ -4536,13 +4533,14 @@ textarea::placeholder {
     --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
     --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
+    padding-top: calc(var(--safe-top) + 1rem);
     padding-bottom: var(--app-bottom-nav-reserved-space-compact);
   }
 
   .app-top-nav {
     margin-inline: -0.78rem;
     padding-inline: 0.78rem;
-    padding-top: calc(var(--app-safe-top-inset) + 11px);
+    padding-top: calc(var(--safe-top) + 11px);
     padding-bottom: calc(0.54rem + var(--app-top-nav-fade-active));
     margin-bottom: var(--app-top-nav-content-offset);
     min-height: 3.3rem;
@@ -5045,7 +5043,7 @@ label.ui-card-label {
 }
 
 body {
-  background-color: var(--color-fill-base) !important;
+  background: var(--color-fill-base) !important;
 }
 
 .native-page-enter,
@@ -5147,19 +5145,6 @@ button {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background-color: var(--color-fill-base);
-}
-
-@media (max-width: 720px) {
-  body {
-    /* Keep the browser viewport transparent so Safari can composite its
-       floating chrome from the actual page surface instead of a flat root fill. */
-    background-color: transparent !important;
-  }
-
-  html {
-    background: transparent;
-  }
 }
 
 :where(
@@ -5395,20 +5380,18 @@ html {
 }
 
 .app-bottom-nav {
+  bottom: 0;
   left: 0;
-  right: 0;
-  bottom: calc(max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)) + var(--app-bottom-nav-floating-gap));
-  width: calc(100vw - (var(--app-bottom-nav-edge-inset) * 2));
-  max-width: calc(var(--layout-max) - (var(--app-bottom-nav-edge-inset) * 2));
-  margin-inline: auto;
-  --bottom-nav-track-padding: clamp(0.56rem, 2.8vw, 0.92rem);
+  width: 100%;
+  --bottom-nav-track-padding: 1.8rem;
   --bottom-nav-track-gap: 0.32rem;
   padding: var(--app-bottom-nav-top-padding) var(--bottom-nav-track-padding) var(--app-bottom-nav-bottom-padding);
-  border-radius: calc(var(--radius-surface) + 0.72rem);
+  border-radius: var(--radius-surface) var(--radius-surface) 0 0;
   gap: var(--bottom-nav-track-gap);
-  border: 1px solid color-mix(in srgb, rgba(255,255,255,0.14) 90%, transparent);
-  box-shadow: var(--glass-shadow, 0 18px 40px -26px rgba(0,0,0,0.28)), var(--shadow-float);
-  background: color-mix(in srgb, var(--color-fill-surface, var(--bg-surface)) 78%, transparent);
+  border: 0;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  box-shadow: none;
+  background: rgba(13,17,25,0.88);
   -webkit-backdrop-filter: blur(40px) saturate(200%);
   backdrop-filter: blur(40px) saturate(200%);
   overflow: hidden;
@@ -7667,8 +7650,8 @@ select:not(.app-form-select):not(.ios-cal-plan-select):not(.app-select-row-nativ
 /* ── Light mode glass overrides */
 @media (prefers-color-scheme: light) {
   .app-bottom-nav {
-    border-color: color-mix(in srgb, var(--glass-border, rgba(0,0,0,0.075)) 92%, transparent);
-    background: color-mix(in srgb, rgba(255,255,255,0.78) 82%, transparent);
+    border-color: var(--glass-border, rgba(0,0,0,0.075));
+    background: var(--glass-bg, rgba(255,255,255,0.72));
   }
 
   .ui-card,
