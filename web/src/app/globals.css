@@ -159,6 +159,8 @@ html {
 
 body {
   min-height: 100dvh;
+  background: var(--app-root-background);
+  background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overscroll-behavior-y: none;
