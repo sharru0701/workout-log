@@ -260,6 +260,24 @@ function formatVolume(kg: number): string {
 export function HomeDashboard({ data }: { data: HomeData }) {
   return (
     <div className="hd-layout">
+      <a
+        href="/ios-top-chrome-minimal.html"
+        style={{
+          display: "block",
+          padding: "0.7rem 1rem",
+          marginBottom: "0.5rem",
+          borderRadius: "0.75rem",
+          border: "1px solid rgba(85,212,205,0.3)",
+          background: "rgba(85,212,205,0.08)",
+          color: "#55d4cd",
+          fontSize: "0.85rem",
+          fontWeight: 600,
+          textDecoration: "none",
+          textAlign: "center",
+        }}
+      >
+        🔍 Safari 상단 투명화 테스트 페이지 열기
+      </a>
       <ProgramStatusSection data={data} />
       <TodaySessionSection data={data} />
       {data.lastSession && <LastSessionSection session={data.lastSession} />}
