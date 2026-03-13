@@ -61,7 +61,6 @@
   --app-bottom-nav-bottom-padding: 0.5rem;
   --app-bottom-nav-reserved-space: 6.35rem;
   --app-bottom-nav-reserved-space-compact: 6.28rem;
-  --browser-chrome-surface: color-mix(in srgb, var(--bg-primary) 92%, var(--accent-primary) 8%);
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -161,7 +160,7 @@ body {
 
 body {
   margin: 0;
-  background: var(--browser-chrome-surface);
+  background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
@@ -628,17 +627,6 @@ button {
 
 .app-shell-main {
   padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
-}
-
-.app-browser-top-chrome {
-  position: sticky;
-  top: 0;
-  z-index: 12;
-  width: 100%;
-  height: calc(var(--app-safe-top-inset) + 1px);
-  margin-bottom: calc(-1 * (var(--app-safe-top-inset) + 1px));
-  pointer-events: none;
-  background: var(--browser-chrome-surface);
 }
 
 .app-shell-route-frame {
@@ -3863,7 +3851,7 @@ button {
 }
 
 body {
-  background-color: var(--browser-chrome-surface);
+  background-color: var(--bg-primary);
   background-image:
     radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
     radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
@@ -3892,12 +3880,12 @@ body {
 }
 
 .home-screen {
-  padding-top: calc(var(--app-safe-top-inset) + 0.4rem);
+  padding-top: 0;
 }
 
 .tab-screen,
 .settings-screen {
-  padding-top: calc(var(--app-safe-top-inset) + 1rem);
+  padding-top: 0;
 }
 
 .app-top-nav {
@@ -5052,7 +5040,7 @@ label.ui-card-label {
 body {
   /* Use background-color (not the background shorthand) so that the
      background-image gradient defined earlier in the cascade is preserved. */
-  background-color: var(--browser-chrome-surface) !important;
+  background-color: var(--color-fill-base) !important;
 }
 
 .native-page-enter,
@@ -5156,7 +5144,7 @@ html {
   text-size-adjust: 100%;
   /* Ensure the viewport background matches the theme color (affects iOS Safari
      safe-area and elastic overscroll regions above/below the page content). */
-  background-color: var(--browser-chrome-surface);
+  background-color: var(--color-fill-base);
 }
 
 :where(
