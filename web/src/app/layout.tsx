@@ -22,11 +22,20 @@ const appMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Workout Log",
   description: "Workout tracking",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Workout Log",
+  },
 };
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: "transparent",
+  colorScheme: "dark light",
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)", color: "rgba(0, 0, 0, 0)" },
+    { media: "(prefers-color-scheme: light)", color: "rgba(255, 255, 255, 0)" },
+  ],
 };
 
 export default function RootLayout({
