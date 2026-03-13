@@ -57,9 +57,9 @@
   --safe-bottom: var(--space-2);
   --app-screen-bottom-padding: var(--space-8);
   --app-bottom-nav-top-padding: 0.5rem;
-  --app-bottom-nav-bottom-padding: 0.5rem;
-  --app-bottom-nav-reserved-space: 6.35rem;
-  --app-bottom-nav-reserved-space-compact: 6.28rem;
+  --app-bottom-nav-bottom-padding: calc(0.5rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-bottom-nav-reserved-space: calc(6.35rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-bottom-nav-reserved-space-compact: calc(6.28rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -615,23 +615,8 @@ button {
   transition: box-shadow var(--motion-duration) var(--motion-ease);
 }
 
-.app-status-bar-shield {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: calc(env(safe-area-inset-top) + 0.25rem);
-  z-index: 200;
-  pointer-events: none;
-  background: transparent;
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-}
-
 .app-shell-main {
-  padding: calc(var(--safe-top) + 1rem) var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
+  padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
 }
 
 .app-shell-route-frame {
@@ -3873,7 +3858,7 @@ body {
   --app-top-nav-content-offset: var(--app-top-nav-content-gap);
   --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
   --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: calc(var(--safe-top) + 1rem) var(--space-4) var(--app-bottom-nav-reserved-space);
+  padding: 0 var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .home-screen,
@@ -3885,12 +3870,12 @@ body {
 }
 
 .home-screen {
-  padding-top: 0;
+  padding-top: calc(var(--safe-top) + 0.4rem);
 }
 
 .tab-screen,
 .settings-screen {
-  padding-top: 0;
+  padding-top: calc(var(--safe-top) + 1rem);
 }
 
 .app-top-nav {
@@ -4534,7 +4519,6 @@ textarea::placeholder {
     --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
     --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
-    padding-top: calc(var(--safe-top) + 1rem);
     padding-bottom: var(--app-bottom-nav-reserved-space-compact);
   }
 

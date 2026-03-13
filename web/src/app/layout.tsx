@@ -23,6 +23,11 @@ const appMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: "Workout Log",
   description: "Workout tracking",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Workout Log",
+  },
 };
 
 export const viewport: Viewport = {
