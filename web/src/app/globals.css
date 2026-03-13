@@ -53,15 +53,11 @@
   --duration-slow: 240ms;
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --ease-emphasized: cubic-bezier(0.2, 0.9, 0.2, 1);
-  --safe-top: max(env(safe-area-inset-top), 0px);
-  --safe-bottom: var(--space-2);
-  --app-safe-top-inset: 0px;
   --app-screen-bottom-padding: var(--space-8);
   --app-bottom-nav-top-padding: 0.5rem;
   --app-bottom-nav-bottom-padding: 0.5rem;
   --app-bottom-nav-reserved-space: 6.35rem;
   --app-bottom-nav-reserved-space-compact: 6.28rem;
-  --app-shell-main-top-padding: 1rem;
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -83,20 +79,6 @@
   --app-cta-secondary-bg-hover: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-card-bg, var(--bg-surface)) 86%);
   --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)) 82%);
   --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
-}
-
-.app-status-bar-shield {
-  display: none;
-}
-
-@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
-  :root {
-    --app-safe-top-inset: var(--safe-top);
-  }
-
-  .app-status-bar-shield {
-    display: block;
-  }
 }
 
 @media (prefers-color-scheme: light) {
@@ -159,6 +141,9 @@ html,
 body {
   min-height: 100%;
   width: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--color-fill-base, var(--bg-primary));
   overflow-x: clip;
   overscroll-behavior-x: none;
 }
@@ -620,24 +605,20 @@ button {
 
 .app-shell {
   position: relative;
-  min-height: 100svh;
+  min-height: 100vh;
+  min-height: 100dvh;
   width: 100%;
   max-width: var(--layout-max);
   margin: 0 auto;
-  background: var(--bg-primary);
+  background: transparent;
   color: var(--text-primary);
   overflow-x: clip;
   transition: box-shadow var(--motion-duration) var(--motion-ease);
 }
 
 .app-shell-main {
-  padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
-}
-
-.app-shell-route-frame {
-  min-height: 100%;
   min-width: 0;
-  overflow-x: clip;
+  padding: 0 var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .app-launch-splash {
@@ -3863,15 +3844,7 @@ body {
   letter-spacing: var(--tracking-normal);
 }
 
-.app-shell {
-  background: transparent;
-}
-
 @media (max-width: 720px) {
-  :root {
-    --app-shell-main-top-padding: 0rem;
-  }
-
   body {
     background-color: var(--bg-primary);
     background-image:
@@ -3879,35 +3852,6 @@ body {
       radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
     background-repeat: no-repeat;
   }
-
-  .app-shell {
-    background-color: transparent;
-    background-image: none;
-  }
-}
-
-.app-status-bar-shield {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: calc(env(safe-area-inset-top) + 0.25rem);
-  z-index: 200;
-  pointer-events: none;
-  background: transparent;
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-}
-
-.app-shell-main {
-  --app-top-nav-fade-size: 2.8rem;
-  --app-top-nav-content-gap: 0.06rem;
-  --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-  --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
-  --app-top-nav-ios-screen-pad: clamp(0.24rem, calc(var(--app-top-nav-fade-size) * 0.1), 0.48rem);
-  padding: calc(var(--app-safe-top-inset) + var(--app-shell-main-top-padding)) var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
 .home-screen,
@@ -3928,68 +3872,27 @@ body {
 }
 
 .app-top-nav {
-  --app-top-nav-fade-active: 0px;
   width: auto;
   margin-inline: -1rem;
   position: sticky;
-  top: -1px;
+  top: 0;
   z-index: 34;
-  isolation: isolate;
-  overflow: visible;
-  padding-inline: 1rem;
-  padding-top: calc(var(--app-safe-top-inset) + 12px);
-  padding-bottom: calc(0.66rem + var(--app-top-nav-fade-active));
-  min-height: 3.52rem;
-  margin-bottom: var(--app-top-nav-content-offset);
+  padding: 0.86rem 1rem 0.72rem;
+  min-height: 3.48rem;
   display: grid;
   grid-template-columns: auto 1fr auto;
   align-items: center;
   column-gap: 0.72rem;
-  background: color-mix(in srgb, var(--bg-primary) 52%, transparent);
-  border-bottom: 0;
-  -webkit-backdrop-filter: var(--blur-lg, blur(40px) saturate(210%));
-  backdrop-filter: var(--blur-lg, blur(40px) saturate(210%));
-  will-change: transform;
-}
-
-.app-top-nav.app-top-nav--ios {
-  --app-top-nav-fade-active: var(--app-top-nav-fade-size);
-  margin-bottom: var(--app-top-nav-ios-content-offset);
-  background: color-mix(in srgb, var(--bg-primary) 58%, transparent);
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 100%) 0%,
-    rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
-    rgb(0 0 0 / 92%) calc(100% - (var(--app-top-nav-fade-size) * 0.72)),
-    rgb(0 0 0 / 68%) calc(100% - (var(--app-top-nav-fade-size) * 0.5)),
-    rgb(0 0 0 / 30%) calc(100% - (var(--app-top-nav-fade-size) * 0.24)),
-    rgb(0 0 0 / 0%) 100%
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    rgb(0 0 0 / 100%) 0%,
-    rgb(0 0 0 / 100%) calc(100% - var(--app-top-nav-fade-size)),
-    rgb(0 0 0 / 92%) calc(100% - (var(--app-top-nav-fade-size) * 0.72)),
-    rgb(0 0 0 / 68%) calc(100% - (var(--app-top-nav-fade-size) * 0.5)),
-    rgb(0 0 0 / 30%) calc(100% - (var(--app-top-nav-fade-size) * 0.24)),
-    rgb(0 0 0 / 0%) 100%
-  );
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  background: color-mix(in srgb, var(--bg-primary) 82%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 42%, transparent);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  backdrop-filter: blur(18px) saturate(160%);
 }
 
 .app-top-nav + .home-screen,
 .app-top-nav + .tab-screen,
 .app-top-nav + .settings-screen {
   padding-top: 0;
-}
-
-.app-top-nav.app-top-nav--ios + .home-screen,
-.app-top-nav.app-top-nav--ios + .tab-screen,
-.app-top-nav.app-top-nav--ios + .settings-screen {
-  padding-top: var(--app-top-nav-ios-screen-pad);
 }
 
 .app-top-nav > * {
@@ -4562,22 +4465,13 @@ textarea::placeholder {
 
 @media (max-width: 430px) {
   .app-shell-main {
-    --app-top-nav-fade-size: 2.3rem;
-    --app-top-nav-content-gap: 0.05rem;
-    --app-top-nav-content-offset: var(--app-top-nav-content-gap);
-    --app-top-nav-ios-content-offset: calc((var(--app-top-nav-fade-size) * -0.8) + var(--app-top-nav-content-gap));
-    --app-top-nav-ios-screen-pad: clamp(0.22rem, calc(var(--app-top-nav-fade-size) * 0.11), 0.46rem);
     padding-inline: 0.78rem;
-    padding-top: calc(var(--app-safe-top-inset) + var(--app-shell-main-top-padding));
     padding-bottom: var(--app-bottom-nav-reserved-space-compact);
   }
 
   .app-top-nav {
     margin-inline: -0.78rem;
-    padding-inline: 0.78rem;
-    padding-top: calc(var(--app-safe-top-inset) + 11px);
-    padding-bottom: calc(0.54rem + var(--app-top-nav-fade-active));
-    margin-bottom: var(--app-top-nav-content-offset);
+    padding: 0.78rem 0.78rem 0.64rem;
     min-height: 3.3rem;
   }
 
@@ -4740,7 +4634,6 @@ textarea::placeholder {
   .app-top-nav {
     margin-inline: -0.9rem;
     padding-inline: 0.9rem;
-    margin-bottom: var(--app-top-nav-content-offset);
   }
 
   .app-top-nav-title {
@@ -4927,7 +4820,7 @@ label.ui-card-label {
 .settings-header {
   display: grid;
   gap: var(--screen-header-card-gap) !important;
-  margin-top: 0.08rem;
+  margin-top: 0;
   padding-block: var(--screen-header-card-padding-block);
   padding-inline: var(--screen-header-card-padding-inline) !important;
   border-radius: var(--screen-header-card-radius);
@@ -4935,12 +4828,6 @@ label.ui-card-label {
   border: 1px solid var(--settings-group-border-color);
   background: var(--color-fill-surface);
   background: color-mix(in srgb, var(--color-fill-surface) 96%, var(--color-fill-elevated) 4%);
-}
-
-.home-screen > header + section,
-.tab-screen > header + section,
-.settings-screen > header + section {
-  margin-top: var(--space-section-top-offset);
 }
 
 .home-screen > section,
@@ -5569,7 +5456,6 @@ html[data-tab-route-direction="backward"] .native-page-enter {
     transition-duration: 0ms !important;
   }
 
-  .app-shell-route-frame,
   .native-page-enter,
   .settings-child-modal-content .native-page-enter {
     animation-duration: 0ms !important;

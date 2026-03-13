@@ -28,7 +28,7 @@ export function TopBackButton() {
   const pathname = usePathname() ?? "/";
   const router = useRouter();
   const title = titleFromPathname(pathname);
-  const topNavClassName = "app-top-nav app-top-nav--ios";
+  const topNavClassName = "app-top-nav";
   const isSettingsRoute = pathname.startsWith("/settings");
 
   const handleBack = useCallback(() => {
