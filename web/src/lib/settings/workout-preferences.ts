@@ -221,31 +221,13 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
 export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
 export { computeBodyweightTotalLoadKg };
 
-// Matches theme.color.{dark,light}.bgPrimary in lib/theme.ts
-const THEME_COLORS = { dark: "#06080f", light: "#f0f2f8" } as const;
-
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
 
-  // Keep PWA status bar in sync with the app theme (not just prefers-color-scheme).
-  const ATTR = "data-dynamic";
-  let meta = document.querySelector<HTMLMetaElement>(`meta[name="theme-color"][${ATTR}]`);
-
-  if (theme === "SYSTEM") {
-    // Let the static prefers-color-scheme meta tags (from Next.js layout) take over.
-    meta?.remove();
-    return;
-  }
-
-  const color = theme === "LIGHT" ? THEME_COLORS.light : THEME_COLORS.dark;
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.name = "theme-color";
-    meta.setAttribute(ATTR, "");
-    document.head.appendChild(meta);
-  }
-  meta.content = color;
+  // Remove any previously injected dynamic theme-color meta; transparent is set
+  // statically in layout.tsx and should not be overridden per-theme.
+  document.querySelector(`meta[name="theme-color"][data-dynamic]`)?.remove();
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {
