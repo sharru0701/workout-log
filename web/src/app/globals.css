@@ -615,7 +615,6 @@ button {
 
 .app-shell {
   position: relative;
-  min-height: 100vh;
   min-height: 100dvh;
   width: 100%;
   max-width: var(--layout-max);
@@ -763,7 +762,7 @@ button {
 .settings-screen {
   width: min(100%, var(--layout-max));
   margin-inline: auto;
-  padding: var(--space-6) var(--space-1) var(--space-5);
+  padding: 0 var(--space-1) var(--space-5);
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--space-3);
@@ -3861,10 +3860,6 @@ body {
   width: min(100%, var(--layout-max-wide));
   padding: 0 0 var(--app-screen-bottom-padding);
   gap: var(--gap-page);
-}
-
-.home-screen {
-  padding-top: 0;
 }
 
 .tab-screen,
