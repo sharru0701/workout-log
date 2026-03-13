@@ -57,9 +57,10 @@
   --safe-bottom: var(--space-2);
   --app-screen-bottom-padding: var(--space-8);
   --app-bottom-nav-top-padding: 0.5rem;
-  --app-bottom-nav-bottom-padding: calc(0.5rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-bottom-nav-reserved-space: calc(6.35rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
-  --app-bottom-nav-reserved-space-compact: calc(6.28rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --app-safe-top-inset: 0px;
+  --app-bottom-nav-bottom-padding: 0.5rem;
+  --app-bottom-nav-reserved-space: 6.35rem;
+  --app-bottom-nav-reserved-space-compact: 6.28rem;
   --browser-chrome-surface: color-mix(in srgb, var(--bg-primary) 92%, var(--accent-primary) 8%);
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
@@ -82,6 +83,15 @@
   --app-cta-secondary-bg-hover: color-mix(in srgb, var(--accent-primary) 14%, var(--surface-card-bg, var(--bg-surface)) 86%);
   --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)) 82%);
   --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  :root {
+    --app-safe-top-inset: var(--safe-top);
+    --app-bottom-nav-bottom-padding: calc(0.5rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-bottom-nav-reserved-space: calc(6.35rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+    --app-bottom-nav-reserved-space-compact: calc(6.28rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  }
 }
 
 
@@ -625,8 +635,8 @@ button {
   top: 0;
   z-index: 12;
   width: 100%;
-  height: calc(var(--safe-top) + 1px);
-  margin-bottom: calc(-1 * (var(--safe-top) + 1px));
+  height: calc(var(--app-safe-top-inset) + 1px);
+  margin-bottom: calc(-1 * (var(--app-safe-top-inset) + 1px));
   pointer-events: none;
   background: var(--browser-chrome-surface);
 }
@@ -3882,12 +3892,12 @@ body {
 }
 
 .home-screen {
-  padding-top: calc(var(--safe-top) + 0.4rem);
+  padding-top: calc(var(--app-safe-top-inset) + 0.4rem);
 }
 
 .tab-screen,
 .settings-screen {
-  padding-top: calc(var(--safe-top) + 1rem);
+  padding-top: calc(var(--app-safe-top-inset) + 1rem);
 }
 
 .app-top-nav {
@@ -3900,7 +3910,7 @@ body {
   isolation: isolate;
   overflow: visible;
   padding-inline: 1rem;
-  padding-top: calc(var(--safe-top) + 12px);
+  padding-top: calc(var(--app-safe-top-inset) + 12px);
   padding-bottom: calc(0.66rem + var(--app-top-nav-fade-active));
   min-height: 3.52rem;
   margin-bottom: var(--app-top-nav-content-offset);
@@ -4537,7 +4547,7 @@ textarea::placeholder {
   .app-top-nav {
     margin-inline: -0.78rem;
     padding-inline: 0.78rem;
-    padding-top: calc(var(--safe-top) + 11px);
+    padding-top: calc(var(--app-safe-top-inset) + 11px);
     padding-bottom: calc(0.54rem + var(--app-top-nav-fade-active));
     margin-bottom: var(--app-top-nav-content-offset);
     min-height: 3.3rem;
