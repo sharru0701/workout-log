@@ -221,13 +221,33 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
 export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
 export { computeBodyweightTotalLoadKg };
 
+// Theme-color values must match the --bg-primary CSS variable for each
+// user-selected theme override (see :root[data-theme-preference="..."] in globals.css).
+// For SYSTEM, the static media-query metas in layout.tsx handle dark/light automatically.
+const THEME_COLOR_OVERRIDE: Partial<Record<ThemePreference, string>> = {
+  DARK: "#000000",  // matches --color-fill-base in data-theme-preference="dark"
+  LIGHT: "#f2f2f7", // matches --color-fill-base in data-theme-preference="light"
+};
+
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
 
-  // Remove any previously injected dynamic theme-color meta; transparent is set
-  // statically in layout.tsx and should not be overridden per-theme.
+  // Remove any previously injected dynamic theme-color meta.
   document.querySelector(`meta[name="theme-color"][data-dynamic]`)?.remove();
+
+  // For explicit dark/light overrides, inject a theme-color meta so Safari's
+  // top chrome color matches the actual page background (--bg-primary).
+  // Without this, Safari keeps the initial system-mode color even after the
+  // CSS theme variables are updated, causing a visible color mismatch.
+  const color = THEME_COLOR_OVERRIDE[theme];
+  if (color) {
+    const meta = document.createElement("meta");
+    meta.name = "theme-color";
+    meta.content = color;
+    meta.dataset.dynamic = "true";
+    document.head.appendChild(meta);
+  }
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {

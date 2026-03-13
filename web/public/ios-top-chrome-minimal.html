@@ -3,7 +3,14 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="transparent" />
+    <!--
+      theme-color must be the actual page background color — NOT "transparent".
+      "transparent" falls back to Safari's default opaque white/grey chrome.
+      Using the real bg color makes Safari's chrome appear to seamlessly blend
+      with the top of the page (the "transparent" illusion).
+    -->
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0b121c" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f3f6fb" />
     <title>iOS Safari Top Chrome Minimal</title>
     <style>
       :root {
@@ -29,6 +36,16 @@
         background:
           radial-gradient(circle at 20% 8%, rgba(85, 212, 205, 0.24), transparent 45%),
           linear-gradient(180deg, #0b121c 0%, #141d29 62%, #1a2533 100%);
+      }
+
+      @media (prefers-color-scheme: light) {
+        body { color: #111b2a; }
+        .canvas {
+          background:
+            radial-gradient(circle at 20% 8%, rgba(20, 127, 120, 0.12), transparent 45%),
+            #f3f6fb;
+        }
+        .card { background: rgba(255,255,255,0.75); border-color: rgba(0,0,0,0.1); }
       }
 
       .hero {
