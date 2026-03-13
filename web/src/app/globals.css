@@ -60,6 +60,7 @@
   --app-bottom-nav-bottom-padding: calc(0.5rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
   --app-bottom-nav-reserved-space: calc(6.35rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
   --app-bottom-nav-reserved-space-compact: calc(6.28rem + max(env(safe-area-inset-bottom), var(--detected-safe-area-bottom, 0px)));
+  --browser-chrome-surface: color-mix(in srgb, var(--bg-primary) 92%, var(--accent-primary) 8%);
   --bg-base: var(--bg-primary);
   --bg-surface: var(--bg-secondary);
   --bg-elevated: var(--bg-tertiary);
@@ -150,7 +151,7 @@ body {
 
 body {
   margin: 0;
-  background: var(--bg-primary);
+  background: var(--browser-chrome-surface);
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
@@ -617,6 +618,17 @@ button {
 
 .app-shell-main {
   padding: 0 var(--space-4) calc(5.75rem + env(safe-area-inset-bottom));
+}
+
+.app-browser-top-chrome {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  width: 100%;
+  height: calc(var(--safe-top) + 1px);
+  margin-bottom: calc(-1 * (var(--safe-top) + 1px));
+  pointer-events: none;
+  background: var(--browser-chrome-surface);
 }
 
 .app-shell-route-frame {
@@ -3841,7 +3853,7 @@ button {
 }
 
 body {
-  background-color: var(--bg-primary);
+  background-color: var(--browser-chrome-surface);
   background-image:
     radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
     radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
@@ -5030,7 +5042,7 @@ label.ui-card-label {
 body {
   /* Use background-color (not the background shorthand) so that the
      background-image gradient defined earlier in the cascade is preserved. */
-  background-color: var(--color-fill-base) !important;
+  background-color: var(--browser-chrome-surface) !important;
 }
 
 .native-page-enter,
@@ -5134,7 +5146,7 @@ html {
   text-size-adjust: 100%;
   /* Ensure the viewport background matches the theme color (affects iOS Safari
      safe-area and elastic overscroll regions above/below the page content). */
-  background-color: var(--color-fill-base);
+  background-color: var(--browser-chrome-surface);
 }
 
 :where(

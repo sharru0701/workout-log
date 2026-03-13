@@ -9,6 +9,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <AppDialogProvider>
       <div className="app-shell">
         <main className="app-shell-main">
+          <div className="app-browser-top-chrome" aria-hidden="true" />
           <div className="app-shell-route-frame">
             {children}
           </div>
