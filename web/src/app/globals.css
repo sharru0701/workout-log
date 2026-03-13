@@ -623,11 +623,14 @@ button {
   height: calc(env(safe-area-inset-top) + 0.25rem);
   z-index: 200;
   pointer-events: none;
-  background: transparent;
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  /* Semi-transparent tint so the glass panel is visible even when the page
+     background is a flat colour (pure transparent + blur on a flat surface
+     looks like a solid white/grey slab instead of frosted glass). */
+  background: color-mix(in srgb, var(--color-fill-base) 42%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
 }
 
 .app-shell-main {
@@ -5044,7 +5047,9 @@ label.ui-card-label {
 }
 
 body {
-  background: var(--color-fill-base) !important;
+  /* Use background-color (not the background shorthand) so that the
+     background-image gradient defined earlier in the cascade is preserved. */
+  background-color: var(--color-fill-base) !important;
 }
 
 .native-page-enter,
@@ -5146,6 +5151,9 @@ button {
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Ensure the viewport background matches the theme color (affects iOS Safari
+     safe-area and elastic overscroll regions above/below the page content). */
+  background-color: var(--color-fill-base);
 }
 
 :where(
