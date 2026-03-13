@@ -623,14 +623,11 @@ button {
   height: calc(env(safe-area-inset-top) + 0.25rem);
   z-index: 200;
   pointer-events: none;
-  /* Semi-transparent tint so the glass panel is visible even when the page
-     background is a flat colour (pure transparent + blur on a flat surface
-     looks like a solid white/grey slab instead of frosted glass). */
-  background: color-mix(in srgb, var(--color-fill-base) 42%, transparent);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
-  mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  background: transparent;
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
+  mask-image: linear-gradient(to bottom, black 60%, transparent 100%);
 }
 
 .app-shell-main {
