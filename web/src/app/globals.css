@@ -4955,11 +4955,6 @@ label.ui-card-label {
   box-shadow: none !important;
 }
 
-:where(.home-hero, .home-primary, .home-tools, .settings-menu-card, .settings-export-card, .workout-action-panel, .workout-empty-state) {
-  background: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-}
 
 .app-bottom-nav {
   background: rgba(13,17,25,0.88);
