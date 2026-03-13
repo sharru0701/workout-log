@@ -32,6 +32,30 @@ if [[ "$all_present" == "true" ]]; then
   exit 0
 fi
 
+# Check if all required libs are already available at the system library path.
+# ubuntu-latest runners ship with these libs pre-installed, so we can skip the
+# apt download entirely and let Playwright find them via the standard search path.
+ARCH="$(uname -m)"
+case "$ARCH" in
+  x86_64)  sys_lib_dir="/usr/lib/x86_64-linux-gnu" ;;
+  aarch64) sys_lib_dir="/usr/lib/aarch64-linux-gnu" ;;
+  *)       sys_lib_dir="" ;;
+esac
+
+if [[ -n "$sys_lib_dir" ]]; then
+  all_system=true
+  for lib in "${required_libs[@]}"; do
+    if [[ ! -f "$sys_lib_dir/$lib" ]]; then
+      all_system=false
+      break
+    fi
+  done
+  if [[ "$all_system" == "true" ]]; then
+    # Libs are available system-wide; no LD_LIBRARY_PATH override needed.
+    exit 0
+  fi
+fi
+
 if ! command -v apt >/dev/null 2>&1 || ! command -v dpkg-deb >/dev/null 2>&1; then
   echo "[ensure-playwright-linux-libs] apt/dpkg-deb not available; cannot install local browser libs." >&2
   exit 1
