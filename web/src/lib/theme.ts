@@ -24,6 +24,6 @@ export const theme = {
 } as const;
 
 export const viewportThemeColor: NonNullable<Viewport["themeColor"]> = [
-  { media: "(prefers-color-scheme: dark)", color: theme.color.dark.bgPrimary },
-  { media: "(prefers-color-scheme: light)", color: theme.color.light.bgPrimary },
+  { media: "(prefers-color-scheme: dark)", color: "transparent" },
+  { media: "(prefers-color-scheme: light)", color: "transparent" },
 ];
