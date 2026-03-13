@@ -143,14 +143,21 @@ body {
   width: 100%;
   margin: 0;
   padding: 0;
-  background: var(--color-fill-base, var(--bg-primary));
   overflow-x: clip;
   overscroll-behavior-x: none;
 }
 
+html {
+  background: var(--color-fill-base, var(--bg-primary));
+}
+
 body {
   margin: 0;
-  background: var(--bg-primary);
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
+    radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
+  background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
@@ -3837,21 +3844,7 @@ button {
 }
 
 body {
-  background-color: var(--bg-primary);
-  background-image:
-    radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
-    radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
   letter-spacing: var(--tracking-normal);
-}
-
-@media (max-width: 720px) {
-  body {
-    background-color: var(--bg-primary);
-    background-image:
-      radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
-      radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%);
-    background-repeat: no-repeat;
-  }
 }
 
 .home-screen,
@@ -5069,19 +5062,6 @@ html {
   text-size-adjust: 100%;
 }
 
-@media (max-width: 720px) {
-  body {
-    background-color: var(--bg-primary) !important;
-    background-image:
-      radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
-      radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%) !important;
-    background-repeat: no-repeat !important;
-  }
-
-  html {
-    background: var(--bg-primary);
-  }
-}
 
 :where(
   button,
