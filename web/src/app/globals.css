@@ -158,13 +158,9 @@ html {
 }
 
 body {
-  margin: 0;
   min-height: 100dvh;
-  background: var(--app-root-background);
-  background-repeat: no-repeat;
   color: var(--text-primary);
   font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
   overscroll-behavior-y: none;
   interpolate-size: allow-keywords;
   font-size: var(--font-body);
@@ -631,9 +627,6 @@ button {
   padding: 0 var(--space-4) var(--app-bottom-nav-reserved-space);
 }
 
-.app-shell-main > .native-page {
-  min-height: 100dvh;
-}
 
 .app-launch-splash {
   position: fixed;
@@ -3862,11 +3855,6 @@ body {
   gap: var(--gap-page);
 }
 
-.tab-screen,
-.settings-screen {
-  padding-top: 0;
-}
-
 .app-top-nav {
   width: auto;
   margin-inline: -1rem;
@@ -3883,12 +3871,6 @@ body {
   border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 42%, transparent);
   -webkit-backdrop-filter: blur(18px) saturate(160%);
   backdrop-filter: blur(18px) saturate(160%);
-}
-
-.app-top-nav + .home-screen,
-.app-top-nav + .tab-screen,
-.app-top-nav + .settings-screen {
-  padding-top: 0;
 }
 
 .app-top-nav > * {
@@ -4958,10 +4940,6 @@ label.ui-card-label {
   --duration-normal: 130ms;
   --duration-slow: 180ms;
   --motion-duration: var(--duration-normal);
-}
-
-body {
-  background: var(--color-fill-base) !important;
 }
 
 .native-page-enter,
