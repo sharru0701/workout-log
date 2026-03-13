@@ -57,6 +57,10 @@ test.describe("iOS Settings compliance: layout/touch/typography/color", () => {
         const bodyStyle = window.getComputedStyle(document.body);
         const titleStyle = title ? window.getComputedStyle(title) : bodyStyle;
         const captionStyle = caption ? window.getComputedStyle(caption) : null;
+        // body is intentionally transparent for Safari top-chrome passthrough;
+        // check the actual surface canvas element for the visible background color.
+        const canvas = document.querySelector<HTMLElement>(".app-root-canvas");
+        const surfaceStyle = canvas ? window.getComputedStyle(canvas) : bodyStyle;
 
         return {
           groupedListCount: groupedLists.length,
@@ -72,7 +76,7 @@ test.describe("iOS Settings compliance: layout/touch/typography/color", () => {
           captionFontPx: captionStyle ? parseFloat(captionStyle.fontSize) : null,
           titleColor: titleStyle.color,
           captionColor: captionStyle ? captionStyle.color : null,
-          surfaceColor: bodyStyle.backgroundColor,
+          surfaceColor: surfaceStyle.backgroundColor,
           accentToken: root.style.getPropertyValue("--accent-primary") || window.getComputedStyle(root).getPropertyValue("--accent-primary"),
         };
       });
