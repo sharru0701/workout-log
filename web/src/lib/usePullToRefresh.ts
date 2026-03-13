@@ -55,7 +55,7 @@ export function usePullToRefresh({
     clearCompletionTimeout();
     setIsCompleting(false);
     const target = event.currentTarget;
-    if (target.scrollTop > 0) return;
+    if (window.scrollY > 0) return;
     if (triggerSelector) {
       const source = event.target instanceof Element ? event.target : null;
       const trigger = source?.closest(triggerSelector);
@@ -70,7 +70,7 @@ export function usePullToRefresh({
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isPullingRef.current || startYRef.current === null || isRefreshing) return;
     const target = scrollTargetRef.current ?? event.currentTarget;
-    if (target.scrollTop > 0) {
+    if (window.scrollY > 0) {
       endPull();
       return;
     }
