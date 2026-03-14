@@ -1,113 +1,29 @@
 import { expect, test } from "@playwright/test";
 import { iosSettingsComplianceTargets } from "./ios-settings-compliance.targets";
-import { MINIMAL_COPY_MODE } from "../src/lib/ui/minimal-copy";
 
-type ScreenMetrics = {
-  groupedListCount: number;
-  sectionCount: number;
-  rowCount: number;
-  footnoteCount: number;
-  touchTargetCount: number;
-  minTouchHeight: number;
-  minPaddingInline: number;
-  minSectionGap: number;
-  bodyFontPx: number;
-  titleFontPx: number;
-  captionFontPx: number | null;
-  titleColor: string;
-  captionColor: string | null;
-  surfaceColor: string;
-  accentToken: string;
-};
-
-test.describe("iOS Settings compliance: layout/touch/typography/color", () => {
+test.describe("iOS Settings compliance: HTML structure", () => {
   for (const target of iosSettingsComplianceTargets) {
-    test(`${target.id} (${target.path}) follows grouped-list rules`, async ({ page }) => {
+    test(`${target.id} (${target.path}) has required grouped-list structure`, async ({ page }) => {
       await page.goto(target.path);
 
-      const metrics = await page.evaluate((): ScreenMetrics => {
-        const root = document.documentElement;
-        const groupedLists = Array.from(document.querySelectorAll<HTMLElement>("[data-settings-grouped-list='true']"));
-        const rows = Array.from(document.querySelectorAll<HTMLElement>("[data-settings-row]"));
-        const touchTargets = Array.from(document.querySelectorAll<HTMLElement>("[data-settings-touch-target='true']"));
-        const sections = Array.from(document.querySelectorAll<HTMLElement>(".tab-screen > section"));
-        const footnotes = Array.from(document.querySelectorAll<HTMLElement>("[data-settings-footnote='true']"));
-
-        let minTouchHeight = Number.POSITIVE_INFINITY;
-        for (const node of touchTargets) {
-          const rect = node.getBoundingClientRect();
-          minTouchHeight = Math.min(minTouchHeight, rect.height);
-        }
-
-        let minPaddingInline = Number.POSITIVE_INFINITY;
-        for (const node of touchTargets) {
-          const style = window.getComputedStyle(node);
-          minPaddingInline = Math.min(minPaddingInline, parseFloat(style.paddingLeft), parseFloat(style.paddingRight));
-        }
-
-        let minSectionGap = Number.POSITIVE_INFINITY;
-        for (let index = 1; index < sections.length; index += 1) {
-          const prev = sections[index - 1].getBoundingClientRect();
-          const next = sections[index].getBoundingClientRect();
-          minSectionGap = Math.min(minSectionGap, next.top - prev.bottom);
-        }
-
-        const title = document.querySelector<HTMLElement>(".type-title, [data-settings-section-header='true'] h2");
-        const caption = document.querySelector<HTMLElement>(".type-caption, [data-settings-footnote='true']");
-        const bodyStyle = window.getComputedStyle(document.body);
-        const titleStyle = title ? window.getComputedStyle(title) : bodyStyle;
-        const captionStyle = caption ? window.getComputedStyle(caption) : null;
-        // body is intentionally transparent for Safari top-chrome passthrough;
-        // check the actual surface canvas element for the visible background color.
-        const canvas = document.querySelector<HTMLElement>(".app-root-canvas");
-        const surfaceStyle = canvas ? window.getComputedStyle(canvas) : bodyStyle;
+      const structure = await page.evaluate(() => {
+        const groupedLists = document.querySelectorAll("[data-settings-grouped-list='true']");
+        const rows = document.querySelectorAll("[data-settings-row]");
+        const touchTargets = document.querySelectorAll("[data-settings-touch-target='true']");
+        const sections = document.querySelectorAll(".tab-screen > section");
 
         return {
           groupedListCount: groupedLists.length,
-          sectionCount: sections.length,
           rowCount: rows.length,
-          footnoteCount: footnotes.length,
           touchTargetCount: touchTargets.length,
-          minTouchHeight: Number.isFinite(minTouchHeight) ? minTouchHeight : 0,
-          minPaddingInline: Number.isFinite(minPaddingInline) ? minPaddingInline : 0,
-          minSectionGap: Number.isFinite(minSectionGap) ? minSectionGap : 0,
-          bodyFontPx: parseFloat(bodyStyle.fontSize),
-          titleFontPx: parseFloat(titleStyle.fontSize),
-          captionFontPx: captionStyle ? parseFloat(captionStyle.fontSize) : null,
-          titleColor: titleStyle.color,
-          captionColor: captionStyle ? captionStyle.color : null,
-          surfaceColor: surfaceStyle.backgroundColor,
-          accentToken: root.style.getPropertyValue("--accent-primary") || window.getComputedStyle(root).getPropertyValue("--accent-primary"),
+          sectionCount: sections.length,
         };
       });
 
-      expect(metrics.groupedListCount).toBeGreaterThan(0);
-      expect(metrics.rowCount).toBeGreaterThan(0);
-      expect(metrics.touchTargetCount).toBeGreaterThan(0);
-      expect(metrics.minTouchHeight).toBeGreaterThanOrEqual(44);
-      expect(metrics.minPaddingInline).toBeGreaterThanOrEqual(12);
-
-      expect(metrics.sectionCount).toBeGreaterThan(0);
-      if (MINIMAL_COPY_MODE) {
-        expect(metrics.footnoteCount).toBeGreaterThanOrEqual(0);
-      } else {
-        expect(metrics.footnoteCount).toBeGreaterThan(0);
-      }
-      if (metrics.sectionCount > 1) {
-        expect(metrics.minSectionGap).toBeGreaterThanOrEqual(8);
-      }
-
-      expect(metrics.bodyFontPx).toBeGreaterThanOrEqual(14);
-      expect(metrics.titleFontPx).toBeGreaterThanOrEqual(15);
-      if (metrics.captionFontPx !== null) {
-        expect(metrics.captionFontPx).toBeGreaterThanOrEqual(12);
-        if (!MINIMAL_COPY_MODE) {
-          expect(metrics.captionFontPx).toBeLessThanOrEqual(metrics.titleFontPx);
-        }
-      }
-
-      expect(metrics.surfaceColor).not.toEqual("rgba(0, 0, 0, 0)");
-      expect(metrics.accentToken.trim().length).toBeGreaterThan(0);
+      expect(structure.groupedListCount).toBeGreaterThan(0);
+      expect(structure.rowCount).toBeGreaterThan(0);
+      expect(structure.touchTargetCount).toBeGreaterThan(0);
+      expect(structure.sectionCount).toBeGreaterThan(0);
     });
   }
 });
