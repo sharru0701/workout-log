@@ -237,7 +237,9 @@ label.ui-card-label {
 
 .momentum-scroll {
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: contain;
+  /* overscroll-behavior-y: contain was removed so the native iOS rubber-band
+     bounce propagates to the html element, revealing html { background } in
+     the safe-area zone and giving the same status-bar blend as the test page. */
 }
 
 .native-page {

@@ -31,13 +31,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  // Use the actual page background colors so Safari's address bar chrome
-  // visually blends with the page top (seamless "transparent" effect).
-  // "transparent" as a value is unreliable across Safari versions and often
-  // falls back to an opaque white/grey bar instead of sampling the page.
+  // Must match --bg-primary from the active :root block in globals.css.
+  // The second :root block (March 2026 design) overrides the first:
+  //   dark  → #06080f  (line ~3678)
+  //   light → #f0f2f8  (line ~3790)
+  // Mismatching here causes Safari's status bar chrome to show a different
+  // shade from the page top, breaking the seamless blend.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0b121c" },
-    { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#06080f" },
+    { media: "(prefers-color-scheme: light)", color: "#f0f2f8" },
   ],
 };
 
