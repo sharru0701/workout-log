@@ -31,15 +31,15 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  // Must match --bg-primary from the active :root block in globals.css.
-  // The second :root block (March 2026 design) overrides the first:
-  //   dark  → #06080f  (line ~3678)
-  //   light → #f0f2f8  (line ~3790)
+  // Must match html { background } in globals.css AND --color-fill-base.
+  // The final resolved --bg-primary (after all :root cascade) is:
+  //   dark  → #000000  (--color-fill-base dark, line ~4682)
+  //   light → #f2f2f7  (--color-fill-base light, line ~4745)
   // Mismatching here causes Safari's status bar chrome to show a different
   // shade from the page top, breaking the seamless blend.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#06080f" },
-    { media: "(prefers-color-scheme: light)", color: "#f0f2f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
+    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
   ],
 };
 
