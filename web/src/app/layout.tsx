@@ -31,15 +31,11 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   viewportFit: "cover",
-  // Must match html { background } in globals.css AND --color-fill-base.
-  // The final resolved --bg-primary (after all :root cascade) is:
-  //   dark  → #000000  (--color-fill-base dark, line ~4682)
-  //   light → #f2f2f7  (--color-fill-base light, line ~4745)
-  // Mismatching here causes Safari's status bar chrome to show a different
-  // shade from the page top, breaking the seamless blend.
+  // iOS Safari (including iOS 26) supports transparent browser chrome when
+  // theme-color is transparent with viewport-fit=cover.
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#000000" },
-    { media: "(prefers-color-scheme: light)", color: "#f2f2f7" },
+    { media: "(prefers-color-scheme: dark)", color: "transparent" },
+    { media: "(prefers-color-scheme: light)", color: "transparent" },
   ],
 };
 
@@ -60,7 +56,8 @@ export default function RootLayout({
 
           Key:  workout-log.setting.v1.prefs.theme.mode  → JSON { value: "LIGHT"|"DARK"|"SYSTEM" }
           Matches: LOCAL_STORAGE_SETTING_PREFIX + SETTINGS_KEYS.theme in workout-preferences.ts
-          Theme-color overrides match THEME_COLOR_OVERRIDE in workout-preferences.ts.
+          Theme-color stays transparent so Safari top/bottom browser chrome
+          remains translucent regardless of theme preference.
         */}
         <script
           dangerouslySetInnerHTML={{
@@ -69,9 +66,7 @@ var raw=localStorage.getItem("workout-log.setting.v1.prefs.theme.mode");
 var v=raw?JSON.parse(raw).value:null;
 var t=(v==="LIGHT"||v==="DARK"||v==="SYSTEM")?v:"SYSTEM";
 document.documentElement.setAttribute("data-theme-preference",t.toLowerCase());
-var cm={"LIGHT":"#f2f2f7","DARK":"#000000"};
-var c=cm[t];
-if(c){var m=document.createElement("meta");m.name="theme-color";m.content=c;m.dataset.dynamic="true";document.head.appendChild(m);}
+var m=document.createElement("meta");m.name="theme-color";m.content="transparent";m.dataset.dynamic="true";document.head.appendChild(m);
 }catch(e){}})();`,
           }}
         />
