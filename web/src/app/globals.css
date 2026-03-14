@@ -157,12 +157,20 @@ body {
 
 html {
   /* viewport-fit:cover extends the page behind the iOS status bar.
-     Setting background here fills that area with the app base color so
-     Safari's status bar zone blends with the page instead of showing
-     the system dark/light fallback (black in dark mode). */
-  background: var(--bg-primary);
+     Hardcoded background fills that area with the app base color so
+     Safari's status bar chrome blends seamlessly with the page.
+     Values MUST match theme-color in layout.tsx and --color-fill-base. */
+  background: #000000; /* system dark default */
   color-scheme: dark light;
 }
+
+@media (prefers-color-scheme: light) {
+  html { background: #f2f2f7; } /* system light */
+}
+
+/* Explicit user theme preference — higher specificity (0,1,1) overrides media query */
+html[data-theme-preference="dark"]  { background: #000000; }
+html[data-theme-preference="light"] { background: #f2f2f7; }
 
 body {
   min-height: 100svh;
