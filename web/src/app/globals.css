@@ -49,6 +49,7 @@
   --screen-text-inset-inline: 20px;
   --screen-section-text-inset-inline: 20px;
   --bottom-nav-height: 60px;
+  --bottom-nav-safe-inset: max(var(--bottom-nav-height), calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px)));
   --top-nav-height: 52px;
 }
 
@@ -219,9 +220,8 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* No background-color here — Safari reads html background for toolbar blur.
-     Setting a solid color prevents the native frosted-glass transparency effect.
-     Background is applied on body and inner containers instead. */
+  background-color: var(--color-bg);
+  height: 100%;
   overscroll-behavior: none;
 }
 
@@ -271,23 +271,30 @@ img, svg { display: block; max-width: 100%; }
 
 /* ---------------------------------------------------------------------------
    4. APP SHELL LAYOUT
-   The shell uses a simple flex column that fills the full viewport height.
-   No position:fixed on the shell itself — pages scroll via their own
-   overflow-y on .native-page.
+   app-root-canvas uses position:fixed + inset:0 so the canvas fills the
+   entire screen including behind iOS Safari's toolbars. This lets Safari read
+   --color-bg from the canvas as the toolbar blur color, creating a seamless
+   blend that looks transparent.
    --------------------------------------------------------------------------- */
 
-/* canvas = entire viewport */
-.app-root-canvas,
-.app-shell {
+/* canvas = fills entire screen (including behind iOS safe-area / toolbars) */
+.app-root-canvas {
+  position: fixed;
+  inset: 0;
   display: flex;
   flex-direction: column;
-  /* Use dvh so the layout shrinks correctly when Safari's toolbar appears */
-  height: 100dvh;
-  overflow: hidden;
   background-color: var(--color-bg);
 }
 
-/* Extends behind top safe-area (status bar) with padding compensation */
+/* App shell fills the fixed canvas */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .app-shell-main {
   flex: 1;
   min-height: 0;
@@ -299,8 +306,6 @@ img, svg { display: block; max-width: 100%; }
 .native-page {
   position: absolute;
   inset: 0;
-  /* Top padding = status bar safe area */
-  padding-top: env(safe-area-inset-top, 0px);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -310,10 +315,13 @@ img, svg { display: block; max-width: 100%; }
 /* Scrollable tab screens */
 .tab-screen,
 .home-screen {
+  position: absolute;
+  inset: 0;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior-y: contain;
-  /* Bottom padding already handled by pb on each content container */
+  /* bottom padding clears the fixed bottom nav including safe area */
+  padding-bottom: var(--bottom-nav-safe-inset);
 }
 
 /* Dashboard screen content wrapper */
@@ -326,9 +334,6 @@ img, svg { display: block; max-width: 100%; }
 
 /* ---------------------------------------------------------------------------
    5. BOTTOM NAVIGATION
-   Uses backdrop-filter blur for iOS 26 "liquid glass" style.
-   The semi-transparent background lets content show through
-   and blends with Safari's floating toolbar.
    --------------------------------------------------------------------------- */
 .app-bottom-nav {
   --bottom-nav-indicator-x: 0px;
@@ -341,14 +346,9 @@ img, svg { display: block; max-width: 100%; }
   align-items: stretch;
   flex-shrink: 0;
 
-  /* Glass effect */
-  background-color: var(--nav-bg-tint);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  backdrop-filter: blur(20px) saturate(1.8);
-
+  background-color: var(--color-surface);
   border-top: 1px solid var(--color-border);
 
-  /* Safe area: home indicator + any toolbar space */
   padding-bottom: env(safe-area-inset-bottom, 0px);
   height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
   z-index: 100;
@@ -416,10 +416,9 @@ img, svg { display: block; max-width: 100%; }
   align-items: center;
   height: var(--top-nav-height);
   padding-inline: var(--sp-2);
-  background-color: var(--nav-bg-tint);
-  -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  backdrop-filter: blur(20px) saturate(1.8);
-  border-bottom: 1px solid var(--color-border-subtle);
+  padding-top: env(safe-area-inset-top, 0px);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;
   position: relative;
   z-index: 10;
