@@ -219,8 +219,9 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  background-color: var(--color-bg);
-  /* Prevent bounce at root level */
+  /* No background-color here — Safari reads html background for toolbar blur.
+     Setting a solid color prevents the native frosted-glass transparency effect.
+     Background is applied on body and inner containers instead. */
   overscroll-behavior: none;
 }
 

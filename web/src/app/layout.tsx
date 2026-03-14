@@ -22,10 +22,10 @@ const appMono = JetBrains_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
-  // Explicitly set transparent so Safari's browser chrome (status bar + address
-  // bar) uses its native frosted-glass effect instead of a solid fill.
-  // Omitting themeColor causes Safari to fall back to an opaque default.
+  // NO viewportFit: "cover" — with cover, web content extends behind the Safari
+  // address bar and its background fills that zone, making the toolbar look opaque.
+  // Without cover, the viewport stays above the toolbar and Safari renders its
+  // native frosted-glass chrome (transparent look) over nothing.
   themeColor: [
     { media: "(prefers-color-scheme: dark)",  color: "transparent" },
     { media: "(prefers-color-scheme: light)", color: "transparent" },
