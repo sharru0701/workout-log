@@ -225,8 +225,15 @@ export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
 
-  // Clean up any previously injected dynamic theme-color meta (legacy).
+  // Keep theme-color as transparent so Safari's browser chrome always uses its
+  // native frosted-glass effect. Re-inject after each theme switch to ensure
+  // the static media-query metas from Next.js viewport export are overridden.
   document.querySelector(`meta[name="theme-color"][data-dynamic]`)?.remove();
+  const meta = document.createElement("meta");
+  meta.name = "theme-color";
+  meta.content = "transparent";
+  meta.dataset.dynamic = "true";
+  document.head.appendChild(meta);
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {

@@ -23,6 +23,13 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  // Explicitly set transparent so Safari's browser chrome (status bar + address
+  // bar) uses its native frosted-glass effect instead of a solid fill.
+  // Omitting themeColor causes Safari to fall back to an opaque default.
+  themeColor: [
+    { media: "(prefers-color-scheme: dark)",  color: "transparent" },
+    { media: "(prefers-color-scheme: light)", color: "transparent" },
+  ],
 };
 
 export const metadata: Metadata = {
