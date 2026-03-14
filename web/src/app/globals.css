@@ -150,10 +150,14 @@ body {
   padding: 0;
   overflow-x: clip;
   overscroll-behavior-x: none;
-  background: transparent;
 }
 
 html {
+  /* viewport-fit:cover extends the page behind the iOS status bar.
+     Setting background here fills that area with the app base color so
+     Safari's status bar zone blends with the page instead of showing
+     the system dark/light fallback (black in dark mode). */
+  background: var(--bg-primary);
   color-scheme: dark light;
 }
 
