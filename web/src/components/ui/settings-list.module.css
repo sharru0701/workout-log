@@ -1,1 +1,384 @@
-/* Design reset: intentionally blank. Add new styles here. */
+/* =============================================================================
+   SETTINGS LIST — CSS Module
+   iOS Settings-style grouped list rows.
+   All colors via CSS custom properties defined in globals.css.
+   ============================================================================= */
+
+/* ---------------------------------------------------------------------------
+   Grouped list container (maps to BaseGroupedList)
+   Rendered as <ul> with Card base styles applied externally via app-card.
+   --------------------------------------------------------------------------- */
+.baseGroupedList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-radius: var(--settings-group-radius, var(--radius-group, 16px));
+  background-color: var(--settings-group-background, var(--surface-card-bg));
+  border: 1px solid var(--settings-group-border-color, var(--surface-border-color));
+  overflow: hidden;
+}
+
+/* ---------------------------------------------------------------------------
+   Section header (above a grouped list)
+   --------------------------------------------------------------------------- */
+.sectionHeader {
+  padding-block: var(--sp-1, 4px) var(--sp-2, 8px);
+  padding-inline: var(--settings-section-header-padding-inline, 20px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--settings-section-header-gap, 2px);
+}
+
+.sectionHeaderTitle {
+  font-size: 0.8125rem; /* 13px */
+  font-weight: 500;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  line-height: 1.3;
+}
+
+.sectionHeaderDescription {
+  font-size: 0.75rem; /* 12px */
+  color: var(--color-text-subtle);
+  line-height: 1.45;
+}
+
+/* ---------------------------------------------------------------------------
+   Section footnote (below a grouped list)
+   --------------------------------------------------------------------------- */
+.sectionFootnote {
+  font-size: 0.8125rem; /* 13px */
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  padding-block: var(--sp-1, 4px) var(--sp-2, 8px);
+  padding-inline: var(--settings-section-header-padding-inline, 20px);
+}
+
+/* ---------------------------------------------------------------------------
+   Row shared touch target styles
+   --------------------------------------------------------------------------- */
+.rowLink,
+.rowButton,
+.rowStatic,
+.rowToggleLabel {
+  display: flex;
+  align-items: center;
+  gap: var(--settings-row-content-gap, 0.84rem);
+  min-height: var(--settings-row-min-height, 50px);
+  padding-block: var(--settings-row-padding-block, 0.84em);
+  padding-inline: var(--settings-row-padding-inline, 1.1rem);
+  width: 100%;
+  text-align: start;
+  position: relative;
+}
+
+/* Divider between rows */
+li + li .rowLink,
+li + li .rowButton,
+li + li .rowStatic,
+li + li .rowToggleLabel {
+  border-top: 1px solid var(--settings-row-divider-color,
+    color-mix(in srgb, var(--color-separator) 50%, transparent));
+}
+
+.rowLink {
+  color: inherit;
+  text-decoration: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.rowLink:active { background-color: var(--color-surface-2); }
+
+.rowButton {
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: background-color 120ms ease;
+}
+.rowButton:active { background-color: var(--color-surface-2); }
+.rowButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.rowStatic {
+  cursor: default;
+}
+
+.rowToggleLabel {
+  cursor: pointer;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Row content layout: leading | body | trailing
+   --------------------------------------------------------------------------- */
+.leading {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.label {
+  font-size: 1.0625rem; /* 17px — iOS list row label */
+  font-weight: 400;
+  color: var(--settings-label-color, var(--color-label-primary));
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subtitle {
+  font-size: 0.8125rem;
+  color: var(--settings-subtitle-color, var(--color-label-secondary));
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.description {
+  font-size: 0.8125rem;
+  color: var(--settings-description-color, var(--color-label-secondary));
+  line-height: 1.45;
+  white-space: normal;
+}
+
+.trailing {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+/* ---------------------------------------------------------------------------
+   Value text
+   --------------------------------------------------------------------------- */
+.value {
+  font-size: 1.0625rem;
+  color: var(--settings-value-color, var(--color-label-secondary));
+  text-align: end;
+}
+
+.valueWrap {
+  white-space: normal;
+  text-align: end;
+}
+
+/* ---------------------------------------------------------------------------
+   Chevron indicator — CSS-drawn right arrow
+   --------------------------------------------------------------------------- */
+.chevron {
+  display: block;
+  width: 7px;
+  height: 12px;
+  position: relative;
+  color: var(--settings-chevron-color, var(--color-label-tertiary));
+  opacity: 0.6;
+}
+.chevron::before,
+.chevron::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  width: 1.8px;
+  height: 7px;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+.chevron::before {
+  top: 0;
+  transform: rotate(45deg);
+  transform-origin: 50% 100%;
+}
+.chevron::after {
+  bottom: 0;
+  transform: rotate(-45deg);
+  transform-origin: 50% 0%;
+}
+
+/* ---------------------------------------------------------------------------
+   Badge
+   --------------------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--settings-badge-height, 1.15rem);
+  height: var(--settings-badge-height, 1.15rem);
+  padding-inline: var(--settings-badge-padding-inline, 0.4rem);
+  border-radius: var(--settings-badge-radius, 9999px);
+  font-size: 0.6875rem; /* 11px */
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.badgeNeutral {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-muted);
+}
+
+.badgeAccent {
+  background-color: var(--color-primary-muted);
+  color: var(--color-primary);
+}
+
+.badgeWarning {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* ---------------------------------------------------------------------------
+   Row icon (leading icon with tone)
+   --------------------------------------------------------------------------- */
+.rowIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--settings-row-icon-size, 2.02rem);
+  height: var(--settings-row-icon-size, 2.02rem);
+  border-radius: var(--settings-row-icon-radius, 0.62rem);
+  font-size: var(--settings-row-icon-font-size, 0.98rem);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.rowIconNeutral {
+  background-color: var(--color-surface-3);
+  color: var(--color-text-muted);
+}
+
+.rowIconTint {
+  background-color: var(--color-primary-muted);
+  color: var(--color-primary);
+}
+
+.rowIconBlue {
+  background-color: var(--color-info-bg);
+  color: var(--color-info);
+}
+
+.rowIconGreen {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.rowIconOrange {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
+
+/* ---------------------------------------------------------------------------
+   Toggle switch (iOS-style)
+   --------------------------------------------------------------------------- */
+.toggleContainer {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.toggleInput {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.toggleInput:focus-visible + .toggleTrack {
+  outline: 2px solid var(--settings-focus-ring-color, var(--color-focus-ring));
+  outline-offset: 2px;
+}
+
+.toggleTrack {
+  display: block;
+  width: 51px;
+  height: 31px;
+  border-radius: 9999px;
+  background-color: var(--settings-switch-off-color, #8e8e93);
+  position: relative;
+  transition: background-color 200ms ease;
+  cursor: pointer;
+}
+
+.toggleInput:checked + .toggleTrack {
+  background-color: var(--settings-switch-on-color, #34c759);
+}
+
+.toggleInput:disabled + .toggleTrack {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toggleThumb {
+  display: block;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.28), 0 1px 2px rgb(0 0 0 / 0.12);
+  transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.toggleInput:checked + .toggleTrack .toggleThumb {
+  transform: translateX(20px);
+}
+
+/* ---------------------------------------------------------------------------
+   Info row tone modifiers
+   --------------------------------------------------------------------------- */
+.infoNeutral .label {
+  color: var(--color-text-muted);
+}
+
+.infoSuccess {
+  background-color: var(--color-success-bg);
+}
+.infoSuccess .label {
+  color: var(--color-success);
+}
+
+.infoWarning {
+  background-color: var(--color-warning-bg);
+}
+.infoWarning .label {
+  color: var(--color-warning);
+}
+
+.infoCritical {
+  background-color: var(--color-danger-bg);
+}
+.infoCritical .label {
+  color: var(--color-danger);
+}
+
+.infoDisabled {
+  opacity: 0.5;
+}
+.infoDisabled .label {
+  color: var(--color-text-subtle);
+}

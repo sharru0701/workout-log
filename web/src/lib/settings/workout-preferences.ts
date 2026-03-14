@@ -221,12 +221,12 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
 export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
 export { computeBodyweightTotalLoadKg };
 
-// Theme-color values must match the --bg-primary CSS variable for each
+// Theme-color values must match the --color-bg CSS variable for each
 // user-selected theme override (see :root[data-theme-preference="..."] in globals.css).
 // For SYSTEM, the static media-query metas in layout.tsx handle dark/light automatically.
 const THEME_COLOR_OVERRIDE: Partial<Record<ThemePreference, string>> = {
-  DARK: "#000000",  // matches --color-fill-base in data-theme-preference="dark"
-  LIGHT: "#f2f2f7", // matches --color-fill-base in data-theme-preference="light"
+  DARK: "#0d1117",  // matches --color-bg in [data-theme-preference="dark"]  (GitHub Dark)
+  LIGHT: "#f3f6fb", // matches --color-bg in [data-theme-preference="light"] (Solarized Light)
 };
 
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
