@@ -80,9 +80,12 @@
   --app-cta-secondary-border: color-mix(in srgb, var(--accent-primary) 18%, var(--surface-border-color, var(--border-subtle)) 82%);
   --app-cta-secondary-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
   /* Keep the root canvas identical to the scrolling page for Safari's translucent top chrome. */
+  /* NOTE: gradient y-positions must stay BELOW the safe-area-inset-top zone (~10% on iPhone
+     with Dynamic Island) so the solid --bg-primary color fills the status-bar area and matches
+     the theme-color meta exactly — enabling seamless Safari top-chrome blending. */
   --app-root-background:
-    radial-gradient(ellipse at 22% 12%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
-    radial-gradient(ellipse at 80% 62%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%),
+    radial-gradient(ellipse at 22% 32%, color-mix(in srgb, var(--accent-primary) 9%, transparent) 0%, transparent 54%),
+    radial-gradient(ellipse at 80% 65%, color-mix(in srgb, var(--accent-secondary, #7B6FE8) 6%, transparent) 0%, transparent 46%),
     var(--bg-primary);
 }
 
