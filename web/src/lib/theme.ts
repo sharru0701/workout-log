@@ -1,18 +1,19 @@
 import type { Viewport } from "next";
 
-/* iOS 26 Liquid Glass color palette */
+// Color palette — dark: GitHub Dark, light: Solarized Light inspired.
+// Must stay in sync with --color-bg in globals.css and THEME_COLOR_OVERRIDE in workout-preferences.ts.
 export const theme = {
   color: {
     dark: {
-      bgPrimary: "#06080f",
-      bgSecondary: "#0d1119",
-      textPrimary: "#eef1fa",
+      bgPrimary: "#0d1117",
+      bgSecondary: "#161b22",
+      textPrimary: "#e6edf3",
       accentPrimary: "#1FDDCF",
     },
     light: {
-      bgPrimary: "#f0f2f8",
+      bgPrimary: "#f3f6fb",
       bgSecondary: "#ffffff",
-      textPrimary: "#090b14",
+      textPrimary: "#24292f",
       accentPrimary: "#009688",
     },
   },
@@ -23,9 +24,9 @@ export const theme = {
   },
 } as const;
 
-// These must stay in sync with --bg-primary in :root and @media (prefers-color-scheme: light)
+// These must stay in sync with --color-bg in :root and @media (prefers-color-scheme: light)
 // in globals.css, and with the THEME_COLOR_OVERRIDE map in workout-preferences.ts.
 export const viewportThemeColor: NonNullable<Viewport["themeColor"]> = [
-  { media: "(prefers-color-scheme: dark)", color: "#0b121c" },
+  { media: "(prefers-color-scheme: dark)", color: "#0d1117" },
   { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
 ];

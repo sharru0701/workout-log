@@ -1,1 +1,98 @@
-/* Design reset: intentionally blank. Add new styles here. */
+/* =============================================================================
+   SETTINGS SEARCH PANEL — CSS Module
+   ============================================================================= */
+
+.searchBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Search bar container */
+.searchBar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding-inline: 12px;
+  height: 44px;
+  margin-inline: var(--settings-section-header-padding-inline, 20px);
+  margin-bottom: 8px;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.searchBar:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}
+
+.searchIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  width: 18px;
+  height: 18px;
+}
+.searchIcon svg {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.searchInput {
+  flex: 1;
+  font-family: inherit;
+  font-size: 1rem;
+  color: var(--color-text);
+  background: none;
+  border: none;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+}
+.searchInput::placeholder {
+  color: var(--color-text-subtle);
+}
+/* Hide the native search clear button in WebKit */
+.searchInput::-webkit-search-decoration,
+.searchInput::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.clearButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-text-subtle);
+  color: var(--color-surface);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1;
+  border: none;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.clearButton:active {
+  background-color: var(--color-text-muted);
+}
+
+/* Highlighted match text */
+.highlight {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  border-radius: 2px;
+  font-style: normal;
+}
