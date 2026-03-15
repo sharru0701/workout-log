@@ -122,126 +122,34 @@ type TabRouteDirection = "forward" | "backward";
 export function BottomNav() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
   const pathActiveTabIndex = tabs.findIndex((tab) => tabIsActive(pathname, tab.href));
   const [visualActiveTabIndex, setVisualActiveTabIndex] = useState(pathActiveTabIndex);
-  const [indicator, setIndicator] = useState({ x: 0, width: 0, visible: false });
-  const navRef = useRef<HTMLElement | null>(null);
-  const tabRefs = useRef<Array<HTMLAnchorElement | null>>([]);
-  const pendingNavTimerRef = useRef<number | null>(null);
-  const clearDirectionTimerRef = useRef<number | null>(null);
-  const pendingDirectionRef = useRef<TabRouteDirection | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
 
-  const syncIndicator = useCallback(
-    (index: number) => {
-      const target = index >= 0 ? tabRefs.current[index] : null;
-      if (!target) {
-        setIndicator((prev) => ({ ...prev, visible: false }));
-        return;
-      }
-      setIndicator({
-        x: target.offsetLeft,
-        width: target.offsetWidth,
-        visible: true,
-      });
-    },
-    [setIndicator],
-  );
-
+  // 현재 활성화된 탭 싱크
   useEffect(() => {
     setVisualActiveTabIndex(pathActiveTabIndex);
   }, [pathActiveTabIndex]);
 
-  useEffect(
-    () => () => {
-      if (pendingNavTimerRef.current !== null) {
-        window.clearTimeout(pendingNavTimerRef.current);
-        pendingNavTimerRef.current = null;
-      }
-      if (clearDirectionTimerRef.current !== null) {
-        window.clearTimeout(clearDirectionTimerRef.current);
-        clearDirectionTimerRef.current = null;
-      }
-      pendingDirectionRef.current = null;
-      document.documentElement.removeAttribute("data-tab-route-pending-direction");
-      document.documentElement.removeAttribute("data-tab-route-direction");
-    },
-    [],
-  );
-
-  useLayoutEffect(() => {
-    const root = document.documentElement;
-    const pendingDirection =
-      pendingDirectionRef.current ??
-      ((root.getAttribute("data-tab-route-pending-direction") as TabRouteDirection | null) ?? null);
-    if (!pendingDirection) return;
-
-    pendingDirectionRef.current = null;
-    root.removeAttribute("data-tab-route-pending-direction");
-
-    if (clearDirectionTimerRef.current !== null) {
-      window.clearTimeout(clearDirectionTimerRef.current);
-      clearDirectionTimerRef.current = null;
-    }
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reducedMotion) {
-      root.removeAttribute("data-tab-route-direction");
-      return;
-    }
-
-    root.setAttribute("data-tab-route-direction", pendingDirection);
-    clearDirectionTimerRef.current = window.setTimeout(() => {
-      clearDirectionTimerRef.current = null;
-      root.removeAttribute("data-tab-route-direction");
-    }, 320);
-  }, [pathname]);
-
+  // 메뉴 외부 클릭 시 닫기
   useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      syncIndicator(visualActiveTabIndex);
-    });
-    return () => {
-      window.cancelAnimationFrame(frame);
-    };
-  }, [syncIndicator, visualActiveTabIndex]);
-
-  useEffect(() => {
-    const onResize = () => {
-      syncIndicator(visualActiveTabIndex);
-    };
-    window.addEventListener("resize", onResize);
-
-    const resizeObserver =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(() => {
-            syncIndicator(visualActiveTabIndex);
-          });
-
-    if (navRef.current && resizeObserver) {
-      resizeObserver.observe(navRef.current);
-      tabRefs.current.forEach((tab) => {
-        if (tab) resizeObserver.observe(tab);
-      });
+    function handleClickOutside(event: globalThis.MouseEvent) {
+      if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
     }
-
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      window.removeEventListener("resize", onResize);
-      resizeObserver?.disconnect();
+      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [syncIndicator, visualActiveTabIndex]);
+  }, [isOpen]);
 
-  const navStyle = {
-    "--bottom-nav-tabs-count": tabs.length,
-    "--bottom-nav-indicator-x": `${indicator.x}px`,
-    "--bottom-nav-indicator-width": `${indicator.width}px`,
-    "--bottom-nav-indicator-opacity": indicator.visible ? 0.98 : 0,
-  } as CSSProperties;
-
-  const onTabPress = (event: MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => {
+  const onTabPress = (event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => {
     if (event.defaultPrevented) return;
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
+    setIsOpen(false); // 탭 클릭 시 메뉴 닫기
     const alreadyActive = tabIsActive(pathname, href);
     if (alreadyActive) {
       setVisualActiveTabIndex(tabIndex);
@@ -249,57 +157,54 @@ export function BottomNav() {
     }
 
     event.preventDefault();
-    const direction: TabRouteDirection = tabIndex > visualActiveTabIndex ? "forward" : "backward";
-    pendingDirectionRef.current = direction;
-    document.documentElement.setAttribute("data-tab-route-pending-direction", direction);
-    document.documentElement.removeAttribute("data-tab-route-direction");
-
     setVisualActiveTabIndex(tabIndex);
-    if (pendingNavTimerRef.current !== null) {
-      window.clearTimeout(pendingNavTimerRef.current);
-      pendingNavTimerRef.current = null;
-    }
-
-    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const navDelayMs = reducedMotion ? 0 : 220;
-    pendingNavTimerRef.current = window.setTimeout(() => {
-      pendingNavTimerRef.current = null;
+    
+    // 부드러운 전환을 위한 딜레이 (애니메이션 동기화)
+    setTimeout(() => {
       router.push(href);
-    }, navDelayMs);
+    }, 150);
   };
 
   return (
-    <nav
-      ref={navRef}
-      aria-label="Floating tab navigation"
-      className="bottom-nav"
-      style={navStyle}
-    >
-      {tabs.map((tab, tabIndex) => {
-        const pathActive = tabIsActive(pathname, tab.href);
-        const visualActive = tabIndex === visualActiveTabIndex;
-        const Icon = tab.Icon;
-        return (
-          <Link
-            key={tab.href}
-            href={tab.href}
-            prefetch={false}
-            ref={(element) => {
-              tabRefs.current[tabIndex] = element;
-            }}
-            aria-current={pathActive ? "page" : undefined}
-            aria-label={tab.ariaLabel}
-            title={tab.ariaLabel}
-            onClick={(event) => onTabPress(event, tabIndex, tab.href)}
-            className="bottom-nav-item"
-          >
-            <div className="bottom-nav-icon">
-              <Icon />
-            </div>
-            <span className="bottom-nav-label">{tab.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+    <div className="fab-container" ref={menuRef}>
+      {/* 확장 메뉴 리스트 */}
+      <div className={`fab-menu ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen}>
+        {tabs.map((tab, tabIndex) => {
+          const pathActive = tabIsActive(pathname, tab.href);
+          const Icon = tab.Icon;
+          return (
+            <Link
+              key={tab.href}
+              href={tab.href}
+              prefetch={false}
+              aria-current={pathActive ? "page" : undefined}
+              aria-label={tab.ariaLabel}
+              title={tab.ariaLabel}
+              onClick={(event) => onTabPress(event, tabIndex, tab.href)}
+              className="fab-item"
+            >
+              <div className="fab-icon">
+                <Icon />
+              </div>
+              <span>{tab.label}</span>
+            </Link>
+          );
+        })}
+      </div>
+
+      {/* 메인 FAB 버튼 */}
+      <button
+        type="button"
+        className={`fab-button ${isOpen ? "is-open" : ""}`}
+        aria-label="메뉴 열기"
+        aria-expanded={isOpen}
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+      </button>
+    </div>
   );
 }

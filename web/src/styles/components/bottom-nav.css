@@ -1,55 +1,111 @@
-/* components/bottom-nav.css */
+/* components/bottom-nav.css -> fab-menu.css 역할 수행 */
 
-.bottom-nav {
+/* 고정형 탭 컨테이너를 좌측 하단 플로팅 메뉴 영역으로 변경 */
+.fab-container {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 50; /* 항상 최상단에 뜨도록 */
-  display: flex;
-  justify-content: space-around;
-  align-items: stretch;
-  
-  /* Glassmorphism 효과 및 배경 */
-  background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px); /* Safari 지원 */
-  border-top: 1px solid var(--color-border);
-  
-  /* Safe-area: 하단 홈 인디케이터 침범 방지를 탭바 하단 고유의 여백으로 흡수 */
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
-.bottom-nav-item {
-  flex: 1;
+  left: var(--space-md);
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  z-index: 50;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  align-items: flex-start; /* 왼쪽 정렬 기준 메뉴 전개 */
+  gap: var(--space-sm);
+}
+
+/* 닫혀있을 때 메인 버튼 */
+.fab-button {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* 버튼만 살짝 띄우는 그림자 */
+  
+  /* Glassmorphism 베이스 적용 (터치 피드백) */
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  display: flex;
   align-items: center;
-  padding: var(--space-xs) 0;
-  min-height: 56px; /* 모바일 하단 탭 최소 권장 높이 */
-  color: var(--color-text-muted);
-  transition: color 0.2s ease;
-  user-select: none;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
 }
 
-.bottom-nav-item:active {
-  opacity: 0.7;
+.fab-button:active {
+  transform: scale(0.95);
+  background-color: var(--color-surface-hover);
 }
 
-.bottom-nav-item[aria-current="page"] {
-  color: var(--color-primary);
-}
-
-.bottom-nav-icon {
+.fab-button svg {
   width: 24px;
   height: 24px;
-  margin-bottom: 4px;
+  transition: transform 0.3s ease;
 }
 
-.bottom-nav-label {
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
+.fab-button.is-open svg {
+  transform: rotate(45deg); /* + 기호가 x로 변환되는 효과 등 지원용 */
+}
+
+/* 위로 전개되는 팝오버 메뉴 영역 */
+.fab-menu {
+  position: absolute;
+  bottom: calc(56px + var(--space-sm)); 
+  left: 0;
+  
+  /* Glassmorphism 백그라운드 메뉴 박스 */
+  background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: var(--space-xs);
+  min-width: 140px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  
+  /* 애니메이션 트랜지션 처리 */
+  transform-origin: bottom left;
+  opacity: 0;
+  transform: scale(0.9) translateY(10px);
+  pointer-events: none; /* 닫혀있을 때 클릭 방지 */
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fab-menu.is-open {
+  opacity: 1;
+  transform: scale(1) translateY(0);
+  pointer-events: auto;
+}
+
+/* 개별 메뉴 탭 아이템 */
+.fab-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: 8px;
+  color: var(--color-text);
+  font: var(--font-body);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.fab-item:active {
+  background-color: var(--color-surface-hover);
+}
+
+.fab-item[aria-current="page"] {
+  color: var(--color-primary);
+  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.fab-item .fab-icon {
+  width: 20px;
+  height: 20px;
 }
