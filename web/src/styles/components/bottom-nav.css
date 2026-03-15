@@ -3,12 +3,12 @@
 /* 고정형 탭 컨테이너를 좌측 하단 플로팅 메뉴 영역으로 변경 */
 .fab-container {
   position: fixed;
-  left: var(--space-md);
+  right: var(--space-md);
   bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
   z-index: 50;
   display: flex;
   flex-direction: column;
-  align-items: flex-start; /* 왼쪽 정렬 기준 메뉴 전개 */
+  align-items: flex-end; /* 오른쪽 우측 정렬 기준 메뉴 전개 */
   gap: var(--space-sm);
 }
 
@@ -52,7 +52,7 @@
 .fab-menu {
   position: absolute;
   bottom: calc(56px + var(--space-sm)); 
-  left: 0;
+  right: 0;
   
   /* Glassmorphism 백그라운드 메뉴 박스 */
   background-color: color-mix(in srgb, var(--color-surface) 90%, transparent);
@@ -70,7 +70,7 @@
   gap: 2px;
   
   /* 애니메이션 트랜지션 처리 */
-  transform-origin: bottom left;
+  transform-origin: bottom right;
   opacity: 0;
   transform: scale(0.9) translateY(10px);
   pointer-events: none; /* 닫혀있을 때 클릭 방지 */

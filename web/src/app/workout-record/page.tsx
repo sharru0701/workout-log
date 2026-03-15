@@ -1559,16 +1559,22 @@ export default function WorkoutRecordPage() {
 
                 {visibleExercises.length > 0 ? <div aria-hidden="true" /> : null}
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    resetAddExerciseSheetState();
-                    setAddSheetOpen(true);
-                  }}
-                >
-                  <AppPlusMinusIcon kind="plus" />
-                  <span>Add Exercise</span>
-                </button>
+                <div style={{ marginBottom: "var(--space-md)" }}>
+                  <button
+                    type="button"
+                    className="btn-add-exercise"
+                    onClick={() => {
+                      resetAddExerciseSheetState();
+                      setAddSheetOpen(true);
+                    }}
+                  >
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ width: "32px", height: "32px" }}>
+                      <line x1="12" y1="5" x2="12" y2="19" />
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                    </svg>
+                    <span>Add Exercise</span>
+                  </button>
+                </div>
 
                 <label>
                   <AppTextarea
