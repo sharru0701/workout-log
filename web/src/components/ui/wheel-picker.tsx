@@ -391,6 +391,12 @@ export const WheelPicker = memo(
             transform: `translate3d(0, ${y}px, 0) scale(${scale})`,
             opacity: Math.max(0, opacity),
             willChange: "transform, opacity",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "1.5rem",
+            fontWeight: isSelected ? 600 : 400,
+            color: "var(--color-text)",
           }}
           onClick={() => handleItemClick(i)}
         >

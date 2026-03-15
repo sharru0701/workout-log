@@ -63,3 +63,55 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 .mobile-bottom-sheet-panel.is-dragging {
   transition: none;
 }
+
+/* 모달 헤더 (원형 액션 버튼 양반 양옆 배치) */
+.mobile-bottom-sheet-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-lg);
+}
+
+.mobile-bottom-sheet-title {
+  flex: 1;
+  text-align: center;
+  font: var(--font-heading);
+  margin: 0;
+}
+
+.mobile-bottom-sheet-title p {
+  font: var(--font-secondary);
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+/* 원형 액션 버튼 */
+.mobile-bottom-sheet-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.mobile-bottom-sheet-btn:active {
+  background-color: var(--color-border);
+  transform: scale(0.95);
+}
+
+.mobile-bottom-sheet-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mobile-bottom-sheet-btn svg {
+  width: 20px;
+  height: 20px;
+}

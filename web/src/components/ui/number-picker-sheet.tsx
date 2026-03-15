@@ -67,8 +67,8 @@ export function NumberPickerSheet({
       }}
       footer={null}
     >
-      <div>
-        <div>
+      <div style={{ padding: "var(--space-md) 0 var(--space-xl)" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-md)" }}>
           <WheelPicker
             ref={pickerRef}
             values={values}
@@ -78,7 +78,7 @@ export function NumberPickerSheet({
             visibleCount={7}
             formatValue={formatValue}
           />
-          {unit ? <span>{unit}</span> : null}
+          {unit ? <span style={{ fontSize: "1.25rem", color: "var(--color-text-muted)" }}>{unit}</span> : null}
         </div>
       </div>
     </BottomSheet>
