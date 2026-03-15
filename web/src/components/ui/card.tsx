@@ -43,8 +43,18 @@ export function Card<T extends ElementType = "div">({
 }: CardProps<T>) {
   const Component = (as ?? "div") as ElementType;
 
+  // mapping for inline fallback or overriding default card padding
+  const paddingMap = {
+    none: "0",
+    sm: "var(--space-sm)",
+    md: "var(--space-md)",
+    lg: "var(--space-lg)",
+  };
+
   return (
     <Component
+      className={cx("card", className)}
+      style={{ padding: paddingMap[padding] }}
       {...props}
     >
       {children}
@@ -54,7 +64,7 @@ export function Card<T extends ElementType = "div">({
 
 export function CardHeader({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx("card-header", className)} {...props}>
       {children}
     </div>
   );
@@ -62,7 +72,7 @@ export function CardHeader({ children, className = "", ...props }: CardSectionPr
 
 export function CardTitle({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx("card-title", className)} {...props}>
       {children}
     </div>
   );
@@ -70,7 +80,11 @@ export function CardTitle({ children, className = "", ...props }: CardSectionPro
 
 export function CardDescription({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <p {...props}>
+    <p
+      className={cx(className)}
+      style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0 }}
+      {...props}
+    >
       {children}
     </p>
   );
@@ -78,7 +92,7 @@ export function CardDescription({ children, className = "", ...props }: CardSect
 
 export function CardContent({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx("card-body", className)} {...props}>
       {children}
     </div>
   );

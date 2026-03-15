@@ -37,11 +37,11 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
   }
 
   return (
-    <section>
-      <div>
-        <h2>현재 프로그램</h2>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>현재 프로그램</h2>
       </div>
-      <Card as={Link} href={planHref} padding="none">
+      <Card as={Link} href={planHref} padding="md">
         <div>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
         {planOverview.highlightedProgramName && (
           <div>{planOverview.highlightedProgramName}</div>
@@ -80,11 +80,11 @@ function TodaySessionSection({ data }: { data: HomeData }) {
     : today.plannedExercises.map((ex) => ({ name: ex.name, role: ex.role, summary: ex.summary }));
 
   return (
-    <section data-pull-refresh-trigger="true">
-      <div>
-        <h2>오늘의 운동</h2>
+    <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>오늘의 운동</h2>
         {hasTodayActivity && (
-          <span>{today.completedSets}세트 완료</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{today.completedSets}세트 완료</span>
         )}
       </div>
       <SessionCard
@@ -103,9 +103,9 @@ function TodaySessionSection({ data }: { data: HomeData }) {
 
 function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
-    <section>
-      <div>
-        <h2>지난 세션</h2>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>지난 세션</h2>
       </div>
       <SessionCard
         variant="last"
@@ -130,11 +130,11 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section>
-      <div>
-        <h2>스트렝스 진행</h2>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>스트렝스 진행</h2>
       </div>
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
         {items.map((item) => {
           const href = item.exerciseId
             ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
@@ -170,11 +170,11 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
   const selected = selectedIndex !== null ? points[selectedIndex] ?? null : null;
 
   return (
-    <section>
-      <div>
-        <h2>주간 볼륨</h2>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>주간 볼륨</h2>
       </div>
-      <Card padding="none">
+      <Card padding="md">
         {selected && (
           <div>
             <span>{selected.label} 주</span>
@@ -216,26 +216,26 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
   if (!hasData) return null;
 
   return (
-    <section>
-      <div>
-        <h2>요약 통계</h2>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>요약 통계</h2>
       </div>
-      <div>
-        <Card padding="none">
-          <span>{stats.totalSessions}</span>
-          <span>총 운동</span>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+        <Card padding="md" className="metric-badge">
+          <span className="metric-value">{stats.totalSessions}</span>
+          <span className="metric-label">총 운동</span>
         </Card>
-        <Card padding="none">
-          <span>{formatVolume(stats.totalVolume)}</span>
-          <span>누적 볼륨</span>
+        <Card padding="md" className="metric-badge">
+          <span className="metric-value">{formatVolume(stats.totalVolume)}</span>
+          <span className="metric-label">누적 볼륨</span>
         </Card>
-        <Card padding="none">
-          <span>{stats.currentStreak}일</span>
-          <span>연속 운동</span>
+        <Card padding="md" className="metric-badge">
+          <span className="metric-value">{stats.currentStreak}일</span>
+          <span className="metric-label">연속 운동</span>
         </Card>
-        <Card padding="none">
-          <span>{stats.thisMonthSessions}</span>
-          <span>이번 달</span>
+        <Card padding="md" className="metric-badge">
+          <span className="metric-value">{stats.thisMonthSessions}</span>
+          <span className="metric-label">이번 달</span>
         </Card>
       </div>
     </section>

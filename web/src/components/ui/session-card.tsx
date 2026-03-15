@@ -33,23 +33,23 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
       {main.length > 0 && (
         <div>
           {main.map((ex) => (
-            <div key={ex.name}>
-              <span>{ex.name}</span>
-              <span>{ex.summary}</span>
+            <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
+              <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
+              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.summary}</span>
             </div>
           ))}
         </div>
       )}
       {assist.length > 0 && (
-        <div>
+        <div style={{ marginTop: "var(--space-sm)", paddingTop: "var(--space-sm)", borderTop: "1px solid var(--color-border)" }}>
           {assist.slice(0, 3).map((ex) => (
-            <div key={ex.name}>
-              <span>{ex.name}</span>
-              <span>{ex.summary}</span>
+            <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
+              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.name}</span>
+              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.summary}</span>
             </div>
           ))}
           {assist.length > 3 && (
-            <div>
+            <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", textAlign: "center", marginTop: "var(--space-xs)" }}>
               +{assist.length - 3}개 보조 운동
             </div>
           )}
@@ -62,13 +62,13 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
 function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
   if (exercises.length === 0) return null;
   return (
-    <div>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
       {exercises.map((ex) => (
-        <div key={ex.name}>
-          <span>{ex.name}</span>
-          <span>
+        <div key={ex.name} style={{ display: "flex", justifyContent: "space-between" }}>
+          <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
-              <span>
+              <span style={{ color: ex.weightDelta > 0 ? "var(--color-success)" : "var(--color-danger)", marginRight: "var(--space-xs)" }}>
                 {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
               </span>
             )}
@@ -117,12 +117,12 @@ function TodayCard({
 
   const inner = (
     <>
-      <div>
+      <div className="card-header">
         <div>
-          <div>{title}</div>
-          {meta && <p>{meta}</p>}
+          <div className="card-title">{title}</div>
+          {meta && <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0, marginTop: "2px" }}>{meta}</p>}
         </div>
-        {badge && <span>{badge}</span>}
+        {badge && <span style={{ font: "var(--font-secondary)", color: "var(--color-primary)", backgroundColor: "var(--color-surface-secondary)", padding: "2px 8px", borderRadius: "12px" }}>{badge}</span>}
       </div>
 
       {hasGrouped ? (
@@ -137,16 +137,16 @@ function TodayCard({
 
       {ctaLabel && (
         href ? (
-          <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false}>
+          <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false} className="btn btn-primary" style={{ marginTop: "var(--space-md)" }}>
             <span>{ctaLabel}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, marginLeft: "var(--space-xs)" }}>
               <path d="m9 18 6-6-6-6" />
             </svg>
           </PrimaryButton>
         ) : (
-          <PrimaryButton as="a" href={ctaHref} variant="primary" size="lg" fullWidth>
+          <PrimaryButton as="a" href={ctaHref} variant="primary" size="lg" fullWidth className="btn btn-primary" style={{ marginTop: "var(--space-md)" }}>
             <span>{ctaLabel}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, marginLeft: "var(--space-xs)" }}>
               <path d="m9 18 6-6-6-6" />
             </svg>
           </PrimaryButton>
@@ -188,12 +188,12 @@ function LastCard({
 
   const inner = hasData ? (
     <>
-      <div>
+      <div className="card-header">
         <div>
-          <div>{title}</div>
-          <div>{date}</div>
+          <div className="card-title">{title}</div>
+          <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{date}</div>
         </div>
-        <div>
+        <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "flex", gap: "var(--space-xs)" }}>
           {totalSets !== undefined && (
             <span>{totalSets}세트</span>
           )}
