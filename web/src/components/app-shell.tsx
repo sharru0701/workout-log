@@ -9,7 +9,9 @@ export function AppShell({ children }: { children: ReactNode }) {
     <AppDialogProvider>
       <div className="app-shell">
         <main className="app-main">
-          {children}
+          <div className="container">
+            {children}
+          </div>
         </main>
         <BottomNav />
       </div>

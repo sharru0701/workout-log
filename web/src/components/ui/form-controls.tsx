@@ -53,6 +53,7 @@ export function AppPlusMinusIcon({
       strokeWidth="2.2"
       strokeLinecap="round"
       strokeLinejoin="round"
+      style={{ width: "24px", height: "24px" }}
     >
       <path d="M5 12h14" />
       {kind === "plus" ? <path d="M12 5v14" /> : null}

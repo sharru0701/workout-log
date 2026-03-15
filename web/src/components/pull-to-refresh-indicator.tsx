@@ -50,7 +50,7 @@ export function PullToRefreshIndicator(props: PullToRefreshIndicatorProps) {
 
   return (
     <div
-      style={style}
+      style={{ ...style, overflow: "hidden" }}
       aria-hidden={!isVisible}
     >
       <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", gap: "var(--space-sm)", color: "var(--color-text-muted)" }}>
