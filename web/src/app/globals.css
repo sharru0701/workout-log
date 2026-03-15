@@ -220,6 +220,8 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  /* Fills area behind Safari toolbar (below 100dvh canvas) with page color */
+  background-color: var(--color-bg);
   height: 100%;
   overscroll-behavior: none;
 }
