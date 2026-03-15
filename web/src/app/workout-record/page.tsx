@@ -466,21 +466,22 @@ function ExerciseRow({
   } as const;
 
   return (
-    <Card as="article" padding="none">
-      <div>
-        <div>
+    <Card as="article" padding="none" style={{ marginBottom: "var(--space-md)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           <strong
             aria-label={`운동종목 ${exercise.exerciseName}`}
+            style={{ font: "var(--font-section-title)" }}
           >
             {exercise.exerciseName}
           </strong>
           {showBadgeAfterName && badgeMeta ? (
-            <span>{badgeMeta.label}</span>
+            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{badgeMeta.label}</span>
           ) : null}
         </div>
-        <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           {badgeMeta && !showBadgeAfterName ? (
-            <span>{badgeMeta.label}</span>
+            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{badgeMeta.label}</span>
           ) : null}
           <button
             type="button"
@@ -510,9 +511,9 @@ function ExerciseRow({
         </div>
       </div>
 
-      <section>
-        <div>
-          <div aria-hidden="true">
+      <section style={{ padding: "var(--space-md)" }}>
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
             <span>세트</span>
             <span>TM%</span>
             <span>{isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "무게(kg)"}</span>
@@ -550,10 +551,9 @@ function ExerciseRow({
                   : exercise.set.weightKg;
 
               return (
-                <div key={`${exercise.id}-set-${index}`} role="listitem">
-                  <span>{index + 1}</span>
-                  <span
-                  >
+                <div key={`${exercise.id}-set-${index}`} role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", alignItems: "center", marginBottom: "var(--space-xs)", textAlign: "center" }}>
+                  <span style={{ color: "var(--color-text-muted)" }}>{index + 1}</span>
+                  <span style={{ font: "var(--font-secondary)" }}>
                     {formatPercentLabel(plannedPercentPerSet[index])}
                   </span>
                   <WorkoutRecordInlinePicker
@@ -581,9 +581,10 @@ function ExerciseRow({
           </div>
         </div>
 
-        <div>
+        <div style={{ display: "flex", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
           <button
             type="button"
+            className="btn btn-secondary"
             onClick={onAddSet}
           >
             <AppPlusMinusIcon kind="plus" />
@@ -591,6 +592,7 @@ function ExerciseRow({
           </button>
           <button
             type="button"
+            className="btn btn-secondary"
             onClick={onRemoveSet}
             disabled={exercise.set.repsPerSet.length <= 1}
           >
@@ -1356,11 +1358,13 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <section data-pull-refresh-trigger="true">
-            <h2>선택된 플랜</h2>
+          <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
+            <h2 style={{ font: "var(--font-heading)", marginBottom: "var(--space-sm)" }}>선택된 플랜</h2>
             <Card as="article" padding="md">
               <button
                 type="button"
+                className="btn btn-secondary"
+                style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center" }}
                 aria-label="플랜 선택 열기"
                 aria-haspopup="dialog"
                 aria-expanded={isEditingExistingLog ? false : planSheetOpen}
@@ -1383,8 +1387,8 @@ export default function WorkoutRecordPage() {
             </Card>
           </section>
 
-          <section>
-            <h2>지난 세션</h2>
+          <section style={{ marginBottom: "var(--space-xl)" }}>
+            <h2 style={{ font: "var(--font-heading)", marginBottom: "var(--space-sm)" }}>지난 세션</h2>
             <SessionCard
               variant="last"
               title={lastSession?.dateLabel ? `${lastSession.weekLabel} · ${lastSession.sessionLabel}` : ""}

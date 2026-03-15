@@ -53,9 +53,9 @@ export function PullToRefreshIndicator(props: PullToRefreshIndicatorProps) {
       style={style}
       aria-hidden={!isVisible}
     >
-      <div>
-        <span aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", gap: "var(--space-sm)", color: "var(--color-text-muted)" }}>
+        <span aria-hidden="true" style={{ width: "24px", height: "24px", display: "inline-block" }}>
+          <svg viewBox="0 0 24 24" focusable="false" style={{ width: "100%", height: "100%" }}>
             <g
               style={{ transform: `rotate(${arrowRotation}deg)` }}
             >

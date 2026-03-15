@@ -372,10 +372,12 @@ export function BottomSheet({
     <div
       ref={sheetRef}
       inert={!isInteractiveSheet}
+      className={`mobile-bottom-sheet ${className}`}
     >
       <button
         type="button"
         aria-label={closeLabel}
+        className="mobile-bottom-sheet-overlay"
         onClick={() => {
           if (!isInteractiveSheet) return;
           onClose();
@@ -387,6 +389,7 @@ export function BottomSheet({
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
+        className={`mobile-bottom-sheet-panel ${panelClassName}`}
       >
         <div onPointerDown={onHandlePointerDown}>
           <div aria-hidden="true" />
