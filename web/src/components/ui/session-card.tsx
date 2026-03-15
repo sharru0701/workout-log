@@ -155,8 +155,8 @@ function TodayCard({
     </>
   );
 
-  if (href) return <Card as={Link} href={href} padding="none">{inner}</Card>;
-  return <Card padding="none">{inner}</Card>;
+  if (href) return <Card as={Link} href={href} padding="md">{inner}</Card>;
+  return <Card padding="md">{inner}</Card>;
 }
 
 // ─── "last" variant ────────────────────────────────────────────────────────────
@@ -217,8 +217,8 @@ function LastCard({
     <div>{emptyMessage}</div>
   );
 
-  if (href) return <Card as={Link} href={href} padding="none">{inner}</Card>;
-  return <Card padding="none">{inner}</Card>;
+  if (href) return <Card as={Link} href={href} padding="md">{inner}</Card>;
+  return <Card padding="md">{inner}</Card>;
 }
 
 // ─── Unified export ────────────────────────────────────────────────────────────
