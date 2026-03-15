@@ -51,19 +51,32 @@ export function AppLaunchSplash() {
       role="status"
       aria-live="polite"
       aria-label="앱을 불러오는 중"
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "var(--color-bg)",
+        transition: "opacity 0.2s ease",
+        opacity: phase === "hiding" ? 0 : 1,
+      }}
     >
-      <div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "var(--space-md)" }}>
         <Image
           src="/icons/icon-192.png"
           width={76}
           height={76}
           alt=""
+          style={{ borderRadius: "20%" }}
           priority
         />
-        <p>Workout Log</p>
-        <div aria-hidden="true">
-          <span />
-          <span>로딩 중</span>
+        <p style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>
+          Workout Log
+        </p>
+        <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", color: "var(--color-text-muted)" }}>
+          <span style={{ font: "var(--font-secondary)" }}>로딩 중...</span>
         </div>
       </div>
     </div>

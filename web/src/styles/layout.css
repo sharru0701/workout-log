@@ -11,8 +11,8 @@
   /* Phase 3: Safe-area 패딩 처리 */
   /* 상단 상태표시줄(노치) 영역 침범 방지 */
   padding-top: env(safe-area-inset-top, 0px);
-  /* 하단 홈 인디케이터(바) 영역 침범 방지 */
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  /* 하단 BottomNav 영역에 텍스트나 카드가 가려지지 않도록 (기본 탭 높이 52px + 여백) 밀어냅니다. */
+  padding-bottom: calc(56px + var(--space-md) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Base utility padding container */

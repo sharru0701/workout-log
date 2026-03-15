@@ -272,6 +272,7 @@ export function BottomNav() {
     <nav
       ref={navRef}
       aria-label="Floating tab navigation"
+      className="bottom-nav"
       style={navStyle}
     >
       {tabs.map((tab, tabIndex) => {
@@ -290,9 +291,12 @@ export function BottomNav() {
             aria-label={tab.ariaLabel}
             title={tab.ariaLabel}
             onClick={(event) => onTabPress(event, tabIndex, tab.href)}
+            className="bottom-nav-item"
           >
-            <Icon />
-            <span>{tab.label}</span>
+            <div className="bottom-nav-icon">
+              <Icon />
+            </div>
+            <span className="bottom-nav-label">{tab.label}</span>
           </Link>
         );
       })}

@@ -1,0 +1,55 @@
+/* components/bottom-nav.css */
+
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50; /* 항상 최상단에 뜨도록 */
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  
+  /* Glassmorphism 효과 및 배경 */
+  background-color: color-mix(in srgb, var(--color-surface) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px); /* Safari 지원 */
+  border-top: 1px solid var(--color-border);
+  
+  /* Safe-area: 하단 홈 인디케이터 침범 방지를 탭바 하단 고유의 여백으로 흡수 */
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xs) 0;
+  min-height: 56px; /* 모바일 하단 탭 최소 권장 높이 */
+  color: var(--color-text-muted);
+  transition: color 0.2s ease;
+  user-select: none;
+}
+
+.bottom-nav-item:active {
+  opacity: 0.7;
+}
+
+.bottom-nav-item[aria-current="page"] {
+  color: var(--color-primary);
+}
+
+.bottom-nav-icon {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+}
+
+.bottom-nav-label {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+}
