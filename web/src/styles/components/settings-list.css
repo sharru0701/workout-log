@@ -1,0 +1,109 @@
+[data-settings-grouped-list] {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+
+[data-settings-section-header] {
+  padding: var(--space-md) var(--space-md) var(--space-sm);
+}
+
+[data-settings-section-header] h2 {
+  font: var(--font-section-title);
+  margin: 0;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+}
+
+[data-settings-section-header] p {
+  font: var(--font-secondary);
+  color: var(--color-text-muted);
+  margin: 4px 0 0;
+}
+
+[data-settings-row] {
+  list-style: none;
+  position: relative;
+}
+
+[data-settings-row]:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: var(--space-md);
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background-color: var(--color-border);
+}
+
+[data-settings-touch-target] {
+  display: flex;
+  align-items: center;
+  min-height: 52px;
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  color: inherit;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+[data-settings-touch-target]:active {
+  background-color: var(--color-surface-secondary);
+}
+
+/* Row Content Layout */
+[data-settings-row] .row-inner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: var(--space-md);
+}
+
+[data-settings-row] .row-label-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-settings-row] .row-label {
+  font: var(--font-body);
+  font-weight: 500;
+}
+
+[data-settings-row] .row-subtitle {
+  font: var(--font-secondary);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}
+
+[data-settings-row] .row-trailing {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-text-muted);
+  font: var(--font-secondary);
+}
+
+/* Chevron */
+[data-settings-row="navigation"] [aria-hidden="true"]:empty {
+  width: 20px;
+  height: 20px;
+  display: block;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m9 18 6-6-6-6'/%3E%3C/svg%3E");
+  background-size: contain;
+  opacity: 0.3;
+}
+
+[data-settings-footnote] {
+  padding: var(--space-sm) var(--space-md);
+  font: var(--font-secondary);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}

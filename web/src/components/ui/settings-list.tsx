@@ -109,20 +109,25 @@ function RowContent({
   trailing?: ReactNode;
 }) {
   return (
-    <>
-      {leading ? <span>{leading}</span> : null}
-      <span>
-        <span>{label}</span>
-        {!MINIMAL_COPY_MODE && subtitle ? <span>{subtitle}</span> : null}
-        {!MINIMAL_COPY_MODE && description ? <span>{description}</span> : null}
+    <div className="row-inner">
+      {leading ? <span className="row-leading">{leading}</span> : null}
+      <span className="row-label-group">
+        <span className="row-label">{label}</span>
+        {!MINIMAL_COPY_MODE && (subtitle || description) ? (
+          <span className="row-subtitle">
+            {subtitle}
+            {subtitle && description ? " · " : ""}
+            {description}
+          </span>
+        ) : null}
       </span>
-      {trailing || badge ? (
-        <span>
-          {badge ? <span>{badge}</span> : null}
+      {(trailing || badge) && (
+        <span className="row-trailing">
+          {badge ? <span className="row-badge">{badge}</span> : null}
           {trailing}
         </span>
-      ) : null}
-    </>
+      )}
+    </div>
   );
 }
 
