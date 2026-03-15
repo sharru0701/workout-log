@@ -22,14 +22,9 @@ const appMono = JetBrains_Mono({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  // NO viewportFit: "cover" — with cover, web content extends behind the Safari
-  // address bar and its background fills that zone, making the toolbar look opaque.
-  // Without cover, the viewport stays above the toolbar and Safari renders its
-  // native frosted-glass chrome (transparent look) over nothing.
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)",  color: "transparent" },
-    { media: "(prefers-color-scheme: light)", color: "transparent" },
-  ],
+  // No viewportFit and no themeColor: the fixed-position app canvas fills the
+  // full screen (including behind iOS toolbars), so Safari reads --color-bg from
+  // the canvas and blends it seamlessly with the toolbar → transparent appearance.
 };
 
 export const metadata: Metadata = {
