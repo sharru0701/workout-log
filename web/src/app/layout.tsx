@@ -4,20 +4,6 @@ import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 
-const appSans = Noto_Sans_KR({
-  subsets: ["latin"],
-  variable: "--font-geist-sans",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
-const appMono = JetBrains_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

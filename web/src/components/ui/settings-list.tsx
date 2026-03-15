@@ -81,28 +81,6 @@ type SubtitleRowProps = Omit<NavigationRowProps, "subtitle"> & {
   subtitle: ReactNode;
 };
 
-function cx(...classes: Array<string | undefined | false>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function rowBadgeToneClassName(tone: RowBadgeTone) {
-  return {
-    neutral: styles.badgeNeutral,
-    accent: styles.badgeAccent,
-    warning: styles.badgeWarning,
-  }[tone];
-}
-
-function rowIconToneClassName(tone: RowIconTone) {
-  return {
-    neutral: styles.rowIconNeutral,
-    tint: styles.rowIconTint,
-    blue: styles.rowIconBlue,
-    green: styles.rowIconGreen,
-    orange: styles.rowIconOrange,
-  }[tone];
-}
-
 function tokensToStyle(tokens?: SettingsListTokenOverrides): CSSProperties | undefined {
   if (!tokens) return undefined;
   const next: CSSProperties = {};
@@ -437,13 +415,6 @@ export function InfoRow({
   tone = "neutral",
 }: InfoRowProps) {
   const hasLeading = Boolean(leading);
-  const toneClass = {
-    neutral: styles.infoNeutral,
-    success: styles.infoSuccess,
-    warning: styles.infoWarning,
-    critical: styles.infoCritical,
-    disabled: styles.infoDisabled,
-  }[tone];
 
   return (
     <li id={rowId} data-settings-row="info" data-has-leading={hasLeading ? "true" : "false"}>
