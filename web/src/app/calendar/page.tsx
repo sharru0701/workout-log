@@ -817,7 +817,7 @@ export default function CalendarPage() {
                     padding: "6px 0",
                     border: "none",
                     background: isSelected ? "var(--color-primary)" : "transparent",
-                    color: isSelected ? "#fff" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-primary)" : "var(--color-text)",
+                    color: isSelected ? "var(--color-text-on-primary)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-primary)" : "var(--color-text)",
                     borderRadius: "50%",
                     transform: isSelected ? "scale(1.1)" : "scale(1)",
                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
@@ -846,7 +846,7 @@ export default function CalendarPage() {
       <div style={{ marginTop: "var(--space-md)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
           <span style={{ font: "var(--font-section-title)" }}>{formatKoreanDate(selectedDate)}</span>
-          {selectedDate === today && <span className="label label-primary label-sm">오늘</span>}
+          {selectedDate === today && <span className="label label-status label-sm">오늘</span>}
         </div>
 
         {error && <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-sm)", font: "var(--font-secondary)" }}>{error}</div>}

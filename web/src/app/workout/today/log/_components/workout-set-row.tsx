@@ -72,6 +72,36 @@ function formatPlannedRef(ref: WorkoutSetRowData["plannedRef"], bodyweightKg: nu
   return `${reps}회 @ ${displayWeight}${meta ? ` (${meta})` : ""}`;
 }
 
+function resolveSetStateLabel({
+  isExtra,
+  plannedPercent,
+  rpe,
+}: {
+  isExtra: boolean;
+  plannedPercent: number | null;
+  rpe: number;
+}) {
+  if (isExtra) {
+    return { className: "label set-backoff label-sm", text: "백오프" };
+  }
+  if (typeof plannedPercent === "number" && Number.isFinite(plannedPercent) && plannedPercent > 0) {
+    if (plannedPercent < 0.65) return { className: "label set-warmup label-sm", text: "워밍업" };
+    if (plannedPercent >= 0.88) return { className: "label set-top label-sm", text: "탑 세트" };
+    return { className: "label set-work label-sm", text: "작업 세트" };
+  }
+  if (rpe > 0 && rpe <= 6.5) {
+    return { className: "label set-deload label-sm", text: "디로드" };
+  }
+  return { className: "label set-work label-sm", text: "작업 세트" };
+}
+
+function progressLabelClass(rpe: number) {
+  if (rpe >= 9.25) return "progress-peak";
+  if (rpe >= 8) return "progress-high";
+  if (rpe >= 6.5) return "progress-medium";
+  return "progress-low";
+}
+
 const WorkoutSetRow = memo(function WorkoutSetRow({
   idx,
   row,
@@ -106,6 +136,25 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
       onRemove(idx);
     }, MOTION_DURATION_FAST_MS);
   }
+
+  const sourceLabel = row.isExtra
+    ? { className: "label label-set-type label-sm", text: "추가" }
+    : row.isPlanned
+      ? { className: "label label-program label-sm", text: "계획" }
+      : { className: "label label-note label-sm", text: "직접 입력" };
+  const plannedPercent = row.plannedRef?.percent ?? null;
+  const setStateLabel = resolveSetStateLabel({
+    isExtra: row.isExtra,
+    plannedPercent,
+    rpe: row.rpe,
+  });
+  const progressLabel =
+    row.rpe > 0
+      ? {
+          className: `label ${progressLabelClass(row.rpe)} label-sm`,
+          text: `RPE ${row.rpe.toFixed(1)}`,
+        }
+      : null;
 
   return (
     <div>
@@ -186,10 +235,17 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         </div>
 
         {isBodyweightExercise && bodyweightKg ? (
-          <div>총하중 기준: {formatKgValue(totalLoadKg)}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+            <span className="label label-metric label-sm">총하중</span>
+            <span className="metric-value metric-weight" style={{ fontSize: "1rem" }}>{formatKgValue(totalLoadKg)}</span>
+          </div>
         ) : null}
 
-        <div>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "var(--space-sm)" }}>
+          <span className={sourceLabel.className}>{sourceLabel.text}</span>
+          {setStateLabel ? <span className={setStateLabel.className}>{setStateLabel.text}</span> : null}
+          {progressLabel ? <span className={progressLabel.className}>{progressLabel.text}</span> : null}
+          {row.completed ? <span className="label label-complete label-sm">완료</span> : null}
           <label>
             <input
               type="checkbox"
@@ -213,13 +269,12 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             />
             <span>완료</span>
           </label>
-
-          <span>{row.isExtra ? "추가" : row.isPlanned ? "계획" : "사용자"}</span>
         </div>
 
         {row.plannedRef ? (
-          <div>
-            처방: {formatPlannedRef(row.plannedRef, bodyweightKg)}
+          <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "var(--space-sm)" }}>
+            <span className="label label-program label-sm">처방</span>
+            <span>{formatPlannedRef(row.plannedRef, bodyweightKg)}</span>
             {isBodyweightExercise && bodyweightKg ? (
               <div>현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
             ) : null}

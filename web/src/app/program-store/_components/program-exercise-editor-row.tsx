@@ -68,9 +68,9 @@ function operatorRowTypeHelp(rowType: ProgramRowType | null | undefined) {
 }
 
 function operatorRowTypeTone(rowType: ProgramRowType | null | undefined) {
-  if (rowType === "AUTO") return "ui-badge-info";
-  if (rowType === "CUSTOM") return "ui-badge-neutral";
-  return "ui-badge-neutral";
+  if (rowType === "AUTO") return "label label-program label-sm";
+  if (rowType === "CUSTOM") return "label label-note label-sm";
+  return "label label-note label-sm";
 }
 
 const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({

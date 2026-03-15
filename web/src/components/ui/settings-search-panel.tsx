@@ -12,11 +12,11 @@ type SettingsSearchPanelProps = {
 function sectionIcon(section: string) {
   switch (section) {
     case "훈련":
-      return { symbol: "TR", tone: "blue" as const };
+      return { symbol: "TR", tone: "info" as const };
     case "프로그램":
-      return { symbol: "PL", tone: "green" as const };
+      return { symbol: "PL", tone: "success" as const };
     case "분석":
-      return { symbol: "ST", tone: "tint" as const };
+      return { symbol: "ST", tone: "surface" as const };
     default:
       return { symbol: "SE", tone: "neutral" as const };
   }

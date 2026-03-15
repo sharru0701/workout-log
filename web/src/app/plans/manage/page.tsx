@@ -48,7 +48,7 @@ function PlanListCard({
         <button
           type="button"
           onClick={onManage}
-          className="label label-neutral"
+          className="label label-note"
           style={{ cursor: "pointer", marginLeft: "var(--space-sm)" }}
         >
           관리

@@ -20,7 +20,7 @@
   background-color: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15); /* 버튼만 살짝 띄우는 그림자 */
+  box-shadow: 0 4px 12px var(--shadow-color-medium);
   
   /* Glassmorphism 베이스 적용 (터치 피드백) */
   backdrop-filter: blur(12px);
@@ -63,7 +63,7 @@
   border-radius: 16px;
   padding: var(--space-xs);
   min-width: 140px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 24px var(--shadow-color-strong);
   
   display: flex;
   flex-direction: column;
@@ -102,7 +102,7 @@
 
 .fab-item[aria-current="page"] {
   color: var(--color-primary);
-  background-color: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  background-color: var(--color-primary-weak);
 }
 
 .fab-item .fab-icon {

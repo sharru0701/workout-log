@@ -47,9 +47,17 @@ function SelectedCheckIcon() {
   return (
     <span
       style={{
-        color: "var(--accent-primary)",
-        borderColor: "var(--accent-primary)",
-        background: "color-mix(in srgb, var(--accent-primary) 14%, transparent)",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "24px",
+        height: "24px",
+        color: "var(--color-accent)",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "color-mix(in srgb, var(--color-accent) 28%, var(--color-border))",
+        borderRadius: "999px",
+        background: "var(--color-accent-weak)",
       }}
       aria-hidden="true"
     >

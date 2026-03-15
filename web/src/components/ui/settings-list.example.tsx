@@ -30,13 +30,13 @@ export function SettingsListExample() {
           description={wifiEnabled ? "Home-5G에 연결됨" : "꺼짐"}
           checked={wifiEnabled}
           onCheckedChange={setWifiEnabled}
-          leading={<RowIcon symbol="WF" tone="blue" />}
+          leading={<RowIcon symbol="WF" tone="info" />}
         />
         <ToggleRow
           label="셀룰러 데이터"
           checked={cellularEnabled}
           onCheckedChange={setCellularEnabled}
-          leading={<RowIcon symbol="CL" tone="green" />}
+          leading={<RowIcon symbol="CL" tone="success" />}
         />
         <ValueRow label="VPN" value="연결 안 됨" leading={<RowIcon symbol="VP" tone="neutral" />} />
         <SubtitleRow
@@ -44,9 +44,9 @@ export function SettingsListExample() {
           subtitle="테더링"
           value="꺼짐"
           href="/system/app"
-          leading={<RowIcon symbol="HS" tone="orange" />}
+          leading={<RowIcon symbol="HS" tone="warning" />}
           badge="NEW"
-          badgeTone="accent"
+          badgeTone="metric"
         />
       </BaseGroupedList>
       <SectionFootnote>예시는 공통 행 조합만 보여줍니다.</SectionFootnote>
@@ -56,7 +56,7 @@ export function SettingsListExample() {
         ariaLabel="Status settings"
         tokens={{
           ...settingsListTokenDefaults,
-          "--settings-group-background": "color-mix(in srgb, var(--bg-surface) 90%, transparent)",
+          "--settings-group-background": "color-mix(in srgb, var(--color-surface) 90%, transparent)",
         }}
       >
         <InfoRow
@@ -64,14 +64,14 @@ export function SettingsListExample() {
           description="2분 전에 동기화됨"
           value="정상"
           tone="success"
-          leading={<RowIcon symbol="SY" tone="green" />}
+          leading={<RowIcon symbol="SY" tone="success" />}
         />
         <InfoRow
           label="오프라인 대기열"
           description="운동 로그 2건 대기"
           value="확인 필요"
           tone="warning"
-          leading={<RowIcon symbol="Q" tone="orange" />}
+          leading={<RowIcon symbol="Q" tone="warning" />}
           badge="!"
           badgeTone="warning"
         />
@@ -79,7 +79,7 @@ export function SettingsListExample() {
           label={showLoading ? "로딩 예시 숨기기" : "로딩 예시 보기"}
           description="지연 뒤 로딩 행이 표시됩니다."
           onPress={() => setShowLoading((prev) => !prev)}
-          leading={<RowIcon symbol="LD" tone="blue" />}
+          leading={<RowIcon symbol="LD" tone="info" />}
         />
       </BaseGroupedList>
       <SectionFootnote>모든 행은 같은 높이와 좌우 패딩을 사용합니다.</SectionFootnote>

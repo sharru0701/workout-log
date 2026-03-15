@@ -3,9 +3,12 @@
 import { memo, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 
+type MetricTone = "weight" | "reps" | "volume" | "1rm" | "progress";
+
 type MetricTileProps = {
   label: string;
   value: string;
+  tone?: MetricTone;
   trend?: { text: string; color: string };
 };
 
@@ -16,18 +19,14 @@ type SparklineChartProps = {
   height?: number;
 };
 
-export const MetricTile = memo(function MetricTile({ label, value, trend }: MetricTileProps) {
+export const MetricTile = memo(function MetricTile({ label, value, tone, trend }: MetricTileProps) {
+  const className = ["metric-badge", tone ? `metric-${tone}` : null].filter(Boolean).join(" ");
   return (
-    <Card as="article" padding="md">
+    <Card as="article" padding="md" className={className}>
       <div className="metric-label">{label}</div>
       <div className="metric-value">{value}</div>
       {trend ? (
-        <div style={{ 
-          marginTop: "var(--space-xs)", 
-          fontSize: "12px", 
-          fontWeight: 600, 
-          color: trend.color 
-        }}>
+        <div className="metric-trend" style={{ color: trend.color }}>
           {trend.text}
         </div>
       ) : null}

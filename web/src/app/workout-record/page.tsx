@@ -297,9 +297,9 @@ function buildLastSessionSummary(
 }
 
 function workoutExerciseBadgeMeta(badge: WorkoutExerciseViewModel["badge"]) {
-  if (badge === "AUTO") return { label: "Auto", className: "ui-badge-info" };
-  if (badge === "CUSTOM") return { label: "Custom", className: "ui-badge-neutral" };
-  if (badge === "ADDED") return { label: "Added", className: "ui-badge-info" };
+  if (badge === "AUTO") return { label: "계획", className: "label label-program label-sm" };
+  if (badge === "CUSTOM") return { label: "사용자", className: "label label-note label-sm" };
+  if (badge === "ADDED") return { label: "추가", className: "label label-exercise label-sm" };
   return null;
 }
 
@@ -491,12 +491,12 @@ function ExerciseRow({
             {exercise.exerciseName}
           </strong>
           {showBadgeAfterName && badgeMeta ? (
-            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{badgeMeta.label}</span>
+            <span className={badgeMeta.className}>{badgeMeta.label}</span>
           ) : null}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           {badgeMeta && !showBadgeAfterName ? (
-            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{badgeMeta.label}</span>
+            <span className={badgeMeta.className}>{badgeMeta.label}</span>
           ) : null}
           <button
             type="button"

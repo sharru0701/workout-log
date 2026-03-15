@@ -128,7 +128,7 @@ export function LoadingStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow label={label} leading={<RowIcon symbol="LD" tone="blue" />} />
+      <InfoRow label={label} leading={<RowIcon symbol="LD" tone="info" />} />
     </BaseGroupedList>
   );
 }
@@ -216,7 +216,7 @@ export function ErrorStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="orange" />} />
+      <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="warning" />} />
       <NavigationRow
         label={retryLabel}
         onPress={onRetry}
@@ -283,7 +283,7 @@ export function NoticeStateRows({
 
   return (
     <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="tint" />} />
+      <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="surface" />} />
     </BaseGroupedList>
   );
 }

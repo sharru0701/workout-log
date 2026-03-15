@@ -24,8 +24,8 @@ type SectionFootnoteProps = {
 };
 
 type RowTone = "neutral" | "success" | "warning" | "critical" | "disabled";
-type RowBadgeTone = "neutral" | "accent" | "warning";
-type RowIconTone = "neutral" | "tint" | "primary" | "success" | "warning";
+type RowBadgeTone = "note" | "metric" | "warning";
+type RowIconTone = "neutral" | "surface" | "primary" | "success" | "warning" | "info";
 
 type RowBaseProps = {
   rowId?: string;
@@ -96,7 +96,7 @@ function RowContent({
   subtitle,
   description,
   badge,
-  badgeTone = "neutral",
+  badgeTone = "note",
   leading,
   trailing,
 }: {
@@ -108,6 +108,13 @@ function RowContent({
   leading?: ReactNode;
   trailing?: ReactNode;
 }) {
+  const badgeClassName =
+    badgeTone === "metric"
+      ? "label label-metric label-sm"
+      : badgeTone === "warning"
+        ? "label label-warning label-sm"
+        : "label label-note label-sm";
+
   return (
     <div className="row-inner">
       {leading ? <span className="row-leading">{leading}</span> : null}
@@ -123,7 +130,7 @@ function RowContent({
       </span>
       {(trailing || badge) && (
         <span className="row-trailing">
-          {badge ? <span className={`label label-sm ${badgeTone === "accent" ? "label-accent" : badgeTone === "warning" ? "label-warning" : "label-neutral"}`}>{badge}</span> : null}
+          {badge ? <span className={badgeClassName}>{badge}</span> : null}
           {trailing}
         </span>
       )}
@@ -167,16 +174,42 @@ export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
   const getStyle = () => {
     switch (tone) {
       case "primary":
-        return { backgroundColor: "var(--color-primary)", color: "var(--color-bg)" };
+        return {
+          backgroundColor: "var(--color-primary-weak)",
+          color: "var(--color-primary-strong)",
+          border: "1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border))",
+        };
+      case "info":
+        return {
+          backgroundColor: "var(--color-info-weak)",
+          color: "var(--color-info)",
+          border: "1px solid color-mix(in srgb, var(--color-info) 28%, var(--color-border))",
+        };
       case "success":
-        return { backgroundColor: "var(--color-success)", color: "var(--color-bg)" };
+        return {
+          backgroundColor: "var(--color-success-weak)",
+          color: "var(--color-success)",
+          border: "1px solid color-mix(in srgb, var(--color-success) 32%, var(--color-border))",
+        };
       case "warning":
-        return { backgroundColor: "var(--color-warning)", color: "var(--color-bg)" };
-      case "tint":
-        return { backgroundColor: "var(--color-surface-2)", color: "var(--color-text)" };
+        return {
+          backgroundColor: "var(--color-warning-weak)",
+          color: "var(--color-warning)",
+          border: "1px solid color-mix(in srgb, var(--color-warning) 32%, var(--color-border))",
+        };
+      case "surface":
+        return {
+          backgroundColor: "var(--color-surface-2)",
+          color: "var(--color-text)",
+          border: "1px solid var(--color-border)",
+        };
       case "neutral":
       default:
-        return { backgroundColor: "var(--color-border)", color: "var(--color-bg)" };
+        return {
+          backgroundColor: "var(--color-surface-2)",
+          color: "var(--color-text-muted)",
+          border: "1px solid var(--color-border)",
+        };
     }
   };
 
@@ -195,6 +228,7 @@ export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
         borderRadius: "6px",
         fontSize: "14px",
         fontWeight: 600,
+        fontVariantNumeric: "tabular-nums",
         ...getStyle(),
       }}
     >

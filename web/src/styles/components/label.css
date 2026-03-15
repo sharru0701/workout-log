@@ -1,76 +1,179 @@
-/* 
+/*
   ==========================================
   SEMANTIC LABEL SYSTEM
   ==========================================
 */
 
 .label {
+  --label-bg: var(--label-note-bg);
+  --label-text: var(--label-note-text);
+  --label-border: var(--label-note-border);
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 2px 10px;
-  border-radius: 9999px; /* Pill shape */
+  border-radius: 9999px;
   font-size: 13px;
   font-weight: 600;
   line-height: 1.4;
   white-space: nowrap;
-  border: 1px solid transparent;
+  border: 1px solid var(--label-border);
+  background-color: var(--label-bg);
+  color: var(--label-text);
   letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Base Semantic Types */
+.label-exercise,
 .label-primary {
-  background-color: var(--label-primary-bg);
-  color: var(--label-primary-text);
-  border-color: var(--label-primary-border);
+  --label-bg: var(--label-exercise-bg);
+  --label-text: var(--label-exercise-text);
+  --label-border: var(--label-exercise-border);
 }
 
+.label-muscle {
+  --label-bg: var(--label-muscle-bg);
+  --label-text: var(--label-muscle-text);
+  --label-border: var(--label-muscle-border);
+}
+
+.label-workout-type,
+.label-program,
 .label-info {
-  background-color: var(--label-info-bg);
-  color: var(--label-info-text);
-  border-color: var(--label-info-border);
+  --label-bg: var(--label-workout-type-bg);
+  --label-text: var(--label-workout-type-text);
+  --label-border: var(--label-workout-type-border);
 }
 
-.label-success {
-  background-color: var(--label-success-bg);
-  color: var(--label-success-text);
-  border-color: var(--label-success-border);
-}
-
-.label-warning {
-  background-color: var(--label-warning-bg);
-  color: var(--label-warning-text);
-  border-color: var(--label-warning-border);
-}
-
-.label-danger {
-  background-color: var(--label-danger-bg);
-  color: var(--label-danger-text);
-  border-color: var(--label-danger-border);
-}
-
-.label-neutral {
-  background-color: var(--label-neutral-bg);
-  color: var(--label-neutral-text);
-  border-color: var(--label-neutral-border);
-}
-
+.label-set-type,
 .label-accent {
-  background-color: var(--label-accent-bg);
-  color: var(--label-accent-text);
-  border-color: var(--label-accent-border);
+  --label-bg: var(--label-set-type-bg);
+  --label-text: var(--label-set-type-text);
+  --label-border: var(--label-set-type-border);
 }
 
-/* Variants (If needed e.g., solid fill vs subtle) */
+.label-intensity,
+.label-warning {
+  --label-bg: var(--label-intensity-bg);
+  --label-text: var(--label-intensity-text);
+  --label-border: var(--label-intensity-border);
+}
+
+.label-status {
+  --label-bg: var(--label-status-bg);
+  --label-text: var(--label-status-text);
+  --label-border: var(--label-status-border);
+}
+
+.label-metric {
+  --label-bg: var(--label-metric-bg);
+  --label-text: var(--label-metric-text);
+  --label-border: var(--label-metric-border);
+}
+
+.label-note,
+.label-neutral {
+  --label-bg: var(--label-note-bg);
+  --label-text: var(--label-note-text);
+  --label-border: var(--label-note-border);
+}
+
+.label-complete,
+.label-success {
+  --label-bg: var(--label-complete-bg);
+  --label-text: var(--label-complete-text);
+  --label-border: var(--label-complete-border);
+}
+
+.label-pr {
+  --label-bg: var(--label-pr-bg);
+  --label-text: var(--label-pr-text);
+  --label-border: var(--label-pr-border);
+}
+
+.label-failed,
+.label-danger {
+  --label-bg: var(--label-failed-bg);
+  --label-text: var(--label-failed-text);
+  --label-border: var(--label-failed-border);
+}
+
+.label-recovery {
+  --label-bg: var(--label-recovery-bg);
+  --label-text: var(--label-recovery-text);
+  --label-border: var(--label-recovery-border);
+}
+
+.set-warmup {
+  --label-bg: var(--set-warmup-bg);
+  --label-text: var(--set-warmup-text);
+  --label-border: var(--set-warmup-border);
+}
+
+.set-work {
+  --label-bg: var(--set-work-bg);
+  --label-text: var(--set-work-text);
+  --label-border: var(--set-work-border);
+}
+
+.set-top {
+  --label-bg: var(--set-top-bg);
+  --label-text: var(--set-top-text);
+  --label-border: var(--set-top-border);
+}
+
+.set-backoff {
+  --label-bg: var(--set-backoff-bg);
+  --label-text: var(--set-backoff-text);
+  --label-border: var(--set-backoff-border);
+}
+
+.set-deload {
+  --label-bg: var(--set-deload-bg);
+  --label-text: var(--set-deload-text);
+  --label-border: var(--set-deload-border);
+}
+
+.set-failure {
+  --label-bg: var(--set-failure-bg);
+  --label-text: var(--set-failure-text);
+  --label-border: var(--set-failure-border);
+}
+
+.progress-low {
+  --label-bg: var(--progress-low-bg);
+  --label-text: var(--progress-low-text);
+  --label-border: var(--progress-low-border);
+}
+
+.progress-medium {
+  --label-bg: var(--progress-medium-bg);
+  --label-text: var(--progress-medium-text);
+  --label-border: var(--progress-medium-border);
+}
+
+.progress-high {
+  --label-bg: var(--progress-high-bg);
+  --label-text: var(--progress-high-text);
+  --label-border: var(--progress-high-border);
+}
+
+.progress-peak {
+  --label-bg: var(--progress-peak-bg);
+  --label-text: var(--progress-peak-text);
+  --label-border: var(--progress-peak-border);
+}
+
 .label-outline {
   background-color: transparent !important;
 }
 
-/* Modifiers */
 .label-sm {
   padding: 1px 8px;
   font-size: 11px;
 }
+
 .label-lg {
   padding: 4px 14px;
   font-size: 14px;

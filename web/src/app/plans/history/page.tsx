@@ -99,11 +99,11 @@ function shortenText(value: string | null | undefined, limit = 120) {
 function progressionBadgeClass(tone: ReturnType<typeof progressionTone>) {
   switch (tone) {
     case "success":
-      return "border-emerald-200 bg-emerald-50 text-emerald-800";
+      return "label progress-medium label-sm";
     case "warning":
-      return "border-amber-200 bg-amber-50 text-amber-900";
+      return "label progress-high label-sm";
     default:
-      return "border-neutral-200 bg-neutral-50 text-neutral-700";
+      return "label progress-low label-sm";
   }
 }
 
@@ -400,13 +400,12 @@ function PlanHistoryPageContent() {
                       {sessionLabel || progressionText ? (
                         <div>
                           {sessionLabel ? (
-                            <span>
+                            <span className="label label-program label-sm">
                               {sessionLabel}
                             </span>
                           ) : null}
                           {progressionText ? (
-                            <span
-                            >
+                            <span className={progressionBadgeClass(progressionBadgeTone)}>
                               {progressionText}
                             </span>
                           ) : null}

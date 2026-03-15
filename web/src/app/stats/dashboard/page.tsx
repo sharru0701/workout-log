@@ -931,13 +931,13 @@ export default function StatsPage() {
     if (!migrationTelemetry) {
       return {
         label: "확인 불가",
-        className: "label label-neutral",
+        className: "label label-note",
       };
     }
     if (migrationTelemetry.status === "critical") {
       return {
         label: "위험",
-        className: "label label-danger",
+        className: "label label-failed",
       };
     }
     if (migrationTelemetry.status === "warn") {
@@ -948,7 +948,7 @@ export default function StatsPage() {
     }
     return {
       label: "정상",
-      className: "label label-success",
+      className: "label label-complete",
     };
   }, [migrationTelemetry]);
   const recentMigrationRuns = migrationTelemetry?.checks.telemetry.recentRuns ?? [];
@@ -1258,10 +1258,12 @@ export default function StatsPage() {
         <MetricTile
           label="e1RM"
           value={e1rm?.best ? `${e1rm.best.e1rm} kg` : "—"}
+          tone="1rm"
         />
         <MetricTile
           label="볼륨"
           value={volume ? formatKg(volume.totals.tonnage) : "—"}
+          tone="volume"
           trend={
             volume
               ? {
@@ -1274,6 +1276,7 @@ export default function StatsPage() {
         <MetricTile
           label="준수율"
           value={compliance ? `${Math.round(compliance.compliance * 100)}%` : "—"}
+          tone="progress"
           trend={
             compliance
               ? {

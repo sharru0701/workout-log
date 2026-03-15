@@ -41,7 +41,7 @@ export function SettingsDeepLinkInvalidView({
             description={errorMessage(errorCode)}
             value="확인 필요"
             tone="warning"
-            leading={<RowIcon symbol="!" tone="orange" />}
+            leading={<RowIcon symbol="!" tone="warning" />}
           />
           <ValueRow
             label="요청 key"
@@ -66,7 +66,7 @@ export function SettingsDeepLinkInvalidView({
             href="/"
             label="루트 검색 열기"
             description="설정 검색에서 다시 찾아 이동하세요."
-            leading={<RowIcon symbol="SR" tone="blue" />}
+            leading={<RowIcon symbol="SR" tone="info" />}
           />
           <NavigationRow
             href="/settings"

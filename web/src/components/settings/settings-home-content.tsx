@@ -17,7 +17,6 @@ const rows = [
     subtitle: "Theme",
     description: "라이트 / 다크 / 시스템 설정",
     symbol: "TM",
-    tone: "primary" as const,
   },
   {
     href: "/settings/minimum-plate",
@@ -25,7 +24,6 @@ const rows = [
     subtitle: "Minimum Plate",
     description: "종목별 최소 원판 무게 설정",
     symbol: "PL",
-    tone: "neutral" as const,
   },
   {
     href: "/settings/bodyweight",
@@ -33,7 +31,6 @@ const rows = [
     subtitle: "Bodyweight",
     description: "몸무게 연관 종목 계산/표시에 사용",
     symbol: "BW",
-    tone: "green" as const,
   },
   {
     href: "/settings/exercise-management",
@@ -41,7 +38,6 @@ const rows = [
     subtitle: "Exercise Catalog",
     description: "운동종목 조회/추가/수정/삭제",
     symbol: "EX",
-    tone: "primary" as const,
   },
   {
     href: "/settings/data",
@@ -49,7 +45,6 @@ const rows = [
     subtitle: "Data",
     description: "Export / 앱 데이터 초기화",
     symbol: "DT",
-    tone: "tint" as const,
   },
   {
     href: "/settings/about",
@@ -57,7 +52,6 @@ const rows = [
     subtitle: "App Info",
     description: "버전 및 앱 정보",
     symbol: "AB",
-    tone: "neutral" as const,
   },
 ];
 

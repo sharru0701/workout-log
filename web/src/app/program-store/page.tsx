@@ -165,9 +165,9 @@ function formatProgramDisplayName(name: string) {
 
 function sourceBadgeMeta(source: ProgramListItem["source"]) {
   if (source === "CUSTOM") {
-    return { label: "Custom", className: "ui-badge-warning" };
+    return { label: "커스텀", className: "label label-note" };
   }
-  return { label: "Base", className: "ui-badge-info" };
+  return { label: "기본", className: "label label-program" };
 }
 
 function ProgramListCard({
@@ -180,10 +180,6 @@ function ProgramListCard({
   const badge = sourceBadgeMeta(item.source);
   const scheduleLabel = getProgramScheduleLabel(item.template);
   const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
-  const tagClassName =
-    item.source === "CUSTOM"
-      ? "program-store-list-card-tag program-store-list-card-tag--custom"
-      : "program-store-list-card-tag program-store-list-card-tag--base";
 
   return (
     <Card
@@ -204,7 +200,7 @@ function ProgramListCard({
             <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
           ) : null}
         </div>
-        <span className={item.source === "CUSTOM" ? "label label-warning label-sm" : "label label-info label-sm"}>
+        <span className={`${badge.className} label-sm`}>
           {badge.label}
         </span>
       </div>
@@ -218,7 +214,7 @@ function ProgramListCard({
       {tags.length > 0 ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
           {tags.slice(0, 5).map((tag) => (
-            <span key={tag} className="label label-neutral label-sm">
+            <span key={tag} className="label label-note label-sm">
               {tag}
             </span>
           ))}
@@ -1320,12 +1316,12 @@ export default function ProgramStorePage() {
                     {formatProgramDisplayName(detailTarget.template.name)}
                   </span>
                   {info.scheduleLabel && (
-                    <span style={{ color: "var(--text-secondary)" }}>
+                    <span style={{ color: "var(--color-text-muted)" }}>
                       {info.scheduleLabel}
                     </span>
                   )}
                 </div>
-                <span>{badge.label}</span>
+                <span className={badge.className}>{badge.label}</span>
               </div>
 
               {/* 스탯 그리드 */}
@@ -1333,15 +1329,15 @@ export default function ProgramStorePage() {
                 {info.stats.map((stat) => (
                   <div
                     key={stat.label}
-                    style={{ background: "var(--bg-tertiary)" }}
+                    style={{ background: "var(--color-surface-2)" }}
                   >
                     <span
-                      style={{ color: "var(--text-secondary)" }}
+                      style={{ color: "var(--color-text-muted)" }}
                     >
                       {stat.label}
                     </span>
                     <span
-                      style={{ color: "var(--text-primary)" }}
+                      style={{ color: "var(--color-text)", fontVariantNumeric: "tabular-nums" }}
                     >
                       {stat.value}
                     </span>
@@ -1353,11 +1349,11 @@ export default function ProgramStorePage() {
               {detailTarget.template.description && (
                 <div>
                   <span
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--color-text-muted)" }}
                   >
                     프로그램 소개
                   </span>
-                  <p style={{ color: "var(--text-primary)" }}>
+                  <p style={{ color: "var(--color-text)" }}>
                     {detailTarget.template.description}
                   </p>
                 </div>
@@ -1367,13 +1363,12 @@ export default function ProgramStorePage() {
               {info.progressionNote && (
                 <div
                   style={{
-                    background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
+                    background: "var(--color-info-weak)",
+                    border: "1px solid color-mix(in srgb, var(--color-info) 24%, var(--color-border))",
                   }}
                 >
-                  <span style={{ color: "var(--accent-primary)" }}>
-                    진행 설정
-                  </span>
-                  <span style={{ color: "var(--text-secondary)" }}>{info.progressionNote}</span>
+                  <span className="label label-note label-sm">진행 설정</span>
+                  <span style={{ color: "var(--color-text-muted)" }}>{info.progressionNote}</span>
                 </div>
               )}
 
@@ -1381,7 +1376,7 @@ export default function ProgramStorePage() {
               {info.modules && info.modules.length > 0 && (
                 <div>
                   <span
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--color-text-muted)" }}
                   >
                     훈련 모듈
                   </span>
@@ -1389,17 +1384,12 @@ export default function ProgramStorePage() {
                     {info.modules.map((mod) => (
                       <div
                         key={mod}
-                        style={{ background: "var(--bg-tertiary)" }}
+                        style={{ background: "var(--color-surface-2)" }}
                       >
-                        <span
-                          style={{
-                            background: "color-mix(in srgb, var(--accent-primary) 18%, var(--bg-tertiary))",
-                            color: "var(--accent-primary)",
-                          }}
-                        >
+                        <span className="label label-muscle label-sm">
                           {mod}
                         </span>
-                        <span style={{ color: "var(--text-primary)" }}>
+                        <span style={{ color: "var(--color-text)" }}>
                           {MODULE_NAMES[mod] ?? mod}
                         </span>
                       </div>
@@ -1412,7 +1402,7 @@ export default function ProgramStorePage() {
               {info.sessions && info.sessions.length > 0 && (
                 <div>
                   <span
-                    style={{ color: "var(--text-secondary)" }}
+                    style={{ color: "var(--color-text-muted)" }}
                   >
                     세션 구성
                   </span>
@@ -1420,35 +1410,30 @@ export default function ProgramStorePage() {
                     {info.sessions.map((session) => (
                       <div
                         key={session.key}
-                        style={{ background: "var(--bg-tertiary)" }}
+                        style={{ background: "var(--color-surface-2)" }}
                       >
                         <div
                           style={{
-                            background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
-                            borderBottom: "1px solid var(--border-default)",
+                            background: "var(--color-surface)",
+                            borderBottom: "1px solid var(--color-border)",
                           }}
                         >
-                          <span
-                            style={{
-                              background: "color-mix(in srgb, var(--accent-primary) 22%, var(--bg-tertiary))",
-                              color: "var(--accent-primary)",
-                            }}
-                          >
+                          <span className="label label-workout-type label-sm">
                             {session.key}
                           </span>
-                          <span style={{ color: "var(--text-primary)" }}>
+                          <span style={{ color: "var(--color-text)" }}>
                             세션 {session.key}
                           </span>
                         </div>
                         <div>
                           {session.exercises.map((ex, i) => (
                             <div key={i}>
-                              <span style={{ color: "var(--text-primary)" }}>
+                              <span style={{ color: "var(--color-text)" }}>
                                 {ex.name}
                               </span>
                               {ex.setsReps && (
                                 <span
-                                  style={{ color: "var(--text-secondary)" }}
+                                  style={{ color: "var(--color-text-muted)" }}
                                 >
                                   {ex.setsReps}
                                 </span>
@@ -1468,7 +1453,7 @@ export default function ProgramStorePage() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="label label-neutral"
+                      className="label label-note"
                     >
                       {tag}
                     </span>

@@ -148,9 +148,9 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
                   <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>Best e1RM</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{item.bestE1rm}kg</div>
+                  <div className="metric-value metric-1rm" style={{ fontSize: "1.2rem" }}>{item.bestE1rm}kg</div>
                   {item.improvement !== 0 ? (
-                    <div style={{ fontSize: "13px", color: item.trend === "up" ? "#27ae60" : "#e74c3c" }}>
+                    <div className="metric-trend" style={{ color: item.trend === "up" ? "var(--color-success)" : "var(--color-danger)" }}>
                       {item.trend === "up" ? "+" : ""}{item.improvement}kg
                     </div>
                   ) : (
@@ -184,14 +184,20 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
       <Card padding="md">
         {selected && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)", padding: "var(--space-sm)", backgroundColor: "var(--color-surface-secondary)", borderRadius: "8px" }}>
-            <span style={{ fontWeight: 600 }}>{selected.label} 주</span>
-            <span style={{ fontWeight: 700 }}>{formatVolume(selected.tonnage)}</span>
+            <span style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+              <span style={{ fontWeight: 600 }}>{selected.label} 주</span>
+              <span className={`label ${progressLabelClassForRatio(selected.tonnage / maxTonnage)} label-sm`}>
+                {progressLabelText(selected.tonnage / maxTonnage)}
+              </span>
+            </span>
+            <span className="metric-value metric-volume" style={{ fontSize: "1.1rem" }}>{formatVolume(selected.tonnage)}</span>
             <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{selected.sets}세트 · {selected.reps}회</span>
           </div>
         )}
         <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "100px" }}>
           {points.map((point, i) => {
             const height = Math.max((point.tonnage / maxTonnage) * 100, 4);
+            const ratio = point.tonnage / maxTonnage;
             const isLast = i === points.length - 1;
             const isSelected = selectedIndex === i;
             return (
@@ -204,7 +210,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{formatVolume(point.tonnage)}</div>
                 <div style={{ width: "100%", flex: "none" }}>
                   <div
-                    style={{ height: `${height}%`, minHeight: "4px", backgroundColor: isSelected ? "var(--color-primary)" : isLast ? "var(--color-primary)" : "var(--color-border)", borderRadius: "4px 4px 0 0", transition: "height 0.3s ease" }}
+                    style={{ height: `${height}%`, minHeight: "4px", backgroundColor: isSelected ? "var(--progress-peak-fill)" : isLast ? "var(--progress-high-fill)" : progressFillForRatio(ratio), borderRadius: "4px 4px 0 0", transition: "height 0.3s ease" }}
                   />
                 </div>
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{point.label}</div>
@@ -229,19 +235,19 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
         <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>요약 통계</h2>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
-        <Card padding="md" className="metric-badge">
+        <Card padding="md" className="metric-badge metric-progress">
           <span className="metric-value">{stats.totalSessions}</span>
           <span className="metric-label">총 운동</span>
         </Card>
-        <Card padding="md" className="metric-badge">
+        <Card padding="md" className="metric-badge metric-volume">
           <span className="metric-value">{formatVolume(stats.totalVolume)}</span>
           <span className="metric-label">누적 볼륨</span>
         </Card>
-        <Card padding="md" className="metric-badge">
+        <Card padding="md" className="metric-badge metric-progress">
           <span className="metric-value">{stats.currentStreak}일</span>
           <span className="metric-label">연속 운동</span>
         </Card>
-        <Card padding="md" className="metric-badge">
+        <Card padding="md" className="metric-badge metric-reps">
           <span className="metric-value">{stats.thisMonthSessions}</span>
           <span className="metric-label">이번 달</span>
         </Card>
@@ -260,12 +266,33 @@ function formatVolume(kg: number): string {
   return `${kg}kg`;
 }
 
+function progressFillForRatio(ratio: number) {
+  if (ratio >= 0.88) return "var(--progress-peak-fill)";
+  if (ratio >= 0.68) return "var(--progress-high-fill)";
+  if (ratio >= 0.42) return "var(--progress-medium-fill)";
+  return "var(--progress-low-fill)";
+}
+
+function progressLabelClassForRatio(ratio: number) {
+  if (ratio >= 0.88) return "progress-peak";
+  if (ratio >= 0.68) return "progress-high";
+  if (ratio >= 0.42) return "progress-medium";
+  return "progress-low";
+}
+
+function progressLabelText(ratio: number) {
+  if (ratio >= 0.88) return "피크";
+  if (ratio >= 0.68) return "고강도";
+  if (ratio >= 0.42) return "중간";
+  return "기초";
+}
+
 // ─── Main Dashboard ──────────────────────────────────────────────
 
 export function HomeDashboard({ data }: { data: HomeData }) {
   return (
     <div>
-<ProgramStatusSection data={data} />
+      <ProgramStatusSection data={data} />
       <TodaySessionSection data={data} />
       {data.lastSession && <LastSessionSection session={data.lastSession} />}
       <StrengthProgressSection items={data.strengthProgress} />

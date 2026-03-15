@@ -48,7 +48,7 @@ export function SessionSummaryCard({
       <div style={{ marginBottom: "var(--space-sm)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
           {data.badgeLabel ? (
-            <span className="label label-neutral label-sm">
+            <span className="label label-workout-type label-sm">
               {data.badgeLabel}
             </span>
           ) : <span />}

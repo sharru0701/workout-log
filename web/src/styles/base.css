@@ -20,3 +20,36 @@ a {
   color: inherit;
   text-decoration: none;
 }
+
+::selection {
+  background-color: var(--color-selection);
+}
+
+input,
+textarea,
+select {
+  accent-color: var(--color-primary);
+  caret-color: var(--color-primary-strong);
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: var(--color-selection);
+}
+
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
+}

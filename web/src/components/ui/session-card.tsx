@@ -32,6 +32,9 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
     <div>
       {main.length > 0 && (
         <div>
+          <div style={{ marginBottom: "var(--space-xs)" }}>
+            <span className="label label-exercise label-sm">메인 리프트</span>
+          </div>
           {main.map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
               <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
@@ -42,6 +45,9 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
       )}
       {assist.length > 0 && (
         <div style={{ marginTop: "var(--space-sm)", paddingTop: "var(--space-sm)", borderTop: "1px solid var(--color-border)" }}>
+          <div style={{ marginBottom: "var(--space-xs)" }}>
+            <span className="label label-set-type label-sm">보조 운동</span>
+          </div>
           {assist.slice(0, 3).map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
               <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.name}</span>
@@ -122,7 +128,7 @@ function TodayCard({
           <div className="card-title">{title}</div>
           {meta && <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0, marginTop: "2px" }}>{meta}</p>}
         </div>
-        {badge && <span className="label label-neutral">{badge}</span>}
+        {badge && <span className="label label-status">{badge}</span>}
       </div>
 
       {hasGrouped ? (

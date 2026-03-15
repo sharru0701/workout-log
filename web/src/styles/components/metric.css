@@ -1,17 +1,70 @@
 .metric-badge {
   display: flex;
   flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  --metric-value-color: var(--color-text);
+  --metric-label-color: var(--color-text-muted);
+  --metric-trend-color: var(--color-text-muted);
+  --metric-accent-line: color-mix(in srgb, var(--color-border) 64%, transparent);
+}
+
+.metric-badge::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background-color: var(--metric-accent-line);
 }
 
 .metric-value {
   font: var(--font-numeric-metric);
-  color: var(--color-text);
+  color: var(--metric-value-color);
   letter-spacing: -0.5px;
+  font-variant-numeric: tabular-nums lining-nums;
 }
 
 .metric-label {
   font: var(--font-secondary);
-  color: var(--color-text-muted);
+  color: var(--metric-label-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+.metric-trend {
+  margin-top: var(--space-xs);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--metric-trend-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.metric-weight {
+  --metric-value-color: var(--metric-weight-color);
+  --metric-trend-color: var(--metric-weight-color);
+  --metric-accent-line: var(--metric-weight-accent);
+}
+
+.metric-1rm {
+  --metric-value-color: var(--metric-1rm-color);
+  --metric-trend-color: var(--metric-1rm-color);
+  --metric-accent-line: var(--metric-1rm-accent);
+}
+
+.metric-reps {
+  --metric-value-color: var(--metric-reps-color);
+  --metric-trend-color: var(--metric-reps-color);
+  --metric-accent-line: var(--metric-reps-accent);
+}
+
+.metric-volume {
+  --metric-value-color: var(--metric-volume-color);
+  --metric-trend-color: var(--metric-volume-color);
+  --metric-accent-line: var(--metric-volume-accent);
+}
+
+.metric-progress {
+  --metric-value-color: var(--metric-progress-color);
+  --metric-trend-color: var(--metric-progress-color);
+  --metric-accent-line: var(--metric-progress-accent);
 }

@@ -7,14 +7,14 @@ export const theme = {
     dark: {
       bgPrimary: "#0d1117",
       bgSecondary: "#161b22",
-      textPrimary: "#e6edf3",
-      accentPrimary: "#1FDDCF",
+      textPrimary: "#c9d1d9",
+      accentPrimary: "#58a6ff",
     },
     light: {
-      bgPrimary: "#f3f6fb",
-      bgSecondary: "#ffffff",
-      textPrimary: "#24292f",
-      accentPrimary: "#009688",
+      bgPrimary: "#fdf6e3",
+      bgSecondary: "#eee8d5",
+      textPrimary: "#586e75",
+      accentPrimary: "#268bd2",
     },
   },
   motion: {
@@ -28,5 +28,5 @@ export const theme = {
 // in globals.css, and with the THEME_COLOR_OVERRIDE map in workout-preferences.ts.
 export const viewportThemeColor: NonNullable<Viewport["themeColor"]> = [
   { media: "(prefers-color-scheme: dark)", color: "#0d1117" },
-  { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
+  { media: "(prefers-color-scheme: light)", color: "#fdf6e3" },
 ];
