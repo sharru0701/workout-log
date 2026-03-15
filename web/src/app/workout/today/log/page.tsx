@@ -1253,7 +1253,6 @@ export default function WorkoutTodayPage() {
 
   return (
     <div
-      className="native-page native-page-enter tab-screen tab-screen-wide app-dashboard-screen momentum-scroll"
       {...pullToRefresh.bind}
     >
       <PullToRefreshIndicator
@@ -1264,22 +1263,16 @@ export default function WorkoutTodayPage() {
         completeLabel="운동 데이터 갱신 완료"
       />
 
-      <Card className="space-y-3" data-pull-refresh-trigger="true">
-        <div className="ios-section-heading">기록 모드</div>
-        <div className="grid grid-cols-2 gap-2">
+      <Card data-pull-refresh-trigger="true">
+        <div>기록 모드</div>
+        <div>
           <button
-            className={`haptic-tap rounded-xl border px-4 py-3 text-sm font-medium ${
-              focusMode === "BEGINNER" ? "bg-bg-elevated" : ""
-            }`}
             type="button"
             onClick={() => setFocusModeWithTracking("BEGINNER", "toggle")}
           >
             기본 모드
           </button>
           <button
-            className={`haptic-tap rounded-xl border px-4 py-3 text-sm font-medium ${
-              focusMode === "POWER" ? "bg-bg-elevated" : ""
-            }`}
             type="button"
             onClick={() => setFocusModeWithTracking("POWER", "toggle")}
           >
@@ -1298,29 +1291,28 @@ export default function WorkoutTodayPage() {
       </Card>
 
       {guidedHint ? (
-        <Card className="space-y-3">
-          <div className="ios-section-heading">실행 가이드</div>
-          <div className="text-sm font-semibold">{guidedHint.title}</div>
-          <button className="haptic-tap workout-action-pill is-primary w-full" type="button" onClick={runGuidedHintAction}>
+        <Card>
+          <div>실행 가이드</div>
+          <div>{guidedHint.title}</div>
+          <button type="button" onClick={runGuidedHintAction}>
             {guidedHint.actionLabel}
           </button>
         </Card>
       ) : null}
 
-      <Card className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2 text-xs">
+      <Card>
+        <div>
           {isUxSyncing && (
-            <span className="ui-badge ui-badge-neutral">
+            <span>
               행동 로그 동기화 중...
             </span>
           )}
           {!isUxSyncing && uxSyncNotice && (
-            <span className="ui-badge ui-badge-neutral">
+            <span>
               {uxSyncNotice}
             </span>
           )}
           <button
-            className="haptic-tap rounded-full border px-2.5 py-1 font-medium"
             onClick={() => {
               void syncUxEventsWithServer("manual");
             }}
@@ -1330,7 +1322,7 @@ export default function WorkoutTodayPage() {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div>
           <AppSelect
             label="플랜"
             wrapperClassName="md:col-span-2"
@@ -1348,8 +1340,8 @@ export default function WorkoutTodayPage() {
               </option>
             ))}
           </AppSelect>
-          <label className="flex flex-col gap-1">
-            <span className="ui-card-label">세션 날짜</span>
+          <label>
+            <span>세션 날짜</span>
             <AppTextInput
               variant="compact"
               type="date"
@@ -1362,11 +1354,11 @@ export default function WorkoutTodayPage() {
         <AccordionSection
           title="세션 컨텍스트"
           description="최근 세션과 고급 생성 키를 확인합니다."
-          summarySlot={<span className="ui-card-label">{planId ? "플랜 선택됨" : "플랜 없음"}</span>}
+          summarySlot={<span>{planId ? "플랜 선택됨" : "플랜 없음"}</span>}
         >
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">userId</span>
+          <div>
+            <label>
+              <span>userId</span>
               <AppTextInput
                 variant="compact"
                 value={userId}
@@ -1375,14 +1367,12 @@ export default function WorkoutTodayPage() {
             </label>
 
             <div
-              className="flex flex-col gap-1 md:col-span-4 recent-session-swipe"
               onTouchStart={onRecentSessionSwipeStart}
               onTouchEnd={onRecentSessionSwipeEnd}
             >
-              <span className="ui-card-label">최근 세션(좌우 스와이프)</span>
-              <div className="grid grid-cols-[auto,1fr,auto] gap-2">
+              <span>최근 세션(좌우 스와이프)</span>
+              <div>
                 <button
-                  className="haptic-tap rounded-lg border px-3 py-2 text-sm"
                   onClick={() => selectAdjacentRecentSession(-1)}
                   disabled={recentSessions.length === 0}
                   type="button"
@@ -1402,7 +1392,6 @@ export default function WorkoutTodayPage() {
                   ))}
                 </AppSelect>
                 <button
-                  className="haptic-tap rounded-lg border px-3 py-2 text-sm"
                   onClick={() => selectAdjacentRecentSession(1)}
                   disabled={recentSessions.length === 0}
                   type="button"
@@ -1412,7 +1401,7 @@ export default function WorkoutTodayPage() {
               </div>
             </div>
 
-            <div className="md:col-span-6">
+            <div>
               <LoadingStateRows
                 active={loadingPlans || loadingRecentSessions}
                 label="불러오는 중"
@@ -1420,17 +1409,17 @@ export default function WorkoutTodayPage() {
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="ui-card-label">시간대</span>
+          <div>
+            <label>
+              <span>시간대</span>
               <AppTextInput
                 variant="compact"
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
               />
             </label>
-            <div className="flex flex-col gap-1">
-              <span className="ui-card-label">주차(고급)</span>
+            <div>
+              <span>주차(고급)</span>
               <NumberPickerField
                 label="주차"
                 value={week}
@@ -1443,9 +1432,9 @@ export default function WorkoutTodayPage() {
             </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
-            <div className="flex flex-col gap-1">
-              <span className="ui-card-label">일차(고급)</span>
+          <div>
+            <div>
+              <span>일차(고급)</span>
               <NumberPickerField
                 label="일차"
                 value={day}
@@ -1456,18 +1445,17 @@ export default function WorkoutTodayPage() {
                 onChange={(v) => setDay(v)}
               />
             </div>
-            <div className="ui-card-label">선택된 플랜 ID: {planId || "(없음)"}</div>
-            <div className="ui-card-label">운동 옵션 수: {exerciseOptions.length}</div>
+            <div>선택된 플랜 ID: {planId || "(없음)"}</div>
+            <div>운동 옵션 수: {exerciseOptions.length}</div>
           </div>
         </AccordionSection>
 
-        <div className="workout-action-panel workout-action-panel-quick">
-          <div className="workout-action-head">
-            <div className="workout-action-title">빠른 시작</div>
+        <div>
+          <div>
+            <div>빠른 시작</div>
           </div>
-          <div className="workout-action-grid">
+          <div>
             <button
-              className="haptic-tap workout-action-pill is-primary"
               type="button"
               onClick={() => {
                 setSuccess(null);
@@ -1480,7 +1468,6 @@ export default function WorkoutTodayPage() {
             </button>
 
             <button
-              className="haptic-tap workout-action-pill is-primary"
               type="button"
               onClick={handleSaveLog}
               disabled={!planId || sets.length === 0}
@@ -1489,7 +1476,6 @@ export default function WorkoutTodayPage() {
             </button>
 
             <button
-              className="haptic-tap workout-action-pill is-primary"
               type="button"
               onClick={() => {
                 setSuccess(null);
@@ -1497,7 +1483,7 @@ export default function WorkoutTodayPage() {
                 openAddExerciseSheet("quick");
               }}
             >
-              <span className="inline-flex items-center justify-center gap-1.5">
+              <span>
                 <span>2)</span>
                 <AppPlusMinusIcon kind="plus" />
                 <span>운동 추가</span>
@@ -1505,7 +1491,6 @@ export default function WorkoutTodayPage() {
             </button>
 
             <button
-              className="haptic-tap workout-action-pill is-secondary"
               type="button"
               onClick={() => {
                 setSuccess(null);
@@ -1516,7 +1501,7 @@ export default function WorkoutTodayPage() {
               지난 운동 반복
             </button>
 
-            <button className="haptic-tap workout-action-pill is-secondary" type="button" onClick={addSetRow}>
+            <button type="button" onClick={addSetRow}>
               빈 로그 시작(+ 기본 세트)
             </button>
           </div>
@@ -1526,12 +1511,11 @@ export default function WorkoutTodayPage() {
           <AccordionSection
             title="고급 동작"
             description="수동 생성, 유틸리티, 세션 오버라이드를 제공합니다."
-            summarySlot={<span className="ui-card-label">{generatedSession ? "세션 준비됨" : "수동 제어"}</span>}
+            summarySlot={<span>{generatedSession ? "세션 준비됨" : "수동 제어"}</span>}
           >
-            <div className="workout-action-panel">
-              <div className="workout-action-grid">
+            <div>
+              <div>
                 <button
-                  className="haptic-tap workout-action-pill is-primary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1544,7 +1528,6 @@ export default function WorkoutTodayPage() {
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-primary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1557,7 +1540,6 @@ export default function WorkoutTodayPage() {
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-primary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1570,7 +1552,6 @@ export default function WorkoutTodayPage() {
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-primary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1582,13 +1563,12 @@ export default function WorkoutTodayPage() {
                   계획 세트 적용
                 </button>
 
-                <button className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5" type="button" onClick={addSetRow}>
+                <button type="button" onClick={addSetRow}>
                   <AppPlusMinusIcon kind="plus" />
                   <span>세트 추가</span>
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1601,7 +1581,6 @@ export default function WorkoutTodayPage() {
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-secondary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1613,7 +1592,6 @@ export default function WorkoutTodayPage() {
                 </button>
 
                 <button
-                  className="haptic-tap workout-action-pill is-secondary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1629,7 +1607,6 @@ export default function WorkoutTodayPage() {
                   빠른 세트 추가
                 </button>
                 <button
-                  className="haptic-tap workout-action-pill is-secondary"
                   type="button"
                   onClick={() => {
                     setShouldRenderOverridesSheet(true);
@@ -1645,7 +1622,6 @@ export default function WorkoutTodayPage() {
           </AccordionSection>
         ) : (
           <button
-            className="haptic-tap workout-action-pill is-secondary w-full"
             type="button"
             onClick={() => setFocusModeWithTracking("POWER", "shortcut")}
           >
@@ -1679,7 +1655,6 @@ export default function WorkoutTodayPage() {
         />
         {lastSavedLogId && (
           <a
-            className="text-sm underline"
             href={`/workout/session/${encodeURIComponent(lastSavedLogId)}`}
           >
             세션 상세 열기
@@ -1687,38 +1662,38 @@ export default function WorkoutTodayPage() {
         )}
       </Card>
 
-      <div className={`grid grid-cols-1 ${isPowerMode ? "lg:grid-cols-2" : ""} gap-4`}>
+      <div>
         {isPowerMode ? (
-          <Card className="space-y-3">
+          <Card>
             <AccordionSection
               title="생성 스냅샷"
               description="필요한 구조만 펼쳐서 확인하세요."
-              summarySlot={<span className="ui-card-label">{generatedSession ? "준비됨" : "비어 있음"}</span>}
+              summarySlot={<span>{generatedSession ? "준비됨" : "비어 있음"}</span>}
             >
               {generatedSession ? (
-                <div className="space-y-3">
-                  <div className="ui-card-label">generatedSessionId: {generatedSession.id}</div>
+                <div>
+                  <div>generatedSessionId: {generatedSession.id}</div>
 
                   <InlineDisclosure label="계획 운동">
-                    <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+                    <pre>
                       {JSON.stringify(snapshot?.exercises ?? [], null, 2)}
                     </pre>
                   </InlineDisclosure>
 
                   <InlineDisclosure label="블록">
-                    <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+                    <pre>
                       {JSON.stringify(snapshot?.blocks ?? [], null, 2)}
                     </pre>
                   </InlineDisclosure>
 
                   <InlineDisclosure label="수동 세션">
-                    <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+                    <pre>
                       {JSON.stringify(snapshot?.manualSession ?? null, null, 2)}
                     </pre>
                   </InlineDisclosure>
 
                   <InlineDisclosure label="보조 운동">
-                    <pre className="rounded-xl border bg-neutral-50 p-3 overflow-auto text-xs">
+                    <pre>
                       {JSON.stringify(snapshot?.accessories ?? [], null, 2)}
                     </pre>
                   </InlineDisclosure>
@@ -1734,28 +1709,27 @@ export default function WorkoutTodayPage() {
           </Card>
         ) : null}
 
-        <Card className="space-y-3">
-          <div className="ios-section-heading">저장할 세트</div>
+        <Card>
+          <div>저장할 세트</div>
 
           {defaultExercisesFromSnapshot.length > 0 && (
-            <div className="ui-card-label">
+            <div>
               추천 운동: {defaultExercisesFromSnapshot.join(", ")}
             </div>
           )}
-          <div className="ui-card-label">
+          <div>
             키보드: Enter는 다음 세트 삽입, 방향키는 셀 이동
           </div>
 
           {sets.length === 0 ? (
-            <div className="space-y-3">
+            <div>
               <EmptyStateRows
                 when
                 label="설정 값 없음"
                 description="저장할 세트가 없습니다. 계획 세트를 불러오거나 빈 세트를 추가하세요."
               />
-              <div className="workout-empty-actions">
+              <div>
                 <button
-                  className="haptic-tap workout-action-pill is-primary"
                   type="button"
                   onClick={() => {
                     setSuccess(null);
@@ -1767,7 +1741,6 @@ export default function WorkoutTodayPage() {
                   생성 및 적용
                 </button>
                 <button
-                  className="haptic-tap workout-action-pill is-secondary inline-flex items-center justify-center gap-1.5"
                   type="button"
                   onClick={() => openAddExerciseSheet("empty")}
                 >
@@ -1777,7 +1750,7 @@ export default function WorkoutTodayPage() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3 ui-height-animate">
+            <div>
               {sets.map((s, idx) => (
                 <WorkoutSetRow
                   key={s.id}
@@ -1802,11 +1775,11 @@ export default function WorkoutTodayPage() {
           </datalist>
 
           {isPowerMode ? (
-            <Card padding="sm" className="space-y-2">
+            <Card padding="sm">
               <AccordionSection
                 title="세션 상세 비교"
                 description="계획 세트와 수행 세트를 비교합니다."
-                summarySlot={<span className="ui-card-label">{compareRows.length}행</span>}
+                summarySlot={<span>{compareRows.length}행</span>}
               >
                 {compareRows.length === 0 ? (
                   <EmptyStateRows
@@ -1815,15 +1788,15 @@ export default function WorkoutTodayPage() {
                     description="비교할 계획/수행 세트가 없습니다."
                   />
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm ios-data-table">
-                      <thead className="text-neutral-600">
+                  <div>
+                    <table>
+                      <thead>
                         <tr>
-                          <th className="text-left py-1 pr-3">운동</th>
-                          <th className="text-right py-1 px-3">세트</th>
-                          <th className="text-right py-1 px-3">계획</th>
-                          <th className="text-right py-1 px-3">수행</th>
-                          <th className="text-right py-1 pl-3">상태</th>
+                          <th>운동</th>
+                          <th>세트</th>
+                          <th>계획</th>
+                          <th>수행</th>
+                          <th>상태</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1872,12 +1845,12 @@ export default function WorkoutTodayPage() {
                                 ? "완료"
                                 : "대기";
                           return (
-                            <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`} className="border-t">
-                              <td className="py-1 pr-3">{r.exerciseName}</td>
-                              <td className="py-1 px-3 text-right">{r.setNumber}</td>
-                              <td className="py-1 px-3 text-right">{plannedText}</td>
-                              <td className="py-1 px-3 text-right">{performedText}</td>
-                              <td className="py-1 pl-3 text-right">{status}</td>
+                            <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`}>
+                              <td>{r.exerciseName}</td>
+                              <td>{r.setNumber}</td>
+                              <td>{plannedText}</td>
+                              <td>{performedText}</td>
+                              <td>{status}</td>
                             </tr>
                           );
                         })}
@@ -1889,7 +1862,6 @@ export default function WorkoutTodayPage() {
             </Card>
           ) : (
             <button
-              className="haptic-tap workout-action-pill is-secondary w-full"
               type="button"
               onClick={() => setFocusModeWithTracking("POWER", "shortcut")}
             >
@@ -1899,12 +1871,11 @@ export default function WorkoutTodayPage() {
         </Card>
       </div>
 
-      <div className="workout-save-dock">
+      <div>
         <PrimaryButton
           variant="primary"
           size="lg"
           fullWidth
-          className="workout-save-button"
           onClick={handleSaveLog}
           disabled={!planId || sets.length === 0}
         >

@@ -65,9 +65,9 @@ export default function SettingsSavePolicyPage() {
   }, [autoSync.notice, timezone.notice]);
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="실패 시뮬레이션" />
         <BaseGroupedList ariaLabel="Save failure simulation">
           <ToggleRow
@@ -83,7 +83,7 @@ export default function SettingsSavePolicyPage() {
         <SectionFootnote>한 번만 실패 처리한 뒤 같은 Row에서 다시 시도하세요.</SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="즉시 반영 설정" />
         <BaseGroupedList ariaLabel="Optimistic settings rows">
           <ToggleRow
@@ -130,7 +130,7 @@ export default function SettingsSavePolicyPage() {
         <SectionFootnote>전체 로딩 오버레이 없이, 저장 중인 Row만 잠급니다.</SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="인라인 안내" />
         <NoticeStateRows
           message={latestNotice}

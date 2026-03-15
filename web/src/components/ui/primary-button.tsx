@@ -46,14 +46,14 @@ export function PrimaryButton<T extends ElementType = "button">({
     const buttonProps = props as ComponentPropsWithoutRef<"button">;
     const { type = "button", ...restButtonProps } = buttonProps;
     return (
-      <button type={type} className={resolvedClassName} {...restButtonProps}>
+      <button type={type} {...restButtonProps}>
         {children}
       </button>
     );
   }
 
   return (
-    <Component className={resolvedClassName} {...props}>
+    <Component {...props}>
       {children}
     </Component>
   );

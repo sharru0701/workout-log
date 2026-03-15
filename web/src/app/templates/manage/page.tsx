@@ -324,21 +324,21 @@ export default function TemplatesPage() {
   }
 
   return (
-    <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
+    <div>
 
-      <Card className="grid grid-cols-1 md:grid-cols-8 gap-3 items-end">
-        <label className="flex flex-col gap-1 md:col-span-2">
-          <span className="ui-card-label">사용자 ID</span>
+      <Card>
+        <label>
+          <span>사용자 ID</span>
           <AppTextInput
             variant="compact"
             value={userId}
             onChange={(e) => setUserId(e.target.value)}
           />
         </label>
-        <label className="flex flex-col gap-1 md:col-span-3">
-          <span className="ui-card-label">템플릿/프로그램 검색</span>
-          <div className="app-search-shell">
-            <span className="app-search-icon" aria-hidden="true">
+        <label>
+          <span>템플릿/프로그램 검색</span>
+          <div>
+            <span aria-hidden="true">
               <svg viewBox="0 0 24 24" focusable="false">
                 <circle cx="11" cy="11" r="7" />
                 <path d="m20 20-3.8-3.8" />
@@ -347,7 +347,6 @@ export default function TemplatesPage() {
             <input
               type="search"
               inputMode="search"
-              className="app-search-input"
               value={searchQuery}
               placeholder="이름, slug, 타입, 태그..."
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -355,7 +354,6 @@ export default function TemplatesPage() {
             {searchQuery.trim().length > 0 ? (
               <button
                 type="button"
-                className="app-search-clear"
                 aria-label="검색어 지우기"
                 onClick={() => setSearchQuery("")}
               >
@@ -377,10 +375,9 @@ export default function TemplatesPage() {
             </option>
           ))}
         </AppSelect>
-        <div className="md:col-span-4 text-sm text-neutral-600">{`${filteredTemplates.length}/${templates.length}개 표시 중`}</div>
-        <div className="md:col-span-4 flex gap-2">
+        <div>{`${filteredTemplates.length}/${templates.length}개 표시 중`}</div>
+        <div>
           <button
-            className="haptic-tap rounded-xl border px-4 py-2 font-medium"
             onClick={() => {
               setError(null);
               setSuccess(null);
@@ -389,18 +386,18 @@ export default function TemplatesPage() {
           >
             다시 불러오기
           </button>
-          <a className="haptic-tap rounded-xl border px-4 py-2 font-medium" href={APP_ROUTES.plansHome}>
+          <a href={APP_ROUTES.plansHome}>
             플랜 화면
           </a>
         </div>
-        <div className="md:col-span-8">
+        <div>
           <LoadingStateRows
             active={loadingTemplates || loadingVersions}
             label="불러오는 중"
             description="템플릿 및 버전 목록을 확인하고 있습니다."
           />
         </div>
-        <div className="md:col-span-8">
+        <div>
           <ErrorStateRows
             message={error}
             onRetry={() => {
@@ -412,18 +409,18 @@ export default function TemplatesPage() {
             }}
           />
         </div>
-        <div className="md:col-span-8">
+        <div>
           <NoticeStateRows message={success} tone="success" label="완료" />
         </div>
       </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <Card className="space-y-3">
+      <div>
+        <Card>
           <AccordionSection
             title="공개 템플릿"
             description="공식 템플릿을 확인하고 포크합니다."
             defaultOpen
-            summarySlot={<span className="ui-card-label">{publicTemplates.length}</span>}
+            summarySlot={<span>{publicTemplates.length}</span>}
           >
             <EmptyStateRows
               when={showPublicTemplatesEmpty}
@@ -431,21 +428,20 @@ export default function TemplatesPage() {
               description="표시할 공개 템플릿이 없습니다."
             />
             {publicTemplates.length > 0 ? (
-              <ul className="space-y-2">
+              <ul>
                 {publicTemplates.map((t) => (
                   <Card as="li" key={t.slug} padding="sm">
-                    <div className="flex items-center justify-between gap-2">
-                      <button className="haptic-tap text-left" onClick={() => setSelectedSlug(t.slug)}>
-                        <div className="font-medium">{t.name}</div>
-                        <div className="ui-card-label">
+                    <div>
+                      <button onClick={() => setSelectedSlug(t.slug)}>
+                        <div>{t.name}</div>
+                        <div>
                           {t.slug} · {t.type} · 최신 v{t.latestVersion?.version ?? "-"}
                         </div>
                         {Array.isArray(t.tags) && t.tags.length > 0 && (
-                          <div className="ui-card-label">tags: {t.tags.join(", ")}</div>
+                          <div>tags: {t.tags.join(", ")}</div>
                         )}
                       </button>
                       <button
-                        className="haptic-tap rounded-lg border px-3 py-1 text-sm"
                         onClick={() => {
                           setError(null);
                           setSuccess(null);
@@ -462,11 +458,11 @@ export default function TemplatesPage() {
           </AccordionSection>
         </Card>
 
-        <Card className="space-y-3">
+        <Card>
           <AccordionSection
             title="내 개인 템플릿"
             description="현재 사용자가 편집할 수 있는 템플릿입니다."
-            summarySlot={<span className="ui-card-label">{myPrivateTemplates.length}</span>}
+            summarySlot={<span>{myPrivateTemplates.length}</span>}
           >
             <EmptyStateRows
               when={showPrivateTemplatesEmpty}
@@ -474,16 +470,16 @@ export default function TemplatesPage() {
               description="개인 템플릿이 없습니다. 공개 템플릿을 포크해 편집을 시작하세요."
             />
             {myPrivateTemplates.length > 0 ? (
-              <ul className="space-y-2">
+              <ul>
                 {myPrivateTemplates.map((t) => (
                   <Card as="li" key={t.slug} padding="sm">
-                    <button className="haptic-tap w-full text-left" onClick={() => setSelectedSlug(t.slug)}>
-                      <div className="font-medium">{t.name}</div>
-                      <div className="ui-card-label">
+                    <button onClick={() => setSelectedSlug(t.slug)}>
+                      <div>{t.name}</div>
+                      <div>
                         {t.slug} · {t.type} · 최신 v{t.latestVersion?.version ?? "-"}
                       </div>
                       {Array.isArray(t.tags) && t.tags.length > 0 && (
-                        <div className="ui-card-label">tags: {t.tags.join(", ")}</div>
+                        <div>tags: {t.tags.join(", ")}</div>
                       )}
                     </button>
                   </Card>
@@ -494,8 +490,8 @@ export default function TemplatesPage() {
         </Card>
       </div>
 
-      <Card padding="lg" className="space-y-4">
-        <div className="ios-section-heading">템플릿 편집기</div>
+      <Card padding="lg">
+        <div>템플릿 편집기</div>
         <EmptyStateRows
           when={showTemplateEditorEmpty}
           label="설정 값 없음"
@@ -503,10 +499,10 @@ export default function TemplatesPage() {
         />
         {selectedTemplate ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
-              <div className="md:col-span-2">
-                <div className="text-sm font-medium">{selectedTemplate.name}</div>
-                <div className="ui-card-label">
+            <div>
+              <div>
+                <div>{selectedTemplate.name}</div>
+                <div>
                   {selectedTemplate.slug} · {selectedTemplate.type} · {selectedTemplate.visibility}
                 </div>
               </div>
@@ -535,19 +531,19 @@ export default function TemplatesPage() {
               <AccordionSection
                 title="수동 세션 편집"
                 description="세션, 아이템, 세트 단위로 편집합니다."
-                summarySlot={<span className="ui-card-label">{manualSessions.length} sessions</span>}
+                summarySlot={<span>{manualSessions.length} sessions</span>}
               >
-                <div className="flex items-center justify-between">
-                  <div className="ios-inline-heading">MANUAL session editor</div>
-                  <button className="haptic-tap rounded-lg border px-3 py-1 text-sm" onClick={addManualSession}>
+                <div>
+                  <div>MANUAL session editor</div>
+                  <button onClick={addManualSession}>
                     + Session
                   </button>
                 </div>
 
                 {manualSessions.map((session, sessionIdx) => (
-                  <div key={sessionIdx} className="rounded-xl border p-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <span className="ui-card-label">Session key</span>
+                  <div key={sessionIdx}>
+                    <div>
+                      <span>Session key</span>
                       <AppTextInput
                         variant="dense"
                         value={session.key}
@@ -565,7 +561,6 @@ export default function TemplatesPage() {
                         }
                       />
                       <button
-                        className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                         onClick={() =>
                           setManualSessions((prev) => prev.filter((_, i) => i !== sessionIdx))
                         }
@@ -575,11 +570,10 @@ export default function TemplatesPage() {
                     </div>
 
                     {session.items.map((item, itemIdx) => (
-                      <div key={itemIdx} className="rounded-lg border p-2 space-y-2">
-                        <div className="flex items-center gap-2">
+                      <div key={itemIdx}>
+                        <div>
                           <AppTextInput
                             variant="dense"
-                            className="flex-1"
                             placeholder="exerciseName"
                             value={item.exerciseName}
                             onChange={(e) =>
@@ -603,7 +597,6 @@ export default function TemplatesPage() {
                             }
                           />
                           <button
-                            className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                             onClick={() =>
                               setManualSessions((prev) =>
                                 prev.map((s, si) =>
@@ -622,9 +615,9 @@ export default function TemplatesPage() {
                         </div>
 
                         {item.sets.map((setRow, setIdx) => (
-                          <div key={setIdx} className="grid grid-cols-4 gap-2 items-end">
-                            <div className="flex flex-col gap-1">
-                              <span className="ui-card-label">reps</span>
+                          <div key={setIdx}>
+                            <div>
+                              <span>reps</span>
                               <NumberPickerField
                                 label="Reps"
                                 value={setRow.reps}
@@ -655,8 +648,8 @@ export default function TemplatesPage() {
                                 }
                               />
                             </div>
-                            <div className="flex flex-col gap-1">
-                              <span className="ui-card-label">weightKg</span>
+                            <div>
+                              <span>weightKg</span>
                               <NumberPickerField
                                 label="Weight (kg)"
                                 value={setRow.targetWeightKg}
@@ -689,8 +682,8 @@ export default function TemplatesPage() {
                                 }
                               />
                             </div>
-                            <div className="flex flex-col gap-1">
-                              <span className="ui-card-label">rpe</span>
+                            <div>
+                              <span>rpe</span>
                               <NumberPickerField
                                 label="RPE"
                                 value={setRow.rpe}
@@ -723,7 +716,6 @@ export default function TemplatesPage() {
                               />
                             </div>
                             <button
-                              className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                               onClick={() =>
                                 setManualSessions((prev) =>
                                   prev.map((s, si) =>
@@ -750,7 +742,6 @@ export default function TemplatesPage() {
                         ))}
 
                         <button
-                          className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                           onClick={() =>
                             setManualSessions((prev) =>
                               prev.map((s, si) =>
@@ -777,7 +768,6 @@ export default function TemplatesPage() {
                     ))}
 
                     <button
-                      className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                       onClick={() =>
                         setManualSessions((prev) =>
                           prev.map((s, si) =>
@@ -800,12 +790,12 @@ export default function TemplatesPage() {
               <AccordionSection
                 title="로직 안전 파라미터"
                 description="스케줄과 대체 규칙을 설정합니다."
-                summarySlot={<span className="ui-card-label">{logicFrequency}/week</span>}
+                summarySlot={<span>{logicFrequency}/week</span>}
               >
-                <div className="ios-inline-heading">로직 안전 파라미터</div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  <div className="flex flex-col gap-1">
-                    <span className="ui-card-label">TM % (defaults.tmPercent)</span>
+                <div>로직 안전 파라미터</div>
+                <div>
+                  <div>
+                    <span>TM % (defaults.tmPercent)</span>
                     <NumberPickerField
                       label="TM %"
                       value={logicTmPercent}
@@ -817,8 +807,8 @@ export default function TemplatesPage() {
                       onChange={(v) => setLogicTmPercent(v)}
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="ui-card-label">Frequency (sessions/week)</span>
+                  <div>
+                    <span>Frequency (sessions/week)</span>
                     <NumberPickerField
                       label="Frequency"
                       value={logicFrequency}
@@ -830,8 +820,8 @@ export default function TemplatesPage() {
                       onChange={(v) => setLogicFrequency(v)}
                     />
                   </div>
-                  <div className="flex flex-col gap-1">
-                    <span className="ui-card-label">Cycle weeks</span>
+                  <div>
+                    <span>Cycle weeks</span>
                     <NumberPickerField
                       label="Cycle weeks"
                       value={logicWeeks}
@@ -845,12 +835,12 @@ export default function TemplatesPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <div className="ui-card-label">Exercise substitutions</div>
+                <div>
+                  <div>Exercise substitutions</div>
                   {logicSubstitutions.map((row, idx) => (
-                    <div key={idx} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-end">
-                      <label className="flex flex-col gap-1 md:col-span-2">
-                        <span className="ui-card-label">target</span>
+                    <div key={idx}>
+                      <label>
+                        <span>target</span>
                         <AppTextInput
                           variant="dense"
                           value={row.target}
@@ -861,8 +851,8 @@ export default function TemplatesPage() {
                           }
                         />
                       </label>
-                      <label className="flex flex-col gap-1 md:col-span-3">
-                        <span className="ui-card-label">exerciseName</span>
+                      <label>
+                        <span>exerciseName</span>
                         <AppTextInput
                           variant="dense"
                           value={row.exerciseName}
@@ -874,7 +864,6 @@ export default function TemplatesPage() {
                         />
                       </label>
                       <button
-                        className="haptic-tap rounded-lg border px-2 py-1 text-xs"
                         onClick={() => setLogicSubstitutions((prev) => prev.filter((_, i) => i !== idx))}
                       >
                         Remove
@@ -882,7 +871,6 @@ export default function TemplatesPage() {
                     </div>
                   ))}
                   <button
-                    className="haptic-tap rounded-lg border px-3 py-1 text-sm"
                     onClick={() =>
                       setLogicSubstitutions((prev) => [...prev, { target: "", exerciseName: "" }])
                     }
@@ -896,12 +884,12 @@ export default function TemplatesPage() {
             <AccordionSection
               title="새 버전 생성"
               description="선택한 기준 버전에서 파생합니다."
-              summarySlot={<span className="ui-card-label">v{selectedBaseVersion?.version ?? "-"}</span>}
+              summarySlot={<span>v{selectedBaseVersion?.version ?? "-"}</span>}
             >
-              <Card padding="sm" className="space-y-2">
-                <div className="ios-inline-heading">새 버전 생성</div>
-                <label className="flex flex-col gap-1">
-                  <span className="ui-card-label">changelog</span>
+              <Card padding="sm">
+                <div>새 버전 생성</div>
+                <label>
+                  <span>changelog</span>
                   <AppTextInput
                     variant="compact"
                     value={changelog}
@@ -910,7 +898,6 @@ export default function TemplatesPage() {
                 </label>
                 <PrimaryButton
                   variant="primary"
-                  className="px-4 py-2 font-medium"
                   onClick={() => {
                     setError(null);
                     setSuccess(null);
@@ -924,7 +911,6 @@ export default function TemplatesPage() {
                   when={!canEditSelectedTemplate}
                   label="편집 비활성"
                   description="이 템플릿은 읽기 전용입니다. 포크 후 개인 템플릿에서 버전을 생성하세요."
-                  className="mt-2"
                 />
               </Card>
             </AccordionSection>
@@ -932,7 +918,7 @@ export default function TemplatesPage() {
             <AccordionSection
               title="버전 기록"
               description="시간순 변경 이력을 확인합니다."
-              summarySlot={<span className="ui-card-label">{versions.length} versions</span>}
+              summarySlot={<span>{versions.length} versions</span>}
             >
               <Card padding="sm">
                 <EmptyStateRows
@@ -941,21 +927,21 @@ export default function TemplatesPage() {
                   description="선택한 템플릿의 버전 이력이 아직 없습니다."
                 />
                 {versions.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm ios-data-table">
-                      <thead className="text-neutral-600">
+                  <div>
+                    <table>
+                      <thead>
                         <tr>
-                          <th className="text-left py-2 pr-4">버전</th>
-                          <th className="text-left py-2 px-4">생성일</th>
-                          <th className="text-left py-2 pl-4">변경 내역</th>
+                          <th>버전</th>
+                          <th>생성일</th>
+                          <th>변경 내역</th>
                         </tr>
                       </thead>
                       <tbody>
                         {versions.map((v) => (
-                          <tr key={v.id} className="border-t">
-                            <td className="py-2 pr-4">v{v.version}</td>
-                            <td className="py-2 px-4">{new Date(v.createdAt).toLocaleString()}</td>
-                            <td className="py-2 pl-4">{v.changelog ?? "-"}</td>
+                          <tr key={v.id}>
+                            <td>v{v.version}</td>
+                            <td>{new Date(v.createdAt).toLocaleString()}</td>
+                            <td>{v.changelog ?? "-"}</td>
                           </tr>
                         ))}
                       </tbody>

@@ -242,9 +242,9 @@ export default function SettingsUxThresholdsPage() {
   }
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="글로벌 기준치" />
         <BaseGroupedList ariaLabel="UX threshold settings">
           <ValueRow
@@ -331,9 +331,9 @@ export default function SettingsUxThresholdsPage() {
         <SectionFootnote>글로벌 기준치는 모든 플랜에 기본으로 적용됩니다.</SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="플랜별 기준치 프로필(선택)" />
-        <Card tone="subtle" padding="md" elevated={false} className="space-y-3">
+        <Card tone="subtle" padding="md" elevated={false}>
           <AppSelect
             label="플랜 선택"
             value={selectedPlanId}
@@ -409,7 +409,7 @@ export default function SettingsUxThresholdsPage() {
             />
           </BaseGroupedList>
 
-          <div className="text-xs text-neutral-600">
+          <div>
             현재 플랜: {selectedPlan ? `${selectedPlan.name} [${selectedPlan.type}]` : "선택되지 않음"}
           </div>
         </Card>
@@ -418,7 +418,7 @@ export default function SettingsUxThresholdsPage() {
         </SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="적용 안내" />
         <NoticeStateRows
           message={latestNotice}

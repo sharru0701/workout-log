@@ -679,7 +679,7 @@ export default function CalendarPage() {
   }, [planId, selectedLog, selectedSession?.id]);
 
   return (
-    <div className="native-page native-page-enter tab-screen ios-cal-screen momentum-scroll" {...pullToRefresh.bind}>
+    <div {...pullToRefresh.bind}>
       <PullToRefreshIndicator
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
@@ -689,10 +689,9 @@ export default function CalendarPage() {
       />
       {/* Plan selector bar */}
       {plans.length > 0 && (
-        <div className="ios-cal-plan-bar" data-pull-refresh-trigger="true">
+        <div data-pull-refresh-trigger="true">
           <button
             type="button"
-            className="haptic-tap app-select-row app-select-row--standalone app-select-row-button ios-cal-plan-button"
             aria-label="플랜 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={planSheetOpen}
@@ -701,9 +700,9 @@ export default function CalendarPage() {
               setPlanSheetOpen(true);
             }}
           >
-            <span className="app-select-row-right">
-              <span className="app-select-trigger-value">{selectedPlan?.name ?? "플랜 선택"}</span>
-              <span className="app-select-row-chevron" aria-hidden="true">
+            <span>
+              <span>{selectedPlan?.name ?? "플랜 선택"}</span>
+              <span aria-hidden="true">
                 <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
                   <path d="M2 5.5L6 2L10 5.5" />
                   <path d="M2 10.5L6 14L10 10.5" />
@@ -717,30 +716,26 @@ export default function CalendarPage() {
       {/* Month navigation header */}
       <div
         ref={calGestureRef}
-        className="ios-cal-gesture-area"
         onTouchStart={handleCalSwipeTouchStart}
         onTouchEnd={handleCalSwipeTouchEnd}
       >
       <div
-        className="ios-cal-header"
         data-pull-refresh-trigger="true"
       >
-        <div className="ios-cal-header-left">
+        <div>
           <button
             type="button"
-            className="ios-cal-month-picker-trigger"
             onClick={() => setMonthPickerOpen(true)}
             aria-label="연도와 월 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={monthPickerOpen}
           >
-            <span className="ios-cal-year-label">{getYear(anchorDate)}년</span>
-            <span className="ios-cal-month-label-large">{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+            <span>{getYear(anchorDate)}년</span>
+            <span>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
           </button>
         </div>
-        <div className="ios-cal-header-right">
+        <div>
           <button
-            className="ios-cal-nav-btn"
             onClick={() => shiftMonth(-1)}
             aria-label="이전 달"
           >
@@ -756,7 +751,6 @@ export default function CalendarPage() {
             </svg>
           </button>
           <button
-            className="ios-cal-nav-btn"
             onClick={() => shiftMonth(1)}
             aria-label="다음 달"
           >
@@ -775,9 +769,9 @@ export default function CalendarPage() {
       </div>
 
       {/* Weekday header row */}
-      <div className="ios-cal-weekdays" aria-hidden="true">
+      <div aria-hidden="true">
         {WEEKDAY_SHORT.map((name, i) => (
-          <div key={name} className={`ios-cal-weekday${i === 0 ? " is-sun" : ""}`}>
+          <div key={name}>
             {name}
           </div>
         ))}
@@ -786,12 +780,11 @@ export default function CalendarPage() {
       {/* Date grid */}
       <div
         key={animKey}
-        className={`ios-cal-grid ${animClass}`}
         role="grid"
         aria-label="날짜 선택"
       >
         {Array.from({ length: 5 }, (_, week) => (
-          <div key={week} className="ios-cal-week-row">
+          <div key={week}>
             {cells.slice(week * 7, week * 7 + 7).map((dateOnly) => {
               const isToday = dateOnly === today;
               const isSelected = dateOnly === selectedDate;
@@ -803,21 +796,12 @@ export default function CalendarPage() {
                 <button
                   key={dateOnly}
                   role="gridcell"
-                  className={[
-                    "ios-cal-day",
-                    isToday ? "is-today" : "",
-                    isSelected ? "is-selected" : "",
-                    isOutside ? "is-outside" : "",
-                    dow === 0 ? "is-sun" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
                   onClick={() => setSelectedDate(dateOnly)}
                   aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
                   aria-selected={isSelected}
                 >
-                  <span className="ios-cal-day-num">{dayOfMonth(dateOnly)}</span>
-                  {hasDot && <span className="ios-cal-day-dot" aria-hidden="true" />}
+                  <span>{dayOfMonth(dateOnly)}</span>
+                  {hasDot && <span aria-hidden="true" />}
                 </button>
               );
             })}
@@ -828,31 +812,30 @@ export default function CalendarPage() {
       </div>{/* /ios-cal-gesture-area */}
 
       {/* Divider */}
-      <div className="ios-cal-divider" role="separator" />
+      <div role="separator" />
 
       {/* Selected date detail panel */}
-      <div className="ios-cal-detail">
-        <div className="ios-cal-detail-header">
-          <span className="ios-cal-detail-date">{formatKoreanDate(selectedDate)}</span>
-          {selectedDate === today && <span className="ios-cal-today-badge">오늘</span>}
+      <div>
+        <div>
+          <span>{formatKoreanDate(selectedDate)}</span>
+          {selectedDate === today && <span>오늘</span>}
         </div>
 
-        {error && <div className="ios-cal-error">{error}</div>}
+        {error && <div>{error}</div>}
 
         {loading || selectedLogLoading || selectedSessionLoading ? (
-          <div className="ios-cal-loading">
-            <span className="ios-cal-loading-dot" />
-            <span className="ios-cal-loading-dot" />
-            <span className="ios-cal-loading-dot" />
+          <div>
+            <span />
+            <span />
+            <span />
           </div>
         ) : !selectedPlan ? (
-          <div className="ios-cal-empty-state">
-            <p className="ios-cal-empty-text">플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
+          <div>
+            <p>플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
           </div>
         ) : selectedLog ? (
           <SessionCard
             variant="today"
-            className="ios-cal-summary-card"
             title={selectedPlan.name}
             meta={`기록 있음 · ${loggedSummary.totalSets}세트 · ${formatVolume(loggedSummary.totalVolume)}`}
             badge={loggedDayLabel ?? undefined}
@@ -863,7 +846,6 @@ export default function CalendarPage() {
         ) : selectedSession ? (
           <SessionCard
             variant="today"
-            className="ios-cal-summary-card"
             title={selectedPlan.name}
             meta={`생성됨 · ${new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}`}
             badge={selectedSessionWDLabel ?? undefined}
@@ -874,16 +856,16 @@ export default function CalendarPage() {
           />
         ) : (
           /* No session yet */
-          <div className="ios-cal-no-session">
-            <div className="ios-cal-session-card-left">
-              <div className="ios-cal-session-dot-muted" aria-hidden="true" />
-              <div className="ios-cal-session-info">
+          <div>
+            <div>
+              <div aria-hidden="true" />
+              <div>
                 {isPastDateCreationBlocked ? null : (
-                  <span className="ios-cal-session-key ios-cal-session-key--muted">
+                  <span>
                     {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
                   </span>
                 )}
-                <span className="ios-cal-session-meta">
+                <span>
                   {isPastDateCreationBlocked
                     ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
                     : selectedCtx?.planned
@@ -893,8 +875,8 @@ export default function CalendarPage() {
               </div>
             </div>
             {!isPastDateCreationBlocked ? (
-              <div className="ios-cal-no-session-actions">
-                <a className="ios-cal-action-btn ios-cal-action-btn--primary" href={workoutHref}>
+              <div>
+                <a href={workoutHref}>
                   기록하기
                 </a>
               </div>

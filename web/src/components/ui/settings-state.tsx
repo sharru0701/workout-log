@@ -127,7 +127,7 @@ export function LoadingStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel} className={className}>
+    <BaseGroupedList ariaLabel={ariaLabel}>
       <InfoRow label={label} leading={<RowIcon symbol="LD" tone="blue" />} />
     </BaseGroupedList>
   );
@@ -167,7 +167,7 @@ export function EmptyStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel} className={className}>
+    <BaseGroupedList ariaLabel={ariaLabel}>
       <InfoRow label={label} />
     </BaseGroupedList>
   );
@@ -215,7 +215,7 @@ export function ErrorStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel} className={className}>
+    <BaseGroupedList ariaLabel={ariaLabel}>
       <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="orange" />} />
       <NavigationRow
         label={retryLabel}
@@ -237,7 +237,7 @@ export function DisabledStateRows({
   if (!when) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel} className={className}>
+    <BaseGroupedList ariaLabel={ariaLabel}>
       <InfoRow tone="disabled" label={label} leading={<RowIcon symbol="DS" tone="neutral" />} />
     </BaseGroupedList>
   );
@@ -282,7 +282,7 @@ export function NoticeStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel} className={className}>
+    <BaseGroupedList ariaLabel={ariaLabel}>
       <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="tint" />} />
     </BaseGroupedList>
   );

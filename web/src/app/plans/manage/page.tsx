@@ -34,20 +34,19 @@ function PlanListCard({
   onManage: () => void;
 }) {
   return (
-    <Card padding="sm" tone="inset" elevated={false} className="grid gap-3">
-      <div className="flex items-start justify-between gap-3">
-        <div className="grid min-w-0 gap-1">
-          <strong className="truncate text-[0.98rem] font-semibold leading-snug text-[var(--text-primary)]">
+    <Card padding="sm" tone="inset" elevated={false}>
+      <div>
+        <div>
+          <strong>
             {plan.name}
           </strong>
-          <span className="ui-card-label">기반 프로그램: {plan.baseProgramName ?? "-"}</span>
-          <span className="text-sm text-[var(--text-secondary)]">
+          <span>기반 프로그램: {plan.baseProgramName ?? "-"}</span>
+          <span>
             최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
           </span>
         </div>
         <button
           type="button"
-          className="haptic-tap shrink-0 rounded-full border px-3 py-1 text-sm font-medium"
           onClick={onManage}
         >
           관리
@@ -59,7 +58,6 @@ function PlanListCard({
         variant="primary"
         size="lg"
         fullWidth
-        className="px-4 text-base font-semibold"
         href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
       >
         수행 히스토리
@@ -228,7 +226,6 @@ function PlansManagePageContent() {
   return (
     <>
       <div
-        className="native-page native-page-enter tab-screen tab-screen-wide app-dashboard-screen momentum-scroll"
         {...pullToRefresh.bind}
       >
         <PullToRefreshIndicator
@@ -246,8 +243,8 @@ function PlansManagePageContent() {
         >
           {plans.length > 0 || searchQuery.trim().length > 0 ? (
             <DashboardSurface>
-              <div className="grid gap-1">
-                <span className="ui-card-label">플랜 검색</span>
+              <div>
+                <span>플랜 검색</span>
                 <StoreSearchInput
                   value={searchQuery}
                   onChange={setSearchQuery}
@@ -282,7 +279,7 @@ function PlansManagePageContent() {
           />
 
           {filteredPlans.length > 0 ? (
-            <div className="grid gap-2">
+            <div>
               {filteredPlans.map((plan) => (
                 <PlanListCard
                   key={plan.id}
@@ -306,9 +303,9 @@ function PlansManagePageContent() {
         closeLabel="닫기"
       >
         {managedPlan ? (
-          <div className="space-y-3 pb-2">
+          <div>
             <Card tone="subtle" padding="sm" elevated={false}>
-              <CardMetaGrid className="grid-cols-1 sm:grid-cols-3">
+              <CardMetaGrid>
                 <CardMetaItem label="기반 프로그램" value={managedPlan.baseProgramName ?? "-"} />
                 <CardMetaItem label="생성일" value={formatDateTime(managedPlan.createdAt)} />
                 <CardMetaItem
@@ -318,8 +315,8 @@ function PlansManagePageContent() {
               </CardMetaGrid>
             </Card>
 
-            <label className="flex flex-col gap-1">
-              <span className="ui-card-label">플랜 이름</span>
+            <label>
+              <span>플랜 이름</span>
               <AppTextInput
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
@@ -327,13 +324,12 @@ function PlansManagePageContent() {
               />
             </label>
 
-            <CardActionGroup className="grid-cols-1 sm:grid-cols-3">
+            <CardActionGroup>
               <PrimaryButton
                 as="a"
                 variant="primary"
                 size="lg"
                 fullWidth
-                className="px-4 text-base font-semibold"
                 href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
               >
                 수행 히스토리
@@ -343,7 +339,6 @@ function PlansManagePageContent() {
                 variant="primary"
                 size="lg"
                 fullWidth
-                className="min-h-12 px-4 text-base font-semibold"
                 disabled={saving || deleting}
                 onClick={() => {
                   void savePlanName();
@@ -353,7 +348,6 @@ function PlansManagePageContent() {
               </PrimaryButton>
               <button
                 type="button"
-                className="haptic-tap rounded-xl border px-4 py-3 text-base font-semibold text-[var(--color-danger)]"
                 disabled={saving || deleting}
                 onClick={() => {
                   void deletePlan();
@@ -364,7 +358,7 @@ function PlansManagePageContent() {
             </CardActionGroup>
           </div>
         ) : (
-          <Card tone="subtle" padding="sm" elevated={false} className="text-sm text-neutral-700">
+          <Card tone="subtle" padding="sm" elevated={false}>
             관리할 플랜을 찾을 수 없습니다.
           </Card>
         )}

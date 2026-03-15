@@ -46,7 +46,6 @@ export function AppPlusMinusIcon({
   return (
     <svg
       viewBox="0 0 24 24"
-      className={className}
       aria-hidden="true"
       focusable="false"
       fill="none"
@@ -65,14 +64,14 @@ export const AppTextInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & { variant?: FormControlVariant }
 >(function AppTextInput({ variant = "default", className, ...props }, ref) {
-  return <input ref={ref} {...props} className={cx(resolveControlClassName(variant), className)} />;
+  return <input ref={ref} {...props} />;
 });
 
 export const AppTextarea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & { variant?: FormControlVariant }
 >(function AppTextarea({ variant = "default", className, ...props }, ref) {
-  return <textarea ref={ref} {...props} className={cx(resolveControlClassName(variant), className)} />;
+  return <textarea ref={ref} {...props} />;
 });
 
 export const AppSelect = forwardRef<
@@ -104,19 +103,18 @@ export const AppSelect = forwardRef<
   // iOS settings-row mode: label on left, value + up-down chevron on right
   if (usesRowChrome) {
     return (
-      <WrapperTag className={cx("app-select-row", !label && "app-select-row--standalone", wrapperClassName)}>
-        {label ? <span className="app-select-row-label">{label}</span> : null}
-        <span className="app-select-row-right">
+      <WrapperTag>
+        {label ? <span>{label}</span> : null}
+        <span>
           <select
             ref={ref}
             {...props}
             multiple={multiple}
             size={size}
-            className={cx("app-select-row-native", !label && "app-select-row-native--standalone", className)}
           >
             {children}
           </select>
-          <span className="app-select-row-chevron" aria-hidden="true">
+          <span aria-hidden="true">
             <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
               <path d="M2 5.5L6 2L10 5.5" />
               <path d="M2 10.5L6 14L10 10.5" />
@@ -135,19 +133,18 @@ export const AppSelect = forwardRef<
 
   if (!supportsSingleChevron) {
     return (
-      <select ref={ref} {...props} multiple={multiple} size={size} className={resolvedClassName}>
+      <select ref={ref} {...props} multiple={multiple} size={size}>
         {children}
       </select>
     );
   }
 
   return (
-    <div className={cx("app-form-select-shell", wrapperClassName)} style={{ position: "relative", width: "100%" }}>
-      <select ref={ref} {...props} multiple={multiple} size={size} className={resolvedClassName}>
+    <div style={{ position: "relative", width: "100%" }}>
+      <select ref={ref} {...props} multiple={multiple} size={size}>
         {children}
       </select>
       <span
-        className="app-form-select-chevron"
         aria-hidden="true"
         style={{
           position: "absolute",
@@ -228,8 +225,8 @@ export function AppNumberStepper({
   );
 
   return (
-    <label className={cx("workout-stepper", complete && "is-complete")}>
-      <span className="ui-card-label">{label}</span>
+    <label>
+      <span>{label}</span>
       <NumberPickerField
         value={value}
         min={min}

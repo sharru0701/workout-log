@@ -132,10 +132,10 @@ function FilterChip({
   onPress: () => void;
 }) {
   return (
-    <button type="button" className="haptic-tap stats-filter-chip" onClick={onPress}>
-      <span className="stats-filter-chip-title">{title}</span>
-      <span className="stats-filter-chip-value">{value}</span>
-      <span className="stats-filter-chip-caret" aria-hidden="true">
+    <button type="button" onClick={onPress}>
+      <span>{title}</span>
+      <span>{value}</span>
+      <span aria-hidden="true">
         ▾
       </span>
     </button>
@@ -192,10 +192,9 @@ function E1RMInteractiveChart({
   const yGuides = [0, 0.25, 0.5, 0.75, 1];
 
   return (
-    <Card as="div" tone="inset" elevated={false} padding="none" className="stats-chart-shell">
+    <Card as="div" tone="inset" elevated={false} padding="none">
       <svg
         viewBox={`0 0 ${width} ${height}`}
-        className="stats-chart-svg"
         role="img"
         aria-label="1RM trend chart"
         onPointerDown={(event) => {
@@ -212,16 +211,16 @@ function E1RMInteractiveChart({
           const value = max - span * ratio;
           return (
             <g key={ratio}>
-              <line x1={padX} y1={y} x2={width - padX} y2={y} className="stats-chart-grid" />
-              <text x={width - padX} y={y - 4} textAnchor="end" className="stats-chart-y-label">
+              <line x1={padX} y1={y} x2={width - padX} y2={y} />
+              <text x={width - padX} y={y - 4} textAnchor="end">
                 {value.toFixed(0)}
               </text>
             </g>
           );
         })}
 
-        {areaPath ? <path d={areaPath} className="stats-chart-area" /> : null}
-        {linePath ? <path d={linePath} className="stats-chart-line" /> : null}
+        {areaPath ? <path d={areaPath} /> : null}
+        {linePath ? <path d={linePath} /> : null}
 
         {selectedPoint && selectedData ? (
           <g>
@@ -230,11 +229,10 @@ function E1RMInteractiveChart({
               y1={padY}
               x2={selectedPoint.x}
               y2={height - padY}
-              className="stats-chart-scrub-line"
             />
-            <circle cx={selectedPoint.x} cy={selectedPoint.y} r={6.5} className="stats-chart-active-dot" />
-            <circle cx={selectedPoint.x} cy={selectedPoint.y} r={3.2} className="stats-chart-inner-dot" />
-            <text x={selectedPoint.x} y={padY - 6} textAnchor="middle" className="stats-chart-x-label">
+            <circle cx={selectedPoint.x} cy={selectedPoint.y} r={6.5} />
+            <circle cx={selectedPoint.x} cy={selectedPoint.y} r={3.2} />
+            <text x={selectedPoint.x} y={padY - 6} textAnchor="middle">
               {formatPointDate(selectedData.date)}
             </text>
           </g>
@@ -459,7 +457,7 @@ export default function Stats1RMPage() {
   const showChartSection = hasChartData;
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+    <div {...pullToRefresh.bind}>
       <PullToRefreshIndicator
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
@@ -473,8 +471,8 @@ export default function Stats1RMPage() {
           description="현재 선택된 운동, 기간, 플랜 범위를 상단 칩으로 유지합니다."
           headerTrigger
         >
-          <DashboardSurface className="grid gap-3">
-            <div className="stats-filter-chip-row">
+          <DashboardSurface>
+            <div>
               <FilterChip
                 title="운동종목"
                 value={selectedExercise?.name ?? "선택 필요"}
@@ -538,12 +536,12 @@ export default function Stats1RMPage() {
           title="차트"
           description="선택된 필터 조합의 e1RM 변화와 요약 지표를 한 섹션에 묶었습니다."
         >
-          <DashboardSurface className="grid gap-3">
-            <header className="stats-chart-header">
+          <DashboardSurface>
+            <header>
               <div>
-                <h3 className="ios-inline-heading">그래프 영역</h3>
+                <h3>그래프 영역</h3>
               </div>
-              <div className="stats-chart-focus">
+              <div>
                 <strong>{activePoint ? `${activePoint.e1rm.toFixed(1)} kg` : "-"}</strong>
                 <span>{activePoint ? `${formatPointDate(activePoint.date)} · ${activePoint.weightKg}kg x ${activePoint.reps}` : "-"}</span>
               </div>
@@ -555,20 +553,20 @@ export default function Stats1RMPage() {
               onActiveIndexChange={setActivePointIndex}
             />
 
-            <div className="stats-chart-meta-grid">
-              <Card as="div" tone="inset" elevated={false} padding="none" className="stats-chart-meta-card">
-                <article className="stats-chart-meta-item">
-                  <span className="ui-card-label">Best e1RM</span>
+            <div>
+              <Card as="div" tone="inset" elevated={false} padding="none">
+                <article>
+                  <span>Best e1RM</span>
                   <strong>{stats?.best ? `${stats.best.e1rm.toFixed(1)} kg` : "-"}</strong>
                   <span>{stats?.best ? formatPointDate(stats.best.date) : "-"}</span>
                 </article>
-                <article className="stats-chart-meta-item">
-                  <span className="ui-card-label">데이터 포인트</span>
+                <article>
+                  <span>데이터 포인트</span>
                   <strong>{series.length}개</strong>
                   <span>{stats ? `${formatPointDate(stats.from)} ~ ${formatPointDate(stats.to)}` : "-"}</span>
                 </article>
-                <article className="stats-chart-meta-item">
-                  <span className="ui-card-label">현재 필터</span>
+                <article>
+                  <span>현재 필터</span>
                   <strong>{rangeLabelForPreset(rangeFilter.preset)}</strong>
                   <span>{selectedProgramLabel}</span>
                 </article>
@@ -601,7 +599,6 @@ export default function Stats1RMPage() {
         description="기간을 선택하면 필터 조합으로 다시 조회합니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
-        className="stats-sheet stats-sheet--medium"
         primaryAction={{
           ariaLabel: "기간 적용",
           onPress: applyRangeDraft,
@@ -610,14 +607,13 @@ export default function Stats1RMPage() {
         footer={null}
       >
         <Card tone="subtle" padding="sm" elevated={false}>
-          <CardContent className="stats-sheet-list">
+          <CardContent>
             {RANGE_PRESETS.map((preset) => {
               const active = rangeDraft.preset === preset.value;
               return (
                 <button
                   key={preset.value}
                   type="button"
-                  className={`haptic-tap stats-sheet-option${active ? " is-active" : ""}`}
                   onClick={() => {
                     setRangeDraft((prev) => ({ ...prev, preset: preset.value }));
                     setRangeDraftError(null);
@@ -630,7 +626,6 @@ export default function Stats1RMPage() {
             })}
             <button
               type="button"
-              className={`haptic-tap stats-sheet-option${rangeDraft.preset === "CUSTOM" ? " is-active" : ""}`}
               onClick={() => {
                 setRangeDraft((prev) => ({ ...prev, preset: "CUSTOM" }));
                 setRangeDraftError(null);
@@ -640,9 +635,9 @@ export default function Stats1RMPage() {
               <span aria-hidden="true">{rangeDraft.preset === "CUSTOM" ? "✓" : ""}</span>
             </button>
             {rangeDraft.preset === "CUSTOM" ? (
-              <div className="stats-range-input-grid">
-                <label className="stats-range-input">
-                  <span className="ui-card-label">시작일</span>
+              <div>
+                <label>
+                  <span>시작일</span>
                   <AppTextInput
                     variant="compact"
                     type="date"
@@ -653,8 +648,8 @@ export default function Stats1RMPage() {
                     }}
                   />
                 </label>
-                <label className="stats-range-input">
-                  <span className="ui-card-label">종료일</span>
+                <label>
+                  <span>종료일</span>
                   <AppTextInput
                     variant="compact"
                     type="date"
@@ -665,7 +660,7 @@ export default function Stats1RMPage() {
                     }}
                   />
                 </label>
-                {rangeDraftError ? <p className="stats-range-error">{rangeDraftError}</p> : null}
+                {rangeDraftError ? <p>{rangeDraftError}</p> : null}
               </div>
             ) : null}
           </CardContent>

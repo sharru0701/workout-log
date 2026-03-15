@@ -5,8 +5,6 @@ import { toSettingsDeepLinkHref } from "@/lib/settings/settings-deeplink";
 import type { SettingsSearchEntry } from "@/lib/settings/settings-search-index";
 import { searchSettingsIndex, splitSearchTokens } from "@/lib/settings/settings-search";
 import { BaseGroupedList, InfoRow, NavigationRow, RowIcon, SectionFootnote, SectionHeader } from "./settings-list";
-import styles from "./settings-search.module.css";
-
 type SettingsSearchPanelProps = {
   index: SettingsSearchEntry[];
 };
@@ -46,7 +44,7 @@ function HighlightText({ text, tokens }: { text: string; tokens: string[] }) {
         const matched = unique.some((token) => token.toLowerCase() === normalized);
         if (!matched) return <span key={`${part}-${index}`}>{part}</span>;
         return (
-          <mark key={`${part}-${index}`} className={styles.highlight}>
+          <mark key={`${part}-${index}`}>
             {part}
           </mark>
         );
@@ -75,10 +73,10 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
   const hasQuery = tokens.length > 0;
 
   return (
-    <section className={styles.searchBlock}>
+    <section>
       <SectionHeader title="검색" />
-      <div className={styles.searchBar}>
-        <span className={styles.searchIcon} aria-hidden="true">
+      <div>
+        <span aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.8-3.8" />
@@ -87,7 +85,6 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
         <input
           type="search"
           inputMode="search"
-          className={styles.searchInput}
           value={query}
           onChange={(event) => setQuery(event.target.value)}
           placeholder="설정 검색"
@@ -96,7 +93,6 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
         {hasQuery ? (
           <button
             type="button"
-            className={styles.clearButton}
             aria-label="검색어 지우기"
             onClick={() => setQuery("")}
           >

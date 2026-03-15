@@ -3,7 +3,6 @@ import { useId } from "react";
 import Link from "next/link";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 import { Card } from "./card";
-import styles from "./settings-list.module.css";
 import type { SettingsListTokenOverrides } from "./settings-list.tokens";
 
 type BaseGroupedListProps = {
@@ -82,28 +81,6 @@ type SubtitleRowProps = Omit<NavigationRowProps, "subtitle"> & {
   subtitle: ReactNode;
 };
 
-function cx(...classes: Array<string | undefined | false>) {
-  return classes.filter(Boolean).join(" ");
-}
-
-function rowBadgeToneClassName(tone: RowBadgeTone) {
-  return {
-    neutral: styles.badgeNeutral,
-    accent: styles.badgeAccent,
-    warning: styles.badgeWarning,
-  }[tone];
-}
-
-function rowIconToneClassName(tone: RowIconTone) {
-  return {
-    neutral: styles.rowIconNeutral,
-    tint: styles.rowIconTint,
-    blue: styles.rowIconBlue,
-    green: styles.rowIconGreen,
-    orange: styles.rowIconOrange,
-  }[tone];
-}
-
 function tokensToStyle(tokens?: SettingsListTokenOverrides): CSSProperties | undefined {
   if (!tokens) return undefined;
   const next: CSSProperties = {};
@@ -133,15 +110,15 @@ function RowContent({
 }) {
   return (
     <>
-      {leading ? <span className={styles.leading}>{leading}</span> : null}
-      <span className={styles.body}>
-        <span className={styles.label}>{label}</span>
-        {!MINIMAL_COPY_MODE && subtitle ? <span className={styles.subtitle}>{subtitle}</span> : null}
-        {!MINIMAL_COPY_MODE && description ? <span className={styles.description}>{description}</span> : null}
+      {leading ? <span>{leading}</span> : null}
+      <span>
+        <span>{label}</span>
+        {!MINIMAL_COPY_MODE && subtitle ? <span>{subtitle}</span> : null}
+        {!MINIMAL_COPY_MODE && description ? <span>{description}</span> : null}
       </span>
       {trailing || badge ? (
-        <span className={styles.trailing}>
-          {badge ? <span className={cx(styles.badge, rowBadgeToneClassName(badgeTone))}>{badge}</span> : null}
+        <span>
+          {badge ? <span>{badge}</span> : null}
           {trailing}
         </span>
       ) : null}
@@ -154,7 +131,6 @@ export function BaseGroupedList({ children, className, ariaLabel, tokens }: Base
     <Card
       as="ul"
       padding="none"
-      className={cx(styles.baseGroupedList, className)}
       aria-label={ariaLabel}
       style={tokensToStyle(tokens)}
       data-settings-grouped-list="true"
@@ -166,9 +142,9 @@ export function BaseGroupedList({ children, className, ariaLabel, tokens }: Base
 
 export function SectionHeader({ title, description, className }: SectionHeaderProps) {
   return (
-    <header className={cx(styles.sectionHeader, className)} data-settings-section-header="true">
-      <h2 className={styles.sectionHeaderTitle}>{title}</h2>
-      {!MINIMAL_COPY_MODE && description ? <p className={styles.sectionHeaderDescription}>{description}</p> : null}
+    <header data-settings-section-header="true">
+      <h2>{title}</h2>
+      {!MINIMAL_COPY_MODE && description ? <p>{description}</p> : null}
     </header>
   );
 }
@@ -176,7 +152,7 @@ export function SectionHeader({ title, description, className }: SectionHeaderPr
 export function SectionFootnote({ children, className }: SectionFootnoteProps) {
   if (MINIMAL_COPY_MODE) return null;
   return (
-    <p className={cx(styles.sectionFootnote, className)} data-settings-footnote="true">
+    <p data-settings-footnote="true">
       {children}
     </p>
   );
@@ -185,7 +161,6 @@ export function SectionFootnote({ children, className }: SectionFootnoteProps) {
 export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
   return (
     <span
-      className={cx(styles.rowIcon, rowIconToneClassName(tone))}
       aria-hidden={label ? undefined : true}
       aria-label={label}
       role={label ? "img" : undefined}
@@ -216,21 +191,20 @@ export function NavigationRow({
   const showChevronIndicator = showChevron;
   const trailing = (
     <>
-      {!showChevronIndicator && value ? <span className={styles.value}>{value}</span> : null}
+      {!showChevronIndicator && value ? <span>{value}</span> : null}
       {showChevronIndicator ? (
-        <span aria-hidden="true" className={styles.chevron} />
+        <span aria-hidden="true" />
       ) : null}
     </>
   );
 
   if (href && !disabled) {
     return (
-      <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
+      <li id={rowId} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
         <Link
           href={href}
           prefetch={prefetch}
           aria-label={ariaLabel}
-          className={styles.rowLink}
           data-settings-touch-target="true"
         >
           <RowContent
@@ -249,8 +223,8 @@ export function NavigationRow({
 
   if (!href && !onPress) {
     return (
-      <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
-        <div className={styles.rowStatic} aria-label={ariaLabel} data-settings-touch-target="true">
+      <li id={rowId} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
+        <div aria-label={ariaLabel} data-settings-touch-target="true">
           <RowContent
             label={label}
             subtitle={subtitle}
@@ -266,10 +240,9 @@ export function NavigationRow({
   }
 
   return (
-    <li id={rowId} className={className} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
+    <li id={rowId} data-settings-row="navigation" data-has-leading={hasLeading ? "true" : "false"}>
       <button
         type="button"
-        className={styles.rowButton}
         onClick={onPress}
         disabled={disabled}
         aria-label={ariaLabel}
@@ -309,25 +282,24 @@ export function ToggleRow({
   const hasLeading = Boolean(leading);
 
   const trailing = (
-    <span className={styles.toggleContainer}>
+    <span>
       <input
         id={inputId}
         name={name}
         type="checkbox"
-        className={styles.toggleInput}
         checked={checked}
         onChange={(event) => onCheckedChange(event.target.checked)}
         disabled={disabled}
       />
-      <span className={styles.toggleTrack} aria-hidden="true">
-        <span className={styles.toggleThumb} />
+      <span aria-hidden="true">
+        <span />
       </span>
     </span>
   );
 
   return (
-    <li id={rowId} className={className} data-settings-row="toggle" data-has-leading={hasLeading ? "true" : "false"}>
-      <label htmlFor={inputId} className={styles.rowToggleLabel} data-settings-touch-target="true">
+    <li id={rowId} data-settings-row="toggle" data-has-leading={hasLeading ? "true" : "false"}>
+      <label htmlFor={inputId} data-settings-touch-target="true">
         <RowContent
           label={label}
           subtitle={subtitle}
@@ -364,17 +336,17 @@ export function ValueRow({
   const showChevronIndicator = showChevron ?? isInteractive;
   const trailing = (
     <>
-      {!showChevronIndicator ? <span className={cx(styles.value, wrapValue && styles.valueWrap)}>{value}</span> : null}
+      {!showChevronIndicator ? <span>{value}</span> : null}
       {showChevronIndicator ? (
-        <span aria-hidden="true" className={styles.chevron} />
+        <span aria-hidden="true" />
       ) : null}
     </>
   );
 
   if (href && !disabled) {
     return (
-      <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
-        <Link href={href} aria-label={ariaLabel} className={styles.rowLink} data-settings-touch-target="true">
+      <li id={rowId} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
+        <Link href={href} aria-label={ariaLabel} data-settings-touch-target="true">
           <RowContent
             label={label}
             subtitle={subtitle}
@@ -391,10 +363,9 @@ export function ValueRow({
 
   if (!href && onPress) {
     return (
-      <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
+      <li id={rowId} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
         <button
           type="button"
-          className={styles.rowButton}
           onClick={onPress}
           disabled={disabled}
           aria-label={ariaLabel}
@@ -415,8 +386,8 @@ export function ValueRow({
   }
 
   return (
-    <li id={rowId} className={className} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
-      <div className={styles.rowStatic} data-settings-touch-target="true">
+    <li id={rowId} data-settings-row="value" data-has-leading={hasLeading ? "true" : "false"}>
+      <div data-settings-touch-target="true">
         <RowContent
           label={label}
           subtitle={subtitle}
@@ -444,17 +415,10 @@ export function InfoRow({
   tone = "neutral",
 }: InfoRowProps) {
   const hasLeading = Boolean(leading);
-  const toneClass = {
-    neutral: styles.infoNeutral,
-    success: styles.infoSuccess,
-    warning: styles.infoWarning,
-    critical: styles.infoCritical,
-    disabled: styles.infoDisabled,
-  }[tone];
 
   return (
-    <li id={rowId} className={className} data-settings-row="info" data-has-leading={hasLeading ? "true" : "false"}>
-      <div className={cx(styles.rowStatic, toneClass)} data-settings-touch-target="true">
+    <li id={rowId} data-settings-row="info" data-has-leading={hasLeading ? "true" : "false"}>
+      <div data-settings-touch-target="true">
         <RowContent
           label={label}
           subtitle={subtitle}
@@ -462,7 +426,7 @@ export function InfoRow({
           badge={badge}
           badgeTone={badgeTone}
           leading={leading}
-          trailing={value ? <span className={styles.value}>{value}</span> : undefined}
+          trailing={value ? <span>{value}</span> : undefined}
         />
       </div>
     </li>

@@ -10,7 +10,7 @@ test.describe("iOS Settings compliance: HTML structure", () => {
         const groupedLists = document.querySelectorAll("[data-settings-grouped-list='true']");
         const rows = document.querySelectorAll("[data-settings-row]");
         const touchTargets = document.querySelectorAll("[data-settings-touch-target='true']");
-        const sections = document.querySelectorAll(".tab-screen > section");
+        const sections = document.querySelectorAll("main section");
 
         return {
           groupedListCount: groupedLists.length,

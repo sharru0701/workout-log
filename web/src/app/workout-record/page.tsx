@@ -384,14 +384,13 @@ function WorkoutRecordInlinePicker({
   const displayValue = formatValue ? formatValue(value) : String(value);
 
   return (
-    <div className="workout-record-inline-picker">
+    <div>
       <button
         type="button"
-        className={`haptic-tap workout-record-inline-picker-button${complete ? " is-complete" : ""}`}
         onClick={() => setOpen(true)}
         aria-label={`${label}: ${displayValue}`}
       >
-        <span className="workout-record-inline-picker-value">{displayValue}</span>
+        <span>{displayValue}</span>
       </button>
       <NumberPickerSheet
         open={open}
@@ -467,26 +466,24 @@ function ExerciseRow({
   } as const;
 
   return (
-    <Card as="article" padding="none" className="workout-set-card grid gap-2">
-      <div className="mb-2 flex items-center justify-between gap-3">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+    <Card as="article" padding="none">
+      <div>
+        <div>
           <strong
-            className="workout-static-field-value min-w-0 flex-1"
             aria-label={`운동종목 ${exercise.exerciseName}`}
           >
             {exercise.exerciseName}
           </strong>
           {showBadgeAfterName && badgeMeta ? (
-            <span className={`ui-badge shrink-0 ${badgeMeta.className}`}>{badgeMeta.label}</span>
+            <span>{badgeMeta.label}</span>
           ) : null}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div>
           {badgeMeta && !showBadgeAfterName ? (
-            <span className={`ui-badge ${badgeMeta.className}`}>{badgeMeta.label}</span>
+            <span>{badgeMeta.label}</span>
           ) : null}
           <button
             type="button"
-            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--color-warning)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)]"
             style={circleActionButtonStyle}
             aria-label="운동 삭제"
             title="운동 삭제"
@@ -497,7 +494,6 @@ function ExerciseRow({
               fill="none"
               stroke="currentColor"
               strokeWidth="2.1"
-              className="h-6 w-6"
               aria-hidden="true"
             >
               <path d="M4.5 7.5h15" strokeLinecap="round" />
@@ -514,16 +510,16 @@ function ExerciseRow({
         </div>
       </div>
 
-      <section className="workout-record-set-panel">
-        <div className="workout-record-set-grid">
-          <div className="workout-record-set-grid-head" aria-hidden="true">
+      <section>
+        <div>
+          <div aria-hidden="true">
             <span>세트</span>
             <span>TM%</span>
             <span>{isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "무게(kg)"}</span>
             <span>횟수</span>
           </div>
 
-          <div className="workout-record-set-grid-body" role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
+          <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
             {exercise.set.repsPerSet.map((setReps, index) => {
               const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
               const parsedSetValue = Number(rawSetValue);
@@ -554,12 +550,9 @@ function ExerciseRow({
                   : exercise.set.weightKg;
 
               return (
-                <div key={`${exercise.id}-set-${index}`} className="workout-record-set-grid-row" role="listitem">
-                  <span className="workout-record-set-index">{index + 1}</span>
+                <div key={`${exercise.id}-set-${index}`} role="listitem">
+                  <span>{index + 1}</span>
                   <span
-                    className={`workout-record-set-percent ${
-                      plannedPercentPerSet[index] ? "is-planned" : "is-empty"
-                    }`}
                   >
                     {formatPercentLabel(plannedPercentPerSet[index])}
                   </span>
@@ -588,39 +581,36 @@ function ExerciseRow({
           </div>
         </div>
 
-        <div className="workout-record-set-action-grid">
+        <div>
           <button
             type="button"
-            className="haptic-tap workout-record-set-action"
             onClick={onAddSet}
           >
-            <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+            <AppPlusMinusIcon kind="plus" />
             <span>세트 추가</span>
           </button>
           <button
             type="button"
-            className="haptic-tap workout-record-set-action"
             onClick={onRemoveSet}
             disabled={exercise.set.repsPerSet.length <= 1}
           >
-            <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
+            <AppPlusMinusIcon kind="minus" />
             <span>마지막 세트</span>
           </button>
         </div>
 
-        <p className="workout-record-control-note">{weightStepMeta}로 입력됩니다.</p>
+        <p>{weightStepMeta}로 입력됩니다.</p>
         {isBodyweightExercise && bodyweightKg ? (
-          <p className="workout-record-control-note">총하중 기준: {formatKgValue(totalLoadKg)}</p>
+          <p>총하중 기준: {formatKgValue(totalLoadKg)}</p>
         ) : null}
         {showMinimumPlateInfo ? (
-          <p className="workout-record-control-note">최소 원판 Increment 규칙이 적용된 값입니다.</p>
+          <p>최소 원판 Increment 규칙이 적용된 값입니다.</p>
         ) : null}
       </section>
 
-      <label className="workout-record-memo-field">
+      <label>
         <AppTextarea
           variant="workout"
-          className="min-h-20 workout-record-memo-input"
           value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
           onChange={(event) => onChangeMemo(event.target.value)}
           placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "세트 메모를 입력하세요." : "세트 메모를 입력하세요."}
@@ -1308,7 +1298,7 @@ export default function WorkoutRecordPage() {
   const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+    <div {...pullToRefresh.bind}>
       <PullToRefreshIndicator
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
@@ -1366,21 +1356,20 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <section className="grid grid-cols-1 gap-2" data-pull-refresh-trigger="true">
-            <h2 className="ios-section-heading">선택된 플랜</h2>
-            <Card as="article" padding="md" className="grid grid-cols-1 gap-2">
+          <section data-pull-refresh-trigger="true">
+            <h2>선택된 플랜</h2>
+            <Card as="article" padding="md">
               <button
                 type="button"
-                className="haptic-tap app-select-row app-select-row--standalone app-select-row-button"
                 aria-label="플랜 선택 열기"
                 aria-haspopup="dialog"
                 aria-expanded={isEditingExistingLog ? false : planSheetOpen}
                 onClick={isEditingExistingLog ? undefined : openPlanSheet}
                 disabled={isEditingExistingLog}
               >
-                <span className="app-select-row-right">
-                  <span className="app-select-trigger-value">{selectedPlan?.name ?? draft.session.planName}</span>
-                  <span className="app-select-row-chevron" aria-hidden="true">
+                <span>
+                  <span>{selectedPlan?.name ?? draft.session.planName}</span>
+                  <span aria-hidden="true">
                     <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
                       <path d="M2 5.5L6 2L10 5.5" />
                       <path d="M2 10.5L6 14L10 10.5" />
@@ -1389,13 +1378,13 @@ export default function WorkoutRecordPage() {
                 </span>
               </button>
               {isEditingExistingLog ? (
-                <p className="text-xs text-[var(--text-secondary)]">기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
+                <p>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
               ) : null}
             </Card>
           </section>
 
-          <section className="grid gap-2">
-            <h2 className="ios-section-heading">지난 세션</h2>
+          <section>
+            <h2>지난 세션</h2>
             <SessionCard
               variant="last"
               title={lastSession?.dateLabel ? `${lastSession.weekLabel} · ${lastSession.sessionLabel}` : ""}
@@ -1407,8 +1396,8 @@ export default function WorkoutRecordPage() {
             />
           </section>
 
-          <section className="grid gap-2">
-            <h2 className="ios-section-heading">{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
+          <section>
+            <h2>{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
             <SessionSummaryCard
               variant="today"
               data={{
@@ -1417,13 +1406,13 @@ export default function WorkoutRecordPage() {
                 bodyweightKg: workoutPreferences.bodyweightKg,
               }}
             >
-              <div className="workout-record-card-divider" aria-hidden="true" />
+              <div aria-hidden="true" />
 
-              <div className="workout-record-content-body">
+              <div>
                 {visibleExercises.length > 0 && (
-                  <div className="workout-record-exercise-list">
+                  <div>
                     {visibleExercises.map((exercise) => (
-                      <div key={exercise.id} className="workout-record-exercise-item">
+                      <div key={exercise.id}>
                         <ExerciseRow
                           exercise={exercise}
                           minimumPlateIncrementKg={resolveMinimumPlateIncrementKg(workoutPreferences, {
@@ -1542,29 +1531,27 @@ export default function WorkoutRecordPage() {
                 )}
 
                 {visibleExercises.length === 0 && (
-                  <div className="workout-empty-state">
+                  <div>
                     <strong>기록할 운동이 없습니다.</strong>
                   </div>
                 )}
 
-                {visibleExercises.length > 0 ? <div className="workout-record-list-divider" aria-hidden="true" /> : null}
+                {visibleExercises.length > 0 ? <div aria-hidden="true" /> : null}
 
                 <button
                   type="button"
-                  className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold inline-flex items-center justify-center gap-1.5"
                   onClick={() => {
                     resetAddExerciseSheetState();
                     setAddSheetOpen(true);
                   }}
                 >
-                  <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+                  <AppPlusMinusIcon kind="plus" />
                   <span>Add Exercise</span>
                 </button>
 
-                <label className="workout-record-memo-field">
+                <label>
                   <AppTextarea
                     variant="workout"
-                    className="min-h-20 workout-record-memo-input"
                     value={draft.session.note.memo}
                     onChange={(event) => {
                       const next = event.target.value;
@@ -1584,13 +1571,12 @@ export default function WorkoutRecordPage() {
               </div>
             </SessionSummaryCard>
 
-            <div className="workout-save-dock">
+            <div>
               <PrimaryButton
                 type="button"
                 variant="primary"
                 size="lg"
                 fullWidth
-                className="workout-save-button"
                 onClick={() => {
                   void handleSave();
                 }}
@@ -1641,7 +1627,7 @@ export default function WorkoutRecordPage() {
         }}
         footer={null}
       >
-        <div className="grid gap-3">
+        <div>
           <Card padding="md" elevated={false}>
             <CardContent>
               <SearchSelectCombobox
@@ -1673,16 +1659,15 @@ export default function WorkoutRecordPage() {
                 loadingText="검색 중..."
                 selectionSummary={
                   selectedExerciseOption ? (
-                    <div className="workout-combobox-selected" role="status" aria-live="polite">
-                      <span className="workout-combobox-selected-kicker">선택됨</span>
-                      <strong className="workout-combobox-selected-name">
+                    <div role="status" aria-live="polite">
+                      <span>선택됨</span>
+                      <strong>
                         {selectedExerciseOption.category
                           ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
                           : selectedExerciseOption.name}
                       </strong>
                       <button
                         type="button"
-                        className="haptic-tap workout-combobox-selected-edit"
                         onClick={() => selectExerciseOption(null)}
                       >
                         선택 변경
@@ -1695,19 +1680,19 @@ export default function WorkoutRecordPage() {
             </CardContent>
           </Card>
 
-          {exerciseOptionsError ? <p className="text-sm text-[var(--color-warning)]">{exerciseOptionsError}</p> : null}
+          {exerciseOptionsError ? <p>{exerciseOptionsError}</p> : null}
 
           <Card padding="md" elevated={false}>
-            <CardContent className="workout-record-control-stack">
-              <section className="workout-record-control-panel">
-                <div className="workout-record-control-head">
-                  <div className="workout-record-control-copy">
-                    <span className="ui-card-label">무게 입력</span>
-                    <strong className="workout-record-control-title">
+            <CardContent>
+              <section>
+                <div>
+                  <div>
+                    <span>무게 입력</span>
+                    <strong>
                       {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 설정" : "무게 설정"}
                     </strong>
                   </div>
-                  <span className="workout-record-control-meta ml-auto">{`${formatKgValue(addDraftIncrementKg)} 단위`}</span>
+                  <span>{`${formatKgValue(addDraftIncrementKg)} 단위`}</span>
                 </div>
 
                 <AppNumberStepper
@@ -1730,19 +1715,19 @@ export default function WorkoutRecordPage() {
                 />
 
                 {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-                  <p className="workout-record-control-note">총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
+                  <p>총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
                 ) : null}
               </section>
 
-              <section className="workout-record-control-panel">
-                <div className="workout-record-control-head">
+              <section>
+                <div>
                   
-                  <span className="workout-record-control-meta ml-auto">빠른 편집</span>
+                  <span>빠른 편집</span>
                 </div>
 
-                <div className="workout-record-set-list">
+                <div>
                   {addDraft.repsPerSet.map((setReps, index) => (
-                    <div key={`add-set-${index}`} className="workout-record-set-item">
+                    <div key={`add-set-${index}`}>
                       <AppNumberStepper
                         label={`${index + 1}세트`}
                         value={setReps}
@@ -1759,10 +1744,9 @@ export default function WorkoutRecordPage() {
                   ))}
                 </div>
 
-                <div className="workout-record-set-action-grid">
+                <div>
                   <button
                     type="button"
-                    className="haptic-tap workout-record-set-action"
                     onClick={() =>
                       setAddDraft((prev) => ({
                         ...prev,
@@ -1770,12 +1754,11 @@ export default function WorkoutRecordPage() {
                       }))
                     }
                   >
-                    <AppPlusMinusIcon kind="plus" className="h-3.5 w-3.5" />
+                    <AppPlusMinusIcon kind="plus" />
                     <span>세트 추가</span>
                   </button>
                   <button
                     type="button"
-                    className="haptic-tap workout-record-set-action"
                     onClick={() =>
                       setAddDraft((prev) => ({
                         ...prev,
@@ -1784,7 +1767,7 @@ export default function WorkoutRecordPage() {
                     }
                     disabled={addDraft.repsPerSet.length <= 1}
                   >
-                    <AppPlusMinusIcon kind="minus" className="h-3.5 w-3.5" />
+                    <AppPlusMinusIcon kind="minus" />
                     <span>마지막 세트</span>
                   </button>
                 </div>
@@ -1793,7 +1776,7 @@ export default function WorkoutRecordPage() {
           </Card>
 
           {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
-            <Card tone="subtle" padding="sm" elevated={false} className="text-xs text-[var(--text-secondary)]">
+            <Card tone="subtle" padding="sm" elevated={false}>
               {addDraftIncrementInfo.source === "RULE" ? <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span> : null}
               {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
                 <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
@@ -1801,11 +1784,10 @@ export default function WorkoutRecordPage() {
             </Card>
           ) : null}
 
-          <label className="workout-record-memo-field">
-            <span className="ui-card-label">메모</span>
+          <label>
+            <span>메모</span>
             <AppTextarea
               variant="workout"
-              className="min-h-20 workout-record-memo-input"
               value={addDraft.memo}
               onChange={(event) => setAddDraft((prev) => ({ ...prev, memo: event.target.value }))}
             />
@@ -1813,7 +1795,6 @@ export default function WorkoutRecordPage() {
 
           <Link
             href="/workout-record/exercise-catalog"
-            className="haptic-tap rounded-xl border px-4 py-3 text-center text-sm font-semibold no-underline"
             onClick={() => setAddSheetOpen(false)}
           >
             운동종목 CRUD 관리 열기

@@ -87,7 +87,7 @@ export default function SettingsBodyweightPage() {
   useSettingsModalHeaderAction(headerAction);
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
       <LoadingStateRows
         active={loading}
         delayMs={120}
@@ -103,7 +103,7 @@ export default function SettingsBodyweightPage() {
       />
       <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label="몸무게 안내" />
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="몸무게 입력" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
         <Card padding="md" elevated={false}>
           <CardContent>

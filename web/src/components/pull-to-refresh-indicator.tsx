@@ -50,30 +50,28 @@ export function PullToRefreshIndicator(props: PullToRefreshIndicatorProps) {
 
   return (
     <div
-      className={`pull-refresh-indicator${isVisible ? " is-visible" : ""} is-${status}`}
       style={style}
       aria-hidden={!isVisible}
     >
-      <div className="pull-refresh-indicator__track">
-        <span className="pull-refresh-indicator__icon-shell" aria-hidden="true">
-          <svg className="pull-refresh-indicator__icon-svg" viewBox="0 0 24 24" focusable="false">
+      <div>
+        <span aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
             <g
-              className="pull-refresh-indicator__arrow"
               style={{ transform: `rotate(${arrowRotation}deg)` }}
             >
               <path d="M12 4.75v10.5" />
               <path d="m7.75 11.5 4.25 4.25 4.25-4.25" />
             </g>
-            <path className="pull-refresh-indicator__spinner" d="M20 12a8 8 0 1 1-3.1-6.34" />
-            <path className="pull-refresh-indicator__check" d="m8.25 12.35 2.35 2.4 5.15-5.35" />
+            <path d="M20 12a8 8 0 1 1-3.1-6.34" />
+            <path d="m8.25 12.35 2.35 2.4 5.15-5.35" />
           </svg>
         </span>
-        <div className="pull-refresh-indicator__copy" aria-live="polite" aria-atomic="true">
-          <span className="pull-refresh-indicator__label">
+        <div aria-live="polite" aria-atomic="true">
+          <span>
             {resolveLabel({ status, pullLabel, releaseLabel, refreshingLabel, completeLabel })}
           </span>
-          <span className="pull-refresh-indicator__meter" aria-hidden="true">
-            <span className="pull-refresh-indicator__meter-fill" />
+          <span aria-hidden="true">
+            <span />
           </span>
         </div>
       </div>

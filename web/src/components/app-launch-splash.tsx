@@ -48,24 +48,22 @@ export function AppLaunchSplash() {
 
   return (
     <div
-      className={`app-launch-splash${phase === "hiding" ? " is-fade-out" : ""}`}
       role="status"
       aria-live="polite"
       aria-label="앱을 불러오는 중"
     >
-      <div className="app-launch-splash-card">
+      <div>
         <Image
-          className="app-launch-splash-logo"
           src="/icons/icon-192.png"
           width={76}
           height={76}
           alt=""
           priority
         />
-        <p className="app-launch-splash-brand">Workout Log</p>
-        <div className="app-launch-splash-progress" aria-hidden="true">
-          <span className="app-launch-splash-spinner" />
-          <span className="app-launch-splash-label">로딩 중</span>
+        <p>Workout Log</p>
+        <div aria-hidden="true">
+          <span />
+          <span>로딩 중</span>
         </div>
       </div>
     </div>
