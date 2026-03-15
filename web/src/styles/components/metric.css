@@ -1,0 +1,17 @@
+.metric-badge {
+  display: flex;
+  flex-direction: column;
+}
+
+.metric-value {
+  font: var(--font-numeric-metric);
+  color: var(--color-text);
+  letter-spacing: -0.5px;
+}
+
+.metric-label {
+  font: var(--font-secondary);
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}

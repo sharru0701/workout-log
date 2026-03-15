@@ -1,0 +1,26 @@
+.card {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.card-title {
+  font: var(--font-card-title);
+  color: var(--color-text);
+  margin: 0;
+}
+
+/* Card body can just wrap content, no predefined styling needed in most cases */
+.card-body {
+  display: flex;
+  flex-direction: column;
+}

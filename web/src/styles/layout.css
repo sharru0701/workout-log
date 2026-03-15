@@ -1,0 +1,23 @@
+/* App Shell Layout */
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.app-main {
+  flex: 1;
+  /* Phase 3: Safe-area 패딩 처리 */
+  /* 상단 상태표시줄(노치) 영역 침범 방지 */
+  padding-top: env(safe-area-inset-top, 0px);
+  /* 하단 홈 인디케이터(바) 영역 침범 방지 */
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+}
+
+/* Base utility padding container */
+.container {
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  width: 100%;
+}
