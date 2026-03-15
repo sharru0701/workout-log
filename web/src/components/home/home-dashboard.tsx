@@ -42,24 +42,25 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
         <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>현재 프로그램</h2>
       </div>
       <Card as={Link} href={planHref} padding="md">
-        <div>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
+        <div style={{ font: "var(--font-card-title)", marginBottom: "2px" }}>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
         {planOverview.highlightedProgramName && (
-          <div>{planOverview.highlightedProgramName}</div>
+          <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-xs)" }}>{planOverview.highlightedProgramName}</div>
         )}
-        <div>
+        <div style={{ display: "flex", gap: "var(--space-sm)", font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-md)" }}>
           {planOverview.lastPerformedAtLabel && (
             <span>마지막 수행 {planOverview.lastPerformedAtLabel}</span>
           )}
           <span>최근 7일 {weeklySummary.activeDays}일 운동</span>
         </div>
-        <div aria-label="최근 7일 운동 활동">
+        <div aria-label="최근 7일 운동 활동" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-xs)", textAlign: "center" }}>
           {weeklySummary.days.map((day) => (
             <div
               key={day.key}
               aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
+              style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
             >
-              <span>{day.shortLabel}</span>
-              <span aria-hidden="true" />
+              <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{day.shortLabel}</span>
+              <span aria-hidden="true" style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: day.hasWorkout ? "var(--color-primary)" : "var(--color-border)", display: "block" }} />
             </div>
           ))}
         </div>
@@ -140,17 +141,23 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
             ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
             : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
           return (
-            <Card as={Link} key={item.exerciseName} href={href} padding="none">
-              <div>{item.exerciseName}</div>
-              <div>{item.bestE1rm}kg</div>
-              <div>Best e1RM</div>
-              {item.improvement !== 0 ? (
+            <Card as={Link} key={item.exerciseName} href={href} padding="md">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  {item.trend === "up" ? "+" : ""}{item.improvement}kg
+                  <div style={{ font: "var(--font-card-title)" }}>{item.exerciseName}</div>
+                  <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>Best e1RM</div>
                 </div>
-              ) : (
-                <div>-</div>
-              )}
+                <div style={{ textAlign: "right" }}>
+                  <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{item.bestE1rm}kg</div>
+                  {item.improvement !== 0 ? (
+                    <div style={{ fontSize: "13px", color: item.trend === "up" ? "#27ae60" : "#e74c3c" }}>
+                      {item.trend === "up" ? "+" : ""}{item.improvement}kg
+                    </div>
+                  ) : (
+                    <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>-</div>
+                  )}
+                </div>
+              </div>
             </Card>
           );
         })}
@@ -176,13 +183,13 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
       </div>
       <Card padding="md">
         {selected && (
-          <div>
-            <span>{selected.label} 주</span>
-            <span>{formatVolume(selected.tonnage)}</span>
-            <span>{selected.sets}세트 · {selected.reps}회</span>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)", padding: "var(--space-sm)", backgroundColor: "var(--color-surface-secondary)", borderRadius: "8px" }}>
+            <span style={{ fontWeight: 600 }}>{selected.label} 주</span>
+            <span style={{ fontWeight: 700 }}>{formatVolume(selected.tonnage)}</span>
+            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{selected.sets}세트 · {selected.reps}회</span>
           </div>
         )}
-        <div>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "100px" }}>
           {points.map((point, i) => {
             const height = Math.max((point.tonnage / maxTonnage) * 100, 4);
             const isLast = i === points.length - 1;
@@ -192,14 +199,15 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 key={point.period}
                 type="button"
                 onClick={() => setSelectedIndex(isSelected ? null : i)}
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", background: "none", border: "none", cursor: "pointer", height: "100%", justifyContent: "flex-end" }}
               >
-                <div>{formatVolume(point.tonnage)}</div>
-                <div>
+                <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{formatVolume(point.tonnage)}</div>
+                <div style={{ width: "100%", flex: "none" }}>
                   <div
-                    style={{ height: `${height}%` }}
+                    style={{ height: `${height}%`, minHeight: "4px", backgroundColor: isSelected ? "var(--color-primary)" : isLast ? "var(--color-primary)" : "var(--color-border)", borderRadius: "4px 4px 0 0", transition: "height 0.3s ease" }}
                   />
                 </div>
-                <div>{point.label}</div>
+                <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{point.label}</div>
               </button>
             );
           })}
