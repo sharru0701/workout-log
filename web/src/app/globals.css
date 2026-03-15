@@ -111,8 +111,6 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    color-scheme: light;
-
     --color-bg:        #f3f6fb;
     --color-surface:   #ffffff;
     --color-surface-2: #f0f3f8;
@@ -184,7 +182,6 @@
 }
 
 :root[data-theme-preference="light"] {
-  color-scheme: light;
   --color-bg: #f3f6fb; --color-surface: #ffffff; --color-surface-2: #f0f3f8;
   --color-surface-3: #e8ecf2; --color-text: #24292f; --color-text-muted: #57606a;
   --color-text-subtle: #8c959f; --color-border: #d0d7de; --color-border-subtle: #e8ecf2;
