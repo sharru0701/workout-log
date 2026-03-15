@@ -64,15 +64,15 @@ export function AppPlusMinusIcon({
 export const AppTextInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & { variant?: FormControlVariant }
->(function AppTextInput({ variant = "default", className, ...props }, ref) {
-  return <input ref={ref} {...props} />;
+>(function AppTextInput({ variant = "default", className, style, ...props }, ref) {
+  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", ...style }} {...props} />;
 });
 
 export const AppTextarea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & { variant?: FormControlVariant }
->(function AppTextarea({ variant = "default", className, ...props }, ref) {
-  return <textarea ref={ref} {...props} />;
+>(function AppTextarea({ variant = "default", className, style, ...props }, ref) {
+  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", minHeight: "60px", resize: "vertical", ...style }} {...props} />;
 });
 
 export const AppSelect = forwardRef<
