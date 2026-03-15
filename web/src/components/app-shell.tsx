@@ -7,8 +7,8 @@ import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     <AppDialogProvider>
-      <div className="app-shell app-root-canvas">
-        <main className="app-shell-main">
+      <div>
+        <main>
           {children}
         </main>
         <BottomNav />

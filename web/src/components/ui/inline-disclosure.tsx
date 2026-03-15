@@ -21,19 +21,18 @@ export function InlineDisclosure({
   const panelId = useId();
 
   return (
-    <div className={`ui-inline-disclosure ${isOpen ? "is-open" : ""} ${className}`.trim()}>
+    <div>
       <button
         id={triggerId}
         type="button"
         aria-expanded={isOpen}
         aria-controls={panelId}
-        className="haptic-tap ui-inline-disclosure-trigger"
         onClick={() => setIsOpen((prev) => !prev)}
       >
         {isOpen ? `Hide ${label}` : `Show ${label}`}
       </button>
-      <div id={panelId} className="ui-inline-disclosure-content" role="region" aria-labelledby={triggerId}>
-        <div className="ui-inline-disclosure-inner">{children}</div>
+      <div id={panelId} role="region" aria-labelledby={triggerId}>
+        <div>{children}</div>
       </div>
     </div>
   );

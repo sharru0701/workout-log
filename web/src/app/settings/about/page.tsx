@@ -3,8 +3,8 @@ import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } fr
 
 export default function SettingsAboutPage() {
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
-      <section className="grid gap-2">
+    <div>
+      <section>
         <SectionHeader title="앱 정보" description="표준 About 정보 계층" />
         <BaseGroupedList ariaLabel="App information">
           <ValueRow

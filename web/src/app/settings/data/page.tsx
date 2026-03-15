@@ -111,11 +111,11 @@ export default function SettingsDataPage() {
   };
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
       <NoticeStateRows message={notice} tone="success" label="초기화 완료" />
       <NoticeStateRows message={error} tone="warning" label="초기화 실패" />
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="데이터 작업" description="내보내기와 전체 초기화를 한 화면에서 관리합니다." />
         <BaseGroupedList ariaLabel="Data actions">
           <NavigationRow
@@ -129,7 +129,7 @@ export default function SettingsDataPage() {
         <SectionFootnote>초기화 전에 먼저 Export로 백업 파일을 보관하는 편이 안전합니다.</SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="앱 데이터 초기화" description="앱 전체 데이터를 정리하고 기본 카탈로그만 다시 세팅합니다." />
         <BaseGroupedList ariaLabel="Reset scope">
           <InfoRow
@@ -154,7 +154,6 @@ export default function SettingsDataPage() {
 
         <button
           type="button"
-          className="haptic-tap rounded-xl border px-4 py-3 text-base font-semibold text-[var(--color-danger)] disabled:opacity-50"
           onClick={() => {
             void runReset();
           }}

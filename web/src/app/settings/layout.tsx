@@ -96,18 +96,17 @@ function SettingsChildModal({
 
   return (
     <>
-      <SettingsHomeContent className="settings-child-modal-background" />
+      <SettingsHomeContent />
       <BottomSheet
         open={sheetOpen}
         onClose={onClose}
         title={modalTitleFromPathname(pathname)}
         description={modalDescriptionFromPathname(pathname)}
         closeLabel="닫기"
-        className={modalClassName}
         panelClassName={panelClassName}
         primaryAction={headerAction}
       >
-        <div className="settings-child-modal-content">{children}</div>
+        <div>{children}</div>
       </BottomSheet>
     </>
   );

@@ -108,14 +108,14 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
   }
 
   return (
-    <div className={`workout-swipe-shell ui-list-item motion-list-item ${isRemoving ? "is-removing" : ""}`}>
-      <button className="workout-swipe-delete haptic-tap" type="button" onClick={handleRemoveWithMotion}>
+    <div>
+      <button type="button" onClick={handleRemoveWithMotion}>
         삭제
       </button>
 
-      <Card as="article" padding="none" className="workout-set-card">
-        <label className="flex flex-col gap-1">
-          <span className="ui-card-label">운동</span>
+      <Card as="article" padding="none">
+        <label>
+          <span>운동</span>
           <AppTextInput
             variant="workout"
             list="exercise-options"
@@ -126,9 +126,9 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
           />
         </label>
 
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          <div className="flex flex-col gap-1">
-            <span className="ui-card-label">세트</span>
+        <div>
+          <div>
+            <span>세트</span>
             <NumberPickerField
               label="세트"
               value={row.setNumber}
@@ -140,8 +140,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="ui-card-label">반복</span>
+          <div>
+            <span>반복</span>
             <NumberPickerField
               label="반복"
               value={row.reps}
@@ -153,8 +153,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="ui-card-label">
+          <div>
+            <span>
               {isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "중량(kg)"}
             </span>
             <NumberPickerField
@@ -170,8 +170,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             />
           </div>
 
-          <div className="flex flex-col gap-1">
-            <span className="ui-card-label">RPE</span>
+          <div>
+            <span>RPE</span>
             <NumberPickerField
               label="RPE"
               value={row.rpe}
@@ -186,11 +186,11 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         </div>
 
         {isBodyweightExercise && bodyweightKg ? (
-          <div className="mt-2 text-xs text-[var(--text-secondary)]">총하중 기준: {formatKgValue(totalLoadKg)}</div>
+          <div>총하중 기준: {formatKgValue(totalLoadKg)}</div>
         ) : null}
 
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <label className="workout-toggle">
+        <div>
+          <label>
             <input
               type="checkbox"
               checked={row.isExtra}
@@ -205,7 +205,7 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             <span>추가</span>
           </label>
 
-          <label className="workout-toggle">
+          <label>
             <input
               type="checkbox"
               checked={row.completed}
@@ -214,31 +214,30 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
             <span>완료</span>
           </label>
 
-          <span className="ui-card-label">{row.isExtra ? "추가" : row.isPlanned ? "계획" : "사용자"}</span>
+          <span>{row.isExtra ? "추가" : row.isPlanned ? "계획" : "사용자"}</span>
         </div>
 
         {row.plannedRef ? (
-          <div className="mt-2 rounded-lg border px-2 py-1 text-xs text-[var(--text-secondary)]">
+          <div>
             처방: {formatPlannedRef(row.plannedRef, bodyweightKg)}
             {isBodyweightExercise && bodyweightKg ? (
-              <div className="pt-1">현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
+              <div>현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
             ) : null}
           </div>
         ) : null}
 
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={() => onCompleteAndNext(idx)}>
+        <div>
+          <button type="button" onClick={() => onCompleteAndNext(idx)}>
             완료 후 다음
           </button>
           <button
-            className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm"
             type="button"
             onClick={() => onCopyPrevious(idx)}
             disabled={!canCopyPrevious}
           >
             이전 복사
           </button>
-          <button className="haptic-tap workout-action-pill rounded-xl border px-3 py-2 text-sm" type="button" onClick={() => onInsertBelow(idx, 0)}>
+          <button type="button" onClick={() => onInsertBelow(idx, 0)}>
             아래에 삽입
           </button>
         </div>

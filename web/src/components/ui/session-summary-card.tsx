@@ -45,48 +45,48 @@ export function SessionSummaryCard({
 
   const inner = hasData ? (
     <>
-      <div className={`session-card-header${isToday ? " session-card-header--today" : ""}`}>
-        <div className="session-card-meta">
-          <span className={`session-card-badge${isToday ? " session-card-badge--today" : ""}`}>
+      <div>
+        <div>
+          <span>
             {data.badgeLabel}
           </span>
-          <span className="session-card-date">{data.dateLabel}</span>
+          <span>{data.dateLabel}</span>
         </div>
         {!isToday && hasStats ? (
-          <div className="session-card-stats">
+          <div>
             {data.totalSets !== undefined && (
-              <span className="session-card-stat">{data.totalSets}세트</span>
+              <span>{data.totalSets}세트</span>
             )}
             {data.totalVolume !== undefined && data.totalVolume > 0 && (
               <>
-                <span className="session-card-sep">·</span>
-                <span className="session-card-stat">{formatVolume(data.totalVolume)}</span>
+                <span>·</span>
+                <span>{formatVolume(data.totalVolume)}</span>
               </>
             )}
             {data.bodyweightKg != null && (
               <>
-                <span className="session-card-sep">·</span>
-                <span className="session-card-stat">BW {data.bodyweightKg.toFixed(1)}kg</span>
+                <span>·</span>
+                <span>BW {data.bodyweightKg.toFixed(1)}kg</span>
               </>
             )}
           </div>
         ) : null}
         {isToday && data.bodyweightKg != null && (
-          <span className="session-card-bw">BW {data.bodyweightKg.toFixed(1)}kg</span>
+          <span>BW {data.bodyweightKg.toFixed(1)}kg</span>
         )}
       </div>
       {data.exercises && data.exercises.length > 0 && (
-        <div className="session-card-exercises">
+        <div>
           {data.exercises.map((ex) => (
-            <div key={ex.name} className="session-card-exercise-row">
-              <span className="session-card-exercise-name">{ex.name}</span>
-              <span className="session-card-exercise-right">
+            <div key={ex.name}>
+              <span>{ex.name}</span>
+              <span>
                 {ex.weightDelta != null && ex.weightDelta !== 0 && (
-                  <span className={`session-card-delta session-card-delta--${ex.weightDelta > 0 ? "up" : "down"}`}>
+                  <span>
                     {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
                   </span>
                 )}
-                <span className="session-card-exercise-detail">{ex.bestSet}</span>
+                <span>{ex.bestSet}</span>
               </span>
             </div>
           ))}
@@ -96,14 +96,14 @@ export function SessionSummaryCard({
     </>
   ) : (
     <>
-      <div className="session-card-empty">{emptyMessage}</div>
+      <div>{emptyMessage}</div>
       {children}
     </>
   );
 
   if (data?.href) {
     return (
-      <Card as={Link} href={data.href} padding="none" interactive className="session-card-link">
+      <Card as={Link} href={data.href} padding="none" interactive>
         {inner}
       </Card>
     );

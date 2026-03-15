@@ -46,7 +46,6 @@ const themeOptions: Array<{
 function SelectedCheckIcon() {
   return (
     <span
-      className="inline-flex h-5 w-5 items-center justify-center rounded-full border"
       style={{
         color: "var(--accent-primary)",
         borderColor: "var(--accent-primary)",
@@ -56,7 +55,6 @@ function SelectedCheckIcon() {
     >
       <svg
         viewBox="0 0 16 16"
-        className="h-3.5 w-3.5"
         focusable="false"
         fill="none"
         stroke="currentColor"
@@ -111,7 +109,7 @@ export default function SettingsThemePage() {
   );
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
       <LoadingStateRows
         active={loading}
         delayMs={120}
@@ -127,7 +125,7 @@ export default function SettingsThemePage() {
       />
       <NoticeStateRows message={themeSetting.notice} tone={themeSetting.error ? "warning" : "success"} label="테마 안내" />
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="테마 설정" description="라이트 / 다크 / 시스템 설정 따름" />
         <BaseGroupedList ariaLabel="Theme selection">
           {themeOptions.map((option) => {

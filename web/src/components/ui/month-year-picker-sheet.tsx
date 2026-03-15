@@ -55,10 +55,10 @@ export function MonthYearPickerSheet({
       }}
       footer={null}
     >
-      <div className="month-year-picker-sheet-body">
-        <div className="month-year-picker-wheel-group">
-          <div className="month-year-picker-column">
-            <span className="month-year-picker-column-label">연도</span>
+      <div>
+        <div>
+          <div>
+            <span>연도</span>
             <WheelPicker
               values={years}
               value={draftYear}
@@ -68,8 +68,8 @@ export function MonthYearPickerSheet({
               formatValue={(value) => `${value}년`}
             />
           </div>
-          <div className="month-year-picker-column">
-            <span className="month-year-picker-column-label">월</span>
+          <div>
+            <span>월</span>
             <WheelPicker
               values={months}
               value={draftMonth}

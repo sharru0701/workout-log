@@ -179,14 +179,12 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         description=""
         onClose={closeActiveAsCancel}
         closeLabel="닫기"
-        className="app-dialog-sheet program-store-sheet--medium"
         footer={
           active ? (
-            <div className={`app-dialog-actions${active.kind === "alert" ? " app-dialog-actions--single" : ""}`}>
+            <div>
               {active.kind === "confirm" ? (
                 <button
                   type="button"
-                  className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold app-dialog-button"
                   onClick={closeActiveAsCancel}
                 >
                   {active.cancelText}
@@ -194,7 +192,6 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
               ) : null}
               <button
                 type="button"
-                className={`ui-primary-button app-dialog-button${active.tone === "danger" ? " app-dialog-button-danger" : ""}`}
                 onClick={closeActiveAsAccept}
               >
                 {active.kind === "confirm" ? active.confirmText : active.buttonText}
@@ -204,9 +201,9 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         }
       >
         {active ? (
-          <Card tone={active.tone === "danger" ? "danger" : "subtle"} padding="md" elevated={false} className="app-dialog-content">
+          <Card tone={active.tone === "danger" ? "danger" : "subtle"} padding="md" elevated={false}>
             <CardContent>
-              <p className="app-dialog-message">{active.message}</p>
+              <p>{active.message}</p>
             </CardContent>
           </Card>
         ) : null}

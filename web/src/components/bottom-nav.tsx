@@ -12,7 +12,7 @@ type TabIconProps = {
 
 function HomeIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 11L12 4.5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M6 9.5V20h12V9.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M9.5 20v-5.5h5V20" strokeLinecap="round" strokeLinejoin="round" />
@@ -22,7 +22,7 @@ function HomeIcon({ className }: TabIconProps) {
 
 function RecordIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 12h16" strokeLinecap="round" />
       <path d="M6.5 9.5v5" strokeLinecap="round" />
       <path d="M9 7.5v9" strokeLinecap="round" />
@@ -34,7 +34,7 @@ function RecordIcon({ className }: TabIconProps) {
 
 function CalendarIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
       <path d="M3.5 9.5h17" strokeLinecap="round" />
       <path d="M8 2.5v3" strokeLinecap="round" />
@@ -50,7 +50,7 @@ function CalendarIcon({ className }: TabIconProps) {
 
 function PlanIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
       <path d="M3.5 9.5h17" strokeLinecap="round" />
       <path d="M8 2.5v3" strokeLinecap="round" />
@@ -65,7 +65,7 @@ function PlanIcon({ className }: TabIconProps) {
 
 function StoreIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M6 2.5L3 8.5h18l-3-6H6z" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M3 8.5v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-11" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M9 12.5a3 3 0 0 0 6 0" strokeLinecap="round" />
@@ -75,7 +75,7 @@ function StoreIcon({ className }: TabIconProps) {
 
 function StatsIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 20h18" strokeLinecap="round" />
       <path d="M7 20V10" strokeLinecap="round" />
       <path d="M12 20V5" strokeLinecap="round" />
@@ -86,7 +86,7 @@ function StatsIcon({ className }: TabIconProps) {
 
 function SettingsIcon({ className }: TabIconProps) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className={className}>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 6h4" strokeLinecap="round" />
       <circle cx="10" cy="6" r="2" />
       <path d="M12 6h8" strokeLinecap="round" />
@@ -271,7 +271,6 @@ export function BottomNav() {
   return (
     <nav
       ref={navRef}
-      className="app-bottom-nav app-bottom-nav--skeleton"
       aria-label="Floating tab navigation"
       style={navStyle}
     >
@@ -287,14 +286,13 @@ export function BottomNav() {
             ref={(element) => {
               tabRefs.current[tabIndex] = element;
             }}
-            className={`app-bottom-nav-tab${visualActive ? " is-active" : ""}`}
             aria-current={pathActive ? "page" : undefined}
             aria-label={tab.ariaLabel}
             title={tab.ariaLabel}
             onClick={(event) => onTabPress(event, tabIndex, tab.href)}
           >
-            <Icon className="app-bottom-nav-icon" />
-            <span className="app-bottom-nav-label">{tab.label}</span>
+            <Icon />
+            <span>{tab.label}</span>
           </Link>
         );
       })}

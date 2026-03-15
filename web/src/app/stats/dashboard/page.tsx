@@ -1118,7 +1118,6 @@ export default function StatsPage() {
 
   return (
     <div
-      className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
       {...pullToRefresh.bind}
     >
       <PullToRefreshIndicator
@@ -1129,15 +1128,12 @@ export default function StatsPage() {
         completeLabel="통계 갱신 완료"
       />
 
-      <Card as="section" className="space-y-3 ui-height-animate" data-pull-refresh-trigger="true">
-        <div className="ios-section-heading">기본 흐름</div>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <Card as="section" data-pull-refresh-trigger="true">
+        <div>기본 흐름</div>
+        <div>
           {PRESET_RANGES.map((d, idx) => (
             <button
               key={`core-${d}`}
-              className={`haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold ${
-                idx === rangeIndex ? "bg-bg-elevated" : ""
-              }`}
               onClick={() => {
                 setRangeIndex(idx);
                 setPresetRange(d);
@@ -1146,19 +1142,16 @@ export default function StatsPage() {
               {d}일
             </button>
           ))}
-          <button className="haptic-tap rounded-xl border px-3 py-3 text-sm font-semibold col-span-2 sm:col-span-1" onClick={openFiltersSheet}>
+          <button onClick={openFiltersSheet}>
             필터
           </button>
         </div>
-        <div className="rounded-xl border bg-neutral-50 p-3">
-          <div className="ui-card-label">UX 분석 프리셋</div>
-          <div className="mt-2 grid grid-cols-3 gap-2">
+        <div>
+          <div>UX 분석 프리셋</div>
+          <div>
             {([1, 7, 14] as const).map((windowDays) => (
               <button
                 key={`ux-preset-${windowDays}`}
-                className={`haptic-tap rounded-lg border px-3 py-2 text-sm font-medium ${
-                  activeUxPreset === windowDays ? "bg-bg-elevated" : ""
-                }`}
                 onClick={() => applyUxFocusPreset(windowDays)}
               >
                 {windowDays === 1 ? "오늘" : `${windowDays}일`}
@@ -1168,20 +1161,20 @@ export default function StatsPage() {
         </div>
       </Card>
 
-      <Card as="section" className="space-y-3 ui-height-animate">
-        <div className="flex items-start justify-between gap-3">
+      <Card as="section">
+        <div>
           <div>
-            <div className="ui-card-label ui-card-label-caps">활성 필터</div>
+            <div>활성 필터</div>
           </div>
-          <button className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" onClick={openFiltersSheet}>
+          <button onClick={openFiltersSheet}>
             수정
           </button>
         </div>
-        <div className="grid grid-cols-2 gap-2 text-xs">
-          <div className="rounded-lg border px-3 py-2">플랜: {selectedPlanName ?? "전체 플랜"}</div>
-          <div className="rounded-lg border px-3 py-2">집계 단위: {bucket}</div>
-          <div className="rounded-lg border px-3 py-2">범위: {from ? `${from} → ${to || todayDateOnly()}` : `${days}일`}</div>
-          <div className="rounded-lg border px-3 py-2">운동: {exerciseId || exercise || "—"}</div>
+        <div>
+          <div>플랜: {selectedPlanName ?? "전체 플랜"}</div>
+          <div>집계 단위: {bucket}</div>
+          <div>범위: {from ? `${from} → ${to || todayDateOnly()}` : `${days}일`}</div>
+          <div>운동: {exerciseId || exercise || "—"}</div>
         </div>
         <LoadingStateRows
           active={plansLoading || loading}
@@ -1213,24 +1206,20 @@ export default function StatsPage() {
 
       <Card
         as="section"
-        className="space-y-3 touch-pan-y ui-height-animate"
         onTouchStart={onRangeSwipeStart}
         onTouchEnd={onRangeSwipeEnd}
       >
-        <div className="flex items-center justify-between">
+        <div>
           <div>
-            <div className="ui-card-label ui-card-label-caps">범위</div>
-            <div className="text-lg font-semibold">{rangeHeadline}</div>
+            <div>범위</div>
+            <div>{rangeHeadline}</div>
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-2">
+        <div>
           {PRESET_RANGES.map((d, idx) => (
             <button
               key={d}
-              className={`haptic-tap rounded-xl border px-3 py-3 text-base font-semibold ${
-                idx === rangeIndex ? "bg-bg-elevated" : ""
-              }`}
               onClick={() => {
                 setRangeIndex(idx);
                 setPresetRange(d);
@@ -1241,23 +1230,23 @@ export default function StatsPage() {
           ))}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <div className="rounded-xl border p-3">
-            <div className="text-neutral-600">볼륨 ({activePresetDays}d)</div>
-            <div className="text-lg font-semibold">{activeTrend ? formatKg(activeTrend.volume.totals.tonnage) : "—"}</div>
+        <div>
+          <div>
+            <div>볼륨 ({activePresetDays}d)</div>
+            <div>{activeTrend ? formatKg(activeTrend.volume.totals.tonnage) : "—"}</div>
             {activeTrend ? (
-              <div className={activeVolumeTrend.className}>
+              <div>
                 {activeVolumeTrend.arrow} {activeVolumeTrend.value}
               </div>
             ) : null}
           </div>
-          <div className="rounded-xl border p-3">
-            <div className="text-neutral-600">준수율 ({activePresetDays}d)</div>
-            <div className="text-lg font-semibold">
+          <div>
+            <div>준수율 ({activePresetDays}d)</div>
+            <div>
               {activeTrend ? `${Math.round(activeTrend.compliance.compliance * 100)}%` : "—"}
             </div>
             {activeTrend ? (
-              <div className={activeComplianceTrend.className}>
+              <div>
                 {activeComplianceTrend.arrow} {activeComplianceTrend.value}pp
               </div>
             ) : null}
@@ -1265,7 +1254,7 @@ export default function StatsPage() {
         </div>
       </Card>
 
-      <section className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <section>
         <MetricTile
           label="e1RM"
           value={e1rm?.best ? `${e1rm.best.e1rm} kg` : "—"}
@@ -1296,46 +1285,40 @@ export default function StatsPage() {
         />
       </section>
 
-      <Card as="section" className="space-y-3 ui-height-animate">
-        <div className="flex items-start justify-between gap-3">
+      <Card as="section">
+        <div>
           <div>
-            <div className="ui-card-label ui-card-label-caps">운영 마이그레이션 상태</div>
+            <div>운영 마이그레이션 상태</div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={`rounded-full border px-3 py-1 text-xs font-semibold ${migrationStatusMeta.className}`}>
+          <div>
+            <span>
               {migrationStatusMeta.label}
             </span>
-            <a className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" href={migrationTelemetryJsonHref}>
+            <a href={migrationTelemetryJsonHref}>
               JSON
             </a>
-            <a className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" href={migrationTelemetryCsvHref}>
+            <a href={migrationTelemetryCsvHref}>
               CSV
             </a>
           </div>
         </div>
 
-        <div className="rounded-xl border bg-neutral-50 p-3">
-          <div className="ui-card-label">조회 구간 / 실행 필터</div>
-          <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <div>
+          <div>조회 구간 / 실행 필터</div>
+          <div>
             {MIGRATION_LOOKBACK_PRESETS.map((presetMinutes) => (
               <button
                 key={`migration-lookback-${presetMinutes}`}
                 type="button"
-                className={`haptic-tap rounded-lg border px-3 py-2 text-sm font-medium ${
-                  migrationLookbackMinutes === presetMinutes ? "bg-bg-elevated" : ""
-                }`}
                 onClick={() => setMigrationLookbackMinutes(presetMinutes)}
               >
                 {formatLookbackLabel(presetMinutes)}
               </button>
             ))}
           </div>
-          <div className="mt-2 flex items-center justify-between gap-2">
+          <div>
             <button
               type="button"
-              className={`haptic-tap rounded-lg border px-3 py-1.5 text-xs font-medium ${
-                migrationRunStatusFilter === "ISSUE" ? "bg-bg-elevated" : ""
-              }`}
               onClick={() =>
                 setMigrationRunStatusFilter((prev) => (prev === "ISSUE" ? "ALL" : "ISSUE"))
               }
@@ -1353,45 +1336,45 @@ export default function StatsPage() {
 
         {migrationTelemetry ? (
           <>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-              <div className="rounded-xl border p-3 text-sm">
-                <div className="text-neutral-600">마이그레이션 파일/적용</div>
-                <div className="mt-1 text-lg font-semibold">
+            <div>
+              <div>
+                <div>마이그레이션 파일/적용</div>
+                <div>
                   {migrationTelemetry.checks.migrations.appliedCount} /{" "}
                   {migrationTelemetry.checks.migrations.localCount}
                 </div>
-                <div className={migrationTelemetry.checks.migrations.pending > 0 ? "text-red-700" : "text-neutral-600"}>
+                <div>
                   pending {migrationTelemetry.checks.migrations.pending}
                 </div>
               </div>
-              <div className="rounded-xl border p-3 text-sm">
-                <div className="text-neutral-600">
+              <div>
+                <div>
                   최근 {migrationTelemetry.checks.telemetry.lookbackMinutes}분 경고
                 </div>
-                <div className="mt-1 grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-lg border px-2 py-2">
+                <div>
+                  <div>
                     timeout {migrationTelemetry.checks.telemetry.alerts.lockTimeoutCount}
                   </div>
-                  <div className="rounded-lg border px-2 py-2">
+                  <div>
                     failed {migrationTelemetry.checks.telemetry.alerts.failedCount}
                   </div>
-                  <div className="rounded-lg border px-2 py-2">
+                  <div>
                     skipped {migrationTelemetry.checks.telemetry.alerts.skippedCount}
                   </div>
                 </div>
               </div>
-              <div className="rounded-xl border p-3 text-sm">
-                <div className="text-neutral-600">잠금 대기(ms)</div>
-                <div className="mt-1 text-lg font-semibold">
+              <div>
+                <div>잠금 대기(ms)</div>
+                <div>
                   avg {formatInteger(migrationTelemetry.checks.telemetry.alerts.avgLockWaitMs)}
                 </div>
-                <div className="text-neutral-600">
+                <div>
                   max {formatInteger(migrationTelemetry.checks.telemetry.alerts.maxLockWaitMs)}
                 </div>
               </div>
             </div>
 
-            <div className="rounded-xl border bg-neutral-50 p-3 text-xs text-neutral-700">
+            <div>
               <div>최근 적용: {formatDateTimeLocal(migrationTelemetry.checks.migrations.latestAppliedAt)}</div>
               <div>
                 최신 해시:{" "}
@@ -1405,38 +1388,38 @@ export default function StatsPage() {
             </div>
 
             {migrationTelemetry.reasons.length > 0 ? (
-              <div className="rounded-xl border bg-neutral-50 p-3 text-xs text-neutral-700">
+              <div>
                 {migrationTelemetry.reasons.map((reason) => describeMigrationReason(reason)).join(" · ")}
               </div>
             ) : null}
 
             {recentMigrationRuns.length > 0 ? (
-              <div className="space-y-2">
-                <div className="ui-card-label">
+              <div>
+                <div>
                   실행 기록 {recentMigrationRuns.length}건 · 필터{" "}
                   {migrationRunStatusFilter === "ISSUE" ? "문제 상태만" : "전체 상태"}
                 </div>
-                <div className="overflow-x-auto">
-                <table className="min-w-full text-sm ios-data-table">
-                  <thead className="text-neutral-600">
+                <div>
+                <table>
+                  <thead>
                     <tr>
-                      <th className="text-left py-2 pr-4">시각</th>
-                      <th className="text-left py-2 px-4">상태</th>
-                      <th className="text-left py-2 px-4">러너</th>
-                      <th className="text-right py-2 px-4">Lock(ms)</th>
-                      <th className="text-left py-2 pl-4">코드/메시지</th>
+                      <th>시각</th>
+                      <th>상태</th>
+                      <th>러너</th>
+                      <th>Lock(ms)</th>
+                      <th>코드/메시지</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentMigrationRuns.map((run) => (
-                      <tr key={run.runId} className="border-t">
-                        <td className="py-2 pr-4 whitespace-nowrap">{formatDateTimeLocal(run.startedAt)}</td>
-                        <td className={`py-2 px-4 whitespace-nowrap ${migrationRunStatusClassName(run.status)}`}>
+                      <tr key={run.runId}>
+                        <td>{formatDateTimeLocal(run.startedAt)}</td>
+                        <td>
                           {describeMigrationRunStatus(run.status)}
                         </td>
-                        <td className="py-2 px-4 whitespace-nowrap">{run.runner}</td>
-                        <td className="py-2 px-4 text-right">{formatInteger(run.lockWaitMs)}</td>
-                        <td className="py-2 pl-4 text-xs text-neutral-600">
+                        <td>{run.runner}</td>
+                        <td>{formatInteger(run.lockWaitMs)}</td>
+                        <td>
                           {run.errorCode ? `[${run.errorCode}] ` : ""}
                           {run.message ?? "—"}
                         </td>
@@ -1467,24 +1450,24 @@ export default function StatsPage() {
         ) : null}
       </Card>
 
-      <Card as="section" className="space-y-3 ui-height-animate">
-        <div className="flex items-start justify-between gap-3">
+      <Card as="section">
+        <div>
           <div>
-            <div className="ui-card-label ui-card-label-caps">UX 퍼널 (서버 집계)</div>
+            <div>UX 퍼널 (서버 집계)</div>
           </div>
-          <a className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium" href={uxFunnelCsvHref}>
+          <a href={uxFunnelCsvHref}>
             CSV 내보내기
           </a>
         </div>
 
         {uxFunnel ? (
           <>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div>
               {uxFunnel.steps.map((step) => (
-                <article key={step.id} className="rounded-xl border p-3">
-                  <div className="text-sm text-neutral-600">{step.label}</div>
-                  <div className="mt-1 text-xl font-semibold">{step.count.toLocaleString()}</div>
-                  <div className="mt-1 text-xs text-neutral-500">
+                <article key={step.id}>
+                  <div>{step.label}</div>
+                  <div>{step.count.toLocaleString()}</div>
+                  <div>
                     {step.conversionFromPrevious === null
                       ? "기준 단계"
                       : `이전 단계 대비 ${Math.round(step.conversionFromPrevious * 100)}%`}
@@ -1493,32 +1476,32 @@ export default function StatsPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-2 text-sm sm:grid-cols-4">
-              <div className="rounded-xl border p-3">
-                <div className="text-neutral-600">생성→저장</div>
-                <div className="font-semibold">{Math.round(uxFunnel.rates.saveFromGenerate * 100)}%</div>
-                <div className={uxSaveTrend.className}>
+            <div>
+              <div>
+                <div>생성→저장</div>
+                <div>{Math.round(uxFunnel.rates.saveFromGenerate * 100)}%</div>
+                <div>
                   {uxSaveTrend.arrow} {uxSaveTrend.value}pp
                 </div>
               </div>
-              <div className="rounded-xl border p-3">
-                <div className="text-neutral-600">저장→추가운동</div>
-                <div className="font-semibold">{Math.round(uxFunnel.rates.extraFromSaved * 100)}%</div>
-                <div className={uxExtraTrend.className}>
+              <div>
+                <div>저장→추가운동</div>
+                <div>{Math.round(uxFunnel.rates.extraFromSaved * 100)}%</div>
+                <div>
                   {uxExtraTrend.arrow} {uxExtraTrend.value}pp
                 </div>
               </div>
-              <div className="rounded-xl border p-3">
-                <div className="text-neutral-600">일평균 생성</div>
-                <div className="font-semibold">{uxFunnel.rates.generatedPerDay}</div>
+              <div>
+                <div>일평균 생성</div>
+                <div>{uxFunnel.rates.generatedPerDay}</div>
               </div>
-              <div className="rounded-xl border p-3">
-                <div className="text-neutral-600">일평균 저장</div>
-                <div className="font-semibold">{uxFunnel.rates.savedPerDay}</div>
+              <div>
+                <div>일평균 저장</div>
+                <div>{uxFunnel.rates.savedPerDay}</div>
               </div>
             </div>
 
-            <div className="rounded-xl border bg-neutral-50 p-3 text-sm">
+            <div>
               가장 큰 이탈 구간: <strong>{uxFunnel.dropoff.fromStepId}</strong> →{" "}
               <strong>{uxFunnel.dropoff.toStepId}</strong> ({uxFunnel.dropoff.dropCount}건,{" "}
               {Math.round(uxFunnel.dropoff.dropRate * 100)}%)
@@ -1533,33 +1516,29 @@ export default function StatsPage() {
         )}
       </Card>
 
-      <Card as="section" className="space-y-3 ui-height-animate">
-        <div className="flex items-start justify-between gap-3">
+      <Card as="section">
+        <div>
           <div>
-            <div className="ui-card-label ui-card-label-caps">UX 행동 요약 (오늘/7일/14일)</div>
+            <div>UX 행동 요약 (오늘/7일/14일)</div>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div>
             <button
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
               type="button"
               onClick={() => setUxCompareMode((prev) => !prev)}
             >
               {uxCompareMode ? "비교 모드 숨기기" : "비교 모드"}
             </button>
             <a
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
               href="/settings/ux-thresholds"
             >
               기준치 설정
             </a>
             <a
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
               href={uxSnapshotJsonHref}
             >
               스냅샷 JSON
             </a>
             <a
-              className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
               href={uxSnapshotCsvHref}
             >
               스냅샷 CSV
@@ -1567,14 +1546,14 @@ export default function StatsPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <div>
           {uxSummaryCards.map(({ days: windowDays, window }) => {
             const label = windowDays === 1 ? "오늘" : `${windowDays}일`;
             if (!window) {
               return (
-                <article key={`ux-summary-${windowDays}`} className="rounded-xl border p-3">
-                  <div className="text-sm text-neutral-600">{label}</div>
-                  <div className="mt-2 text-sm text-neutral-500">요약 데이터 로드 중...</div>
+                <article key={`ux-summary-${windowDays}`}>
+                  <div>{label}</div>
+                  <div>요약 데이터 로드 중...</div>
                 </article>
               );
             }
@@ -1583,29 +1562,29 @@ export default function StatsPage() {
             const saveCountTrend = trendMeta(window.payload.trend?.saveSuccessesDelta ?? 0, 0);
 
             return (
-              <article key={`ux-summary-${windowDays}`} className="rounded-xl border p-3 space-y-2">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm text-neutral-600">{label}</div>
-                  <div className="ui-card-label">이벤트 {window.payload.totalEvents.toLocaleString()}</div>
+              <article key={`ux-summary-${windowDays}`}>
+                <div>
+                  <div>{label}</div>
+                  <div>이벤트 {window.payload.totalEvents.toLocaleString()}</div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <div className="rounded-lg border px-2 py-2">오픈 {window.payload.summary.opens}</div>
-                  <div className="rounded-lg border px-2 py-2">생성성공 {window.payload.summary.generateSuccesses}</div>
-                  <div className="rounded-lg border px-2 py-2">저장성공 {window.payload.summary.saveSuccesses}</div>
-                  <div className="rounded-lg border px-2 py-2">운동추가 {window.payload.summary.addExerciseAdds}</div>
+                <div>
+                  <div>오픈 {window.payload.summary.opens}</div>
+                  <div>생성성공 {window.payload.summary.generateSuccesses}</div>
+                  <div>저장성공 {window.payload.summary.saveSuccesses}</div>
+                  <div>운동추가 {window.payload.summary.addExerciseAdds}</div>
                 </div>
 
-                <div className="rounded-lg border bg-neutral-50 px-2 py-2 text-xs">
+                <div>
                   <div>저장 성공률: {Math.round(window.payload.rates.saveSuccessFromClicks * 100)}%</div>
                   <div>오픈 대비 저장: {Math.round(window.payload.rates.saveSuccessFromOpens * 100)}%</div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-1 text-xs">
-                  <div className={saveCountTrend.className}>
+                <div>
+                  <div>
                     저장 성공수 {saveCountTrend.arrow} {saveCountTrend.value}
                   </div>
-                  <div className={saveRateTrend.className}>
+                  <div>
                     저장 성공률 {saveRateTrend.arrow} {saveRateTrend.value}pp
                   </div>
                 </div>
@@ -1615,19 +1594,16 @@ export default function StatsPage() {
         </div>
 
         {uxThresholds.length > 0 ? (
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div>
             {uxThresholds.map((threshold) => (
               <article
                 key={threshold.id}
-                className={`rounded-xl border p-3 ${
-                  threshold.status === "ok" ? "bg-emerald-50/60" : "bg-amber-50/70"
-                }`}
               >
-                <div className="text-xs text-neutral-600">{threshold.label}</div>
-                <div className="mt-1 text-base font-semibold">
+                <div>{threshold.label}</div>
+                <div>
                   {Math.round(threshold.value * 100)}% / 목표 {Math.round(threshold.target * 100)}%
                 </div>
-                <div className={`mt-1 text-xs ${threshold.status === "ok" ? "text-emerald-700" : "text-amber-700"}`}>
+                <div>
                   {threshold.status === "ok" ? "기준 충족" : "개선 필요"}
                 </div>
               </article>
@@ -1637,25 +1613,25 @@ export default function StatsPage() {
 
         {uxCompareMode ? (
           uxCompareRows.length > 0 ? (
-            <div className="rounded-xl border p-3">
-              <div className="ui-card-label ui-card-label-caps mb-2">현재 vs 이전 구간 비교</div>
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm ios-data-table">
-                  <thead className="text-neutral-600">
+            <div>
+              <div>현재 vs 이전 구간 비교</div>
+              <div>
+                <table>
+                  <thead>
                     <tr>
-                      <th className="text-left py-2 pr-4">지표</th>
-                      <th className="text-right py-2 px-4">현재</th>
-                      <th className="text-right py-2 px-4">이전</th>
-                      <th className="text-right py-2 pl-4">변화</th>
+                      <th>지표</th>
+                      <th>현재</th>
+                      <th>이전</th>
+                      <th>변화</th>
                     </tr>
                   </thead>
                   <tbody>
                     {uxCompareRows.map((row) => (
-                      <tr key={row.id} className="border-t">
-                        <td className="py-2 pr-4">{row.metric}</td>
-                        <td className="py-2 px-4 text-right">{row.current}</td>
-                        <td className="py-2 px-4 text-right">{row.previous}</td>
-                        <td className={`py-2 pl-4 text-right ${row.deltaClassName}`}>{row.deltaText}</td>
+                      <tr key={row.id}>
+                        <td>{row.metric}</td>
+                        <td>{row.current}</td>
+                        <td>{row.previous}</td>
+                        <td>{row.deltaText}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1672,13 +1648,13 @@ export default function StatsPage() {
         ) : null}
       </Card>
 
-      <Card as="section" className="space-y-3 ui-height-animate">
-        <div className="flex items-end justify-between">
+      <Card as="section">
+        <div>
           <div>
-            <div className="text-sm text-neutral-600">볼륨 추세선</div>
-            <div className="text-lg font-semibold">{series ? `${series.bucket} 단위` : "—"}</div>
+            <div>볼륨 추세선</div>
+            <div>{series ? `${series.bucket} 단위` : "—"}</div>
           </div>
-          <div className="ui-card-label">포인트: {seriesPoints.length}</div>
+          <div>포인트: {seriesPoints.length}</div>
         </div>
         {seriesPoints.length > 0 ? (
           <SparklineChart points={seriesPoints} labels={seriesLabels} />
@@ -1691,30 +1667,30 @@ export default function StatsPage() {
         )}
       </Card>
 
-      <Card as="section" className="ui-height-animate">
+      <Card as="section">
         <AccordionSection
           title="운동별 볼륨 분해"
           description="운동별 톤수와 세트 분포를 확인합니다."
-          summarySlot={<span className="ui-card-label">{series?.byExercise?.length ?? 0}개</span>}
+          summarySlot={<span>{series?.byExercise?.length ?? 0}개</span>}
         >
           {series?.byExercise?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm ios-data-table">
-                <thead className="text-neutral-600">
+            <div>
+              <table>
+                <thead>
                   <tr>
-                    <th className="text-left py-2 pr-4">운동</th>
-                    <th className="text-right py-2 px-4">톤수</th>
-                    <th className="text-right py-2 px-4">반복</th>
-                    <th className="text-right py-2 pl-4">세트</th>
+                    <th>운동</th>
+                    <th>톤수</th>
+                    <th>반복</th>
+                    <th>세트</th>
                   </tr>
                 </thead>
                 <tbody>
                   {series.byExercise.map((r) => (
-                    <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
-                      <td className="py-2 pr-4">{r.exerciseName}</td>
-                      <td className="py-2 px-4 text-right">{Math.round(r.totals.tonnage)}</td>
-                      <td className="py-2 px-4 text-right">{r.totals.reps}</td>
-                      <td className="py-2 pl-4 text-right">{r.totals.sets}</td>
+                    <tr key={r.exerciseId ?? r.exerciseName}>
+                      <td>{r.exerciseName}</td>
+                      <td>{Math.round(r.totals.tonnage)}</td>
+                      <td>{r.totals.reps}</td>
+                      <td>{r.totals.sets}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1730,30 +1706,30 @@ export default function StatsPage() {
         </AccordionSection>
       </Card>
 
-      <Card as="section" className="ui-height-animate">
+      <Card as="section">
         <AccordionSection
           title="플랜별 준수율"
           description="계획 세션 대비 완료 수를 비교합니다."
-          summarySlot={<span className="ui-card-label">{compliance?.byPlan?.length ?? 0}개 플랜</span>}
+          summarySlot={<span>{compliance?.byPlan?.length ?? 0}개 플랜</span>}
         >
           {compliance?.byPlan?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm ios-data-table">
-                <thead className="text-neutral-600">
+            <div>
+              <table>
+                <thead>
                   <tr>
-                    <th className="text-left py-2 pr-4">플랜</th>
-                    <th className="text-right py-2 px-4">계획</th>
-                    <th className="text-right py-2 px-4">완료</th>
-                    <th className="text-right py-2 pl-4">준수율</th>
+                    <th>플랜</th>
+                    <th>계획</th>
+                    <th>완료</th>
+                    <th>준수율</th>
                   </tr>
                 </thead>
                 <tbody>
                   {compliance.byPlan.map((r) => (
-                    <tr key={r.planId} className="border-t">
-                      <td className="py-2 pr-4">{r.planName}</td>
-                      <td className="py-2 px-4 text-right">{r.planned}</td>
-                      <td className="py-2 px-4 text-right">{r.done}</td>
-                      <td className="py-2 pl-4 text-right">{Math.round(r.compliance * 100)}%</td>
+                    <tr key={r.planId}>
+                      <td>{r.planName}</td>
+                      <td>{r.planned}</td>
+                      <td>{r.done}</td>
+                      <td>{Math.round(r.compliance * 100)}%</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1769,36 +1745,36 @@ export default function StatsPage() {
         </AccordionSection>
       </Card>
 
-      <Card as="section" className="ui-height-animate">
+      <Card as="section">
         <AccordionSection
           title="PR 추적"
           description="운동별 최고/최신 e1RM을 비교합니다."
-          summarySlot={<span className="ui-card-label">{prs?.items?.length ?? 0}건</span>}
+          summarySlot={<span>{prs?.items?.length ?? 0}건</span>}
         >
           {prs?.items?.length ? (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-sm ios-data-table">
-                <thead className="text-neutral-600">
+            <div>
+              <table>
+                <thead>
                   <tr>
-                    <th className="text-left py-2 pr-4">운동</th>
-                    <th className="text-right py-2 px-4">최고 e1RM</th>
-                    <th className="text-right py-2 px-4">최신 e1RM</th>
-                    <th className="text-right py-2 px-4">향상</th>
-                    <th className="text-right py-2 pl-4">최고 기록일</th>
+                    <th>운동</th>
+                    <th>최고 e1RM</th>
+                    <th>최신 e1RM</th>
+                    <th>향상</th>
+                    <th>최고 기록일</th>
                   </tr>
                 </thead>
                 <tbody>
                   {prs.items.map((r) => {
                     const imp = trendMeta(r.improvement, 1);
                     return (
-                      <tr key={r.exerciseId ?? r.exerciseName} className="border-t">
-                        <td className="py-2 pr-4">{r.exerciseName}</td>
-                        <td className="py-2 px-4 text-right">{r.best.e1rm}</td>
-                        <td className="py-2 px-4 text-right">{r.latest.e1rm}</td>
-                        <td className={`py-2 px-4 text-right ${imp.className}`}>
+                      <tr key={r.exerciseId ?? r.exerciseName}>
+                        <td>{r.exerciseName}</td>
+                        <td>{r.best.e1rm}</td>
+                        <td>{r.latest.e1rm}</td>
+                        <td>
                           {imp.arrow} {imp.value}
                         </td>
-                        <td className="py-2 pl-4 text-right">{r.best.date}</td>
+                        <td>{r.best.date}</td>
                       </tr>
                     );
                   })}

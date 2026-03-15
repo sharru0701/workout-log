@@ -246,7 +246,7 @@ export default function SettingsMinimumPlatePage() {
   };
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
       <LoadingStateRows
         active={loading}
         delayMs={120}
@@ -262,7 +262,7 @@ export default function SettingsMinimumPlatePage() {
       />
       <NoticeStateRows message={latestNotice} tone={hasSaveError ? "warning" : "success"} label="최소 원판 안내" />
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="기본 최소 원판 무게" description="기본값은 규칙이 없는 모든 종목에 적용됩니다." />
         <BaseGroupedList ariaLabel="Default minimum plate setting">
           <ValueRow
@@ -274,7 +274,7 @@ export default function SettingsMinimumPlatePage() {
         </BaseGroupedList>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="기본값 조절" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
         <Card padding="md" elevated={false}>
           <CardContent>
@@ -291,7 +291,7 @@ export default function SettingsMinimumPlatePage() {
         </Card>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="종목별 최소 원판 규칙" description="예: Pull-up 1.25kg, 나머지 2.5kg" />
         <BaseGroupedList ariaLabel="Per exercise minimum plate rules">
           {rules.map((rule) => (
@@ -329,7 +329,6 @@ export default function SettingsMinimumPlatePage() {
         description="운동종목을 선택하고 증가 단위를 설정하세요."
         onClose={() => setSheetOpen(false)}
         closeLabel="닫기"
-        className="stats-sheet stats-sheet--large"
         primaryAction={{
           ariaLabel: rulesSetting.pending ? "규칙 저장 중" : "규칙 저장",
           onPress: () => {
@@ -339,10 +338,9 @@ export default function SettingsMinimumPlatePage() {
         }}
         footer={
           editingRuleKey ? (
-            <div className="grid gap-2">
+            <div>
               <button
                 type="button"
-                className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-[var(--color-danger)]"
                 onClick={() => void deleteRule()}
                 disabled={rulesSetting.pending}
               >
@@ -352,14 +350,14 @@ export default function SettingsMinimumPlatePage() {
           ) : null
         }
       >
-        <div className="grid gap-3">
+        <div>
           <Card padding="md" elevated={false}>
             <CardContent>
-              <label className="grid gap-1">
-                <span className="ui-card-label">운동종목 드롭다운 검색/선택</span>
-                <div className="workout-combobox" data-no-swipe="true">
-                  <div className="app-search-shell">
-                    <span className="app-search-icon" aria-hidden="true">
+              <label>
+                <span>운동종목 드롭다운 검색/선택</span>
+                <div data-no-swipe="true">
+                  <div>
+                    <span aria-hidden="true">
                       <svg viewBox="0 0 24 24" focusable="false">
                         <circle cx="11" cy="11" r="7" />
                         <path d="m20 20-3.8-3.8" />
@@ -368,7 +366,6 @@ export default function SettingsMinimumPlatePage() {
                     <input
                       type="search"
                       inputMode="search"
-                      className="app-search-input"
                       value={exerciseQuery}
                       placeholder="예: Pull-up"
                       onChange={(event) => {
@@ -392,7 +389,6 @@ export default function SettingsMinimumPlatePage() {
                     {exerciseQuery.trim().length > 0 ? (
                       <button
                         type="button"
-                        className="app-search-clear"
                         aria-label="검색어 지우기"
                         onClick={() => {
                           setExerciseQuery("");
@@ -405,16 +401,15 @@ export default function SettingsMinimumPlatePage() {
                   </div>
 
                   {selectedExerciseOption ? (
-                    <div className="workout-combobox-selected" role="status" aria-live="polite">
-                      <span className="workout-combobox-selected-kicker">선택됨</span>
-                      <strong className="workout-combobox-selected-name">
+                    <div role="status" aria-live="polite">
+                      <span>선택됨</span>
+                      <strong>
                         {selectedExerciseOption.category
                           ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
                           : selectedExerciseOption.name}
                       </strong>
                       <button
                         type="button"
-                        className="haptic-tap workout-combobox-selected-edit"
                         onClick={() => selectExerciseOption(null)}
                       >
                         선택 변경
@@ -423,15 +418,14 @@ export default function SettingsMinimumPlatePage() {
                   ) : null}
 
                   {!selectedExerciseOption ? (
-                    <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+                    <div role="listbox" aria-label="운동종목 검색 결과">
                       {visibleExercises.length === 0 ? (
-                        <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                        <span>검색 조건에 맞는 운동종목이 없습니다.</span>
                       ) : (
                         visibleExercises.map((exercise) => (
                           <button
                             key={exercise.id}
                             type="button"
-                            className={`haptic-tap workout-combobox-option${ruleDraft.exerciseId === exercise.id ? " is-active" : ""}`}
                             onClick={() => {
                               selectExerciseOption(exercise);
                             }}
@@ -466,7 +460,7 @@ export default function SettingsMinimumPlatePage() {
             </CardContent>
           </Card>
 
-          {sheetError ? <p className="text-sm text-[var(--color-danger)]">{sheetError}</p> : null}
+          {sheetError ? <p>{sheetError}</p> : null}
         </div>
       </BottomSheet>
     </div>

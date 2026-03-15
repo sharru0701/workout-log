@@ -188,11 +188,6 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
 
   return (
     <article
-      className={`workout-set-card grid gap-2 transition-[box-shadow,border-color,background-color] duration-300 ${
-        highlighted
-          ? "border-[var(--accent)] bg-[color:color-mix(in_srgb,var(--accent)_10%,var(--bg-elevated))] shadow-[0_0_0_2px_color-mix(in_srgb,var(--accent)_22%,transparent)]"
-          : ""
-      }`}
       draggable
       onDragStart={() => onDragStart(sessionId, exercise.id)}
       onDragOver={(event) => {
@@ -203,55 +198,52 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         onDrop(sessionId, exercise.id);
       }}
     >
-      <div className="program-store-row-head">
-        <div className="flex items-center gap-2">
+      <div>
+        <div>
           {operatorStyle ? (
             <>
-              <span className={`ui-badge ${operatorRowTypeTone(exercise.rowType)}`}>
+              <span>
                 {operatorRowTypeLabel(exercise.rowType)}
               </span>
               {operatorAutoRow && exercise.progressionTarget ? (
-                <span className="ui-badge ui-badge-neutral">{progressionTargetLabel(exercise.progressionTarget)}</span>
+                <span>{progressionTargetLabel(exercise.progressionTarget)}</span>
               ) : null}
             </>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
+        <div>
           <button
             type="button"
-            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--text-secondary)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)] disabled:cursor-default disabled:opacity-35"
             style={circleActionButtonStyle}
             aria-label="운동 위로 이동"
             title="운동 위로 이동"
             onClick={() => onMove(sessionId, exercise.id, "up")}
             disabled={!canMoveUp}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <path d="m6.75 14.25 5.25-5.25 5.25 5.25" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <button
             type="button"
-            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--text-secondary)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)] disabled:cursor-default disabled:opacity-35"
             style={circleActionButtonStyle}
             aria-label="운동 아래로 이동"
             title="운동 아래로 이동"
             onClick={() => onMove(sessionId, exercise.id, "down")}
             disabled={!canMoveDown}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="h-5.5 w-5.5" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
               <path d="m6.75 9.75 5.25 5.25 5.25-5.25" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </button>
           <button
             type="button"
-            className="haptic-tap flex shrink-0 items-center justify-center rounded-full border bg-[color:color-mix(in_srgb,var(--bg-surface)_74%,transparent)] text-[var(--color-warning)] shadow-[0_8px_18px_-16px_color-mix(in_srgb,#000000_45%,transparent)]"
             style={circleActionButtonStyle}
             aria-label="운동 삭제"
             title="운동 삭제"
             onClick={() => onDelete(sessionId, exercise.id)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" className="h-6 w-6" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true">
               <path d="M4.5 7.5h15" strokeLinecap="round" />
               <path d="M9.75 3.75h4.5" strokeLinecap="round" />
               <path d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -262,29 +254,28 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         </div>
       </div>
 
-      <div className="grid gap-1">
-        <span className="ui-card-label">운동종목</span>
-        <div className="workout-combobox" data-no-swipe="true">
+      <div>
+        <span>운동종목</span>
+        <div data-no-swipe="true">
           {selectedExerciseOption && !exercisePickerOpen ? (
             <button
               type="button"
-              className="haptic-tap flex items-center justify-between gap-3 rounded-[0.9rem] border border-[color:color-mix(in_srgb,var(--accent-primary)_34%,transparent)] bg-[color:color-mix(in_srgb,var(--accent-primary)_13%,transparent)] px-3 py-3 text-left"
               onClick={() => {
                 setExerciseQuery(selectedExerciseOption.name);
                 setExercisePickerOpen(true);
               }}
             >
-              <strong className="min-w-0 truncate text-[0.96rem] text-[var(--text-primary)]">
+              <strong>
                 {formatExerciseOptionLabel(selectedExerciseOption)}
               </strong>
-              <span className="rounded-full border border-[color:color-mix(in_srgb,var(--accent-primary)_42%,transparent)] bg-[color:color-mix(in_srgb,var(--bg-surface)_68%,transparent)] px-3 py-1 text-[0.78rem] font-semibold text-[color:color-mix(in_srgb,var(--accent-primary)_88%,var(--text-primary))]">
+              <span>
                 변경
               </span>
             </button>
           ) : (
             <>
-              <div className="app-search-shell">
-                <span className="app-search-icon" aria-hidden="true">
+              <div>
+                <span aria-hidden="true">
                   <svg viewBox="0 0 24 24" focusable="false">
                     <circle cx="11" cy="11" r="7" />
                     <path d="m20 20-3.8-3.8" />
@@ -294,7 +285,6 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                   ref={exerciseInputRef}
                   type="search"
                   inputMode="search"
-                  className="app-search-input"
                   value={exerciseQuery}
                   placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
                   onChange={(event) => {
@@ -317,7 +307,6 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 {exerciseQuery.trim().length > 0 ? (
                   <button
                     type="button"
-                    className="app-search-clear"
                     aria-label="검색어 지우기"
                     onClick={() => {
                       setExerciseQuery("");
@@ -330,19 +319,16 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 ) : null}
               </div>
 
-              <div className="workout-combobox-panel" role="listbox" aria-label="운동종목 검색 결과">
+              <div role="listbox" aria-label="운동종목 검색 결과">
                 {exerciseOptionsLoading ? (
-                  <span className="workout-combobox-empty">검색 중...</span>
+                  <span>검색 중...</span>
                 ) : filteredExerciseOptions.length === 0 ? (
-                  <span className="workout-combobox-empty">검색 조건에 맞는 운동종목이 없습니다.</span>
+                  <span>검색 조건에 맞는 운동종목이 없습니다.</span>
                 ) : (
                   filteredExerciseOptions.map((option) => (
                     <button
                       key={option.id}
                       type="button"
-                      className={`haptic-tap workout-combobox-option${
-                        exercise.exerciseName.trim().toLowerCase() === option.name.trim().toLowerCase() ? " is-active" : ""
-                      }`}
                       onMouseDown={(event) => {
                         event.preventDefault();
                       }}
@@ -361,7 +347,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       </div>
 
       {!operatorStyle ? (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <div>
           <AppSelect
             label="수행 방식"
             value={exercise.mode}
@@ -392,7 +378,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           )}
         </div>
       ) : (
-        <div className="grid gap-2">
+        <div>
           <AppSelect
             label="행 타입"
             value={exercise.rowType ?? "CUSTOM"}
@@ -435,26 +421,26 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
               <option value="OHP">OHP</option>
             </AppSelect>
           ) : null}
-          <div className="rounded-lg border border-dashed px-3 py-2 text-xs text-[var(--text-secondary)]">
+          <div>
             {operatorRowTypeHelp(exercise.rowType)}
           </div>
           {operatorAutoDefaults ? (
-            <div className="rounded-lg border px-3 py-2 text-sm text-[var(--text-secondary)]">
-              Operator 자동 설정: <strong className="text-[var(--text-primary)]">{operatorAutoDefaults.sets}세트 x {operatorAutoDefaults.reps}회</strong>
+            <div>
+              Operator 자동 설정: <strong>{operatorAutoDefaults.sets}세트 x {operatorAutoDefaults.reps}회</strong>
             </div>
           ) : null}
         </div>
       )}
 
       {!operatorAutoRow ? (
-        <div className="grid grid-cols-2 gap-2">
+        <div>
           <AppNumberStepper label="세트" value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
           <AppNumberStepper label="횟수" value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
         </div>
       ) : null}
 
-      <label className="grid gap-1">
-        <span className="ui-card-label">메모</span>
+      <label>
+        <span>메모</span>
         <AppTextInput variant="workout" value={exercise.note} onChange={(event) => onPatch(sessionId, exercise.id, { note: event.target.value })} placeholder="세션 메모" />
       </label>
     </article>

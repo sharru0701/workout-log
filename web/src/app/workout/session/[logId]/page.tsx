@@ -178,18 +178,16 @@ export default function WorkoutSessionDetailPage() {
   }, [compareRows]);
 
   return (
-    <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
+    <div>
 
-      <Card className="grid grid-cols-1 md:grid-cols-4 gap-3 items-end">
+      <Card>
         <a
-          className="haptic-tap rounded-xl border px-4 py-2 text-center font-medium md:col-span-2"
           href={APP_ROUTES.todayLog}
         >
           오늘 기록으로 돌아가기
         </a>
 
         <button
-          className="haptic-tap rounded-xl border px-4 py-2 font-medium"
           onClick={() => {
             setItem(null);
             setError(null);
@@ -225,17 +223,17 @@ export default function WorkoutSessionDetailPage() {
 
       {item && (
         <>
-          <Card className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+          <Card>
             <div>
-              <div className="ui-card-label">로그 ID</div>
-              <div className="font-mono break-all">{item.id}</div>
+              <div>로그 ID</div>
+              <div>{item.id}</div>
             </div>
             <div>
-              <div className="ui-card-label">수행 시각</div>
+              <div>수행 시각</div>
               <div>{new Date(item.performedAt).toLocaleString()}</div>
             </div>
             <div>
-              <div className="ui-card-label">세션 키</div>
+              <div>세션 키</div>
               <div>
                 {item.generatedSession?.sessionKey
                   ? formatSessionKeyLabel(item.generatedSession.sessionKey)
@@ -244,23 +242,23 @@ export default function WorkoutSessionDetailPage() {
             </div>
           </Card>
 
-          <Card className="grid grid-cols-3 gap-3 text-sm">
+          <Card>
             <div>
-              <div className="ui-card-label">일치</div>
-              <div className="text-lg font-semibold">{stats.matched}</div>
+              <div>일치</div>
+              <div>{stats.matched}</div>
             </div>
             <div>
-              <div className="ui-card-label">누락</div>
-              <div className="text-lg font-semibold">{stats.missing}</div>
+              <div>누락</div>
+              <div>{stats.missing}</div>
             </div>
             <div>
-              <div className="ui-card-label">추가</div>
-              <div className="text-lg font-semibold">{stats.extra}</div>
+              <div>추가</div>
+              <div>{stats.extra}</div>
             </div>
           </Card>
 
-          <Card className="space-y-3 text-sm">
-            <div className="ios-section-heading">자동 진행</div>
+          <Card>
+            <div>자동 진행</div>
             <NoticeStateRows
               message={summarizeProgression(item.progression ?? null)}
               tone={progressionTone(item.progression ?? null)}
@@ -268,44 +266,44 @@ export default function WorkoutSessionDetailPage() {
             />
             {item.progression?.event ? (
               <>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <div>
                   <div>
-                    <div className="ui-card-label">이벤트</div>
+                    <div>이벤트</div>
                     <div>{item.progression.event.eventType}</div>
                   </div>
                   <div>
-                    <div className="ui-card-label">프로그램</div>
+                    <div>프로그램</div>
                     <div>{item.progression.event.programSlug}</div>
                   </div>
                   <div>
-                    <div className="ui-card-label">세션 진행</div>
+                    <div>세션 진행</div>
                     <div>{item.progression.event.didAdvanceSession ? "예" : "아니오"}</div>
                   </div>
                   <div>
-                    <div className="ui-card-label">적용 시각</div>
+                    <div>적용 시각</div>
                     <div>{new Date(item.progression.event.createdAt).toLocaleString()}</div>
                   </div>
                 </div>
                 {item.progression.event.targetDecisions.length > 0 ? (
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full text-sm ios-data-table">
-                      <thead className="text-neutral-600">
+                  <div>
+                    <table>
+                      <thead>
                         <tr>
-                          <th className="text-left py-2 pr-3">Target</th>
-                          <th className="text-right py-2 px-3">결과</th>
-                          <th className="text-right py-2 px-3">변화</th>
-                          <th className="text-right py-2 pl-3">사유</th>
+                          <th>Target</th>
+                          <th>결과</th>
+                          <th>변화</th>
+                          <th>사유</th>
                         </tr>
                       </thead>
                       <tbody>
                         {item.progression.event.targetDecisions.map((decision, idx) => (
-                          <tr key={`${decision.target}-${decision.eventType}-${idx}`} className="border-t">
-                            <td className="py-1 pr-3">{decision.target}</td>
-                            <td className="py-1 px-3 text-right">{decision.eventType}</td>
-                            <td className="py-1 px-3 text-right">
+                          <tr key={`${decision.target}-${decision.eventType}-${idx}`}>
+                            <td>{decision.target}</td>
+                            <td>{decision.eventType}</td>
+                            <td>
                               {formatKg(decision.beforeWorkKg)} → {formatKg(decision.afterWorkKg)}
                             </td>
-                            <td className="py-1 pl-3 text-right">{decision.reason}</td>
+                            <td>{decision.reason}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -321,7 +319,7 @@ export default function WorkoutSessionDetailPage() {
           </Card>
 
           <Card>
-            <div className="ios-section-heading mb-2">계획 대비 수행</div>
+            <div>계획 대비 수행</div>
             {compareRows.length === 0 ? (
               <EmptyStateRows
                 when
@@ -329,16 +327,16 @@ export default function WorkoutSessionDetailPage() {
                 description="비교할 계획/수행 세트가 없습니다."
               />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm ios-data-table">
-                  <thead className="text-neutral-600">
+              <div>
+                <table>
+                  <thead>
                     <tr>
-                      <th className="text-left py-2 pr-3">운동</th>
-                      <th className="text-right py-2 px-3">세트</th>
-                      <th className="text-right py-2 px-3">계획</th>
-                      <th className="text-right py-2 px-3">수행</th>
-                      <th className="text-right py-2 pl-3">차이</th>
-                      <th className="text-right py-2 pl-3">상태</th>
+                      <th>운동</th>
+                      <th>세트</th>
+                      <th>계획</th>
+                      <th>수행</th>
+                      <th>차이</th>
+                      <th>상태</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -386,13 +384,13 @@ export default function WorkoutSessionDetailPage() {
                             : "logged";
 
                       return (
-                        <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`} className="border-t">
-                          <td className="py-1 pr-3">{r.exerciseName}</td>
-                          <td className="py-1 px-3 text-right">{r.setNumber}</td>
-                          <td className="py-1 px-3 text-right">{plannedText}</td>
-                          <td className="py-1 px-3 text-right">{performedText}</td>
-                          <td className="py-1 pl-3 text-right">{diffText}</td>
-                          <td className="py-1 pl-3 text-right">{status}</td>
+                        <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`}>
+                          <td>{r.exerciseName}</td>
+                          <td>{r.setNumber}</td>
+                          <td>{plannedText}</td>
+                          <td>{performedText}</td>
+                          <td>{diffText}</td>
+                          <td>{status}</td>
                         </tr>
                       );
                     })}

@@ -93,11 +93,11 @@ export default function SettingsDataExportPage() {
   };
 
   return (
-    <div className="native-page native-page-enter tab-screen settings-screen momentum-scroll">
+    <div>
       <NoticeStateRows message={notice} tone="success" label="Export 완료" />
       <NoticeStateRows message={error} tone="warning" label="Export 실패" />
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="데이터 Export" description="Export는 iOS 표준 ShareSheet를 우선 사용합니다." />
         <BaseGroupedList ariaLabel="Data export actions">
           <NavigationRow
@@ -127,10 +127,10 @@ export default function SettingsDataExportPage() {
       </section>
 
       {exportingLabel ? (
-        <section className="grid gap-2">
+        <section>
           <Card tone="subtle" padding="md" elevated={false}>
             <CardContent>
-              <p className="m-0 text-sm text-[var(--text-secondary)]">{exportingLabel}</p>
+              <p>{exportingLabel}</p>
             </CardContent>
           </Card>
         </section>

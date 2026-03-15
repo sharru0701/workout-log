@@ -92,11 +92,6 @@ function cx(...classes: Array<string | false | null | undefined>) {
 export function DashboardScreen({ children, className, wide = false }: DashboardScreenProps) {
   return (
     <div
-      className={cx(
-        "native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll",
-        wide && "tab-screen-wide",
-        className,
-      )}
     >
       {children}
     </div>
@@ -116,26 +111,25 @@ export function DashboardHero({
   children,
 }: DashboardHeroProps) {
   return (
-    <header className={cx("app-dashboard-hero", `app-dashboard-hero--${tone}`, className)}>
-      {topSlot ? <div className="app-dashboard-hero-top-slot">{topSlot}</div> : null}
+    <header>
+      {topSlot ? <div>{topSlot}</div> : null}
 
       {(eyebrow || title || description) && (
-        <div className="app-dashboard-hero-copy">
-          {eyebrow ? <div className="app-dashboard-eyebrow">{eyebrow}</div> : null}
-          <h1 className="app-dashboard-title">{title}</h1>
-          {description ? <p className="app-dashboard-description">{description}</p> : null}
+        <div>
+          {eyebrow ? <div>{eyebrow}</div> : null}
+          <h1>{title}</h1>
+          {description ? <p>{description}</p> : null}
         </div>
       )}
 
       {(primaryAction || secondaryAction) && (
-        <div className="app-dashboard-hero-actions">
+        <div>
           {primaryAction ? (
             <PrimaryButton
               as={Link}
               href={primaryAction.href}
               variant={primaryAction.tone === "secondary" ? "secondary" : "primary"}
               size="lg"
-              className={cx("app-dashboard-hero-action")}
             >
               {primaryAction.label}
             </PrimaryButton>
@@ -146,7 +140,6 @@ export function DashboardHero({
               href={secondaryAction.href}
               variant={secondaryAction.tone === "secondary" ? "secondary" : "primary"}
               size="lg"
-              className={cx("app-dashboard-hero-action")}
             >
               {secondaryAction.label}
             </PrimaryButton>
@@ -162,11 +155,11 @@ export function DashboardHero({
 
 export function DashboardMetricStrip({ items, className }: DashboardMetricStripProps) {
   return (
-    <div className={cx("app-dashboard-metric-strip", className)}>
+    <div>
       {items.map((item) => (
-        <div key={`${item.label}-${item.value}`} className="app-dashboard-metric-pill">
-          <div className="app-dashboard-metric-label">{item.label}</div>
-          <div className="app-dashboard-metric-value">{item.value}</div>
+        <div key={`${item.label}-${item.value}`}>
+          <div>{item.label}</div>
+          <div>{item.value}</div>
         </div>
       ))}
     </div>
@@ -182,12 +175,12 @@ export function DashboardSection({
   headerTrigger = false,
 }: DashboardSectionProps) {
   return (
-    <section className={cx("app-dashboard-section", className)}>
-      <div className="app-dashboard-section-head" data-pull-refresh-trigger={headerTrigger ? "true" : undefined}>
-        <h2 id={titleId} className="app-dashboard-section-title">
+    <section>
+      <div data-pull-refresh-trigger={headerTrigger ? "true" : undefined}>
+        <h2 id={titleId}>
           {title}
         </h2>
-        {description ? <p className="app-dashboard-section-description">{description}</p> : null}
+        {description ? <p>{description}</p> : null}
       </div>
       {children}
     </section>
@@ -197,7 +190,6 @@ export function DashboardSection({
 export function DashboardActionGrid({ children, className, ariaLabel, ariaLabelledBy }: DashboardActionGridProps) {
   return (
     <div
-      className={cx("app-dashboard-action-grid", className)}
       role="list"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabel ? undefined : ariaLabelledBy}
@@ -230,17 +222,16 @@ export function DashboardActionCard({
       href={href}
       padding="none"
       interactive
-      className={cx("app-dashboard-action-card", `app-dashboard-action-card--${tone}`, className)}
       role="listitem"
     >
-      <div className="app-dashboard-action-top">
-        {symbol ? <span className="app-dashboard-action-symbol">{symbol}</span> : null}
-        {badge ? <span className="app-dashboard-action-badge">{badge}</span> : null}
+      <div>
+        {symbol ? <span>{symbol}</span> : null}
+        {badge ? <span>{badge}</span> : null}
       </div>
-      <div className="app-dashboard-action-title">{title}</div>
-      {subtitle ? <div className="app-dashboard-action-subtitle">{subtitle}</div> : null}
-      <p className="app-dashboard-action-description">{description}</p>
-      {meta ? <div className="app-dashboard-action-meta">{meta}</div> : null}
+      <div>{title}</div>
+      {subtitle ? <div>{subtitle}</div> : null}
+      <p>{description}</p>
+      {meta ? <div>{meta}</div> : null}
     </Card>
   );
 }
@@ -257,10 +248,10 @@ export function DashboardActionSection({
   const titleId = useId();
 
   return (
-    <DashboardSection title={title} description={description} className={className} titleId={titleId}>
-      <DashboardActionGrid className={gridClassName} ariaLabel={ariaLabel} ariaLabelledBy={titleId}>
+    <DashboardSection title={title} description={description} titleId={titleId}>
+      <DashboardActionGrid ariaLabel={ariaLabel} ariaLabelledBy={titleId}>
         {items.map((item, index) => (
-          <DashboardActionCard key={toActionItemKey(item, index)} {...item} className={cardClassName} />
+          <DashboardActionCard key={toActionItemKey(item, index)} {...item} />
         ))}
       </DashboardActionGrid>
     </DashboardSection>
@@ -269,7 +260,7 @@ export function DashboardActionSection({
 
 export function DashboardSurface({ children, className, ...rest }: DashboardSurfaceProps) {
   return (
-    <Card padding="none" className={cx("app-dashboard-surface", className)} {...rest}>
+    <Card padding="none" {...rest}>
       {children}
     </Card>
   );
