@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
@@ -18,14 +18,6 @@ const appMono = JetBrains_Mono({
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
-
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  // No viewportFit and no themeColor: the fixed-position app canvas fills the
-  // full screen (including behind iOS toolbars), so Safari reads --color-bg from
-  // the canvas and blends it seamlessly with the toolbar → transparent appearance.
-};
 
 export const metadata: Metadata = {
   title: "Workout Log",
