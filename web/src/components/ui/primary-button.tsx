@@ -32,13 +32,10 @@ export function PrimaryButton<T extends ElementType = "button">({
 }: PrimaryButtonProps<T>) {
   const Component = (as ?? "button") as ElementType;
   const resolvedClassName = cx(
-    interactive && "haptic-tap",
-    "app-pill-button",
-    interactive && "app-pill-button--interactive",
-    variant === "primary" && "ui-primary-button",
-    `app-pill-button--${variant}`,
-    `app-pill-button--${size}`,
-    fullWidth && "app-pill-button--full",
+    "btn",
+    variant && `btn-${variant}`,
+    size && `btn-${size}`,
+    fullWidth && "btn-full",
     className,
   );
 
@@ -46,14 +43,14 @@ export function PrimaryButton<T extends ElementType = "button">({
     const buttonProps = props as ComponentPropsWithoutRef<"button">;
     const { type = "button", ...restButtonProps } = buttonProps;
     return (
-      <button type={type} {...restButtonProps}>
+      <button type={type} className={resolvedClassName} {...restButtonProps}>
         {children}
       </button>
     );
   }
 
   return (
-    <Component {...props}>
+    <Component className={resolvedClassName} {...props}>
       {children}
     </Component>
   );

@@ -16,6 +16,23 @@
   opacity: 0.8;
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-lg {
+  padding: 14px var(--space-lg);
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+}
+
+.btn-full {
+  width: 100%;
+}
+
 .btn-primary {
   background-color: var(--color-primary);
   color: #ffffff;
