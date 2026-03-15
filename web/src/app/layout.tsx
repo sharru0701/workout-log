@@ -23,12 +23,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // Media-query theme-color covers SYSTEM theme users:
-  // Safari picks the matching meta based on the device's current appearance.
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f3f6fb" },
-    { media: "(prefers-color-scheme: dark)",  color: "#0d1117" },
-  ],
+  // No themeColor: let Safari use natural frosted-glass.
+  // The html background-color (--color-bg) fills behind the pill
+  // so frosted glass blurs the page color → looks transparent.
 };
 
 export const metadata: Metadata = {

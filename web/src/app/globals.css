@@ -345,9 +345,7 @@ img, svg { display: block; max-width: 100%; }
   align-items: stretch;
   flex-shrink: 0;
 
-  /* DIAG: use page bg color instead of surface to see if Safari pill follows */
-  background-color: var(--color-bg);
-  background-clip: unset;
+  background-color: var(--color-surface);
   border-top: 1px solid var(--color-border);
 
   padding-bottom: env(safe-area-inset-bottom, 0px);
