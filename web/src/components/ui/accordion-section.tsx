@@ -29,35 +29,30 @@ export function AccordionSection({
 
   return (
     <section
-      className={`ui-accordion ${surface === "surface" ? "ui-accordion-surface" : "ui-accordion-flat"} ${
-        isOpen ? "is-open" : ""
-      } ${className}`.trim()}
     >
       <button
         id={triggerId}
         type="button"
-        className="haptic-tap ui-accordion-trigger"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        <span className="ui-accordion-copy">
-          <span className="ui-accordion-title">{title}</span>
-          {!MINIMAL_COPY_MODE && description ? <span className="ui-accordion-description">{description}</span> : null}
+        <span>
+          <span>{title}</span>
+          {!MINIMAL_COPY_MODE && description ? <span>{description}</span> : null}
         </span>
-        <span className="ui-accordion-meta">
+        <span>
           {summarySlot}
-          <span className="ui-accordion-chevron" aria-hidden="true" />
+          <span aria-hidden="true" />
         </span>
       </button>
 
       <div
         id={panelId}
-        className="ui-accordion-content"
         role="region"
         aria-labelledby={triggerId}
       >
-        <div className="ui-accordion-inner">{children}</div>
+        <div>{children}</div>
       </div>
     </section>
   );

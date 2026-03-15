@@ -86,7 +86,7 @@ function useFilteredOptions(options: SelectionOption[], query: string) {
 
 function SelectionLayout({ children }: SelectionLayoutProps) {
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div>
       {children}
     </div>
   );
@@ -102,10 +102,10 @@ function SearchInput({
   placeholder: string;
 }) {
   return (
-    <section className="grid gap-2">
+    <section>
       <SectionHeader title="검색" />
-      <div className="app-search-shell" aria-label="검색 입력">
-        <span className="app-search-icon" aria-hidden="true">
+      <div aria-label="검색 입력">
+        <span aria-hidden="true">
           <svg viewBox="0 0 24 24" focusable="false">
             <circle cx="11" cy="11" r="7" />
             <path d="m20 20-3.8-3.8" />
@@ -114,7 +114,6 @@ function SearchInput({
         <input
           type="search"
           inputMode="search"
-          className="app-search-input"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}
@@ -123,7 +122,6 @@ function SearchInput({
         {value.trim().length > 0 ? (
           <button
             type="button"
-            className="app-search-clear"
             aria-label="검색어 지우기"
             onClick={() => onChange("")}
           >
@@ -155,7 +153,7 @@ export function SingleSelectionScreen({
   return (
     <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title={sectionTitle} />
         {filtered.length === 0 ? (
           <EmptyStateRows when label="설정 값 없음" description={emptyDescription} />
@@ -201,7 +199,7 @@ export function MultiSelectionScreen({
   return (
     <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title={sectionTitle} />
         {filtered.length === 0 ? (
           <EmptyStateRows when label="설정 값 없음" description={emptyDescription} />
@@ -222,7 +220,7 @@ export function MultiSelectionScreen({
         )}
         {sectionFootnote ? <SectionFootnote>{sectionFootnote}</SectionFootnote> : null}
       </section>
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="적용" />
         <BaseGroupedList ariaLabel="다중 선택 적용">
           <NavigationRow label="적용 후 돌아가기" onPress={onApply} description="선택값을 바로 반영합니다." />
@@ -254,17 +252,16 @@ export function PickerSelectionScreen({
 
   return (
     <SelectionLayout>
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title={sectionTitle} />
         <BaseGroupedList ariaLabel={ariaLabel}>
           <li>
-            <div className="flex flex-col gap-1 px-4 py-3">
-              <label className="ui-card-label" htmlFor={inputId}>
+            <div>
+              <label htmlFor={inputId}>
                 {inputLabel}
               </label>
               <input
                 id={inputId}
-                className="rounded-lg border px-3 py-2"
                 type={inputType}
                 value={value}
                 min={min}
@@ -277,7 +274,7 @@ export function PickerSelectionScreen({
         </BaseGroupedList>
         {sectionFootnote ? <SectionFootnote>{sectionFootnote}</SectionFootnote> : null}
       </section>
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="적용" />
         <BaseGroupedList ariaLabel="입력 값 적용">
           <NavigationRow label={applyLabel} description={applyDescription} onPress={onApply} />

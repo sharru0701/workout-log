@@ -382,7 +382,6 @@ export const WheelPicker = memo(
       items.push(
         <div
           key={i}
-          className={`wheel-picker-item${isSelected ? " is-selected" : ""}`}
           style={{
             position: "absolute",
             left: 0,
@@ -403,7 +402,6 @@ export const WheelPicker = memo(
     return (
       <div
         ref={containerRef}
-        className="wheel-picker"
         style={{ height: containerHeight, position: "relative", overflow: "hidden" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
@@ -412,7 +410,6 @@ export const WheelPicker = memo(
       >
         {/* Highlight band for selected item */}
         <div
-          className="wheel-picker-highlight"
           style={{
             position: "absolute",
             left: 0,

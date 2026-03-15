@@ -72,7 +72,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
 
   return (
     <div
-      className={`native-page native-page-enter tab-screen settings-screen settings-screen-main momentum-scroll ${className}`.trim()}
       {...pullToRefresh.bind}
     >
       <PullToRefreshIndicator
@@ -82,7 +81,7 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
         refreshingLabel="설정 새로고침 중..."
         completeLabel="설정 다시 확인 완료"
       />
-      <section className="grid gap-2">
+      <section>
         <div data-pull-refresh-trigger="true">
           <SectionHeader
             title="Settings"

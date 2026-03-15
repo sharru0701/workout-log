@@ -67,8 +67,8 @@ export function NumberPickerSheet({
       }}
       footer={null}
     >
-      <div className="number-picker-sheet-body">
-        <div className="number-picker-wheel-wrapper">
+      <div>
+        <div>
           <WheelPicker
             ref={pickerRef}
             values={values}
@@ -78,7 +78,7 @@ export function NumberPickerSheet({
             visibleCount={7}
             formatValue={formatValue}
           />
-          {unit ? <span className="number-picker-unit">{unit}</span> : null}
+          {unit ? <span>{unit}</span> : null}
         </div>
       </div>
     </BottomSheet>
@@ -138,12 +138,11 @@ export function NumberPickerField({
     <>
       <button
         type="button"
-        className={`${fieldClass}${complete ? " is-complete" : ""} ${className}`.trim()}
         onClick={() => setOpen(true)}
         aria-label={label ? `${label}: ${displayText}` : displayText}
       >
-        <span className="number-picker-field-value">{displayText}</span>
-        {unit ? <span className="number-picker-field-unit">{unit}</span> : null}
+        <span>{displayText}</span>
+        {unit ? <span>{unit}</span> : null}
       </button>
       <NumberPickerSheet
         open={open}

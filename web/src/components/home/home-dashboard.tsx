@@ -22,14 +22,14 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
 
   if (!hasPlan) {
     return (
-      <section className="hd-section">
-        <Card as={Link} href={APP_ROUTES.programStore} padding="none" className="hd-program-card">
-          <div className="hd-program-empty">
-            <div className="hd-program-empty-title">프로그램을 시작하세요</div>
-            <p className="hd-program-empty-copy">
+      <section>
+        <Card as={Link} href={APP_ROUTES.programStore} padding="none">
+          <div>
+            <div>프로그램을 시작하세요</div>
+            <p>
               프로그램 스토어에서 프로그램을 선택하면 오늘 운동이 자동으로 구성됩니다.
             </p>
-            <span className="hd-program-empty-action">프로그램 둘러보기</span>
+            <span>프로그램 둘러보기</span>
           </div>
         </Card>
       </section>
@@ -37,30 +37,29 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
   }
 
   return (
-    <section className="hd-section">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">현재 프로그램</h2>
+    <section>
+      <div>
+        <h2>현재 프로그램</h2>
       </div>
-      <Card as={Link} href={planHref} padding="none" className="hd-program-card">
-        <div className="hd-program-name">{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
+      <Card as={Link} href={planHref} padding="none">
+        <div>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
         {planOverview.highlightedProgramName && (
-          <div className="hd-program-base">{planOverview.highlightedProgramName}</div>
+          <div>{planOverview.highlightedProgramName}</div>
         )}
-        <div className="hd-program-meta-row">
+        <div>
           {planOverview.lastPerformedAtLabel && (
-            <span className="hd-program-meta">마지막 수행 {planOverview.lastPerformedAtLabel}</span>
+            <span>마지막 수행 {planOverview.lastPerformedAtLabel}</span>
           )}
-          <span className="hd-program-meta">최근 7일 {weeklySummary.activeDays}일 운동</span>
+          <span>최근 7일 {weeklySummary.activeDays}일 운동</span>
         </div>
-        <div className="hd-week-strip" aria-label="최근 7일 운동 활동">
+        <div aria-label="최근 7일 운동 활동">
           {weeklySummary.days.map((day) => (
             <div
               key={day.key}
-              className={`hd-week-day${day.hasWorkout ? " is-active" : ""}${day.isToday ? " is-today" : ""}`}
               aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
             >
-              <span className="hd-week-day-label">{day.shortLabel}</span>
-              <span className="hd-week-day-dot" aria-hidden="true" />
+              <span>{day.shortLabel}</span>
+              <span aria-hidden="true" />
             </div>
           ))}
         </div>
@@ -81,11 +80,11 @@ function TodaySessionSection({ data }: { data: HomeData }) {
     : today.plannedExercises.map((ex) => ({ name: ex.name, role: ex.role, summary: ex.summary }));
 
   return (
-    <section className="hd-section" data-pull-refresh-trigger="true">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">오늘의 운동</h2>
+    <section data-pull-refresh-trigger="true">
+      <div>
+        <h2>오늘의 운동</h2>
         {hasTodayActivity && (
-          <span className="hd-section-action">{today.completedSets}세트 완료</span>
+          <span>{today.completedSets}세트 완료</span>
         )}
       </div>
       <SessionCard
@@ -104,9 +103,9 @@ function TodaySessionSection({ data }: { data: HomeData }) {
 
 function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
-    <section className="hd-section">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">지난 세션</h2>
+    <section>
+      <div>
+        <h2>지난 세션</h2>
       </div>
       <SessionCard
         variant="last"
@@ -131,26 +130,26 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <section className="hd-section">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">스트렝스 진행</h2>
+    <section>
+      <div>
+        <h2>스트렝스 진행</h2>
       </div>
-      <div className="hd-strength-grid">
+      <div>
         {items.map((item) => {
           const href = item.exerciseId
             ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
             : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
           return (
-            <Card as={Link} key={item.exerciseName} href={href} padding="none" className="hd-strength-card">
-              <div className="hd-strength-name">{item.exerciseName}</div>
-              <div className="hd-strength-value">{item.bestE1rm}kg</div>
-              <div className="hd-strength-label">Best e1RM</div>
+            <Card as={Link} key={item.exerciseName} href={href} padding="none">
+              <div>{item.exerciseName}</div>
+              <div>{item.bestE1rm}kg</div>
+              <div>Best e1RM</div>
               {item.improvement !== 0 ? (
-                <div className={`hd-strength-trend hd-strength-trend--${item.trend}`}>
+                <div>
                   {item.trend === "up" ? "+" : ""}{item.improvement}kg
                 </div>
               ) : (
-                <div className="hd-strength-trend hd-strength-trend--flat">-</div>
+                <div>-</div>
               )}
             </Card>
           );
@@ -171,19 +170,19 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
   const selected = selectedIndex !== null ? points[selectedIndex] ?? null : null;
 
   return (
-    <section className="hd-section">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">주간 볼륨</h2>
+    <section>
+      <div>
+        <h2>주간 볼륨</h2>
       </div>
-      <Card padding="none" className="hd-volume-card">
+      <Card padding="none">
         {selected && (
-          <div className="hd-volume-detail">
-            <span className="hd-volume-detail-label">{selected.label} 주</span>
-            <span className="hd-volume-detail-value">{formatVolume(selected.tonnage)}</span>
-            <span className="hd-volume-detail-sub">{selected.sets}세트 · {selected.reps}회</span>
+          <div>
+            <span>{selected.label} 주</span>
+            <span>{formatVolume(selected.tonnage)}</span>
+            <span>{selected.sets}세트 · {selected.reps}회</span>
           </div>
         )}
-        <div className="hd-volume-bars">
+        <div>
           {points.map((point, i) => {
             const height = Math.max((point.tonnage / maxTonnage) * 100, 4);
             const isLast = i === points.length - 1;
@@ -192,17 +191,15 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
               <button
                 key={point.period}
                 type="button"
-                className={`hd-volume-col${isSelected ? " is-selected" : ""}`}
                 onClick={() => setSelectedIndex(isSelected ? null : i)}
               >
-                <div className="hd-volume-value">{formatVolume(point.tonnage)}</div>
-                <div className="hd-volume-bar-track">
+                <div>{formatVolume(point.tonnage)}</div>
+                <div>
                   <div
-                    className={`hd-volume-bar${isLast ? " hd-volume-bar--current" : ""}${isSelected ? " hd-volume-bar--selected" : ""}`}
                     style={{ height: `${height}%` }}
                   />
                 </div>
-                <div className="hd-volume-label">{point.label}</div>
+                <div>{point.label}</div>
               </button>
             );
           })}
@@ -219,26 +216,26 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
   if (!hasData) return null;
 
   return (
-    <section className="hd-section">
-      <div className="hd-section-head">
-        <h2 className="hd-section-title">요약 통계</h2>
+    <section>
+      <div>
+        <h2>요약 통계</h2>
       </div>
-      <div className="hd-stats-grid">
-        <Card padding="none" className="hd-stat-chip">
-          <span className="hd-stat-chip-value">{stats.totalSessions}</span>
-          <span className="hd-stat-chip-label">총 운동</span>
+      <div>
+        <Card padding="none">
+          <span>{stats.totalSessions}</span>
+          <span>총 운동</span>
         </Card>
-        <Card padding="none" className="hd-stat-chip">
-          <span className="hd-stat-chip-value">{formatVolume(stats.totalVolume)}</span>
-          <span className="hd-stat-chip-label">누적 볼륨</span>
+        <Card padding="none">
+          <span>{formatVolume(stats.totalVolume)}</span>
+          <span>누적 볼륨</span>
         </Card>
-        <Card padding="none" className="hd-stat-chip">
-          <span className="hd-stat-chip-value">{stats.currentStreak}일</span>
-          <span className="hd-stat-chip-label">연속 운동</span>
+        <Card padding="none">
+          <span>{stats.currentStreak}일</span>
+          <span>연속 운동</span>
         </Card>
-        <Card padding="none" className="hd-stat-chip">
-          <span className="hd-stat-chip-value">{stats.thisMonthSessions}</span>
-          <span className="hd-stat-chip-label">이번 달</span>
+        <Card padding="none">
+          <span>{stats.thisMonthSessions}</span>
+          <span>이번 달</span>
         </Card>
       </div>
     </section>
@@ -259,7 +256,7 @@ function formatVolume(kg: number): string {
 
 export function HomeDashboard({ data }: { data: HomeData }) {
   return (
-    <div className="hd-layout">
+    <div>
 <ProgramStatusSection data={data} />
       <TodaySessionSection data={data} />
       {data.lastSession && <LastSessionSection session={data.lastSession} />}

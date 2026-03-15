@@ -21,7 +21,7 @@ export function SettingsListExample() {
   const [showLoading, setShowLoading] = useState(false);
 
   return (
-    <div className="native-page tab-screen momentum-scroll">
+    <div>
       <SectionHeader title="연결" />
       <BaseGroupedList ariaLabel="Connectivity settings">
         <ToggleRow

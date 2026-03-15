@@ -40,22 +40,21 @@ export function TopBackButton() {
   }, [router]);
 
   return (
-    <div className={topNavClassName}>
-      <div className="app-top-back-wrap">
-        <button type="button" className="haptic-tap app-top-back-button" onClick={handleBack} aria-label="Go back">
-          <span className="app-top-back-icon" aria-hidden="true" />
+    <div>
+      <div>
+        <button type="button" onClick={handleBack} aria-label="Go back">
+          <span aria-hidden="true" />
         </button>
       </div>
-      <div className="app-top-nav-title">{title}</div>
-      <div className="app-top-settings-wrap">
+      <div>{title}</div>
+      <div>
         <Link
           href="/settings"
           prefetch={false}
-          className={`haptic-tap app-top-settings-button${isSettingsRoute ? " is-active" : ""}`}
           aria-label="Settings"
           aria-current={isSettingsRoute ? "page" : undefined}
         >
-          <span className="app-top-settings-icon" aria-hidden="true">
+          <span aria-hidden="true">
             <svg viewBox="0 0 24 24" focusable="false">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />

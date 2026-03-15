@@ -24,8 +24,8 @@ export function StoreSearchInput({
   };
 
   return (
-    <div className="app-search-shell" aria-label={shellAriaLabel}>
-      <span className="app-search-icon" aria-hidden="true">
+    <div aria-label={shellAriaLabel}>
+      <span aria-hidden="true">
         <svg viewBox="0 0 24 24" focusable="false">
           <circle cx="11" cy="11" r="7" />
           <path d="m20 20-3.8-3.8" />
@@ -34,14 +34,13 @@ export function StoreSearchInput({
       <input
         type="search"
         inputMode="search"
-        className="app-search-input"
         value={value}
         onChange={handleChange}
         placeholder={placeholder}
         aria-label={ariaLabel}
       />
       {hasQuery ? (
-        <button type="button" className="app-search-clear" aria-label={clearAriaLabel} onClick={() => onChange("")}>
+        <button type="button" aria-label={clearAriaLabel} onClick={() => onChange("")}>
           ×
         </button>
       ) : null}

@@ -193,29 +193,28 @@ function ProgramListCard({
       tone="inset"
       elevated={false}
       interactive
-      className="program-store-list-card haptic-tap"
       onClick={onPress}
     >
-      <div className="program-store-list-card-head">
-        <div className="program-store-list-card-copy">
-          <strong className="program-store-list-card-title">
+      <div>
+        <div>
+          <strong>
             {formatProgramDisplayName(item.name)}
           </strong>
           {scheduleLabel ? (
-            <span className="program-store-list-card-meta">{scheduleLabel}</span>
+            <span>{scheduleLabel}</span>
           ) : null}
         </div>
-        <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
+        <span>{badge.label}</span>
       </div>
 
       {item.template.description ? (
-        <p className="program-store-list-card-description">{item.template.description}</p>
+        <p>{item.template.description}</p>
       ) : null}
 
       {tags.length > 0 ? (
-        <div className="program-store-list-card-tags">
+        <div>
           {tags.slice(0, 5).map((tag) => (
-            <span key={tag} className={tagClassName}>
+            <span key={tag}>
               {tag}
             </span>
           ))}
@@ -1156,7 +1155,7 @@ export default function ProgramStorePage() {
   const hasStoreQuery = storeQuery.trim().length > 0;
 
   return (
-    <div className="native-page native-page-enter tab-screen app-dashboard-screen momentum-scroll" {...pullToRefresh.bind}>
+    <div {...pullToRefresh.bind}>
       <PullToRefreshIndicator
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
@@ -1180,8 +1179,8 @@ export default function ProgramStorePage() {
 
       {listItems.length > 0 || hasStoreQuery ? (
         <DashboardSurface data-pull-refresh-trigger="true">
-          <div className="grid gap-1">
-            <span className="ui-card-label">스토어 검색</span>
+          <div>
+            <span>스토어 검색</span>
             <StoreSearchInput
               value={storeQuery}
               onChange={setStoreQuery}
@@ -1210,7 +1209,7 @@ export default function ProgramStorePage() {
             label="표시할 프로그램이 없습니다"
           />
           {marketListItems.length > 0 && (
-            <div className="grid gap-2">
+            <div>
               {marketListItems.map((item) => (
                 <ProgramListCard
                   key={item.key}
@@ -1227,7 +1226,7 @@ export default function ProgramStorePage() {
 
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
-          <div className="grid gap-2">
+          <div>
             {customListItems.map((item) => (
               <ProgramListCard
                 key={item.key}
@@ -1247,11 +1246,10 @@ export default function ProgramStorePage() {
           type="button"
           padding="md"
           interactive
-          className="program-store-create-card haptic-tap"
           onClick={openCreateSheet}
         >
-          <span className="program-store-create-card-title">새 프로그램 만들기</span>
-          <span className="program-store-create-card-description">
+          <span>새 프로그램 만들기</span>
+          <span>
             기존 프로그램 복사 또는 빈 템플릿에서 시작
           </span>
         </Card>
@@ -1263,10 +1261,9 @@ export default function ProgramStorePage() {
         description=""
         onClose={() => setDetailTargetId(null)}
         closeLabel="닫기"
-        className="program-store-sheet program-store-sheet--large"
         footer={
           detailTarget ? (
-            <div className="grid gap-2">
+            <div>
               <PrimaryButton
                 type="button"
                 variant="primary"
@@ -1280,7 +1277,6 @@ export default function ProgramStorePage() {
               </PrimaryButton>
               <button
                 type="button"
-                className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
                 onClick={() => {
                   setCustomizeDraft({
                     name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
@@ -1294,7 +1290,6 @@ export default function ProgramStorePage() {
               {detailTarget.source === "CUSTOM" ? (
                 <button
                   type="button"
-                  className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold text-red-600"
                   disabled={saving}
                   onClick={() => {
                     void deleteCustomTemplate(detailTarget);
@@ -1312,39 +1307,36 @@ export default function ProgramStorePage() {
           const badge = sourceBadgeMeta(detailTarget.source);
           const tags = Array.isArray(detailTarget.template.tags) ? detailTarget.template.tags : [];
           return (
-            <div className="grid gap-5">
+            <div>
 
               {/* 헤더 */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="grid gap-1">
-                  <span className="text-base font-bold leading-snug">
+              <div>
+                <div>
+                  <span>
                     {formatProgramDisplayName(detailTarget.template.name)}
                   </span>
                   {info.scheduleLabel && (
-                    <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+                    <span style={{ color: "var(--text-secondary)" }}>
                       {info.scheduleLabel}
                     </span>
                   )}
                 </div>
-                <span className={`ui-badge ${badge.className} shrink-0`}>{badge.label}</span>
+                <span>{badge.label}</span>
               </div>
 
               {/* 스탯 그리드 */}
-              <div className="grid grid-cols-4 gap-2">
+              <div>
                 {info.stats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="rounded-xl p-2.5 grid gap-1 text-center"
                     style={{ background: "var(--bg-tertiary)" }}
                   >
                     <span
-                      className="text-[10px] font-medium leading-tight"
                       style={{ color: "var(--text-secondary)" }}
                     >
                       {stat.label}
                     </span>
                     <span
-                      className="text-xs font-bold leading-tight"
                       style={{ color: "var(--text-primary)" }}
                     >
                       {stat.value}
@@ -1355,14 +1347,13 @@ export default function ProgramStorePage() {
 
               {/* 프로그램 소개 */}
               {detailTarget.template.description && (
-                <div className="grid gap-2">
+                <div>
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-widest"
                     style={{ color: "var(--text-secondary)" }}
                   >
                     프로그램 소개
                   </span>
-                  <p className="text-sm leading-relaxed" style={{ color: "var(--text-primary)" }}>
+                  <p style={{ color: "var(--text-primary)" }}>
                     {detailTarget.template.description}
                   </p>
                 </div>
@@ -1371,12 +1362,11 @@ export default function ProgramStorePage() {
               {/* 진행 설정 (Operator) */}
               {info.progressionNote && (
                 <div
-                  className="rounded-xl px-4 py-3 flex items-center gap-2 text-xs"
                   style={{
                     background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
                   }}
                 >
-                  <span className="font-semibold" style={{ color: "var(--accent-primary)" }}>
+                  <span style={{ color: "var(--accent-primary)" }}>
                     진행 설정
                   </span>
                   <span style={{ color: "var(--text-secondary)" }}>{info.progressionNote}</span>
@@ -1385,22 +1375,19 @@ export default function ProgramStorePage() {
 
               {/* 훈련 모듈 (Operator) */}
               {info.modules && info.modules.length > 0 && (
-                <div className="grid gap-2">
+                <div>
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-widest"
                     style={{ color: "var(--text-secondary)" }}
                   >
                     훈련 모듈
                   </span>
-                  <div className="grid gap-1.5">
+                  <div>
                     {info.modules.map((mod) => (
                       <div
                         key={mod}
-                        className="rounded-xl px-4 py-3 flex items-center gap-3"
                         style={{ background: "var(--bg-tertiary)" }}
                       >
                         <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0"
                           style={{
                             background: "color-mix(in srgb, var(--accent-primary) 18%, var(--bg-tertiary))",
                             color: "var(--accent-primary)",
@@ -1408,7 +1395,7 @@ export default function ProgramStorePage() {
                         >
                           {mod}
                         </span>
-                        <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+                        <span style={{ color: "var(--text-primary)" }}>
                           {MODULE_NAMES[mod] ?? mod}
                         </span>
                       </div>
@@ -1419,29 +1406,25 @@ export default function ProgramStorePage() {
 
               {/* 세션 구성 (Manual) */}
               {info.sessions && info.sessions.length > 0 && (
-                <div className="grid gap-2">
+                <div>
                   <span
-                    className="text-[11px] font-semibold uppercase tracking-widest"
                     style={{ color: "var(--text-secondary)" }}
                   >
                     세션 구성
                   </span>
-                  <div className="grid gap-2">
+                  <div>
                     {info.sessions.map((session) => (
                       <div
                         key={session.key}
-                        className="rounded-xl overflow-hidden"
                         style={{ background: "var(--bg-tertiary)" }}
                       >
                         <div
-                          className="px-4 py-2.5 flex items-center gap-2"
                           style={{
                             background: "color-mix(in srgb, var(--accent-primary) 10%, var(--bg-tertiary))",
                             borderBottom: "1px solid var(--border-default)",
                           }}
                         >
                           <span
-                            className="text-xs font-bold px-2 py-0.5 rounded-full"
                             style={{
                               background: "color-mix(in srgb, var(--accent-primary) 22%, var(--bg-tertiary))",
                               color: "var(--accent-primary)",
@@ -1449,19 +1432,18 @@ export default function ProgramStorePage() {
                           >
                             {session.key}
                           </span>
-                          <span className="text-xs font-semibold" style={{ color: "var(--text-primary)" }}>
+                          <span style={{ color: "var(--text-primary)" }}>
                             세션 {session.key}
                           </span>
                         </div>
-                        <div className="px-4 py-3 grid gap-2">
+                        <div>
                           {session.exercises.map((ex, i) => (
-                            <div key={i} className="flex items-center justify-between gap-2">
-                              <span className="text-sm" style={{ color: "var(--text-primary)" }}>
+                            <div key={i}>
+                              <span style={{ color: "var(--text-primary)" }}>
                                 {ex.name}
                               </span>
                               {ex.setsReps && (
                                 <span
-                                  className="text-xs font-semibold shrink-0"
                                   style={{ color: "var(--text-secondary)" }}
                                 >
                                   {ex.setsReps}
@@ -1478,11 +1460,10 @@ export default function ProgramStorePage() {
 
               {/* 태그 */}
               {tags.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
+                <div>
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="px-2.5 py-1 rounded-full text-xs font-medium"
                       style={{
                         background: "color-mix(in srgb, var(--accent-primary) 12%, var(--bg-tertiary))",
                         color: "var(--accent-primary)",
@@ -1505,7 +1486,6 @@ export default function ProgramStorePage() {
         description="모든 종목의 1RM 입력이 필수입니다."
         onClose={() => setStartProgramDraft(null)}
         closeLabel="닫기"
-        className="program-store-sheet program-store-sheet--medium"
         primaryAction={
           startProgramDraft
             ? {
@@ -1520,24 +1500,24 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {startProgramDraft ? (
-          <div className="grid gap-3">
+          <div>
             <Card padding="sm" elevated={false}>
               <CardHeader>
                 <CardTitle>{formatProgramDisplayName(startProgramDraft.template.name)}</CardTitle>
-                <div className="ui-card-label">
+                <div>
                 TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
                 </div>
               </CardHeader>
             </Card>
             {startProgramDraft.recommendationStatus === "loading" ? (
-              <p className="ui-card-label">운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
+              <p>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
             ) : null}
             {startProgramDraft.recommendationMessage ? (
-              <p className="ui-card-label">{startProgramDraft.recommendationMessage}</p>
+              <p>{startProgramDraft.recommendationMessage}</p>
             ) : null}
             {startProgramDraft.targets.map((target) => (
-              <div key={target.key} className="grid gap-2">
-                <span className="ui-card-label">
+              <div key={target.key}>
+                <span>
                   {target.label} 1RM (kg)
                 </span>
                 <NumberPickerField
@@ -1563,15 +1543,14 @@ export default function ProgramStorePage() {
                   }
                 />
                 {startProgramDraft.recommendations[target.key] ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="ui-card-label">
+                  <div>
+                    <span>
                       추천 {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
                       {" · "}
                       최근 e1RM {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
                     </span>
                     <button
                       type="button"
-                      className="haptic-tap rounded-lg border px-2 py-1 text-xs font-semibold"
                       onClick={() =>
                         setStartProgramDraft((prev) => {
                           if (!prev) return prev;
@@ -1609,7 +1588,6 @@ export default function ProgramStorePage() {
         }
         onClose={() => setCustomizeDraft(null)}
         closeLabel="닫기"
-        className="program-store-sheet program-store-sheet--large"
         primaryAction={
           customizeDraft
             ? {
@@ -1624,9 +1602,9 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {customizeDraft && (
-          <div className="grid gap-3">
-            <label className="grid gap-1">
-              <span className="ui-card-label">프로그램 이름</span>
+          <div>
+            <label>
+              <span>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={customizeDraft.name}
@@ -1637,7 +1615,7 @@ export default function ProgramStorePage() {
             </label>
 
             {isOperatorCustomization ? (
-              <Card tone="subtle" padding="sm" elevated={false} className="text-sm text-neutral-700">
+              <Card tone="subtle" padding="sm" elevated={false}>
                 <CardHeader>
                   <CardTitle>Operator 기본 구성</CardTitle>
                   <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
@@ -1664,7 +1642,6 @@ export default function ProgramStorePage() {
                   padding="none"
                   tone="inset"
                   elevated={false}
-                  className="program-store-session-card"
                   onDragOver={(event) => {
                     event.preventDefault();
                   }}
@@ -1687,11 +1664,11 @@ export default function ProgramStorePage() {
                     setDragContext(null);
                   }}
                 >
-                  <header className="program-store-session-head">
-                    <div className="grid gap-0.5">
+                  <header>
+                    <div>
                       <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
                       {isOperatorCustomization ? (
-                        <span className="text-xs text-[var(--text-secondary)]">
+                        <span>
                           {summary || meta.description}
                         </span>
                       ) : null}
@@ -1699,7 +1676,7 @@ export default function ProgramStorePage() {
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div className="rounded-lg border p-3 text-sm text-[var(--text-secondary)]">운동이 없습니다.</div>
+                    <div>운동이 없습니다.</div>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -1734,7 +1711,6 @@ export default function ProgramStorePage() {
 
                   <button
                     type="button"
-                    className="haptic-tap mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
                     onClick={() => {
                       const addedExercise = createEmptyExerciseDraft(
                         isOperatorCustomization ? null : customizeDraft.baseTemplate.slug,
@@ -1756,7 +1732,7 @@ export default function ProgramStorePage() {
                       });
                     }}
                   >
-                    <span className="text-lg leading-none text-[var(--accent-primary)]" aria-hidden="true">
+                    <span aria-hidden="true">
                       +
                     </span>
                     <span>운동 추가</span>
@@ -1776,7 +1752,6 @@ export default function ProgramStorePage() {
         description="새 커스텀 프로그램 생성"
         onClose={() => setCreateDraft(null)}
         closeLabel="닫기"
-        className="program-store-sheet program-store-sheet--large"
         primaryAction={
           createDraft
             ? {
@@ -1791,9 +1766,9 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {createDraft && (
-          <div className="grid gap-3">
-            <label className="grid gap-1">
-              <span className="ui-card-label">프로그램 이름</span>
+          <div>
+            <label>
+              <span>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={createDraft.name}
@@ -1804,12 +1779,9 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div>
               <button
                 type="button"
-                className={`haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold ${
-                  createDraft.mode === "MARKET_BASED" ? "border-[color:var(--accent-primary)]" : ""
-                }`}
                 onClick={() =>
                   setCreateDraft((prev) =>
                     prev
@@ -1825,9 +1797,6 @@ export default function ProgramStorePage() {
               </button>
               <button
                 type="button"
-                className={`haptic-tap rounded-xl border px-3 py-2 text-sm font-semibold ${
-                  createDraft.mode === "FULL_MANUAL" ? "border-[color:var(--accent-primary)]" : ""
-                }`}
                 onClick={() =>
                   setCreateDraft((prev) =>
                     prev
@@ -1874,12 +1843,9 @@ export default function ProgramStorePage() {
                 <CardTitle>세션 규칙 생성</CardTitle>
               </CardHeader>
               <CardContent>
-              <div className="grid grid-cols-2 gap-2">
+              <div>
                 <button
                   type="button"
-                  className={`haptic-tap rounded-lg border px-3 py-2 text-sm ${
-                    createDraft.rule.type === "AB" ? "border-[color:var(--accent-primary)]" : ""
-                  }`}
                   onClick={() =>
                     setCreateDraft((prev) => {
                       if (!prev) return prev;
@@ -1896,9 +1862,6 @@ export default function ProgramStorePage() {
                 </button>
                 <button
                   type="button"
-                  className={`haptic-tap rounded-lg border px-3 py-2 text-sm ${
-                    createDraft.rule.type === "NUMERIC" ? "border-[color:var(--accent-primary)]" : ""
-                  }`}
                   onClick={() =>
                     setCreateDraft((prev) => {
                       if (!prev) return prev;
@@ -1915,8 +1878,8 @@ export default function ProgramStorePage() {
                 </button>
               </div>
               {createDraft.rule.type === "NUMERIC" && (
-                <div className="grid gap-1">
-                  <span className="ui-card-label">세션 개수 (1~4)</span>
+                <div>
+                  <span>세션 개수 (1~4)</span>
                   <NumberPickerField
                     label="세션 개수"
                     value={createDraft.rule.count}
@@ -1952,7 +1915,6 @@ export default function ProgramStorePage() {
                   padding="none"
                   tone="inset"
                   elevated={false}
-                  className="program-store-session-card"
                   onDragOver={(event) => {
                     event.preventDefault();
                   }}
@@ -1975,12 +1937,12 @@ export default function ProgramStorePage() {
                     setDragContext(null);
                   }}
                 >
-                  <header className="program-store-session-head">
+                  <header>
                     <strong>세션 {session.key}</strong>
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div className="rounded-lg border p-3 text-sm text-[var(--text-secondary)]">운동이 없습니다.</div>
+                    <div>운동이 없습니다.</div>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -2003,7 +1965,6 @@ export default function ProgramStorePage() {
 
                   <button
                     type="button"
-                    className="haptic-tap mt-1 flex w-full items-center justify-center gap-2 rounded-xl border border-dashed px-3 py-3 text-sm font-semibold text-[var(--text-secondary)]"
                     onClick={() =>
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
@@ -2025,7 +1986,7 @@ export default function ProgramStorePage() {
                       })
                     }
                   >
-                    <span className="text-lg leading-none text-[var(--accent-primary)]" aria-hidden="true">
+                    <span aria-hidden="true">
                       +
                     </span>
                     <span>운동 추가</span>

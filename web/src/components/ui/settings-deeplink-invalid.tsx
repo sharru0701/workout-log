@@ -31,9 +31,9 @@ export function SettingsDeepLinkInvalidView({
   requestedRow?: string | null;
 }) {
   return (
-    <div className="native-page native-page-enter tab-screen momentum-scroll">
+    <div>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="안내" />
         <BaseGroupedList ariaLabel="딥링크 오류 안내">
           <InfoRow
@@ -59,7 +59,7 @@ export function SettingsDeepLinkInvalidView({
         <SectionFootnote>링크 오타이거나 이전 버전 링크일 수 있습니다.</SectionFootnote>
       </section>
 
-      <section className="grid gap-2">
+      <section>
         <SectionHeader title="다음 동작" />
         <BaseGroupedList ariaLabel="딥링크 복구 이동">
           <NavigationRow

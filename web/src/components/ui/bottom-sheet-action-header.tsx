@@ -31,22 +31,20 @@ export function BottomSheetActionHeader({
   action: BottomSheetPrimaryAction;
 }) {
   return (
-    <header className="mobile-bottom-sheet-header sheet-action-header">
+    <header>
       <button
         type="button"
-        className="haptic-tap mobile-bottom-sheet-close sheet-action-icon-button"
         onClick={onClose}
         aria-label={closeLabel}
       >
-        <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />
+        <span aria-hidden="true" />
       </button>
-      <div className="sheet-action-header-copy">
-        <h2 className="mobile-bottom-sheet-title sheet-action-title">{title}</h2>
-        {description ? <p className="mobile-bottom-sheet-description sheet-action-description">{description}</p> : null}
+      <div>
+        <h2>{title}</h2>
+        {description ? <p>{description}</p> : null}
       </div>
       <button
         type="button"
-        className="haptic-tap sheet-action-icon-button sheet-action-confirm-button"
         onClick={action.onPress}
         aria-label={action.ariaLabel}
         disabled={action.disabled}

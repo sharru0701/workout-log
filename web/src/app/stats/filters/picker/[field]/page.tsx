@@ -68,7 +68,7 @@ export default function StatsFiltersPickerFieldPage() {
 
   if (!config) {
     return (
-      <div className="native-page native-page-enter tab-screen momentum-scroll">
+      <div>
         <ErrorStateRows
           message={`Unknown picker field: ${rawField}`}
           onRetry={() => router.push("/stats/filters")}

@@ -371,15 +371,11 @@ export function BottomSheet({
   const sheetElement = (
     <div
       ref={sheetRef}
-      className={`mobile-bottom-sheet ${visualOpen ? "is-open" : ""} ${isInteractiveSheet ? "pointer-events-auto" : "pointer-events-none"} ${
-        open && !isInteractiveSheet ? "is-underlay" : ""
-      } ${className}`.trim()}
       inert={!isInteractiveSheet}
     >
       <button
         type="button"
         aria-label={closeLabel}
-        className="mobile-bottom-sheet-backdrop"
         onClick={() => {
           if (!isInteractiveSheet) return;
           onClose();
@@ -387,14 +383,13 @@ export function BottomSheet({
       />
       <section
         ref={panelRef}
-        className={`mobile-bottom-sheet-panel ${panelClassName}`.trim()}
         role="dialog"
         aria-modal="true"
         aria-label={title}
         tabIndex={-1}
       >
-        <div className="mobile-bottom-sheet-handle-hit" onPointerDown={onHandlePointerDown}>
-          <div className="mobile-bottom-sheet-handle" aria-hidden="true" />
+        <div onPointerDown={onHandlePointerDown}>
+          <div aria-hidden="true" />
         </div>
         {header ?? (primaryAction ? (
           <BottomSheetActionHeader
@@ -405,18 +400,18 @@ export function BottomSheet({
             action={primaryAction}
           />
         ) : (
-          <header className={`mobile-bottom-sheet-header${hasDescription ? "" : " mobile-bottom-sheet-header--compact"}`}>
+          <header>
             <div>
-              <h2 className="mobile-bottom-sheet-title">{title}</h2>
-              {hasDescription ? <p className="mobile-bottom-sheet-description">{description}</p> : null}
+              <h2>{title}</h2>
+              {hasDescription ? <p>{description}</p> : null}
             </div>
-            <button type="button" className="haptic-tap mobile-bottom-sheet-close" onClick={onClose} aria-label={closeLabel}>
-              <span className="mobile-bottom-sheet-close-icon" aria-hidden="true" />
+            <button type="button" onClick={onClose} aria-label={closeLabel}>
+              <span aria-hidden="true" />
             </button>
           </header>
         ))}
-        <div className="mobile-bottom-sheet-body">{children}</div>
-        {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
+        <div>{children}</div>
+        {footer ? <footer>{footer}</footer> : null}
       </section>
     </div>
   );

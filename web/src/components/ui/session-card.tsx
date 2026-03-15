@@ -29,27 +29,27 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
   const main = exercises.filter((e) => e.role === "MAIN");
   const assist = exercises.filter((e) => e.role !== "MAIN");
   return (
-    <div className="hd-today-exercises">
+    <div>
       {main.length > 0 && (
-        <div className="hd-today-exercise-group">
+        <div>
           {main.map((ex) => (
-            <div key={ex.name} className="hd-today-exercise hd-today-exercise--main">
-              <span className="hd-today-exercise-name">{ex.name}</span>
-              <span className="hd-today-exercise-summary">{ex.summary}</span>
+            <div key={ex.name}>
+              <span>{ex.name}</span>
+              <span>{ex.summary}</span>
             </div>
           ))}
         </div>
       )}
       {assist.length > 0 && (
-        <div className="hd-today-exercise-group">
+        <div>
           {assist.slice(0, 3).map((ex) => (
-            <div key={ex.name} className="hd-today-exercise">
-              <span className="hd-today-exercise-name">{ex.name}</span>
-              <span className="hd-today-exercise-summary">{ex.summary}</span>
+            <div key={ex.name}>
+              <span>{ex.name}</span>
+              <span>{ex.summary}</span>
             </div>
           ))}
           {assist.length > 3 && (
-            <div className="hd-today-exercise hd-today-exercise--more">
+            <div>
               +{assist.length - 3}개 보조 운동
             </div>
           )}
@@ -62,17 +62,17 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
 function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
   if (exercises.length === 0) return null;
   return (
-    <div className="hd-last-exercises">
+    <div>
       {exercises.map((ex) => (
-        <div key={ex.name} className="hd-last-exercise">
-          <span className="hd-last-exercise-name">{ex.name}</span>
-          <span className="hd-last-exercise-right">
+        <div key={ex.name}>
+          <span>{ex.name}</span>
+          <span>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
-              <span className={`hd-last-delta hd-last-delta--${ex.weightDelta > 0 ? "up" : "down"}`}>
+              <span>
                 {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
               </span>
             )}
-            <span className="hd-last-exercise-detail">{ex.summary}</span>
+            <span>{ex.summary}</span>
           </span>
         </div>
       ))}
@@ -117,12 +117,12 @@ function TodayCard({
 
   const inner = (
     <>
-      <div className="hd-today-top">
-        <div className="hd-today-left">
-          <div className="hd-today-program">{title}</div>
-          {meta && <p className="hd-today-meta">{meta}</p>}
+      <div>
+        <div>
+          <div>{title}</div>
+          {meta && <p>{meta}</p>}
         </div>
-        {badge && <span className="hd-today-badge hd-today-badge--planned">{badge}</span>}
+        {badge && <span>{badge}</span>}
       </div>
 
       {hasGrouped ? (
@@ -133,20 +133,20 @@ function TodayCard({
 
       {children}
 
-      {ctaNote && <p className="hd-today-meta ios-cal-summary-note">{ctaNote}</p>}
+      {ctaNote && <p>{ctaNote}</p>}
 
       {ctaLabel && (
         href ? (
-          <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false} className="hd-today-cta">
-            <span className="hd-today-cta-text">{ctaLabel}</span>
-            <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false}>
+            <span>{ctaLabel}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m9 18 6-6-6-6" />
             </svg>
           </PrimaryButton>
         ) : (
-          <PrimaryButton as="a" href={ctaHref} variant="primary" size="lg" fullWidth className="hd-today-cta ios-cal-summary-cta">
-            <span className="hd-today-cta-text">{ctaLabel}</span>
-            <svg className="hd-today-cta-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <PrimaryButton as="a" href={ctaHref} variant="primary" size="lg" fullWidth>
+            <span>{ctaLabel}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="m9 18 6-6-6-6" />
             </svg>
           </PrimaryButton>
@@ -155,8 +155,8 @@ function TodayCard({
     </>
   );
 
-  if (href) return <Card as={Link} href={href} padding="none" className={cls}>{inner}</Card>;
-  return <Card padding="none" className={cls}>{inner}</Card>;
+  if (href) return <Card as={Link} href={href} padding="none">{inner}</Card>;
+  return <Card padding="none">{inner}</Card>;
 }
 
 // ─── "last" variant ────────────────────────────────────────────────────────────
@@ -188,25 +188,25 @@ function LastCard({
 
   const inner = hasData ? (
     <>
-      <div className="hd-last-top">
+      <div>
         <div>
-          <div className="hd-last-plan">{title}</div>
-          <div className="hd-last-date">{date}</div>
+          <div>{title}</div>
+          <div>{date}</div>
         </div>
-        <div className="hd-last-stats">
+        <div>
           {totalSets !== undefined && (
-            <span className="hd-last-stat">{totalSets}세트</span>
+            <span>{totalSets}세트</span>
           )}
           {totalVolume !== undefined && totalVolume > 0 && (
             <>
-              <span className="hd-last-stat-sep">·</span>
-              <span className="hd-last-stat">{formatVolume(totalVolume)}</span>
+              <span>·</span>
+              <span>{formatVolume(totalVolume)}</span>
             </>
           )}
           {bodyweightKg != null && (
             <>
-              <span className="hd-last-stat-sep">·</span>
-              <span className="hd-last-stat">BW {bodyweightKg.toFixed(1)}kg</span>
+              <span>·</span>
+              <span>BW {bodyweightKg.toFixed(1)}kg</span>
             </>
           )}
         </div>
@@ -214,11 +214,11 @@ function LastCard({
       <ExerciseFlatList exercises={exercises} />
     </>
   ) : (
-    <div className="hd-last-empty">{emptyMessage}</div>
+    <div>{emptyMessage}</div>
   );
 
-  if (href) return <Card as={Link} href={href} padding="none" className="hd-last-card">{inner}</Card>;
-  return <Card padding="none" className="hd-last-card">{inner}</Card>;
+  if (href) return <Card as={Link} href={href} padding="none">{inner}</Card>;
+  return <Card padding="none">{inner}</Card>;
 }
 
 // ─── Unified export ────────────────────────────────────────────────────────────

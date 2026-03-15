@@ -21,25 +21,24 @@ export default function RootError({
   }, [error]);
 
   return (
-    <div className="native-page native-page-enter tab-screen">
-      <Card as="section" padding="lg" className="space-y-4" role="alert" aria-live="assertive">
-        <div className="space-y-1">
-          <p className="ui-card-label">오류</p>
-          <h2 className="tab-screen-title">화면을 불러오지 못했습니다</h2>
-          <p className="text-sm text-[var(--text-secondary)]">
+    <div>
+      <Card as="section" padding="lg" role="alert" aria-live="assertive">
+        <div>
+          <p>오류</p>
+          <h2>화면을 불러오지 못했습니다</h2>
+          <p>
             {error.message || "알 수 없는 렌더링 오류"}
           </p>
         </div>
-        <div className="flex flex-col gap-3">
+        <div>
           <button
             type="button"
-            className="ui-primary-button"
             onClick={() => reset()}
           >
             다시 시도
           </button>
           {error.digest ? (
-            <p className="text-xs text-[var(--text-tertiary)]">
+            <p>
               Error ID: {error.digest}
             </p>
           ) : null}

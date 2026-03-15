@@ -280,7 +280,6 @@ function PlanHistoryPageContent() {
 
   return (
     <div
-      className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll"
       {...pullToRefresh.bind}
     >
       <PullToRefreshIndicator
@@ -291,9 +290,9 @@ function PlanHistoryPageContent() {
         completeLabel="플랜 히스토리 갱신 완료"
       />
 
-      <section className="grid gap-2" data-pull-refresh-trigger="true">
-        <div className="ios-section-heading">플랜 수행 히스토리</div>
-        <p className="text-sm text-neutral-600">
+      <section data-pull-refresh-trigger="true">
+        <div>플랜 수행 히스토리</div>
+        <p>
           플랜별 수행 로그를 모아보고, 각 항목에서 세션 상세 화면으로 이동할 수 있습니다.
         </p>
 
@@ -327,29 +326,29 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <Card className="grid grid-cols-1 md:grid-cols-4 gap-3 text-sm">
+          <Card>
             <div>
-              <div className="ui-card-label">플랜 이름</div>
-              <div className="font-semibold">{selectedPlan.name}</div>
+              <div>플랜 이름</div>
+              <div>{selectedPlan.name}</div>
             </div>
             <div>
-              <div className="ui-card-label">기반 프로그램</div>
+              <div>기반 프로그램</div>
               <div>{selectedPlan.baseProgramName ?? "-"}</div>
             </div>
             <div>
-              <div className="ui-card-label">생성일</div>
+              <div>생성일</div>
               <div>{formatDateTime(selectedPlan.createdAt)}</div>
             </div>
             <div>
-              <div className="ui-card-label">마지막 수행일</div>
+              <div>마지막 수행일</div>
               <div>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
             </div>
           </Card>
         ) : null}
       </section>
 
-      <section className="grid gap-2">
-        <div className="ios-section-heading">수행 로그</div>
+      <section>
+        <div>수행 로그</div>
         <NoticeStateRows
           message={
             selectedPlan
@@ -380,7 +379,7 @@ function PlanHistoryPageContent() {
         />
 
         {logs.length > 0 ? (
-          <div className="grid gap-3">
+          <div>
             {logs.map((log) => {
               const workSetCount = countWorkSets(log.sets ?? []);
               const exerciseSummary = summarizeExercises(log.sets ?? []);
@@ -393,21 +392,20 @@ function PlanHistoryPageContent() {
                 : null;
 
               return (
-                <Card as="article" key={log.id} className="grid gap-3">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="grid gap-1">
+                <Card as="article" key={log.id}>
+                  <div>
+                    <div>
                       <strong>{formatDateTime(log.performedAt)}</strong>
-                      <span className="text-sm text-neutral-600">{exerciseSummary}</span>
+                      <span>{exerciseSummary}</span>
                       {sessionLabel || progressionText ? (
-                        <div className="flex flex-wrap gap-2 pt-1">
+                        <div>
                           {sessionLabel ? (
-                            <span className="rounded-full border border-neutral-200 bg-neutral-50 px-2.5 py-1 text-[11px] font-medium text-neutral-700">
+                            <span>
                               {sessionLabel}
                             </span>
                           ) : null}
                           {progressionText ? (
                             <span
-                              className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${progressionBadgeClass(progressionBadgeTone)}`}
                             >
                               {progressionText}
                             </span>
@@ -415,16 +413,14 @@ function PlanHistoryPageContent() {
                         </div>
                       ) : null}
                     </div>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
+                    <div>
                       <a
-                        className="haptic-tap rounded-xl border px-3 py-2 text-sm font-medium"
                         href={`/workout/session/${encodeURIComponent(log.id)}`}
                       >
                         세션 상세
                       </a>
                       <button
                         type="button"
-                        className="haptic-tap rounded-xl border border-red-200 bg-red-50/70 px-3 py-2 text-sm font-medium text-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                         disabled={deletingLogId === log.id}
                         onClick={() => {
                           void deleteLog(log);
@@ -435,28 +431,28 @@ function PlanHistoryPageContent() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                    <div className="rounded-xl bg-neutral-50 px-3 py-2">
-                      <div className="ui-card-label">작업 세트</div>
+                  <div>
+                    <div>
+                      <div>작업 세트</div>
                       <div>{workSetCount}세트</div>
                     </div>
-                    <div className="rounded-xl bg-neutral-50 px-3 py-2">
-                      <div className="ui-card-label">추정 볼륨</div>
+                    <div>
+                      <div>추정 볼륨</div>
                       <div>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
                     </div>
-                    <div className="rounded-xl bg-neutral-50 px-3 py-2">
-                      <div className="ui-card-label">기록 시간</div>
+                    <div>
+                      <div>기록 시간</div>
                       <div>{formatDuration(log.durationMinutes)}</div>
                     </div>
-                    <div className="rounded-xl bg-neutral-50 px-3 py-2">
-                      <div className="ui-card-label">세션 타입</div>
+                    <div>
+                      <div>세션 타입</div>
                       <div>{sessionLabel ? "생성 세션 연결" : "수동 로그"}</div>
                     </div>
                   </div>
 
                   {noteText ? (
-                    <div className="rounded-xl border border-dashed px-3 py-2 text-sm text-neutral-700">
-                      <div className="ui-card-label">노트</div>
+                    <div>
+                      <div>노트</div>
                       <div>{noteText}</div>
                     </div>
                   ) : null}
@@ -467,7 +463,6 @@ function PlanHistoryPageContent() {
             {nextCursor ? (
               <button
                 type="button"
-                className="haptic-tap rounded-xl border px-4 py-3 text-sm font-semibold"
                 disabled={logsLoadingMore}
                 onClick={() => {
                   if (!selectedPlanId || !nextCursor) return;
@@ -488,9 +483,9 @@ export default function PlanHistoryPage() {
   return (
     <Suspense
       fallback={
-        <div className="native-page native-page-enter tab-screen tab-screen-wide momentum-scroll">
-          <section className="grid gap-2">
-            <div className="ios-section-heading">플랜 수행 히스토리</div>
+        <div>
+          <section>
+            <div>플랜 수행 히스토리</div>
             <LoadingStateRows active label="히스토리 화면 준비 중" />
           </section>
         </div>

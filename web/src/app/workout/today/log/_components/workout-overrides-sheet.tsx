@@ -41,9 +41,9 @@ export default function WorkoutOverridesSheet({
 }: WorkoutOverridesSheetProps) {
   return (
     <BottomSheet open={open} onClose={onClose} title="세션 오버라이드" description={`대상 세션: ${sessionKeyLabel}`}>
-      <div className="space-y-4 pb-2">
+      <div>
         <Card padding="md" elevated={false}>
-          <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
+          <CardContent>
             <AppSelect
               label="선택 세트 행(추가 상태 필수)"
               wrapperClassName="md:col-span-2"
@@ -60,7 +60,6 @@ export default function WorkoutOverridesSheet({
               ))}
             </AppSelect>
             <button
-              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
               type="button"
               onClick={onMakeAccessoryPermanent}
             >
@@ -70,7 +69,7 @@ export default function WorkoutOverridesSheet({
         </Card>
 
         <Card padding="md" elevated={false}>
-          <CardContent className="grid grid-cols-1 gap-2 md:grid-cols-4 items-end">
+          <CardContent>
             <AppSelect label="블록 대상" value={blockTarget} onChange={(event) => onBlockTargetChange(event.target.value)}>
               <option value="SQUAT">SQUAT</option>
               <option value="BENCH">BENCH</option>
@@ -79,8 +78,8 @@ export default function WorkoutOverridesSheet({
               <option value="PULL">PULL</option>
               <option value="CUSTOM">CUSTOM</option>
             </AppSelect>
-            <label className="flex flex-col gap-1 md:col-span-2">
-              <span className="ui-card-label">대체 운동 이름</span>
+            <label>
+              <span>대체 운동 이름</span>
               <AppTextInput
                 variant="compact"
                 value={replacementExerciseName}
@@ -89,7 +88,6 @@ export default function WorkoutOverridesSheet({
               />
             </label>
             <button
-              className="haptic-tap workout-action-pill is-secondary workout-inline-action"
               type="button"
               onClick={onReplaceExercisePermanent}
             >

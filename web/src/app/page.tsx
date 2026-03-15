@@ -75,7 +75,6 @@ export default function HomePage() {
 
   return (
     <div
-      className={`native-page native-page-enter home-screen momentum-scroll${hasResolvedHomeData ? " home-dashboard" : ""}`}
       {...pullToRefresh.bind}
     >
       <PullToRefreshIndicator

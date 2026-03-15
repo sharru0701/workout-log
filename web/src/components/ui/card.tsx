@@ -45,14 +45,6 @@ export function Card<T extends ElementType = "div">({
 
   return (
     <Component
-      className={cx(
-        elevated ? "motion-card" : "ui-card",
-        "app-card",
-        `app-card--${tone}`,
-        `app-card--${padding}`,
-        interactive && "app-card--interactive",
-        className,
-      )}
       {...props}
     >
       {children}
@@ -62,7 +54,7 @@ export function Card<T extends ElementType = "div">({
 
 export function CardHeader({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-header", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -70,7 +62,7 @@ export function CardHeader({ children, className = "", ...props }: CardSectionPr
 
 export function CardTitle({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-title", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -78,7 +70,7 @@ export function CardTitle({ children, className = "", ...props }: CardSectionPro
 
 export function CardDescription({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <p className={cx("app-card-description", className)} {...props}>
+    <p {...props}>
       {children}
     </p>
   );
@@ -86,7 +78,7 @@ export function CardDescription({ children, className = "", ...props }: CardSect
 
 export function CardContent({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-content", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -94,7 +86,7 @@ export function CardContent({ children, className = "", ...props }: CardSectionP
 
 export function CardFooter({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-footer", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -102,7 +94,7 @@ export function CardFooter({ children, className = "", ...props }: CardSectionPr
 
 export function CardActionGroup({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-action-group", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -110,7 +102,7 @@ export function CardActionGroup({ children, className = "", ...props }: CardSect
 
 export function CardMetaGrid({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div className={cx("app-card-meta-grid", className)} {...props}>
+    <div {...props}>
       {children}
     </div>
   );
@@ -118,9 +110,9 @@ export function CardMetaGrid({ children, className = "", ...props }: CardSection
 
 export function CardMetaItem({ label, value, className = "" }: CardMetaItemProps) {
   return (
-    <div className={cx("app-card-meta-item", className)}>
-      <div className="app-card-meta-label">{label}</div>
-      <div className="app-card-meta-value">{value}</div>
+    <div>
+      <div>{label}</div>
+      <div>{value}</div>
     </div>
   );
 }
