@@ -346,6 +346,9 @@ img, svg { display: block; max-width: 100%; }
   flex-shrink: 0;
 
   background-color: var(--color-surface);
+  /* Clip white bg to nav-items area only; safe-area padding below stays
+     transparent so the canvas color (#f3f6fb) shows through behind Safari pill */
+  background-clip: content-box;
   border-top: 1px solid var(--color-border);
 
   padding-bottom: env(safe-area-inset-bottom, 0px);
