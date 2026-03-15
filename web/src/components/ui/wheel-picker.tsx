@@ -408,7 +408,7 @@ export const WheelPicker = memo(
     return (
       <div
         ref={containerRef}
-        style={{ height: containerHeight, position: "relative", overflow: "hidden" }}
+        style={{ height: containerHeight, position: "relative", overflow: "hidden", flex: 1, width: "100%" }}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
