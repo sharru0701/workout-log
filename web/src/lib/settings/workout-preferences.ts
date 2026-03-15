@@ -221,32 +221,11 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
 export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
 export { computeBodyweightTotalLoadKg };
 
-// For explicit dark/light overrides, inject a theme-color that exactly matches
-// --color-bg so Safari's toolbar frosted-glass blends seamlessly with the canvas.
-// For SYSTEM, no override is needed — the prefers-color-scheme media query in the
-// fixed canvas background already supplies the right color.
-const THEME_COLOR_OVERRIDE: Partial<Record<ThemePreference, string>> = {
-  DARK:  "#0d1117",  // matches --color-bg in [data-theme-preference="dark"]
-  LIGHT: "#f3f6fb",  // matches --color-bg in [data-theme-preference="light"]
-};
-
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
-
-  // Remove any previously injected dynamic theme-color meta.
+  // No theme-color meta injection — let Safari read the canvas background naturally.
   document.querySelector(`meta[name="theme-color"][data-dynamic]`)?.remove();
-
-  // For explicit dark/light overrides, set theme-color to exactly --color-bg
-  // so the Safari toolbar blur matches the fixed canvas background seamlessly.
-  const color = THEME_COLOR_OVERRIDE[theme];
-  if (color) {
-    const meta = document.createElement("meta");
-    meta.name = "theme-color";
-    meta.content = color;
-    meta.dataset.dynamic = "true";
-    document.head.appendChild(meta);
-  }
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {
