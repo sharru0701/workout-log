@@ -45,15 +45,15 @@ export function SessionSummaryCard({
 
   const inner = hasData ? (
     <>
-      <div>
-        <div>
-          <span>
+      <div style={{ marginBottom: "var(--space-sm)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-xs)" }}>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
             {data.badgeLabel}
           </span>
-          <span>{data.dateLabel}</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{data.dateLabel}</span>
         </div>
         {!isToday && hasStats ? (
-          <div>
+          <div style={{ display: "flex", gap: "var(--space-xs)", font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
             {data.totalSets !== undefined && (
               <span>{data.totalSets}세트</span>
             )}
@@ -72,7 +72,7 @@ export function SessionSummaryCard({
           </div>
         ) : null}
         {isToday && data.bodyweightKg != null && (
-          <span>BW {data.bodyweightKg.toFixed(1)}kg</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>BW {data.bodyweightKg.toFixed(1)}kg</span>
         )}
       </div>
       {data.exercises && data.exercises.length > 0 && (
@@ -103,14 +103,14 @@ export function SessionSummaryCard({
 
   if (data?.href) {
     return (
-      <Card as={Link} href={data.href} padding="none" interactive>
+      <Card as={Link} href={data.href} padding="md" interactive>
         {inner}
       </Card>
     );
   }
 
   return (
-    <Card as="article" padding="none">
+    <Card as="article" padding="md">
       {inner}
     </Card>
   );

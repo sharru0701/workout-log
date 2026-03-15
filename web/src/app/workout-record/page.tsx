@@ -1418,7 +1418,7 @@ export default function WorkoutRecordPage() {
           </section>
 
           <section>
-            <h2>{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
+            <h2 style={{ font: "var(--font-section-title)", marginBottom: "var(--space-md)" }}>{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
             <SessionSummaryCard
               variant="today"
               data={{
@@ -1431,7 +1431,7 @@ export default function WorkoutRecordPage() {
 
               <div>
                 {visibleExercises.length > 0 && (
-                  <div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", marginTop: "var(--space-md)" }}>
                     {visibleExercises.map((exercise) => (
                       <div key={exercise.id}>
                         <ExerciseRow
