@@ -384,9 +384,21 @@ function WorkoutRecordInlinePicker({
   const displayValue = formatValue ? formatValue(value) : String(value);
 
   return (
-    <div>
+    <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
       <button
         type="button"
+        style={{
+          width: "100%",
+          padding: "var(--space-xs)",
+          border: "1px solid var(--color-border)",
+          borderRadius: "6px",
+          backgroundColor: complete ? "var(--color-surface-hover)" : "transparent",
+          color: complete ? "var(--color-text)" : "var(--color-text-muted)",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          font: "var(--font-primary)",
+        }}
         onClick={() => setOpen(true)}
         aria-label={`${label}: ${displayValue}`}
       >
@@ -462,6 +474,9 @@ function ExerciseRow({
     minWidth: "var(--touch-target)",
     minHeight: "var(--touch-target)",
     padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
     aspectRatio: "1 / 1",
   } as const;
 
@@ -581,10 +596,11 @@ function ExerciseRow({
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexWrap: "nowrap", gap: "var(--space-md)", marginTop: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
           <button
             type="button"
             className="btn btn-secondary"
+            style={{ flex: 1 }}
             onClick={onAddSet}
           >
             <AppPlusMinusIcon kind="plus" />
@@ -593,11 +609,12 @@ function ExerciseRow({
           <button
             type="button"
             className="btn btn-secondary"
+            style={{ flex: 1 }}
             onClick={onRemoveSet}
             disabled={exercise.set.repsPerSet.length <= 1}
           >
             <AppPlusMinusIcon kind="minus" />
-            <span>마지막 세트</span>
+            <span>삭제</span>
           </button>
         </div>
 
