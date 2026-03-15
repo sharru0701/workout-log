@@ -68,9 +68,9 @@ export function SearchSelectCombobox({
     <label>
       <span>{label}</span>
       <div data-no-swipe="true">
-        <div>
-          <span aria-hidden="true">
-            <svg viewBox="0 0 24 24" focusable="false">
+        <div style={{ position: "relative", marginBottom: "var(--space-md)" }}>
+          <span aria-hidden="true" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)", pointerEvents: "none" }}>
+            <svg viewBox="0 0 24 24" focusable="false" style={{ width: 18, height: 18, fill: "none", stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round", strokeLinejoin: "round" }}>
               <circle cx="11" cy="11" r="7" />
               <path d="m20 20-3.8-3.8" />
             </svg>
@@ -86,9 +86,15 @@ export function SearchSelectCombobox({
               event.preventDefault();
               onQuerySubmit();
             }}
+            style={{ width: "100%", padding: "10px 12px 10px 40px", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface)", color: "var(--color-text)", outline: "none" }}
           />
           {query.trim().length > 0 ? (
-            <button type="button" aria-label="검색어 지우기" onClick={resolvedClearQuery}>
+            <button
+              type="button"
+              aria-label="검색어 지우기"
+              onClick={resolvedClearQuery}
+              style={{ position: "absolute", right: "8px", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", fontSize: "20px", color: "var(--color-text-muted)", padding: "4px", cursor: "pointer" }}
+            >
               ×
             </button>
           ) : null}
@@ -97,11 +103,11 @@ export function SearchSelectCombobox({
         {selectionSummary}
 
         {!hideOptions ? (
-          <div role="listbox" aria-label={resultsAriaLabel}>
+          <div role="listbox" aria-label={resultsAriaLabel} style={{ display: "flex", flexDirection: "column", gap: "2px", maxHeight: "300px", overflowY: "auto" }}>
             {loading ? (
-              <span>{loadingText}</span>
+              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{loadingText}</span>
             ) : options.length === 0 ? (
-              <span>{emptyText}</span>
+              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{emptyText}</span>
             ) : (
               options.map((option) => (
                 <button
@@ -109,8 +115,14 @@ export function SearchSelectCombobox({
                   type="button"
                   aria-current={option.ariaCurrent ? "true" : undefined}
                   onClick={option.onSelect}
+                  style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px", border: "none", borderRadius: "8px", backgroundColor: option.active ? "var(--color-surface-secondary)" : "transparent", color: option.active ? "var(--color-primary)" : "var(--color-text)", cursor: "pointer", textAlign: "left", font: "var(--font-body)", fontWeight: option.active ? 600 : 400 }}
                 >
-                  {option.label}
+                  <span style={{ flex: 1 }}>{option.label}</span>
+                  {option.active && (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+                      <path d="M20 6L9 17l-5-5" />
+                    </svg>
+                  )}
                 </button>
               ))
             )}
