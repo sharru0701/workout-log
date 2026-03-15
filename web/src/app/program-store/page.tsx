@@ -195,26 +195,26 @@ function ProgramListCard({
       interactive
       onClick={onPress}
     >
-      <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
         <div>
-          <strong>
+          <strong style={{ font: "var(--font-card-title)" }}>
             {formatProgramDisplayName(item.name)}
           </strong>
           {scheduleLabel ? (
-            <span>{scheduleLabel}</span>
+            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
           ) : null}
         </div>
-        <span>{badge.label}</span>
+        <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", backgroundColor: item.source === "CUSTOM" ? "#fff3cd" : "#d1ecf1", color: item.source === "CUSTOM" ? "#856404" : "#0c5460", whiteSpace: "nowrap" }}>{badge.label}</span>
       </div>
 
       {item.template.description ? (
-        <p>{item.template.description}</p>
+        <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-sm)" }}>{item.template.description}</p>
       ) : null}
 
       {tags.length > 0 ? (
-        <div>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
           {tags.slice(0, 5).map((tag) => (
-            <span key={tag}>
+            <span key={tag} style={{ fontSize: "11px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "var(--color-surface-secondary)", color: "var(--color-text-muted)" }}>
               {tag}
             </span>
           ))}
