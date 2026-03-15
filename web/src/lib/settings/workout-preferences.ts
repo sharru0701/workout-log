@@ -221,29 +221,12 @@ export function snapWeightToIncrementKg(weightKg: number, incrementKg: number): 
 export const isBodyweightRelatedExerciseName = isBodyweightExerciseName;
 export { computeBodyweightTotalLoadKg };
 
-// --color-bg values per forced theme (must match globals.css)
-const THEME_COLOR: Record<"LIGHT" | "DARK", string> = {
-  LIGHT: "#f3f6fb",
-  DARK:  "#0d1117",
-};
-
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
   document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
-
-  // Remove previously injected override.
+  // No theme-color injection: Safari uses natural frosted-glass,
+  // blurring html { background-color: var(--color-bg) } behind the pill.
   document.querySelectorAll(`meta[name="theme-color"][data-dynamic]`).forEach(m => m.remove());
-
-  // For forced LIGHT/DARK, inject a single solid theme-color that overrides the
-  // static media-query metas (from layout.tsx viewport export).
-  // For SYSTEM, do nothing — the static media-query metas handle it.
-  if (theme === "LIGHT" || theme === "DARK") {
-    const meta = document.createElement("meta");
-    meta.name = "theme-color";
-    meta.content = THEME_COLOR[theme];
-    meta.dataset.dynamic = "true";
-    document.head.appendChild(meta);
-  }
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {
