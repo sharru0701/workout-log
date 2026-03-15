@@ -689,18 +689,19 @@ export default function CalendarPage() {
       />
       {/* Plan selector bar */}
       {plans.length > 0 && (
-        <div data-pull-refresh-trigger="true">
+        <div data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-md)" }}>
           <button
             type="button"
             aria-label="플랜 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={planSheetOpen}
+            className="btn btn-secondary btn-full"
             onClick={() => {
               setPlanQuery("");
               setPlanSheetOpen(true);
             }}
           >
-            <span>
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-xs)" }}>
               <span>{selectedPlan?.name ?? "플랜 선택"}</span>
               <span aria-hidden="true">
                 <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
@@ -721,6 +722,7 @@ export default function CalendarPage() {
       >
       <div
         data-pull-refresh-trigger="true"
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)" }}
       >
         <div>
           <button
@@ -729,15 +731,17 @@ export default function CalendarPage() {
             aria-label="연도와 월 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={monthPickerOpen}
+            style={{ background: "none", border: "none", font: "var(--font-section-title)", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)" }}
           >
             <span>{getYear(anchorDate)}년</span>
             <span>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
           </button>
         </div>
-        <div>
+        <div style={{ display: "flex", gap: "var(--space-xs)" }}>
           <button
             onClick={() => shiftMonth(-1)}
             aria-label="이전 달"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <svg
               viewBox="0 0 24 24"
@@ -746,6 +750,7 @@ export default function CalendarPage() {
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ width: "20px", height: "20px" }}
             >
               <path d="M15 18l-6-6 6-6" />
             </svg>
@@ -753,6 +758,7 @@ export default function CalendarPage() {
           <button
             onClick={() => shiftMonth(1)}
             aria-label="다음 달"
+            style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <svg
               viewBox="0 0 24 24"
@@ -761,6 +767,7 @@ export default function CalendarPage() {
               strokeWidth="2.2"
               strokeLinecap="round"
               strokeLinejoin="round"
+              style={{ width: "20px", height: "20px" }}
             >
               <path d="M9 18l6-6-6-6" />
             </svg>
@@ -769,9 +776,9 @@ export default function CalendarPage() {
       </div>
 
       {/* Weekday header row */}
-      <div aria-hidden="true">
+      <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "var(--space-xs)" }}>
         {WEEKDAY_SHORT.map((name, i) => (
-          <div key={name}>
+          <div key={name} style={{ padding: "var(--space-xs) 0" }}>
             {name}
           </div>
         ))}
@@ -782,9 +789,10 @@ export default function CalendarPage() {
         key={animKey}
         role="grid"
         aria-label="날짜 선택"
+        style={{ marginBottom: "var(--space-md)" }}
       >
         {Array.from({ length: 5 }, (_, week) => (
-          <div key={week}>
+          <div key={week} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center" }}>
             {cells.slice(week * 7, week * 7 + 7).map((dateOnly) => {
               const isToday = dateOnly === today;
               const isSelected = dateOnly === selectedDate;
@@ -799,9 +807,25 @@ export default function CalendarPage() {
                   onClick={() => setSelectedDate(dateOnly)}
                   aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
                   aria-selected={isSelected}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "6px 0",
+                    border: "none",
+                    background: isSelected ? "var(--color-primary)" : "transparent",
+                    color: isSelected ? "#fff" : isOutside ? "var(--color-text-muted)" : dow === 0 ? "#e74c3c" : dow === 6 ? "#3498db" : "var(--color-text)",
+                    borderRadius: isSelected ? "50%" : "0",
+                    fontWeight: isToday ? 700 : 400,
+                    cursor: "pointer",
+                    aspectRatio: "1 / 1",
+                    position: "relative",
+                    fontSize: "14px",
+                  }}
                 >
                   <span>{dayOfMonth(dateOnly)}</span>
-                  {hasDot && <span aria-hidden="true" />}
+                  {hasDot && <span aria-hidden="true" style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: isSelected ? "#fff" : "var(--color-primary)", position: "absolute", bottom: "2px" }} />}
                 </button>
               );
             })}
@@ -815,22 +839,22 @@ export default function CalendarPage() {
       <div role="separator" />
 
       {/* Selected date detail panel */}
-      <div>
-        <div>
-          <span>{formatKoreanDate(selectedDate)}</span>
-          {selectedDate === today && <span>오늘</span>}
+      <div style={{ marginTop: "var(--space-md)" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
+          <span style={{ font: "var(--font-section-title)" }}>{formatKoreanDate(selectedDate)}</span>
+          {selectedDate === today && <span style={{ fontSize: "12px", color: "var(--color-primary)", fontWeight: 600 }}>오늘</span>}
         </div>
 
-        {error && <div>{error}</div>}
+        {error && <div style={{ color: "#e74c3c", marginBottom: "var(--space-sm)" }}>{error}</div>}
 
         {loading || selectedLogLoading || selectedSessionLoading ? (
-          <div>
+          <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "center", padding: "var(--space-lg)" }}>
             <span />
             <span />
             <span />
           </div>
         ) : !selectedPlan ? (
-          <div>
+          <div style={{ padding: "var(--space-lg)", textAlign: "center", color: "var(--color-text-muted)" }}>
             <p>플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
           </div>
         ) : selectedLog ? (
@@ -856,16 +880,16 @@ export default function CalendarPage() {
           />
         ) : (
           /* No session yet */
-          <div>
-            <div>
+          <div style={{ textAlign: "center", padding: "var(--space-lg)", color: "var(--color-text-muted)" }}>
+            <div style={{ marginBottom: "var(--space-md)" }}>
               <div aria-hidden="true" />
               <div>
                 {isPastDateCreationBlocked ? null : (
-                  <span>
+                  <span style={{ display: "block", fontWeight: 600 }}>
                     {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
                   </span>
                 )}
-                <span>
+                <span style={{ display: "block", fontSize: "13px", marginTop: "var(--space-xs)" }}>
                   {isPastDateCreationBlocked
                     ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
                     : selectedCtx?.planned
@@ -876,7 +900,7 @@ export default function CalendarPage() {
             </div>
             {!isPastDateCreationBlocked ? (
               <div>
-                <a href={workoutHref}>
+                <a href={workoutHref} className="btn btn-primary" style={{ display: "inline-flex" }}>
                   기록하기
                 </a>
               </div>
