@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
@@ -18,6 +18,12 @@ const appMono = JetBrains_Mono({
   display: "swap",
   weight: ["400", "500", "600", "700"],
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+};
 
 export const metadata: Metadata = {
   title: "Workout Log",
