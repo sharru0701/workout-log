@@ -217,8 +217,8 @@ html {
   line-height: 1.5;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
-  /* Fills area behind Safari toolbar (below 100dvh canvas) with page color */
-  background-color: var(--color-bg);
+  /* DIAG: bright red to test if Safari pill reads this background */
+  background-color: #ff0000;
   height: 100%;
   overscroll-behavior: none;
 }
