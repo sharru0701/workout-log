@@ -204,17 +204,21 @@ function ProgramListCard({
             <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
           ) : null}
         </div>
-        <span style={{ fontSize: "11px", fontWeight: 600, padding: "2px 8px", borderRadius: "4px", backgroundColor: item.source === "CUSTOM" ? "#fff3cd" : "#d1ecf1", color: item.source === "CUSTOM" ? "#856404" : "#0c5460", whiteSpace: "nowrap" }}>{badge.label}</span>
+        <span className={item.source === "CUSTOM" ? "label label-warning label-sm" : "label label-info label-sm"}>
+          {badge.label}
+        </span>
       </div>
 
       {item.template.description ? (
-        <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-sm)" }}>{item.template.description}</p>
+        <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-sm)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+          {item.template.description}
+        </p>
       ) : null}
 
       {tags.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
           {tags.slice(0, 5).map((tag) => (
-            <span key={tag} style={{ fontSize: "11px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "var(--color-surface-secondary)", color: "var(--color-text-muted)" }}>
+            <span key={tag} className="label label-neutral label-sm">
               {tag}
             </span>
           ))}
@@ -1464,10 +1468,7 @@ export default function ProgramStorePage() {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      style={{
-                        background: "color-mix(in srgb, var(--accent-primary) 12%, var(--bg-tertiary))",
-                        color: "var(--accent-primary)",
-                      }}
+                      className="label label-neutral"
                     >
                       {tag}
                     </span>

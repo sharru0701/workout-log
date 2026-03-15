@@ -48,7 +48,8 @@ function PlanListCard({
         <button
           type="button"
           onClick={onManage}
-          style={{ background: "none", border: "1px solid var(--color-border)", borderRadius: "6px", padding: "4px 12px", cursor: "pointer", font: "var(--font-secondary)", color: "var(--color-text-muted)", whiteSpace: "nowrap", marginLeft: "var(--space-sm)" }}
+          className="label label-neutral"
+          style={{ cursor: "pointer", marginLeft: "var(--space-sm)" }}
         >
           관리
         </button>

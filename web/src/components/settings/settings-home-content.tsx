@@ -17,7 +17,7 @@ const rows = [
     subtitle: "Theme",
     description: "라이트 / 다크 / 시스템 설정",
     symbol: "TM",
-    tone: "blue" as const,
+    tone: "primary" as const,
   },
   {
     href: "/settings/minimum-plate",
@@ -41,7 +41,7 @@ const rows = [
     subtitle: "Exercise Catalog",
     description: "운동종목 조회/추가/수정/삭제",
     symbol: "EX",
-    tone: "orange" as const,
+    tone: "primary" as const,
   },
   {
     href: "/settings/data",

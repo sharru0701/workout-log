@@ -261,7 +261,7 @@ type UxCompareRow = {
   current: string;
   previous: string;
   deltaText: string;
-  deltaClassName: string;
+  deltaColor: string;
 };
 
 type MigrationTelemetryResp = {
@@ -390,12 +390,12 @@ function describeMigrationRunStatus(status: string) {
 }
 
 function migrationRunStatusClassName(status: string) {
-  if (status === "SUCCESS") return "text-emerald-700";
-  if (status === "RUNNING") return "text-blue-700";
-  if (status === "LOCK_TIMEOUT") return "text-red-700";
-  if (status === "FAILED") return "text-red-700";
-  if (status === "SKIPPED") return "text-amber-700";
-  return "text-neutral-700";
+  if (status === "SUCCESS") return "var(--color-success)";
+  if (status === "RUNNING") return "var(--color-primary-strong)";
+  if (status === "LOCK_TIMEOUT") return "var(--color-danger)";
+  if (status === "FAILED") return "var(--color-danger)";
+  if (status === "SKIPPED") return "var(--color-warning)";
+  return "var(--color-text-subtle)";
 }
 
 function isMigrationTelemetryResp(value: unknown): value is MigrationTelemetryResp {
@@ -416,18 +416,18 @@ function clampRatio(value: number, fallback: number) {
 
 function trendMeta(delta: number, digits = 1) {
   if (!Number.isFinite(delta) || Math.abs(delta) < 1e-9) {
-    return { arrow: "→", className: "text-neutral-500", value: "0" };
+    return { arrow: "→", color: "var(--color-text-muted)", value: "0" };
   }
   if (delta > 0) {
     return {
       arrow: "↑",
-      className: "text-emerald-700",
+      color: "var(--color-success)",
       value: `+${delta.toFixed(digits)}`,
     };
   }
   return {
     arrow: "↓",
-    className: "text-red-700",
+    color: "var(--color-danger)",
     value: delta.toFixed(digits),
   };
 }
@@ -931,24 +931,24 @@ export default function StatsPage() {
     if (!migrationTelemetry) {
       return {
         label: "확인 불가",
-        className: "border-neutral-300 bg-neutral-100 text-neutral-700",
+        className: "label label-neutral",
       };
     }
     if (migrationTelemetry.status === "critical") {
       return {
         label: "위험",
-        className: "border-red-200 bg-red-100 text-red-700",
+        className: "label label-danger",
       };
     }
     if (migrationTelemetry.status === "warn") {
       return {
         label: "주의",
-        className: "border-amber-200 bg-amber-100 text-amber-700",
+        className: "label label-warning",
       };
     }
     return {
       label: "정상",
-      className: "border-emerald-200 bg-emerald-100 text-emerald-700",
+      className: "label label-success",
     };
   }, [migrationTelemetry]);
   const recentMigrationRuns = migrationTelemetry?.checks.telemetry.recentRuns ?? [];
@@ -966,7 +966,7 @@ export default function StatsPage() {
         current: formatInteger(current),
         previous: formatInteger(previous),
         deltaText: `${trend.arrow} ${trend.value}`,
-        deltaClassName: trend.className,
+        deltaColor: trend.color,
       });
     };
 
@@ -979,7 +979,7 @@ export default function StatsPage() {
         current: formatRatioPercent(current, 1),
         previous: formatRatioPercent(previous, 1),
         deltaText: `${trend.arrow} ${trend.value}pp`,
-        deltaClassName: trend.className,
+        deltaColor: trend.color,
       });
     };
 
@@ -1266,7 +1266,7 @@ export default function StatsPage() {
             volume
               ? {
                   text: `${volumeTrend.arrow} ${volumeTrend.value}`,
-                  className: volumeTrend.className,
+                  color: volumeTrend.color,
                 }
               : undefined
           }
@@ -1278,7 +1278,7 @@ export default function StatsPage() {
             compliance
               ? {
                   text: `${complianceTrend.arrow} ${complianceTrend.value}pp`,
-                  className: complianceTrend.className,
+                  color: complianceTrend.color,
                 }
               : undefined
           }

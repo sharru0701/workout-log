@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/card";
 type MetricTileProps = {
   label: string;
   value: string;
-  trend?: { text: string; className: string };
+  trend?: { text: string; color: string };
 };
 
 type SparklineChartProps = {
@@ -18,10 +18,19 @@ type SparklineChartProps = {
 
 export const MetricTile = memo(function MetricTile({ label, value, trend }: MetricTileProps) {
   return (
-    <Card as="article">
-      <div>{label}</div>
-      <div>{value}</div>
-      {trend ? <div>{trend.text}</div> : null}
+    <Card as="article" padding="md">
+      <div className="metric-label">{label}</div>
+      <div className="metric-value">{value}</div>
+      {trend ? (
+        <div style={{ 
+          marginTop: "var(--space-xs)", 
+          fontSize: "12px", 
+          fontWeight: 600, 
+          color: trend.color 
+        }}>
+          {trend.text}
+        </div>
+      ) : null}
     </Card>
   );
 });
@@ -60,14 +69,15 @@ export const SparklineChart = memo(function SparklineChart({ points, labels, wid
   if (!chart) return null;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ background: "var(--glass-bg-subtle)" }}>
-      <path d={chart.area} fill="currentColor" fillOpacity="0.12" />
-      <path d={chart.d} fill="none" stroke="currentColor" strokeWidth="2.5" />
-      <circle cx={chart.last.x} cy={chart.last.y} r="3.4" fill="currentColor" />
-      <text x={chart.pad} y={height - 4} fontSize="10" fill="currentColor">
+    <svg viewBox={`0 0 ${width} ${height}`} style={{ background: "transparent", color: "var(--color-primary)" }}>
+      <path d={chart.area} fill="currentColor" fillOpacity="0.08" />
+      <path d={chart.d} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+      <circle cx={chart.last.x} cy={chart.last.y} r="3.5" fill="currentColor" />
+      <circle cx={chart.last.x} cy={chart.last.y} r="6" fill="currentColor" fillOpacity="0.1" />
+      <text x={chart.pad} y={height - 4} fontSize="10" fontWeight="500" fill="var(--color-text-muted)">
         min {Math.round(chart.min)}
       </text>
-      <text x={width - chart.pad} y={height - 4} textAnchor="end" fontSize="10" fill="currentColor">
+      <text x={width - chart.pad} y={height - 4} textAnchor="end" fontSize="10" fontWeight="500" fill="var(--color-text-muted)">
         {labels[labels.length - 1]} · max {Math.round(chart.max)}
       </text>
     </svg>

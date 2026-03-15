@@ -122,7 +122,7 @@ function TodayCard({
           <div className="card-title">{title}</div>
           {meta && <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0, marginTop: "2px" }}>{meta}</p>}
         </div>
-        {badge && <span style={{ font: "var(--font-secondary)", color: "var(--color-primary)", backgroundColor: "var(--color-surface-secondary)", padding: "2px 8px", borderRadius: "12px" }}>{badge}</span>}
+        {badge && <span className="label label-neutral">{badge}</span>}
       </div>
 
       {hasGrouped ? (

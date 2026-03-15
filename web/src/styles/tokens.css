@@ -4,16 +4,63 @@
      ============================ */
   --color-bg: #fdf6e3;
   --color-surface: #eee8d5;
-  --color-surface-secondary: #e6dfcb;
+  --color-surface-2: #e6dfcb;            /* (기존 surface-secondary 호환) */
+  --color-surface-secondary: #e6dfcb;    /* 하위 호환성 유지 */
   --color-border: #93a1a1;
+  --color-border-strong: #586e75;
   
   --color-text: #586e75;
   --color-text-muted: #93a1a1;
+  --color-text-subtle: #b7c1c1;
   
+  /* Brand Constants */
   --color-primary: #268bd2;
+  --color-primary-strong: #1a6ba3;
+  --color-primary-weak: #d7e8f5;
+  
   --color-success: #859900;
   --color-warning: #b58900;
   --color-danger: #dc322f;
+
+  /* Interactive States */
+  --color-focus-ring: rgba(38, 139, 210, 0.5);
+  --color-link: #268bd2;
+  --color-link-hover: #1a6ba3;
+  
+  --color-highlight: rgba(181, 137, 0, 0.15); /* warning weak background */
+  --color-selection: rgba(38, 139, 210, 0.2);
+
+  /* ============================
+     LABEL COLOR SYSTEM
+     (Background, Text, Border)
+     ============================ */
+  --label-primary-bg: #d7e8f5;
+  --label-primary-text: #1a6ba3;
+  --label-primary-border: #a4cbed;
+
+  --label-info-bg: #e2e8f0;
+  --label-info-text: #475569;
+  --label-info-border: #cbd5e1;
+
+  --label-success-bg: #e2ecb3;
+  --label-success-text: #515d00;
+  --label-success-border: #b9cf66;
+
+  --label-warning-bg: #f5ecc7;
+  --label-warning-text: #735700;
+  --label-warning-border: #dcb859;
+
+  --label-danger-bg: #f6dbda;
+  --label-danger-text: #a11f1d;
+  --label-danger-border: #e6a5a3;
+
+  --label-neutral-bg: #e6dfcb;
+  --label-neutral-text: #586e75;
+  --label-neutral-border: #93a1a1;
+
+  --label-accent-bg: #e5d8ee;
+  --label-accent-text: #6c2d91;
+  --label-accent-border: #ccafe3;
 
   /* ============================
      TYPOGRAPHY SYSTEM (타이포그래피)
@@ -42,15 +89,63 @@
        ============================ */
     --color-bg: #0d1117;
     --color-surface: #161b22;
+    --color-surface-2: #21262d;
     --color-surface-secondary: #21262d;
     --color-border: #30363d;
+    --color-border-strong: #8b949e;
     
     --color-text: #c9d1d9;
     --color-text-muted: #8b949e;
+    --color-text-subtle: #484f58;
     
+    /* Brand Constants */
     --color-primary: #58a6ff;
+    --color-primary-strong: #79c0ff;
+    --color-primary-weak: #1f3a5f;
+    
     --color-success: #238636;
     --color-warning: #d29922;
     --color-danger: #da3633;
+
+    /* Interactive States */
+    --color-focus-ring: rgba(88, 166, 255, 0.4);
+    --color-link: #58a6ff;
+    --color-link-hover: #79c0ff;
+    
+    --color-highlight: rgba(210, 153, 34, 0.15); /* warning weak background */
+    --color-selection: rgba(88, 166, 255, 0.2);
+
+    /* ============================
+       LABEL COLOR SYSTEM (Dark Mode)
+       (Background, Text, Border) -> Optimized for GitHub Dark contrast
+       ============================ */
+    --label-primary-bg: rgba(56, 139, 253, 0.1);
+    --label-primary-text: #79c0ff;
+    --label-primary-border: rgba(56, 139, 253, 0.3);
+
+    --label-info-bg: rgba(139, 148, 158, 0.1);
+    --label-info-text: #c9d1d9;
+    --label-info-border: rgba(139, 148, 158, 0.3);
+
+    --label-success-bg: rgba(35, 134, 54, 0.15);
+    --label-success-text: #56d364;
+    --label-success-border: rgba(35, 134, 54, 0.4);
+
+    --label-warning-bg: rgba(210, 153, 34, 0.15);
+    --label-warning-text: #e3b341;
+    --label-warning-border: rgba(210, 153, 34, 0.4);
+
+    --label-danger-bg: rgba(218, 54, 51, 0.1);
+    --label-danger-text: #ff7b72;
+    --label-danger-border: rgba(218, 54, 51, 0.3);
+
+    --label-neutral-bg: var(--color-surface-2);
+    --label-neutral-text: var(--color-text-muted);
+    --label-neutral-border: var(--color-border);
+
+    --label-accent-bg: rgba(188, 140, 255, 0.1);
+    --label-accent-text: #d2a8ff;
+    --label-accent-border: rgba(188, 140, 255, 0.3);
   }
 }
+

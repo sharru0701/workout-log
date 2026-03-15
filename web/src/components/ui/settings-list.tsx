@@ -25,7 +25,7 @@ type SectionFootnoteProps = {
 
 type RowTone = "neutral" | "success" | "warning" | "critical" | "disabled";
 type RowBadgeTone = "neutral" | "accent" | "warning";
-type RowIconTone = "neutral" | "tint" | "blue" | "green" | "orange";
+type RowIconTone = "neutral" | "tint" | "primary" | "success" | "warning";
 
 type RowBaseProps = {
   rowId?: string;
@@ -123,7 +123,7 @@ function RowContent({
       </span>
       {(trailing || badge) && (
         <span className="row-trailing">
-          {badge ? <span className="row-badge">{badge}</span> : null}
+          {badge ? <span className={`label label-sm ${badgeTone === "accent" ? "label-accent" : badgeTone === "warning" ? "label-warning" : "label-neutral"}`}>{badge}</span> : null}
           {trailing}
         </span>
       )}
@@ -164,11 +164,39 @@ export function SectionFootnote({ children, className }: SectionFootnoteProps) {
 }
 
 export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
+  const getStyle = () => {
+    switch (tone) {
+      case "primary":
+        return { backgroundColor: "var(--color-primary)", color: "var(--color-bg)" };
+      case "success":
+        return { backgroundColor: "var(--color-success)", color: "var(--color-bg)" };
+      case "warning":
+        return { backgroundColor: "var(--color-warning)", color: "var(--color-bg)" };
+      case "tint":
+        return { backgroundColor: "var(--color-surface-2)", color: "var(--color-text)" };
+      case "neutral":
+      default:
+        return { backgroundColor: "var(--color-border)", color: "var(--color-bg)" };
+    }
+  };
+
   return (
     <span
+      className="settings-row-icon"
       aria-hidden={label ? undefined : true}
       aria-label={label}
       role={label ? "img" : undefined}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        width: "28px",
+        height: "28px",
+        borderRadius: "6px",
+        fontSize: "14px",
+        fontWeight: 600,
+        ...getStyle(),
+      }}
     >
       {symbol}
     </span>

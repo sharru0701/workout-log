@@ -46,10 +46,12 @@ export function SessionSummaryCard({
   const inner = hasData ? (
     <>
       <div style={{ marginBottom: "var(--space-sm)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-xs)" }}>
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
-            {data.badgeLabel}
-          </span>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
+          {data.badgeLabel ? (
+            <span className="label label-neutral label-sm">
+              {data.badgeLabel}
+            </span>
+          ) : <span />}
           <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{data.dateLabel}</span>
         </div>
         {!isToday && hasStats ? (
