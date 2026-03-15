@@ -34,20 +34,21 @@ function PlanListCard({
   onManage: () => void;
 }) {
   return (
-    <Card padding="sm" tone="inset" elevated={false}>
-      <div>
-        <div>
-          <strong>
+    <Card padding="md" tone="inset" elevated={false}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
+        <div style={{ flex: 1 }}>
+          <strong style={{ font: "var(--font-card-title)", display: "block", marginBottom: "2px" }}>
             {plan.name}
           </strong>
-          <span>기반 프로그램: {plan.baseProgramName ?? "-"}</span>
-          <span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "block", marginBottom: "2px" }}>기반 프로그램: {plan.baseProgramName ?? "-"}</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "block" }}>
             최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
           </span>
         </div>
         <button
           type="button"
           onClick={onManage}
+          style={{ background: "none", border: "1px solid var(--color-border)", borderRadius: "6px", padding: "4px 12px", cursor: "pointer", font: "var(--font-secondary)", color: "var(--color-text-muted)", whiteSpace: "nowrap", marginLeft: "var(--space-sm)" }}
         >
           관리
         </button>
