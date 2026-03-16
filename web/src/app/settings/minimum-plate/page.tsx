@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useSettingsModalHeaderAction } from "@/components/settings/settings-modal-header-action";
 import { Card, CardContent } from "@/components/ui/card";
-import { AppNumberStepper } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
 import {
   BaseGroupedList,
   NavigationRow,
@@ -341,6 +341,7 @@ export default function SettingsMinimumPlatePage() {
             <div>
               <button
                 type="button"
+                className="btn btn-danger btn-full"
                 onClick={() => void deleteRule()}
                 disabled={rulesSetting.pending}
               >
@@ -350,23 +351,40 @@ export default function SettingsMinimumPlatePage() {
           ) : null
         }
       >
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
           <Card padding="md" elevated={false}>
-            <CardContent>
-              <label>
-                <span>운동종목 드롭다운 검색/선택</span>
+            <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+                <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동종목 드롭다운 검색/선택</span>
                 <div data-no-swipe="true">
-                  <div>
-                    <span aria-hidden="true">
-                      <svg viewBox="0 0 24 24" focusable="false">
+                  <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                    <span
+                      aria-hidden="true"
+                      style={{
+                        position: "absolute",
+                        insetInlineStart: "0.82rem",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                        width: "0.9rem",
+                        height: "0.9rem",
+                        color: "var(--color-text-subtle)",
+                        pointerEvents: "none",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" focusable="false" style={{ width: "100%", height: "100%", fill: "none", stroke: "currentColor", strokeWidth: "2" }}>
                         <circle cx="11" cy="11" r="7" />
                         <path d="m20 20-3.8-3.8" />
                       </svg>
                     </span>
-                    <input
-                      type="search"
+                    <AppTextInput
+                      type="text"
                       inputMode="search"
+                      autoComplete="off"
                       value={exerciseQuery}
+                      style={{ paddingInlineStart: "2.15rem", paddingInlineEnd: exerciseQuery.trim().length > 0 ? "2.25rem" : "var(--space-md)" }}
                       placeholder="예: Pull-up"
                       onChange={(event) => {
                         const nextQuery = event.target.value;
@@ -390,26 +408,61 @@ export default function SettingsMinimumPlatePage() {
                       <button
                         type="button"
                         aria-label="검색어 지우기"
+                        style={{
+                          position: "absolute",
+                          insetInlineEnd: "0.55rem",
+                          top: "50%",
+                          transform: "translateY(-50%)",
+                          width: "24px",
+                          height: "24px",
+                          minHeight: "24px",
+                          borderRadius: "999px",
+                          border: "1px solid var(--color-border)",
+                          background: "var(--color-surface-secondary)",
+                          color: "var(--color-text-muted)",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 0,
+                          lineHeight: 0,
+                        }}
                         onClick={() => {
                           setExerciseQuery("");
                           setSheetError(null);
                         }}
                       >
-                        ×
+                        <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                          <path d="M2 2 10 10" />
+                          <path d="M10 2 2 10" />
+                        </svg>
                       </button>
                     ) : null}
                   </div>
 
                   {selectedExerciseOption ? (
-                    <div role="status" aria-live="polite">
-                      <span>선택됨</span>
-                      <strong>
+                    <div
+                      role="status"
+                      aria-live="polite"
+                      style={{
+                        marginTop: "var(--space-sm)",
+                        padding: "var(--space-sm)",
+                        border: "1px solid var(--color-selected-border)",
+                        borderRadius: "8px",
+                        background: "var(--color-selected-weak)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: "var(--space-sm)",
+                      }}
+                    >
+                      <strong style={{ minWidth: 0 }}>
                         {selectedExerciseOption.category
                           ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
                           : selectedExerciseOption.name}
                       </strong>
                       <button
                         type="button"
+                        className="btn btn-inline-action"
                         onClick={() => selectExerciseOption(null)}
                       >
                         선택 변경
@@ -418,14 +471,27 @@ export default function SettingsMinimumPlatePage() {
                   ) : null}
 
                   {!selectedExerciseOption ? (
-                    <div role="listbox" aria-label="운동종목 검색 결과">
+                    <div
+                      role="listbox"
+                      aria-label="운동종목 검색 결과"
+                      style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "var(--space-xs)",
+                        maxHeight: "240px",
+                        overflowY: "auto",
+                        paddingTop: "var(--space-sm)",
+                      }}
+                    >
                       {visibleExercises.length === 0 ? (
-                        <span>검색 조건에 맞는 운동종목이 없습니다.</span>
+                        <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 조건에 맞는 운동종목이 없습니다.</span>
                       ) : (
                         visibleExercises.map((exercise) => (
                           <button
                             key={exercise.id}
                             type="button"
+                            className="btn btn-secondary btn-full"
+                            style={{ justifyContent: "flex-start", minHeight: "40px" }}
                             onClick={() => {
                               selectExerciseOption(exercise);
                             }}
@@ -460,7 +526,7 @@ export default function SettingsMinimumPlatePage() {
             </CardContent>
           </Card>
 
-          {sheetError ? <p>{sheetError}</p> : null}
+          {sheetError ? <p style={{ margin: 0, color: "var(--color-danger)", font: "var(--font-secondary)" }}>{sheetError}</p> : null}
         </div>
       </BottomSheet>
     </div>
