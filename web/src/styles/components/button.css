@@ -49,6 +49,18 @@
   transform: none;
 }
 
+.btn-danger {
+  background-color: color-mix(in srgb, var(--color-danger) 90%, var(--color-surface));
+  color: var(--color-text-on-action);
+  border: 1px solid color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+}
+
+.btn-danger:active {
+  background-color: color-mix(in srgb, var(--color-danger) 84%, var(--color-surface-active));
+  border-color: color-mix(in srgb, var(--color-danger) 52%, var(--color-border));
+  transform: none;
+}
+
 .btn-secondary {
   background-color: var(--color-surface-secondary);
   color: var(--color-text);

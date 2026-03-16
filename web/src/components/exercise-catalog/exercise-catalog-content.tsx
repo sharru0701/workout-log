@@ -6,6 +6,7 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
+import { AppTextInput } from "@/components/ui/form-controls";
 
 type ExerciseItem = {
   id: string;
@@ -89,14 +90,6 @@ export function ExerciseCatalogContent() {
   const visibleItems = useMemo(() => items, [items]);
   const listQueryKey = `exercise-catalog:${activeLoadQuery}`;
   const isListSettled = useQuerySettled(listQueryKey, loading);
-  const circleActionButtonStyle = {
-    width: "var(--touch-target)",
-    height: "var(--touch-target)",
-    minWidth: "var(--touch-target)",
-    minHeight: "var(--touch-target)",
-    padding: 0,
-    aspectRatio: "1 / 1",
-  } as const;
 
   return (
     <div>
@@ -120,8 +113,9 @@ export function ExerciseCatalogContent() {
         <Card padding="md" elevated={false}>
           <CardContent>
             <label>
-              <span>검색</span>
-              <input
+              <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>검색</span>
+              <AppTextInput
+                variant="compact"
                 value={query}
                 placeholder="운동종목 검색"
                 onChange={(event) => setQuery(event.target.value)}
@@ -138,6 +132,7 @@ export function ExerciseCatalogContent() {
             {!createOpen ? (
               <button
                 type="button"
+                className="btn btn-secondary btn-full"
                 onClick={() => setCreateOpen(true)}
               >
                 운동종목 추가
@@ -145,24 +140,27 @@ export function ExerciseCatalogContent() {
             ) : (
               <>
                 <label>
-                  <span>운동종목명</span>
-                  <input
+                  <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
+                  <AppTextInput
+                    variant="compact"
                     value={createName}
                     onChange={(event) => setCreateName(event.target.value)}
                     placeholder="예: Incline Bench Press"
                   />
                 </label>
                 <label>
-                  <span>카테고리 (선택)</span>
-                  <input
+                  <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>카테고리 (선택)</span>
+                  <AppTextInput
+                    variant="compact"
                     value={createCategory}
                     onChange={(event) => setCreateCategory(event.target.value)}
                     placeholder="예: Chest"
                   />
                 </label>
-                <CardActionGroup>
+                <CardActionGroup style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-sm)", marginTop: "var(--space-sm)" }}>
                   <button
                     type="button"
+                    className="btn btn-secondary"
                     disabled={savingCreate}
                     onClick={() => setCreateOpen(false)}
                   >
@@ -170,6 +168,7 @@ export function ExerciseCatalogContent() {
                   </button>
                   <button
                     type="button"
+                    className="btn btn-primary"
                     disabled={savingCreate || !createName.trim()}
                     onClick={async () => {
                       try {
@@ -216,14 +215,14 @@ export function ExerciseCatalogContent() {
               <CardContent>
                 {!editingThis ? (
                   <>
-                    <div>
-                      <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-sm)" }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
                         <strong>{item.name}</strong>
                       </div>
-                      <div>
+                      <div style={{ display: "flex", gap: "var(--space-xs)" }}>
                         <button
                           type="button"
-                          style={circleActionButtonStyle}
+                          className="btn btn-icon"
                           aria-label={`${item.name} 수정`}
                           title="운동종목 수정"
                           disabled={deletingThis}
@@ -241,6 +240,7 @@ export function ExerciseCatalogContent() {
                             stroke="currentColor"
                             strokeWidth="2.05"
                             aria-hidden="true"
+                            style={{ width: "22px", height: "22px" }}
                           >
                             <path
                               d="M4.75 19.25h4.1l9.56-9.56a1.75 1.75 0 0 0 0-2.47l-1.63-1.63a1.75 1.75 0 0 0-2.47 0l-9.56 9.56v4.1Z"
@@ -252,7 +252,7 @@ export function ExerciseCatalogContent() {
                         </button>
                         <button
                           type="button"
-                          style={circleActionButtonStyle}
+                          className="btn btn-icon btn-icon-danger"
                           aria-label={deletingThis ? `${item.name} 삭제 중` : `${item.name} 삭제`}
                           title={deletingThis ? "삭제 중..." : "운동종목 삭제"}
                           disabled={deletingThis}
@@ -284,6 +284,7 @@ export function ExerciseCatalogContent() {
                             stroke="currentColor"
                             strokeWidth="2.1"
                             aria-hidden="true"
+                            style={{ width: "22px", height: "22px" }}
                           >
                             <path d="M4.5 7.5h15" strokeLinecap="round" />
                             <path d="M9.75 3.75h4.5" strokeLinecap="round" />
@@ -298,7 +299,7 @@ export function ExerciseCatalogContent() {
                         </button>
                       </div>
                     </div>
-                    <div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "2px", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
                       <span>카테고리: {item.category ?? "미지정"}</span>
                       <span>별칭: {item.aliases.join(", ") || "-"}</span>
                     </div>
@@ -306,8 +307,9 @@ export function ExerciseCatalogContent() {
                 ) : (
                   <>
                     <label>
-                      <span>운동종목명</span>
-                      <input
+                      <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
+                      <AppTextInput
+                        variant="compact"
                         value={editing.name}
                         onChange={(event) =>
                           setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
@@ -315,17 +317,19 @@ export function ExerciseCatalogContent() {
                       />
                     </label>
                     <label>
-                      <span>카테고리</span>
-                      <input
+                      <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>카테고리</span>
+                      <AppTextInput
+                        variant="compact"
                         value={editing.category}
                         onChange={(event) =>
                           setEditing((prev) => (prev ? { ...prev, category: event.target.value } : prev))
                         }
                       />
                     </label>
-                    <CardActionGroup>
+                    <CardActionGroup style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-sm)", marginTop: "var(--space-sm)" }}>
                       <button
                         type="button"
+                        className="btn btn-primary"
                         disabled={savingEdit || !editing.name.trim()}
                         onClick={async () => {
                           try {
@@ -349,6 +353,7 @@ export function ExerciseCatalogContent() {
                       </button>
                       <button
                         type="button"
+                        className="btn btn-secondary"
                         onClick={() => setEditing(null)}
                       >
                         취소

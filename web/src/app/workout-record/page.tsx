@@ -1597,7 +1597,7 @@ export default function WorkoutRecordPage() {
         description="보유 플랜을 검색해 오늘 기록에 사용할 플랜으로 전환합니다."
         onClose={closePlanSheet}
         closeLabel="닫기"
-        label="플랜 드롭다운 검색/선택"
+        label=""
         query={planQuery}
         placeholder="플랜 검색"
         onQueryChange={setPlanQuery}
@@ -1657,8 +1657,8 @@ export default function WorkoutRecordPage() {
                 loadingText="검색 중..."
                 selectionSummary={
                   selectedExerciseOption ? (
-                    <div role="status" aria-live="polite">
-                      <span>선택됨</span>
+                    <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
+                      <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택됨</span>
                       <strong>
                         {selectedExerciseOption.category
                           ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
@@ -1666,6 +1666,7 @@ export default function WorkoutRecordPage() {
                       </strong>
                       <button
                         type="button"
+                        className="btn btn-inline-action"
                         onClick={() => selectExerciseOption(null)}
                       >
                         선택 변경

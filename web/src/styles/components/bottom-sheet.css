@@ -53,6 +53,7 @@
   
   transform: translateY(100%); /* 기본 닫혀있음 */
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bottom-sheet-panel {
@@ -114,4 +115,22 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 .mobile-bottom-sheet-btn svg {
   width: 20px;
   height: 20px;
+}
+
+.mobile-bottom-sheet-btn-spacer {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.mobile-bottom-sheet-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--space-md);
+}
+
+.mobile-bottom-sheet-footer {
+  flex-shrink: 0;
 }

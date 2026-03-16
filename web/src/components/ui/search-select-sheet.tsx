@@ -14,7 +14,7 @@ export type SearchSelectOption = {
 };
 
 type SearchSelectComboboxProps = {
-  label: string;
+  label?: string;
   query: string;
   placeholder: string;
   onQueryChange: (value: string) => void;
@@ -66,7 +66,7 @@ export function SearchSelectCombobox({
 
   return (
     <label>
-      <span>{label}</span>
+      {label ? <span>{label}</span> : null}
       <div data-no-swipe="true">
         <div style={{ position: "relative", marginBottom: "var(--space-md)" }}>
           <span aria-hidden="true" style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "var(--color-text-muted)", pointerEvents: "none" }}>

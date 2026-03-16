@@ -341,6 +341,18 @@ export default function CalendarPage() {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [refreshTick, setRefreshTick] = useState(0);
+  const [monthTransition, setMonthTransition] = useState<{
+    fromDate: string;
+    toDate: string;
+    fromSelectedDate: string;
+    toSelectedDate: string;
+    direction: "next" | "prev";
+  } | null>(null);
+  const monthTransitionTimerRef = useRef<number | null>(null);
+  const monthDragEndTimerRef = useRef<number | null>(null);
+  const [dragOffsetY, setDragOffsetY] = useState(0);
+  const [isDraggingMonth, setIsDraggingMonth] = useState(false);
+  const [isSettlingMonth, setIsSettlingMonth] = useState(false);
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -354,8 +366,6 @@ export default function CalendarPage() {
       normalizeSearchText(plan.name, plan.type).includes(normalizedQuery),
     );
   }, [orderedPlans, planQuery]);
-  const anchorMonthKey = useMemo(() => monthStart(anchorDate).slice(0, 7), [anchorDate]);
-  const cells = useMemo(() => monthGrid(anchorDate), [anchorDate]);
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
@@ -540,19 +550,116 @@ export default function CalendarPage() {
     return session;
   }
 
-  const [animKey, setAnimKey] = useState(0);
-  const [animClass, setAnimClass] = useState<"" | "slide-from-below" | "slide-from-above">("");
   const swipeTouchRef = useRef<{ startY: number; startX: number } | null>(null);
   const calGestureRef = useRef<HTMLDivElement>(null);
+  const calendarGridViewportRef = useRef<HTMLDivElement>(null);
+
+  function buildMonthTransition(direction: "next" | "prev") {
+    const nextAnchorDate = shiftDateByMonths(anchorDate, direction === "next" ? 1 : -1);
+    const nextSelectedDate = setMonthOfDate(selectedDate, getYear(nextAnchorDate), getMonth(nextAnchorDate));
+    return {
+      fromDate: anchorDate,
+      toDate: nextAnchorDate,
+      fromSelectedDate: selectedDate,
+      toSelectedDate: nextSelectedDate,
+      direction,
+    } as const;
+  }
+
+  function commitVerticalSwipe(startX: number, startY: number, endX: number, endY: number, threshold = 40) {
+    const dy = startY - endY;
+    const dx = Math.abs(startX - endX);
+    if (Math.abs(dy) < threshold || dx > Math.abs(dy) * 0.8) return;
+    shiftMonth(dy > 0 ? 1 : -1);
+  }
+
+  function beginMonthDrag(startX: number, startY: number) {
+    if (monthTransition || isSettlingMonth) return;
+    swipeTouchRef.current = { startY, startX };
+  }
+
+  function updateMonthDrag(currentX: number, currentY: number) {
+    if (!swipeTouchRef.current || isSettlingMonth) return;
+    const dy = currentY - swipeTouchRef.current.startY;
+    const dx = Math.abs(currentX - swipeTouchRef.current.startX);
+    if (Math.abs(dy) < 8 || dx > Math.abs(dy) * 0.9) return;
+
+    const direction: "next" | "prev" = dy < 0 ? "next" : "prev";
+    if (!monthTransition || monthTransition.direction !== direction) {
+      setMonthTransition(buildMonthTransition(direction));
+    }
+
+    const viewportHeight = calendarGridViewportRef.current?.clientHeight ?? 260;
+    const clampedOffset = Math.max(-viewportHeight, Math.min(viewportHeight, dy));
+    setDragOffsetY(clampedOffset);
+    setIsDraggingMonth(true);
+  }
+
+  function finishMonthDrag(endX: number, endY: number, fallbackThreshold = 40) {
+    const start = swipeTouchRef.current;
+    swipeTouchRef.current = null;
+    if (!start) return;
+
+    if (!monthTransition || !isDraggingMonth) {
+      commitVerticalSwipe(start.startX, start.startY, endX, endY, fallbackThreshold);
+      return;
+    }
+
+    const viewportHeight = calendarGridViewportRef.current?.clientHeight ?? 260;
+    const commitThreshold = Math.min(Math.max(viewportHeight * 0.22, 44), 120);
+    const commit = Math.abs(dragOffsetY) >= commitThreshold;
+    const settleTarget = commit
+      ? (monthTransition.direction === "next" ? -viewportHeight : viewportHeight)
+      : 0;
+
+    setIsDraggingMonth(false);
+    setIsSettlingMonth(true);
+    setDragOffsetY(settleTarget);
+
+    if (monthDragEndTimerRef.current !== null) {
+      window.clearTimeout(monthDragEndTimerRef.current);
+      monthDragEndTimerRef.current = null;
+    }
+
+    monthDragEndTimerRef.current = window.setTimeout(() => {
+      if (commit) {
+        setAnchorDate(monthTransition.toDate);
+        setSelectedDate(monthTransition.toSelectedDate);
+      }
+      setMonthTransition(null);
+      setIsSettlingMonth(false);
+      setDragOffsetY(0);
+      monthDragEndTimerRef.current = null;
+    }, 190);
+  }
 
   function setCalendarMonth(value: { year: number; month: number }) {
+    if (monthTransition) return;
     const currentMonthValue = getYear(anchorDate) * 12 + getMonth(anchorDate);
     const nextMonthValue = value.year * 12 + value.month;
     if (nextMonthValue === currentMonthValue) return;
-    setAnimClass(nextMonthValue > currentMonthValue ? "slide-from-below" : "slide-from-above");
-    setAnimKey((k) => k + 1);
-    setAnchorDate((current) => setMonthOfDate(current, value.year, value.month));
-    setSelectedDate((current) => setMonthOfDate(current, value.year, value.month));
+    const nextAnchorDate = setMonthOfDate(anchorDate, value.year, value.month);
+    const nextSelectedDate = setMonthOfDate(selectedDate, value.year, value.month);
+
+    setMonthTransition({
+      fromDate: anchorDate,
+      toDate: nextAnchorDate,
+      fromSelectedDate: selectedDate,
+      toSelectedDate: nextSelectedDate,
+      direction: nextMonthValue > currentMonthValue ? "next" : "prev",
+    });
+
+    setAnchorDate(nextAnchorDate);
+    setSelectedDate(nextSelectedDate);
+
+    if (monthTransitionTimerRef.current !== null) {
+      window.clearTimeout(monthTransitionTimerRef.current);
+      monthTransitionTimerRef.current = null;
+    }
+    monthTransitionTimerRef.current = window.setTimeout(() => {
+      setMonthTransition(null);
+      monthTransitionTimerRef.current = null;
+    }, 280);
   }
 
   function shiftMonth(delta: number) {
@@ -566,32 +673,49 @@ export default function CalendarPage() {
 
   function handleCalSwipeTouchStart(e: React.TouchEvent) {
     const t = e.touches[0];
-    swipeTouchRef.current = { startY: t.clientY, startX: t.clientX };
+    beginMonthDrag(t.clientX, t.clientY);
+  }
+
+  function handleCalSwipeTouchMove(e: React.TouchEvent) {
+    const t = e.touches[0];
+    updateMonthDrag(t.clientX, t.clientY);
   }
 
   function handleCalSwipeTouchEnd(e: React.TouchEvent) {
-    if (!swipeTouchRef.current) return;
     const t = e.changedTouches[0];
-    const dy = swipeTouchRef.current.startY - t.clientY;
-    const dx = Math.abs(swipeTouchRef.current.startX - t.clientX);
-    swipeTouchRef.current = null;
-    if (Math.abs(dy) < 40 || dx > Math.abs(dy) * 0.8) return;
-    shiftMonth(dy > 0 ? 1 : -1);
+    finishMonthDrag(t.clientX, t.clientY, 40);
   }
 
-  useEffect(() => {
-    const el = calGestureRef.current;
-    if (!el) return;
-    const onTouchMove = (e: TouchEvent) => {
-      if (!swipeTouchRef.current) return;
-      const t = e.touches[0];
-      const dy = Math.abs(swipeTouchRef.current.startY - t.clientY);
-      const dx = Math.abs(swipeTouchRef.current.startX - t.clientX);
-      if (dy > dx && dy > 8) e.preventDefault();
+  function handleCalSwipeMouseDown(e: React.MouseEvent) {
+    if (e.button !== 0) return;
+    beginMonthDrag(e.clientX, e.clientY);
+    e.preventDefault();
+
+    const onMouseMove = (event: MouseEvent) => {
+      updateMonthDrag(event.clientX, event.clientY);
     };
-    el.addEventListener("touchmove", onTouchMove, { passive: false });
-    return () => el.removeEventListener("touchmove", onTouchMove);
-  }, []);
+    const onMouseUp = (event: MouseEvent) => {
+      finishMonthDrag(event.clientX, event.clientY, 28);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup", onMouseUp);
+    };
+
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup", onMouseUp);
+  }
+
+  useEffect(
+    () => () => {
+      if (monthDragEndTimerRef.current !== null) {
+        window.clearTimeout(monthDragEndTimerRef.current);
+        monthDragEndTimerRef.current = null;
+      }
+      if (monthTransitionTimerRef.current === null) return;
+      window.clearTimeout(monthTransitionTimerRef.current);
+      monthTransitionTimerRef.current = null;
+    },
+    [monthDragEndTimerRef],
+  );
 
   const selectedCtx = useMemo(
     () => computePlanContextForDate(selectedPlan, selectedDate),
@@ -678,6 +802,67 @@ export default function CalendarPage() {
     };
   }, [planId, selectedLog, selectedSession?.id]);
 
+  const renderMonthRows = (baseDate: string, selectedForGrid: string) => {
+    const baseMonthKey = monthStart(baseDate).slice(0, 7);
+    const cells = monthGrid(baseDate);
+    return Array.from({ length: 5 }, (_, week) => (
+      <div key={`${baseDate}-week-${week}`} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center" }}>
+        {cells.slice(week * 7, week * 7 + 7).map((dateOnly) => {
+          const isToday = dateOnly === today;
+          const isSelected = dateOnly === selectedForGrid;
+          const isOutside = !dateOnly.startsWith(baseMonthKey);
+          const hasDot = !!selectedPlan && logDates.has(dateOnly);
+          const dow = getDayOfWeek(dateOnly);
+
+          return (
+            <button
+              key={dateOnly}
+              role="gridcell"
+              onClick={() => setSelectedDate(dateOnly)}
+              aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
+              aria-selected={isSelected}
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                margin: "4px auto",
+                padding: 0,
+                border: isSelected ? "1px solid var(--color-selected-border)" : "1px solid transparent",
+                background: isSelected ? "var(--color-selected-bg)" : "transparent",
+                color: isSelected ? "var(--color-selected-text)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-calendar-saturday)" : "var(--color-text)",
+                borderRadius: "50%",
+                transform: isSelected ? "scale(1.01)" : "scale(1)",
+                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                fontWeight: isToday || isSelected ? 700 : 400,
+                cursor: "pointer",
+                position: "relative",
+                fontSize: "14px",
+              }}
+            >
+              <span>{dayOfMonth(dateOnly)}</span>
+              {hasDot ? (
+                <span
+                  aria-hidden="true"
+                  style={{
+                    width: "4px",
+                    height: "4px",
+                    borderRadius: "50%",
+                    backgroundColor: isSelected ? "var(--color-bg)" : "var(--color-calendar-dot)",
+                    position: "absolute",
+                    bottom: "3px",
+                  }}
+                />
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    ));
+  };
+
   return (
     <div {...pullToRefresh.bind}>
       <PullToRefreshIndicator
@@ -720,7 +905,9 @@ export default function CalendarPage() {
       <div
         ref={calGestureRef}
         onTouchStart={handleCalSwipeTouchStart}
+        onTouchMove={handleCalSwipeTouchMove}
         onTouchEnd={handleCalSwipeTouchEnd}
+        onMouseDown={handleCalSwipeMouseDown}
       >
       <div
         data-pull-refresh-trigger="true"
@@ -754,7 +941,7 @@ export default function CalendarPage() {
               strokeLinejoin="round"
               style={{ width: "20px", height: "20px" }}
             >
-              <path d="M15 18l-6-6 6-6" />
+              <path d="M6 15l6-6 6 6" />
             </svg>
           </button>
           <button
@@ -771,7 +958,7 @@ export default function CalendarPage() {
               strokeLinejoin="round"
               style={{ width: "20px", height: "20px" }}
             >
-              <path d="M9 18l6-6-6-6" />
+              <path d="M6 9l6 6 6-6" />
             </svg>
           </button>
         </div>
@@ -787,54 +974,26 @@ export default function CalendarPage() {
       </div>
 
       {/* Date grid */}
-      <div
-        key={animKey}
-        role="grid"
-        aria-label="날짜 선택"
-        style={{ marginBottom: "var(--space-md)" }}
-      >
-        {Array.from({ length: 5 }, (_, week) => (
-          <div key={week} style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center" }}>
-            {cells.slice(week * 7, week * 7 + 7).map((dateOnly) => {
-              const isToday = dateOnly === today;
-              const isSelected = dateOnly === selectedDate;
-              const isOutside = !dateOnly.startsWith(anchorMonthKey);
-              const hasDot = !!selectedPlan && logDates.has(dateOnly);
-              const dow = getDayOfWeek(dateOnly);
-
-              return (
-                <button
-                  key={dateOnly}
-                  role="gridcell"
-                  onClick={() => setSelectedDate(dateOnly)}
-                  aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
-                  aria-selected={isSelected}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    padding: "6px 0",
-                    border: isSelected ? "1px solid var(--color-selected-border)" : "1px solid transparent",
-                    background: isSelected ? "var(--color-selected-bg)" : "transparent",
-                    color: isSelected ? "var(--color-selected-text)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-calendar-saturday)" : "var(--color-text)",
-                    borderRadius: "50%",
-                    transform: isSelected ? "scale(1.04)" : "scale(1)",
-                    transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    fontWeight: isToday || isSelected ? 700 : 400,
-                    cursor: "pointer",
-                    aspectRatio: "1 / 1",
-                    position: "relative",
-                    fontSize: "14px",
-                  }}
-                >
-                  <span>{dayOfMonth(dateOnly)}</span>
-                  {hasDot && <span aria-hidden="true" style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: isSelected ? "var(--color-bg)" : "var(--color-calendar-dot)", position: "absolute", bottom: "2px" }} />}
-                </button>
-              );
-            })}
-          </div>
-        ))}
+      <div ref={calendarGridViewportRef} role="grid" aria-label="날짜 선택" className="calendar-grid-viewport" style={{ marginBottom: "var(--space-md)" }}>
+        <div
+          className={`calendar-grid-stage${monthTransition ? ` is-animating dir-${monthTransition.direction}` : ""}${isDraggingMonth ? " is-dragging" : ""}${isSettlingMonth ? " is-settling" : ""}`}
+          style={monthTransition ? ({ "--calendar-drag-offset": `${dragOffsetY}px` } as React.CSSProperties) : undefined}
+        >
+          {monthTransition ? (
+            <>
+              <div className="calendar-grid-panel">
+                {renderMonthRows(monthTransition.fromDate, monthTransition.fromSelectedDate)}
+              </div>
+              <div className="calendar-grid-panel">
+                {renderMonthRows(monthTransition.toDate, monthTransition.toSelectedDate)}
+              </div>
+            </>
+          ) : (
+            <div className="calendar-grid-panel">
+              {renderMonthRows(anchorDate, selectedDate)}
+            </div>
+          )}
+        </div>
       </div>
 
       </div>{/* /ios-cal-gesture-area */}
@@ -922,7 +1081,7 @@ export default function CalendarPage() {
           setPlanQuery("");
         }}
         closeLabel="닫기"
-        label="플랜 드롭다운 검색/선택"
+        label=""
         query={planQuery}
         placeholder="플랜 검색"
         onQueryChange={setPlanQuery}

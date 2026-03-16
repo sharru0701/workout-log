@@ -7,6 +7,7 @@ type StoreSearchInputProps = {
   ariaLabel: string;
   shellAriaLabel?: string;
   clearAriaLabel?: string;
+  chrome?: "outlined" | "plain";
 };
 
 export function StoreSearchInput({
@@ -16,6 +17,7 @@ export function StoreSearchInput({
   ariaLabel,
   shellAriaLabel,
   clearAriaLabel = "검색어 지우기",
+  chrome = "outlined",
 }: StoreSearchInputProps) {
   const hasQuery = value.trim().length > 0;
 
@@ -24,7 +26,18 @@ export function StoreSearchInput({
   };
 
   return (
-    <div aria-label={shellAriaLabel} style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", backgroundColor: "var(--color-surface)" }}>
+    <div
+      aria-label={shellAriaLabel}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-sm)",
+        padding: "var(--space-sm) var(--space-md)",
+        border: chrome === "outlined" ? "1px solid var(--color-border)" : "none",
+        borderRadius: "8px",
+        backgroundColor: chrome === "outlined" ? "var(--color-surface)" : "transparent",
+      }}
+    >
       <span aria-hidden="true" style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "20px", height: "20px", flexShrink: 0 }}>
         <svg viewBox="0 0 24 24" focusable="false" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "100%", height: "100%" }}>
           <circle cx="11" cy="11" r="7" />

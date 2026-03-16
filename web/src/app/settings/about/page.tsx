@@ -22,7 +22,7 @@ export default function SettingsAboutPage() {
           <ValueRow
             label="플랫폼"
             description="Runtime"
-            value="Next.js PWA"
+            value="Next.js"
             showChevron={false}
           />
           <InfoRow

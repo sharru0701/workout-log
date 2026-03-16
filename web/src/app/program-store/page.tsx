@@ -1180,13 +1180,13 @@ export default function ProgramStorePage() {
       {listItems.length > 0 || hasStoreQuery ? (
         <DashboardSurface data-pull-refresh-trigger="true">
           <div>
-            <span>스토어 검색</span>
             <StoreSearchInput
               value={storeQuery}
               onChange={setStoreQuery}
               placeholder="프로그램명, 설명, 태그 검색"
               ariaLabel="스토어 검색"
               shellAriaLabel="스토어 검색 입력"
+              chrome="plain"
             />
           </div>
         </DashboardSurface>

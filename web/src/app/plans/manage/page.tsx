@@ -246,13 +246,13 @@ function PlansManagePageContent() {
           {plans.length > 0 || searchQuery.trim().length > 0 ? (
             <DashboardSurface>
               <div>
-                <span>플랜 검색</span>
                 <StoreSearchInput
                   value={searchQuery}
                   onChange={setSearchQuery}
                   placeholder="플랜명 또는 기반 프로그램 검색"
                   ariaLabel="플랜 검색"
                   shellAriaLabel="플랜 검색 입력"
+                  chrome="plain"
                 />
               </div>
             </DashboardSurface>

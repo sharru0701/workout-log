@@ -154,6 +154,8 @@ export default function SettingsDataPage() {
 
         <button
           type="button"
+          className="btn btn-danger btn-full"
+          style={{ marginTop: "var(--space-sm)" }}
           onClick={() => {
             void runReset();
           }}

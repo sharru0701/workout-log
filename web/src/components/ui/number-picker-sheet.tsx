@@ -126,13 +126,39 @@ export function NumberPickerField({
   const [open, setOpen] = useState(false);
 
   const displayText = formatValue ? formatValue(value) : String(value);
-
-  const fieldClass =
-    variant === "workout-number"
-      ? "number-picker-field number-picker-field--workout"
-      : variant === "stepper"
-        ? "number-picker-field number-picker-field--stepper"
-        : "number-picker-field";
+  const variantStyles = (() => {
+    if (variant === "stepper") {
+      return {
+        justifyContent: "space-between" as const,
+        borderRadius: "8px",
+        minHeight: "44px",
+        padding: "8px 12px",
+        backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface)",
+        color: complete ? "var(--color-text)" : "var(--color-text-muted)",
+        font: "var(--font-body)",
+      };
+    }
+    if (variant === "workout-number") {
+      return {
+        justifyContent: "center" as const,
+        borderRadius: "6px",
+        minHeight: "36px",
+        padding: "4px 8px",
+        backgroundColor: complete ? "var(--color-surface-hover)" : "transparent",
+        color: complete ? "var(--color-text)" : "var(--color-text-muted)",
+        font: "var(--font-secondary)",
+      };
+    }
+    return {
+      justifyContent: "space-between" as const,
+      borderRadius: "8px",
+      minHeight: "44px",
+      padding: "10px 12px",
+      backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface)",
+      color: complete ? "var(--color-text)" : "var(--color-text)",
+      font: "var(--font-body)",
+    };
+  })();
 
   return (
     <>
@@ -140,9 +166,20 @@ export function NumberPickerField({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={label ? `${label}: ${displayText}` : displayText}
+        className={className}
+        style={{
+          width: "100%",
+          border: "1px solid var(--color-border)",
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "6px",
+          textAlign: "left",
+          cursor: "pointer",
+          ...variantStyles,
+        }}
       >
-        <span>{displayText}</span>
-        {unit ? <span>{unit}</span> : null}
+        <span style={{ fontVariantNumeric: "tabular-nums" }}>{displayText}</span>
+        {unit ? <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{unit}</span> : null}
       </button>
       <NumberPickerSheet
         open={open}

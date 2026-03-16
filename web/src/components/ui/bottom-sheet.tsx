@@ -404,6 +404,7 @@ export function BottomSheet({
           />
         ) : (
           <header className="mobile-bottom-sheet-header">
+            <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
             <div className="mobile-bottom-sheet-title">
               <h2>{title}</h2>
               {hasDescription ? <p>{description}</p> : null}
@@ -416,8 +417,8 @@ export function BottomSheet({
             </button>
           </header>
         ))}
-        <div>{children}</div>
-        {footer ? <footer>{footer}</footer> : null}
+        <div className="mobile-bottom-sheet-content">{children}</div>
+        {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
       </section>
     </div>
   );
