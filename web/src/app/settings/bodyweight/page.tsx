@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSettingsModalHeaderAction } from "@/components/settings/settings-modal-header-action";
+import { useCallback, useEffect, useState } from "react";
 import {
   SectionFootnote,
   SectionHeader,
@@ -73,19 +72,6 @@ export default function SettingsBodyweightPage() {
     }
   }, [bodyweight, normalizedDraftBodyweightKg]);
 
-  const headerAction = useMemo(
-    () => ({
-      ariaLabel: bodyweight.pending ? "몸무게 저장 중" : "몸무게 저장",
-      onPress: () => {
-        void saveBodyweight();
-      },
-      disabled: !canSaveBodyweight,
-    }),
-    [bodyweight.pending, canSaveBodyweight, saveBodyweight],
-  );
-
-  useSettingsModalHeaderAction(headerAction);
-
   return (
     <div>
       <LoadingStateRows
@@ -104,9 +90,9 @@ export default function SettingsBodyweightPage() {
       <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label="몸무게 안내" />
 
       <section>
-        <SectionHeader title="몸무게 입력" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
+        <SectionHeader title="몸무게 입력" description="스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." />
         <Card padding="md" elevated={false}>
-          <CardContent>
+          <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             <AppNumberStepper
               label="Bodyweight (kg)"
               value={draftBodyweightKg}
@@ -116,6 +102,16 @@ export default function SettingsBodyweightPage() {
               inputMode="decimal"
               onChange={(next) => setDraftBodyweightKg(normalizeBodyweightKg(next))}
             />
+            <button
+              type="button"
+              className="btn btn-primary btn-full"
+              onClick={() => {
+                void saveBodyweight();
+              }}
+              disabled={!canSaveBodyweight}
+            >
+              {bodyweight.pending ? "저장 중..." : "몸무게 저장"}
+            </button>
           </CardContent>
         </Card>
         <SectionFootnote>

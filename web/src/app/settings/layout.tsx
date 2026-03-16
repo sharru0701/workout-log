@@ -91,7 +91,6 @@ function SettingsChildModal({
 }) {
   const headerAction = useSettingsModalHeaderActionState();
   const isExerciseManagement = pathname.startsWith("/settings/exercise-management");
-  const modalClassName = `settings-child-modal${isExerciseManagement ? " settings-child-modal--exercise-management" : ""}`;
   const panelClassName = `settings-child-modal-panel${isExerciseManagement ? " settings-child-modal-panel--fixed-height" : ""}`;
 
   return (

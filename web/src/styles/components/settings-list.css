@@ -6,22 +6,19 @@
 }
 
 [data-settings-section-header] {
-  padding: var(--space-md) var(--space-md) var(--space-sm);
+  padding: var(--space-sm) 0;
 }
 
 [data-settings-section-header] h2 {
   font: var(--font-section-title);
   margin: 0;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.5px;
+  color: var(--color-text);
 }
 
 [data-settings-section-header] p {
   font: var(--font-secondary);
   color: var(--color-text-muted);
-  margin: 4px 0 0;
+  margin: 2px 0 0;
 }
 
 [data-settings-row] {

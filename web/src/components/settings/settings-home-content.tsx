@@ -1,12 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import {
   BaseGroupedList,
   NavigationRow,
   SectionFootnote,
-  SectionHeader,
 } from "@/components/ui/settings-list";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
@@ -67,6 +67,7 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
   return (
     <div
       {...pullToRefresh.bind}
+      className={className || undefined}
     >
       <PullToRefreshIndicator
         pullOffset={pullToRefresh.pullOffset}
@@ -75,13 +76,11 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
         refreshingLabel="설정 새로고침 중..."
         completeLabel="설정 다시 확인 완료"
       />
-      <section>
-        <div data-pull-refresh-trigger="true">
-          <SectionHeader
-            title="Settings"
-            description="iOS Settings Form + Section 패턴으로 설정 항목을 구성합니다."
-          />
-        </div>
+      <DashboardSection
+        title="설정"
+        description="앱 동작, 데이터, 기록 보조 설정을 관리합니다."
+        headerTrigger
+      >
         <BaseGroupedList ariaLabel="Settings menu">
           {rows.map((row) => (
             <NavigationRow
@@ -95,7 +94,7 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
           ))}
         </BaseGroupedList>
         <SectionFootnote>모든 설정은 저장 즉시 반영되며, 실패 시 안내와 함께 이전 값으로 복구됩니다.</SectionFootnote>
-      </section>
+      </DashboardSection>
     </div>
   );
 }

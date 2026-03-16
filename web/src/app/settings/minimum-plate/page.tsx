@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { useSettingsModalHeaderAction } from "@/components/settings/settings-modal-header-action";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
 import {
@@ -158,19 +157,6 @@ export default function SettingsMinimumPlatePage() {
     }
   }, [defaultIncrement, normalizedDefaultDraftKg]);
 
-  const headerAction = useMemo(
-    () => ({
-      ariaLabel: defaultIncrement.pending ? "기본값 저장 중" : "기본값 저장",
-      onPress: () => {
-        void saveDefaultIncrement();
-      },
-      disabled: !canSaveDefault,
-    }),
-    [canSaveDefault, defaultIncrement.pending, saveDefaultIncrement],
-  );
-
-  useSettingsModalHeaderAction(headerAction);
-
   const openCreateSheet = () => {
     setEditingRuleKey(null);
     setRuleDraft({
@@ -275,9 +261,9 @@ export default function SettingsMinimumPlatePage() {
       </section>
 
       <section>
-        <SectionHeader title="기본값 조절" description="스테퍼로 조절한 뒤 상단 체크 버튼으로 저장합니다." />
+        <SectionHeader title="기본값 조절" description="스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." />
         <Card padding="md" elevated={false}>
-          <CardContent>
+          <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             <AppNumberStepper
               label="기본 최소 원판 (kg)"
               value={defaultDraftKg}
@@ -287,6 +273,16 @@ export default function SettingsMinimumPlatePage() {
               inputMode="decimal"
               onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
             />
+            <button
+              type="button"
+              className="btn btn-primary btn-full"
+              onClick={() => {
+                void saveDefaultIncrement();
+              }}
+              disabled={!canSaveDefault}
+            >
+              {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
+            </button>
           </CardContent>
         </Card>
       </section>
