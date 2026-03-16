@@ -148,12 +148,10 @@ function shiftDateByMonths(dateOnly: string, delta: number) {
   return setMonthOfDate(dateOnly, targetMonth.getUTCFullYear(), targetMonth.getUTCMonth() + 1);
 }
 
-function formatKoreanDate(dateOnly: string) {
-  const y = getYear(dateOnly);
-  const m = getMonth(dateOnly);
+function formatKoreanDay(dateOnly: string) {
   const d = dayOfMonth(dateOnly);
   const dow = getDayOfWeek(dateOnly);
-  return `${y}년 ${m}월 ${d}일 ${WEEKDAY_KOREAN[dow]}요일`;
+  return `${d}일 ${WEEKDAY_KOREAN[dow]}요일`;
 }
 
 function daysBetween(aDateOnly: string, bDateOnly: string) {
@@ -341,18 +339,8 @@ export default function CalendarPage() {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [refreshTick, setRefreshTick] = useState(0);
-  const [monthTransition, setMonthTransition] = useState<{
-    fromDate: string;
-    toDate: string;
-    fromSelectedDate: string;
-    toSelectedDate: string;
-    direction: "next" | "prev";
-  } | null>(null);
-  const monthTransitionTimerRef = useRef<number | null>(null);
-  const monthDragEndTimerRef = useRef<number | null>(null);
-  const [dragOffsetY, setDragOffsetY] = useState(0);
-  const [isDraggingMonth, setIsDraggingMonth] = useState(false);
-  const [isSettlingMonth, setIsSettlingMonth] = useState(false);
+  const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
+  const monthNavFeedbackTimerRef = useRef<number | null>(null);
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -550,116 +538,14 @@ export default function CalendarPage() {
     return session;
   }
 
-  const swipeTouchRef = useRef<{ startY: number; startX: number } | null>(null);
-  const calGestureRef = useRef<HTMLDivElement>(null);
-  const calendarGridViewportRef = useRef<HTMLDivElement>(null);
-
-  function buildMonthTransition(direction: "next" | "prev") {
-    const nextAnchorDate = shiftDateByMonths(anchorDate, direction === "next" ? 1 : -1);
-    const nextSelectedDate = setMonthOfDate(selectedDate, getYear(nextAnchorDate), getMonth(nextAnchorDate));
-    return {
-      fromDate: anchorDate,
-      toDate: nextAnchorDate,
-      fromSelectedDate: selectedDate,
-      toSelectedDate: nextSelectedDate,
-      direction,
-    } as const;
-  }
-
-  function commitVerticalSwipe(startX: number, startY: number, endX: number, endY: number, threshold = 40) {
-    const dy = startY - endY;
-    const dx = Math.abs(startX - endX);
-    if (Math.abs(dy) < threshold || dx > Math.abs(dy) * 0.8) return;
-    shiftMonth(dy > 0 ? 1 : -1);
-  }
-
-  function beginMonthDrag(startX: number, startY: number) {
-    if (monthTransition || isSettlingMonth) return;
-    swipeTouchRef.current = { startY, startX };
-  }
-
-  function updateMonthDrag(currentX: number, currentY: number) {
-    if (!swipeTouchRef.current || isSettlingMonth) return;
-    const dy = currentY - swipeTouchRef.current.startY;
-    const dx = Math.abs(currentX - swipeTouchRef.current.startX);
-    if (Math.abs(dy) < 8 || dx > Math.abs(dy) * 0.9) return;
-
-    const direction: "next" | "prev" = dy < 0 ? "next" : "prev";
-    if (!monthTransition || monthTransition.direction !== direction) {
-      setMonthTransition(buildMonthTransition(direction));
-    }
-
-    const viewportHeight = calendarGridViewportRef.current?.clientHeight ?? 260;
-    const clampedOffset = Math.max(-viewportHeight, Math.min(viewportHeight, dy));
-    setDragOffsetY(clampedOffset);
-    setIsDraggingMonth(true);
-  }
-
-  function finishMonthDrag(endX: number, endY: number, fallbackThreshold = 40) {
-    const start = swipeTouchRef.current;
-    swipeTouchRef.current = null;
-    if (!start) return;
-
-    if (!monthTransition || !isDraggingMonth) {
-      commitVerticalSwipe(start.startX, start.startY, endX, endY, fallbackThreshold);
-      return;
-    }
-
-    const viewportHeight = calendarGridViewportRef.current?.clientHeight ?? 260;
-    const commitThreshold = Math.min(Math.max(viewportHeight * 0.22, 44), 120);
-    const commit = Math.abs(dragOffsetY) >= commitThreshold;
-    const settleTarget = commit
-      ? (monthTransition.direction === "next" ? -viewportHeight : viewportHeight)
-      : 0;
-
-    setIsDraggingMonth(false);
-    setIsSettlingMonth(true);
-    setDragOffsetY(settleTarget);
-
-    if (monthDragEndTimerRef.current !== null) {
-      window.clearTimeout(monthDragEndTimerRef.current);
-      monthDragEndTimerRef.current = null;
-    }
-
-    monthDragEndTimerRef.current = window.setTimeout(() => {
-      if (commit) {
-        setAnchorDate(monthTransition.toDate);
-        setSelectedDate(monthTransition.toSelectedDate);
-      }
-      setMonthTransition(null);
-      setIsSettlingMonth(false);
-      setDragOffsetY(0);
-      monthDragEndTimerRef.current = null;
-    }, 190);
-  }
-
   function setCalendarMonth(value: { year: number; month: number }) {
-    if (monthTransition) return;
     const currentMonthValue = getYear(anchorDate) * 12 + getMonth(anchorDate);
     const nextMonthValue = value.year * 12 + value.month;
     if (nextMonthValue === currentMonthValue) return;
     const nextAnchorDate = setMonthOfDate(anchorDate, value.year, value.month);
     const nextSelectedDate = setMonthOfDate(selectedDate, value.year, value.month);
-
-    setMonthTransition({
-      fromDate: anchorDate,
-      toDate: nextAnchorDate,
-      fromSelectedDate: selectedDate,
-      toSelectedDate: nextSelectedDate,
-      direction: nextMonthValue > currentMonthValue ? "next" : "prev",
-    });
-
     setAnchorDate(nextAnchorDate);
     setSelectedDate(nextSelectedDate);
-
-    if (monthTransitionTimerRef.current !== null) {
-      window.clearTimeout(monthTransitionTimerRef.current);
-      monthTransitionTimerRef.current = null;
-    }
-    monthTransitionTimerRef.current = window.setTimeout(() => {
-      setMonthTransition(null);
-      monthTransitionTimerRef.current = null;
-    }, 280);
   }
 
   function shiftMonth(delta: number) {
@@ -667,55 +553,22 @@ export default function CalendarPage() {
     setCalendarMonth({ year: getYear(nextAnchorDate), month: getMonth(nextAnchorDate) });
   }
 
+  function shiftMonthWithFeedback(delta: number) {
+    setMonthNavFeedback(delta < 0 ? "prev" : "next");
+    if (monthNavFeedbackTimerRef.current !== null) {
+      window.clearTimeout(monthNavFeedbackTimerRef.current);
+      monthNavFeedbackTimerRef.current = null;
+    }
+    monthNavFeedbackTimerRef.current = window.setTimeout(() => {
+      setMonthNavFeedback("");
+      monthNavFeedbackTimerRef.current = null;
+    }, 240);
+    shiftMonth(delta);
+  }
+
   function handleMonthPickerChange(value: { year: number; month: number }) {
     setCalendarMonth(value);
   }
-
-  function handleCalSwipeTouchStart(e: React.TouchEvent) {
-    const t = e.touches[0];
-    beginMonthDrag(t.clientX, t.clientY);
-  }
-
-  function handleCalSwipeTouchMove(e: React.TouchEvent) {
-    const t = e.touches[0];
-    updateMonthDrag(t.clientX, t.clientY);
-  }
-
-  function handleCalSwipeTouchEnd(e: React.TouchEvent) {
-    const t = e.changedTouches[0];
-    finishMonthDrag(t.clientX, t.clientY, 40);
-  }
-
-  function handleCalSwipeMouseDown(e: React.MouseEvent) {
-    if (e.button !== 0) return;
-    beginMonthDrag(e.clientX, e.clientY);
-    e.preventDefault();
-
-    const onMouseMove = (event: MouseEvent) => {
-      updateMonthDrag(event.clientX, event.clientY);
-    };
-    const onMouseUp = (event: MouseEvent) => {
-      finishMonthDrag(event.clientX, event.clientY, 28);
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
-    };
-
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseup", onMouseUp);
-  }
-
-  useEffect(
-    () => () => {
-      if (monthDragEndTimerRef.current !== null) {
-        window.clearTimeout(monthDragEndTimerRef.current);
-        monthDragEndTimerRef.current = null;
-      }
-      if (monthTransitionTimerRef.current === null) return;
-      window.clearTimeout(monthTransitionTimerRef.current);
-      monthTransitionTimerRef.current = null;
-    },
-    [monthDragEndTimerRef],
-  );
 
   const selectedCtx = useMemo(
     () => computePlanContextForDate(selectedPlan, selectedDate),
@@ -801,6 +654,15 @@ export default function CalendarPage() {
       cancelled = true;
     };
   }, [planId, selectedLog, selectedSession?.id]);
+
+  useEffect(
+    () => () => {
+      if (monthNavFeedbackTimerRef.current === null) return;
+      window.clearTimeout(monthNavFeedbackTimerRef.current);
+      monthNavFeedbackTimerRef.current = null;
+    },
+    [],
+  );
 
   const renderMonthRows = (baseDate: string, selectedForGrid: string) => {
     const baseMonthKey = monthStart(baseDate).slice(0, 7);
@@ -902,15 +764,10 @@ export default function CalendarPage() {
       )}
 
       {/* Month navigation header */}
-      <div
-        ref={calGestureRef}
-        onTouchStart={handleCalSwipeTouchStart}
-        onTouchMove={handleCalSwipeTouchMove}
-        onTouchEnd={handleCalSwipeTouchEnd}
-        onMouseDown={handleCalSwipeMouseDown}
-      >
+      <div>
       <div
         data-pull-refresh-trigger="true"
+        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
         style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)" }}
       >
         <div>
@@ -928,7 +785,7 @@ export default function CalendarPage() {
         </div>
         <div style={{ display: "flex", gap: "var(--space-xs)" }}>
           <button
-            onClick={() => shiftMonth(-1)}
+            onClick={() => shiftMonthWithFeedback(-1)}
             aria-label="이전 달"
             style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
@@ -945,7 +802,7 @@ export default function CalendarPage() {
             </svg>
           </button>
           <button
-            onClick={() => shiftMonth(1)}
+            onClick={() => shiftMonthWithFeedback(1)}
             aria-label="다음 달"
             style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
           >
@@ -966,7 +823,7 @@ export default function CalendarPage() {
 
       {/* Weekday header row */}
       <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "var(--space-xs)" }}>
-        {WEEKDAY_SHORT.map((name, i) => (
+        {WEEKDAY_SHORT.map((name) => (
           <div key={name} style={{ padding: "var(--space-xs) 0" }}>
             {name}
           </div>
@@ -974,26 +831,13 @@ export default function CalendarPage() {
       </div>
 
       {/* Date grid */}
-      <div ref={calendarGridViewportRef} role="grid" aria-label="날짜 선택" className="calendar-grid-viewport" style={{ marginBottom: "var(--space-md)" }}>
-        <div
-          className={`calendar-grid-stage${monthTransition ? ` is-animating dir-${monthTransition.direction}` : ""}${isDraggingMonth ? " is-dragging" : ""}${isSettlingMonth ? " is-settling" : ""}`}
-          style={monthTransition ? ({ "--calendar-drag-offset": `${dragOffsetY}px` } as React.CSSProperties) : undefined}
-        >
-          {monthTransition ? (
-            <>
-              <div className="calendar-grid-panel">
-                {renderMonthRows(monthTransition.fromDate, monthTransition.fromSelectedDate)}
-              </div>
-              <div className="calendar-grid-panel">
-                {renderMonthRows(monthTransition.toDate, monthTransition.toSelectedDate)}
-              </div>
-            </>
-          ) : (
-            <div className="calendar-grid-panel">
-              {renderMonthRows(anchorDate, selectedDate)}
-            </div>
-          )}
-        </div>
+      <div
+        role="grid"
+        aria-label="날짜 선택"
+        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
+        style={{ marginBottom: "var(--space-md)" }}
+      >
+        {renderMonthRows(anchorDate, selectedDate)}
       </div>
 
       </div>{/* /ios-cal-gesture-area */}
@@ -1004,7 +848,7 @@ export default function CalendarPage() {
       {/* Selected date detail panel */}
       <div style={{ marginTop: "var(--space-md)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
-          <span style={{ font: "var(--font-section-title)" }}>{formatKoreanDate(selectedDate)}</span>
+          <span style={{ font: "var(--font-section-title)" }}>{formatKoreanDay(selectedDate)}</span>
           {selectedDate === today && <span className="label label-status label-sm">오늘</span>}
         </div>
 

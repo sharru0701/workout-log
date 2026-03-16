@@ -108,18 +108,62 @@ export const AppSelect = forwardRef<
   // iOS settings-row mode: label on left, value + up-down chevron on right
   if (usesRowChrome) {
     return (
-      <WrapperTag>
-        {label ? <span>{label}</span> : null}
-        <span>
+      <WrapperTag
+        className={wrapperClassName}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: "var(--space-sm)",
+          width: "100%",
+          minHeight: "44px",
+          border: "1px solid var(--color-border)",
+          borderRadius: "8px",
+          padding: "var(--space-sm) var(--space-md)",
+          backgroundColor: "var(--color-surface)",
+          boxSizing: "border-box",
+        }}
+      >
+        {label ? (
+          <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)", whiteSpace: "nowrap" }}>
+            {label}
+          </span>
+        ) : null}
+        <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-xs)", minWidth: 0 }}>
           <select
             ref={ref}
+            className={className}
+            style={{
+              border: "none",
+              background: "transparent",
+              color: "var(--color-text)",
+              font: "var(--font-body)",
+              outline: "none",
+              appearance: "none",
+              WebkitAppearance: "none",
+              minWidth: 0,
+              textAlign: "right",
+              textAlignLast: "right",
+              paddingRight: "0",
+            }}
             {...props}
             multiple={multiple}
             size={size}
           >
             {children}
           </select>
-          <span aria-hidden="true">
+          <span
+            aria-hidden="true"
+            style={{
+              color: "var(--color-text-subtle)",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "10px",
+              height: "14px",
+              flexShrink: 0,
+            }}
+          >
             <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
               <path d="M2 5.5L6 2L10 5.5" />
               <path d="M2 10.5L6 14L10 10.5" />
@@ -135,10 +179,21 @@ export const AppSelect = forwardRef<
     supportsSingleChevron && "app-form-select",
     className,
   );
+  const selectBaseStyle = {
+    width: "100%",
+    padding: "var(--space-sm) var(--space-md)",
+    border: "1px solid var(--color-border)",
+    borderRadius: "8px",
+    font: "var(--font-body)",
+    backgroundColor: "var(--color-surface)",
+    color: "var(--color-text)",
+    outline: "none",
+    boxSizing: "border-box" as const,
+  };
 
   if (!supportsSingleChevron) {
     return (
-      <select ref={ref} {...props} multiple={multiple} size={size}>
+      <select ref={ref} className={resolvedClassName} style={selectBaseStyle} {...props} multiple={multiple} size={size}>
         {children}
       </select>
     );
@@ -146,7 +201,14 @@ export const AppSelect = forwardRef<
 
   return (
     <div style={{ position: "relative", width: "100%" }}>
-      <select ref={ref} {...props} multiple={multiple} size={size}>
+      <select
+        ref={ref}
+        className={resolvedClassName}
+        style={{ ...selectBaseStyle, paddingRight: "2.25rem", appearance: "none", WebkitAppearance: "none" }}
+        {...props}
+        multiple={multiple}
+        size={size}
+      >
         {children}
       </select>
       <span

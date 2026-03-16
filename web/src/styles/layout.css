@@ -22,156 +22,35 @@
   width: 100%;
 }
 
-/* Calendar month transition */
-.slide-from-below {
-  animation: calendar-slide-from-below 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+/* Calendar chevron feedback */
+.calendar-month-feedback-prev {
+  animation: calendar-month-feedback-prev 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform, opacity;
 }
 
-.slide-from-above {
-  animation: calendar-slide-from-above 0.26s cubic-bezier(0.22, 0.61, 0.36, 1);
+.calendar-month-feedback-next {
+  animation: calendar-month-feedback-next 0.24s cubic-bezier(0.22, 0.61, 0.36, 1);
   will-change: transform, opacity;
 }
 
-@keyframes calendar-slide-from-below {
-  from {
-    transform: translateY(14px);
-    opacity: 0.55;
+@keyframes calendar-month-feedback-prev {
+  0% {
+    transform: translateY(-6px);
+    opacity: 0.88;
   }
-  to {
+  100% {
     transform: translateY(0);
     opacity: 1;
   }
 }
 
-@keyframes calendar-slide-from-above {
-  from {
-    transform: translateY(-14px);
-    opacity: 0.55;
+@keyframes calendar-month-feedback-next {
+  0% {
+    transform: translateY(6px);
+    opacity: 0.88;
   }
-  to {
+  100% {
     transform: translateY(0);
     opacity: 1;
-  }
-}
-
-.calendar-grid-viewport {
-  position: relative;
-  overflow: hidden;
-  min-height: 220px;
-}
-
-.calendar-grid-stage {
-  position: relative;
-}
-
-.calendar-grid-panel {
-  width: 100%;
-}
-
-.calendar-grid-stage.is-animating .calendar-grid-panel {
-  position: absolute;
-  inset: 0;
-}
-
-.calendar-grid-stage.is-animating:not(.is-dragging):not(.is-settling).dir-next .calendar-grid-panel:first-child {
-  animation: calendar-panel-exit-to-top 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.calendar-grid-stage.is-animating:not(.is-dragging):not(.is-settling).dir-next .calendar-grid-panel:last-child {
-  animation: calendar-panel-enter-from-bottom 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.calendar-grid-stage.is-animating:not(.is-dragging):not(.is-settling).dir-prev .calendar-grid-panel:first-child {
-  animation: calendar-panel-exit-to-bottom 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.calendar-grid-stage.is-animating:not(.is-dragging):not(.is-settling).dir-prev .calendar-grid-panel:last-child {
-  animation: calendar-panel-enter-from-top 0.28s cubic-bezier(0.22, 0.61, 0.36, 1) both;
-}
-
-.calendar-grid-stage.is-dragging {
-  will-change: transform;
-}
-
-.calendar-grid-stage.is-settling {
-  will-change: transform;
-}
-
-.calendar-grid-stage.is-dragging .calendar-grid-panel,
-.calendar-grid-stage.is-settling .calendar-grid-panel {
-  position: absolute;
-  inset: 0;
-}
-
-.calendar-grid-stage.is-dragging.dir-next .calendar-grid-panel:first-child,
-.calendar-grid-stage.is-settling.dir-next .calendar-grid-panel:first-child {
-  transform: translateY(var(--calendar-drag-offset, 0px));
-  z-index: 1;
-}
-
-.calendar-grid-stage.is-dragging.dir-next .calendar-grid-panel:last-child,
-.calendar-grid-stage.is-settling.dir-next .calendar-grid-panel:last-child {
-  transform: translateY(calc(100% + var(--calendar-drag-offset, 0px)));
-  z-index: 2;
-}
-
-.calendar-grid-stage.is-dragging.dir-prev .calendar-grid-panel:first-child,
-.calendar-grid-stage.is-settling.dir-prev .calendar-grid-panel:first-child {
-  transform: translateY(var(--calendar-drag-offset, 0px));
-  z-index: 1;
-}
-
-.calendar-grid-stage.is-dragging.dir-prev .calendar-grid-panel:last-child,
-.calendar-grid-stage.is-settling.dir-prev .calendar-grid-panel:last-child {
-  transform: translateY(calc(-100% + var(--calendar-drag-offset, 0px)));
-  z-index: 2;
-}
-
-.calendar-grid-stage.is-settling .calendar-grid-panel {
-  transition: transform 0.18s cubic-bezier(0.22, 0.61, 0.36, 1);
-}
-
-@keyframes calendar-panel-enter-from-bottom {
-  from {
-    transform: translateY(100%);
-    opacity: 0.8;
-  }
-  to {
-    transform: translateY(0%);
-    opacity: 1;
-  }
-}
-
-@keyframes calendar-panel-exit-to-top {
-  from {
-    transform: translateY(0%);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(-100%);
-    opacity: 0.8;
-  }
-}
-
-@keyframes calendar-panel-enter-from-top {
-  from {
-    transform: translateY(-100%);
-    opacity: 0.8;
-  }
-  to {
-    transform: translateY(0%);
-    opacity: 1;
-  }
-}
-
-@keyframes calendar-panel-exit-to-bottom {
-  from {
-    transform: translateY(0%);
-    opacity: 1;
-  }
-  to {
-    transform: translateY(100%);
-    opacity: 0.8;
   }
 }

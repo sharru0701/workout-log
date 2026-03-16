@@ -1263,7 +1263,7 @@ export default function ProgramStorePage() {
         closeLabel="닫기"
         footer={
           detailTarget ? (
-            <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", paddingTop: "var(--space-xs)" }}>
               <PrimaryButton
                 type="button"
                 variant="primary"
@@ -1275,8 +1275,10 @@ export default function ProgramStorePage() {
               >
                 이 프로그램으로 시작하기
               </PrimaryButton>
-              <button
+              <PrimaryButton
                 type="button"
+                variant="secondary"
+                fullWidth
                 onClick={() => {
                   setCustomizeDraft({
                     name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
@@ -1286,10 +1288,12 @@ export default function ProgramStorePage() {
                 }}
               >
                 커스터마이징해서 사용하기
-              </button>
+              </PrimaryButton>
               {detailTarget.source === "CUSTOM" ? (
                 <button
                   type="button"
+                  className="btn btn-inline-action btn-inline-action-danger"
+                  style={{ alignSelf: "center" }}
                   disabled={saving}
                   onClick={() => {
                     void deleteCustomTemplate(detailTarget);
@@ -1306,85 +1310,93 @@ export default function ProgramStorePage() {
           const info = getProgramDetailInfo(detailTarget.template);
           const badge = sourceBadgeMeta(detailTarget.source);
           const tags = Array.isArray(detailTarget.template.tags) ? detailTarget.template.tags : [];
+          const sectionLabelStyle = {
+            display: "block",
+            color: "var(--color-text-muted)",
+            font: "var(--font-secondary)",
+            marginBottom: "var(--space-xs)",
+          } as const;
+          const bodyTextStyle = {
+            color: "var(--color-text)",
+            font: "var(--font-body)",
+            lineHeight: 1.55,
+            margin: 0,
+          } as const;
           return (
-            <div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
 
               {/* 헤더 */}
-              <div>
-                <div>
-                  <span>
+              <Card padding="md" elevated={false} tone="inset">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <strong style={{ display: "block", font: "var(--font-card-title)" }}>
                     {formatProgramDisplayName(detailTarget.template.name)}
-                  </span>
+                    </strong>
                   {info.scheduleLabel && (
-                    <span style={{ color: "var(--color-text-muted)" }}>
+                    <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
                       {info.scheduleLabel}
                     </span>
                   )}
+                  </div>
+                  <span className={`${badge.className} label-sm`}>{badge.label}</span>
                 </div>
-                <span className={badge.className}>{badge.label}</span>
-              </div>
+              </Card>
 
               {/* 스탯 그리드 */}
-              <div>
-                {info.stats.map((stat) => (
+              <Card padding="md" elevated={false}>
+                {info.stats.map((stat, index) => (
                   <div
                     key={stat.label}
-                    style={{ background: "var(--color-surface-2)" }}
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      gap: "var(--space-sm)",
+                      padding: "6px 0",
+                      borderBottom: index < info.stats.length - 1 ? "1px solid var(--color-border)" : "none",
+                    }}
                   >
                     <span
-                      style={{ color: "var(--color-text-muted)" }}
+                      style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}
                     >
                       {stat.label}
                     </span>
                     <span
-                      style={{ color: "var(--color-text)", fontVariantNumeric: "tabular-nums" }}
+                      style={{ color: "var(--color-text)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}
                     >
                       {stat.value}
                     </span>
                   </div>
                 ))}
-              </div>
+              </Card>
 
               {/* 프로그램 소개 */}
               {detailTarget.template.description && (
-                <div>
-                  <span
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    프로그램 소개
-                  </span>
-                  <p style={{ color: "var(--color-text)" }}>
+                <Card padding="md" elevated={false}>
+                  <span style={sectionLabelStyle}>프로그램 소개</span>
+                  <p style={bodyTextStyle}>
                     {detailTarget.template.description}
                   </p>
-                </div>
+                </Card>
               )}
 
               {/* 진행 설정 (Operator) */}
               {info.progressionNote && (
-                <div
-                  style={{
-                    background: "var(--color-info-weak)",
-                    border: "1px solid color-mix(in srgb, var(--color-info) 24%, var(--color-border))",
-                  }}
-                >
+                <Card tone="subtle" padding="md" elevated={false}>
                   <span className="label label-note label-sm">진행 설정</span>
-                  <span style={{ color: "var(--color-text-muted)" }}>{info.progressionNote}</span>
-                </div>
+                  <p style={{ ...bodyTextStyle, color: "var(--color-text-muted)", marginTop: "var(--space-xs)" }}>{info.progressionNote}</p>
+                </Card>
               )}
 
               {/* 훈련 모듈 (Operator) */}
               {info.modules && info.modules.length > 0 && (
-                <div>
-                  <span
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    훈련 모듈
-                  </span>
-                  <div>
+                <Card padding="md" elevated={false}>
+                  <span style={sectionLabelStyle}>훈련 모듈</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginTop: "var(--space-xs)" }}>
                     {info.modules.map((mod) => (
                       <div
                         key={mod}
-                        style={{ background: "var(--color-surface-2)" }}
+                        style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}
                       >
                         <span className="label label-muscle-group label-sm">
                           {mod}
@@ -1395,26 +1407,26 @@ export default function ProgramStorePage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               )}
 
               {/* 세션 구성 (Manual) */}
               {info.sessions && info.sessions.length > 0 && (
-                <div>
-                  <span
-                    style={{ color: "var(--color-text-muted)" }}
-                  >
-                    세션 구성
-                  </span>
-                  <div>
+                <Card padding="md" elevated={false}>
+                  <span style={sectionLabelStyle}>세션 구성</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
                     {info.sessions.map((session) => (
                       <div
                         key={session.key}
-                        style={{ background: "var(--color-surface-2)" }}
+                        style={{ border: "1px solid var(--color-border)", borderRadius: "10px", overflow: "hidden" }}
                       >
                         <div
                           style={{
-                            background: "var(--color-surface)",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "var(--space-xs)",
+                            padding: "var(--space-xs) var(--space-sm)",
+                            background: "var(--color-surface-2)",
                             borderBottom: "1px solid var(--color-border)",
                           }}
                         >
@@ -1425,9 +1437,9 @@ export default function ProgramStorePage() {
                             세션 {session.key}
                           </span>
                         </div>
-                        <div>
+                        <div style={{ padding: "var(--space-sm)" }}>
                           {session.exercises.map((ex, i) => (
-                            <div key={i}>
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)", padding: "2px 0" }}>
                               <span style={{ color: "var(--color-text)" }}>
                                 {ex.name}
                               </span>
@@ -1444,16 +1456,16 @@ export default function ProgramStorePage() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </Card>
               )}
 
               {/* 태그 */}
               {tags.length > 0 && (
-                <div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="label label-note"
+                      className="label label-note label-sm"
                     >
                       {tag}
                     </span>
@@ -1588,9 +1600,9 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {customizeDraft && (
-          <div>
-            <label>
-              <span>프로그램 이름</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={customizeDraft.name}
@@ -1602,7 +1614,7 @@ export default function ProgramStorePage() {
 
             {isOperatorCustomization ? (
               <Card tone="subtle" padding="sm" elevated={false}>
-                <CardHeader>
+                <CardHeader style={{ marginBottom: 0 }}>
                   <CardTitle>Operator 기본 구성</CardTitle>
                   <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
                   <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
@@ -1611,10 +1623,10 @@ export default function ProgramStorePage() {
             ) : null}
 
             <Card padding="sm" elevated={false}>
-              <CardHeader>
+              <CardHeader style={{ marginBottom: "var(--space-md)" }}>
                 <CardTitle>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {customizeDraft.sessions.map((session) => {
                 const meta = operatorSessionMeta(session.key);
                 const summary = session.exercises
@@ -1628,6 +1640,7 @@ export default function ProgramStorePage() {
                   padding="none"
                   tone="inset"
                   elevated={false}
+                  style={{ padding: "var(--space-sm)", marginBottom: 0 }}
                   onDragOver={(event) => {
                     event.preventDefault();
                   }}
@@ -1650,11 +1663,11 @@ export default function ProgramStorePage() {
                     setDragContext(null);
                   }}
                 >
-                  <header>
-                    <div>
+                  <header style={{ marginBottom: "var(--space-sm)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                       <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
                       {isOperatorCustomization ? (
-                        <span>
+                        <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
                           {summary || meta.description}
                         </span>
                       ) : null}
@@ -1668,6 +1681,7 @@ export default function ProgramStorePage() {
                   {session.exercises.map((exercise, exerciseIndex) => (
                     <div
                       key={exercise.id}
+                      style={{ marginTop: exerciseIndex === 0 ? 0 : "var(--space-sm)" }}
                       ref={(node) => {
                         if (node) {
                           customizeExerciseRefs.current.set(exercise.id, node);
@@ -1697,6 +1711,8 @@ export default function ProgramStorePage() {
 
                   <button
                     type="button"
+                    className="btn btn-secondary btn-full"
+                    style={{ marginTop: "var(--space-sm)" }}
                     onClick={() => {
                       const addedExercise = createEmptyExerciseDraft(
                         isOperatorCustomization ? null : customizeDraft.baseTemplate.slug,

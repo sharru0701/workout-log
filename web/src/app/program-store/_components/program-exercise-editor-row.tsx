@@ -189,21 +189,31 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         event.preventDefault();
         onDrop(sessionId, exercise.id);
       }}
+      style={{
+        border: highlighted ? "1px solid var(--color-selected-border)" : "1px solid var(--color-border)",
+        borderRadius: "10px",
+        padding: "var(--space-sm)",
+        background: highlighted ? "var(--color-selected-bg)" : "var(--color-surface)",
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-md)",
+        transition: "border-color 200ms ease, background-color 200ms ease",
+      }}
     >
-      <div>
-        <div>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
+        <div style={{ display: "flex", gap: "var(--space-xs)", flexWrap: "wrap" }}>
           {operatorStyle ? (
             <>
-              <span>
+              <span className={operatorRowTypeTone(exercise.rowType)}>
                 {operatorRowTypeLabel(exercise.rowType)}
               </span>
               {operatorAutoRow && exercise.progressionTarget ? (
-                <span>{progressionTargetLabel(exercise.progressionTarget)}</span>
+                <span className="label label-program label-sm">{progressionTargetLabel(exercise.progressionTarget)}</span>
               ) : null}
             </>
           ) : null}
         </div>
-        <div>
+        <div style={{ display: "flex", gap: "var(--space-xs)" }}>
           <button
             type="button"
             className="btn btn-icon"
@@ -241,11 +251,13 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       </div>
 
       <div>
-        <span>운동종목</span>
+        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동종목</span>
         <div data-no-swipe="true">
           {selectedExerciseOption && !exercisePickerOpen ? (
             <button
               type="button"
+              className="btn btn-secondary btn-full"
+              style={{ justifyContent: "space-between" }}
               onClick={() => {
                 setExerciseQuery(selectedExerciseOption.name);
                 setExercisePickerOpen(true);
@@ -260,18 +272,46 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
             </button>
           ) : (
             <>
-              <div>
-                <span aria-hidden="true">
-                  <svg viewBox="0 0 24 24" focusable="false">
+              <div
+                style={{
+                  position: "relative",
+                  display: "flex",
+                  alignItems: "center",
+                }}
+              >
+                <span
+                  aria-hidden="true"
+                  style={{
+                    position: "absolute",
+                    insetInlineStart: "0.82rem",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    width: "0.9rem",
+                    height: "0.9rem",
+                    color: "var(--color-text-subtle)",
+                    pointerEvents: "none",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    focusable="false"
+                    style={{ width: "100%", height: "100%", fill: "none", stroke: "currentColor", strokeWidth: "2" }}
+                  >
                     <circle cx="11" cy="11" r="7" />
                     <path d="m20 20-3.8-3.8" />
                   </svg>
                 </span>
-                <input
+                <AppTextInput
                   ref={exerciseInputRef}
-                  type="search"
+                  variant="compact"
+                  type="text"
                   inputMode="search"
+                  autoComplete="off"
                   value={exerciseQuery}
+                  style={{ paddingInlineStart: "2.15rem", paddingInlineEnd: exerciseQuery.trim().length > 0 ? "2.25rem" : "var(--space-md)" }}
                   placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
                   onChange={(event) => {
                     const nextQuery = event.target.value;
@@ -294,27 +334,61 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                   <button
                     type="button"
                     aria-label="검색어 지우기"
+                    style={{
+                      position: "absolute",
+                      insetInlineEnd: "0.55rem",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: "24px",
+                      height: "24px",
+                      minHeight: "24px",
+                      borderRadius: "999px",
+                      border: "1px solid var(--color-border)",
+                      background: "var(--color-surface-secondary)",
+                      color: "var(--color-text-muted)",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      padding: 0,
+                      lineHeight: 0,
+                    }}
                     onClick={() => {
                       setExerciseQuery("");
                       onPatch(sessionId, exercise.id, { exerciseName: "" });
                       setExercisePickerOpen(true);
                     }}
                   >
-                    ×
+                    <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
+                      <path d="M2 2 10 10" />
+                      <path d="M10 2 2 10" />
+                    </svg>
                   </button>
                 ) : null}
               </div>
 
-              <div role="listbox" aria-label="운동종목 검색 결과">
+              <div
+                role="listbox"
+                aria-label="운동종목 검색 결과"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "var(--space-xs)",
+                  maxHeight: "200px",
+                  overflowY: "auto",
+                  paddingTop: "var(--space-sm)",
+                }}
+              >
                 {exerciseOptionsLoading ? (
-                  <span>검색 중...</span>
+                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 중...</span>
                 ) : filteredExerciseOptions.length === 0 ? (
-                  <span>검색 조건에 맞는 운동종목이 없습니다.</span>
+                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 조건에 맞는 운동종목이 없습니다.</span>
                 ) : (
                   filteredExerciseOptions.map((option) => (
                     <button
                       key={option.id}
                       type="button"
+                      className="btn btn-secondary btn-full"
+                      style={{ justifyContent: "flex-start", minHeight: "40px" }}
                       onMouseDown={(event) => {
                         event.preventDefault();
                       }}
@@ -333,85 +407,93 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       </div>
 
       {!operatorStyle ? (
-        <div>
-          <AppSelect
-            label="수행 방식"
-            value={exercise.mode}
-            onChange={(event) =>
-              onPatch(sessionId, exercise.id, {
-                mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
-                marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
-              })
-            }
-          >
-            <option value="MARKET">시중 프로그램 기반</option>
-            <option value="MANUAL">완전 수동</option>
-          </AppSelect>
-
-          {exercise.mode === "MARKET" && (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>수행 방식</span>
             <AppSelect
-              label="기반 프로그램"
-              value={exercise.marketTemplateSlug ?? ""}
-              onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
-            >
-              <option value="">선택</option>
-              {publicTemplates.map((template) => (
-                <option key={template.id} value={template.slug}>
-                  {formatProgramDisplayName(template.name)}
-                </option>
-              ))}
-            </AppSelect>
-          )}
-        </div>
-      ) : (
-        <div>
-          <AppSelect
-            label="행 타입"
-            value={exercise.rowType ?? "CUSTOM"}
-            onChange={(event) => {
-              const nextValue = String(event.target.value ?? "").trim().toUpperCase();
-              const nextRowType: ProgramRowType = nextValue === "AUTO" ? "AUTO" : "CUSTOM";
-              const inferredTarget =
-                nextRowType === "AUTO" ? inferProgressionTargetFromExerciseName(exercise.exerciseName) : null;
-              onPatch(
-                sessionId,
-                exercise.id,
-                isOperatorAutoRowType(nextRowType)
-                  ? {
-                      rowType: nextRowType,
-                      progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
-                      ...resolveOperatorExerciseDefaults(exercise.exerciseName, nextRowType),
-                    }
-                  : { rowType: nextRowType, progressionTarget: null },
-              );
-            }}
-          >
-            <option value="AUTO">Auto</option>
-            <option value="CUSTOM">Custom</option>
-          </AppSelect>
-          {operatorAutoRow ? (
-            <AppSelect
-              label="진행 타겟"
-              value={exercise.progressionTarget ?? ""}
+              value={exercise.mode}
               onChange={(event) =>
                 onPatch(sessionId, exercise.id, {
-                  progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
+                  mode: event.target.value === "MARKET" ? "MARKET" : "MANUAL",
+                  marketTemplateSlug: event.target.value === "MARKET" ? exercise.marketTemplateSlug : null,
                 })
               }
             >
-              <option value="">선택</option>
-              <option value="SQUAT">Squat</option>
-              <option value="BENCH">Bench</option>
-              <option value="DEADLIFT">Deadlift</option>
-              <option value="PULL">Pull</option>
-              <option value="OHP">OHP</option>
+              <option value="MARKET">시중 프로그램 기반</option>
+              <option value="MANUAL">완전 수동</option>
             </AppSelect>
+          </label>
+
+          {exercise.mode === "MARKET" && (
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</span>
+              <AppSelect
+                value={exercise.marketTemplateSlug ?? ""}
+                onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
+              >
+                <option value="">선택</option>
+                {publicTemplates.map((template) => (
+                  <option key={template.id} value={template.slug}>
+                    {formatProgramDisplayName(template.name)}
+                  </option>
+                ))}
+              </AppSelect>
+            </label>
+          )}
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>행 타입</span>
+            <AppSelect
+              value={exercise.rowType ?? "CUSTOM"}
+              onChange={(event) => {
+                const nextValue = String(event.target.value ?? "").trim().toUpperCase();
+                const nextRowType: ProgramRowType = nextValue === "AUTO" ? "AUTO" : "CUSTOM";
+                const inferredTarget =
+                  nextRowType === "AUTO" ? inferProgressionTargetFromExerciseName(exercise.exerciseName) : null;
+                onPatch(
+                  sessionId,
+                  exercise.id,
+                  isOperatorAutoRowType(nextRowType)
+                    ? {
+                        rowType: nextRowType,
+                        progressionTarget: inferredTarget ?? exercise.progressionTarget ?? null,
+                        ...resolveOperatorExerciseDefaults(exercise.exerciseName, nextRowType),
+                      }
+                    : { rowType: nextRowType, progressionTarget: null },
+                );
+              }}
+            >
+              <option value="AUTO">Auto</option>
+              <option value="CUSTOM">Custom</option>
+            </AppSelect>
+          </label>
+          {operatorAutoRow ? (
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>진행 타겟</span>
+              <AppSelect
+                value={exercise.progressionTarget ?? ""}
+                onChange={(event) =>
+                  onPatch(sessionId, exercise.id, {
+                    progressionTarget: (String(event.target.value ?? "").trim().toUpperCase() || null) as ProgramProgressionTarget | null,
+                  })
+                }
+              >
+                <option value="">선택</option>
+                <option value="SQUAT">Squat</option>
+                <option value="BENCH">Bench</option>
+                <option value="DEADLIFT">Deadlift</option>
+                <option value="PULL">Pull</option>
+                <option value="OHP">OHP</option>
+              </AppSelect>
+            </label>
           ) : null}
-          <div>
+          <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
             {operatorRowTypeHelp(exercise.rowType)}
           </div>
           {operatorAutoDefaults ? (
-            <div>
+            <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
               Operator 자동 설정: <strong>{operatorAutoDefaults.sets}세트 x {operatorAutoDefaults.reps}회</strong>
             </div>
           ) : null}
@@ -419,14 +501,14 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       )}
 
       {!operatorAutoRow ? (
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
           <AppNumberStepper label="세트" value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
           <AppNumberStepper label="횟수" value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
         </div>
       ) : null}
 
       <label>
-        <span>메모</span>
+        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>메모</span>
         <AppTextInput variant="workout" value={exercise.note} onChange={(event) => onPatch(sessionId, exercise.id, { note: event.target.value })} placeholder="세션 메모" />
       </label>
     </article>
