@@ -1,5 +1,6 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useState } from "react";
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -60,7 +61,7 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
             >
               <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{day.shortLabel}</span>
-              <span aria-hidden="true" style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: day.hasWorkout ? "var(--color-primary)" : "var(--color-border)", display: "block" }} />
+              <span aria-hidden="true" className={`activity-dot ${day.hasWorkout ? "is-active" : ""}`} />
             </div>
           ))}
         </div>
@@ -141,20 +142,20 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
             ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
             : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
           return (
-            <Card as={Link} key={item.exerciseName} href={href} padding="md">
+            <Card as={Link} key={item.exerciseName} href={href} padding="md" className="metric-badge metric-1rm">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <div style={{ font: "var(--font-card-title)" }}>{item.exerciseName}</div>
-                  <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>Best e1RM</div>
+                  <div className="metric-kicker">Best e1RM</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   <div className="metric-value metric-1rm" style={{ fontSize: "1.2rem" }}>{item.bestE1rm}kg</div>
                   {item.improvement !== 0 ? (
-                    <div className="metric-trend" style={{ color: item.trend === "up" ? "var(--color-success)" : "var(--color-danger)" }}>
+                    <div className={`metric-trend ${metricTrendClassName(item.trend)}`}>
                       {item.trend === "up" ? "+" : ""}{item.improvement}kg
                     </div>
                   ) : (
-                    <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>-</div>
+                    <div className="metric-trend metric-trend--flat">-</div>
                   )}
                 </div>
               </div>
@@ -190,7 +191,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 {progressLabelText(selected.tonnage / maxTonnage)}
               </span>
             </span>
-            <span className="metric-value metric-volume" style={{ fontSize: "1.1rem" }}>{formatVolume(selected.tonnage)}</span>
+            <span className="metric-inline metric-volume">{formatVolume(selected.tonnage)}</span>
             <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{selected.sets}세트 · {selected.reps}회</span>
           </div>
         )}
@@ -208,9 +209,10 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", background: "none", border: "none", cursor: "pointer", height: "100%", justifyContent: "flex-end" }}
               >
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{formatVolume(point.tonnage)}</div>
-                <div style={{ width: "100%", flex: "none" }}>
+                <div className="progress-bar-track" style={{ width: "100%", flex: "none" }}>
                   <div
-                    style={{ height: `${height}%`, minHeight: "4px", backgroundColor: isSelected ? "var(--progress-peak-fill)" : isLast ? "var(--progress-high-fill)" : progressFillForRatio(ratio), borderRadius: "4px 4px 0 0", transition: "height 0.3s ease" }}
+                    className={`progress-bar-fill ${isSelected ? "progress-peak" : isLast ? "progress-high" : progressLabelClassForRatio(ratio)}`}
+                    style={{ "--progress-bar-height": `${height}%` } as CSSProperties}
                   />
                 </div>
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{point.label}</div>
@@ -266,11 +268,10 @@ function formatVolume(kg: number): string {
   return `${kg}kg`;
 }
 
-function progressFillForRatio(ratio: number) {
-  if (ratio >= 0.88) return "var(--progress-peak-fill)";
-  if (ratio >= 0.68) return "var(--progress-high-fill)";
-  if (ratio >= 0.42) return "var(--progress-medium-fill)";
-  return "var(--progress-low-fill)";
+function metricTrendClassName(trend: HomeStrengthItem["trend"]) {
+  if (trend === "up") return "metric-trend--up";
+  if (trend === "down") return "metric-trend--down";
+  return "metric-trend--flat";
 }
 
 function progressLabelClassForRatio(ratio: number) {

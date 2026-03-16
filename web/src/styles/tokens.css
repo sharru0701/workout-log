@@ -31,6 +31,29 @@
   --color-info-weak: #dcefe9;
   --color-accent: #6c71c4;
   --color-accent-weak: #e7e4f7;
+  --color-success-strong: color-mix(in srgb, var(--color-success) 78%, var(--color-text));
+  --color-warning-strong: color-mix(in srgb, var(--color-warning) 80%, var(--color-text));
+  --color-danger-strong: color-mix(in srgb, var(--color-danger) 80%, var(--color-text));
+  --color-info-strong: color-mix(in srgb, var(--color-info) 82%, var(--color-text));
+  --color-accent-strong: color-mix(in srgb, var(--color-accent) 82%, var(--color-text));
+  --color-highlight-weak: color-mix(in srgb, var(--color-highlight-strong) 14%, transparent);
+  --color-action: var(--color-info);
+  --color-action-strong: var(--color-info-strong);
+  --color-action-weak: color-mix(in srgb, var(--color-action) 16%, var(--color-surface));
+  --color-text-on-action: var(--color-text-on-primary);
+  --color-selected-bg: var(--color-action);
+  --color-selected-text: var(--color-text-on-action);
+  --color-selected-weak: color-mix(in srgb, var(--color-action) 18%, var(--color-surface));
+  --color-selected-border: color-mix(in srgb, var(--color-action) 34%, var(--color-border));
+  --color-calendar-saturday: var(--color-text);
+  --color-calendar-dot: var(--color-action-strong);
+  --color-icon-button-bg: color-mix(in srgb, var(--color-surface-2) 76%, var(--color-surface));
+  --color-icon-button-border: color-mix(in srgb, var(--color-border-strong) 18%, var(--color-border));
+  --color-icon-button-text: var(--color-text-muted);
+  --color-icon-button-active: color-mix(in srgb, var(--color-surface-active) 72%, var(--color-surface-2));
+  --color-icon-button-danger-bg: color-mix(in srgb, var(--color-danger-weak) 42%, var(--color-surface));
+  --color-icon-button-danger-border: color-mix(in srgb, var(--color-danger) 22%, var(--color-border));
+  --color-icon-button-danger-text: color-mix(in srgb, var(--color-danger) 54%, var(--color-text));
 
   /* Interactive states */
   --color-focus-ring: rgba(38, 139, 210, 0.35);
@@ -55,20 +78,20 @@
   --label-exercise-text: var(--color-primary-strong);
   --label-exercise-border: color-mix(in srgb, var(--color-primary) 32%, var(--color-border));
 
-  --label-muscle-bg: var(--color-surface-2);
-  --label-muscle-text: var(--color-text);
-  --label-muscle-border: color-mix(in srgb, var(--color-border-strong) 34%, var(--color-border));
+  --label-muscle-group-bg: var(--color-surface-2);
+  --label-muscle-group-text: var(--color-text);
+  --label-muscle-group-border: color-mix(in srgb, var(--color-border-strong) 34%, var(--color-border));
 
-  --label-workout-type-bg: var(--color-info-weak);
-  --label-workout-type-text: #1f6f68;
-  --label-workout-type-border: color-mix(in srgb, var(--color-info) 28%, var(--color-border));
+  --label-program-bg: var(--color-info-weak);
+  --label-program-text: var(--color-info-strong);
+  --label-program-border: color-mix(in srgb, var(--color-info) 28%, var(--color-border));
 
   --label-set-type-bg: var(--color-accent-weak);
-  --label-set-type-text: #514c9d;
+  --label-set-type-text: var(--color-accent-strong);
   --label-set-type-border: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
 
   --label-intensity-bg: var(--color-warning-weak);
-  --label-intensity-text: #735700;
+  --label-intensity-text: var(--color-warning-strong);
   --label-intensity-border: color-mix(in srgb, var(--color-warning) 30%, var(--color-border));
 
   --label-status-bg: var(--color-surface-2);
@@ -83,25 +106,41 @@
   --label-note-text: var(--color-text-muted);
   --label-note-border: var(--color-border);
 
-  --label-complete-bg: var(--color-success-weak);
-  --label-complete-text: #556400;
-  --label-complete-border: color-mix(in srgb, var(--color-success) 34%, var(--color-border));
+  --label-success-bg: var(--color-success-weak);
+  --label-success-text: var(--color-success-strong);
+  --label-success-border: color-mix(in srgb, var(--color-success) 34%, var(--color-border));
 
   --label-warning-bg: var(--color-warning-weak);
-  --label-warning-text: #735700;
+  --label-warning-text: var(--color-warning-strong);
   --label-warning-border: color-mix(in srgb, var(--color-warning) 34%, var(--color-border));
 
-  --label-pr-bg: var(--color-highlight);
-  --label-pr-text: var(--color-highlight-strong);
-  --label-pr-border: color-mix(in srgb, var(--color-highlight-strong) 28%, var(--color-border));
+  --label-personal-record-bg: var(--color-highlight);
+  --label-personal-record-text: var(--color-highlight-strong);
+  --label-personal-record-border: color-mix(in srgb, var(--color-highlight-strong) 28%, var(--color-border));
 
-  --label-failed-bg: var(--color-danger-weak);
-  --label-failed-text: #a11f1d;
-  --label-failed-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+  --label-danger-bg: var(--color-danger-weak);
+  --label-danger-text: var(--color-danger-strong);
+  --label-danger-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
 
   --label-recovery-bg: var(--color-surface-2);
   --label-recovery-text: var(--color-text-muted);
   --label-recovery-border: color-mix(in srgb, var(--color-border-strong) 20%, var(--color-border));
+
+  --label-muscle-bg: var(--label-muscle-group-bg);
+  --label-muscle-text: var(--label-muscle-group-text);
+  --label-muscle-border: var(--label-muscle-group-border);
+  --label-workout-type-bg: var(--label-program-bg);
+  --label-workout-type-text: var(--label-program-text);
+  --label-workout-type-border: var(--label-program-border);
+  --label-complete-bg: var(--label-success-bg);
+  --label-complete-text: var(--label-success-text);
+  --label-complete-border: var(--label-success-border);
+  --label-pr-bg: var(--label-personal-record-bg);
+  --label-pr-text: var(--label-personal-record-text);
+  --label-pr-border: var(--label-personal-record-border);
+  --label-failed-bg: var(--label-danger-bg);
+  --label-failed-text: var(--label-danger-text);
+  --label-failed-border: var(--label-danger-border);
 
   /* ============================
      METRIC EMPHASIS SYSTEM
@@ -116,6 +155,10 @@
   --metric-1rm-accent: color-mix(in srgb, var(--color-accent) 36%, transparent);
   --metric-progress-color: var(--color-success);
   --metric-progress-accent: color-mix(in srgb, var(--color-success) 36%, transparent);
+  --metric-label-color: var(--color-text-muted);
+  --metric-trend-up: var(--color-success-strong);
+  --metric-trend-down: var(--color-danger-strong);
+  --metric-trend-flat: var(--color-text-muted);
 
   /* ============================
      SET STATE SYSTEM
@@ -158,20 +201,17 @@
   --progress-peak-text: var(--label-pr-text);
   --progress-peak-border: var(--label-pr-border);
   --progress-peak-fill: var(--color-highlight-strong);
+  --progress-track: color-mix(in srgb, var(--color-border) 44%, transparent);
+  --progress-dot-rest: var(--color-border);
+  --progress-dot-active: var(--color-action);
 
   /* Legacy label aliases kept for compatibility while components migrate */
   --label-primary-bg: var(--label-exercise-bg);
   --label-primary-text: var(--label-exercise-text);
   --label-primary-border: var(--label-exercise-border);
-  --label-info-bg: var(--label-workout-type-bg);
-  --label-info-text: var(--label-workout-type-text);
-  --label-info-border: var(--label-workout-type-border);
-  --label-success-bg: var(--label-complete-bg);
-  --label-success-text: var(--label-complete-text);
-  --label-success-border: var(--label-complete-border);
-  --label-danger-bg: var(--label-failed-bg);
-  --label-danger-text: var(--label-failed-text);
-  --label-danger-border: var(--label-failed-border);
+  --label-info-bg: var(--label-program-bg);
+  --label-info-text: var(--label-program-text);
+  --label-info-border: var(--label-program-border);
   --label-neutral-bg: var(--label-note-bg);
   --label-neutral-text: var(--label-note-text);
   --label-neutral-border: var(--label-note-border);
@@ -235,6 +275,29 @@
     --color-info-weak: rgba(57, 197, 207, 0.14);
     --color-accent: #a371f7;
     --color-accent-weak: rgba(163, 113, 247, 0.16);
+    --color-success-strong: color-mix(in srgb, var(--color-success) 82%, var(--color-text));
+    --color-warning-strong: color-mix(in srgb, var(--color-warning) 82%, var(--color-text));
+    --color-danger-strong: color-mix(in srgb, var(--color-danger) 82%, var(--color-text));
+    --color-info-strong: color-mix(in srgb, var(--color-info) 84%, var(--color-text));
+    --color-accent-strong: color-mix(in srgb, var(--color-accent) 84%, var(--color-text));
+    --color-highlight-weak: color-mix(in srgb, var(--color-highlight-strong) 18%, transparent);
+    --color-action: var(--color-info);
+    --color-action-strong: var(--color-info-strong);
+    --color-action-weak: color-mix(in srgb, var(--color-action) 18%, var(--color-surface));
+    --color-text-on-action: var(--color-text-on-primary);
+    --color-selected-bg: var(--color-action);
+    --color-selected-text: var(--color-text-on-action);
+    --color-selected-weak: color-mix(in srgb, var(--color-action) 20%, var(--color-surface));
+    --color-selected-border: color-mix(in srgb, var(--color-action) 36%, transparent);
+    --color-calendar-saturday: var(--color-text);
+    --color-calendar-dot: var(--color-action-strong);
+    --color-icon-button-bg: color-mix(in srgb, var(--color-surface-2) 88%, var(--color-surface));
+    --color-icon-button-border: color-mix(in srgb, var(--color-border-strong) 24%, var(--color-border));
+    --color-icon-button-text: color-mix(in srgb, var(--color-text-muted) 92%, var(--color-text));
+    --color-icon-button-active: color-mix(in srgb, var(--color-surface-active) 78%, var(--color-surface-2));
+    --color-icon-button-danger-bg: color-mix(in srgb, var(--color-danger-weak) 58%, var(--color-surface));
+    --color-icon-button-danger-border: color-mix(in srgb, var(--color-danger) 26%, var(--color-border));
+    --color-icon-button-danger-text: color-mix(in srgb, var(--color-danger) 66%, var(--color-text));
 
     /* Interactive states */
     --color-focus-ring: rgba(88, 166, 255, 0.3);
@@ -259,21 +322,21 @@
     --label-exercise-text: var(--color-primary-strong);
     --label-exercise-border: rgba(88, 166, 255, 0.34);
 
-    --label-muscle-bg: var(--color-surface-2);
-    --label-muscle-text: var(--color-text);
-    --label-muscle-border: rgba(139, 148, 158, 0.34);
+    --label-muscle-group-bg: var(--color-surface-2);
+    --label-muscle-group-text: var(--color-text);
+    --label-muscle-group-border: color-mix(in srgb, var(--color-border-strong) 42%, transparent);
 
-    --label-workout-type-bg: var(--color-info-weak);
-    --label-workout-type-text: #7ee7ef;
-    --label-workout-type-border: rgba(57, 197, 207, 0.32);
+    --label-program-bg: var(--color-info-weak);
+    --label-program-text: var(--color-info-strong);
+    --label-program-border: color-mix(in srgb, var(--color-info) 30%, transparent);
 
     --label-set-type-bg: var(--color-accent-weak);
-    --label-set-type-text: #d2a8ff;
-    --label-set-type-border: rgba(163, 113, 247, 0.32);
+    --label-set-type-text: var(--color-accent-strong);
+    --label-set-type-border: color-mix(in srgb, var(--color-accent) 32%, transparent);
 
     --label-intensity-bg: var(--color-warning-weak);
-    --label-intensity-text: #e3b341;
-    --label-intensity-border: rgba(210, 153, 34, 0.38);
+    --label-intensity-text: var(--color-warning-strong);
+    --label-intensity-border: color-mix(in srgb, var(--color-warning) 38%, transparent);
 
     --label-status-bg: var(--color-surface-2);
     --label-status-text: var(--color-text-muted);
@@ -287,25 +350,41 @@
     --label-note-text: var(--color-text-muted);
     --label-note-border: var(--color-border);
 
-    --label-complete-bg: var(--color-success-weak);
-    --label-complete-text: #56d364;
-    --label-complete-border: rgba(63, 185, 80, 0.38);
+    --label-success-bg: var(--color-success-weak);
+    --label-success-text: var(--color-success-strong);
+    --label-success-border: color-mix(in srgb, var(--color-success) 38%, transparent);
 
     --label-warning-bg: var(--color-warning-weak);
-    --label-warning-text: #e3b341;
-    --label-warning-border: rgba(210, 153, 34, 0.38);
+    --label-warning-text: var(--color-warning-strong);
+    --label-warning-border: color-mix(in srgb, var(--color-warning) 38%, transparent);
 
-    --label-pr-bg: var(--color-highlight);
-    --label-pr-text: var(--color-highlight-strong);
-    --label-pr-border: rgba(240, 136, 62, 0.34);
+    --label-personal-record-bg: var(--color-highlight);
+    --label-personal-record-text: var(--color-highlight-strong);
+    --label-personal-record-border: color-mix(in srgb, var(--color-highlight-strong) 34%, transparent);
 
-    --label-failed-bg: var(--color-danger-weak);
-    --label-failed-text: #ff7b72;
-    --label-failed-border: rgba(248, 81, 73, 0.34);
+    --label-danger-bg: var(--color-danger-weak);
+    --label-danger-text: var(--color-danger-strong);
+    --label-danger-border: color-mix(in srgb, var(--color-danger) 34%, transparent);
 
     --label-recovery-bg: var(--color-surface-2);
     --label-recovery-text: var(--color-text-muted);
-    --label-recovery-border: rgba(139, 148, 158, 0.24);
+    --label-recovery-border: color-mix(in srgb, var(--color-border-strong) 24%, transparent);
+
+    --label-muscle-bg: var(--label-muscle-group-bg);
+    --label-muscle-text: var(--label-muscle-group-text);
+    --label-muscle-border: var(--label-muscle-group-border);
+    --label-workout-type-bg: var(--label-program-bg);
+    --label-workout-type-text: var(--label-program-text);
+    --label-workout-type-border: var(--label-program-border);
+    --label-complete-bg: var(--label-success-bg);
+    --label-complete-text: var(--label-success-text);
+    --label-complete-border: var(--label-success-border);
+    --label-pr-bg: var(--label-personal-record-bg);
+    --label-pr-text: var(--label-personal-record-text);
+    --label-pr-border: var(--label-personal-record-border);
+    --label-failed-bg: var(--label-danger-bg);
+    --label-failed-text: var(--label-danger-text);
+    --label-failed-border: var(--label-danger-border);
 
     /* ============================
        METRIC EMPHASIS SYSTEM
@@ -317,9 +396,13 @@
     --metric-volume-color: var(--color-highlight-strong);
     --metric-volume-accent: rgba(240, 136, 62, 0.3);
     --metric-1rm-color: var(--color-accent);
-    --metric-1rm-accent: rgba(163, 113, 247, 0.34);
+    --metric-1rm-accent: color-mix(in srgb, var(--color-accent) 34%, transparent);
     --metric-progress-color: var(--color-success);
-    --metric-progress-accent: rgba(63, 185, 80, 0.34);
+    --metric-progress-accent: color-mix(in srgb, var(--color-success) 34%, transparent);
+    --metric-label-color: var(--color-text-muted);
+    --metric-trend-up: var(--color-success-strong);
+    --metric-trend-down: var(--color-danger-strong);
+    --metric-trend-flat: var(--color-text-muted);
 
     /* ============================
        SET STATE SYSTEM
@@ -362,20 +445,17 @@
     --progress-peak-text: var(--label-pr-text);
     --progress-peak-border: var(--label-pr-border);
     --progress-peak-fill: var(--color-highlight-strong);
+    --progress-track: color-mix(in srgb, var(--color-border) 36%, transparent);
+    --progress-dot-rest: var(--color-border-strong);
+    --progress-dot-active: var(--color-action);
 
     /* Legacy label aliases kept for compatibility while components migrate */
     --label-primary-bg: var(--label-exercise-bg);
     --label-primary-text: var(--label-exercise-text);
     --label-primary-border: var(--label-exercise-border);
-    --label-info-bg: var(--label-workout-type-bg);
-    --label-info-text: var(--label-workout-type-text);
-    --label-info-border: var(--label-workout-type-border);
-    --label-success-bg: var(--label-complete-bg);
-    --label-success-text: var(--label-complete-text);
-    --label-success-border: var(--label-complete-border);
-    --label-danger-bg: var(--label-failed-bg);
-    --label-danger-text: var(--label-failed-text);
-    --label-danger-border: var(--label-failed-border);
+    --label-info-bg: var(--label-program-bg);
+    --label-info-text: var(--label-program-text);
+    --label-info-border: var(--label-program-border);
     --label-neutral-bg: var(--label-note-bg);
     --label-neutral-text: var(--label-note-text);
     --label-neutral-border: var(--label-note-border);

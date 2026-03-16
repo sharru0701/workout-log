@@ -39,21 +39,25 @@ function resolveControlClassName(variant: FormControlVariant) {
 export function AppPlusMinusIcon({
   kind,
   className = "h-4 w-4",
+  size = 24,
 }: {
   kind: "plus" | "minus";
   className?: string;
+  size?: number | string;
 }) {
+  const resolvedSize = typeof size === "number" ? `${size}px` : size;
   return (
     <svg
       viewBox="0 0 24 24"
       aria-hidden="true"
       focusable="false"
+      className={className}
       fill="none"
       stroke="currentColor"
       strokeWidth="2.2"
       strokeLinecap="round"
       strokeLinejoin="round"
-      style={{ width: "24px", height: "24px" }}
+      style={{ width: resolvedSize, height: resolvedSize }}
     >
       <path d="M5 12h14" />
       {kind === "plus" ? <path d="M12 5v14" /> : null}

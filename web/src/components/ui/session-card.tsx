@@ -74,7 +74,7 @@ function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
           <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
           <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
-              <span style={{ color: ex.weightDelta > 0 ? "var(--color-success)" : "var(--color-danger)", marginRight: "var(--space-xs)" }}>
+              <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--space-xs)" }}>
                 {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
               </span>
             )}

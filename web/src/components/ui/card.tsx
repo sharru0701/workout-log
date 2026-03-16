@@ -54,6 +54,9 @@ export function Card<T extends ElementType = "div">({
   return (
     <Component
       className={cx("card", className)}
+      data-card-tone={tone}
+      data-card-elevated={elevated ? "true" : "false"}
+      data-card-interactive={interactive ? "true" : "false"}
       style={{ padding: paddingMap[padding] }}
       {...props}
     >

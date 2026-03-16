@@ -1,17 +1,57 @@
 .card {
-  background-color: var(--color-surface);
-  border: 1px solid var(--color-border);
+  --card-bg: var(--color-surface);
+  --card-border: var(--color-border);
+  --card-text: var(--color-text);
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: var(--space-md);
   margin-bottom: var(--space-md);
   text-decoration: none;
-  color: inherit;
+  color: var(--card-text);
   display: block;
   width: 100%;
   box-sizing: border-box;
   text-align: left;
   cursor: inherit;
   font: inherit;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+}
+
+.card[data-card-tone="default"] {
+  --card-bg: var(--color-surface);
+  --card-border: var(--color-border);
+}
+
+.card[data-card-tone="subtle"] {
+  --card-bg: color-mix(in srgb, var(--color-surface-2) 82%, var(--color-surface));
+  --card-border: color-mix(in srgb, var(--color-border-strong) 18%, var(--color-border));
+}
+
+.card[data-card-tone="inset"] {
+  --card-bg: color-mix(in srgb, var(--color-surface-2) 92%, var(--color-bg));
+  --card-border: color-mix(in srgb, var(--color-border-strong) 26%, var(--color-border));
+}
+
+.card[data-card-tone="accent"] {
+  --card-bg: color-mix(in srgb, var(--color-action) 12%, var(--color-surface));
+  --card-border: var(--color-selected-border);
+}
+
+.card[data-card-tone="danger"] {
+  --card-bg: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  --card-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+}
+
+.card[data-card-interactive="true"] {
+  cursor: pointer;
+}
+
+.card[data-card-interactive="true"]:active {
+  background-color: color-mix(in srgb, var(--card-bg) 90%, var(--color-surface-active));
 }
 
 .card-header {

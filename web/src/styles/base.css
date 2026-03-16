@@ -28,8 +28,8 @@ a {
 input,
 textarea,
 select {
-  accent-color: var(--color-primary);
-  caret-color: var(--color-primary-strong);
+  accent-color: var(--color-action);
+  caret-color: var(--color-action-strong);
 }
 
 button,

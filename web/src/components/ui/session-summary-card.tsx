@@ -48,7 +48,7 @@ export function SessionSummaryCard({
       <div style={{ marginBottom: "var(--space-sm)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
           {data.badgeLabel ? (
-            <span className="label label-workout-type label-sm">
+            <span className="label label-program label-sm">
               {data.badgeLabel}
             </span>
           ) : <span />}
@@ -84,7 +84,7 @@ export function SessionSummaryCard({
               <span>{ex.name}</span>
               <span>
                 {ex.weightDelta != null && ex.weightDelta !== 0 && (
-                  <span>
+                  <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--space-xs)" }}>
                     {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
                   </span>
                 )}

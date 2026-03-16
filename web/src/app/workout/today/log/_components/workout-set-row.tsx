@@ -162,7 +162,7 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         삭제
       </button>
 
-      <Card as="article" padding="none">
+      <Card as="article" tone="inset" elevated={false} padding="none">
         <label>
           <span>운동</span>
           <AppTextInput

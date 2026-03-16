@@ -1386,7 +1386,7 @@ export default function ProgramStorePage() {
                         key={mod}
                         style={{ background: "var(--color-surface-2)" }}
                       >
-                        <span className="label label-muscle label-sm">
+                        <span className="label label-muscle-group label-sm">
                           {mod}
                         </span>
                         <span style={{ color: "var(--color-text)" }}>
@@ -1418,7 +1418,7 @@ export default function ProgramStorePage() {
                             borderBottom: "1px solid var(--color-border)",
                           }}
                         >
-                          <span className="label label-workout-type label-sm">
+                          <span className="label label-program label-sm">
                             {session.key}
                           </span>
                           <span style={{ color: "var(--color-text)" }}>

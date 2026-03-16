@@ -468,20 +468,8 @@ function ExerciseRow({
   const usesPlannedRowWeights =
     typeof resolvedFirstPlannedWeightKg === "number" &&
     Math.abs(exercise.set.weightKg - resolvedFirstPlannedWeightKg) < 0.01;
-  const circleActionButtonStyle = {
-    width: "var(--touch-target)",
-    height: "var(--touch-target)",
-    minWidth: "var(--touch-target)",
-    minHeight: "var(--touch-target)",
-    padding: 0,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    aspectRatio: "1 / 1",
-  } as const;
-
   return (
-    <Card as="article" padding="none" style={{ marginBottom: "var(--space-md)" }}>
+    <Card as="article" tone="inset" elevated={false} padding="none" style={{ marginBottom: "var(--space-md)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           <strong
@@ -500,28 +488,12 @@ function ExerciseRow({
           ) : null}
           <button
             type="button"
-            style={circleActionButtonStyle}
+            className="btn btn-icon btn-icon-danger"
             aria-label="운동 삭제"
             title="운동 삭제"
             onClick={onDelete}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.1"
-              aria-hidden="true"
-            >
-              <path d="M4.5 7.5h15" strokeLinecap="round" />
-              <path d="M9.75 3.75h4.5" strokeLinecap="round" />
-              <path
-                d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <path d="M10.5 10.5v5.25" strokeLinecap="round" />
-              <path d="M13.5 10.5v5.25" strokeLinecap="round" />
-            </svg>
+            <AppPlusMinusIcon kind="minus" />
           </button>
         </div>
       </div>
@@ -596,24 +568,22 @@ function ExerciseRow({
           </div>
         </div>
 
-        <div style={{ display: "flex", flexWrap: "nowrap", gap: "var(--space-md)", marginTop: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
+            className="btn btn-inline-action btn-inline-action-primary"
             onClick={onAddSet}
           >
-            <AppPlusMinusIcon kind="plus" />
+            <AppPlusMinusIcon kind="plus" size={16} />
             <span>세트 추가</span>
           </button>
           <button
             type="button"
-            className="btn btn-secondary"
-            style={{ flex: 1 }}
+            className="btn btn-inline-action btn-inline-action-danger"
             onClick={onRemoveSet}
             disabled={exercise.set.repsPerSet.length <= 1}
           >
-            <AppPlusMinusIcon kind="minus" />
+            <AppPlusMinusIcon kind="minus" size={16} />
             <span>삭제</span>
           </button>
         </div>
@@ -1772,9 +1742,10 @@ export default function WorkoutRecordPage() {
                   ))}
                 </div>
 
-                <div>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
                   <button
                     type="button"
+                    className="btn btn-inline-action btn-inline-action-primary"
                     onClick={() =>
                       setAddDraft((prev) => ({
                         ...prev,
@@ -1782,11 +1753,12 @@ export default function WorkoutRecordPage() {
                       }))
                     }
                   >
-                    <AppPlusMinusIcon kind="plus" />
+                    <AppPlusMinusIcon kind="plus" size={16} />
                     <span>세트 추가</span>
                   </button>
                   <button
                     type="button"
+                    className="btn btn-inline-action btn-inline-action-danger"
                     onClick={() =>
                       setAddDraft((prev) => ({
                         ...prev,
@@ -1795,7 +1767,7 @@ export default function WorkoutRecordPage() {
                     }
                     disabled={addDraft.repsPerSet.length <= 1}
                   >
-                    <AppPlusMinusIcon kind="minus" />
+                    <AppPlusMinusIcon kind="minus" size={16} />
                     <span>마지막 세트</span>
                   </button>
                 </div>

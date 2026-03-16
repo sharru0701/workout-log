@@ -815,13 +815,13 @@ export default function CalendarPage() {
                     alignItems: "center",
                     justifyContent: "center",
                     padding: "6px 0",
-                    border: "none",
-                    background: isSelected ? "var(--color-primary)" : "transparent",
-                    color: isSelected ? "var(--color-text-on-primary)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-primary)" : "var(--color-text)",
+                    border: isSelected ? "1px solid var(--color-selected-border)" : "1px solid transparent",
+                    background: isSelected ? "var(--color-selected-bg)" : "transparent",
+                    color: isSelected ? "var(--color-selected-text)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-calendar-saturday)" : "var(--color-text)",
                     borderRadius: "50%",
-                    transform: isSelected ? "scale(1.1)" : "scale(1)",
+                    transform: isSelected ? "scale(1.04)" : "scale(1)",
                     transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
-                    fontWeight: isToday ? 700 : 400,
+                    fontWeight: isToday || isSelected ? 700 : 400,
                     cursor: "pointer",
                     aspectRatio: "1 / 1",
                     position: "relative",
@@ -829,7 +829,7 @@ export default function CalendarPage() {
                   }}
                 >
                   <span>{dayOfMonth(dateOnly)}</span>
-                  {hasDot && <span aria-hidden="true" style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: isSelected ? "var(--color-bg)" : "var(--color-primary-strong)", position: "absolute", bottom: "2px" }} />}
+                  {hasDot && <span aria-hidden="true" style={{ width: "4px", height: "4px", borderRadius: "50%", backgroundColor: isSelected ? "var(--color-bg)" : "var(--color-calendar-dot)", position: "absolute", bottom: "2px" }} />}
                 </button>
               );
             })}

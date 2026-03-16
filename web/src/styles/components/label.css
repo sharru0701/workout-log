@@ -32,18 +32,19 @@
   --label-border: var(--label-exercise-border);
 }
 
-.label-muscle {
-  --label-bg: var(--label-muscle-bg);
-  --label-text: var(--label-muscle-text);
-  --label-border: var(--label-muscle-border);
+.label-muscle,
+.label-muscle-group {
+  --label-bg: var(--label-muscle-group-bg);
+  --label-text: var(--label-muscle-group-text);
+  --label-border: var(--label-muscle-group-border);
 }
 
 .label-workout-type,
 .label-program,
 .label-info {
-  --label-bg: var(--label-workout-type-bg);
-  --label-text: var(--label-workout-type-text);
-  --label-border: var(--label-workout-type-border);
+  --label-bg: var(--label-program-bg);
+  --label-text: var(--label-program-text);
+  --label-border: var(--label-program-border);
 }
 
 .label-set-type,
@@ -81,22 +82,23 @@
 
 .label-complete,
 .label-success {
-  --label-bg: var(--label-complete-bg);
-  --label-text: var(--label-complete-text);
-  --label-border: var(--label-complete-border);
+  --label-bg: var(--label-success-bg);
+  --label-text: var(--label-success-text);
+  --label-border: var(--label-success-border);
 }
 
-.label-pr {
-  --label-bg: var(--label-pr-bg);
-  --label-text: var(--label-pr-text);
-  --label-border: var(--label-pr-border);
+.label-pr,
+.label-personal-record {
+  --label-bg: var(--label-personal-record-bg);
+  --label-text: var(--label-personal-record-text);
+  --label-border: var(--label-personal-record-border);
 }
 
 .label-failed,
 .label-danger {
-  --label-bg: var(--label-failed-bg);
-  --label-text: var(--label-failed-text);
-  --label-border: var(--label-failed-border);
+  --label-bg: var(--label-danger-bg);
+  --label-text: var(--label-danger-text);
+  --label-border: var(--label-danger-border);
 }
 
 .label-recovery {

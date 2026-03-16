@@ -261,7 +261,6 @@ type UxCompareRow = {
   current: string;
   previous: string;
   deltaText: string;
-  deltaColor: string;
 };
 
 type MigrationTelemetryResp = {
@@ -389,13 +388,13 @@ function describeMigrationRunStatus(status: string) {
   return status;
 }
 
-function migrationRunStatusClassName(status: string) {
-  if (status === "SUCCESS") return "var(--color-success)";
-  if (status === "RUNNING") return "var(--color-primary-strong)";
-  if (status === "LOCK_TIMEOUT") return "var(--color-danger)";
-  if (status === "FAILED") return "var(--color-danger)";
-  if (status === "SKIPPED") return "var(--color-warning)";
-  return "var(--color-text-subtle)";
+function migrationRunStatusLabelClassName(status: string) {
+  if (status === "SUCCESS") return "label label-complete label-sm";
+  if (status === "RUNNING") return "label label-program label-sm";
+  if (status === "LOCK_TIMEOUT") return "label label-danger label-sm";
+  if (status === "FAILED") return "label label-danger label-sm";
+  if (status === "SKIPPED") return "label label-warning label-sm";
+  return "label label-note label-sm";
 }
 
 function isMigrationTelemetryResp(value: unknown): value is MigrationTelemetryResp {
@@ -416,18 +415,18 @@ function clampRatio(value: number, fallback: number) {
 
 function trendMeta(delta: number, digits = 1) {
   if (!Number.isFinite(delta) || Math.abs(delta) < 1e-9) {
-    return { arrow: "→", color: "var(--color-text-muted)", value: "0" };
+    return { arrow: "→", tone: "flat" as const, value: "0" };
   }
   if (delta > 0) {
     return {
       arrow: "↑",
-      color: "var(--color-success)",
+      tone: "up" as const,
       value: `+${delta.toFixed(digits)}`,
     };
   }
   return {
     arrow: "↓",
-    color: "var(--color-danger)",
+    tone: "down" as const,
     value: delta.toFixed(digits),
   };
 }
@@ -966,7 +965,6 @@ export default function StatsPage() {
         current: formatInteger(current),
         previous: formatInteger(previous),
         deltaText: `${trend.arrow} ${trend.value}`,
-        deltaColor: trend.color,
       });
     };
 
@@ -979,7 +977,6 @@ export default function StatsPage() {
         current: formatRatioPercent(current, 1),
         previous: formatRatioPercent(previous, 1),
         deltaText: `${trend.arrow} ${trend.value}pp`,
-        deltaColor: trend.color,
       });
     };
 
@@ -1268,7 +1265,7 @@ export default function StatsPage() {
             volume
               ? {
                   text: `${volumeTrend.arrow} ${volumeTrend.value}`,
-                  color: volumeTrend.color,
+                  tone: volumeTrend.tone,
                 }
               : undefined
           }
@@ -1281,7 +1278,7 @@ export default function StatsPage() {
             compliance
               ? {
                   text: `${complianceTrend.arrow} ${complianceTrend.value}pp`,
-                  color: complianceTrend.color,
+                  tone: complianceTrend.tone,
                 }
               : undefined
           }
@@ -1418,7 +1415,9 @@ export default function StatsPage() {
                       <tr key={run.runId}>
                         <td>{formatDateTimeLocal(run.startedAt)}</td>
                         <td>
-                          {describeMigrationRunStatus(run.status)}
+                          <span className={migrationRunStatusLabelClassName(run.status)}>
+                            {describeMigrationRunStatus(run.status)}
+                          </span>
                         </td>
                         <td>{run.runner}</td>
                         <td>{formatInteger(run.lockWaitMs)}</td>
@@ -1660,7 +1659,7 @@ export default function StatsPage() {
           <div>포인트: {seriesPoints.length}</div>
         </div>
         {seriesPoints.length > 0 ? (
-          <SparklineChart points={seriesPoints} labels={seriesLabels} />
+          <SparklineChart points={seriesPoints} labels={seriesLabels} tone="volume" />
         ) : (
           <EmptyStateRows
             when={canShowDetailsEmptyState}

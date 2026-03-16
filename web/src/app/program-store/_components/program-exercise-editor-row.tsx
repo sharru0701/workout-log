@@ -1,7 +1,7 @@
 "use client";
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import {
   inferProgressionTargetFromExerciseName,
   isOperatorAutoRowType,
@@ -94,14 +94,6 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
   const [exercisePickerOpen, setExercisePickerOpen] = useState(() => exercise.exerciseName.trim().length === 0);
   const exerciseInputRef = useRef<HTMLInputElement | null>(null);
   const lastResolvedExerciseNameRef = useRef(exercise.exerciseName.trim().toLowerCase());
-  const circleActionButtonStyle = {
-    width: "var(--touch-target)",
-    height: "var(--touch-target)",
-    minWidth: "var(--touch-target)",
-    minHeight: "var(--touch-target)",
-    padding: 0,
-    aspectRatio: "1 / 1",
-  } as const;
 
   useEffect(() => {
     const normalizedSelectedName = exercise.exerciseName.trim().toLowerCase();
@@ -214,7 +206,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         <div>
           <button
             type="button"
-            style={circleActionButtonStyle}
+            className="btn btn-icon"
             aria-label="운동 위로 이동"
             title="운동 위로 이동"
             onClick={() => onMove(sessionId, exercise.id, "up")}
@@ -226,7 +218,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           </button>
           <button
             type="button"
-            style={circleActionButtonStyle}
+            className="btn btn-icon"
             aria-label="운동 아래로 이동"
             title="운동 아래로 이동"
             onClick={() => onMove(sessionId, exercise.id, "down")}
@@ -238,18 +230,12 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           </button>
           <button
             type="button"
-            style={circleActionButtonStyle}
+            className="btn btn-icon btn-icon-danger"
             aria-label="운동 삭제"
             title="운동 삭제"
             onClick={() => onDelete(sessionId, exercise.id)}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true">
-              <path d="M4.5 7.5h15" strokeLinecap="round" />
-              <path d="M9.75 3.75h4.5" strokeLinecap="round" />
-              <path d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M10.5 10.5v5.25" strokeLinecap="round" />
-              <path d="M13.5 10.5v5.25" strokeLinecap="round" />
-            </svg>
+            <AppPlusMinusIcon kind="minus" />
           </button>
         </div>
       </div>

@@ -4,17 +4,19 @@ import { memo, useMemo } from "react";
 import { Card } from "@/components/ui/card";
 
 type MetricTone = "weight" | "reps" | "volume" | "1rm" | "progress";
+type MetricTrendTone = "up" | "down" | "flat";
 
 type MetricTileProps = {
   label: string;
   value: string;
   tone?: MetricTone;
-  trend?: { text: string; color: string };
+  trend?: { text: string; tone?: MetricTrendTone };
 };
 
 type SparklineChartProps = {
   points: number[];
   labels: string[];
+  tone?: MetricTone;
   width?: number;
   height?: number;
 };
@@ -26,7 +28,7 @@ export const MetricTile = memo(function MetricTile({ label, value, tone, trend }
       <div className="metric-label">{label}</div>
       <div className="metric-value">{value}</div>
       {trend ? (
-        <div className="metric-trend" style={{ color: trend.color }}>
+        <div className={`metric-trend ${trend.tone ? `metric-trend--${trend.tone}` : "metric-trend--flat"}`}>
           {trend.text}
         </div>
       ) : null}
@@ -34,7 +36,7 @@ export const MetricTile = memo(function MetricTile({ label, value, tone, trend }
   );
 });
 
-export const SparklineChart = memo(function SparklineChart({ points, labels, width = 320, height = 90 }: SparklineChartProps) {
+export const SparklineChart = memo(function SparklineChart({ points, labels, tone = "volume", width = 320, height = 90 }: SparklineChartProps) {
   const chart = useMemo(() => {
     if (!points.length) return null;
 
@@ -68,15 +70,15 @@ export const SparklineChart = memo(function SparklineChart({ points, labels, wid
   if (!chart) return null;
 
   return (
-    <svg viewBox={`0 0 ${width} ${height}`} style={{ background: "transparent", color: "var(--color-primary)" }}>
+    <svg viewBox={`0 0 ${width} ${height}`} className={`sparkline-chart metric-${tone}`} style={{ background: "transparent" }}>
       <path d={chart.area} fill="currentColor" fillOpacity="0.08" />
       <path d={chart.d} fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       <circle cx={chart.last.x} cy={chart.last.y} r="3.5" fill="currentColor" />
       <circle cx={chart.last.x} cy={chart.last.y} r="6" fill="currentColor" fillOpacity="0.1" />
-      <text x={chart.pad} y={height - 4} fontSize="10" fontWeight="500" fill="var(--color-text-muted)">
+      <text x={chart.pad} y={height - 4} fontSize="10" fontWeight="500">
         min {Math.round(chart.min)}
       </text>
-      <text x={width - chart.pad} y={height - 4} textAnchor="end" fontSize="10" fontWeight="500" fill="var(--color-text-muted)">
+      <text x={width - chart.pad} y={height - 4} textAnchor="end" fontSize="10" fontWeight="500">
         {labels[labels.length - 1]} · max {Math.round(chart.max)}
       </text>
     </svg>

@@ -115,7 +115,7 @@ export function SearchSelectCombobox({
                   type="button"
                   aria-current={option.ariaCurrent ? "true" : undefined}
                   onClick={option.onSelect}
-                  style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px", border: "none", borderRadius: "8px", backgroundColor: option.active ? "var(--color-surface-secondary)" : "transparent", color: option.active ? "var(--color-primary)" : "var(--color-text)", cursor: "pointer", textAlign: "left", font: "var(--font-body)", fontWeight: option.active ? 600 : 400 }}
+                  style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px", border: "none", borderRadius: "8px", backgroundColor: option.active ? "var(--color-selected-weak)" : "transparent", color: option.active ? "var(--color-action-strong)" : "var(--color-text)", cursor: "pointer", textAlign: "left", font: "var(--font-body)", fontWeight: option.active ? 600 : 400 }}
                 >
                   <span style={{ flex: 1 }}>{option.label}</span>
                   {option.active && (

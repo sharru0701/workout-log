@@ -101,8 +101,8 @@
 }
 
 .fab-item[aria-current="page"] {
-  color: var(--color-primary);
-  background-color: var(--color-primary-weak);
+  color: var(--color-action-strong);
+  background-color: var(--color-selected-weak);
 }
 
 .fab-item .fab-icon {

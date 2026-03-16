@@ -175,9 +175,9 @@ export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
     switch (tone) {
       case "primary":
         return {
-          backgroundColor: "var(--color-primary-weak)",
-          color: "var(--color-primary-strong)",
-          border: "1px solid color-mix(in srgb, var(--color-primary) 28%, var(--color-border))",
+          backgroundColor: "var(--color-selected-weak)",
+          color: "var(--color-action-strong)",
+          border: "1px solid var(--color-selected-border)",
         };
       case "info":
         return {

@@ -3,9 +3,9 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  --metric-value-color: var(--color-text);
-  --metric-label-color: var(--color-text-muted);
-  --metric-trend-color: var(--color-text-muted);
+  --metric-tone-color: var(--color-text);
+  --metric-value-color: var(--metric-tone-color);
+  --metric-trend-color: var(--metric-trend-flat);
   --metric-accent-line: color-mix(in srgb, var(--color-border) 64%, transparent);
 }
 
@@ -19,7 +19,7 @@
 
 .metric-value {
   font: var(--font-numeric-metric);
-  color: var(--metric-value-color);
+  color: var(--metric-value-color, var(--metric-tone-color, var(--color-text)));
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums lining-nums;
 }
@@ -31,40 +31,119 @@
   letter-spacing: 0.5px;
 }
 
+.metric-kicker {
+  font: var(--font-secondary);
+  color: var(--metric-label-color);
+}
+
+.metric-inline {
+  font: var(--font-card-title);
+  color: var(--metric-value-color, var(--metric-tone-color, var(--color-text)));
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
 .metric-trend {
   margin-top: var(--space-xs);
   font-size: 12px;
   font-weight: 600;
-  color: var(--metric-trend-color);
+  color: var(--metric-trend-color, var(--metric-trend-flat));
   font-variant-numeric: tabular-nums;
 }
 
+.metric-trend--up {
+  color: var(--metric-trend-up);
+}
+
+.metric-trend--down {
+  color: var(--metric-trend-down);
+}
+
+.metric-trend--flat {
+  color: var(--metric-trend-flat);
+}
+
 .metric-weight {
-  --metric-value-color: var(--metric-weight-color);
-  --metric-trend-color: var(--metric-weight-color);
+  --metric-tone-color: var(--metric-weight-color);
   --metric-accent-line: var(--metric-weight-accent);
 }
 
 .metric-1rm {
-  --metric-value-color: var(--metric-1rm-color);
-  --metric-trend-color: var(--metric-1rm-color);
+  --metric-tone-color: var(--metric-1rm-color);
   --metric-accent-line: var(--metric-1rm-accent);
 }
 
 .metric-reps {
-  --metric-value-color: var(--metric-reps-color);
-  --metric-trend-color: var(--metric-reps-color);
+  --metric-tone-color: var(--metric-reps-color);
   --metric-accent-line: var(--metric-reps-accent);
 }
 
 .metric-volume {
-  --metric-value-color: var(--metric-volume-color);
-  --metric-trend-color: var(--metric-volume-color);
+  --metric-tone-color: var(--metric-volume-color);
   --metric-accent-line: var(--metric-volume-accent);
 }
 
 .metric-progress {
-  --metric-value-color: var(--metric-progress-color);
-  --metric-trend-color: var(--metric-progress-color);
+  --metric-tone-color: var(--metric-progress-color);
   --metric-accent-line: var(--metric-progress-accent);
+}
+
+.sparkline-chart {
+  display: block;
+  width: 100%;
+  height: auto;
+  color: var(--metric-tone-color, var(--color-primary));
+}
+
+.sparkline-chart text {
+  fill: var(--metric-label-color);
+}
+
+.progress-bar-track {
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+  min-height: 4px;
+  background-color: var(--progress-track);
+  border-radius: 8px 8px 0 0;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  --progress-fill: var(--progress-medium-fill);
+  width: 100%;
+  min-height: 4px;
+  height: var(--progress-bar-height, 0%);
+  background-color: var(--progress-fill);
+  border-radius: inherit;
+  transition:
+    height 0.3s ease,
+    background-color 0.2s ease;
+}
+
+.progress-low {
+  --progress-fill: var(--progress-low-fill);
+}
+
+.progress-medium {
+  --progress-fill: var(--progress-medium-fill);
+}
+
+.progress-high {
+  --progress-fill: var(--progress-high-fill);
+}
+
+.progress-peak {
+  --progress-fill: var(--progress-peak-fill);
+}
+
+.activity-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background-color: var(--progress-dot-rest);
+  display: block;
+}
+
+.activity-dot.is-active {
+  background-color: var(--progress-dot-active);
 }
