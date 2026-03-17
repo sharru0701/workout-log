@@ -37,6 +37,18 @@ const dbPromise = isIndexedDBSupported()
 const getLocalStorageKey = (key: string) => `workout-draft-${key}`;
 
 /**
+ * Helper to get DB with timeout
+ */
+async function getDBWithTimeout(timeoutMs = 150): Promise<any> {
+  if (!dbPromise) return null;
+  
+  return Promise.race([
+    dbPromise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error("IndexedDB timeout")), timeoutMs))
+  ]).catch(() => null);
+}
+
+/**
  * Saves a workout record draft.
  */
 export async function saveWorkoutDraft(
@@ -51,13 +63,13 @@ export async function saveWorkoutDraft(
     updatedAt: Date.now(),
   };
 
-  if (dbPromise) {
+  const db = await getDBWithTimeout();
+  if (db) {
     try {
-      const db = await dbPromise;
       await db.put(STORE_NAME, data);
       return;
     } catch (error) {
-      console.error("IndexedDB draft save failed, falling back to localStorage.", error);
+      console.error("IndexedDB draft save failed", error);
     }
   }
 
@@ -65,7 +77,7 @@ export async function saveWorkoutDraft(
   try {
     localStorage.setItem(getLocalStorageKey(key), JSON.stringify(data));
   } catch (error) {
-    console.error("localStorage draft save failed.", error);
+    console.error("localStorage draft save failed", error);
   }
 }
 
@@ -73,13 +85,14 @@ export async function saveWorkoutDraft(
  * Loads a workout record draft.
  */
 export async function loadWorkoutDraft(key: string): Promise<WorkoutDraftData | null> {
-  if (dbPromise) {
+  // Safari compatibility: check localStorage first if it's very small or just try IDB with short timeout
+  const db = await getDBWithTimeout();
+  if (db) {
     try {
-      const db = await dbPromise;
       const data = await db.get(STORE_NAME, key);
       if (data) return data;
     } catch (error) {
-      console.error("IndexedDB draft load failed, falling back to localStorage.", error);
+      console.error("IndexedDB draft load failed", error);
     }
   }
 
@@ -90,7 +103,7 @@ export async function loadWorkoutDraft(key: string): Promise<WorkoutDraftData | 
       return JSON.parse(dataJSON) as WorkoutDraftData;
     }
   } catch (error) {
-    console.error("localStorage draft load failed.", error);
+    console.error("localStorage draft load failed", error);
   }
 
   return null;

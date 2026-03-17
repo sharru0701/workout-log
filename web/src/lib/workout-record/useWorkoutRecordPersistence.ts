@@ -37,27 +37,6 @@ export function useWorkoutRecordPersistence(
     debouncedSave(key, draft, programEntryState);
   }, [key, draft, programEntryState, debouncedSave]);
 
-  // Lifecycle events
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        forceSave();
-      }
-    };
-
-    const handlePageHide = () => {
-      forceSave();
-    };
-
-    window.addEventListener("visibilitychange", handleVisibilityChange);
-    window.addEventListener("pagehide", handlePageHide);
-
-    return () => {
-      window.removeEventListener("visibilitychange", handleVisibilityChange);
-      window.removeEventListener("pagehide", handlePageHide);
-    };
-  }, [forceSave]);
-
   // Restoration attempt
   const attemptRestore = useCallback(async (targetKey: string) => {
     if (!options.enabled || isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
@@ -84,6 +63,37 @@ export function useWorkoutRecordPersistence(
       isRestoringRef.current = false;
     }
   }, [onRestore, options.enabled]);
+
+  // Lifecycle events
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        forceSave();
+      }
+    };
+
+    const handlePageHide = () => {
+      forceSave();
+    };
+
+    window.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("pagehide", handlePageHide);
+    
+    // bfcache 대응
+    const handlePageShow = (event: any) => {
+      console.log(`[Persistence] Page shown (persisted: ${event.persisted})`);
+      if (key && options.enabled) {
+        attemptRestore(key);
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow as EventListener);
+
+    return () => {
+      window.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("pagehide", handlePageHide);
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [forceSave, key, options.enabled, attemptRestore]);
 
   useEffect(() => {
     if (key && options.enabled) {
