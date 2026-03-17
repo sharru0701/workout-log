@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
@@ -621,7 +621,11 @@ export default function WorkoutRecordPage() {
 
   const [query, setQuery] = useState<QueryContext>(() => readQueryContext());
   const [plans, setPlans] = useState<PlanItem[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState("");
+  const [selectedPlanId, setSelectedPlanId] = useState(() => {
+    const q = readQueryContext();
+    return q.planId || "";
+  });
+  const isRestoredRef = useRef(false);
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
   const [lastSession, setLastSession] = useState<{
     dateLabel: string | null;
@@ -656,6 +660,7 @@ export default function WorkoutRecordPage() {
     programEntryState,
     useCallback((data) => {
       console.log("[WorkoutRecordPage] onRestore called", data);
+      isRestoredRef.current = true;
       // 순서를 보장하여 상태 업데이트
       setDraft(data.draft);
       setProgramEntryState(data.programEntryState);
@@ -668,9 +673,9 @@ export default function WorkoutRecordPage() {
           message: "이전에 입력 중이던 기록을 불러왔습니다.",
           buttonText: "확인",
         });
-      }, 100);
+      }, 150);
     }, [alert]),
-    { enabled: !loading } // 로딩 중에는 복구 시도 안함
+    { enabled: true } // 즉시 복구 시도
   );
 
   const selectedPlan = useMemo(
@@ -871,8 +876,15 @@ export default function WorkoutRecordPage() {
           );
           const summaryDateKey = input.dateKey || nextDraft.session.sessionDate;
           setSelectedPlanId(resolvedPlanId);
-          setDraft(nextDraft);
-          setProgramEntryState({});
+          
+          if (!isRestoredRef.current) {
+            console.log("[WorkoutRecordPage] No restored data, applying log data to draft");
+            setDraft(nextDraft);
+            setProgramEntryState({});
+          } else {
+            console.log("[WorkoutRecordPage] Restored data present, skipping log data setDraft");
+          }
+
           setLastSession(
             buildLastSessionSummary(
               logsRes.items ?? [],
@@ -931,8 +943,15 @@ export default function WorkoutRecordPage() {
           ),
         );
         setSelectedPlanId(input.planId);
-        setDraft(prepared.draft);
-        setProgramEntryState(prepared.programEntryState);
+        
+        if (!isRestoredRef.current) {
+          console.log("[WorkoutRecordPage] No restored data, applying generated session to draft");
+          setDraft(prepared.draft);
+          setProgramEntryState(prepared.programEntryState);
+        } else {
+          console.log("[WorkoutRecordPage] Restored data present, skipping generated session setDraft");
+        }
+
         setLastSession(
           buildLastSessionSummary(
             logsRes.items ?? [],

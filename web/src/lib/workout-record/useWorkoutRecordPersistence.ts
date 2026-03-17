@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useCallback, useRef } from "react";
-import { saveWorkoutDraft, loadWorkoutDraft, type WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
+import { saveWorkoutDraft, loadWorkoutDraft, saveWorkoutDraftSync, type WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
 import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
 import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
 import { debounce } from "@/lib/storage/workoutSession";
@@ -18,16 +18,34 @@ export function useWorkoutRecordPersistence(
   const isRestoringRef = useRef(false);
   const lastSavedKeyRef = useRef<string | null>(null);
 
-  const forceSave = useCallback(() => {
-    if (!key || !draft || !options.enabled) return;
-    saveWorkoutDraft(key, draft, programEntryState);
-    console.log(`[Persistence] Draft saved for key: ${key}`);
+  // Refs to keep values stable in event listeners
+  const keyRef = useRef(key);
+  const draftRef = useRef(draft);
+  const entryStateRef = useRef(programEntryState);
+  const enabledRef = useRef(options.enabled);
+
+  useEffect(() => {
+    keyRef.current = key;
+    draftRef.current = draft;
+    entryStateRef.current = programEntryState;
+    enabledRef.current = options.enabled;
   }, [key, draft, programEntryState, options.enabled]);
+
+  const forceSave = useCallback(() => {
+    if (!keyRef.current || !draftRef.current || !enabledRef.current) return;
+    saveWorkoutDraft(keyRef.current, draftRef.current, entryStateRef.current);
+    console.log(`[Persistence] Draft saved for key: ${keyRef.current}`);
+  }, []);
+
+  const forceSaveSync = useCallback(() => {
+    if (!keyRef.current || !draftRef.current || !enabledRef.current) return;
+    saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
+    console.log(`[Persistence] Sync draft saved for key: ${keyRef.current}`);
+  }, []);
 
   const debouncedSave = useRef(
     debounce((k: string, d: WorkoutRecordDraft, p: WorkoutProgramExerciseEntryStateMap) => {
       saveWorkoutDraft(k, d, p);
-      console.log(`[Persistence] Debounced draft saved for key: ${k}`);
     }, 1000)
   ).current;
 
@@ -39,7 +57,7 @@ export function useWorkoutRecordPersistence(
 
   // Restoration attempt
   const attemptRestore = useCallback(async (targetKey: string) => {
-    if (!options.enabled || isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
+    if (!enabledRef.current || isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
     isRestoringRef.current = true;
 
     try {
@@ -53,19 +71,19 @@ export function useWorkoutRecordPersistence(
           lastSavedKeyRef.current = targetKey;
           console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
         } else {
-          console.log(`[Persistence] Expired draft found (updatedAt: ${loaded.updatedAt}), ignoring`);
+          console.log(`[Persistence] Expired draft found, ignoring`);
         }
       } else {
-        console.log(`[Persistence] No draft found for key: ${targetKey} in any storage`);
+        console.log(`[Persistence] No draft found for key: ${targetKey}`);
       }
     } catch (e) {
       console.error("[Persistence] Restoration failed", e);
     } finally {
       isRestoringRef.current = false;
     }
-  }, [onRestore, options.enabled]);
+  }, [onRestore]);
 
-  // Lifecycle events
+  // Lifecycle events - Keep listeners stable
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -74,21 +92,21 @@ export function useWorkoutRecordPersistence(
     };
 
     const handlePageHide = () => {
-      forceSave();
+      // Use sync save on pagehide for maximum reliability - NO DYNAMIC IMPORTS
+      if (keyRef.current && draftRef.current && enabledRef.current) {
+        saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
+      }
+    };
+
+    const handlePageShow = (event: any) => {
+      console.log(`[Persistence] Page shown (persisted: ${event.persisted})`);
+      if (keyRef.current && enabledRef.current && !isRestoringRef.current) {
+        attemptRestore(keyRef.current);
+      }
     };
 
     window.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("pagehide", handlePageHide);
-    
-    // bfcache 대응
-    const handlePageShow = (event: any) => {
-      console.log(`[Persistence] Page shown (persisted: ${event.persisted})`);
-      // bfcache(event.persisted === true)인 경우 상태가 유지되어 있을 수 있지만, 
-      // 혹시 모를 소실에 대비해 다시 체크합니다.
-      if (key && options.enabled && !isRestoringRef.current) {
-        attemptRestore(key);
-      }
-    };
     window.addEventListener("pageshow", handlePageShow as EventListener);
 
     return () => {
@@ -96,14 +114,13 @@ export function useWorkoutRecordPersistence(
       window.removeEventListener("pagehide", handlePageHide);
       window.removeEventListener("pageshow", handlePageShow as EventListener);
     };
-  }, [forceSave, key, options.enabled, attemptRestore]);
+  }, [forceSave, attemptRestore]); // Only stable dependencies
 
   useEffect(() => {
-    // 이미 해당 키로 복구가 완료된 경우(lastSavedKeyRef.current === key)는 건너뜁니다.
     if (key && options.enabled && lastSavedKeyRef.current !== key) {
       attemptRestore(key);
     }
   }, [key, attemptRestore, options.enabled]);
 
-  return { forceSave };
+  return { forceSave: forceSaveSync };
 }

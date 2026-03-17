@@ -49,6 +49,29 @@ async function getDBWithTimeout(timeoutMs = 150): Promise<any> {
 }
 
 /**
+ * Synchronously saves a workout record draft to localStorage.
+ * Critical for pagehide/visibilitychange events on iOS Safari.
+ */
+export function saveWorkoutDraftSync(
+  key: string,
+  draft: WorkoutRecordDraft,
+  programEntryState: WorkoutProgramExerciseEntryStateMap
+): void {
+  const data: WorkoutDraftData = {
+    key,
+    draft,
+    programEntryState,
+    updatedAt: Date.now(),
+  };
+
+  try {
+    localStorage.setItem(getLocalStorageKey(key), JSON.stringify(data));
+  } catch (error) {
+    console.warn("[Storage] localStorage sync save failed", error);
+  }
+}
+
+/**
  * Saves a workout record draft.
  * Dual-writes to both IndexedDB and localStorage for Safari compatibility.
  */
@@ -57,27 +80,22 @@ export async function saveWorkoutDraft(
   draft: WorkoutRecordDraft,
   programEntryState: WorkoutProgramExerciseEntryStateMap
 ): Promise<void> {
-  const data: WorkoutDraftData = {
-    key,
-    draft,
-    programEntryState,
-    updatedAt: Date.now(),
-  };
+  // Always do sync write first
+  saveWorkoutDraftSync(key, draft, programEntryState);
 
-  // 1. Always write to localStorage first (fast & reliable on Safari)
-  try {
-    localStorage.setItem(getLocalStorageKey(key), JSON.stringify(data));
-  } catch (error) {
-    console.error("localStorage draft save failed", error);
-  }
-
-  // 2. Then try IndexedDB
+  // Then try IndexedDB asynchronously
   const db = await getDBWithTimeout(200);
   if (db) {
     try {
+      const data: WorkoutDraftData = {
+        key,
+        draft,
+        programEntryState,
+        updatedAt: Date.now(),
+      };
       await db.put(STORE_NAME, data);
     } catch (error) {
-      console.error("IndexedDB draft save failed", error);
+      console.error("[Storage] IndexedDB draft save failed", error);
     }
   }
 }
@@ -85,40 +103,36 @@ export async function saveWorkoutDraft(
 /**
  * Loads a workout record draft.
  * Priorities: 
- * 1. Read from localStorage immediately.
- * 2. Try IndexedDB with short timeout.
- * 3. Compare updatedAt and return the latest one.
+ * 1. Read from localStorage immediately (Fast path).
+ * 2. If not found, try IndexedDB with timeout.
  */
 export async function loadWorkoutDraft(key: string): Promise<WorkoutDraftData | null> {
-  let localData: WorkoutDraftData | null = null;
-  
-  // 1. Immediate read from localStorage
+  // 1. Fast path: localStorage
   try {
     const dataJSON = localStorage.getItem(getLocalStorageKey(key));
     if (dataJSON) {
-      localData = JSON.parse(dataJSON) as WorkoutDraftData;
+      console.log("[Storage] Draft found in localStorage");
+      return JSON.parse(dataJSON) as WorkoutDraftData;
     }
   } catch (error) {
-    console.warn("localStorage draft load failed", error);
+    console.warn("[Storage] localStorage draft load failed", error);
   }
 
-  // 2. Try IndexedDB with timeout
-  const db = await getDBWithTimeout(250);
-  let idbData: WorkoutDraftData | null = null;
+  // 2. Slow path: IndexedDB (only if local is empty)
+  const db = await getDBWithTimeout(300);
   if (db) {
     try {
-      idbData = await db.get(STORE_NAME, key);
+      const idbData = await db.get(STORE_NAME, key);
+      if (idbData) {
+        console.log("[Storage] Draft found in IndexedDB");
+        return idbData;
+      }
     } catch (error) {
-      console.warn("IndexedDB draft load failed", error);
+      console.warn("[Storage] IndexedDB draft load failed", error);
     }
   }
 
-  // 3. Compare and return the latest
-  if (localData && idbData) {
-    return localData.updatedAt >= idbData.updatedAt ? localData : idbData;
-  }
-  
-  return localData || idbData || null;
+  return null;
 }
 
 /**
