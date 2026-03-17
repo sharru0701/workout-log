@@ -12,16 +12,17 @@ export function useWorkoutRecordPersistence(
   key: string | null,
   draft: WorkoutRecordDraft | null,
   programEntryState: WorkoutProgramExerciseEntryStateMap,
-  onRestore: (data: WorkoutDraftData) => void
+  onRestore: (data: WorkoutDraftData) => void,
+  options: { enabled?: boolean } = { enabled: true }
 ) {
   const isRestoringRef = useRef(false);
   const lastSavedKeyRef = useRef<string | null>(null);
 
   const forceSave = useCallback(() => {
-    if (!key || !draft) return;
+    if (!key || !draft || !options.enabled) return;
     saveWorkoutDraft(key, draft, programEntryState);
     console.log(`[Persistence] Draft saved for key: ${key}`);
-  }, [key, draft, programEntryState]);
+  }, [key, draft, programEntryState, options.enabled]);
 
   const debouncedSave = useRef(
     debounce((k: string, d: WorkoutRecordDraft, p: WorkoutProgramExerciseEntryStateMap) => {
@@ -59,30 +60,36 @@ export function useWorkoutRecordPersistence(
 
   // Restoration attempt
   const attemptRestore = useCallback(async (targetKey: string) => {
-    if (isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
+    if (!options.enabled || isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
     isRestoringRef.current = true;
 
     try {
+      console.log(`[Persistence] Attempting restore for key: ${targetKey}`);
       const loaded = await loadWorkoutDraft(targetKey);
       if (loaded) {
         const isExpired = Date.now() - loaded.updatedAt > DRAFT_EXPIRATION_MS;
         if (!isExpired) {
+          console.log(`[Persistence] Valid draft found, calling onRestore`);
           onRestore(loaded);
           lastSavedKeyRef.current = targetKey;
+        } else {
+          console.log(`[Persistence] Expired draft found, ignoring`);
         }
+      } else {
+        console.log(`[Persistence] No draft found for key: ${targetKey}`);
       }
     } catch (e) {
       console.error("[Persistence] Restoration failed", e);
     } finally {
       isRestoringRef.current = false;
     }
-  }, [onRestore]);
+  }, [onRestore, options.enabled]);
 
   useEffect(() => {
-    if (key) {
+    if (key && options.enabled) {
       attemptRestore(key);
     }
-  }, [key, attemptRestore]);
+  }, [key, attemptRestore, options.enabled]);
 
   return { forceSave };
 }

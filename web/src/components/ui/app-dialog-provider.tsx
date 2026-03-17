@@ -181,21 +181,31 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         closeLabel="닫기"
         footer={
           active ? (
-            <div>
+            <div
+              className="app-dialog-footer"
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: "var(--space-xs)",
+                width: "100%",
+              }}
+            >
+              <button
+                type="button"
+                className="btn btn-primary btn-full"
+                onClick={closeActiveAsAccept}
+              >
+                {active.kind === "confirm" ? active.confirmText : active.buttonText}
+              </button>
               {active.kind === "confirm" ? (
                 <button
                   type="button"
+                  className="btn btn-secondary btn-full"
                   onClick={closeActiveAsCancel}
                 >
                   {active.cancelText}
                 </button>
               ) : null}
-              <button
-                type="button"
-                onClick={closeActiveAsAccept}
-              >
-                {active.kind === "confirm" ? active.confirmText : active.buttonText}
-              </button>
             </div>
           ) : null
         }

@@ -655,14 +655,20 @@ export default function WorkoutRecordPage() {
     draft,
     programEntryState,
     useCallback((data) => {
+      // 순서를 보장하여 상태 업데이트
       setDraft(data.draft);
       setProgramEntryState(data.programEntryState);
-      alert({
-        title: "기록 복구",
-        message: "이전에 입력 중이던 기록을 불러왔습니다.",
-        buttonText: "확인",
-      });
-    }, [alert])
+      
+      // 상태가 반영될 시간을 주기 위해 지연 호출하거나 alert을 비동기로 처리
+      setTimeout(() => {
+        alert({
+          title: "기록 복구",
+          message: "이전에 입력 중이던 기록을 불러왔습니다.",
+          buttonText: "확인",
+        });
+      }, 0);
+    }, [alert]),
+    { enabled: !loading } // 로딩 중에는 복구 시도 안함
   );
 
   const selectedPlan = useMemo(
