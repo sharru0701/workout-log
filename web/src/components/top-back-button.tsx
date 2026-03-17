@@ -50,7 +50,6 @@ export function TopBackButton() {
       <div>
         <Link
           href="/settings"
-          prefetch={false}
           aria-label="Settings"
           aria-current={isSettingsRoute ? "page" : undefined}
         >

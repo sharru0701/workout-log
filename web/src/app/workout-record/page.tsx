@@ -19,6 +19,8 @@ import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName
 import { parseSessionKey } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
+import { useWorkoutRecordPersistence } from "@/lib/workout-record/useWorkoutRecordPersistence";
+import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
   computeBodyweightTotalLoadKg,
@@ -647,6 +649,22 @@ export default function WorkoutRecordPage() {
   const [programEntryState, setProgramEntryState] = useState<WorkoutProgramExerciseEntryStateMap>({});
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
 
+  const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
+  useWorkoutRecordPersistence(
+    persistenceKey,
+    draft,
+    programEntryState,
+    useCallback((data) => {
+      setDraft(data.draft);
+      setProgramEntryState(data.programEntryState);
+      alert({
+        title: "기록 복구",
+        message: "이전에 입력 중이던 기록을 불러왔습니다.",
+        buttonText: "확인",
+      });
+    }, [alert])
+  );
+
   const selectedPlan = useMemo(
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
     [plans, selectedPlanId],
@@ -1228,6 +1246,12 @@ export default function WorkoutRecordPage() {
       } else {
         await apiPost("/api/logs", payload);
       }
+      
+      // 저장 성공 시 드래프트 삭제
+      if (persistenceKey) {
+        await clearWorkoutDraft(persistenceKey);
+      }
+
       setWorkflowState("done");
       router.push("/");
     } catch (e: any) {

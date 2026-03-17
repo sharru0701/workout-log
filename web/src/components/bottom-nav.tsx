@@ -150,19 +150,7 @@ export function BottomNav() {
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
     setIsOpen(false); // 탭 클릭 시 메뉴 닫기
-    const alreadyActive = tabIsActive(pathname, href);
-    if (alreadyActive) {
-      setVisualActiveTabIndex(tabIndex);
-      return;
-    }
-
-    event.preventDefault();
     setVisualActiveTabIndex(tabIndex);
-    
-    // 부드러운 전환을 위한 딜레이 (애니메이션 동기화)
-    setTimeout(() => {
-      router.push(href);
-    }, 150);
   };
 
   return (
@@ -176,7 +164,6 @@ export function BottomNav() {
             <Link
               key={tab.href}
               href={tab.href}
-              prefetch={false}
               aria-current={pathActive ? "page" : undefined}
               aria-label={tab.ariaLabel}
               title={tab.ariaLabel}
