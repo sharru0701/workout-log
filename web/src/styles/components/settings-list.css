@@ -9,10 +9,12 @@
   padding: var(--space-sm) 0;
 }
 
-[data-settings-section-header] h2 {
-  font: var(--font-section-title);
+[data-settings-section-header] h2,
+.settings-section-title {
+  font: var(--font-card-title);
   margin: 0;
   color: var(--color-text);
+  font-weight: 600;
 }
 
 [data-settings-section-header] p {

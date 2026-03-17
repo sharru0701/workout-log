@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
@@ -290,11 +291,12 @@ function PlanHistoryPageContent() {
         completeLabel="플랜 히스토리 갱신 완료"
       />
 
-      <section data-pull-refresh-trigger="true">
-        <div>플랜 수행 히스토리</div>
-        <p>
-          플랜별 수행 로그를 모아보고, 각 항목에서 세션 상세 화면으로 이동할 수 있습니다.
-        </p>
+      <DashboardSection
+        title="플랜 수행 히스토리"
+        description="플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다."
+        headerTrigger
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
 
         <LoadingStateRows active={plansLoading} label="플랜 목록 불러오는 중" />
         <ErrorStateRows
@@ -326,33 +328,30 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <Card>
-            <div>
-              <div>플랜 이름</div>
-              <div>{selectedPlan.name}</div>
+          <Card tone="subtle" padding="sm" elevated={false}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택 플랜</div>
+              <div style={{ font: "var(--font-card-title)" }}>{selectedPlan.name}</div>
+              {selectedPlan.baseProgramName ? (
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                  기반 프로그램: {selectedPlan.baseProgramName}
+                </div>
+              ) : null}
             </div>
-            <div>
-              <div>기반 프로그램</div>
-              <div>{selectedPlan.baseProgramName ?? "-"}</div>
-            </div>
-            <div>
-              <div>생성일</div>
-              <div>{formatDateTime(selectedPlan.createdAt)}</div>
-            </div>
-            <div>
-              <div>마지막 수행일</div>
-              <div>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
+            <div style={{ marginTop: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+              최근 수행: {formatDateTime(selectedPlan.lastPerformedAt)}
             </div>
           </Card>
         ) : null}
-      </section>
+        </div>
+      </DashboardSection>
 
-      <section>
-        <div>수행 로그</div>
+      <DashboardSection title="수행 로그" description="기록 시점, 운동 구성, 핵심 지표를 확인합니다.">
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
         <NoticeStateRows
           message={
             selectedPlan
-              ? `현재 ${loadedLogCount}개 로그 / ${loadedSetCount}세트를 표시합니다. 세션 상세에서 처방 대비와 자동 진행을 확인할 수 있습니다.`
+              ? `현재 ${loadedLogCount}개 로그 / ${loadedSetCount}세트를 표시합니다.`
               : "표시할 플랜을 선택하세요."
           }
           tone="neutral"
@@ -379,7 +378,7 @@ function PlanHistoryPageContent() {
         />
 
         {logs.length > 0 ? (
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
             {logs.map((log) => {
               const workSetCount = countWorkSets(log.sets ?? []);
               const exerciseSummary = summarizeExercises(log.sets ?? []);
@@ -392,13 +391,13 @@ function PlanHistoryPageContent() {
                 : null;
 
               return (
-                <Card as="article" key={log.id}>
-                  <div>
-                    <div>
+                <Card as="article" key={log.id} tone="inset" padding="sm" elevated={false}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                       <strong>{formatDateTime(log.performedAt)}</strong>
-                      <span>{exerciseSummary}</span>
+                      <span style={{ color: "var(--color-text)" }}>{exerciseSummary}</span>
                       {sessionLabel || progressionText ? (
-                        <div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
                           {sessionLabel ? (
                             <span className="label label-program label-sm">
                               {sessionLabel}
@@ -412,14 +411,17 @@ function PlanHistoryPageContent() {
                         </div>
                       ) : null}
                     </div>
-                    <div>
+
+                    <div style={{ display: "flex", gap: "var(--space-xs)" }}>
                       <a
+                        className="btn btn-inline-action btn-inline-action-primary"
                         href={`/workout/session/${encodeURIComponent(log.id)}`}
                       >
                         세션 상세
                       </a>
                       <button
                         type="button"
+                        className="btn btn-inline-action btn-inline-action-danger"
                         disabled={deletingLogId === log.id}
                         onClick={() => {
                           void deleteLog(log);
@@ -430,29 +432,25 @@ function PlanHistoryPageContent() {
                     </div>
                   </div>
 
-                  <div>
+                  <div style={{ marginTop: "var(--space-sm)", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
                     <div>
-                      <div>작업 세트</div>
-                      <div>{workSetCount}세트</div>
+                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>작업 세트</div>
+                      <div style={{ font: "var(--font-card-title)" }}>{workSetCount}세트</div>
                     </div>
                     <div>
-                      <div>추정 볼륨</div>
-                      <div>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
+                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기록 시간</div>
+                      <div style={{ font: "var(--font-card-title)" }}>{formatDuration(log.durationMinutes)}</div>
                     </div>
                     <div>
-                      <div>기록 시간</div>
-                      <div>{formatDuration(log.durationMinutes)}</div>
-                    </div>
-                    <div>
-                      <div>세션 타입</div>
-                      <div>{sessionLabel ? "생성 세션 연결" : "수동 로그"}</div>
+                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>추정 볼륨</div>
+                      <div style={{ font: "var(--font-card-title)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
                     </div>
                   </div>
 
                   {noteText ? (
-                    <div>
-                      <div>노트</div>
-                      <div>{noteText}</div>
+                    <div style={{ marginTop: "var(--space-sm)", borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)" }}>
+                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>노트</div>
+                      <div style={{ marginTop: "2px" }}>{noteText}</div>
                     </div>
                   ) : null}
                 </Card>
@@ -462,6 +460,7 @@ function PlanHistoryPageContent() {
             {nextCursor ? (
               <button
                 type="button"
+                className="btn btn-secondary btn-full"
                 disabled={logsLoadingMore}
                 onClick={() => {
                   if (!selectedPlanId || !nextCursor) return;
@@ -473,7 +472,8 @@ function PlanHistoryPageContent() {
             ) : null}
           </div>
         ) : null}
-      </section>
+        </div>
+      </DashboardSection>
     </div>
   );
 }
@@ -483,8 +483,8 @@ export default function PlanHistoryPage() {
     <Suspense
       fallback={
         <div>
-          <section>
-            <div>플랜 수행 히스토리</div>
+          <section style={{ paddingTop: "var(--space-sm)" }}>
+            <div style={{ font: "var(--font-section-title)" }}>플랜 수행 히스토리</div>
             <LoadingStateRows active label="히스토리 화면 준비 중" />
           </section>
         </div>

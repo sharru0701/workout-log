@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardActionGroup, CardMetaGrid, CardMetaItem } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -305,20 +305,26 @@ function PlansManagePageContent() {
         closeLabel="닫기"
       >
         {managedPlan ? (
-          <div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
             <Card tone="subtle" padding="sm" elevated={false}>
-              <CardMetaGrid>
-                <CardMetaItem label="기반 프로그램" value={managedPlan.baseProgramName ?? "-"} />
-                <CardMetaItem label="생성일" value={formatDateTime(managedPlan.createdAt)} />
-                <CardMetaItem
-                  label="마지막 수행일"
-                  value={managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}
-                />
-              </CardMetaGrid>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</div>
+                  <div style={{ font: "var(--font-card-title)" }}>{managedPlan.baseProgramName ?? "-"}</div>
+                </div>
+                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>생성일</div>
+                  <div>{formatDateTime(managedPlan.createdAt)}</div>
+                </div>
+                <div>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>마지막 수행일</div>
+                  <div>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
+                </div>
+              </div>
             </Card>
 
-            <label>
-              <span>플랜 이름</span>
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>플랜 이름</span>
               <AppTextInput
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
@@ -326,7 +332,7 @@ function PlansManagePageContent() {
               />
             </label>
 
-            <CardActionGroup>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               <PrimaryButton
                 as="a"
                 variant="primary"
@@ -348,16 +354,20 @@ function PlansManagePageContent() {
               >
                 {saving ? "저장 중..." : "이름 저장"}
               </PrimaryButton>
-              <button
+              <PrimaryButton
                 type="button"
+                variant="secondary"
+                size="md"
+                className="btn-danger"
+                fullWidth
                 disabled={saving || deleting}
                 onClick={() => {
                   void deletePlan();
                 }}
-                >
-                  {deleting ? "삭제 중..." : "플랜 삭제"}
-                </button>
-            </CardActionGroup>
+              >
+                {deleting ? "삭제 중..." : "플랜 삭제"}
+              </PrimaryButton>
+            </div>
           </div>
         ) : (
           <Card tone="subtle" padding="sm" elevated={false}>

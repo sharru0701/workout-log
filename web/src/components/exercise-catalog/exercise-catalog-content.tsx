@@ -109,7 +109,7 @@ export function ExerciseCatalogContent() {
       <NoticeStateRows message={notice} label="안내" />
 
       <section>
-        <h2>운동종목 CRUD</h2>
+        <h2 className="settings-section-title">운동종목 CRUD</h2>
         <Card padding="md" elevated={false}>
           <CardContent>
             <label>
@@ -126,7 +126,7 @@ export function ExerciseCatalogContent() {
       </section>
 
       <section>
-        <h2>추가 (Create)</h2>
+        <h2 className="settings-section-title">추가 (Create)</h2>
         <Card padding="md" elevated={false}>
           <CardContent>
             {!createOpen ? (
@@ -200,7 +200,7 @@ export function ExerciseCatalogContent() {
       </section>
 
       <section>
-        <h2>수정 / 삭제 (Update / Delete)</h2>
+        <h2 className="settings-section-title">수정 / 삭제 (Update / Delete)</h2>
         <EmptyStateRows
           when={isListSettled && !error && visibleItems.length === 0}
           label="운동종목이 없습니다"

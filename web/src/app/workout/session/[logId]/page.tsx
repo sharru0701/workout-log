@@ -84,6 +84,12 @@ function formatKg(value: number | null) {
   return typeof value === "number" && Number.isFinite(value) ? `${value}kg` : "-";
 }
 
+function shortLogId(id: string) {
+  if (!id) return "-";
+  if (id.length <= 10) return id;
+  return `${id.slice(0, 8)}...`;
+}
+
 export default function WorkoutSessionDetailPage() {
   const params = useParams<{ logId: string }>();
   const logId = String(params?.logId ?? "");
@@ -177,29 +183,36 @@ export default function WorkoutSessionDetailPage() {
     return { matched, missing, extra };
   }, [compareRows]);
 
+  const mismatchRows = useMemo(
+    () => compareRows.filter((row) => !(row.planned && row.actual)),
+    [compareRows],
+  );
+
   return (
     <div>
-
-      <Card>
-        <a
-          href={APP_ROUTES.todayLog}
-        >
-          오늘 기록으로 돌아가기
-        </a>
-
-        <button
-          onClick={() => {
-            setItem(null);
-            setError(null);
-            setLoading(true);
-            apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
-              .then((res) => setItem(res.item))
-              .catch((e: any) => setError(e?.message ?? "세션 상세를 다시 불러오지 못했습니다."))
-              .finally(() => setLoading(false));
-          }}
-        >
-          다시 불러오기
-        </button>
+      <Card tone="subtle" padding="sm" elevated={false}>
+        <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+          <a
+            href={APP_ROUTES.todayLog}
+            className="btn btn-secondary"
+          >
+            오늘 기록으로 돌아가기
+          </a>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              setItem(null);
+              setError(null);
+              setLoading(true);
+              apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
+                .then((res) => setItem(res.item))
+                .catch((e: any) => setError(e?.message ?? "세션 상세를 다시 불러오지 못했습니다."))
+                .finally(() => setLoading(false));
+            }}
+          >
+            다시 불러오기
+          </button>
+        </div>
       </Card>
 
       <LoadingStateRows
@@ -222,71 +235,70 @@ export default function WorkoutSessionDetailPage() {
       />
 
       {item && (
-        <>
-          <Card>
-            <div>
-              <div>로그 ID</div>
-              <div>{item.id}</div>
-            </div>
-            <div>
-              <div>수행 시각</div>
-              <div>{new Date(item.performedAt).toLocaleString()}</div>
-            </div>
-            <div>
-              <div>세션 키</div>
-              <div>
-                {item.generatedSession?.sessionKey
-                  ? formatSessionKeyLabel(item.generatedSession.sessionKey)
-                  : "(수동 / 생성 세션 없음)"}
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <Card tone="subtle" padding="sm" elevated={false}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>수행 시각</div>
+              <div style={{ font: "var(--font-card-title)" }}>{new Date(item.performedAt).toLocaleString()}</div>
+              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                세션: {item.generatedSession?.sessionKey ? formatSessionKeyLabel(item.generatedSession.sessionKey) : "수동 로그"}
+              </div>
+              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                로그 ID: {shortLogId(item.id)}
               </div>
             </div>
           </Card>
 
-          <Card>
-            <div>
-              <div>일치</div>
-              <div>{stats.matched}</div>
-            </div>
-            <div>
-              <div>누락</div>
-              <div>{stats.missing}</div>
-            </div>
-            <div>
-              <div>추가</div>
-              <div>{stats.extra}</div>
+          <Card padding="sm" elevated={false}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
+              <div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>일치</div>
+                <div style={{ font: "var(--font-card-title)" }}>{stats.matched}</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>누락</div>
+                <div style={{ font: "var(--font-card-title)" }}>{stats.missing}</div>
+              </div>
+              <div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>추가</div>
+                <div style={{ font: "var(--font-card-title)" }}>{stats.extra}</div>
+              </div>
             </div>
           </Card>
 
-          <Card>
-            <div>자동 진행</div>
+          <Card padding="sm" elevated={false}>
+            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>자동 진행</div>
             <NoticeStateRows
               message={summarizeProgression(item.progression ?? null)}
               tone={progressionTone(item.progression ?? null)}
               label="요약"
             />
             {item.progression?.event ? (
-              <>
-                <div>
+              <details style={{ marginTop: "var(--space-sm)" }}>
+                <summary style={{ cursor: "pointer", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                  자동 진행 상세 보기
+                </summary>
+                <div style={{ marginTop: "var(--space-sm)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
                   <div>
-                    <div>이벤트</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>이벤트</div>
                     <div>{item.progression.event.eventType}</div>
                   </div>
                   <div>
-                    <div>프로그램</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>프로그램</div>
                     <div>{item.progression.event.programSlug}</div>
                   </div>
                   <div>
-                    <div>세션 진행</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>세션 진행</div>
                     <div>{item.progression.event.didAdvanceSession ? "예" : "아니오"}</div>
                   </div>
                   <div>
-                    <div>적용 시각</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>적용 시각</div>
                     <div>{new Date(item.progression.event.createdAt).toLocaleString()}</div>
                   </div>
                 </div>
                 {item.progression.event.targetDecisions.length > 0 ? (
-                  <div>
-                    <table>
+                  <div style={{ marginTop: "var(--space-sm)", overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
                           <th>Target</th>
@@ -312,14 +324,14 @@ export default function WorkoutSessionDetailPage() {
                 ) : (
                   <EmptyStateRows when label="타겟별 자동 진행 결정 없음" />
                 )}
-              </>
+              </details>
             ) : (
               <EmptyStateRows when label="이 로그에는 자동 진행 이벤트가 없습니다." />
             )}
           </Card>
 
-          <Card>
-            <div>계획 대비 수행</div>
+          <Card padding="sm" elevated={false}>
+            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>계획 대비 수행</div>
             {compareRows.length === 0 ? (
               <EmptyStateRows
                 when
@@ -327,20 +339,41 @@ export default function WorkoutSessionDetailPage() {
                 description="비교할 계획/수행 세트가 없습니다."
               />
             ) : (
-              <div>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>운동</th>
-                      <th>세트</th>
-                      <th>계획</th>
-                      <th>수행</th>
-                      <th>차이</th>
-                      <th>상태</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {compareRows.map((r, idx) => {
+              <>
+                {mismatchRows.length > 0 ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
+                    {mismatchRows.map((r, idx) => {
+                      const status = !r.planned ? "추가된 세트" : "누락 세트";
+                      return (
+                        <div key={`mismatch-${r.exerciseName}-${r.setNumber}-${idx}`} style={{ border: "1px solid var(--color-border)", borderRadius: "8px", padding: "var(--space-xs) var(--space-sm)" }}>
+                          <strong>{r.exerciseName} {r.setNumber}세트</strong>
+                          <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{status}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <NoticeStateRows message="모든 세트가 계획과 일치합니다." tone="success" label="비교 결과" preferInline />
+                )}
+
+                <details>
+                  <summary style={{ cursor: "pointer", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                    전체 비교표 보기
+                  </summary>
+                  <div style={{ marginTop: "var(--space-sm)", overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                      <thead>
+                        <tr>
+                          <th>운동</th>
+                          <th>세트</th>
+                          <th>계획</th>
+                          <th>수행</th>
+                          <th>차이</th>
+                          <th>상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {compareRows.map((r, idx) => {
                       const plannedPercent =
                         r.planned && typeof r.planned.percent === "number"
                           ? `${Math.round(r.planned.percent * 100)}%`
@@ -393,13 +426,15 @@ export default function WorkoutSessionDetailPage() {
                           <td>{status}</td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                      })}
+                    </tbody>
+                  </table>
+                  </div>
+                </details>
+              </>
             )}
           </Card>
-        </>
+        </div>
       )}
     </div>
   );
