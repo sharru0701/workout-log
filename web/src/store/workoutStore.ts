@@ -26,6 +26,7 @@ interface WorkoutState {
     // Timer management
     startRestTimer: (durationSec: number) => void;
     clearRestTimer: () => void;
+    setRestoring: (isRestoring: boolean) => void;
 
     // Direct state manipulation for persistence
     _getSessionForSaving: () => WorkoutSession | null;
@@ -96,6 +97,10 @@ const useWorkoutStore = create<WorkoutState>((set, get) => {
             state.session.restTimer.startedAt = null;
           }
         }),
+      setRestoring: (isRestoring) =>
+        set(produce((state) => {
+            state.isRestoring = isRestoring;
+        })),
       _getSessionForSaving: () => {
         const session = get().session;
         if (!session) return null;

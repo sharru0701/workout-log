@@ -8,8 +8,7 @@ import useWorkoutStore from "@/store/workoutStore";
 const SESSION_EXPIRATION_MS = 6 * 60 * 60 * 1000;
 
 export function useWorkoutPersistence(sessionId: string) {
-  const { restoreSession, _getSessionForSaving } = useWorkoutStore(s => s.actions);
-  const setRestoring = useWorkoutStore(s => s.set);
+  const { restoreSession, _getSessionForSaving, setRestoring } = useWorkoutStore(s => s.actions);
   const [showRestoredToast, setShowRestoredToast] = useState(false);
   const isRestoringRef = useRef(false);
 
@@ -47,7 +46,7 @@ export function useWorkoutPersistence(sessionId: string) {
     }
 
     // Set restoring to false, even if nothing was loaded
-    setRestoring(state => ({ ...state, isRestoring: false }));
+    setRestoring(false);
     isRestoringRef.current = false;
   }, [sessionId, restoreSession, setRestoring]);
 
