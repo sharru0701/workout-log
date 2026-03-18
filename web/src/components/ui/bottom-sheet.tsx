@@ -219,6 +219,7 @@ export function BottomSheet({
     const panel = panelRef.current;
     if (!panel) return;
     panel.classList.remove("is-dragging");
+    panel.classList.remove("is-closing");
     panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
   }, []);
 
@@ -240,7 +241,6 @@ export function BottomSheet({
 
     panel.classList.add("is-closing");
     window.setTimeout(() => {
-      panel.classList.remove("is-closing");
       onClose();
     }, closeAnimationMs);
   }, [isInteractiveSheet, onClose, closeAnimationMs]);
@@ -304,6 +304,7 @@ export function BottomSheet({
         window.clearTimeout(closeAnimationTimerRef.current);
         closeAnimationTimerRef.current = null;
       }
+      clearDragVisual();
       return;
     }
 
@@ -357,7 +358,6 @@ export function BottomSheet({
           // 드래그 놓는 위치에서 아래로 슬라이드 후 닫기
           panel.classList.add("is-closing");
           window.setTimeout(() => {
-            panel.classList.remove("is-closing");
             onClose();
           }, closeAnimationMs);
           return;
