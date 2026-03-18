@@ -137,13 +137,19 @@
 }
 
 .activity-dot {
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 9999px;
   background-color: var(--progress-dot-rest);
   display: block;
+  opacity: 0.5;
+  transition: background-color 0.2s, box-shadow 0.2s, width 0.2s, height 0.2s, opacity 0.2s;
 }
 
 .activity-dot.is-active {
+  width: 12px;
+  height: 12px;
   background-color: var(--progress-dot-active);
+  box-shadow: 0 0 6px 2px var(--progress-dot-active-glow);
+  opacity: 1;
 }

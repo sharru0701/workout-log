@@ -204,6 +204,7 @@
   --progress-track: color-mix(in srgb, var(--color-border) 44%, transparent);
   --progress-dot-rest: var(--color-border);
   --progress-dot-active: var(--color-action);
+  --progress-dot-active-glow: color-mix(in srgb, var(--color-action) 40%, transparent);
 
   /* Legacy label aliases kept for compatibility while components migrate */
   --label-primary-bg: var(--label-exercise-bg);
@@ -432,6 +433,7 @@
     --progress-track: color-mix(in srgb, var(--color-border) 36%, transparent);
     --progress-dot-rest: var(--color-border-strong);
     --progress-dot-active: var(--color-action);
+    --progress-dot-active-glow: color-mix(in srgb, var(--color-action) 50%, transparent);
 
     --label-primary-bg: var(--label-exercise-bg);
     --label-primary-text: var(--label-exercise-text);
@@ -637,6 +639,7 @@
   --progress-track: color-mix(in srgb, var(--color-border) 36%, transparent);
   --progress-dot-rest: var(--color-border-strong);
   --progress-dot-active: var(--color-action);
+  --progress-dot-active-glow: color-mix(in srgb, var(--color-action) 50%, transparent);
 
   --label-primary-bg: var(--label-exercise-bg);
   --label-primary-text: var(--label-exercise-text);
