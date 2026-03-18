@@ -12,4 +12,4 @@ if [[ "$(uname -s)" == "Linux" ]]; then
 fi
 
 cd "$WEB_DIR"
-exec playwright "$@"
+exec pnpm exec playwright "$@"
