@@ -681,6 +681,7 @@ export default function WorkoutRecordPage() {
           message: "이전에 입력 중이던 기록을 불러왔습니다.",
           confirmText: "복구",
           cancelText: "삭제",
+          closeAsConfirm: true,
         });
 
         if (!shouldKeep) {

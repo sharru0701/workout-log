@@ -19,6 +19,7 @@ export type AppConfirmOptions = {
   confirmText?: string;
   cancelText?: string;
   tone?: DialogTone;
+  closeAsConfirm?: boolean;
 };
 
 type AlertRequest = {
@@ -37,6 +38,7 @@ type ConfirmRequest = {
   confirmText: string;
   cancelText: string;
   tone: DialogTone;
+  closeAsConfirm: boolean;
   resolve: (confirmed: boolean) => void;
 };
 
@@ -95,6 +97,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
     confirmText: String(input.confirmText ?? "").trim() || "확인",
     cancelText: String(input.cancelText ?? "").trim() || "취소",
     tone: input.tone === "danger" ? "danger" : "default",
+    closeAsConfirm: input.closeAsConfirm === true,
   };
 }
 
@@ -119,7 +122,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
 
   const closeActiveAsCancel = useCallback(() => {
     if (!active) return;
-    if (active.kind === "confirm") active.resolve(false);
+    if (active.kind === "confirm") active.resolve(active.closeAsConfirm ? true : false);
     else active.resolve();
     setQueue((prev) => prev.slice(1));
   }, [active]);
@@ -156,6 +159,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         confirmText: normalized.confirmText,
         cancelText: normalized.cancelText,
         tone: normalized.tone,
+        closeAsConfirm: normalized.closeAsConfirm,
         resolve,
       };
       setQueue((prev) => [...prev, request]);
