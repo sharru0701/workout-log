@@ -626,6 +626,8 @@ export default function WorkoutRecordPage() {
     return q.planId || "";
   });
   const isRestoredRef = useRef(false);
+  const persistenceKeyRef = useRef<string | null>(null);
+  const reloadDraftContextRef = useRef<(() => Promise<void>) | null>(null);
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
   const [lastSession, setLastSession] = useState<{
     dateLabel: string | null;
@@ -654,27 +656,42 @@ export default function WorkoutRecordPage() {
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
 
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
+  useEffect(() => {
+    persistenceKeyRef.current = persistenceKey;
+  }, [persistenceKey]);
+
   useWorkoutRecordPersistence(
     persistenceKey,
     draft,
     programEntryState,
-    useCallback((data) => {
+    useCallback(async (data) => {
       console.log("[WorkoutRecordPage] onRestore called", data);
       isRestoredRef.current = true;
       // 순서를 보장하여 상태 업데이트
       setDraft(data.draft);
       setProgramEntryState(data.programEntryState);
-      
+
+      const capturedKey = persistenceKeyRef.current;
+
       // Safari 등에서 렌더링 프레임 확보를 위해 약간의 지연 후 알림
-      setTimeout(() => {
-        console.log("[WorkoutRecordPage] Showing restore alert");
-        alert({
+      setTimeout(async () => {
+        console.log("[WorkoutRecordPage] Showing restore confirm");
+        const shouldKeep = await confirm({
           title: "기록 복구",
           message: "이전에 입력 중이던 기록을 불러왔습니다.",
-          buttonText: "확인",
+          confirmText: "유지",
+          cancelText: "삭제",
         });
+
+        if (!shouldKeep) {
+          if (capturedKey) await clearWorkoutDraft(capturedKey);
+          isRestoredRef.current = false;
+          setDraft(null);
+          setProgramEntryState({});
+          await reloadDraftContextRef.current?.();
+        }
       }, 150);
-    }, [alert]),
+    }, [confirm]),
     { enabled: true } // 즉시 복구 시도
   );
 
@@ -972,6 +989,26 @@ export default function WorkoutRecordPage() {
     },
     [applyWeightRulesToDraft, browserTimezone],
   );
+
+  useEffect(() => {
+    reloadDraftContextRef.current = async () => {
+      const plan = selectedPlan;
+      const prefs = workoutPreferences;
+      const currentQuery = query;
+      const resolvedPlanId = plan?.id ?? currentQuery.planId ?? "";
+      const resolvedPlanName = plan?.name ?? "프로그램 미선택";
+      if (!resolvedPlanId) return;
+      await loadWorkoutContext({
+        planId: resolvedPlanId,
+        planName: resolvedPlanName,
+        dateKey: currentQuery.date,
+        preferences: prefs,
+        planAutoProgression: plan?.params?.autoProgression === true,
+        planSchedule: plan?.params?.schedule,
+        planParams: plan?.params ?? null,
+      });
+    };
+  }, [selectedPlan, workoutPreferences, query, loadWorkoutContext]);
 
   useEffect(() => {
     let cancelled = false;
