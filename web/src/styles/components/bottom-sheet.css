@@ -54,9 +54,10 @@
   box-shadow: 0 -4px 20px var(--shadow-color-strong);
   padding: var(--space-md);
   padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
-  
+
   transform: translateY(100%); /* 기본 닫혀있음 */
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  /* 스프링 이징: 오픈/스냅백 시 자연스러운 탄성 효과 */
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
 
@@ -69,6 +70,36 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   transition: none;
 }
 
+/* 드래그 핸들 영역 */
+.mobile-bottom-sheet-drag-handle {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4px 0 8px;
+  margin: -4px calc(-1 * var(--space-md)) 0;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.mobile-bottom-sheet-panel.is-dragging .mobile-bottom-sheet-drag-handle {
+  cursor: grabbing;
+}
+
+/* 드래그 pill 인디케이터 */
+.mobile-bottom-sheet-drag-handle-pill {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background-color: var(--color-border);
+  transition: width 0.2s ease, opacity 0.2s ease;
+}
+
+.mobile-bottom-sheet-panel.is-dragging .mobile-bottom-sheet-drag-handle-pill {
+  width: 44px;
+  opacity: 0.7;
+}
+
 /* 모달 헤더 (원형 액션 버튼 양반 양옆 배치) */
 .mobile-bottom-sheet-header {
   display: flex;
@@ -76,6 +107,13 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   justify-content: space-between;
   margin-bottom: var(--space-md);
   min-height: 44px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+
+.mobile-bottom-sheet-panel.is-dragging .mobile-bottom-sheet-header {
+  cursor: grabbing;
 }
 
 .mobile-bottom-sheet-title {
