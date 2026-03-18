@@ -3,6 +3,7 @@
 import { useEffect, useCallback, useRef } from "react";
 import { saveWorkoutDraft, loadWorkoutDraft, saveWorkoutDraftSync, type WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
 import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
+import { hasWorkoutEdits } from "@/lib/workout-record/model";
 import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
 import { debounce } from "@/lib/storage/workoutSession";
 
@@ -66,10 +67,15 @@ export function useWorkoutRecordPersistence(
       if (loaded) {
         const isExpired = Date.now() - loaded.updatedAt > DRAFT_EXPIRATION_MS;
         if (!isExpired) {
-          console.log(`[Persistence] Valid draft found (updatedAt: ${loaded.updatedAt}), calling onRestore`);
-          onRestore(loaded);
-          lastSavedKeyRef.current = targetKey;
-          console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
+          if (!hasWorkoutEdits(loaded.draft)) {
+            console.log(`[Persistence] Draft found but has no user edits, skipping restore`);
+            lastSavedKeyRef.current = targetKey;
+          } else {
+            console.log(`[Persistence] Valid draft found (updatedAt: ${loaded.updatedAt}), calling onRestore`);
+            onRestore(loaded);
+            lastSavedKeyRef.current = targetKey;
+            console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
+          }
         } else {
           console.log(`[Persistence] Expired draft found, ignoring`);
         }
