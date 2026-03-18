@@ -310,9 +310,14 @@ export function BottomSheet({
   useEffect(() => () => clearDragState(), [clearDragState]);
 
   const onHandlePointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLDivElement>) => {
+    (event: ReactPointerEvent<HTMLElement>, skipInteractiveCheck = false) => {
       if (!isInteractiveSheet) return;
       if (event.pointerType === "mouse" && event.button !== 0) return;
+      // 헤더 내 버튼/링크 클릭 시 드래그 무시
+      if (!skipInteractiveCheck) {
+        const target = event.target as HTMLElement;
+        if (target.closest('button, a, [role="button"]')) return;
+      }
       const panel = panelRef.current;
       if (!panel) return;
 
@@ -324,6 +329,9 @@ export function BottomSheet({
       const pointerId = event.pointerId;
       const startY = event.clientY;
       let dragOffset = 0;
+      let lastY = startY;
+      let lastTime = event.timeStamp;
+      let velocityY = 0;
 
       panel.classList.add("is-dragging");
       panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
@@ -343,11 +351,18 @@ export function BottomSheet({
         dragOffset = Math.max(0, moveEvent.clientY - startY);
         panel.style.setProperty("--mobile-bottom-sheet-drag-offset", `${dragOffset}px`);
         if (dragOffset > 0) moveEvent.preventDefault();
+
+        // 속도 추적 (px/ms)
+        const dt = moveEvent.timeStamp - lastTime;
+        if (dt > 0) velocityY = (moveEvent.clientY - lastY) / dt;
+        lastY = moveEvent.clientY;
+        lastTime = moveEvent.timeStamp;
       };
 
       const onPointerUp = (upEvent: PointerEvent) => {
         if (upEvent.pointerId !== pointerId) return;
-        finish(dragOffset >= closeThresholdPx);
+        // 임계값 초과 OR 빠른 플릭(0.5px/ms 이상 + 20px 이상 드래그)으로 닫기
+        finish(dragOffset >= closeThresholdPx || (velocityY > 0.5 && dragOffset > 20));
       };
 
       const onPointerCancel = (cancelEvent: PointerEvent) => {
@@ -391,8 +406,11 @@ export function BottomSheet({
         tabIndex={-1}
         className={`mobile-bottom-sheet-panel ${panelClassName}`}
       >
-        <div onPointerDown={onHandlePointerDown}>
-          <div aria-hidden="true" />
+        <div
+          className="mobile-bottom-sheet-drag-handle"
+          onPointerDown={(e) => onHandlePointerDown(e, true)}
+        >
+          <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
         </div>
         {header ?? (primaryAction ? (
           <BottomSheetActionHeader
@@ -401,9 +419,13 @@ export function BottomSheet({
             closeLabel={closeLabel}
             onClose={onClose}
             action={primaryAction}
+            onPointerDown={onHandlePointerDown}
           />
         ) : (
-          <header className="mobile-bottom-sheet-header">
+          <header
+            className="mobile-bottom-sheet-header"
+            onPointerDown={onHandlePointerDown}
+          >
             <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
             <div className="mobile-bottom-sheet-title">
               <h2>{title}</h2>

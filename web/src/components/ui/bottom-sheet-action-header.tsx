@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 
 export type BottomSheetPrimaryAction = {
   ariaLabel: string;
@@ -23,15 +23,17 @@ export function BottomSheetActionHeader({
   closeLabel,
   onClose,
   action,
+  onPointerDown,
 }: {
   title: string;
   description?: string;
   closeLabel: string;
   onClose: () => void;
   action: BottomSheetPrimaryAction;
+  onPointerDown?: (event: ReactPointerEvent<HTMLElement>) => void;
 }) {
   return (
-    <header className="mobile-bottom-sheet-header">
+    <header className="mobile-bottom-sheet-header" onPointerDown={onPointerDown}>
       <button
         type="button"
         className="mobile-bottom-sheet-btn"
