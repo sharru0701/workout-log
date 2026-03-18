@@ -679,7 +679,7 @@ export default function WorkoutRecordPage() {
         const shouldKeep = await confirm({
           title: "기록 복구",
           message: "이전에 입력 중이던 기록을 불러왔습니다.",
-          confirmText: "유지",
+          confirmText: "복구",
           cancelText: "삭제",
         });
 
