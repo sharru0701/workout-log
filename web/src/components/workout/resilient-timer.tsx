@@ -52,7 +52,7 @@ export function ResilientTimer() {
   }
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-gray-900 text-white p-4 rounded-lg shadow-lg">
+    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 p-4 rounded-lg" style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", boxShadow: "0 4px 12px var(--shadow-color-strong)" }}>
       <h3 className="text-lg font-bold">Rest Timer</h3>
       <p className="text-4xl font-mono">{formatTime(remainingSeconds)}</p>
     </div>

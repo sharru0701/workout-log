@@ -108,7 +108,7 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
             color: "var(--color-selected-text)",
             zIndex: 2,
           } : range ? {
-            background: "var(--color-surface-2, rgba(0,0,0,0.05))",
+            background: "var(--color-surface-2)",
             color: "var(--color-text)",
             borderRadius: 0,
           } : {};
@@ -120,7 +120,7 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
           const dayColor = selected ? "var(--color-selected-text)" :
                           isOutside ? "var(--color-text-subtle)" :
                           dow === 0 ? "var(--color-danger)" :
-                          dow === 6 ? "var(--color-calendar-saturday, #2563eb)" :
+                          dow === 6 ? "var(--color-calendar-saturday)" :
                           "var(--color-text)";
 
           return (

@@ -32,7 +32,7 @@ function Toast({ message, show, onDismiss }: { message: string; show: boolean; o
   if (!show) return null;
 
   return (
-    <div className="fixed top-5 right-5 bg-green-500 text-white px-4 py-2 rounded-lg shadow-md animate-fade-in-out">
+    <div style={{ position: "fixed", top: "20px", right: "20px", backgroundColor: "var(--color-success)", color: "var(--color-text-on-primary)", padding: "8px 16px", borderRadius: "8px", boxShadow: "0 4px 12px var(--shadow-color-medium)" }}>
       {message}
     </div>
   );
@@ -56,7 +56,7 @@ export default function WorkoutPage({ params }: { params: { sessionId: string } 
       <div className="flex items-center justify-center min-h-screen">
         <button
           onClick={() => actions.startSession(createNewSession(sessionId))}
-          className="px-4 py-2 bg-blue-500 text-white rounded"
+          className="btn btn-primary"
         >
           Start New Workout
         </button>
@@ -79,7 +79,7 @@ export default function WorkoutPage({ params }: { params: { sessionId: string } 
 
       <div className="space-y-4">
         {currentExercise.sets.map((set, setIndex) => (
-          <div key={setIndex} className={`p-2 border rounded ${set.completed ? 'bg-gray-100' : ''}`}>
+          <div key={setIndex} className="p-2 border rounded" style={set.completed ? { backgroundColor: "var(--color-surface-2)" } : undefined}>
             <p>Set {setIndex + 1}</p>
             <input
               type="number"
@@ -101,7 +101,7 @@ export default function WorkoutPage({ params }: { params: { sessionId: string } 
                   actions.toggleSetCompletion(session.currentExerciseIndex, setIndex);
                   actions.startRestTimer(session.restTimer.durationSec);
                 }}
-                className="px-2 py-1 bg-green-500 text-white rounded"
+                className="btn btn-primary"
               >
                 Complete Set
               </button>
@@ -113,12 +113,12 @@ export default function WorkoutPage({ params }: { params: { sessionId: string } 
       {session.currentExerciseIndex < session.exercises.length - 1 && (
         <button 
           onClick={actions.goToNextExercise} 
-          className="mt-4 px-4 py-2 bg-purple-500 text-white rounded">
+          className="btn btn-secondary" style={{ marginTop: "var(--space-md)" }}>
           Next Exercise
         </button>
       )}
 
-      <button onClick={actions.endSession} className="mt-4 ml-4 px-4 py-2 bg-red-500 text-white rounded">
+      <button onClick={actions.endSession} className="btn btn-danger" style={{ marginTop: "var(--space-md)", marginLeft: "var(--space-md)" }}>
         End Workout
       </button>
 

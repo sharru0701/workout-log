@@ -241,11 +241,10 @@
   --touch-target: 44px;
 }
 
+
+/* System dark preference — respects user's manual light override */
 @media (prefers-color-scheme: dark) {
-  :root {
-    /* ============================
-       THEME: GitHub Dark
-       ============================ */
+  :root:not([data-theme-preference="light"]) {
     --color-bg: #0d1117;
     --color-surface: #161b22;
     --color-surface-2: #21262d;
@@ -260,7 +259,6 @@
     --color-text-subtle: #6e7681;
     --color-text-on-primary: #0d1117;
 
-    /* Brand + semantic accents */
     --color-primary: #58a6ff;
     --color-primary-strong: #79c0ff;
     --color-primary-weak: rgba(56, 139, 253, 0.16);
@@ -299,7 +297,6 @@
     --color-icon-button-danger-border: color-mix(in srgb, var(--color-danger) 26%, var(--color-border));
     --color-icon-button-danger-text: color-mix(in srgb, var(--color-danger) 66%, var(--color-text));
 
-    /* Interactive states */
     --color-focus-ring: rgba(88, 166, 255, 0.3);
     --color-link: var(--color-primary);
     --color-link-hover: var(--color-primary-strong);
@@ -314,10 +311,6 @@
     --shadow-color-inset: rgba(1, 4, 9, 0.38);
     --shadow-color-text: rgba(1, 4, 9, 0.32);
 
-    /* ============================
-       LABEL COLOR SYSTEM
-       (Background, Text, Border)
-       ============================ */
     --label-exercise-bg: var(--color-primary-weak);
     --label-exercise-text: var(--color-primary-strong);
     --label-exercise-border: rgba(88, 166, 255, 0.34);
@@ -386,9 +379,6 @@
     --label-failed-text: var(--label-danger-text);
     --label-failed-border: var(--label-danger-border);
 
-    /* ============================
-       METRIC EMPHASIS SYSTEM
-       ============================ */
     --metric-weight-color: var(--color-primary-strong);
     --metric-weight-accent: rgba(88, 166, 255, 0.34);
     --metric-reps-color: var(--color-info);
@@ -404,9 +394,6 @@
     --metric-trend-down: var(--color-danger-strong);
     --metric-trend-flat: var(--color-text-muted);
 
-    /* ============================
-       SET STATE SYSTEM
-       ============================ */
     --set-warmup-bg: var(--label-note-bg);
     --set-warmup-text: var(--label-note-text);
     --set-warmup-border: var(--label-note-border);
@@ -426,9 +413,6 @@
     --set-failure-text: var(--label-failed-text);
     --set-failure-border: var(--label-failed-border);
 
-    /* ============================
-       PROGRESS SCALE
-       ============================ */
     --progress-low-bg: var(--label-note-bg);
     --progress-low-text: var(--label-note-text);
     --progress-low-border: var(--label-note-border);
@@ -449,7 +433,6 @@
     --progress-dot-rest: var(--color-border-strong);
     --progress-dot-active: var(--color-action);
 
-    /* Legacy label aliases kept for compatibility while components migrate */
     --label-primary-bg: var(--label-exercise-bg);
     --label-primary-text: var(--label-exercise-text);
     --label-primary-border: var(--label-exercise-border);
@@ -463,4 +446,208 @@
     --label-accent-text: var(--label-set-type-text);
     --label-accent-border: var(--label-set-type-border);
   }
+}
+
+/* Explicit dark override — user forced dark regardless of system preference */
+:root[data-theme-preference="dark"] {
+  --color-bg: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-2: #21262d;
+  --color-surface-secondary: var(--color-surface-2);
+  --color-surface-hover: #1f2630;
+  --color-surface-active: #262d38;
+  --color-border: #30363d;
+  --color-border-strong: #8b949e;
+
+  --color-text: #c9d1d9;
+  --color-text-muted: #8b949e;
+  --color-text-subtle: #6e7681;
+  --color-text-on-primary: #0d1117;
+
+  --color-primary: #58a6ff;
+  --color-primary-strong: #79c0ff;
+  --color-primary-weak: rgba(56, 139, 253, 0.16);
+
+  --color-success: #3fb950;
+  --color-success-weak: rgba(46, 160, 67, 0.16);
+  --color-warning: #d29922;
+  --color-warning-weak: rgba(210, 153, 34, 0.18);
+  --color-danger: #ff7b72;
+  --color-danger-weak: rgba(248, 81, 73, 0.16);
+  --color-info: #39c5cf;
+  --color-info-weak: rgba(57, 197, 207, 0.14);
+  --color-accent: #a371f7;
+  --color-accent-weak: rgba(163, 113, 247, 0.16);
+  --color-success-strong: color-mix(in srgb, var(--color-success) 82%, var(--color-text));
+  --color-warning-strong: color-mix(in srgb, var(--color-warning) 82%, var(--color-text));
+  --color-danger-strong: color-mix(in srgb, var(--color-danger) 82%, var(--color-text));
+  --color-info-strong: color-mix(in srgb, var(--color-info) 84%, var(--color-text));
+  --color-accent-strong: color-mix(in srgb, var(--color-accent) 84%, var(--color-text));
+  --color-highlight-weak: color-mix(in srgb, var(--color-highlight-strong) 18%, transparent);
+  --color-action: var(--color-info);
+  --color-action-strong: var(--color-info-strong);
+  --color-action-weak: color-mix(in srgb, var(--color-action) 18%, var(--color-surface));
+  --color-text-on-action: var(--color-text-on-primary);
+  --color-selected-bg: var(--color-action);
+  --color-selected-text: var(--color-text-on-action);
+  --color-selected-weak: color-mix(in srgb, var(--color-action) 20%, var(--color-surface));
+  --color-selected-border: color-mix(in srgb, var(--color-action) 36%, transparent);
+  --color-calendar-saturday: var(--color-text);
+  --color-calendar-dot: var(--color-action-strong);
+  --color-icon-button-bg: color-mix(in srgb, var(--color-surface-2) 88%, var(--color-surface));
+  --color-icon-button-border: color-mix(in srgb, var(--color-border-strong) 24%, var(--color-border));
+  --color-icon-button-text: color-mix(in srgb, var(--color-text-muted) 92%, var(--color-text));
+  --color-icon-button-active: color-mix(in srgb, var(--color-surface-active) 78%, var(--color-surface-2));
+  --color-icon-button-danger-bg: color-mix(in srgb, var(--color-danger-weak) 58%, var(--color-surface));
+  --color-icon-button-danger-border: color-mix(in srgb, var(--color-danger) 26%, var(--color-border));
+  --color-icon-button-danger-text: color-mix(in srgb, var(--color-danger) 66%, var(--color-text));
+
+  --color-focus-ring: rgba(88, 166, 255, 0.3);
+  --color-link: var(--color-primary);
+  --color-link-hover: var(--color-primary-strong);
+  --color-highlight: rgba(240, 136, 62, 0.16);
+  --color-highlight-strong: #f2a65a;
+  --color-selection: rgba(88, 166, 255, 0.2);
+  --color-overlay: rgba(1, 4, 9, 0.62);
+
+  --shadow-color-soft: rgba(1, 4, 9, 0.32);
+  --shadow-color-medium: rgba(1, 4, 9, 0.4);
+  --shadow-color-strong: rgba(1, 4, 9, 0.52);
+  --shadow-color-inset: rgba(1, 4, 9, 0.38);
+  --shadow-color-text: rgba(1, 4, 9, 0.32);
+
+  --label-exercise-bg: var(--color-primary-weak);
+  --label-exercise-text: var(--color-primary-strong);
+  --label-exercise-border: rgba(88, 166, 255, 0.34);
+
+  --label-muscle-group-bg: var(--color-surface-2);
+  --label-muscle-group-text: var(--color-text);
+  --label-muscle-group-border: color-mix(in srgb, var(--color-border-strong) 42%, transparent);
+
+  --label-program-bg: var(--color-info-weak);
+  --label-program-text: var(--color-info-strong);
+  --label-program-border: color-mix(in srgb, var(--color-info) 30%, transparent);
+
+  --label-set-type-bg: var(--color-accent-weak);
+  --label-set-type-text: var(--color-accent-strong);
+  --label-set-type-border: color-mix(in srgb, var(--color-accent) 32%, transparent);
+
+  --label-intensity-bg: var(--color-warning-weak);
+  --label-intensity-text: var(--color-warning-strong);
+  --label-intensity-border: color-mix(in srgb, var(--color-warning) 38%, transparent);
+
+  --label-status-bg: var(--color-surface-2);
+  --label-status-text: var(--color-text-muted);
+  --label-status-border: var(--color-border);
+
+  --label-metric-bg: var(--color-highlight);
+  --label-metric-text: var(--color-highlight-strong);
+  --label-metric-border: rgba(240, 136, 62, 0.32);
+
+  --label-note-bg: var(--color-surface-2);
+  --label-note-text: var(--color-text-muted);
+  --label-note-border: var(--color-border);
+
+  --label-success-bg: var(--color-success-weak);
+  --label-success-text: var(--color-success-strong);
+  --label-success-border: color-mix(in srgb, var(--color-success) 38%, transparent);
+
+  --label-warning-bg: var(--color-warning-weak);
+  --label-warning-text: var(--color-warning-strong);
+  --label-warning-border: color-mix(in srgb, var(--color-warning) 38%, transparent);
+
+  --label-personal-record-bg: var(--color-highlight);
+  --label-personal-record-text: var(--color-highlight-strong);
+  --label-personal-record-border: color-mix(in srgb, var(--color-highlight-strong) 34%, transparent);
+
+  --label-danger-bg: var(--color-danger-weak);
+  --label-danger-text: var(--color-danger-strong);
+  --label-danger-border: color-mix(in srgb, var(--color-danger) 34%, transparent);
+
+  --label-recovery-bg: var(--color-surface-2);
+  --label-recovery-text: var(--color-text-muted);
+  --label-recovery-border: color-mix(in srgb, var(--color-border-strong) 24%, transparent);
+
+  --label-muscle-bg: var(--label-muscle-group-bg);
+  --label-muscle-text: var(--label-muscle-group-text);
+  --label-muscle-border: var(--label-muscle-group-border);
+  --label-workout-type-bg: var(--label-program-bg);
+  --label-workout-type-text: var(--label-program-text);
+  --label-workout-type-border: var(--label-program-border);
+  --label-complete-bg: var(--label-success-bg);
+  --label-complete-text: var(--label-success-text);
+  --label-complete-border: var(--label-success-border);
+  --label-pr-bg: var(--label-personal-record-bg);
+  --label-pr-text: var(--label-personal-record-text);
+  --label-pr-border: var(--label-personal-record-border);
+  --label-failed-bg: var(--label-danger-bg);
+  --label-failed-text: var(--label-danger-text);
+  --label-failed-border: var(--label-danger-border);
+
+  --metric-weight-color: var(--color-primary-strong);
+  --metric-weight-accent: rgba(88, 166, 255, 0.34);
+  --metric-reps-color: var(--color-info);
+  --metric-reps-accent: rgba(57, 197, 207, 0.34);
+  --metric-volume-color: var(--color-highlight-strong);
+  --metric-volume-accent: rgba(240, 136, 62, 0.3);
+  --metric-1rm-color: var(--color-accent);
+  --metric-1rm-accent: color-mix(in srgb, var(--color-accent) 34%, transparent);
+  --metric-progress-color: var(--color-success);
+  --metric-progress-accent: color-mix(in srgb, var(--color-success) 34%, transparent);
+  --metric-label-color: var(--color-text-muted);
+  --metric-trend-up: var(--color-success-strong);
+  --metric-trend-down: var(--color-danger-strong);
+  --metric-trend-flat: var(--color-text-muted);
+
+  --set-warmup-bg: var(--label-note-bg);
+  --set-warmup-text: var(--label-note-text);
+  --set-warmup-border: var(--label-note-border);
+  --set-work-bg: var(--label-exercise-bg);
+  --set-work-text: var(--label-exercise-text);
+  --set-work-border: var(--label-exercise-border);
+  --set-top-bg: var(--label-set-type-bg);
+  --set-top-text: var(--label-set-type-text);
+  --set-top-border: var(--label-set-type-border);
+  --set-backoff-bg: var(--label-recovery-bg);
+  --set-backoff-text: var(--label-recovery-text);
+  --set-backoff-border: var(--label-recovery-border);
+  --set-deload-bg: var(--label-warning-bg);
+  --set-deload-text: var(--label-warning-text);
+  --set-deload-border: var(--label-warning-border);
+  --set-failure-bg: var(--label-failed-bg);
+  --set-failure-text: var(--label-failed-text);
+  --set-failure-border: var(--label-failed-border);
+
+  --progress-low-bg: var(--label-note-bg);
+  --progress-low-text: var(--label-note-text);
+  --progress-low-border: var(--label-note-border);
+  --progress-low-fill: var(--color-border-strong);
+  --progress-medium-bg: var(--label-exercise-bg);
+  --progress-medium-text: var(--label-exercise-text);
+  --progress-medium-border: var(--label-exercise-border);
+  --progress-medium-fill: var(--color-primary);
+  --progress-high-bg: var(--label-intensity-bg);
+  --progress-high-text: var(--label-intensity-text);
+  --progress-high-border: var(--label-intensity-border);
+  --progress-high-fill: var(--color-warning);
+  --progress-peak-bg: var(--label-pr-bg);
+  --progress-peak-text: var(--label-pr-text);
+  --progress-peak-border: var(--label-pr-border);
+  --progress-peak-fill: var(--color-highlight-strong);
+  --progress-track: color-mix(in srgb, var(--color-border) 36%, transparent);
+  --progress-dot-rest: var(--color-border-strong);
+  --progress-dot-active: var(--color-action);
+
+  --label-primary-bg: var(--label-exercise-bg);
+  --label-primary-text: var(--label-exercise-text);
+  --label-primary-border: var(--label-exercise-border);
+  --label-info-bg: var(--label-program-bg);
+  --label-info-text: var(--label-program-text);
+  --label-info-border: var(--label-program-border);
+  --label-neutral-bg: var(--label-note-bg);
+  --label-neutral-text: var(--label-note-text);
+  --label-neutral-border: var(--label-note-border);
+  --label-accent-bg: var(--label-set-type-bg);
+  --label-accent-text: var(--label-set-type-text);
+  --label-accent-border: var(--label-set-type-border);
 }

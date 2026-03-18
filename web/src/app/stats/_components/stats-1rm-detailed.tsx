@@ -563,7 +563,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                     cursor: "pointer",
                     background: isActive ? "var(--color-bg)" : "transparent",
                     color: isActive ? "var(--color-text)" : "var(--color-text-muted)",
-                    boxShadow: isActive ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                    boxShadow: isActive ? "0 2px 6px var(--shadow-color-soft)" : "none",
                     transition: "all 0.15s ease"
                   }}
                 >
@@ -584,7 +584,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                 background: rangeFilter.preset === "CUSTOM" ? "var(--color-bg)" : "transparent",
                 color: rangeFilter.preset === "CUSTOM" ? "var(--color-primary)" : "var(--color-text-subtle)",
                 cursor: "pointer",
-                boxShadow: rangeFilter.preset === "CUSTOM" ? "0 2px 6px rgba(0,0,0,0.06)" : "none",
+                boxShadow: rangeFilter.preset === "CUSTOM" ? "0 2px 6px var(--shadow-color-soft)" : "none",
                 transition: "all 0.15s ease"
               }}
             >
