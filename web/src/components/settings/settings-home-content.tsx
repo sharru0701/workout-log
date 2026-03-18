@@ -53,6 +53,13 @@ const rows = [
     description: "버전 및 앱 정보",
     symbol: "AB",
   },
+  {
+    href: "/settings/system-stats",
+    label: "시스템 통계",
+    subtitle: "System Stats",
+    description: "마이그레이션 및 UX 분석(관리자)",
+    symbol: "SS",
+  },
 ];
 
 export function SettingsHomeContent({ className = "" }: { className?: string }) {

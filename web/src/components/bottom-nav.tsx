@@ -106,7 +106,7 @@ const tabs = [
   { href: "/calendar", label: "캘린더", ariaLabel: "캘린더", Icon: CalendarIcon },
   { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
   { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },
-  { href: "/stats-1rm", label: "1RM", ariaLabel: "1RM 통계", Icon: StatsIcon },
+  { href: "/stats", label: "통계", ariaLabel: "통계", Icon: StatsIcon },
   { href: "/settings", label: "설정", ariaLabel: "설정", Icon: SettingsIcon },
 ];
 

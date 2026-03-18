@@ -13,7 +13,7 @@ function titleFromPathname(pathname: string) {
   if (pathname.startsWith("/program-store/customize")) return "프로그램 수정";
   if (pathname.startsWith("/program-store/detail")) return "프로그램 상세";
   if (pathname.startsWith("/program-store")) return "프로그램";
-  if (pathname.startsWith("/stats-1rm")) return "1RM";
+  if (pathname.startsWith("/stats")) return "통계";
   if (pathname.startsWith("/settings/theme")) return "테마";
   if (pathname.startsWith("/settings/minimum-plate")) return "최소 원판";
   if (pathname.startsWith("/settings/bodyweight")) return "몸무게";

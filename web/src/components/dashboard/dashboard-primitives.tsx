@@ -92,6 +92,7 @@ function cx(...classes: Array<string | false | null | undefined>) {
 export function DashboardScreen({ children, className, wide = false }: DashboardScreenProps) {
   return (
     <div
+      className={cx("dashboard-screen", className, wide && "dashboard-screen--wide")}
     >
       {children}
     </div>
@@ -111,19 +112,19 @@ export function DashboardHero({
   children,
 }: DashboardHeroProps) {
   return (
-    <header>
-      {topSlot ? <div>{topSlot}</div> : null}
+    <header className={cx("dashboard-hero", `dashboard-hero--${tone}`, className)}>
+      {topSlot ? <div className="dashboard-hero__top-slot">{topSlot}</div> : null}
 
       {(eyebrow || title || description) && (
-        <div>
-          {eyebrow ? <div>{eyebrow}</div> : null}
-          <h1>{title}</h1>
-          {description ? <p>{description}</p> : null}
+        <div className="dashboard-hero__content">
+          {eyebrow ? <div className="dashboard-hero__eyebrow">{eyebrow}</div> : null}
+          <h1 className="dashboard-hero__title">{title}</h1>
+          {description ? <p className="dashboard-hero__description">{description}</p> : null}
         </div>
       )}
 
       {(primaryAction || secondaryAction) && (
-        <div>
+        <div className="dashboard-hero__actions">
           {primaryAction ? (
             <PrimaryButton
               as={Link}
@@ -155,11 +156,11 @@ export function DashboardHero({
 
 export function DashboardMetricStrip({ items, className }: DashboardMetricStripProps) {
   return (
-    <div>
-      {items.map((item) => (
-        <div key={`${item.label}-${item.value}`}>
-          <div>{item.label}</div>
-          <div>{item.value}</div>
+    <div className={cx("dashboard-metric-strip", className)}>
+      {items.map((item, i) => (
+        <div className="dashboard-metric-strip__item" key={i}>
+          <div className="dashboard-metric-strip__label">{item.label}</div>
+          <div className="dashboard-metric-strip__value">{item.value}</div>
         </div>
       ))}
     </div>
@@ -175,14 +176,19 @@ export function DashboardSection({
   headerTrigger = false,
 }: DashboardSectionProps) {
   return (
-    <section>
-      <div data-pull-refresh-trigger={headerTrigger ? "true" : undefined}>
-        <h2 id={titleId}>
+    <section className={cx("dashboard-section", className)}>
+      <div 
+        className="dashboard-section__header"
+        data-pull-refresh-trigger={headerTrigger ? "true" : undefined}
+      >
+        <h2 className="dashboard-section__title" id={titleId}>
           {title}
         </h2>
-        {description ? <p>{description}</p> : null}
+        {description ? <p className="dashboard-section__description">{description}</p> : null}
       </div>
-      {children}
+      <div className="dashboard-section__content">
+        {children}
+      </div>
     </section>
   );
 }
@@ -190,6 +196,7 @@ export function DashboardSection({
 export function DashboardActionGrid({ children, className, ariaLabel, ariaLabelledBy }: DashboardActionGridProps) {
   return (
     <div
+      className={cx("dashboard-action-grid", className)}
       role="list"
       aria-label={ariaLabel}
       aria-labelledby={ariaLabel ? undefined : ariaLabelledBy}
@@ -223,15 +230,14 @@ export function DashboardActionCard({
       padding="none"
       interactive
       role="listitem"
+      className={cx("dashboard-action-card", `card--${tone}`, className)}
     >
-      <div>
-        {symbol ? <span>{symbol}</span> : null}
-        {badge ? <span>{badge}</span> : null}
-      </div>
-      <div>{title}</div>
-      {subtitle ? <div>{subtitle}</div> : null}
-      <p>{description}</p>
-      {meta ? <div>{meta}</div> : null}
+      {symbol ? <div className="dashboard-action-card__symbol">{symbol}</div> : null}
+      {badge ? <div className="dashboard-action-card__badge">{badge}</div> : null}
+      <div className="dashboard-action-card__title">{title}</div>
+      {subtitle ? <div className="dashboard-action-card__subtitle">{subtitle}</div> : null}
+      <p className="dashboard-action-card__description">{description}</p>
+      {meta ? <div className="dashboard-action-card__meta">{meta}</div> : null}
     </Card>
   );
 }

@@ -139,8 +139,8 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
         {items.map((item) => {
           const href = item.exerciseId
-            ? `${APP_ROUTES.stats1rm}?exerciseId=${encodeURIComponent(item.exerciseId)}`
-            : `${APP_ROUTES.stats1rm}?exercise=${encodeURIComponent(item.exerciseName)}`;
+            ? `${APP_ROUTES.statsHome}?exerciseId=${encodeURIComponent(item.exerciseId)}`
+            : `${APP_ROUTES.statsHome}?exercise=${encodeURIComponent(item.exerciseName)}`;
           return (
             <Card as={Link} key={item.exerciseName} href={href} padding="md" className="metric-badge metric-1rm">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -176,6 +176,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
 
   const maxTonnage = Math.max(...points.map((p) => p.tonnage), 1);
   const selected = selectedIndex !== null ? points[selectedIndex] ?? null : null;
+  const CHART_BAR_HEIGHT_PX = 82;
 
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
@@ -195,9 +196,12 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
             <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{selected.sets}세트 · {selected.reps}회</span>
           </div>
         )}
-        <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "100px" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "136px" }}>
           {points.map((point, i) => {
-            const height = Math.max((point.tonnage / maxTonnage) * 100, 4);
+            // Use a softened scale so low-volume weeks remain distinguishable
+            // even when one week is a significant outlier.
+            const normalized = point.tonnage <= 0 ? 0 : Math.sqrt(point.tonnage / maxTonnage);
+            const height = point.tonnage <= 0 ? 6 : Math.max(18, normalized * 100);
             const ratio = point.tonnage / maxTonnage;
             const isLast = i === points.length - 1;
             const isSelected = selectedIndex === i;
@@ -209,7 +213,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", background: "none", border: "none", cursor: "pointer", height: "100%", justifyContent: "flex-end" }}
               >
                 <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{formatVolume(point.tonnage)}</div>
-                <div className="progress-bar-track" style={{ width: "100%", flex: "none" }}>
+                <div className="progress-bar-track" style={{ width: "100%", flex: "none", height: `${CHART_BAR_HEIGHT_PX}px` }}>
                   <div
                     className={`progress-bar-fill ${isSelected ? "progress-peak" : isLast ? "progress-high" : progressLabelClassForRatio(ratio)}`}
                     style={{ "--progress-bar-height": `${height}%` } as CSSProperties}

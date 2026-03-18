@@ -16,7 +16,5 @@ export const APP_ROUTES = {
   todayOverrides: "/workout/today/overrides",
   workoutRecord: "/workout-record",
   statsHome: "/stats",
-  statsDashboard: "/stats/dashboard",
-  stats1rm: "/stats-1rm",
-  statsFilters: "/stats/filters",
+  systemStats: "/settings/system-stats",
 } as const;

@@ -39,6 +39,7 @@ export function Card<T extends ElementType = "div">({
   tone = "default",
   padding = "md",
   interactive = false,
+  style,
   ...props
 }: CardProps<T>) {
   const Component = (as ?? "div") as ElementType;
@@ -57,7 +58,7 @@ export function Card<T extends ElementType = "div">({
       data-card-tone={tone}
       data-card-elevated={elevated ? "true" : "false"}
       data-card-interactive={interactive ? "true" : "false"}
-      style={{ padding: paddingMap[padding] }}
+      style={{ padding: paddingMap[padding], ...style }}
       {...props}
     >
       {children}
