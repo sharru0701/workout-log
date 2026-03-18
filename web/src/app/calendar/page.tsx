@@ -878,7 +878,6 @@ export default function CalendarPage() {
           setPlanQuery("");
         }}
         closeLabel="닫기"
-        label=""
         query={planQuery}
         placeholder="플랜 검색"
         onQueryChange={setPlanQuery}

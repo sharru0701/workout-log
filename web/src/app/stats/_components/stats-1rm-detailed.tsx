@@ -705,7 +705,6 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         description="그래프 대상 운동종목을 선택합니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
-        label="운동종목 검색"
         query={exerciseQuery}
         placeholder="운동종목 검색..."
         onQueryChange={setExerciseQuery}
@@ -754,7 +753,6 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         description="특정 플랜 기록만 보거나 전체를 볼 수 있습니다."
         onClose={() => setActiveSheet(null)}
         closeLabel="닫기"
-        label="플랜 검색"
         query={programQuery}
         placeholder="플랜 검색..."
         onQueryChange={setProgramQuery}

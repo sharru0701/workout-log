@@ -79,6 +79,7 @@ export function SearchSelectCombobox({
             type="search"
             inputMode="search"
             value={query}
+            aria-label={label || placeholder}
             placeholder={placeholder}
             onChange={(event) => onQueryChange(event.target.value)}
             onKeyDown={(event) => {

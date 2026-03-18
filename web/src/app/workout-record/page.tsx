@@ -1648,7 +1648,6 @@ export default function WorkoutRecordPage() {
         description="보유 플랜을 검색해 오늘 기록에 사용할 플랜으로 전환합니다."
         onClose={closePlanSheet}
         closeLabel="닫기"
-        label=""
         query={planQuery}
         placeholder="플랜 검색"
         onQueryChange={setPlanQuery}
@@ -1680,7 +1679,6 @@ export default function WorkoutRecordPage() {
           <Card padding="md" elevated={false}>
             <CardContent>
               <SearchSelectCombobox
-                label="운동종목 드롭다운 검색/선택"
                 query={exerciseQuery}
                 placeholder="예: Squat"
                 onQueryChange={(nextQuery) => {

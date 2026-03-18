@@ -49,7 +49,6 @@ export default function WorkoutAddExerciseSheet({
         onPress: handleConfirm,
         disabled: !canConfirm,
       }}
-      label="추천/등록 운동 드롭다운 검색/선택"
       query={addExerciseQuery}
       placeholder="예: Bench Press"
       onQueryChange={onAddExerciseQueryChange}
