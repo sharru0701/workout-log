@@ -80,6 +80,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
   confirmText: string;
   cancelText: string;
   tone: DialogTone;
+  closeAsConfirm: boolean;
 } {
   if (typeof input === "string") {
     return {
@@ -88,6 +89,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
       confirmText: "확인",
       cancelText: "취소",
       tone: "default" as const,
+      closeAsConfirm: false,
     };
   }
 
