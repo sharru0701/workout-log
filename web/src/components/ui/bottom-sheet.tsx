@@ -231,16 +231,30 @@ export function BottomSheet({
     }
   }, [clearDragListeners, clearDragVisual]);
 
+  // 닫기 애니메이션: is-closing 클래스로 패널 슬라이드 → 애니메이션 후 onClose() 호출
+  const handleClose = useCallback(() => {
+    if (!isInteractiveSheet) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    if (panel.classList.contains("is-closing")) return;
+
+    panel.classList.add("is-closing");
+    window.setTimeout(() => {
+      panel.classList.remove("is-closing");
+      onClose();
+    }, closeAnimationMs);
+  }, [isInteractiveSheet, onClose, closeAnimationMs]);
+
   useEffect(() => {
     if (!isInteractiveSheet) return;
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") handleClose();
     };
 
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [isInteractiveSheet, onClose]);
+  }, [isInteractiveSheet, handleClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -340,7 +354,12 @@ export function BottomSheet({
         clearDragListeners();
         panel.classList.remove("is-dragging");
         if (close) {
-          onClose();
+          // 드래그 놓는 위치에서 아래로 슬라이드 후 닫기
+          panel.classList.add("is-closing");
+          window.setTimeout(() => {
+            panel.classList.remove("is-closing");
+            onClose();
+          }, closeAnimationMs);
           return;
         }
         panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
@@ -395,7 +414,7 @@ export function BottomSheet({
         className="mobile-bottom-sheet-overlay"
         onClick={() => {
           if (!isInteractiveSheet) return;
-          onClose();
+          handleClose();
         }}
       />
       <section
@@ -417,7 +436,7 @@ export function BottomSheet({
             title={title}
             description={hasDescription ? description : undefined}
             closeLabel={closeLabel}
-            onClose={onClose}
+            onClose={handleClose}
             action={primaryAction}
             onPointerDown={onHandlePointerDown}
           />
@@ -431,7 +450,7 @@ export function BottomSheet({
               <h2>{title}</h2>
               {hasDescription ? <p>{description}</p> : null}
             </div>
-            <button type="button" className="mobile-bottom-sheet-btn" onClick={onClose} aria-label={closeLabel}>
+            <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />

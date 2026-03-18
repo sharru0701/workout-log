@@ -70,6 +70,19 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   transition: none;
 }
 
+/* 닫기 애니메이션: 패널을 아래로 슬라이드 (ease-in으로 자연스러운 이탈감) */
+html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bottom-sheet-panel.is-closing {
+  transform: translateY(100%);
+  transition: transform 0.35s cubic-bezier(0.4, 0, 1, 1);
+  pointer-events: none;
+}
+
+/* 닫기 중 오버레이 페이드아웃 */
+.mobile-bottom-sheet:has(.mobile-bottom-sheet-panel.is-closing) .mobile-bottom-sheet-overlay {
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 1, 1);
+}
+
 /* 드래그 핸들 영역 */
 .mobile-bottom-sheet-drag-handle {
   display: flex;
