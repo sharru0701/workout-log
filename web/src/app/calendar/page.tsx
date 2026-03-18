@@ -479,15 +479,30 @@ export default function CalendarPage() {
   }, [allPlanLogs, generatedById]);
 
   function getSessionForDate(dateOnly: string): RecentGeneratedSession | null {
-    const ctx = computePlanContextForDate(selectedPlan, dateOnly);
     const mode = String(selectedPlan?.params?.sessionKeyMode ?? "").toUpperCase();
-    if (mode === "DATE") return generatedByDate.get(dateOnly) ?? null;
-    if (!ctx) return null;
-    const session = generatedByKey.get(ctx.sessionKey) ?? null;
+    const isAutoProgression = selectedPlan?.params?.autoProgression === true;
+
+    let session: RecentGeneratedSession | null = null;
+    if (mode === "DATE") {
+      session = generatedByDate.get(dateOnly) ?? null;
+    } else {
+      const ctx = computePlanContextForDate(selectedPlan, dateOnly);
+      if (!ctx) return null;
+      session = generatedByKey.get(ctx.sessionKey) ?? null;
+    }
     if (!session) return null;
-    // Wave mode: if this session was already logged on a different date, don't show it here
+
+    // If this session was logged on a different date, don't show it here
     const loggedDate = sessionLoggedDateMap.get(session.id);
     if (loggedDate && loggedDate !== dateOnly) return null;
+
+    // For auto-progression plans: hide unlogged sessions when progression has already moved past this date.
+    // Covers past dates (< today) and any date where a later log already exists.
+    if (!loggedDate && isAutoProgression) {
+      const hasLaterLog = Array.from(logDates).some((d) => d > dateOnly);
+      if (dateOnly < today || hasLaterLog) return null;
+    }
+
     return session;
   }
 
