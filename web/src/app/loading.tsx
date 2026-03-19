@@ -11,7 +11,7 @@ const skeletonStyle: React.CSSProperties = {
 
 export default function HomeLoading() {
   return (
-    <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
+    <div style={{ paddingBlock: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-xl)" }}>
       <style>{`
         @keyframes skeleton-shimmer {
           0% { background-position: 200% 0; }
