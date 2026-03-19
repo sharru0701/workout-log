@@ -34,25 +34,25 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
         <div>
           {main.map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
-              {/* INFO COLOR: exercise-name — 주 운동명은 font-weight 600으로 즉시 식별 */}
-              <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)" }}>{ex.name}</span>
+              {/* INFO COLOR: exercise-name — 주 운동명은 즉시 식별 가능한 강조톤 */}
+              <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)", fontWeight: "var(--font-weight-exercise-name)" }}>{ex.name}</span>
               <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
         </div>
       )}
       {assist.length > 0 && (
-        <div style={{ marginTop: "var(--space-sm)", paddingTop: "var(--space-sm)" }}>
+        <div style={{ marginTop: "var(--space-sm)", paddingTop: "var(--space-sm)", borderTop: "1px dashed var(--color-border)" }}>
           {assist.slice(0, 3).map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
-              {/* INFO COLOR: exercise-name (assist) — 보조 운동은 14px muted로 뒤로 물러남 */}
+              {/* INFO COLOR: exercise-name (assist) — 보조 운동은 muted 컨텍스트톤으로 위계 조정 */}
               <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)" }}>{ex.name}</span>
               <span style={{ font: "var(--font-secondary)", color: "var(--text-hint)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
           {assist.length > 3 && (
-            <div style={{ font: "var(--font-secondary)", color: "var(--text-hint)", textAlign: "center", marginTop: "var(--space-xs)" }}>
-              +{assist.length - 3}개 보조 운동
+            <div style={{ font: "var(--font-secondary)", color: "var(--text-hint)", textAlign: "right", marginTop: "var(--space-xs)" }}>
+              +{assist.length - 3} more assist
             </div>
           )}
         </div>
@@ -67,8 +67,8 @@ function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
       {exercises.map((ex) => (
         <div key={ex.name} style={{ display: "flex", justifyContent: "space-between" }}>
-          {/* INFO COLOR: exercise-name — 운동명은 600 weight로 요약 텍스트보다 먼저 읽힘 */}
-          <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)" }}>{ex.name}</span>
+          {/* INFO COLOR: exercise-name — 운동명은 700 weight와 강조톤으로 요약보다 먼저 읽힘 */}
+          <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)", fontWeight: "var(--font-weight-exercise-name)" }}>{ex.name}</span>
           <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)", fontVariantNumeric: "tabular-nums" }}>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
               <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--space-xs)" }}>
@@ -122,10 +122,11 @@ function TodayCard({
     <>
       <div className="card-header">
         <div>
-          <div className="card-title">{title}</div>
-          {meta && <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0, marginTop: "2px" }}>{meta}</p>}
+          {/* INFO COLOR: session-name — 오늘 세션 제목은 plan/program identity */}
+          <div className="card-title" style={{ color: "var(--text-session-name)", font: "var(--font-card-title)", fontWeight: 700 }}>{title}</div>
+          {meta && <p style={{ font: "var(--font-secondary)", color: "var(--text-session-context)", margin: 0, marginTop: "2px" }}>{meta}</p>}
         </div>
-        {badge && <span className="label label-status">{badge}</span>}
+        {badge && <span className="label label-tag-session">{badge}</span>}
       </div>
 
       {hasGrouped ? (
@@ -193,14 +194,15 @@ function LastCard({
     <>
       <div className="card-header">
         <div>
-          <div className="card-title">{title}</div>
-          {/* INFO COLOR: session-context — 날짜는 계획/컨텍스트 정보이므로 muted */}
-          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-context)" }}>{date}</div>
+          {/* INFO COLOR: plan-name — 지난 세션 제목은 program/plan identity */}
+          <div className="card-title" style={{ color: "var(--text-plan-name)", font: "var(--font-card-title)", fontWeight: 600 }}>{title}</div>
+          {/* INFO COLOR: session-context — 날짜는 계획/컨텍스트 정보이므로 강조톤 */}
+          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-date)" }}>{date}</div>
         </div>
         {/* INFO COLOR: meta-muted — 총 세트/볼륨은 참고 통계로 muted */}
         <div style={{ font: "var(--font-secondary)", color: "var(--text-meta)", display: "flex", gap: "var(--space-xs)", fontVariantNumeric: "tabular-nums" }}>
           {totalSets !== undefined && (
-            <span>{totalSets}세트</span>
+            <span>{totalSets} sets</span>
           )}
           {totalVolume !== undefined && totalVolume > 0 && (
             <>
@@ -211,7 +213,7 @@ function LastCard({
           {bodyweightKg != null && (
             <>
               <span>·</span>
-              <span>BW {bodyweightKg.toFixed(1)}kg</span>
+              <span style={{ color: "var(--text-session-context)" }}>BW {bodyweightKg.toFixed(1)}kg</span>
             </>
           )}
         </div>

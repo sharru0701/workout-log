@@ -371,6 +371,7 @@ function WorkoutRecordInlinePicker({
   formatValue,
   sheetTitle,
   complete = false,
+  color,
 }: {
   label: string;
   value: number;
@@ -381,6 +382,7 @@ function WorkoutRecordInlinePicker({
   formatValue?: (value: number) => string;
   sheetTitle?: string;
   complete?: boolean;
+  color?: string;
 }) {
   const [open, setOpen] = useState(false);
   const displayValue = formatValue ? formatValue(value) : String(value);
@@ -395,11 +397,12 @@ function WorkoutRecordInlinePicker({
           border: "1px solid var(--color-border)",
           borderRadius: "6px",
           backgroundColor: complete ? "var(--color-surface-hover)" : "transparent",
-          color: complete ? "var(--color-text)" : "var(--color-text-muted)",
+          color: color || (complete ? "var(--color-text)" : "var(--color-text-muted)"),
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
           font: "var(--font-primary)",
+          fontWeight: color ? 700 : "inherit",
         }}
         onClick={() => setOpen(true)}
         aria-label={`${label}: ${displayValue}`}
@@ -472,11 +475,11 @@ function ExerciseRow({
     Math.abs(exercise.set.weightKg - resolvedFirstPlannedWeightKg) < 0.01;
   return (
     <Card as="article" tone="inset" elevated={false} padding="none" style={{ marginBottom: "var(--space-md)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)", backgroundColor: "var(--color-surface-hover)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           <strong
             aria-label={`운동종목 ${exercise.exerciseName}`}
-            style={{ font: "var(--font-section-title)" }}
+            style={{ font: "var(--font-section-title)", color: "var(--text-exercise-name)", fontWeight: "var(--font-weight-exercise-name)" }}
           >
             {exercise.exerciseName}
           </strong>
@@ -503,10 +506,10 @@ function ExerciseRow({
       <section style={{ padding: "var(--space-md)" }}>
         <div style={{ marginBottom: "var(--space-md)" }}>
           <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
-            <span>세트</span>
-            <span>TM%</span>
-            <span>{isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "무게(kg)"}</span>
-            <span>횟수</span>
+            <span style={{ color: "var(--text-metric-sets)" }}>Sets</span>
+            <span style={{ color: "var(--text-metric-percent)" }}>TM%</span>
+            <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
+            <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
           </div>
 
           <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
@@ -541,8 +544,8 @@ function ExerciseRow({
 
               return (
                 <div key={`${exercise.id}-set-${index}`} role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", alignItems: "center", marginBottom: "var(--space-xs)", textAlign: "center" }}>
-                  <span style={{ color: "var(--color-text-muted)" }}>{index + 1}</span>
-                  <span style={{ font: "var(--font-secondary)" }}>
+                  <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
+                  <span style={{ font: "var(--font-secondary)", color: "var(--text-metric-percent)" }}>
                     {formatPercentLabel(plannedPercentPerSet[index])}
                   </span>
                   <WorkoutRecordInlinePicker
@@ -552,6 +555,7 @@ function ExerciseRow({
                     max={1000}
                     step={minimumPlateIncrementKg}
                     formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
+                    color="var(--text-metric-weight)"
                     onChange={onChangeWeight}
                   />
                   <WorkoutRecordInlinePicker
@@ -562,6 +566,7 @@ function ExerciseRow({
                     step={1}
                     complete={isSetComplete}
                     formatValue={(value) => String(Math.round(value))}
+                    color="var(--text-metric-reps)"
                     onChange={(value) => onChangeSetReps(index, value)}
                   />
                 </div>
@@ -599,7 +604,7 @@ function ExerciseRow({
         ) : null}
       </section>
 
-      <label>
+      <label style={{ display: "block", padding: "0 var(--space-md) var(--space-md)" }}>
         <AppTextarea
           variant="workout"
           value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}

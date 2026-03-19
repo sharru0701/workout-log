@@ -40,14 +40,15 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>현재 프로그램</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>현재 프로그램</h2>
       </div>
       <Card as={Link} href={planHref} padding="md">
-        <div style={{ font: "var(--font-card-title)", marginBottom: "2px" }}>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
+        {/* INFO COLOR: plan-name — 현재 플랜명이 가장 먼저 읽히도록 강조 */}
+        <div style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)", marginBottom: "2px" }}>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
         {planOverview.highlightedProgramName && (
-          <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-xs)" }}>{planOverview.highlightedProgramName}</div>
+          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-name)", marginBottom: "var(--space-xs)" }}>{planOverview.highlightedProgramName}</div>
         )}
-        <div style={{ display: "flex", gap: "var(--space-sm)", font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-md)" }}>
+        <div style={{ display: "flex", gap: "var(--space-sm)", font: "var(--font-secondary)", color: "var(--text-meta)", marginBottom: "var(--space-md)" }}>
           {planOverview.lastPerformedAtLabel && (
             <span>마지막 수행 {planOverview.lastPerformedAtLabel}</span>
           )}
@@ -60,7 +61,7 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
               aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
               style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px" }}
             >
-              <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{day.shortLabel}</span>
+              <span style={{ fontSize: "11px", color: "var(--text-session-day)" }}>{day.shortLabel}</span>
               <span aria-hidden="true" className={`activity-dot ${day.hasWorkout ? "is-active" : ""}`} />
             </div>
           ))}
@@ -84,9 +85,9 @@ function TodaySessionSection({ data }: { data: HomeData }) {
   return (
     <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>오늘의 운동</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>오늘의 운동</h2>
         {hasTodayActivity && (
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{today.completedSets}세트 완료</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--text-status-completed)" }}>{today.completedSets}세트 완료</span>
         )}
       </div>
       <SessionCard
@@ -107,7 +108,7 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>지난 세션</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>지난 세션</h2>
       </div>
       <SessionCard
         variant="last"
@@ -134,7 +135,7 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>스트렝스 진행</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>스트렝스 진행</h2>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
         {items.map((item) => {
@@ -145,7 +146,7 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
             <Card as={Link} key={item.exerciseName} href={href} padding="md" className="metric-badge metric-1rm">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <div style={{ font: "var(--font-card-title)" }}>{item.exerciseName}</div>
+                  <div style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)" }}>{item.exerciseName}</div>
                   <div className="metric-kicker">Best e1RM</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
@@ -181,7 +182,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>주간 볼륨</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>주간 볼륨</h2>
       </div>
       <Card padding="md">
         {selected && (
@@ -228,7 +229,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                     style={{ "--progress-bar-height": `${height}%` } as CSSProperties}
                   />
                 </div>
-                <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{point.label}</div>
+                <div style={{ fontSize: "10px", color: "var(--text-session-context)" }}>{point.label}</div>
               </button>
             );
           })}
@@ -247,7 +248,7 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: 0 }}>요약 통계</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>요약 통계</h2>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <Card padding="md" className="metric-badge metric-progress">

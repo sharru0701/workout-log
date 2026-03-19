@@ -165,9 +165,9 @@ function formatProgramDisplayName(name: string) {
 
 function sourceBadgeMeta(source: ProgramListItem["source"]) {
   if (source === "CUSTOM") {
-    return { label: "커스텀", className: "label label-note" };
+    return { label: "커스텀", className: "label label-tag-custom" };
   }
-  return { label: "기본", className: "label label-program" };
+  return { label: "기본", className: "label label-tag-session" };
 }
 
 /**
@@ -180,16 +180,25 @@ function sourceBadgeMeta(source: ProgramListItem["source"]) {
  */
 function tagLabelClass(tag: string): string {
   const t = tag.toLowerCase().trim();
+  if (["manual", "fixed", "custom"].some((k) => t.includes(k))) {
+    return "label label-tag-manual label-sm";
+  }
+  if (["beginner", "novice", "starter", "입문", "초보"].some((k) => t.includes(k))) {
+    return "label label-tag-beginner label-sm";
+  }
   if (["amrap", "top-set", "topset", "top set", "rpe", "rir"].some((k) => t.includes(k))) {
-    return "label label-set-type label-sm";
+    return t.includes("amrap") ? "label label-tag-amrap label-sm" : "label label-tag-top-set label-sm";
   }
   if (["strength", "power", "hypertrophy", "근력", "파워", "근비대"].some((k) => t.includes(k))) {
-    return "label label-program label-sm";
+    return "label label-tag-session label-sm";
   }
   if (["linear", "progression", "wave", "periodization", "선형", "주기화"].some((k) => t.includes(k))) {
-    return "label label-exercise label-sm";
+    return "label label-tag-progression label-sm";
   }
-  return "label label-note label-sm";
+  if (["base", "variant", "template", "library", "operator"].some((k) => t.includes(k))) {
+    return "label label-tag-identity label-sm";
+  }
+  return "label label-tag-custom label-sm";
 }
 
 function ProgramListCard({
@@ -230,7 +239,7 @@ function ProgramListCard({
       </div>
 
       {item.template.description ? (
-        <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginBottom: "var(--space-sm)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <p style={{ font: "var(--font-secondary)", color: "var(--text-meta)", marginBottom: "var(--space-sm)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {item.template.description}
         </p>
       ) : null}
@@ -1337,12 +1346,12 @@ export default function ProgramStorePage() {
           const tags = Array.isArray(detailTarget.template.tags) ? detailTarget.template.tags : [];
           const sectionLabelStyle = {
             display: "block",
-            color: "var(--color-text-muted)",
+            color: "var(--text-session-context)",
             font: "var(--font-secondary)",
             marginBottom: "var(--space-xs)",
           } as const;
           const bodyTextStyle = {
-            color: "var(--color-text)",
+            color: "var(--text-program-name)",
             font: "var(--font-body)",
             lineHeight: 1.55,
             margin: 0,
@@ -1354,11 +1363,12 @@ export default function ProgramStorePage() {
               <Card padding="md" elevated={false} tone="inset">
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <strong style={{ display: "block", font: "var(--font-card-title)" }}>
+                    {/* INFO COLOR: program-name — 상세 헤더에서 프로그램명이 최우선 */}
+                    <strong style={{ display: "block", font: "var(--font-card-title)", color: "var(--text-program-name)" }}>
                     {formatProgramDisplayName(detailTarget.template.name)}
                     </strong>
                   {info.scheduleLabel && (
-                    <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                    <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>
                       {info.scheduleLabel}
                     </span>
                   )}
@@ -1382,12 +1392,12 @@ export default function ProgramStorePage() {
                     }}
                   >
                     <span
-                      style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}
+                      style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}
                     >
                       {stat.label}
                     </span>
                     <span
-                      style={{ color: "var(--color-text)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}
+                      style={{ color: "var(--text-metric-weight)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}
                     >
                       {stat.value}
                     </span>
@@ -1408,8 +1418,8 @@ export default function ProgramStorePage() {
               {/* 진행 설정 (Operator) */}
               {info.progressionNote && (
                 <Card tone="subtle" padding="md" elevated={false}>
-                  <span className="label label-note label-sm">진행 설정</span>
-                  <p style={{ ...bodyTextStyle, color: "var(--color-text-muted)", marginTop: "var(--space-xs)" }}>{info.progressionNote}</p>
+                  <span className="label label-tag-progression label-sm">진행 설정</span>
+                  <p style={{ ...bodyTextStyle, color: "var(--text-meta)", marginTop: "var(--space-xs)" }}>{info.progressionNote}</p>
                 </Card>
               )}
 
@@ -1426,7 +1436,7 @@ export default function ProgramStorePage() {
                         <span className="label label-muscle-group label-sm">
                           {mod}
                         </span>
-                        <span style={{ color: "var(--color-text)" }}>
+                        <span style={{ color: "var(--text-program-name)" }}>
                           {MODULE_NAMES[mod] ?? mod}
                         </span>
                       </div>
@@ -1456,21 +1466,22 @@ export default function ProgramStorePage() {
                           }}
                         >
                           <span className="label label-program label-sm">
+                            {/* INFO COLOR: session-context */}
                             {session.key}
                           </span>
-                          <span style={{ color: "var(--color-text)" }}>
+                          <span style={{ color: "var(--text-session-name)" }}>
                             세션 {session.key}
                           </span>
                         </div>
                         <div style={{ padding: "var(--space-sm)" }}>
                           {session.exercises.map((ex, i) => (
                             <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)", padding: "2px 0" }}>
-                              <span style={{ color: "var(--color-text)" }}>
+                              <span style={{ color: "var(--text-exercise-name)" }}>
                                 {ex.name}
                               </span>
                               {ex.setsReps && (
                                 <span
-                                  style={{ color: "var(--color-text-muted)" }}
+                                  style={{ color: "var(--text-metric-reps)" }}
                                 >
                                   {ex.setsReps}
                                 </span>
@@ -1625,7 +1636,7 @@ export default function ProgramStorePage() {
         {customizeDraft && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>프로그램 이름</span>
+              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={customizeDraft.name}
@@ -1690,7 +1701,7 @@ export default function ProgramStorePage() {
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
                       <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
                       {isOperatorCustomization ? (
-                        <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                        <span style={{ color: "var(--text-meta)", font: "var(--font-secondary)" }}>
                           {summary || meta.description}
                         </span>
                       ) : null}

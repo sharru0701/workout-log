@@ -224,27 +224,91 @@
      WORKOUT INFORMATION HIERARCHY
      운동기록 앱 정보 속성별 semantic 색상
      ============================ */
+  /* INFO COLOR: primary-identity */
   /* A. 운동명 / 종목명 — 카드에서 가장 먼저 읽혀야 하는 identity 정보 */
-  --text-exercise-name: var(--color-text);
-  --font-weight-exercise-name: 600;
+  --text-exercise-name: color-mix(in srgb, var(--color-text) 60%, var(--color-primary-strong));
+  --font-weight-exercise-name: 700;
 
   /* B. 플랜명 / 프로그램명 — 세션/카드의 주 제목 */
-  --text-plan-name: var(--color-text);
+  --text-plan-name: color-mix(in srgb, var(--color-text) 80%, var(--color-info-strong));
   --font-weight-plan-name: 600;
+  --text-program-name: var(--text-plan-name);
+  --text-section-title: var(--color-text);
 
-  /* C. 세션 컨텍스트 — 날짜, 주/일차, 세션 타입 (부가 정보) */
-  --text-session-context: var(--color-text-muted);
+  /* INFO COLOR: session-context */
+  /* C. 세션명 / 주차 / 날짜 / 요일 / 진행 컨텍스트 */
+  --text-session-name: color-mix(in srgb, var(--color-text) 70%, var(--color-accent-strong));
+  --text-session-context: color-mix(in srgb, var(--color-text-muted) 80%, var(--color-text));
+  --text-session-date: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-primary-strong));
+  --text-session-day: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-info-strong));
+  --text-session-emphasis: color-mix(in srgb, var(--color-text) 60%, var(--color-info-strong));
 
+  /* INFO COLOR: metric semantics */
   /* D. 수행 지표 — 종류별로 구분되는 숫자들 */
   --text-metric-weight: var(--metric-weight-color);   /* 중량(kg) = 파란색 (primary-strong) */
   --text-metric-reps: var(--metric-reps-color);       /* 횟수(reps) = 청록색 (info) */
-  --text-metric-sets: var(--color-text-muted);        /* 세트 수 = 중립 (구조 정보) */
-  --text-metric-percent: var(--color-text-muted);     /* TM% = 중립 (계산 기준) */
+  --text-metric-sets: color-mix(in srgb, var(--color-text-muted) 60%, var(--color-text)); /* 세트 수 = 중립-강조 (구조 정보) */
+  --text-metric-percent: color-mix(in srgb, var(--color-text-muted) 70%, var(--color-accent-strong)); /* TM% = 보라 회색 (계산 기준) */
   --text-metric-volume: var(--metric-volume-color);   /* 총 볼륨 = 주황색 (highlight) */
+  --text-metric-completion: var(--color-success-strong);
+  --text-metric-planned: color-mix(in srgb, var(--color-info-strong) 70%, var(--color-text));
+  --text-metric-actual: color-mix(in srgb, var(--color-primary-strong) 70%, var(--color-text));
 
+  /* INFO COLOR: state-status */
+  --text-status-planned: color-mix(in srgb, var(--color-info-strong) 80%, var(--color-text));
+  --text-status-actual: color-mix(in srgb, var(--color-primary-strong) 80%, var(--color-text));
+  --text-status-completed: var(--color-success-strong);
+  --text-status-in-progress: color-mix(in srgb, var(--color-warning-strong) 70%, var(--color-text));
+  --text-status-rest: color-mix(in srgb, var(--color-text-muted) 80%, var(--color-border-strong));
+  --text-status-danger: var(--color-danger-strong);
+  --text-status-recommended: color-mix(in srgb, var(--color-accent-strong) 80%, var(--color-text));
+
+  /* INFO COLOR: meta-muted */
   /* E. 보조 / 메타 정보 — 주요 수치 뒤로 물러나야 하는 설명 */
   --text-meta: var(--color-text-muted);
   --text-hint: var(--color-text-subtle);
+  --text-placeholder: color-mix(in srgb, var(--color-text-subtle) 80%, var(--color-border));
+
+  /* INFO COLOR: semantic chips */
+  --chip-identity-bg: var(--label-exercise-bg);
+  --chip-identity-text: var(--label-exercise-text);
+  --chip-identity-border: var(--label-exercise-border);
+
+  --chip-session-bg: var(--label-program-bg);
+  --chip-session-text: var(--label-program-text);
+  --chip-session-border: var(--label-program-border);
+
+  --chip-method-bg: var(--label-set-type-bg);
+  --chip-method-text: var(--label-set-type-text);
+  --chip-method-border: var(--label-set-type-border);
+
+  --chip-progression-bg: color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-2));
+  --chip-progression-text: color-mix(in srgb, var(--color-primary-strong) 86%, var(--color-text));
+  --chip-progression-border: color-mix(in srgb, var(--color-primary) 26%, var(--color-border));
+
+  --chip-beginner-bg: color-mix(in srgb, var(--color-success) 14%, var(--color-surface-2));
+  --chip-beginner-text: color-mix(in srgb, var(--color-success-strong) 84%, var(--color-text));
+  --chip-beginner-border: color-mix(in srgb, var(--color-success) 28%, var(--color-border));
+
+  --chip-custom-bg: var(--label-note-bg);
+  --chip-custom-text: color-mix(in srgb, var(--color-text-muted) 92%, var(--color-text));
+  --chip-custom-border: var(--label-note-border);
+
+  --chip-manual-bg: color-mix(in srgb, var(--color-text-muted) 10%, var(--color-surface-2));
+  --chip-manual-text: color-mix(in srgb, var(--color-text-muted) 88%, var(--color-text));
+  --chip-manual-border: color-mix(in srgb, var(--color-text-muted) 22%, var(--color-border));
+
+  --chip-top-set-bg: var(--chip-method-bg);
+  --chip-top-set-text: var(--chip-method-text);
+  --chip-top-set-border: var(--chip-method-border);
+
+  --chip-amrap-bg: color-mix(in srgb, var(--color-highlight-strong) 12%, var(--color-surface-2));
+  --chip-amrap-text: color-mix(in srgb, var(--color-highlight-strong) 82%, var(--color-text));
+  --chip-amrap-border: color-mix(in srgb, var(--color-highlight-strong) 28%, var(--color-border));
+
+  --chip-danger-bg: var(--label-danger-bg);
+  --chip-danger-text: var(--label-danger-text);
+  --chip-danger-border: var(--label-danger-border);
 
   /* ============================
      TYPOGRAPHY SYSTEM
@@ -473,6 +537,25 @@
     --label-accent-bg: var(--label-set-type-bg);
     --label-accent-text: var(--label-set-type-text);
     --label-accent-border: var(--label-set-type-border);
+
+    /* WORKOUT INFORMATION HIERARCHY (Dark Mode) */
+    --text-exercise-name: color-mix(in srgb, var(--color-text) 80%, var(--color-primary-strong));
+    --text-plan-name: color-mix(in srgb, var(--color-text) 85%, var(--color-info-strong));
+    --text-session-name: color-mix(in srgb, var(--color-text) 80%, var(--color-accent-strong));
+    --text-session-context: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-text));
+    --text-session-date: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-primary-strong));
+    --text-session-day: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-info-strong));
+    --text-session-emphasis: color-mix(in srgb, var(--color-text) 70%, var(--color-info-strong));
+    --text-metric-weight: var(--metric-weight-color);
+    --text-metric-reps: var(--metric-reps-color);
+    --text-metric-sets: color-mix(in srgb, var(--color-text-muted) 75%, var(--color-text));
+    --text-metric-percent: color-mix(in srgb, var(--color-text-muted) 75%, var(--color-accent-strong));
+    --text-status-planned: color-mix(in srgb, var(--color-info-strong) 85%, var(--color-text));
+    --text-status-actual: color-mix(in srgb, var(--color-primary-strong) 85%, var(--color-text));
+    --text-status-in-progress: color-mix(in srgb, var(--color-warning-strong) 80%, var(--color-text));
+    --text-status-rest: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-border-strong));
+    --text-status-recommended: color-mix(in srgb, var(--color-accent-strong) 85%, var(--color-text));
+    --text-placeholder: color-mix(in srgb, var(--color-text-subtle) 80%, var(--color-border));
   }
 }
 
@@ -679,4 +762,23 @@
   --label-accent-bg: var(--label-set-type-bg);
   --label-accent-text: var(--label-set-type-text);
   --label-accent-border: var(--label-set-type-border);
+
+  /* WORKOUT INFORMATION HIERARCHY (Dark Mode) */
+  --text-exercise-name: color-mix(in srgb, var(--color-text) 80%, var(--color-primary-strong));
+  --text-plan-name: color-mix(in srgb, var(--color-text) 85%, var(--color-info-strong));
+  --text-session-name: color-mix(in srgb, var(--color-text) 80%, var(--color-accent-strong));
+  --text-session-context: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-text));
+  --text-session-date: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-primary-strong));
+  --text-session-day: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-info-strong));
+  --text-session-emphasis: color-mix(in srgb, var(--color-text) 70%, var(--color-info-strong));
+  --text-metric-weight: var(--metric-weight-color);
+  --text-metric-reps: var(--metric-reps-color);
+  --text-metric-sets: color-mix(in srgb, var(--color-text-muted) 75%, var(--color-text));
+  --text-metric-percent: color-mix(in srgb, var(--color-text-muted) 75%, var(--color-accent-strong));
+  --text-status-planned: color-mix(in srgb, var(--color-info-strong) 85%, var(--color-text));
+  --text-status-actual: color-mix(in srgb, var(--color-primary-strong) 85%, var(--color-text));
+  --text-status-in-progress: color-mix(in srgb, var(--color-warning-strong) 80%, var(--color-text));
+  --text-status-rest: color-mix(in srgb, var(--color-text-muted) 85%, var(--color-border-strong));
+  --text-status-recommended: color-mix(in srgb, var(--color-accent-strong) 85%, var(--color-text));
+  --text-placeholder: color-mix(in srgb, var(--color-text-subtle) 80%, var(--color-border));
 }

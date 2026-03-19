@@ -107,6 +107,67 @@
   --label-border: var(--label-recovery-border);
 }
 
+/* INFO COLOR: semantic tag taxonomy */
+.label-tag-identity {
+  --label-bg: var(--chip-identity-bg);
+  --label-text: var(--chip-identity-text);
+  --label-border: var(--chip-identity-border);
+}
+
+.label-tag-session {
+  --label-bg: var(--chip-session-bg);
+  --label-text: var(--chip-session-text);
+  --label-border: var(--chip-session-border);
+}
+
+.label-tag-method {
+  --label-bg: var(--chip-method-bg);
+  --label-text: var(--chip-method-text);
+  --label-border: var(--chip-method-border);
+}
+
+.label-tag-progression {
+  --label-bg: var(--chip-progression-bg);
+  --label-text: var(--chip-progression-text);
+  --label-border: var(--chip-progression-border);
+}
+
+.label-tag-beginner {
+  --label-bg: var(--chip-beginner-bg);
+  --label-text: var(--chip-beginner-text);
+  --label-border: var(--chip-beginner-border);
+}
+
+.label-tag-custom {
+  --label-bg: var(--chip-custom-bg);
+  --label-text: var(--chip-custom-text);
+  --label-border: var(--chip-custom-border);
+}
+
+.label-tag-manual {
+  --label-bg: var(--chip-manual-bg);
+  --label-text: var(--chip-manual-text);
+  --label-border: var(--chip-manual-border);
+}
+
+.label-tag-top-set {
+  --label-bg: var(--chip-top-set-bg);
+  --label-text: var(--chip-top-set-text);
+  --label-border: var(--chip-top-set-border);
+}
+
+.label-tag-amrap {
+  --label-bg: var(--chip-amrap-bg);
+  --label-text: var(--chip-amrap-text);
+  --label-border: var(--chip-amrap-border);
+}
+
+.label-tag-danger {
+  --label-bg: var(--chip-danger-bg);
+  --label-text: var(--chip-danger-text);
+  --label-border: var(--chip-danger-border);
+}
+
 .set-warmup {
   --label-bg: var(--set-warmup-bg);
   --label-text: var(--set-warmup-text);

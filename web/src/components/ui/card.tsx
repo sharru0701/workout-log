@@ -86,7 +86,7 @@ export function CardDescription({ children, className = "", ...props }: CardSect
   return (
     <p
       className={cx(className)}
-      style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0 }}
+      style={{ font: "var(--font-secondary)", color: "var(--text-meta)", margin: 0 }}
       {...props}
     >
       {children}

@@ -48,14 +48,15 @@ export function SessionSummaryCard({
       <div style={{ marginBottom: "var(--space-sm)" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
           {data.badgeLabel ? (
-            <span className="label label-program label-sm">
+            <span className="label label-tag-session label-sm">
               {data.badgeLabel}
             </span>
           ) : <span />}
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{data.dateLabel}</span>
+          {/* INFO COLOR: session-date */}
+          <span style={{ font: "var(--font-secondary)", color: "var(--text-session-date)" }}>{data.dateLabel}</span>
         </div>
         {!isToday && hasStats ? (
-          <div style={{ display: "flex", gap: "var(--space-xs)", font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+          <div style={{ display: "flex", gap: "var(--space-xs)", font: "var(--font-secondary)", color: "var(--text-meta)" }}>
             {data.totalSets !== undefined && (
               <span>{data.totalSets}세트</span>
             )}
@@ -74,15 +75,16 @@ export function SessionSummaryCard({
           </div>
         ) : null}
         {isToday && data.bodyweightKg != null && (
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>BW {data.bodyweightKg.toFixed(1)}kg</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)" }}>BW {data.bodyweightKg.toFixed(1)}kg</span>
         )}
       </div>
       {data.exercises && data.exercises.length > 0 && (
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {data.exercises.map((ex) => (
-            <div key={ex.name}>
-              <span>{ex.name}</span>
-              <span>
+            <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)" }}>
+              {/* INFO COLOR: exercise-name */}
+              <span style={{ color: "var(--text-exercise-name)", font: "var(--font-card-title)" }}>{ex.name}</span>
+              <span style={{ color: "var(--text-meta)", font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>
                 {ex.weightDelta != null && ex.weightDelta !== 0 && (
                   <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--space-xs)" }}>
                     {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
@@ -98,7 +100,7 @@ export function SessionSummaryCard({
     </>
   ) : (
     <>
-      <div>{emptyMessage}</div>
+      <div style={{ color: "var(--text-hint)", font: "var(--font-secondary)" }}>{emptyMessage}</div>
       {children}
     </>
   );

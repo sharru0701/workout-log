@@ -1827,14 +1827,14 @@ export default function WorkoutTodayPage() {
                   />
                 ) : (
                   <div>
-                    <table>
+                    <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
                       <thead>
                         <tr>
-                          <th>운동</th>
-                          <th>세트</th>
-                          <th>계획</th>
-                          <th>수행</th>
-                          <th>상태</th>
+                          <th style={{ textAlign: "left", padding: "0 0 var(--space-xs)", color: "var(--text-session-context)", font: "var(--font-secondary)" }}>운동</th>
+                          <th style={{ textAlign: "left", padding: "0 0 var(--space-xs)", color: "var(--text-metric-sets)", font: "var(--font-secondary)" }}>세트</th>
+                          <th style={{ textAlign: "left", padding: "0 0 var(--space-xs)", color: "var(--text-status-planned)", font: "var(--font-secondary)" }}>계획</th>
+                          <th style={{ textAlign: "left", padding: "0 0 var(--space-xs)", color: "var(--text-status-actual)", font: "var(--font-secondary)" }}>수행</th>
+                          <th style={{ textAlign: "left", padding: "0 0 var(--space-xs)", color: "var(--text-session-context)", font: "var(--font-secondary)" }}>상태</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1882,13 +1882,20 @@ export default function WorkoutTodayPage() {
                               : r.actual.completed
                                 ? "완료"
                                 : "대기";
+                          const statusColor = !r.planned
+                            ? "var(--text-status-actual)"
+                            : !r.actual
+                              ? "var(--text-status-danger)"
+                              : r.actual.completed
+                                ? "var(--text-status-completed)"
+                                : "var(--text-status-in-progress)";
                           return (
                             <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`}>
-                              <td>{r.exerciseName}</td>
-                              <td>{r.setNumber}</td>
-                              <td>{plannedText}</td>
-                              <td>{performedText}</td>
-                              <td>{status}</td>
+                              <td style={{ padding: "var(--space-xs) 0", color: "var(--text-exercise-name)", font: "var(--font-card-title)" }}>{r.exerciseName}</td>
+                              <td style={{ padding: "var(--space-xs) 0", color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>{r.setNumber}</td>
+                              <td style={{ padding: "var(--space-xs) 0", color: "var(--text-status-planned)", font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>{plannedText}</td>
+                              <td style={{ padding: "var(--space-xs) 0", color: "var(--text-status-actual)", font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>{performedText}</td>
+                              <td style={{ padding: "var(--space-xs) 0", color: statusColor, font: "var(--font-secondary)", fontWeight: 600 }}>{status}</td>
                             </tr>
                           );
                         })}

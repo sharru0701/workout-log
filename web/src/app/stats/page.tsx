@@ -114,7 +114,7 @@ function StatsPageContent() {
           <Card padding="md" className="metric-badge metric-volume">
             <div style={{ display: "flex", alignItems: "baseline", gap: "2px" }}>
               <span className="metric-value">{heroMetrics ? formatVolumeValue(heroMetrics.volume) : "-"}</span>
-              <span style={{ fontSize: "14px", color: "var(--color-text-muted)", fontWeight: 600 }}>{heroMetrics ? formatVolumeUnit(heroMetrics.volume) : ""}</span>
+              <span style={{ fontSize: "14px", color: "var(--text-meta)", fontWeight: 600 }}>{heroMetrics ? formatVolumeUnit(heroMetrics.volume) : ""}</span>
             </div>
             <span className="metric-label">누적 볼륨</span>
           </Card>
@@ -145,13 +145,15 @@ function StatsPageContent() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div>
-                      <div style={{ font: "var(--font-card-title)", marginBottom: "2px" }}>{r.planName}</div>
-                      <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+                      {/* INFO COLOR: plan-name */}
+                      <div style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)", marginBottom: "2px" }}>{r.planName}</div>
+                      <div style={{ font: "var(--font-secondary)", color: "var(--text-meta)" }}>
                         {r.done} / {r.planned} 세션 완료
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div className="metric-value" style={{ color: "var(--color-primary)", fontSize: "1.2rem" }}>
+                      {/* INFO COLOR: metric-percent */}
+                      <div className="metric-value" style={{ color: "var(--text-metric-percent)", fontSize: "1.2rem" }}>
                         {Math.round(r.compliance * 100)}%
                       </div>
                       <div className="metric-label" style={{ fontSize: "10px" }}>COMPLIANCE</div>
@@ -160,7 +162,7 @@ function StatsPageContent() {
                 </Card>
               ))
             ) : (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)" }}>데이터가 없습니다.</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--text-hint)" }}>데이터가 없습니다.</div>
             )}
           </div>
         </DashboardSection>
@@ -182,17 +184,22 @@ function StatsPageContent() {
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ font: "var(--font-card-title)", marginBottom: "2px" }}>{r.exerciseName}</div>
-                      <div style={{ display: "flex", gap: "var(--space-md)", font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
-                        <span>최신: {r.latest?.e1rm ?? "-"}kg</span>
-                        <span>최고: {r.best?.e1rm ?? "-"}kg</span>
+                      {/* INFO COLOR: exercise-name */}
+                      <div style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)", marginBottom: "2px" }}>{r.exerciseName}</div>
+                      <div style={{ display: "flex", gap: "var(--space-md)", font: "var(--font-secondary)", color: "var(--text-meta)" }}>
+                        <span>
+                          최신: <span style={{ color: "var(--text-metric-actual)" }}>{r.latest?.e1rm ?? "-"}kg</span>
+                        </span>
+                        <span>
+                          최고: <span style={{ color: "var(--text-metric-weight)" }}>{r.best?.e1rm ?? "-"}kg</span>
+                        </span>
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
                       <div 
                         className="metric-value" 
                         style={{ 
-                          color: r.improvement > 0 ? "var(--color-success)" : "var(--color-text-muted)",
+                          color: r.improvement > 0 ? "var(--text-status-completed)" : "var(--text-status-rest)",
                           fontSize: "1.1rem"
                         }}
                       >
@@ -204,7 +211,7 @@ function StatsPageContent() {
                 </Card>
               ))
             ) : (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)" }}>데이터가 없습니다.</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--text-hint)" }}>데이터가 없습니다.</div>
             )}
           </div>
         </DashboardSection>

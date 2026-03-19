@@ -138,10 +138,10 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
   }
 
   const sourceLabel = row.isExtra
-    ? { className: "label label-set-type label-sm", text: "추가" }
+    ? { className: "label label-tag-method label-sm", text: "추가" }
     : row.isPlanned
-      ? { className: "label label-program label-sm", text: "계획" }
-      : { className: "label label-note label-sm", text: "직접 입력" };
+      ? { className: "label label-tag-session label-sm", text: "계획" }
+      : { className: "label label-tag-manual label-sm", text: "직접 입력" };
   const plannedPercent = row.plannedRef?.percent ?? null;
   const setStateLabel = resolveSetStateLabel({
     isExtra: row.isExtra,
@@ -159,7 +159,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
   return (
     <div>
       <button type="button" onClick={handleRemoveWithMotion}>
-        삭제
+        {/* INFO COLOR: danger-action — 삭제는 다른 정보색과 겹치지 않도록 위험색 */}
+        <span style={{ color: "var(--text-status-danger)" }}>삭제</span>
       </button>
 
       <Card as="article" tone="inset" elevated={false} padding="none">
@@ -277,11 +278,13 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
 
         {row.plannedRef ? (
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "var(--space-sm)" }}>
-            <span className="label label-program label-sm">처방</span>
+            <span className="label label-tag-session label-sm">처방</span>
             {/* INFO COLOR: session-context — 처방 목표치는 계획 정보이므로 muted */}
             <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)", fontVariantNumeric: "tabular-nums" }}>{formatPlannedRef(row.plannedRef, bodyweightKg)}</span>
             {isBodyweightExercise && bodyweightKg ? (
-              <div>현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
+              <div style={{ color: "var(--text-metric-actual)", font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>
+                현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg
+              </div>
             ) : null}
           </div>
         ) : null}

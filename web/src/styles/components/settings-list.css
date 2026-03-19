@@ -19,7 +19,7 @@
 
 [data-settings-section-header] p {
   font: var(--font-secondary);
-  color: var(--color-text-muted);
+  color: var(--text-hint);
   margin: 2px 0 0;
 }
 
@@ -83,7 +83,7 @@
 
 [data-settings-row] .row-subtitle {
   font: var(--font-secondary);
-  color: var(--color-text-muted);
+  color: var(--text-meta);
   font-size: 13px;
 }
 
@@ -91,7 +91,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  color: var(--color-text-muted);
+  color: var(--text-meta);
   font: var(--font-secondary);
 }
 
@@ -108,6 +108,6 @@
 [data-settings-footnote] {
   padding: var(--space-sm) var(--space-md);
   font: var(--font-secondary);
-  color: var(--color-text-muted);
+  color: var(--text-hint);
   font-size: 13px;
 }
