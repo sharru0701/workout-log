@@ -8,7 +8,7 @@ const skeletonStyle: React.CSSProperties = {
 
 export default function WorkoutRecordLoading() {
   return (
-    <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+    <div style={{ paddingBlock: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
       <style>{`
         @keyframes skeleton-shimmer {
           0% { background-position: 200% 0; }
