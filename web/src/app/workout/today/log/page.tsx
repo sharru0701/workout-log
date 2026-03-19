@@ -1765,23 +1765,47 @@ export default function WorkoutTodayPage() {
             </div>
           ) : (
             <div>
-              {sets.map((s, idx) => (
-                <WorkoutSetRow
-                  key={s.id}
-                  idx={idx}
-                  row={s}
-                  bodyweightKg={bodyweightKg}
-                  setCellKey={setCellKey}
-                  registerSetInputRef={registerSetInputRef}
-                  handleSetGridKeyDown={handleSetGridKeyDown}
-                  updateRow={updateSetRow}
-                  onCompleteAndNext={completeSetAndAddNext}
-                  onCopyPrevious={copyPreviousSet}
-                  onInsertBelow={insertSetBelow}
-                  onRemove={removeSetRow}
-                  canCopyPrevious={idx !== 0}
-                />
-              ))}
+              {sets.map((s, idx) => {
+                const prevName = idx > 0 ? sets[idx - 1]?.exerciseName.trim() : null;
+                const thisName = s.exerciseName.trim();
+                /* INFO COLOR: exercise-name — 종목이 바뀌는 지점에 섹션 헤더 표시 */
+                const showHeader = thisName.length > 0 && thisName !== prevName;
+                return (
+                  <React.Fragment key={s.id}>
+                    {showHeader && (
+                      <div style={{
+                        paddingTop: idx === 0 ? 0 : "var(--space-md)",
+                        paddingBottom: "var(--space-xs)",
+                        borderTop: idx === 0 ? "none" : "1px solid var(--color-border)",
+                        marginTop: idx === 0 ? 0 : "var(--space-sm)",
+                      }}>
+                        <span style={{
+                          font: "var(--font-section-title)",
+                          fontSize: "17px",
+                          color: "var(--text-exercise-name)",
+                          letterSpacing: "-0.3px",
+                        }}>
+                          {thisName}
+                        </span>
+                      </div>
+                    )}
+                    <WorkoutSetRow
+                      idx={idx}
+                      row={s}
+                      bodyweightKg={bodyweightKg}
+                      setCellKey={setCellKey}
+                      registerSetInputRef={registerSetInputRef}
+                      handleSetGridKeyDown={handleSetGridKeyDown}
+                      updateRow={updateSetRow}
+                      onCompleteAndNext={completeSetAndAddNext}
+                      onCopyPrevious={copyPreviousSet}
+                      onInsertBelow={insertSetBelow}
+                      onRemove={removeSetRow}
+                      canCopyPrevious={idx !== 0}
+                    />
+                  </React.Fragment>
+                );
+              })}
             </div>
           )}
           <datalist id="exercise-options">

@@ -34,8 +34,9 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
         <div>
           {main.map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
-              <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
-              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.summary}</span>
+              {/* INFO COLOR: exercise-name — 주 운동명은 font-weight 600으로 즉시 식별 */}
+              <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)" }}>{ex.name}</span>
+              <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
         </div>
@@ -44,12 +45,13 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
         <div style={{ marginTop: "var(--space-sm)", paddingTop: "var(--space-sm)" }}>
           {assist.slice(0, 3).map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--space-xs)" }}>
-              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.name}</span>
-              <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{ex.summary}</span>
+              {/* INFO COLOR: exercise-name (assist) — 보조 운동은 14px muted로 뒤로 물러남 */}
+              <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)" }}>{ex.name}</span>
+              <span style={{ font: "var(--font-secondary)", color: "var(--text-hint)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
           {assist.length > 3 && (
-            <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", textAlign: "center", marginTop: "var(--space-xs)" }}>
+            <div style={{ font: "var(--font-secondary)", color: "var(--text-hint)", textAlign: "center", marginTop: "var(--space-xs)" }}>
               +{assist.length - 3}개 보조 운동
             </div>
           )}
@@ -65,8 +67,9 @@ function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
       {exercises.map((ex) => (
         <div key={ex.name} style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ font: "var(--font-body)", color: "var(--color-text)" }}>{ex.name}</span>
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+          {/* INFO COLOR: exercise-name — 운동명은 600 weight로 요약 텍스트보다 먼저 읽힘 */}
+          <span style={{ font: "var(--font-card-title)", color: "var(--text-exercise-name)" }}>{ex.name}</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)", fontVariantNumeric: "tabular-nums" }}>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
               <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--space-xs)" }}>
                 {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
@@ -191,9 +194,11 @@ function LastCard({
       <div className="card-header">
         <div>
           <div className="card-title">{title}</div>
-          <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{date}</div>
+          {/* INFO COLOR: session-context — 날짜는 계획/컨텍스트 정보이므로 muted */}
+          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-context)" }}>{date}</div>
         </div>
-        <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "flex", gap: "var(--space-xs)" }}>
+        {/* INFO COLOR: meta-muted — 총 세트/볼륨은 참고 통계로 muted */}
+        <div style={{ font: "var(--font-secondary)", color: "var(--text-meta)", display: "flex", gap: "var(--space-xs)", fontVariantNumeric: "tabular-nums" }}>
           {totalSets !== undefined && (
             <span>{totalSets}세트</span>
           )}

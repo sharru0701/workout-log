@@ -187,13 +187,21 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
         {selected && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)", padding: "var(--space-sm)", backgroundColor: "var(--color-surface-secondary)", borderRadius: "8px" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-              <span style={{ fontWeight: 600 }}>{selected.label} 주</span>
+              {/* INFO COLOR: session-context — 주차는 컨텍스트 정보 */}
+              <span style={{ fontWeight: 600, color: "var(--text-session-context)" }}>{selected.label} 주</span>
               <span className={`label ${progressLabelClassForRatio(selected.tonnage / maxTonnage)} label-sm`}>
                 {progressLabelText(selected.tonnage / maxTonnage)}
               </span>
             </span>
+            {/* INFO COLOR: metric-volume — 총 볼륨은 주황색 metric-inline */}
             <span className="metric-inline metric-volume">{formatVolume(selected.tonnage)}</span>
-            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>{selected.sets}세트 · {selected.reps}회</span>
+            {/* INFO COLOR: metric-sets/reps — 세트는 muted, 횟수는 cyan */}
+            <span style={{ font: "var(--font-secondary)", fontVariantNumeric: "tabular-nums" }}>
+              <span style={{ color: "var(--text-metric-sets)" }}>{selected.sets}</span>
+              <span style={{ color: "var(--text-hint)" }}>세트 · </span>
+              <span style={{ color: "var(--text-metric-reps)" }}>{selected.reps}</span>
+              <span style={{ color: "var(--text-hint)" }}>회</span>
+            </span>
           </div>
         )}
         <div style={{ display: "flex", alignItems: "flex-end", gap: "4px", height: "136px" }}>
@@ -212,7 +220,8 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
                 onClick={() => setSelectedIndex(isSelected ? null : i)}
                 style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: "2px", background: "none", border: "none", cursor: "pointer", height: "100%", justifyContent: "flex-end" }}
               >
-                <div style={{ fontSize: "10px", color: "var(--color-text-muted)" }}>{formatVolume(point.tonnage)}</div>
+                {/* INFO COLOR: metric-volume — 바 위 볼륨 숫자는 metric 색상 */}
+                <div style={{ fontSize: "10px", color: "var(--text-metric-volume)", fontVariantNumeric: "tabular-nums", fontWeight: 600 }}>{formatVolume(point.tonnage)}</div>
                 <div className="progress-bar-track" style={{ width: "100%", flex: "none", height: `${CHART_BAR_HEIGHT_PX}px` }}>
                   <div
                     className={`progress-bar-fill ${isSelected ? "progress-peak" : isLast ? "progress-high" : progressLabelClassForRatio(ratio)}`}

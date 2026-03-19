@@ -120,9 +120,10 @@
   margin: 0;
 }
 
+/* INFO COLOR: meta-muted — 섹션 설명은 제목보다 한 단계 뒤로 */
 .dashboard-section__description {
   font: var(--font-secondary);
-  color: var(--color-text-muted);
+  color: var(--text-hint);
   margin: 4px 0 0 0;
 }
 

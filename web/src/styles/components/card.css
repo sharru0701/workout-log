@@ -61,9 +61,10 @@
   margin-bottom: var(--space-sm);
 }
 
+/* INFO COLOR: plan-name — 카드 제목(플랜명/운동명)은 600 weight, 기본 텍스트 색상 */
 .card-title {
   font: var(--font-card-title);
-  color: var(--color-text);
+  color: var(--text-plan-name, var(--color-text));
   margin: 0;
 }
 

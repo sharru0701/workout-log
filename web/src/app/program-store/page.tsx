@@ -170,6 +170,28 @@ function sourceBadgeMeta(source: ProgramListItem["source"]) {
   return { label: "기본", className: "label label-program" };
 }
 
+/**
+ * INFO COLOR: tag semantic classification
+ * 태그를 정보 속성별로 분류해서 시각적으로 구분.
+ * - 세트 방식/강도 기법 (amrap, top-set, rpe) → purple (set-type)
+ * - 훈련 목표 (strength, power, hypertrophy) → cyan (program)
+ * - 진행 방식 (linear, progression) → blue (exercise)
+ * - 나머지 → neutral gray (note)
+ */
+function tagLabelClass(tag: string): string {
+  const t = tag.toLowerCase().trim();
+  if (["amrap", "top-set", "topset", "top set", "rpe", "rir"].some((k) => t.includes(k))) {
+    return "label label-set-type label-sm";
+  }
+  if (["strength", "power", "hypertrophy", "근력", "파워", "근비대"].some((k) => t.includes(k))) {
+    return "label label-program label-sm";
+  }
+  if (["linear", "progression", "wave", "periodization", "선형", "주기화"].some((k) => t.includes(k))) {
+    return "label label-exercise label-sm";
+  }
+  return "label label-note label-sm";
+}
+
 function ProgramListCard({
   item,
   onPress,
@@ -193,11 +215,13 @@ function ProgramListCard({
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
         <div>
-          <strong style={{ font: "var(--font-card-title)" }}>
+          {/* INFO COLOR: plan-name — 프로그램명은 명시적 색상으로 계층 보장 */}
+          <strong style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)" }}>
             {formatProgramDisplayName(item.name)}
           </strong>
+          {/* INFO COLOR: session-context — 스케줄 정보는 muted */}
           {scheduleLabel ? (
-            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
+            <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
           ) : null}
         </div>
         <span className={`${badge.className} label-sm`}>
@@ -213,8 +237,9 @@ function ProgramListCard({
 
       {tags.length > 0 ? (
         <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
+          {/* INFO COLOR: tag semantic — 태그 속성별로 색상 분류 */}
           {tags.slice(0, 5).map((tag) => (
-            <span key={tag} className="label label-note label-sm">
+            <span key={tag} className={tagLabelClass(tag)}>
               {tag}
             </span>
           ))}
@@ -1462,11 +1487,9 @@ export default function ProgramStorePage() {
               {/* 태그 */}
               {tags.length > 0 && (
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
+                  {/* INFO COLOR: tag semantic — 상세 모달에서도 동일한 분류 적용 */}
                   {tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="label label-note label-sm"
-                    >
+                    <span key={tag} className={tagLabelClass(tag)}>
                       {tag}
                     </span>
                   ))}

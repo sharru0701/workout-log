@@ -221,6 +221,32 @@
   --label-accent-border: var(--label-set-type-border);
 
   /* ============================
+     WORKOUT INFORMATION HIERARCHY
+     운동기록 앱 정보 속성별 semantic 색상
+     ============================ */
+  /* A. 운동명 / 종목명 — 카드에서 가장 먼저 읽혀야 하는 identity 정보 */
+  --text-exercise-name: var(--color-text);
+  --font-weight-exercise-name: 600;
+
+  /* B. 플랜명 / 프로그램명 — 세션/카드의 주 제목 */
+  --text-plan-name: var(--color-text);
+  --font-weight-plan-name: 600;
+
+  /* C. 세션 컨텍스트 — 날짜, 주/일차, 세션 타입 (부가 정보) */
+  --text-session-context: var(--color-text-muted);
+
+  /* D. 수행 지표 — 종류별로 구분되는 숫자들 */
+  --text-metric-weight: var(--metric-weight-color);   /* 중량(kg) = 파란색 (primary-strong) */
+  --text-metric-reps: var(--metric-reps-color);       /* 횟수(reps) = 청록색 (info) */
+  --text-metric-sets: var(--color-text-muted);        /* 세트 수 = 중립 (구조 정보) */
+  --text-metric-percent: var(--color-text-muted);     /* TM% = 중립 (계산 기준) */
+  --text-metric-volume: var(--metric-volume-color);   /* 총 볼륨 = 주황색 (highlight) */
+
+  /* E. 보조 / 메타 정보 — 주요 수치 뒤로 물러나야 하는 설명 */
+  --text-meta: var(--color-text-muted);
+  --text-hint: var(--color-text-subtle);
+
+  /* ============================
      TYPOGRAPHY SYSTEM
      ============================ */
   --font-page-title: 700 24px/1.2 system-ui, -apple-system, sans-serif;

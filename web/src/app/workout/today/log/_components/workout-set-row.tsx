@@ -177,7 +177,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
 
         <div>
           <div>
-            <span>세트</span>
+            {/* INFO COLOR: metric-sets — 세트 수는 구조 정보(muted) */}
+            <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: "var(--text-metric-sets)" }}>세트</span>
             <NumberPickerField
               label="세트"
               value={row.setNumber}
@@ -190,7 +191,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
           </div>
 
           <div>
-            <span>반복</span>
+            {/* INFO COLOR: metric-reps — 반복 수는 수행량 지표(cyan) */}
+            <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: "var(--text-metric-reps)" }}>반복</span>
             <NumberPickerField
               label="반복"
               value={row.reps}
@@ -203,7 +205,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
           </div>
 
           <div>
-            <span>
+            {/* INFO COLOR: metric-weight — 중량은 가장 중요한 성과 지표(blue) */}
+            <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: "var(--text-metric-weight)" }}>
               {isBodyweightExercise && bodyweightKg ? "추가중량(kg)" : "중량(kg)"}
             </span>
             <NumberPickerField
@@ -220,7 +223,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
           </div>
 
           <div>
-            <span>RPE</span>
+            {/* INFO COLOR: meta-muted — RPE는 주관적 난이도(muted) */}
+            <span style={{ fontSize: "11px", fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.04em", color: "var(--text-meta)" }}>RPE</span>
             <NumberPickerField
               label="RPE"
               value={row.rpe}
@@ -274,7 +278,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
         {row.plannedRef ? (
           <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "var(--space-sm)" }}>
             <span className="label label-program label-sm">처방</span>
-            <span>{formatPlannedRef(row.plannedRef, bodyweightKg)}</span>
+            {/* INFO COLOR: session-context — 처방 목표치는 계획 정보이므로 muted */}
+            <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)", fontVariantNumeric: "tabular-nums" }}>{formatPlannedRef(row.plannedRef, bodyweightKg)}</span>
             {isBodyweightExercise && bodyweightKg ? (
               <div>현재 입력 총하중: {totalLoadKg?.toFixed(2) ?? "-"}kg</div>
             ) : null}
