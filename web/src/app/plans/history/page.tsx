@@ -480,16 +480,7 @@ function PlanHistoryPageContent() {
 
 export default function PlanHistoryPage() {
   return (
-    <Suspense
-      fallback={
-        <div>
-          <section style={{ paddingTop: "var(--space-sm)" }}>
-            <div style={{ font: "var(--font-section-title)" }}>플랜 수행 히스토리</div>
-            <LoadingStateRows active label="히스토리 화면 준비 중" />
-          </section>
-        </div>
-      }
-    >
+    <Suspense fallback={null}>
       <PlanHistoryPageContent />
     </Suspense>
   );
