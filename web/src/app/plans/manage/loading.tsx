@@ -25,10 +25,12 @@ export default function PlansManageLoading() {
         </div>
 
         {/* 검색 인풋 스켈레톤 */}
-        <div style={{ ...skeletonStyle, height: 48, margin: "0 var(--space-md) var(--space-md)", borderRadius: 10 }} />
+        <div className="card" style={{ padding: 0 }}>
+          <div style={{ ...skeletonStyle, height: 48, borderRadius: 10 }} />
+        </div>
 
         {/* 플랜 카드 스켈레톤 2개 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "0 var(--space-md) var(--space-md)" }}>
+        <div style={{ padding: "0 var(--space-md) var(--space-md)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-md)" }}>
