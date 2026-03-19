@@ -20,27 +20,27 @@ export default function PlansManageLoading() {
       <div style={{ paddingTop: "var(--space-xl)" }}>
         {/* 섹션 헤더 */}
         <div style={{ padding: "0 var(--space-md) var(--space-md)" }}>
-          <div style={{ ...skeletonStyle, height: 22, width: "50%", marginBottom: 6 }} />
-          <div style={{ ...skeletonStyle, height: 13, width: "80%", borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 22, width: "50%", marginBottom: "var(--space-sm)" }} />
+          <div style={{ ...skeletonStyle, height: 14, width: "80%", borderRadius: 4 }} />
         </div>
 
         {/* 검색 인풋 스켈레톤 */}
-        <div style={{ ...skeletonStyle, height: 44, margin: "0 var(--space-md) var(--space-md)", borderRadius: 10 }} />
+        <div style={{ ...skeletonStyle, height: 48, margin: "0 var(--space-md) var(--space-md)", borderRadius: 10 }} />
 
         {/* 플랜 카드 스켈레톤 2개 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", padding: "0 var(--space-md) var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "0 var(--space-md) var(--space-md)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-md)" }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...skeletonStyle, height: 16, width: "55%", marginBottom: 8 }} />
-                  <div style={{ ...skeletonStyle, height: 12, width: "70%", marginBottom: 6, borderRadius: 4 }} />
-                  <div style={{ ...skeletonStyle, height: 12, width: "50%", borderRadius: 4 }} />
+                  <div style={{ ...skeletonStyle, height: 17, width: "55%", marginBottom: "var(--space-sm)" }} />
+                  <div style={{ ...skeletonStyle, height: 13, width: "70%", marginBottom: "var(--space-xs)", borderRadius: 4 }} />
+                  <div style={{ ...skeletonStyle, height: 13, width: "50%", borderRadius: 4 }} />
                 </div>
-                <div style={{ ...skeletonStyle, height: 32, width: 64, borderRadius: 8 }} />
+                <div style={{ ...skeletonStyle, height: 34, width: 64, borderRadius: 8 }} />
               </div>
               {/* 수행 히스토리 버튼 */}
-              <div style={{ ...skeletonStyle, height: 44, width: "100%", borderRadius: 8 }} />
+              <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 8 }} />
             </div>
           ))}
         </div>

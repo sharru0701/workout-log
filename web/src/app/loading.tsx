@@ -19,51 +19,55 @@ export default function HomeLoading() {
         }
       `}</style>
 
-      {/* 현재 프로그램 카드 (ProgramStatusSection) */}
-      <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 16, width: "55%", marginBottom: 6 }} />
-        <div style={{ ...skeletonStyle, height: 12, width: "40%", marginBottom: 4, borderRadius: 4 }} />
-        <div style={{ ...skeletonStyle, height: 11, width: "65%", marginBottom: 16, borderRadius: 4 }} />
-        {/* 7일 운동 그리드 */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-xs)", textAlign: "center" }}>
-          {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-              <div style={{ ...skeletonStyle, height: 10, width: "100%", borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 10, width: 10, borderRadius: "50%" }} />
-            </div>
-          ))}
+      {/* 현재 프로그램 섹션 */}
+      <div>
+        <div style={{ ...skeletonStyle, height: 20, width: "45%", marginBottom: "var(--space-md)", borderRadius: 6 }} />
+        <div className="card" style={{ padding: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 16, width: "55%", marginBottom: 10 }} />
+          <div style={{ ...skeletonStyle, height: 13, width: "40%", marginBottom: 8, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 12, width: "65%", marginBottom: 20, borderRadius: 4 }} />
+          {/* 7일 운동 그리드 */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-xs)", textAlign: "center" }}>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+                <div style={{ ...skeletonStyle, height: 11, width: "100%", borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 12, width: 12, borderRadius: "50%" }} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* 오늘의 운동 카드 (TodaySessionSection) */}
-      <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: 12 }} />
-        {/* 운동 목록 2개 */}
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: i === 0 ? "1px solid var(--color-border)" : "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ ...skeletonStyle, height: 14, width: "55%", marginBottom: 4 }} />
-              <div style={{ ...skeletonStyle, height: 11, width: "35%", borderRadius: 4 }} />
+      {/* 오늘의 운동 섹션 */}
+      <div>
+        <div style={{ ...skeletonStyle, height: 20, width: "35%", marginBottom: "var(--space-md)", borderRadius: 6 }} />
+        <div className="card" style={{ padding: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 16, width: "70%", marginBottom: "var(--space-md)" }} />
+          {/* 운동 목록 5개 */}
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 10, borderBottom: i < 4 ? "1px solid var(--color-border)" : "none" }}>
+              <div style={{ ...skeletonStyle, height: 14, width: "45%", borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 12, width: 80, borderRadius: 4 }} />
             </div>
-            <div style={{ ...skeletonStyle, height: 11, width: 40, borderRadius: 4 }} />
-          </div>
-        ))}
-        {/* CTA 버튼 */}
-        <div style={{ ...skeletonStyle, height: 40, width: "100%", borderRadius: 8, marginTop: 12 }} />
+          ))}
+          {/* CTA 버튼 */}
+          <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 10, marginTop: "var(--space-md)" }} />
+        </div>
       </div>
 
-      {/* 지난 세션 카드 (LastSessionSection) */}
-      <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 14, width: "35%", marginBottom: 12 }} />
-        {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: i === 0 ? "1px solid var(--color-border)" : "none" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ ...skeletonStyle, height: 13, width: "50%", marginBottom: 4 }} />
-              <div style={{ ...skeletonStyle, height: 11, width: "35%", borderRadius: 4 }} />
+      {/* 지난 세션 섹션 */}
+      <div>
+        <div style={{ ...skeletonStyle, height: 20, width: "30%", marginBottom: "var(--space-md)", borderRadius: 6 }} />
+        <div className="card" style={{ padding: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 15, width: "55%", marginBottom: 6 }} />
+          <div style={{ ...skeletonStyle, height: 12, width: "35%", marginBottom: "var(--space-md)", borderRadius: 4 }} />
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 10, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+              <div style={{ ...skeletonStyle, height: 13, width: "50%", borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 12, width: 60, borderRadius: 4 }} />
             </div>
-            <div style={{ ...skeletonStyle, height: 11, width: 36, borderRadius: 4 }} />
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );
