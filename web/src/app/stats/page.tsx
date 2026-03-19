@@ -105,7 +105,7 @@ function StatsPageContent() {
           description="최근 30일간의 훈련 성과입니다. 카드를 선택해 상세 추이를 분석하세요."
         />
 
-        <div style={{ padding: "0 var(--space-md) var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)", marginTop: "-4px" }}>
+        <div style={{ padding: "0 0 var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)", marginTop: "-4px" }}>
           <Card padding="md" className="metric-badge metric-progress">
             <span className="metric-value">{heroMetrics?.sessions ?? "-"}</span>
             <span className="metric-label">30일 운동</span>
@@ -125,7 +125,7 @@ function StatsPageContent() {
             title="상세 추이 분석"
             description="운동별 e1RM 변화와 전체 기간 최고 기록을 상세하게 분석합니다."
           >
-            <div style={{ padding: "0 var(--space-md) var(--space-md) var(--space-md)" }}>
+            <div style={{ padding: "0 0 var(--space-md) 0" }}>
               <Stats1RMDetailed ref={detailedRef} refreshTick={refreshTick} />
             </div>
           </DashboardSection>
@@ -135,7 +135,7 @@ function StatsPageContent() {
           title="플랜별 준수율"
           description="최근 90일간 계획 대비 완료 세션 비율입니다."
         >
-          <div style={{ padding: "0 var(--space-md) var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <div style={{ padding: "0 0 var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             {compliance?.byPlan?.length ? (
               compliance.byPlan.map((r: any) => (
                 <Card 
@@ -171,7 +171,7 @@ function StatsPageContent() {
           title="PR 기록 추적"
           description="종목별 최고 기록과 최신 기록을 비교합니다."
         >
-          <div style={{ padding: "0 var(--space-md) var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <div style={{ padding: "0 0 var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             {prs?.items?.length ? (
               prs.items.map((r: any) => (
                 <Card 

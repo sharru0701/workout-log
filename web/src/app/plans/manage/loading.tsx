@@ -8,7 +8,7 @@ const skeletonStyle: React.CSSProperties = {
 
 export default function PlansManageLoading() {
   return (
-    <div>
+    <div className="dashboard-screen">
       <style>{`
         @keyframes skeleton-shimmer {
           0% { background-position: 200% 0; }
@@ -17,36 +17,36 @@ export default function PlansManageLoading() {
       `}</style>
 
       {/* DashboardSection: 플랜 목록 */}
-      <div style={{ paddingTop: "var(--space-xl)" }}>
+      <section className="dashboard-section">
         {/* 섹션 헤더 */}
-        <div style={{ padding: "0 var(--space-md) var(--space-md)" }}>
+        <div className="dashboard-section__header">
           <div style={{ ...skeletonStyle, height: 22, width: "50%", marginBottom: "var(--space-sm)" }} />
           <div style={{ ...skeletonStyle, height: 14, width: "80%", borderRadius: 4 }} />
         </div>
 
-        {/* 검색 인풋 스켈레톤 */}
-        <div className="card" style={{ padding: 0 }}>
-          <div style={{ ...skeletonStyle, height: 48, borderRadius: 10 }} />
-        </div>
+        <div className="dashboard-section__content">
+          {/* 검색 인풋 스켈레톤 (DashboardSurface 모사: Card padding none) */}
+          <div className="card" style={{ padding: 0, marginBottom: "var(--space-md)" }}>
+            <div style={{ ...skeletonStyle, height: 48, borderRadius: 10 }} />
+          </div>
 
-        {/* 플랜 카드 스켈레톤 2개 */}
-        <div style={{ padding: "0 0 var(--space-md)" }}>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-md)" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ ...skeletonStyle, height: 17, width: "55%", marginBottom: "var(--space-sm)" }} />
-                  <div style={{ ...skeletonStyle, height: 13, width: "70%", marginBottom: "var(--space-xs)", borderRadius: 4 }} />
-                  <div style={{ ...skeletonStyle, height: 13, width: "50%", borderRadius: 4 }} />
+          {/* 플랜 카드 스켈레톤 2개 (PlanListCard 모사: Card padding md, tone inset) */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            {Array.from({ length: 2 }).map((_, i) => (
+              <div key={i} className="card" data-card-tone="inset" data-card-elevated="false" style={{ padding: "var(--space-md)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ ...skeletonStyle, height: 18, width: "55%", marginBottom: "var(--space-sm)" }} />
+                    <div style={{ ...skeletonStyle, height: 13, width: "70%", marginBottom: "var(--space-xs)", borderRadius: 4 }} />
+                    <div style={{ ...skeletonStyle, height: 13, width: "50%", borderRadius: 4 }} />
+                  </div>
+                  <div style={{ ...skeletonStyle, height: 32, width: 64, borderRadius: 8 }} />
                 </div>
-                <div style={{ ...skeletonStyle, height: 34, width: 64, borderRadius: 8 }} />
               </div>
-              {/* 수행 히스토리 버튼 */}
-              <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 8 }} />
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

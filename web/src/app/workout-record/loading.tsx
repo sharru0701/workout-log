@@ -8,7 +8,7 @@ const skeletonStyle: React.CSSProperties = {
 
 export default function WorkoutRecordLoading() {
   return (
-    <div style={{ paddingBlock: "var(--space-md)", display: "flex", flexDirection: "column" }}>
+    <div style={{ paddingBlock: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
       <style>{`
         @keyframes skeleton-shimmer {
           0% { background-position: 200% 0; }
@@ -17,39 +17,40 @@ export default function WorkoutRecordLoading() {
       `}</style>
 
       {/* 선택된 플랜 섹션 */}
-      <div>
-        <div style={{ ...skeletonStyle, height: 18, width: "40%", marginBottom: "var(--space-md)" }} />
+      <section style={{ marginBottom: "var(--space-xl)" }}>
+        <div style={{ ...skeletonStyle, height: 22, width: "35%", marginBottom: "var(--space-sm)" }} />
         <div className="card" style={{ padding: "var(--space-md)" }}>
-          {/* 플랜 선택 버튼 (좌: 라벨+이름, 우: 화살표 아이콘) */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ ...skeletonStyle, height: 12, width: "35%", marginBottom: 8, borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 20, width: "60%" }} />
-            </div>
-            <div style={{ ...skeletonStyle, height: 18, width: 18, borderRadius: 4 }} />
-          </div>
+          {/* 플랜 선택 버튼 모사 */}
+          <div style={{ ...skeletonStyle, height: 52, width: "100%", borderRadius: 12 }} />
         </div>
-      </div>
+      </section>
 
       {/* 지난 세션 섹션 */}
-      <div>
-        <div style={{ ...skeletonStyle, height: 18, width: "30%", marginBottom: "var(--space-md)" }} />
+      <section style={{ marginBottom: "var(--space-xl)" }}>
+        <div style={{ ...skeletonStyle, height: 22, width: "30%", marginBottom: "var(--space-sm)" }} />
+        {/* SessionCard 모사 (variant last) */}
         <div className="card" style={{ padding: "var(--space-md)" }}>
-          <div style={{ ...skeletonStyle, height: 14, width: "50%", marginBottom: "var(--space-md)", borderRadius: 4 }} />
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 18, width: "40%", marginBottom: 12 }} />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i}>
-                <div style={{ ...skeletonStyle, height: 12, width: "70%", marginBottom: 8, borderRadius: 4 }} />
-                <div style={{ ...skeletonStyle, height: 20, width: "90%" }} />
+                <div style={{ ...skeletonStyle, height: 12, width: "70%", marginBottom: 4, borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 18, width: "90%" }} />
               </div>
             ))}
           </div>
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} style={{ paddingBlock: 8, borderTop: "1px solid var(--color-border)" }}>
+              <div style={{ ...skeletonStyle, height: 14, width: "50%" }} />
+            </div>
+          ))}
         </div>
-      </div>
+      </section>
 
       {/* 오늘 세션 섹션 */}
-      <div>
-        <div style={{ ...skeletonStyle, height: 18, width: "35%", marginBottom: "var(--space-md)" }} />
+      <section style={{ marginBottom: "var(--space-xl)" }}>
+        <div style={{ ...skeletonStyle, height: 22, width: "35%", marginBottom: "var(--space-sm)" }} />
+        {/* SessionSummaryCard 모사 */}
         <div className="card" style={{ padding: "var(--space-md)" }}>
           {/* 배지 + 날짜 */}
           <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
@@ -57,34 +58,42 @@ export default function WorkoutRecordLoading() {
             <div style={{ ...skeletonStyle, height: 22, width: 64, borderRadius: 6 }} />
           </div>
 
-          {/* 운동 행 3개 */}
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ marginBottom: i < 2 ? "var(--space-lg)" : 0 }}>
-              {/* 운동명 헤더 바 */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-sm) var(--space-md)", marginBottom: "var(--space-sm)", background: "var(--color-surface-hover)", borderRadius: 8 }}>
-                <div style={{ ...skeletonStyle, height: 16, width: "45%" }} />
-                <div style={{ ...skeletonStyle, height: 24, width: 24, borderRadius: "50%" }} />
+          {/* 운동 행(ExerciseRow) 2개 모사 */}
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="card" data-card-tone="inset" data-card-elevated="false" style={{ padding: "0", marginBottom: "var(--space-md)" }}>
+              {/* ExerciseRow Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", borderBottom: "1px solid var(--color-border)", background: "var(--color-surface-hover)" }}>
+                <div style={{ ...skeletonStyle, height: 16, width: "40%" }} />
+                <div style={{ ...skeletonStyle, height: 24, width: 24, borderRadius: 6 }} />
               </div>
-              {/* 열 헤더 (Sets / TM% / Weight / Reps) */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", paddingInline: "var(--space-md)" }}>
-                {Array.from({ length: 4 }).map((_, j) => (
-                  <div key={j} style={{ ...skeletonStyle, height: 11, borderRadius: 4 }} />
-                ))}
-              </div>
-              {/* 세트 행 3개 */}
-              {Array.from({ length: 3 }).map((_, k) => (
-                <div key={k} style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", paddingInline: "var(--space-md)" }}>
+              {/* ExerciseRow Content */}
+              <div style={{ padding: "16px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
                   {Array.from({ length: 4 }).map((_, j) => (
-                    <div key={j} style={{ ...skeletonStyle, height: 36, borderRadius: 6 }} />
+                    <div key={j} style={{ ...skeletonStyle, height: 11, borderRadius: 4 }} />
                   ))}
                 </div>
-              ))}
+                {Array.from({ length: 3 }).map((_, k) => (
+                  <div key={k} style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
+                    <div style={{ ...skeletonStyle, height: 14, width: "50%", margin: "0 auto" }} />
+                    <div style={{ ...skeletonStyle, height: 12, width: "40%", margin: "0 auto" }} />
+                    <div style={{ ...skeletonStyle, height: 32, borderRadius: 6 }} />
+                    <div style={{ ...skeletonStyle, height: 32, borderRadius: 6 }} />
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
-        </div>
-      </div>
 
-      {/* 기록 저장 버튼 */}
+          {/* Add Exercise 버튼 모사 */}
+          <div style={{ ...skeletonStyle, height: 64, width: "100%", borderRadius: 12, marginBottom: "var(--space-md)" }} />
+
+          {/* 세션 메모 모사 */}
+          <div style={{ ...skeletonStyle, height: 80, width: "100%", borderRadius: 10 }} />
+        </div>
+      </section>
+
+      {/* 기록 완료 버튼 */}
       <div style={{ ...skeletonStyle, height: 52, width: "100%", borderRadius: 10 }} />
     </div>
   );
