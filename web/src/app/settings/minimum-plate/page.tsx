@@ -11,7 +11,7 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -233,12 +233,19 @@ export default function SettingsMinimumPlatePage() {
 
   return (
     <div>
-      <LoadingStateRows
-        active={loading}
-        delayMs={120}
-        label="최소 원판 설정 로딩 중"
-        description="종목 목록과 저장된 최소 원판 규칙을 확인하고 있습니다."
-      />
+      {loading && (
+        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "50%", marginBottom: 4 }} />
+          <div className="card" style={{ padding: "var(--space-md)" }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <ErrorStateRows
         message={loadError}
         title="최소 원판 설정 조회 실패"

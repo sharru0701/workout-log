@@ -9,7 +9,7 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { StoreSearchInput } from "@/components/ui/store-search-input";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
@@ -258,10 +258,22 @@ function PlansManagePageContent() {
             </DashboardSurface>
           ) : null}
 
-          <LoadingStateRows
-            active={loading}
-            label="플랜 목록 불러오는 중"
-          />
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "var(--space-md)" }}>
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "55%", marginBottom: 8 }} />
+                      <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 12, width: "70%", marginBottom: 6 }} />
+                      <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 12, width: "50%" }} />
+                    </div>
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 32, width: 64 }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
           <ErrorStateRows
             message={error}
             title="플랜 목록 조회 실패"

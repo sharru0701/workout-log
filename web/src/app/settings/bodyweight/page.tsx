@@ -5,7 +5,7 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
-import { ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -74,12 +74,18 @@ export default function SettingsBodyweightPage() {
 
   return (
     <div>
-      <LoadingStateRows
-        active={loading}
-        delayMs={120}
-        label="몸무게 설정 로딩 중"
-        description="현재 저장된 몸무게를 확인하고 있습니다."
-      />
+      {loading && (
+        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
+          <div className="card" style={{ padding: "var(--space-md)" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36, width: 120 }} />
+            </div>
+          </div>
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
+        </div>
+      )}
       <ErrorStateRows
         message={loadError}
         title="몸무게 설정 조회 실패"

@@ -7,7 +7,7 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
-import { ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import {
@@ -118,12 +118,19 @@ export default function SettingsThemePage() {
 
   return (
     <div>
-      <LoadingStateRows
-        active={loading}
-        delayMs={120}
-        label="테마 설정 로딩 중"
-        description="현재 테마 설정을 확인하고 있습니다."
-      />
+      {loading && (
+        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 4 }} />
+          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: "50%", height: 20, width: 20 }} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       <ErrorStateRows
         message={loadError}
         title="테마 설정 조회 실패"

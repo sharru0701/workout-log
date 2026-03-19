@@ -9,7 +9,7 @@ import { progressionTone, summarizeProgression, type ProgressionSummaryPayload }
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
 
 type PlannedRow = {
@@ -215,12 +215,33 @@ export default function WorkoutSessionDetailPage() {
         </div>
       </Card>
 
-      <LoadingStateRows
-        active={loading}
-        delayMs={140}
-        label="불러오는 중"
-        description="세션 상세 정보를 조회하고 있습니다."
-      />
+      {loading && (
+        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div className="card" style={{ padding: "var(--space-md)" }}>
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "50%", marginBottom: 8 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "70%", marginBottom: 12 }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-sm)" }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i}>
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "60%", marginBottom: 4 }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 20, width: "80%" }} />
+                </div>
+              ))}
+            </div>
+          </div>
+          {Array.from({ length: 2 }).map((_, i) => (
+            <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 14, width: "40%", marginBottom: 8 }} />
+              {Array.from({ length: 3 }).map((_, j) => (
+                <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: j < 2 ? "1px solid var(--color-border)" : "none" }}>
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "45%" }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 13, width: 40 }} />
+                </div>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
       <ErrorStateRows
         message={error}
         onRetry={() => {
