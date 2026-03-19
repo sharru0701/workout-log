@@ -1198,7 +1198,7 @@ export default function ProgramStorePage() {
         completeLabel="스토어 갱신 완료"
       />
       {loading && (
-        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
               <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "55%", marginBottom: 8 }} />

@@ -30,7 +30,7 @@ export default function PlansManageLoading() {
         </div>
 
         {/* 플랜 카드 스켈레톤 2개 */}
-        <div style={{ padding: "0 var(--space-md) var(--space-md)" }}>
+        <div style={{ padding: "0 0 var(--space-md)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-md)" }}>

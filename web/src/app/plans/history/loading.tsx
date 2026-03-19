@@ -25,9 +25,9 @@ export default function PlanHistoryLoading() {
         </div>
 
         {/* 섹션 콘텐츠 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "0 var(--space-md) var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column", padding: "0 0 var(--space-md)" }}>
           {/* 플랜 선택 드롭다운 */}
-          <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 10 }} />
+          <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 10, marginBottom: "var(--space-md)" }} />
 
           {/* 선택된 플랜 정보 카드 */}
           <div className="card" style={{ padding: "var(--space-md)" }}>
@@ -48,7 +48,7 @@ export default function PlanHistoryLoading() {
         </div>
 
         {/* 로그 카드 스켈레톤 2개 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "0 var(--space-md) var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column", padding: "0 0 var(--space-md)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>

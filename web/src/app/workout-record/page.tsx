@@ -1390,7 +1390,7 @@ export default function WorkoutRecordPage() {
         completeLabel="기록 화면 갱신 완료"
       />
       {loading && (
-        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           {/* 선택된 플랜 카드 */}
           <div>
             <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 12 }} />

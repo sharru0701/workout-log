@@ -75,7 +75,7 @@ export default function SettingsBodyweightPage() {
   return (
     <div>
       {loading && (
-        <div style={{ padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+        <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
           <div className="card" style={{ padding: "var(--space-md)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
