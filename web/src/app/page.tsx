@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
@@ -14,6 +14,13 @@ import {
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 const HOME_PREVIEW_MODE = process.env.NEXT_PUBLIC_HOME_DATA_MODE === "preview";
+
+const skeletonStyle: CSSProperties = {
+  background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)",
+  backgroundSize: "200% 100%",
+  animation: "skeleton-shimmer 1.4s ease infinite",
+  borderRadius: 8,
+};
 
 function useHomeDataSource(): HomeDataSource {
   return useMemo(() => {
