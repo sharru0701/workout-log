@@ -13,7 +13,7 @@
     "docker:dev:seed": "docker compose -f docker-compose.dev.yml exec web pnpm db:seed",
     "dev:check": "bash scripts/local-dev-check.sh",
     "dev:webpack": "next dev --webpack",
-    "build": "next build",
+    "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
     "test:a11y:contrast": "node scripts/a11y-contrast-check.mjs",
