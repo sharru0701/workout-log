@@ -8,7 +8,7 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { AccordionSection } from "@/components/ui/accordion-section";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
 import { DashboardScreen, DashboardHero, DashboardSection } from "@/components/dashboard/dashboard-primitives";
 

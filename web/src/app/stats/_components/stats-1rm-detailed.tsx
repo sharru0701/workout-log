@@ -5,7 +5,7 @@ import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashb
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { CalendarRangePicker } from "@/components/ui/calendar-range-picker";
@@ -595,12 +595,12 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       </div>
 
       <div>
-        <LoadingStateRows
-          active={optionsLoading}
-          delayMs={120}
-          label="필터 옵션 로딩 중"
-          description="운동종목/플랜 목록을 조회하고 있습니다."
-        />
+        {optionsLoading && (
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
+          </div>
+        )}
         <ErrorStateRows
           message={optionsError}
           title="필터 옵션을 불러오지 못했습니다"
@@ -616,12 +616,15 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
         {!showNoExerciseState && (
           <>
-            <LoadingStateRows
-              active={loading}
-              delayMs={180}
-              label="1RM 데이터 조회 중"
-              description="필터 조합에 맞는 1RM 추이를 불러오고 있습니다."
-            />
+            {loading && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 180 }} />
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
+                </div>
+              </div>
+            )}
             <ErrorStateRows
               message={error}
               title="1RM 데이터를 불러오지 못했습니다"

@@ -51,7 +51,7 @@ import { AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { InlineDisclosure } from "@/components/ui/inline-disclosure";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { DisabledStateRows, EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
 
 const WorkoutAddExerciseSheet = dynamic(() => import("./_components/workout-add-exercise-sheet"), {
@@ -1415,12 +1415,12 @@ export default function WorkoutTodayPage() {
               </div>
             </div>
 
-            <div>
-              <LoadingStateRows
-                active={loadingPlans || loadingRecentSessions}
-                label="불러오는 중"
-              />
-            </div>
+            {(loadingPlans || loadingRecentSessions) && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40, width: "70%" }} />
+              </div>
+            )}
           </div>
 
           <div>

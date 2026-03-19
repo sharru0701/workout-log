@@ -8,7 +8,7 @@ import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { DisabledStateRows, EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
 
 type TemplateItem = {
@@ -391,11 +391,13 @@ export default function TemplatesPage() {
           </a>
         </div>
         <div>
-          <LoadingStateRows
-            active={loadingTemplates || loadingVersions}
-            label="불러오는 중"
-            description="템플릿 및 버전 목록을 확인하고 있습니다."
-          />
+          {(loadingTemplates || loadingVersions) && (
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
+              ))}
+            </div>
+          )}
         </div>
         <div>
           <ErrorStateRows
@@ -521,11 +523,13 @@ export default function TemplatesPage() {
               </AppSelect>
             </div>
 
-            <LoadingStateRows
-              active={loadingVersions}
-              label="불러오는 중"
-              description="버전 이력을 조회하고 있습니다."
-            />
+            {loadingVersions && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
+                ))}
+              </div>
+            )}
 
             {selectedTemplate.type === "MANUAL" ? (
               <AccordionSection
