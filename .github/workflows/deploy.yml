@@ -97,7 +97,11 @@ jobs:
           printf '%s' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+          for i in $(seq 1 6); do
+            ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts && break
+            echo "ssh-keyscan retry ($i/6)..."
+            sleep 5
+          done
 
       - name: Upload deploy bundle to server
         shell: bash
