@@ -31,6 +31,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -78,6 +79,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ env.TARGET_SHA }}
+          fetch-depth: 1
 
       - name: Tailscale connect (OAuth, tag:ci)
         uses: tailscale/github-action@v4
@@ -85,11 +87,6 @@ jobs:
           oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
-
-      - name: Install rsync
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y rsync
 
       - name: Setup SSH key
         shell: bash
@@ -102,16 +99,12 @@ jobs:
 
           ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
 
-      - name: Ensure /opt/workout-log exists
+      - name: Upload deploy bundle to server
         shell: bash
         run: |
           ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R ${{ secrets.DEPLOY_USER }}:${{ secrets.DEPLOY_USER }} /opt/workout-log"
-
-      - name: Upload deploy bundle to server
-        shell: bash
-        run: |
+            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R \$USER:\$USER /opt/workout-log"
           rsync -avz --delete \
             --exclude ".env" \
             -e "ssh -o StrictHostKeyChecking=yes" \
@@ -188,19 +181,18 @@ jobs:
           echo "Healthcheck URL: ${HEALTHCHECK_URL}"
 
           for i in $(seq 1 18); do
-            response="$(ssh -T -o StrictHostKeyChecking=yes \
+            ssh_out="$(ssh -T -o StrictHostKeyChecking=yes \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}'" || true)"
+              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' 2>/dev/null || true
+               printf '\n__IMG__=%s\n' \"\$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)\"" \
+              || true)"
 
+            response="$(printf '%s' "${ssh_out}" | grep -v '^__IMG__=' || true)"
             running_tag="$(
-              ssh -T -o StrictHostKeyChecking=yes \
-                "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-                "docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true" \
-                | tr -d '\r' \
-                | awk -F: '{print $NF}' \
-                | grep -E '^[0-9a-f]{40}$' \
-                | tail -n1 \
-                | xargs || true
+              printf '%s' "${ssh_out}" \
+                | grep '^__IMG__=' | cut -d= -f2- \
+                | tr -d '\r' | awk -F: '{print $NF}' \
+                | grep -E '^[0-9a-f]{40}$' | tail -n1 | xargs || true
             )"
 
             actual_version=""

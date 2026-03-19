@@ -1,9 +1,9 @@
 FROM node:24-alpine AS base
 WORKDIR /app
+RUN corepack enable && corepack prepare pnpm@10.30.1 --activate
 
 FROM base AS deps
 COPY package.json pnpm-lock.yaml ./
-RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm install --frozen-lockfile
 
 FROM base AS builder
@@ -15,7 +15,6 @@ ENV NODE_ENV=production
 ENV DATABASE_URL=postgres://app:app@localhost:5432/workoutlog
 ENV NEXT_PUBLIC_APP_URL=http://localhost
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
 RUN pnpm build
 
 FROM base AS runner
