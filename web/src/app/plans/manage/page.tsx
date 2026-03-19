@@ -259,7 +259,7 @@ function PlansManagePageContent() {
           ) : null}
 
           {loading && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", padding: "var(--space-md)" }}>
+            <div>
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
