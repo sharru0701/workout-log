@@ -46,9 +46,10 @@ async function GETImpl(req: Request) {
 
     const unit = bucket === "day" ? "day" : bucket === "month" ? "month" : "week";
 
+    // PERF: 날짜를 일 단위로 잘라 동일 날짜 내 반복 요청에서 캐시 히트율 향상
     const cacheParams = {
-      from: from.toISOString(),
-      to: to.toISOString(),
+      from: from.toISOString().slice(0, 10),
+      to: to.toISOString().slice(0, 10),
       bucket: unit,
       exerciseId: resolvedExerciseId,
       exerciseName: resolvedExerciseName ?? exerciseName ?? null,

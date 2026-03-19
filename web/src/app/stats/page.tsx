@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  DashboardActionSection,
   DashboardHero,
   DashboardScreen,
   DashboardSection,
@@ -11,15 +10,11 @@ import {
 import { APP_ROUTES } from "@/lib/app-routes";
 import { apiGet } from "@/lib/api";
 import { Card } from "@/components/ui/card";
-import { StrengthSummaryGrid } from "./_components/stats-summary-widgets";
 import { Stats1RMDetailed, type Stats1RMDetailedRef } from "./_components/stats-1rm-detailed";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useSearchParams } from "next/navigation";
 import React from "react";
-
-
-
 
 export default function StatsIndexPage() {
   return (
@@ -36,11 +31,8 @@ function StatsPageContent() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [heroMetrics, setHeroMetrics] = useState<{ sessions: number; volume: number } | null>(null);
   
-  // 상세 데이터 상태 추가
-  const [volumeSeries, setVolumeSeries] = useState<any>(null);
   const [compliance, setCompliance] = useState<any>(null);
   const [prs, setPrs] = useState<any>(null);
-  const [loadingDetails, setLoadingDetails] = useState(false);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
@@ -65,53 +57,26 @@ function StatsPageContent() {
     }
   }, [searchParams]);
 
+  // PERF: 5개 개별 요청 → 1개 번들 엔드포인트 호출로 단축 (5 RTT → 1 RTT)
+  // /api/stats/bundle: sessions30d, tonnage30d, compliance90d, prs90d 서버 사이드 병렬 처리
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const [uxRes, volumeRes] = await Promise.all([
-          apiGet<any>("/api/stats/ux-snapshot?windows=30"),
-          apiGet<any>("/api/stats/volume?days=30")
-        ]);
+        const bundle = await apiGet<any>("/api/stats/bundle");
         if (cancelled) return;
         setHeroMetrics({
-          sessions: uxRes.funnel?.totals?.savedLogs ?? 0,
-          volume: volumeRes.totals?.tonnage ?? 0
+          sessions: bundle.sessions30d ?? 0,
+          volume: bundle.tonnage30d ?? 0,
         });
+        setCompliance(bundle.compliance90d ?? null);
+        setPrs({ items: bundle.prs90d ?? [] });
       } catch (e) {
-        console.error("Failed to load hero metrics", e);
+        console.error("Failed to load stats", e);
       }
     })();
     return () => { cancelled = true; };
   }, [refreshTick]);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        setLoadingDetails(true);
-        const [seriesRes, compRes, prsRes] = await Promise.all([
-          apiGet<any>("/api/stats/volume-series?days=90&bucket=week&perExercise=1"),
-          apiGet<any>("/api/stats/compliance?days=90&comparePrev=1"),
-          apiGet<any>("/api/stats/prs?days=90&limit=10")
-        ]);
-        if (cancelled) return;
-        setVolumeSeries(seriesRes);
-        setCompliance(compRes);
-        setPrs(prsRes);
-      } catch (e) {
-        console.error("Failed to load extended stats", e);
-      } finally {
-        if (!cancelled) setLoadingDetails(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [refreshTick]);
-
-  const handleExerciseSelect = (id: string) => {
-    detailedRef.current?.selectExercise(id);
-    detailedSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const formatVolumeValue = (kg: number) => {
     if (kg >= 1000) return (kg / 1000).toFixed(1);
@@ -121,11 +86,6 @@ function StatsPageContent() {
   const formatVolumeUnit = (kg: number) => {
     if (kg >= 1000) return "t";
     return "kg";
-  };
-
-  const formatVolume = (kg: number) => {
-    if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
-    return `${kg}kg`;
   };
 
   return (

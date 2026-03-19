@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/index.css";
 import "@/styles/components/bottom-sheet.css";
-import { JetBrains_Mono, Noto_Sans_KR } from "next/font/google";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";

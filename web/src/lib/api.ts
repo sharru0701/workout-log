@@ -13,6 +13,8 @@ type ApiMutationOptions = {
   signal?: AbortSignal;
   headers?: Record<string, string>;
   invalidateCache?: boolean;
+  // PERF: 전체 캐시 삭제 대신 특정 prefix만 무효화 → 유효한 캐시 엔트리 보존
+  invalidateCachePrefixes?: string[];
 };
 
 type ApiCacheEntry = {
@@ -341,7 +343,15 @@ async function apiMutate<T>(
       throw new Error(resolveApiErrorMessage(data, `${method} ${path} failed: ${res.status}`));
     }
     if (invalidateCache) {
-      apiInvalidateCache();
+      const { invalidateCachePrefixes } = options;
+      if (invalidateCachePrefixes?.length) {
+        // PERF: 지정된 prefix만 무효화 → 나머지 캐시(plans, exercises 등) 보존
+        for (const prefix of invalidateCachePrefixes) {
+          apiInvalidateCache(prefix);
+        }
+      } else {
+        apiInvalidateCache();
+      }
     }
     return (data ?? {}) as T;
   } finally {

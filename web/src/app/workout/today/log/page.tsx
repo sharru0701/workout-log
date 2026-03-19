@@ -210,13 +210,24 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
 export default function WorkoutTodayPage() {
   const setGridColCount = 5;
   const [userId, setUserId] = useState("dev");
-  const [planId, setPlanId] = useState("");
+  // PERF: planId와 sessionDate를 URL 파라미터에서 동기적으로 초기화
+  // 기존: useState("") → 첫 렌더에 planId="" → sessions 요청 → URL effect 후 재요청 → plans 완료 후 재요청 (최대 3회)
+  // 변경: URL에서 초기값 → 첫 렌더부터 올바른 planId → sessions 1회만 요청
+  const [planId, setPlanId] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("planId") ?? "";
+  });
   const [week, setWeek] = useState(1);
   const [day, setDay] = useState(1);
   const [timezone, setTimezone] = useState(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC");
-  const [sessionDate, setSessionDate] = useState(() =>
-    dateOnlyInTimezone(new Date(), Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
-  );
+  const [sessionDate, setSessionDate] = useState(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    if (typeof window !== "undefined") {
+      const qDate = new URLSearchParams(window.location.search).get("date");
+      if (qDate && /^\d{4}-\d{2}-\d{2}$/.test(qDate)) return qDate;
+    }
+    return dateOnlyInTimezone(new Date(), tz);
+  });
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
 
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -1133,7 +1144,10 @@ export default function WorkoutTodayPage() {
   }
 
   async function saveLog(payload: WorkoutLogRequest) {
-    return apiPost<SaveLogResponse>(`/api/logs`, payload);
+    // PERF: 전체 캐시 삭제 대신 로그 저장과 관련된 엔드포인트만 무효화
+    return apiPost<SaveLogResponse>(`/api/logs`, payload, {
+      invalidateCachePrefixes: ["/api/logs", "/api/home", "/api/stats"],
+    });
   }
 
   async function handleSaveLog() {

@@ -1,4 +1,4 @@
-import { apiGet, apiPost } from "@/lib/api";
+import { apiGet } from "@/lib/api";
 import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -761,43 +761,29 @@ export class ApiHomeDataSource implements HomeDataSource {
   constructor(private readonly recentLimit = DEFAULT_RECENT_LIMIT) {}
 
   async load(): Promise<HomeData> {
-    const [plansRes, logsRes, prsRes, volumeSeriesRes] = await Promise.all([
-      apiGet<{ items: PlanItem[] }>("/api/plans"),
-      apiGet<{ items: WorkoutLogItem[] }>(`/api/logs?limit=${Math.max(this.recentLimit + 14, 40)}`),
-      apiGet<{ items: PrApiItem[] }>("/api/stats/prs?limit=4&rangeDays=365").catch(() => ({ items: [] as PrApiItem[] })),
-      apiGet<{ series: VolumeSeriesPoint[] }>("/api/stats/volume-series?bucket=week&rangeDays=28").catch(() => ({ series: [] as VolumeSeriesPoint[] })),
-    ]);
-
-    const plans = plansRes.items ?? [];
-    const logs = logsRes.items ?? [];
-
-    // Resolve highlighted plan for session generation
-    const nowKey = toLocalDateKey(new Date());
-    const latestTodayLog = logs.find((entry) => parseDateKey(entry.performedAt) === nowKey) ?? null;
-    const highlightedPlan = resolveHighlightedPlan(plans, latestTodayLog);
-
-    // Generate today's session to get exercise preview (idempotent upsert)
-    let snapshot: GenerateSessionResponse["session"]["snapshot"] | null = null;
-    if (highlightedPlan) {
-      try {
-        const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const res = await apiPost<GenerateSessionResponse>(
-          `/api/plans/${encodeURIComponent(highlightedPlan.id)}/generate`,
-          { sessionDate: nowKey, timezone },
-          { invalidateCache: false },
-        );
-        snapshot = res.session?.snapshot ?? null;
-      } catch {
-        // Non-critical: fall back to no exercise preview
-      }
-    }
+    // PERF: 기존 5개 HTTP 요청(4개 병렬 + 1개 순차) → 1개 요청으로 통합
+    // /api/home이 서버에서 모든 DB 쿼리를 병렬 실행하고 snapshot도 서버 내부에서 생성
+    // RTT 150ms 환경: 기존 300ms+ → 150ms로 단축
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // PERF: maxAgeMs를 60초로 확장 - 홈 데이터는 운동 기록 후에만 변경됨
+    // mutation 시 apiInvalidateCache("/api/home")로 무효화되므로 stale 데이터 표시 없음
+    const res = await apiGet<{
+      plans: PlanItem[];
+      logs: WorkoutLogItem[];
+      prs: PrApiItem[];
+      volumeSeries: VolumeSeriesPoint[];
+      snapshot: GenerateSessionResponse["session"]["snapshot"] | null;
+    }>(`/api/home?timezone=${encodeURIComponent(timezone)}`, {
+      maxAgeMs: 60_000,           // 기본 8초 → 60초
+      staleWhileRevalidateMs: 300_000, // 기본 52초 → 5분
+    });
 
     return buildHomeData(
-      plans,
-      logs,
-      prsRes.items ?? [],
-      volumeSeriesRes.series ?? [],
-      snapshot,
+      res.plans ?? [],
+      res.logs ?? [],
+      res.prs ?? [],
+      res.volumeSeries ?? [],
+      res.snapshot ?? null,
       this.recentLimit,
     );
   }
