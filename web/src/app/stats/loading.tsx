@@ -48,7 +48,30 @@ export default function StatsLoading() {
               <div style={{ ...skeletonStyle, height: 14, width: 120, marginBottom: 6 }} />
               <div style={{ ...skeletonStyle, height: 11, width: 80, borderRadius: 4 }} />
             </div>
-            <div style={{ ...skeletonStyle, height: 28, width: 48, borderRadius: 6 }} />
+            <div style={{ textAlign: "right" }}>
+              <div style={{ ...skeletonStyle, height: 22, width: 48, marginBottom: 4 }} />
+              <div style={{ ...skeletonStyle, height: 10, width: 64, borderRadius: 4 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* PR 기록 추적 */}
+      <div className="card" style={{ padding: "var(--space-md)" }}>
+        <div style={{ ...skeletonStyle, height: 16, width: "35%", marginBottom: 16 }} />
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...skeletonStyle, height: 14, width: "45%", marginBottom: 6 }} />
+              <div style={{ display: "flex", gap: "var(--space-md)" }}>
+                <div style={{ ...skeletonStyle, height: 11, width: 60, borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 11, width: 60, borderRadius: 4 }} />
+              </div>
+            </div>
+            <div style={{ textAlign: "right" }}>
+              <div style={{ ...skeletonStyle, height: 22, width: 48, marginBottom: 4 }} />
+              <div style={{ ...skeletonStyle, height: 10, width: 60, borderRadius: 4 }} />
+            </div>
           </div>
         ))}
       </div>

@@ -16,16 +16,22 @@ export default function WorkoutRecordLoading() {
         }
       `}</style>
 
-      {/* 선택된 플랜 카드 */}
+      {/* 선택된 플랜 섹션 */}
       <div>
         <div style={{ ...skeletonStyle, height: 16, width: "40%", marginBottom: 12 }} />
         <div className="card" style={{ padding: "var(--space-md)" }}>
-          <div style={{ ...skeletonStyle, height: 11, width: "35%", marginBottom: 6, borderRadius: 4 }} />
-          <div style={{ ...skeletonStyle, height: 20, width: "60%" }} />
+          {/* 플랜 선택 버튼 (좌: 라벨+이름, 우: 화살표 아이콘) */}
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...skeletonStyle, height: 11, width: "35%", marginBottom: 6, borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 18, width: "60%" }} />
+            </div>
+            <div style={{ ...skeletonStyle, height: 16, width: 16, borderRadius: 4 }} />
+          </div>
         </div>
       </div>
 
-      {/* 지난 세션 */}
+      {/* 지난 세션 섹션 */}
       <div>
         <div style={{ ...skeletonStyle, height: 16, width: "30%", marginBottom: 12 }} />
         <div className="card" style={{ padding: "var(--space-md)" }}>
@@ -41,19 +47,38 @@ export default function WorkoutRecordLoading() {
         </div>
       </div>
 
-      {/* 오늘 세션 */}
+      {/* 오늘 세션 섹션 */}
       <div>
         <div style={{ ...skeletonStyle, height: 16, width: "35%", marginBottom: 12 }} />
         <div className="card" style={{ padding: "var(--space-md)" }}>
-          <div style={{ ...skeletonStyle, height: 13, width: "40%", marginBottom: 12, borderRadius: 4 }} />
+          {/* 배지 + 날짜 */}
+          <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: 12 }}>
+            <div style={{ ...skeletonStyle, height: 20, width: 96, borderRadius: 6 }} />
+            <div style={{ ...skeletonStyle, height: 20, width: 64, borderRadius: 6 }} />
+          </div>
+
+          {/* 운동 행 3개 */}
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ paddingBlock: 10, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
-              <div style={{ ...skeletonStyle, height: 14, width: "55%", marginBottom: 6 }} />
-              <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-                <div style={{ ...skeletonStyle, height: 32, flex: 2, borderRadius: 6 }} />
-                <div style={{ ...skeletonStyle, height: 32, flex: 1, borderRadius: 6 }} />
-                <div style={{ ...skeletonStyle, height: 32, flex: 1, borderRadius: 6 }} />
+            <div key={i} style={{ marginBottom: i < 2 ? "var(--space-md)" : 0 }}>
+              {/* 운동명 헤더 바 */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-sm) var(--space-md)", marginBottom: 8, background: "var(--color-surface-hover)", borderRadius: 8 }}>
+                <div style={{ ...skeletonStyle, height: 15, width: "45%" }} />
+                <div style={{ ...skeletonStyle, height: 22, width: 22, borderRadius: "50%" }} />
               </div>
+              {/* 열 헤더 (Sets / TM% / Weight / Reps) */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-xs)", paddingInline: "var(--space-md)" }}>
+                {Array.from({ length: 4 }).map((_, j) => (
+                  <div key={j} style={{ ...skeletonStyle, height: 10, borderRadius: 4 }} />
+                ))}
+              </div>
+              {/* 세트 행 3개 */}
+              {Array.from({ length: 3 }).map((_, k) => (
+                <div key={k} style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-xs)", paddingInline: "var(--space-md)" }}>
+                  {Array.from({ length: 4 }).map((_, j) => (
+                    <div key={j} style={{ ...skeletonStyle, height: 32, borderRadius: 6 }} />
+                  ))}
+                </div>
+              ))}
             </div>
           ))}
         </div>

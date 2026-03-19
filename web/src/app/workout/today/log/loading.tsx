@@ -16,7 +16,7 @@ export default function WorkoutLogLoading() {
         }
       `}</style>
 
-      {/* 모드 선택 카드 */}
+      {/* 모드 선택 카드 (기록 모드 + 기본/고급 버튼) */}
       <div className="card" style={{ padding: "var(--space-md)" }}>
         <div style={{ ...skeletonStyle, height: 14, width: "30%", marginBottom: 12 }} />
         <div style={{ display: "flex", gap: "var(--space-sm)" }}>
@@ -27,20 +27,39 @@ export default function WorkoutLogLoading() {
 
       {/* 플랜 선택 + 빠른 시작 카드 */}
       <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 38, width: "100%", marginBottom: 12, borderRadius: 8 }} />
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)", marginBottom: 12 }}>
-          <div style={{ ...skeletonStyle, height: 40, borderRadius: 8 }} />
-          <div style={{ ...skeletonStyle, height: 40, borderRadius: 8 }} />
+        {/* 플랜 드롭다운 */}
+        <div style={{ ...skeletonStyle, height: 44, width: "100%", marginBottom: 8, borderRadius: 8 }} />
+        {/* 날짜 입력 */}
+        <div style={{ ...skeletonStyle, height: 36, width: "60%", marginBottom: 12, borderRadius: 8 }} />
+        {/* AccordionSection (접힌 상태) */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16, padding: "var(--space-xs) 0" }}>
+          <div>
+            <div style={{ ...skeletonStyle, height: 14, width: 100, marginBottom: 4 }} />
+            <div style={{ ...skeletonStyle, height: 11, width: 140, borderRadius: 4 }} />
+          </div>
+          <div style={{ ...skeletonStyle, height: 20, width: 20, borderRadius: 4 }} />
         </div>
-        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-          <div style={{ ...skeletonStyle, height: 40, flex: 2, borderRadius: 8 }} />
-          <div style={{ ...skeletonStyle, height: 40, flex: 1, borderRadius: 8 }} />
+        {/* 빠른 시작 버튼 4개 */}
+        <div style={{ ...skeletonStyle, height: 13, width: "25%", marginBottom: 8, borderRadius: 4 }} />
+        <div style={{ display: "flex", gap: "var(--space-sm)", flexWrap: "wrap" }}>
+          <div style={{ ...skeletonStyle, height: 40, flex: "1 1 45%", borderRadius: 8 }} />
+          <div style={{ ...skeletonStyle, height: 40, flex: "1 1 45%", borderRadius: 8 }} />
+          <div style={{ ...skeletonStyle, height: 40, flex: "1 1 45%", borderRadius: 8 }} />
+          <div style={{ ...skeletonStyle, height: 40, flex: "1 1 45%", borderRadius: 8 }} />
         </div>
       </div>
 
       {/* 세트 테이블 스켈레톤 */}
       <div className="card" style={{ padding: "var(--space-md)" }}>
         <div style={{ ...skeletonStyle, height: 16, width: "35%", marginBottom: 16 }} />
+        {/* 열 헤더 */}
+        <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: 8 }}>
+          <div style={{ ...skeletonStyle, height: 10, flex: 2, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 10, flex: 1, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 10, flex: 1, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 10, flex: 1, borderRadius: 4 }} />
+          <div style={{ width: 32 }} />
+        </div>
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} style={{ display: "flex", gap: "var(--space-sm)", alignItems: "center", paddingBlock: 8, borderBottom: i < 3 ? "1px solid var(--color-border)" : "none" }}>
             <div style={{ ...skeletonStyle, height: 32, flex: 2, borderRadius: 6 }} />

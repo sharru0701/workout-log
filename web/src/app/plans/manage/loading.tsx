@@ -33,6 +33,8 @@ export default function PlansManageLoading() {
             </div>
             <div style={{ ...skeletonStyle, height: 32, width: 64, borderRadius: 8 }} />
           </div>
+          {/* 수행 히스토리 버튼 */}
+          <div style={{ ...skeletonStyle, height: 44, width: "100%", borderRadius: 8 }} />
         </div>
       ))}
     </div>

@@ -19,40 +19,49 @@ export default function HomeLoading() {
         }
       `}</style>
 
-      {/* 오늘 운동 카드 스켈레톤 */}
+      {/* 현재 프로그램 카드 (ProgramStatusSection) */}
       <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: 12 }} />
-        <div style={{ ...skeletonStyle, height: 22, width: "70%", marginBottom: 8 }} />
-        <div style={{ ...skeletonStyle, height: 14, width: "55%", marginBottom: 16 }} />
-        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-          <div style={{ ...skeletonStyle, height: 36, flex: 1, borderRadius: 8 }} />
-          <div style={{ ...skeletonStyle, height: 36, flex: 1, borderRadius: 8 }} />
-        </div>
-      </div>
-
-      {/* 주간 요약 스켈레톤 */}
-      <div className="card" style={{ padding: "var(--space-md)" }}>
-        <div style={{ ...skeletonStyle, height: 14, width: "30%", marginBottom: 12 }} />
-        <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "space-between" }}>
+        <div style={{ ...skeletonStyle, height: 16, width: "55%", marginBottom: 6 }} />
+        <div style={{ ...skeletonStyle, height: 12, width: "40%", marginBottom: 4, borderRadius: 4 }} />
+        <div style={{ ...skeletonStyle, height: 11, width: "65%", marginBottom: 16, borderRadius: 4 }} />
+        {/* 7일 운동 그리드 */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-xs)", textAlign: "center" }}>
           {Array.from({ length: 7 }).map((_, i) => (
-            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, flex: 1 }}>
+            <div key={i} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
               <div style={{ ...skeletonStyle, height: 10, width: "100%", borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 28, width: "100%", borderRadius: 6 }} />
+              <div style={{ ...skeletonStyle, height: 10, width: 10, borderRadius: "50%" }} />
             </div>
           ))}
         </div>
       </div>
 
-      {/* 최근 운동 스켈레톤 */}
+      {/* 오늘의 운동 카드 (TodaySessionSection) */}
+      <div className="card" style={{ padding: "var(--space-md)" }}>
+        <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: 12 }} />
+        {/* 운동 목록 2개 */}
+        {Array.from({ length: 2 }).map((_, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: i === 0 ? "1px solid var(--color-border)" : "none" }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ ...skeletonStyle, height: 14, width: "55%", marginBottom: 4 }} />
+              <div style={{ ...skeletonStyle, height: 11, width: "35%", borderRadius: 4 }} />
+            </div>
+            <div style={{ ...skeletonStyle, height: 11, width: 40, borderRadius: 4 }} />
+          </div>
+        ))}
+        {/* CTA 버튼 */}
+        <div style={{ ...skeletonStyle, height: 40, width: "100%", borderRadius: 8, marginTop: 12 }} />
+      </div>
+
+      {/* 지난 세션 카드 (LastSessionSection) */}
       <div className="card" style={{ padding: "var(--space-md)" }}>
         <div style={{ ...skeletonStyle, height: 14, width: "35%", marginBottom: 12 }} />
         {Array.from({ length: 2 }).map((_, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 10, borderBottom: i === 0 ? "1px solid var(--color-border)" : "none" }}>
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: i === 0 ? "1px solid var(--color-border)" : "none" }}>
             <div style={{ flex: 1 }}>
-              <div style={{ ...skeletonStyle, height: 13, width: "50%", marginBottom: 6 }} />
+              <div style={{ ...skeletonStyle, height: 13, width: "50%", marginBottom: 4 }} />
               <div style={{ ...skeletonStyle, height: 11, width: "35%", borderRadius: 4 }} />
             </div>
-            <div style={{ ...skeletonStyle, height: 24, width: 24, borderRadius: "50%" }} />
+            <div style={{ ...skeletonStyle, height: 11, width: 36, borderRadius: 4 }} />
           </div>
         ))}
       </div>
