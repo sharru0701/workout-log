@@ -214,7 +214,7 @@ jobs:
           image_ref="${{ env.IMAGE_NAME }}:${{ env.TARGET_SHA }}"
           ./scripts/ensure_docker_headroom.sh
           if docker image inspect "${image_ref}" >/dev/null 2>&1; then
-            echo "[deploy] target image already present locally; skipping docker pull (${image_ref})"
+            echo "[deploy] target image already present locally; skipping docker pull (\${image_ref})"
           elif ! docker compose pull web; then
             echo "[deploy] docker pull failed; forcing aggressive docker cleanup and retrying once"
             AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
