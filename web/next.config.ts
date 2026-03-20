@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "standalone",
   // production 빌드(Turbopack)에서만 React Compiler 활성화.
   // dev + Turbopack에서는 HMR 그래프 오류가 간헐적으로 발생할 수 있어 비활성화.
   reactCompiler: process.env.NODE_ENV === "production",

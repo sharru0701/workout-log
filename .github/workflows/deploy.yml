@@ -88,6 +88,13 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
+      - name: Cache SSH known_hosts
+        id: ssh_cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ssh/known_hosts
+          key: ssh-known-hosts-${{ secrets.DEPLOY_HOST }}
+
       - name: Setup SSH key
         shell: bash
         run: |
@@ -97,11 +104,13 @@ jobs:
           printf '%s' "${{ secrets.DEPLOY_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
 
-          for i in $(seq 1 6); do
-            ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts && break
-            echo "ssh-keyscan retry ($i/6)..."
-            sleep 5
-          done
+          if [[ "${{ steps.ssh_cache.outputs.cache-hit }}" != "true" ]]; then
+            for i in $(seq 1 6); do
+              ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts && break
+              echo "ssh-keyscan retry ($i/6)..."
+              sleep 5
+            done
+          fi
 
       - name: Upload deploy bundle to server
         shell: bash
