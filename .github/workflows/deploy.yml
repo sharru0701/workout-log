@@ -143,14 +143,18 @@ jobs:
         run: |
           set -euo pipefail
 
-          ssh -T -o StrictHostKeyChecking=yes \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R \$USER:\$USER /opt/workout-log"
-
           remote_ready="$(
             ssh -T -o StrictHostKeyChecking=yes \
-              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "test -f /opt/workout-log/deploy/docker-compose.yml && test -x /opt/workout-log/deploy/scripts/ensure_docker_headroom.sh && printf true || printf false"
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
+            set -euo pipefail
+            sudo mkdir -p /opt/workout-log/deploy
+            sudo chown -R "$USER:$USER" /opt/workout-log
+            if [[ -f /opt/workout-log/deploy/docker-compose.yml && -x /opt/workout-log/deploy/scripts/ensure_docker_headroom.sh ]]; then
+              printf true
+            else
+              printf false
+            fi
+            EOF
           )"
 
           echo "ready=${remote_ready}" >> "$GITHUB_OUTPUT"
