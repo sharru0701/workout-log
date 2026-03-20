@@ -273,7 +273,7 @@ export function BottomSheet({
       body.style.right = "0";
       body.style.width = "100%";
       body.style.overflow = "hidden";
-      root.style.overflow = "hidden";
+      // root.style.overflow = "hidden" 제거: Safari 상태바/주소창 Frosted glass 효과 유지를 위함
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -293,7 +293,6 @@ export function BottomSheet({
       body.style.width = "";
       body.style.overflow = "";
       delete root.dataset.bottomSheetOpen;
-      root.style.overflow = "";
       window.scrollTo(0, scrollY);
     };
   }, [open]);

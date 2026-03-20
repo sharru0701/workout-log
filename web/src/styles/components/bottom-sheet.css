@@ -2,7 +2,12 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  inset: 0;
+  /* Safari 상단 UI(상태바·주소창) 투명도 유지를 위해 
+     Safe area 상단 영역은 비워두고 그 아래부터 레이어를 생성합니다. */
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -36,19 +41,7 @@
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
 
-  /* Safari 상단 UI(상태바·주소창) 투명도 유지:
-     safe-area-inset-top 위쪽은 마스크로 투명하게 남겨
-     Safari frosted-glass가 페이지 배경색을 계속 샘플링하게 함 */
-  -webkit-mask-image: linear-gradient(
-    to bottom,
-    transparent env(safe-area-inset-top, 0px),
-    black env(safe-area-inset-top, 0px)
-  );
-  mask-image: linear-gradient(
-    to bottom,
-    transparent env(safe-area-inset-top, 0px),
-    black env(safe-area-inset-top, 0px)
-  );
+  /* Safari 상단 UI 투명화를 위해 레이어 자체를 top에서 띄웠으므로 마스크는 불필요 */
 }
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
