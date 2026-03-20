@@ -188,6 +188,24 @@ type GenerateSessionResponse = {
 const DEFAULT_RECENT_LIMIT = 3;
 const WEEKLY_WINDOW_DAYS = 7;
 
+// ─── Intl formatter singletons ──────────────────────────────────────
+// PERF: Intl.DateTimeFormat 인스턴스 생성은 비용이 크므로 모듈 레벨에서 한 번만 생성
+
+const DATE_FORMATTER_WITH_WEEKDAY = new Intl.DateTimeFormat("ko-KR", {
+  month: "numeric",
+  day: "numeric",
+  weekday: "short",
+});
+
+const DATE_FORMATTER_MONTH_DAY = new Intl.DateTimeFormat("ko-KR", {
+  month: "numeric",
+  day: "numeric",
+});
+
+const DATE_FORMATTER_WEEKDAY_SHORT = new Intl.DateTimeFormat("ko-KR", {
+  weekday: "short",
+});
+
 // ─── Helpers ────────────────────────────────────────────────────────
 
 function parseDateKey(iso: string) {
@@ -199,46 +217,51 @@ function parseDateKey(iso: string) {
 function formatDate(iso: string) {
   const parsed = new Date(iso);
   if (Number.isNaN(parsed.getTime())) return "날짜 미상";
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-    weekday: "short",
-  }).format(parsed);
+  return DATE_FORMATTER_WITH_WEEKDAY.format(parsed);
 }
 
 function formatMonthDay(date: Date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-  }).format(date);
+  return DATE_FORMATTER_MONTH_DAY.format(date);
 }
 
 function formatWeekdayShort(date: Date) {
-  return new Intl.DateTimeFormat("ko-KR", {
-    weekday: "short",
-  }).format(date);
+  return DATE_FORMATTER_WEEKDAY_SHORT.format(date);
 }
 
 function formatWeekLabel(period: string) {
   const date = new Date(period);
   if (Number.isNaN(date.getTime())) return period;
-  return new Intl.DateTimeFormat("ko-KR", {
-    month: "numeric",
-    day: "numeric",
-  }).format(date);
+  return DATE_FORMATTER_MONTH_DAY.format(date);
 }
 
 function resolveHighlightedPlan(plans: PlanItem[], latestTodayLog: WorkoutLogItem | null) {
-  const planFromToday = latestTodayLog?.planId ? plans.find((entry) => entry.id === latestTodayLog.planId) ?? null : null;
-  const planByLastPerformed = [...plans]
-    .filter((entry) => entry.lastPerformedAt)
-    .sort((a, b) => {
-      const aValue = new Date(a.lastPerformedAt ?? 0).getTime();
-      const bValue = new Date(b.lastPerformedAt ?? 0).getTime();
-      return bValue - aValue;
-    })[0];
-  const fallbackPlan =
-    [...plans].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0] ?? null;
+  // PERF: 기존 두 번의 배열 복사+정렬(O(n log n)) → 단일 순회(O(n))로 개선
+  const todayPlanId = latestTodayLog?.planId ?? null;
+
+  let planFromToday: PlanItem | null = null;
+  let planByLastPerformed: PlanItem | null = null;
+  let planByLastPerformedTime = -Infinity;
+  let fallbackPlan: PlanItem | null = null;
+  let fallbackPlanTime = -Infinity;
+
+  for (const plan of plans) {
+    if (todayPlanId && plan.id === todayPlanId) {
+      planFromToday = plan;
+    }
+    if (plan.lastPerformedAt) {
+      const t = new Date(plan.lastPerformedAt).getTime();
+      if (t > planByLastPerformedTime) {
+        planByLastPerformedTime = t;
+        planByLastPerformed = plan;
+      }
+    }
+    const createdTime = new Date(plan.createdAt).getTime();
+    if (createdTime > fallbackPlanTime) {
+      fallbackPlanTime = createdTime;
+      fallbackPlan = plan;
+    }
+  }
+
   return planFromToday ?? planByLastPerformed ?? fallbackPlan;
 }
 

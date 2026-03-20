@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { Card } from "@/components/ui/card";
@@ -16,7 +16,7 @@ import type {
 
 // ─── Section 1: Program Status ──────────────────────────────────────
 
-function ProgramStatusSection({ data }: { data: HomeData }) {
+const ProgramStatusSection = memo(function ProgramStatusSection({ data }: { data: HomeData }) {
   const { planOverview, weeklySummary } = data;
   const hasPlan = planOverview.totalPlans > 0;
   const planHref = hasPlan ? APP_ROUTES.calendarHome : APP_ROUTES.programStore;
@@ -69,11 +69,11 @@ function ProgramStatusSection({ data }: { data: HomeData }) {
       </Card>
     </section>
   );
-}
+});
 
 // ─── Section 2: Today Session ──────────────────────────────────────
 
-function TodaySessionSection({ data }: { data: HomeData }) {
+const TodaySessionSection = memo(function TodaySessionSection({ data }: { data: HomeData }) {
   const { today, planOverview } = data;
   const hasTodayActivity = today.completedSets > 0;
   const hasPlan = planOverview.totalPlans > 0;
@@ -100,11 +100,11 @@ function TodaySessionSection({ data }: { data: HomeData }) {
       />
     </section>
   );
-}
+});
 
 // ─── Section 3: Last Session ──────────────────────────────────────
 
-function LastSessionSection({ session }: { session: HomeLastSession }) {
+const LastSessionSection = memo(function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
@@ -125,11 +125,11 @@ function LastSessionSection({ session }: { session: HomeLastSession }) {
       />
     </section>
   );
-}
+});
 
 // ─── Section 4: Strength Progress ──────────────────────────────────
 
-function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
+const StrengthProgressSection = memo(function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
   if (items.length === 0) return null;
 
   return (
@@ -166,16 +166,17 @@ function StrengthProgressSection({ items }: { items: HomeStrengthItem[] }) {
       </div>
     </section>
   );
-}
+});
 
 // ─── Section 5: Volume Trend ──────────────────────────────────────
 
 function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
+  // PERF: points가 바뀔 때만 재계산 (selectedIndex 변경 시 불필요한 재계산 방지)
+  const maxTonnage = useMemo(() => Math.max(...points.map((p) => p.tonnage), 1), [points]);
 
   if (points.length === 0) return null;
 
-  const maxTonnage = Math.max(...points.map((p) => p.tonnage), 1);
   const selected = selectedIndex !== null ? points[selectedIndex] ?? null : null;
   const CHART_BAR_HEIGHT_PX = 82;
 
@@ -241,7 +242,7 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
 
 // ─── Section 6: Quick Stats ──────────────────────────────────────
 
-function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
+const QuickStatsSection = memo(function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
   const hasData = stats.totalSessions > 0;
   if (!hasData) return null;
 
@@ -270,7 +271,7 @@ function QuickStatsSection({ stats }: { stats: HomeQuickStats }) {
       </div>
     </section>
   );
-}
+});
 
 // ─── Helpers ──────────────────────────────────────────────────────
 

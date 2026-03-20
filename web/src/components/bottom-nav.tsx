@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, MouseEvent } from "react";
-import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useRef } from "react";
@@ -119,6 +119,33 @@ function tabIsActive(pathname: string, href: string) {
 
 type TabRouteDirection = "forward" | "backward";
 
+type FabItemProps = {
+  tab: (typeof tabs)[number];
+  tabIndex: number;
+  isActive: boolean;
+  onPress: (event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => void;
+};
+
+// PERF: 탭 아이템을 메모화된 컴포넌트로 분리해 pathname 변경 시 비활성 탭 불필요한 재렌더 방지
+const FabItem = memo(function FabItem({ tab, tabIndex, isActive, onPress }: FabItemProps) {
+  const Icon = tab.Icon;
+  return (
+    <Link
+      href={tab.href}
+      aria-current={isActive ? "page" : undefined}
+      aria-label={tab.ariaLabel}
+      title={tab.ariaLabel}
+      onClick={(event) => onPress(event, tabIndex, tab.href)}
+      className="fab-item"
+    >
+      <div className="fab-icon">
+        <Icon />
+      </div>
+      <span>{tab.label}</span>
+    </Link>
+  );
+});
+
 export function BottomNav() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
@@ -145,38 +172,27 @@ export function BottomNav() {
     };
   }, [isOpen]);
 
-  const onTabPress = (event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => {
+  const onTabPress = useCallback((event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => {
     if (event.defaultPrevented) return;
     if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
     setIsOpen(false); // 탭 클릭 시 메뉴 닫기
     setVisualActiveTabIndex(tabIndex);
-  };
+  }, []);
 
   return (
     <div className="fab-container" ref={menuRef}>
       {/* 확장 메뉴 리스트 */}
       <div className={`fab-menu ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen}>
-        {tabs.map((tab, tabIndex) => {
-          const pathActive = tabIsActive(pathname, tab.href);
-          const Icon = tab.Icon;
-          return (
-            <Link
-              key={tab.href}
-              href={tab.href}
-              aria-current={pathActive ? "page" : undefined}
-              aria-label={tab.ariaLabel}
-              title={tab.ariaLabel}
-              onClick={(event) => onTabPress(event, tabIndex, tab.href)}
-              className="fab-item"
-            >
-              <div className="fab-icon">
-                <Icon />
-              </div>
-              <span>{tab.label}</span>
-            </Link>
-          );
-        })}
+        {tabs.map((tab, tabIndex) => (
+          <FabItem
+            key={tab.href}
+            tab={tab}
+            tabIndex={tabIndex}
+            isActive={tabIsActive(pathname, tab.href)}
+            onPress={onTabPress}
+          />
+        ))}
       </div>
 
       {/* 메인 FAB 버튼 */}

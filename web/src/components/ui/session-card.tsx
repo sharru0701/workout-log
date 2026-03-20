@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { memo } from "react";
 import type { ReactNode } from "react";
 import { Card } from "./card";
 import { PrimaryButton } from "./primary-button";
@@ -24,7 +25,7 @@ function formatVolume(kg: number): string {
 
 // ─── Shared exercise list sub-components ──────────────────────────────────────
 
-function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }) {
+const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }) {
   if (exercises.length === 0) return null;
   const main = exercises.filter((e) => e.role === "MAIN");
   const assist = exercises.filter((e) => e.role !== "MAIN");
@@ -59,9 +60,9 @@ function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }
       )}
     </div>
   );
-}
+});
 
-function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
+const ExerciseFlatList = memo(function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
   if (exercises.length === 0) return null;
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
@@ -81,7 +82,7 @@ function ExerciseFlatList({ exercises }: { exercises: SessionCardExercise[] }) {
       ))}
     </div>
   );
-}
+});
 
 // ─── "today" variant ───────────────────────────────────────────────────────────
 // Used for: home 오늘의 운동 카드, 캘린더 하단 상세카드
