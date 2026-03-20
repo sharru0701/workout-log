@@ -167,20 +167,9 @@ jobs:
 
       - name: Deploy image by commit SHA (capture rollback SHA)
         id: deploy_sha
-        continue-on-error: true
         shell: bash
         run: |
           set -euo pipefail
-
-          HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
-          if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
-          fi
-
-          HEALTHCHECK_RETRY_DELAY_SECONDS="${{ vars.DEPLOY_HEALTHCHECK_RETRY_DELAY_SECONDS }}"
-          if [[ -z "${HEALTHCHECK_RETRY_DELAY_SECONDS}" ]]; then
-            HEALTHCHECK_RETRY_DELAY_SECONDS=3
-          fi
 
           set +e
           deploy_out="$(ssh -T -o StrictHostKeyChecking=yes \
@@ -214,6 +203,51 @@ jobs:
           docker compose run -e DB_SEED_RUNNER=ci-deploy -e WORKOUT_SEED_INCLUDE_DEMO_PLANS=0 --rm -T migrate sh -lc 'node scripts/migrate.mjs && node scripts/seed-if-needed.mjs' </dev/null
           docker compose up -d --no-deps --force-recreate web
           docker compose ps
+          EOF
+          )"
+          deploy_status=$?
+          set -e
+
+          printf '%s\n' "${deploy_out}" | grep -v '^__ROLLBACK_SHA__=' || true
+
+          rollback_sha="$(
+            printf '%s\n' "${deploy_out}" \
+              | grep '^__ROLLBACK_SHA__=' | cut -d= -f2- \
+              | tr -d '\r' \
+              | grep -E '^[0-9a-f]{40}$' \
+              | tail -n1 \
+              | xargs || true
+          )"
+          echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
+          echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
+
+          if [[ "${deploy_status}" -ne 0 ]]; then
+            exit "${deploy_status}"
+          fi
+
+      - name: Healthcheck (from deploy server)
+        id: healthcheck
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
+          if [[ -z "${HEALTHCHECK_URL}" ]]; then
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
+          fi
+
+          echo "Healthcheck URL: ${HEALTHCHECK_URL}"
+
+          HEALTHCHECK_RETRY_DELAY_SECONDS="${{ vars.DEPLOY_HEALTHCHECK_RETRY_DELAY_SECONDS }}"
+          if [[ -z "${HEALTHCHECK_RETRY_DELAY_SECONDS}" ]]; then
+            HEALTHCHECK_RETRY_DELAY_SECONDS=3
+          fi
+
+          set +e
+          ssh_out="$(ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
           healthcheck_url='${HEALTHCHECK_URL}'
           expected_sha='${{ env.TARGET_SHA }}'
           retry_delay='${HEALTHCHECK_RETRY_DELAY_SECONDS}'
@@ -228,55 +262,31 @@ jobs:
               running_tag=''
             fi
             if [[ -n "\${response}" && "\${running_tag}" == "\${expected_sha}" ]]; then
-              printf '__HEALTHCHECK_RESPONSE__=%s\n' "\${response}"
-              printf '__HEALTHCHECK_RUNNING_IMAGE__=%s\n' "\${running_image}"
-              printf '__HEALTHCHECK_ATTEMPT__=%s\n' "\${i}"
-              printf '%s' "\${expected_sha}" > .last_successful_web_sha
+              printf '%s\n' "\${response}"
+              printf '__IMG__=%s\n' "\${running_image}"
+              printf '__ATTEMPT__=%s\n' "\${i}"
               exit 0
             fi
             sleep "\${retry_delay}"
           done
-          printf '__HEALTHCHECK_RESPONSE__=%s\n' "\${response}"
-          printf '__HEALTHCHECK_RUNNING_IMAGE__=%s\n' "\${running_image}"
-          printf '__HEALTHCHECK_ATTEMPT__=%s\n' '18'
+          printf '%s\n' "\${response}"
+          printf '__IMG__=%s\n' "\${running_image}"
+          printf '__ATTEMPT__=%s\n' '18'
           exit 1
           EOF
           )"
-          deploy_status=$?
           set -e
 
-          printf '%s\n' "${deploy_out}" \
-            | grep -v '^__ROLLBACK_SHA__=' \
-            | grep -v '^__HEALTHCHECK_RESPONSE__=' \
-            | grep -v '^__HEALTHCHECK_RUNNING_IMAGE__=' \
-            | grep -v '^__HEALTHCHECK_ATTEMPT__=' \
-            || true
-
-          rollback_sha="$(
-            printf '%s\n' "${deploy_out}" \
-              | grep '^__ROLLBACK_SHA__=' | cut -d= -f2- \
-              | tr -d '\r' \
-              | grep -E '^[0-9a-f]{40}$' \
-              | tail -n1 \
-              | xargs || true
-          )"
-          echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
-          echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
-
-          response="$(
-            printf '%s\n' "${deploy_out}" \
-              | sed -n 's/^__HEALTHCHECK_RESPONSE__=//p' \
-              | tail -n1
-          )"
+          response="$(printf '%s' "${ssh_out}" | grep -v '^__IMG__=' | grep -v '^__ATTEMPT__=' || true)"
           running_tag="$(
-            printf '%s\n' "${deploy_out}" \
-              | sed -n 's/^__HEALTHCHECK_RUNNING_IMAGE__=//p' \
+            printf '%s' "${ssh_out}" \
+              | grep '^__IMG__=' | cut -d= -f2- \
               | tr -d '\r' | awk -F: '{print $NF}' \
               | grep -E '^[0-9a-f]{40}$' | tail -n1 | xargs || true
           )"
           attempt="$(
-            printf '%s\n' "${deploy_out}" \
-              | sed -n 's/^__HEALTHCHECK_ATTEMPT__=//p' \
+            printf '%s' "${ssh_out}" \
+              | grep '^__ATTEMPT__=' | cut -d= -f2- \
               | tr -d '\r' | grep -E '^[0-9]+$' | tail -n1 | xargs || true
           )"
 
@@ -285,9 +295,12 @@ jobs:
             actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
           fi
 
-          if [[ "${deploy_status}" -eq 0 ]]; then
+          if [[ -n "${response}" && "${running_tag}" == "${{ env.TARGET_SHA }}" ]]; then
             echo "Healthcheck passed with expected running image tag (${attempt:-1}/18): ${running_tag}"
-          elif [[ -z "${response}" ]]; then
+            exit 0
+          fi
+
+          if [[ -z "${response}" ]]; then
             echo "Healthcheck request failed or returned empty body after ${attempt:-18} attempts. running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
           elif [[ -z "${actual_version}" ]]; then
             echo "Healthcheck response version missing/unparseable after ${attempt:-18} attempts. running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
@@ -295,16 +308,14 @@ jobs:
             echo "Healthcheck response version mismatch after ${attempt:-18} attempts: got='${actual_version}' expected='${{ env.TARGET_SHA }}' running_tag='${running_tag:-<none>}'"
           fi
 
-          if [[ "${deploy_status}" -ne 0 ]]; then
-            echo "Deploy verification failed. Dumping server diagnostics..."
-            ssh -T -o StrictHostKeyChecking=yes \
-              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "cd /opt/workout-log/deploy && docker compose ps && docker compose logs --tail=120 web postgres || true"
-            exit "${deploy_status}"
-          fi
+          echo "Healthcheck failed. Dumping server diagnostics..."
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "cd /opt/workout-log/deploy && docker compose ps && docker compose logs --tail=120 web postgres || true"
+          exit 1
 
       - name: Migration telemetry alert check
-        if: ${{ steps.deploy_sha.outcome == 'success' }}
+        if: ${{ steps.healthcheck.outcome == 'success' }}
         id: migration_telemetry
         continue-on-error: true
         shell: bash
@@ -360,8 +371,17 @@ jobs:
             fi
           fi
 
+      - name: Mark successful deployed SHA
+        if: ${{ steps.healthcheck.outcome == 'success' && steps.migration_telemetry.outcome != 'failure' }}
+        id: mark_success
+        shell: bash
+        run: |
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "printf '%s' '${{ env.TARGET_SHA }}' > /opt/workout-log/deploy/.last_successful_web_sha"
+
       - name: Rollback to previous SHA
-        if: ${{ always() && (steps.deploy_sha.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -379,7 +399,7 @@ jobs:
           EOF
 
       - name: Verify rollback health
-        if: ${{ always() && (steps.deploy_sha.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') && steps.deploy_sha.outputs.rollback_sha != '' }}
         shell: bash
         run: |
           set -euo pipefail
@@ -421,7 +441,7 @@ jobs:
           exit 1
 
       - name: Fail workflow when deploy healthcheck failed
-        if: ${{ always() && (steps.deploy_sha.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure') }}
+        if: ${{ always() && (steps.healthcheck.outcome == 'failure' || steps.migration_telemetry.outcome == 'failure' || steps.mark_success.outcome == 'failure') }}
         shell: bash
         run: |
           echo "Deploy verification failed (healthcheck or strict migration telemetry). Rollback attempted automatically."
