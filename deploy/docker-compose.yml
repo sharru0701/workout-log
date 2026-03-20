@@ -61,6 +61,16 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -q -O - 'http://127.0.0.1:3000/api/health?requiredTables=program_template,user_setting,ux_event_log,migration_run_log' >/dev/null 2>&1",
+        ]
+      interval: 2s
+      timeout: 2s
+      retries: 15
+      start_period: 1s
     ports:
       - "127.0.0.1:3001:3000"
 
