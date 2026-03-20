@@ -244,44 +244,73 @@ jobs:
             HEALTHCHECK_RETRY_DELAY_SECONDS=3
           fi
 
-          for i in $(seq 1 18); do
-            ssh_out="$(ssh -T -o StrictHostKeyChecking=yes \
-              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' 2>/dev/null || true
-               printf '\n__IMG__=%s\n' \"\$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)\"" \
-              || true)"
-
-            response="$(printf '%s' "${ssh_out}" | grep -v '^__IMG__=' || true)"
-            running_tag="$(
-              printf '%s' "${ssh_out}" \
-                | grep '^__IMG__=' | cut -d= -f2- \
-                | tr -d '\r' | awk -F: '{print $NF}' \
-                | grep -E '^[0-9a-f]{40}$' | tail -n1 | xargs || true
-            )"
-
-            actual_version=""
-            if [[ -n "${response}" ]]; then
-              actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
+          set +e
+          ssh_out="$(ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
+          healthcheck_url='${HEALTHCHECK_URL}'
+          expected_sha='${{ env.TARGET_SHA }}'
+          retry_delay='${HEALTHCHECK_RETRY_DELAY_SECONDS}'
+          response=''
+          running_image=''
+          running_tag=''
+          for i in \$(seq 1 18); do
+            response="\$(curl -fsS --max-time 8 "\${healthcheck_url}" 2>/dev/null || true)"
+            running_image="\$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)"
+            running_tag="\${running_image##*:}"
+            if [[ ! "\${running_tag}" =~ ^[0-9a-f]{40}$ ]]; then
+              running_tag=''
             fi
-
-            if [[ -n "${response}" && "${running_tag}" == "${{ env.TARGET_SHA }}" ]]; then
-              if [[ -n "${actual_version}" && "${actual_version}" != "${{ env.TARGET_SHA }}" ]]; then
-                echo "::warning::Healthcheck version mismatch but running image tag is expected SHA (got version='${actual_version}', expected='${{ env.TARGET_SHA }}')."
-              fi
-              echo "Healthcheck passed with expected running image tag (${i}/18): ${running_tag}"
+            if [[ -n "\${response}" && "\${running_tag}" == "\${expected_sha}" ]]; then
+              printf '%s\n' "\${response}"
+              printf '__IMG__=%s\n' "\${running_image}"
+              printf '__ATTEMPT__=%s\n' "\${i}"
               exit 0
             fi
-
-            if [[ -z "${response}" ]]; then
-              echo "Healthcheck request failed or returned empty body (${i}/18). running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
-            elif [[ -z "${actual_version}" ]]; then
-              echo "Healthcheck response version missing/unparseable (${i}/18). running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
-            else
-              echo "Healthcheck response version mismatch (${i}/18): got='${actual_version}' expected='${{ env.TARGET_SHA }}' running_tag='${running_tag:-<none>}'"
-            fi
-            echo "Healthcheck retry (${i}/18) after ${HEALTHCHECK_RETRY_DELAY_SECONDS}s"
-            sleep "${HEALTHCHECK_RETRY_DELAY_SECONDS}"
+            sleep "\${retry_delay}"
           done
+          printf '%s\n' "\${response}"
+          printf '__IMG__=%s\n' "\${running_image}"
+          printf '__ATTEMPT__=%s\n' '18'
+          exit 1
+          EOF
+          )"
+          ssh_status=$?
+          set -e
+
+          response="$(printf '%s' "${ssh_out}" | grep -v '^__IMG__=' | grep -v '^__ATTEMPT__=' || true)"
+          running_tag="$(
+            printf '%s' "${ssh_out}" \
+              | grep '^__IMG__=' | cut -d= -f2- \
+              | tr -d '\r' | awk -F: '{print $NF}' \
+              | grep -E '^[0-9a-f]{40}$' | tail -n1 | xargs || true
+          )"
+          attempt="$(
+            printf '%s' "${ssh_out}" \
+              | grep '^__ATTEMPT__=' | cut -d= -f2- \
+              | tr -d '\r' | grep -E '^[0-9]+$' | tail -n1 | xargs || true
+          )"
+
+          actual_version=""
+          if [[ -n "${response}" ]]; then
+            actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
+          fi
+
+          if [[ "${ssh_status}" -eq 0 ]]; then
+            if [[ -n "${actual_version}" && "${actual_version}" != "${{ env.TARGET_SHA }}" ]]; then
+              echo "::warning::Healthcheck version mismatch but running image tag is expected SHA (got version='${actual_version}', expected='${{ env.TARGET_SHA }}')."
+            fi
+            echo "Healthcheck passed with expected running image tag (${attempt:-1}/18): ${running_tag}"
+            exit 0
+          fi
+
+          if [[ -z "${response}" ]]; then
+            echo "Healthcheck request failed or returned empty body after ${attempt:-18} attempts. running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
+          elif [[ -z "${actual_version}" ]]; then
+            echo "Healthcheck response version missing/unparseable after ${attempt:-18} attempts. running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
+          else
+            echo "Healthcheck response version mismatch after ${attempt:-18} attempts: got='${actual_version}' expected='${{ env.TARGET_SHA }}' running_tag='${running_tag:-<none>}'"
+          fi
 
           echo "Healthcheck failed. Dumping server diagnostics..."
           ssh -T -o StrictHostKeyChecking=yes \
@@ -391,16 +420,20 @@ jobs:
             HEALTHCHECK_RETRY_DELAY_SECONDS=3
           fi
 
-          for i in $(seq 1 12); do
-            if ssh -T -o StrictHostKeyChecking=yes \
-              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-              "curl -fsS --max-time 8 '${HEALTHCHECK_URL}' >/dev/null"; then
-              echo "Rollback healthcheck passed (${i}/12)"
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
+          set -euo pipefail
+          healthcheck_url='${HEALTHCHECK_URL}'
+          retry_delay='${HEALTHCHECK_RETRY_DELAY_SECONDS}'
+          for i in \$(seq 1 12); do
+            if curl -fsS --max-time 8 "\${healthcheck_url}" >/dev/null 2>&1; then
+              printf 'Rollback healthcheck passed (%s/12)\n' "\${i}"
               exit 0
             fi
-            echo "Rollback healthcheck retry (${i}/12) after ${HEALTHCHECK_RETRY_DELAY_SECONDS}s"
-            sleep "${HEALTHCHECK_RETRY_DELAY_SECONDS}"
+            sleep "\${retry_delay}"
           done
+          exit 1
+          EOF
 
           echo "Rollback healthcheck failed. Dumping server diagnostics..."
           ssh -T -o StrictHostKeyChecking=yes \
