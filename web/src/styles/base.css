@@ -15,6 +15,15 @@ html[data-bottom-sheet-open="true"] body {
   background-color: transparent;
 }
 
+html[data-bottom-sheet-open="true"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-bg);
+  pointer-events: none;
+  z-index: -1;
+}
+
 *,
 *::before,
 *::after {
