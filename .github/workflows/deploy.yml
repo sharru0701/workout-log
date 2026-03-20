@@ -32,6 +32,8 @@ jobs:
         with:
           ref: ${{ env.TARGET_SHA }}
           fetch-depth: 1
+          sparse-checkout: |
+            web
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -80,6 +82,8 @@ jobs:
         with:
           ref: ${{ env.TARGET_SHA }}
           fetch-depth: 1
+          sparse-checkout: |
+            deploy
 
       - name: Tailscale connect (OAuth, tag:ci)
         uses: tailscale/github-action@v4
@@ -90,7 +94,7 @@ jobs:
 
       - name: Cache SSH known_hosts
         id: ssh_cache
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ~/.ssh/known_hosts
           key: ssh-known-hosts-${{ secrets.DEPLOY_HOST }}
@@ -171,10 +175,8 @@ jobs:
             AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
             docker compose pull web
           fi
-          echo "[deploy] running dedicated migration job before switching web container"
-          docker compose run --rm -T migrate </dev/null
-          echo "[deploy] syncing seed data when base data is missing or seed hash changed"
-          docker compose run -e DB_SEED_RUNNER=ci-deploy -e WORKOUT_SEED_INCLUDE_DEMO_PLANS=0 --rm -T migrate node scripts/seed-if-needed.mjs </dev/null
+          echo "[deploy] running migration + seed sync before switching web container"
+          docker compose run -e DB_SEED_RUNNER=ci-deploy -e WORKOUT_SEED_INCLUDE_DEMO_PLANS=0 --rm -T migrate sh -lc 'node scripts/migrate.mjs && node scripts/seed-if-needed.mjs' </dev/null
           docker compose up -d --no-deps --force-recreate web
           docker compose ps
           EOF
@@ -192,6 +194,11 @@ jobs:
           fi
 
           echo "Healthcheck URL: ${HEALTHCHECK_URL}"
+
+          HEALTHCHECK_RETRY_DELAY_SECONDS="${{ vars.DEPLOY_HEALTHCHECK_RETRY_DELAY_SECONDS }}"
+          if [[ -z "${HEALTHCHECK_RETRY_DELAY_SECONDS}" ]]; then
+            HEALTHCHECK_RETRY_DELAY_SECONDS=3
+          fi
 
           for i in $(seq 1 18); do
             ssh_out="$(ssh -T -o StrictHostKeyChecking=yes \
@@ -228,8 +235,8 @@ jobs:
             else
               echo "Healthcheck response version mismatch (${i}/18): got='${actual_version}' expected='${{ env.TARGET_SHA }}' running_tag='${running_tag:-<none>}'"
             fi
-            echo "Healthcheck retry (${i}/18)"
-            sleep 5
+            echo "Healthcheck retry (${i}/18) after ${HEALTHCHECK_RETRY_DELAY_SECONDS}s"
+            sleep "${HEALTHCHECK_RETRY_DELAY_SECONDS}"
           done
 
           echo "Healthcheck failed. Dumping server diagnostics..."
@@ -335,6 +342,11 @@ jobs:
 
           echo "Rollback healthcheck URL: ${HEALTHCHECK_URL}"
 
+          HEALTHCHECK_RETRY_DELAY_SECONDS="${{ vars.DEPLOY_HEALTHCHECK_RETRY_DELAY_SECONDS }}"
+          if [[ -z "${HEALTHCHECK_RETRY_DELAY_SECONDS}" ]]; then
+            HEALTHCHECK_RETRY_DELAY_SECONDS=3
+          fi
+
           for i in $(seq 1 12); do
             if ssh -T -o StrictHostKeyChecking=yes \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
@@ -342,8 +354,8 @@ jobs:
               echo "Rollback healthcheck passed (${i}/12)"
               exit 0
             fi
-            echo "Rollback healthcheck retry (${i}/12)"
-            sleep 5
+            echo "Rollback healthcheck retry (${i}/12) after ${HEALTHCHECK_RETRY_DELAY_SECONDS}s"
+            sleep "${HEALTHCHECK_RETRY_DELAY_SECONDS}"
           done
 
           echo "Rollback healthcheck failed. Dumping server diagnostics..."
