@@ -1,16 +1,14 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { SessionCard } from "@/components/ui/session-card";
 import { apiGet } from "@/lib/api";
-import { 
-  dateOnlyToUtcDate, 
-  utcDateToDateOnly, 
-  addDays, 
-  monthStart, 
+import {
+  dateOnlyToUtcDate,
+  monthStart,
   monthGrid, 
   dayOfMonth, 
   getDayOfWeek,
@@ -284,6 +282,7 @@ export default function CalendarPage() {
   const [allPlanLogs, setAllPlanLogs] = useState<WorkoutLogSummary[]>([]);
   const [selectedLog, setSelectedLog] = useState<WorkoutLogForDate | null>(null);
   const [selectedLogLoading, setSelectedLogLoading] = useState(false);
+  const [completedLogKey, setCompletedLogKey] = useState("");
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<GeneratedSessionDetail | null>(null);
   const [selectedSessionLoading, setSelectedSessionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -294,8 +293,8 @@ export default function CalendarPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
   const monthNavFeedbackTimerRef = useRef<number | null>(null);
-  const loadingRef = useRef(loading);
-  loadingRef.current = loading;
+
+  const currentLogKey = planId ? `${planId}|${selectedDate}` : "";
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -368,11 +367,13 @@ export default function CalendarPage() {
   useEffect(() => {
     if (!planId) {
       setSelectedLog(null);
-      setSelectedLogLoading(loadingRef.current);
+      setCompletedLogKey("");
+      setSelectedLogLoading(false);
       return;
     }
 
     let cancelled = false;
+    const fetchKey = `${planId}|${selectedDate}`;
 
     (async () => {
       try {
@@ -386,9 +387,11 @@ export default function CalendarPage() {
         const res = await apiGet<{ items: WorkoutLogForDate[] }>(`/api/logs?${sp.toString()}`);
         if (cancelled) return;
         setSelectedLog(res.items[0] ?? null);
+        setCompletedLogKey(fetchKey);
       } catch (e: any) {
         if (!cancelled) {
           setSelectedLog(null);
+          setCompletedLogKey(fetchKey);
           setError(e?.message ?? "운동기록을 불러오지 못했습니다.");
         }
       } finally {
@@ -824,7 +827,7 @@ export default function CalendarPage() {
 
         {error && <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-sm)", font: "var(--font-secondary)" }}>{error}</div>}
 
-        {loading || selectedLogLoading || selectedSessionLoading ? (
+        {loading || selectedLogLoading || selectedSessionLoading || (!!planId && completedLogKey !== currentLogKey) ? (
           <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "center", padding: "var(--space-lg)" }}>
             <span />
             <span />
