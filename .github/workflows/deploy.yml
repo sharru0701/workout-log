@@ -143,6 +143,10 @@ jobs:
         run: |
           set -euo pipefail
 
+          ssh -T -o StrictHostKeyChecking=yes \
+            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R \$USER:\$USER /opt/workout-log"
+
           remote_ready="$(
             ssh -T -o StrictHostKeyChecking=yes \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
@@ -156,9 +160,6 @@ jobs:
         if: ${{ steps.deploy_bundle_changes.outputs.has_changes == 'true' || steps.remote_bundle.outputs.ready != 'true' }}
         shell: bash
         run: |
-          ssh -T -o StrictHostKeyChecking=yes \
-            "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
-            "sudo mkdir -p /opt/workout-log/deploy && sudo chown -R \$USER:\$USER /opt/workout-log"
           rsync -avz --delete \
             --exclude ".env" \
             -e "ssh -o StrictHostKeyChecking=yes" \
