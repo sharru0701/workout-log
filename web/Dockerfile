@@ -41,5 +41,5 @@ COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/src/server/db ./src/server/db
 
 EXPOSE 3000
-# In standalone mode, use the generated server.js
-CMD ["sh", "-c", "node scripts/migrate.mjs && exec node server.js"]
+# Migrations run as a dedicated deploy job before the web container is switched.
+CMD ["node", "server.js"]
