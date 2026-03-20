@@ -32,9 +32,23 @@
   height: 100%;
   pointer-events: auto; /* 터치 잡아먹기 */
   cursor: pointer;
-  
+
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
+
+  /* Safari 상단 UI(상태바·주소창) 투명도 유지:
+     safe-area-inset-top 위쪽은 마스크로 투명하게 남겨
+     Safari frosted-glass가 페이지 배경색을 계속 샘플링하게 함 */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px)
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px)
+  );
 }
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
