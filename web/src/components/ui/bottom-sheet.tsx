@@ -274,28 +274,6 @@ export function BottomSheet({
       body.style.width = "100%";
       // body.style.overflow = "hidden" 제거: Safari 상태바/주소창 Frosted glass 효과 유지를 위함
       // root.style.overflow = "hidden" 제거: 상동
-
-      // Safari 상태바 투명도 유지를 위한 추가 조치:
-      // 모달이 열리면 배경이 어두워지므로(딤드), Safari가 이를 인식하도록 
-      // html/body 배경색을 오버레이가 적용된 후의 예상 색상으로 설정하고 theme-color를 동적으로 변경합니다.
-      const isDark = root.getAttribute("data-theme-preference") === "dark" || 
-                    (root.getAttribute("data-theme-preference") !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
-      
-      const overlayColor = isDark ? "#05070a" : "#c5c8c6";
-      root.style.backgroundColor = overlayColor;
-      body.style.backgroundColor = overlayColor;
-
-      let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
-      if (!meta) {
-        meta = document.createElement("meta");
-        meta.name = "theme-color";
-        document.head.appendChild(meta);
-      }
-      
-      // 기존 값이 없으면 현재 테마에 맞는 기본색을 백업 (ThemePreferenceSync에서 아직 설정을 안했을 수도 있음)
-      const defaultColor = isDark ? "#0d1117" : "#fdf6e3";
-      root.dataset.originalThemeColor = meta.content || defaultColor;
-      meta.content = overlayColor;
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -314,16 +292,6 @@ export function BottomSheet({
       body.style.right = "";
       body.style.width = "";
       body.style.overflow = "";
-      body.style.backgroundColor = "";
-      root.style.backgroundColor = "";
-      
-      const originalColor = root.dataset.originalThemeColor;
-      const meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
-      if (meta && originalColor) {
-        meta.content = originalColor;
-      }
-      delete root.dataset.originalThemeColor;
-
       delete root.dataset.bottomSheetOpen;
       window.scrollTo(0, scrollY);
     };
