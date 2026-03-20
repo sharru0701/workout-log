@@ -2,12 +2,7 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* Safari 상단 UI(상태바·주소창) 투명도 유지를 위해 
-     Safe area 상단 영역은 비워두고 그 아래부터 레이어를 생성합니다. */
-  top: env(safe-area-inset-top, 0px);
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -27,7 +22,17 @@
 .mobile-bottom-sheet-overlay {
   position: absolute;
   inset: 0;
-  background-color: var(--color-overlay);
+  /* Safari 상단 UI(상태바·주소창) 투명도 유지:
+     Safe area 상단 영역은 투명하게 두어 Safari가 뒤의 배경색을 샘플링하도록 합니다.
+     이후 영역은 var(--color-overlay)로 딤드 처리합니다.
+     backdrop-filter는 투명 영역에도 영향을 줄 수 있으므로 주의 깊게 설정합니다. */
+  background: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent env(safe-area-inset-top, 0px),
+    var(--color-overlay) env(safe-area-inset-top, 0px),
+    var(--color-overlay) 100%
+  );
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   appearance: none;
@@ -41,7 +46,22 @@
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
 
-  /* Safari 상단 UI 투명화를 위해 레이어 자체를 top에서 띄웠으므로 마스크는 불필요 */
+  /* backdrop-filter가 상태바 영역을 블러처리하지 않도록 마스크로 영역을 제한합니다.
+     이 마스크를 통해 상단 Safe Area 영역은 backdrop-filter의 영향권에서 완전히 벗어납니다. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px),
+    black 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px),
+    black 100%
+  );
 }
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
