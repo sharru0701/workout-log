@@ -296,7 +296,7 @@ jobs:
             actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
           fi
 
-          if [[ "${ssh_status}" -eq 0 ]]; then
+          if [[ -n "${response}" && "${running_tag}" == "${{ env.TARGET_SHA }}" ]]; then
             if [[ -n "${actual_version}" && "${actual_version}" != "${{ env.TARGET_SHA }}" ]]; then
               echo "::warning::Healthcheck version mismatch but running image tag is expected SHA (got version='${actual_version}', expected='${{ env.TARGET_SHA }}')."
             fi
@@ -420,7 +420,7 @@ jobs:
             HEALTHCHECK_RETRY_DELAY_SECONDS=3
           fi
 
-          ssh -T -o StrictHostKeyChecking=yes \
+          if ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
           set -euo pipefail
           healthcheck_url='${HEALTHCHECK_URL}'
@@ -434,6 +434,9 @@ jobs:
           done
           exit 1
           EOF
+          then
+            exit 0
+          fi
 
           echo "Rollback healthcheck failed. Dumping server diagnostics..."
           ssh -T -o StrictHostKeyChecking=yes \
