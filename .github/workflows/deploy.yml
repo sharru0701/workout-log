@@ -81,7 +81,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ env.TARGET_SHA }}
-          fetch-depth: 1
+          fetch-depth: 2
           sparse-checkout: |
             deploy
 
@@ -116,7 +116,44 @@ jobs:
             done
           fi
 
+      - name: Detect deploy bundle changes
+        id: deploy_bundle_changes
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          changed_files="$(
+            git show --format= --name-only "${{ env.TARGET_SHA }}" -- deploy \
+              | sed '/^$/d' \
+              || true
+          )"
+
+          if [[ -n "${changed_files}" ]]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+            echo "Deploy bundle changed files:"
+            printf '%s\n' "${changed_files}"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+            echo "No deploy bundle changes detected in ${TARGET_SHA}."
+          fi
+
+      - name: Check remote deploy bundle
+        id: remote_bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          remote_ready="$(
+            ssh -T -o StrictHostKeyChecking=yes \
+              "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
+              "test -f /opt/workout-log/deploy/docker-compose.yml && test -x /opt/workout-log/deploy/scripts/ensure_docker_headroom.sh && printf true || printf false"
+          )"
+
+          echo "ready=${remote_ready}" >> "$GITHUB_OUTPUT"
+          echo "Remote deploy bundle ready: ${remote_ready}"
+
       - name: Upload deploy bundle to server
+        if: ${{ steps.deploy_bundle_changes.outputs.has_changes == 'true' || steps.remote_bundle.outputs.ready != 'true' }}
         shell: bash
         run: |
           ssh -T -o StrictHostKeyChecking=yes \
@@ -126,6 +163,10 @@ jobs:
             --exclude ".env" \
             -e "ssh -o StrictHostKeyChecking=yes" \
             ./deploy/ "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}:/opt/workout-log/deploy/"
+
+      - name: Skip deploy bundle upload
+        if: ${{ steps.deploy_bundle_changes.outputs.has_changes != 'true' && steps.remote_bundle.outputs.ready == 'true' }}
+        run: echo "Skipping deploy bundle upload; deploy/ is unchanged and the remote bundle is already present."
 
       - name: Deploy image by commit SHA (capture rollback SHA)
         id: deploy_sha
