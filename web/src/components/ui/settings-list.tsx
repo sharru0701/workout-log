@@ -170,49 +170,41 @@ export function SectionFootnote({ children, className }: SectionFootnoteProps) {
   );
 }
 
-export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
-  const getStyle = () => {
-    switch (tone) {
-      case "primary":
-        return {
-          backgroundColor: "var(--color-selected-weak)",
-          color: "var(--color-action-strong)",
-          border: "1px solid var(--color-selected-border)",
-        };
-      case "info":
-        return {
-          backgroundColor: "var(--color-info-weak)",
-          color: "var(--color-info)",
-          border: "1px solid color-mix(in srgb, var(--color-info) 28%, var(--color-border))",
-        };
-      case "success":
-        return {
-          backgroundColor: "var(--color-success-weak)",
-          color: "var(--color-success)",
-          border: "1px solid color-mix(in srgb, var(--color-success) 32%, var(--color-border))",
-        };
-      case "warning":
-        return {
-          backgroundColor: "var(--color-warning-weak)",
-          color: "var(--color-warning)",
-          border: "1px solid color-mix(in srgb, var(--color-warning) 32%, var(--color-border))",
-        };
-      case "surface":
-        return {
-          backgroundColor: "var(--color-surface-2)",
-          color: "var(--color-text)",
-          border: "1px solid var(--color-border)",
-        };
-      case "neutral":
-      default:
-        return {
-          backgroundColor: "var(--color-surface-2)",
-          color: "var(--color-text-muted)",
-          border: "1px solid var(--color-border)",
-        };
-    }
-  };
+// PERF: RowIcon 렌더마다 switch 실행 → 모듈 레벨 상수 룩업으로 교체
+const ROW_ICON_TONE_STYLES: Record<RowIconTone, CSSProperties> = {
+  primary: {
+    backgroundColor: "var(--color-selected-weak)",
+    color: "var(--color-action-strong)",
+    border: "1px solid var(--color-selected-border)",
+  },
+  info: {
+    backgroundColor: "var(--color-info-weak)",
+    color: "var(--color-info)",
+    border: "1px solid color-mix(in srgb, var(--color-info) 28%, var(--color-border))",
+  },
+  success: {
+    backgroundColor: "var(--color-success-weak)",
+    color: "var(--color-success)",
+    border: "1px solid color-mix(in srgb, var(--color-success) 32%, var(--color-border))",
+  },
+  warning: {
+    backgroundColor: "var(--color-warning-weak)",
+    color: "var(--color-warning)",
+    border: "1px solid color-mix(in srgb, var(--color-warning) 32%, var(--color-border))",
+  },
+  surface: {
+    backgroundColor: "var(--color-surface-2)",
+    color: "var(--color-text)",
+    border: "1px solid var(--color-border)",
+  },
+  neutral: {
+    backgroundColor: "var(--color-surface-2)",
+    color: "var(--color-text-muted)",
+    border: "1px solid var(--color-border)",
+  },
+};
 
+export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
   return (
     <span
       className="settings-row-icon"
@@ -229,7 +221,7 @@ export function RowIcon({ symbol, tone = "neutral", label }: RowIconProps) {
         fontSize: "14px",
         fontWeight: 600,
         fontVariantNumeric: "tabular-nums",
-        ...getStyle(),
+        ...ROW_ICON_TONE_STYLES[tone],
       }}
     >
       {symbol}
