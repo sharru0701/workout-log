@@ -294,6 +294,8 @@ export default function CalendarPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
   const monthNavFeedbackTimerRef = useRef<number | null>(null);
+  const loadingRef = useRef(loading);
+  loadingRef.current = loading;
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -366,7 +368,7 @@ export default function CalendarPage() {
   useEffect(() => {
     if (!planId) {
       setSelectedLog(null);
-      setSelectedLogLoading(false);
+      setSelectedLogLoading(loadingRef.current);
       return;
     }
 
