@@ -1,4 +1,4 @@
-name: Web E2E (Playwright)
+name: e2e
 
 on:
   pull_request:

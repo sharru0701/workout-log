@@ -1,8 +1,8 @@
-name: Build & Deploy (GHCR + Tailscale OAuth + SSH)
+name: build&deploy
 
 on:
   workflow_run:
-    workflows: ["Web E2E (Playwright)"]
+    workflows: ["e2e"]
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -234,7 +234,7 @@ jobs:
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?checkMigrations=1&requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
           fi
 
           echo "Healthcheck URL: ${HEALTHCHECK_URL}"
@@ -381,7 +381,7 @@ jobs:
 
           HEALTHCHECK_URL="${{ secrets.DEPLOY_HEALTHCHECK_URL }}"
           if [[ -z "${HEALTHCHECK_URL}" ]]; then
-            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?checkMigrations=1&requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
+            HEALTHCHECK_URL="http://127.0.0.1:3001/api/health?requiredTables=program_template,user_setting,ux_event_log,migration_run_log"
           fi
 
           echo "Rollback healthcheck URL: ${HEALTHCHECK_URL}"
