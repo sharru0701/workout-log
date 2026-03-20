@@ -211,8 +211,11 @@ jobs:
           export KEEP_IMAGES=5
           export MIN_FREE_MB=4096
           export MAX_ROOT_USAGE_PERCENT=90
+          image_ref="${{ env.IMAGE_NAME }}:${{ env.TARGET_SHA }}"
           ./scripts/ensure_docker_headroom.sh
-          if ! docker compose pull web; then
+          if docker image inspect "${image_ref}" >/dev/null 2>&1; then
+            echo "[deploy] target image already present locally; skipping docker pull (${image_ref})"
+          elif ! docker compose pull web; then
             echo "[deploy] docker pull failed; forcing aggressive docker cleanup and retrying once"
             AGGRESSIVE_PRUNE=1 ./scripts/ensure_docker_headroom.sh
             docker compose pull web
