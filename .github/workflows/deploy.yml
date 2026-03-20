@@ -175,7 +175,7 @@ jobs:
         run: |
           set -euo pipefail
 
-          rollback_sha="$(ssh -T -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF'
+          rollback_sha="$(ssh -T -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF' || true
           set -euo pipefail
           cd /opt/workout-log/deploy
 
