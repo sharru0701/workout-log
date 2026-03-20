@@ -7,6 +7,11 @@ import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import pkg from "../../../../package.json";
 
+// Force Next.js standalone to include these for the external migration script
+import "drizzle-orm/node-postgres/migrator";
+import "pg";
+import "tsx/dist/cli.mjs"; // For seed-if-needed.mjs
+
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
 const MIGRATION_FILE_PATTERN = /^\d+_.+\.sql$/;
 
