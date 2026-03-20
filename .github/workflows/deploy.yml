@@ -171,38 +171,22 @@ jobs:
         run: |
           set -euo pipefail
 
-          rollback_sha="$(ssh -T -o StrictHostKeyChecking=yes "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<'EOF' || true
-          set -euo pipefail
-          cd /opt/workout-log/deploy
-
-          if [[ -s .last_successful_web_sha ]]; then
-            cat .last_successful_web_sha
-            exit 0
-          fi
-
-          current_image="$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)"
-          current_tag="${current_image##*:}"
-
-          if [[ "${current_tag}" =~ ^[0-9a-f]{40}$ ]]; then
-            echo "${current_tag}"
-          fi
-          EOF
-          )"
-
-          rollback_sha="$(
-            printf '%s\n' "${rollback_sha}" \
-              | tr -d '\r' \
-              | grep -E '^[0-9a-f]{40}$' \
-              | tail -n1 \
-              | xargs || true
-          )"
-          echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
-          echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
-
-          ssh -T -o StrictHostKeyChecking=yes \
+          set +e
+          deploy_out="$(ssh -T -o StrictHostKeyChecking=yes \
             "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" <<EOF
           set -euo pipefail
           cd /opt/workout-log/deploy
+          rollback_sha=''
+          if [[ -s .last_successful_web_sha ]]; then
+            rollback_sha="\$(tr -d '\r\n' < .last_successful_web_sha)"
+          else
+            current_image="\$(docker inspect -f '{{.Config.Image}}' workoutlog-web 2>/dev/null || true)"
+            current_tag="\${current_image##*:}"
+            if [[ "\${current_tag}" =~ ^[0-9a-f]{40}$ ]]; then
+              rollback_sha="\${current_tag}"
+            fi
+          fi
+          printf '__ROLLBACK_SHA__=%s\n' "\${rollback_sha}"
           export WEB_IMAGE_TAG=${{ env.TARGET_SHA }}
           export KEEP_IMAGES=5
           export MIN_FREE_MB=4096
@@ -220,6 +204,26 @@ jobs:
           docker compose up -d --no-deps --force-recreate web
           docker compose ps
           EOF
+          )"
+          deploy_status=$?
+          set -e
+
+          printf '%s\n' "${deploy_out}" | grep -v '^__ROLLBACK_SHA__=' || true
+
+          rollback_sha="$(
+            printf '%s\n' "${deploy_out}" \
+              | grep '^__ROLLBACK_SHA__=' | cut -d= -f2- \
+              | tr -d '\r' \
+              | grep -E '^[0-9a-f]{40}$' \
+              | tail -n1 \
+              | xargs || true
+          )"
+          echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
+          echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
+
+          if [[ "${deploy_status}" -ne 0 ]]; then
+            exit "${deploy_status}"
+          fi
 
       - name: Healthcheck (from deploy server)
         id: healthcheck
