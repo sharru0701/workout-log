@@ -81,8 +81,8 @@ assert_headroom() {
   return 0
 }
 
-report_disk
 if [[ "${AGGRESSIVE_PRUNE}" == "1" ]]; then
+  report_disk
   prune_aggressive
   report_disk
   assert_headroom
