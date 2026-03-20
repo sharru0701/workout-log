@@ -223,10 +223,26 @@ export { computeBodyweightTotalLoadKg };
 
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
-  document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
-  // No theme-color injection: Safari uses natural frosted-glass,
-  // blurring html { background-color: var(--color-bg) } behind the pill.
-  document.querySelectorAll(`meta[name="theme-color"][data-dynamic]`).forEach(m => m.remove());
+  const root = document.documentElement;
+  const normalizedTheme = theme.toLowerCase();
+  root.setAttribute("data-theme-preference", normalizedTheme);
+
+  // Solarized Light: #fdf6e3, Dark: #0d1117 (tokens.css 참조)
+  const themeColor = normalizedTheme === "dark" ? "#0d1117" : "#fdf6e3";
+  
+  // 모달이 열려있는 경우 직접 업데이트하지 않고 백업만 갱신
+  if (root.dataset.bottomSheetOpen === "true") {
+    root.dataset.originalThemeColor = themeColor;
+    return;
+  }
+
+  let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
+  if (!meta) {
+    meta = document.createElement("meta");
+    meta.name = "theme-color";
+    document.head.appendChild(meta);
+  }
+  meta.content = themeColor;
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {

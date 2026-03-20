@@ -5,13 +5,13 @@ import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 
+import { viewportThemeColor } from "@/lib/theme";
+
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  // No themeColor: let Safari use natural frosted-glass.
-  // The html background-color (--color-bg) fills behind the pill
-  // so frosted glass blurs the page color → looks transparent.
+  themeColor: viewportThemeColor,
 };
 
 export const metadata: Metadata = {
