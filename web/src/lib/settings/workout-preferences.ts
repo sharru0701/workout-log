@@ -227,22 +227,10 @@ export function applyThemePreferenceToDocument(theme: ThemePreference) {
   const normalizedTheme = theme.toLowerCase();
   root.setAttribute("data-theme-preference", normalizedTheme);
 
-  // Solarized Light: #fdf6e3, Dark: #0d1117 (tokens.css 참조)
-  const themeColor = normalizedTheme === "dark" ? "#0d1117" : "#fdf6e3";
-  
-  // 모달이 열려있는 경우 직접 업데이트하지 않고 백업만 갱신
-  if (root.dataset.bottomSheetOpen === "true") {
-    root.dataset.originalThemeColor = themeColor;
-    return;
-  }
-
-  let meta = document.querySelector('meta[name="theme-color"]') as HTMLMetaElement;
-  if (!meta) {
-    meta = document.createElement("meta");
-    meta.name = "theme-color";
-    document.head.appendChild(meta);
-  }
-  meta.content = themeColor;
+  // No theme-color injection: Safari uses natural frosted-glass,
+  // blurring html { background-color: var(--color-bg) } behind the pill.
+  // We remove any dynamic theme-color meta tags that might have been injected.
+  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.remove());
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {

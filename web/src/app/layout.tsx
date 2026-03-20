@@ -5,13 +5,11 @@ import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 
-import { viewportThemeColor } from "@/lib/theme";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: viewportThemeColor,
+  // No themeColor: let Safari use natural frosted-glass.
 };
 
 export const metadata: Metadata = {

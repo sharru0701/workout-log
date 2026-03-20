@@ -2,11 +2,7 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* Safari 상태바 투명도 유지를 위해 모달 컨테이너를 Safe Area 아래로 밀어냅니다. */
-  top: env(safe-area-inset-top, 0px);
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -39,6 +35,25 @@
 
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
+
+  /* Safari 상단 UI(상태바·주소창) 투명도 유지:
+     Safe area 상단 영역은 마스크를 통해 제외함으로써, 
+     backdrop-filter나 배경색이 상태바 영역에 영향을 주지 않도록 합니다. 
+     이를 통해 Safari가 뒤쪽의 배경색(var(--color-bg))을 그대로 샘플링하게 합니다. */
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px),
+    black 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent env(safe-area-inset-top, 0px),
+    black env(safe-area-inset-top, 0px),
+    black 100%
+  );
 }
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
