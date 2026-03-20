@@ -82,9 +82,21 @@ assert_headroom() {
 }
 
 report_disk
+if [[ "${AGGRESSIVE_PRUNE}" == "1" ]]; then
+  prune_aggressive
+  report_disk
+  assert_headroom
+  exit 0
+fi
+
+if assert_headroom; then
+  echo "[headroom] sufficient disk headroom detected; skipping docker cleanup"
+  exit 0
+fi
+
 prune_safe
 
-if [[ "${AGGRESSIVE_PRUNE}" == "1" ]] || ! assert_headroom; then
+if ! assert_headroom; then
   prune_aggressive
 fi
 
