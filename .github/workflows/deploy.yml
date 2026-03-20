@@ -228,6 +228,7 @@ jobs:
               running_tag=''
             fi
             if [[ -n "\${response}" && "\${running_tag}" == "\${expected_sha}" ]]; then
+              printf '__DEPLOY_VERIFIED__=%s\n' 'true'
               printf '__HEALTHCHECK_RESPONSE__=%s\n' "\${response}"
               printf '__HEALTHCHECK_RUNNING_IMAGE__=%s\n' "\${running_image}"
               printf '__HEALTHCHECK_ATTEMPT__=%s\n' "\${i}"
@@ -236,6 +237,7 @@ jobs:
             fi
             sleep "\${retry_delay}"
           done
+          printf '__DEPLOY_VERIFIED__=%s\n' 'false'
           printf '__HEALTHCHECK_RESPONSE__=%s\n' "\${response}"
           printf '__HEALTHCHECK_RUNNING_IMAGE__=%s\n' "\${running_image}"
           printf '__HEALTHCHECK_ATTEMPT__=%s\n' '18'
@@ -247,6 +249,7 @@ jobs:
 
           printf '%s\n' "${deploy_out}" \
             | grep -v '^__ROLLBACK_SHA__=' \
+            | grep -v '^__DEPLOY_VERIFIED__=' \
             | grep -v '^__HEALTHCHECK_RESPONSE__=' \
             | grep -v '^__HEALTHCHECK_RUNNING_IMAGE__=' \
             | grep -v '^__HEALTHCHECK_ATTEMPT__=' \
@@ -263,6 +266,11 @@ jobs:
           echo "rollback_sha=${rollback_sha}" >> "$GITHUB_OUTPUT"
           echo "Rollback candidate SHA: ${rollback_sha:-<none>}"
 
+          deploy_verified="$(
+            printf '%s\n' "${deploy_out}" \
+              | sed -n 's/^__DEPLOY_VERIFIED__=//p' \
+              | tr -d '\r' | tail -n1 | xargs || true
+          )"
           response="$(
             printf '%s\n' "${deploy_out}" \
               | sed -n 's/^__HEALTHCHECK_RESPONSE__=//p' \
@@ -285,12 +293,7 @@ jobs:
             actual_version="$(printf '%s' "${response}" | node -e "const fs=require('fs');const raw=fs.readFileSync(0,'utf8');const start=raw.indexOf('{');const end=raw.lastIndexOf('}');if(start===-1||end<start){process.stdout.write('');process.exit(0);}try{const d=JSON.parse(raw.slice(start,end+1));process.stdout.write(String(d.version||''));}catch{process.stdout.write('');}")"
           fi
 
-          verified_locally=0
-          if [[ -n "${response}" && "${running_tag}" == "${{ env.TARGET_SHA }}" && "${actual_version}" == "${{ env.TARGET_SHA }}" ]]; then
-            verified_locally=1
-          fi
-
-          if [[ "${deploy_status}" -eq 0 && "${verified_locally}" -eq 1 ]]; then
+          if [[ "${deploy_status}" -eq 0 && "${deploy_verified}" == "true" ]]; then
             echo "Healthcheck passed with expected running image tag (${attempt:-1}/18): ${running_tag}"
           elif [[ -z "${response}" ]]; then
             echo "Healthcheck request failed or returned empty body after ${attempt:-18} attempts. running_tag='${running_tag:-<none>}' expected='${{ env.TARGET_SHA }}'"
@@ -300,7 +303,7 @@ jobs:
             echo "Healthcheck response version mismatch after ${attempt:-18} attempts: got='${actual_version}' expected='${{ env.TARGET_SHA }}' running_tag='${running_tag:-<none>}'"
           fi
 
-          if [[ "${deploy_status}" -ne 0 || "${verified_locally}" -ne 1 ]]; then
+          if [[ "${deploy_status}" -ne 0 || "${deploy_verified}" != "true" ]]; then
             echo "Deploy verification failed. Dumping server diagnostics..."
             ssh -T -o StrictHostKeyChecking=yes \
               "${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}" \
@@ -409,28 +412,20 @@ jobs:
           retry_delay='${HEALTHCHECK_RETRY_DELAY_SECONDS}'
           for i in \$(seq 1 12); do
             if curl -fsS --max-time 8 "\${healthcheck_url}" >/dev/null 2>&1; then
-              printf '__ROLLBACK_HEALTHCHECK__=%s\n' 'true'
               printf 'Rollback healthcheck passed (%s/12)\n' "\${i}"
               exit 0
             fi
             sleep "\${retry_delay}"
           done
-          printf '__ROLLBACK_HEALTHCHECK__=%s\n' 'false'
-          exit 0
+          exit 1
           EOF
           )"
           rollback_status=$?
           set -e
 
-          printf '%s\n' "${rollback_out}" | grep -v '^__ROLLBACK_HEALTHCHECK__=' || true
+          printf '%s\n' "${rollback_out}" || true
 
-          rollback_verified="$(
-            printf '%s\n' "${rollback_out}" \
-              | sed -n 's/^__ROLLBACK_HEALTHCHECK__=//p' \
-              | tr -d '\r' | tail -n1 | xargs || true
-          )"
-
-          if [[ "${rollback_status}" -eq 0 && "${rollback_verified}" == "true" ]]; then
+          if [[ "${rollback_status}" -eq 0 ]]; then
             exit 0
           fi
 
