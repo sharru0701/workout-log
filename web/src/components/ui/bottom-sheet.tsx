@@ -273,18 +273,6 @@ export function BottomSheet({
       body.style.right = "0";
       body.style.width = "100%";
       // overflow: hidden 미사용 — Safari 상태바/주소창 frosted-glass 유지를 위함
-
-      // Safari: body가 position:fixed 상태가 되면 자연 frosted-glass 샘플링이 중단되어
-      // 상태바/주소창에 배경색이 노출됩니다. --color-bg 값을 theme-color 메타로 명시해
-      // 메인 화면과 동일한 색상이 표시되도록 합니다.
-      const bgColor = getComputedStyle(root).getPropertyValue("--color-bg").trim();
-      if (bgColor) {
-        const meta = document.createElement("meta");
-        meta.name = "theme-color";
-        meta.content = bgColor;
-        meta.dataset.bottomSheetThemeColor = "true";
-        document.head.appendChild(meta);
-      }
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -305,9 +293,6 @@ export function BottomSheet({
       body.style.overflow = "";
       delete root.dataset.bottomSheetOpen;
       window.scrollTo(0, scrollY);
-
-      // Safari: 모달 종료 시 theme-color 제거 → 메인 화면의 자연 frosted-glass 복원
-      document.querySelectorAll("meta[data-bottom-sheet-theme-color]").forEach((m) => m.remove());
     };
   }, [open]);
 
