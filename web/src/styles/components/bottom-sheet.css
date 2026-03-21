@@ -42,20 +42,6 @@
   transition: opacity 0.3s ease;
 }
 
-/* Safe area 상단에 앱 배경색 고정 레이어:
-   backdrop-filter blur가 safe area까지 확장되면서 드래그 시 색상이 변동하는 문제를 방지.
-   ::before가 blur 위에 렌더링되어 safe area를 --color-bg로 덮어, 상태바 색이
-   드래그 여부와 무관하게 메인화면과 동일하게 유지됩니다. */
-.mobile-bottom-sheet-overlay::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: env(safe-area-inset-top, 0px);
-  background-color: var(--color-bg);
-  pointer-events: none;
-}
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
 }
