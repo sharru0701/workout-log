@@ -2,9 +2,9 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* Safari 상태바 투명도 유지를 위해 모달 컨테이너를 Safe Area 상단 영역에서 완전히 제외합니다.
-     이 영역에 어떠한 레이어도 겹치지 않게 함으로써 Safari가 메인 화면의 배경색을 그대로 샘플링하게 합니다. */
-  top: env(safe-area-inset-top, 0px);
+  /* Safe Area 포함 viewport 전체를 덮어, 오버레이 blur가 상태바 영역까지 이어지게 합니다.
+     Safe area를 제외했을 때 body::before 배경색이 노출되어 생기던 색띠 문제를 해결합니다. */
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
