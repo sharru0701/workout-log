@@ -274,6 +274,36 @@ export function BottomSheet({
       body.style.right = "0";
       body.style.width = "100%";
       // overflow: hidden 미사용 — Safari 상태바/주소창 frosted-glass 유지를 위함
+
+      // Safari 상태바/주소창에 블러 오버레이 색을 반영하기 위해 theme-color 주입
+      // Canvas로 --color-bg + --color-overlay를 합성하여 실제 표시 색상을 계산
+      try {
+        const style = getComputedStyle(root);
+        const bgColor = style.getPropertyValue("--color-bg").trim();
+        const overlayColor = style.getPropertyValue("--color-overlay").trim();
+        let themeColor = bgColor;
+        const canvas = document.createElement("canvas");
+        canvas.width = 1;
+        canvas.height = 1;
+        const ctx = canvas.getContext("2d");
+        if (ctx && bgColor) {
+          ctx.fillStyle = bgColor;
+          ctx.fillRect(0, 0, 1, 1);
+          if (overlayColor) {
+            ctx.fillStyle = overlayColor;
+            ctx.fillRect(0, 0, 1, 1);
+          }
+          const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+          themeColor = `rgb(${r}, ${g}, ${b})`;
+        }
+        const meta = document.createElement("meta");
+        meta.name = "theme-color";
+        meta.content = themeColor;
+        meta.dataset.bottomSheetThemeColor = "true";
+        document.head.appendChild(meta);
+      } catch {
+        // theme-color 주입 실패 시 무시
+      }
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -294,6 +324,9 @@ export function BottomSheet({
       body.style.overflow = "";
       delete root.dataset.bottomSheetOpen;
       window.scrollTo(0, scrollY);
+
+      // 주입했던 theme-color 메타 제거
+      document.querySelectorAll("meta[data-bottom-sheet-theme-color]").forEach((m) => m.remove());
     };
   }, [open]);
 
