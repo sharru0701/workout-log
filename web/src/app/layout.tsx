@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/index.css";
-import "@/styles/components/bottom-sheet.css";
+import "@/styles/components/sheet.css";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";

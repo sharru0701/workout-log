@@ -1,9 +1,9 @@
 "use client";
 
 import { createContext, useContext, useEffect, useEffectEvent, useMemo, useState, type ReactNode } from "react";
-import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
+import type { SheetPrimaryAction } from "@/components/ui/sheet-header";
 
-export type SettingsModalHeaderAction = BottomSheetPrimaryAction;
+export type SettingsModalHeaderAction = SheetPrimaryAction;
 
 type SettingsModalHeaderActionContextValue = {
   action: SettingsModalHeaderAction | null;

@@ -1,8 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { BottomSheet } from "./bottom-sheet";
-import type { BottomSheetPrimaryAction } from "./bottom-sheet-action-header";
+import { Sheet } from "./sheet";
+import type { SheetPrimaryAction } from "./sheet-header";
 
 type ModalProps = {
   open: boolean;
@@ -11,17 +11,13 @@ type ModalProps = {
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
-  primaryAction?: BottomSheetPrimaryAction | null;
+  primaryAction?: SheetPrimaryAction | null;
   closeLabel?: string;
   panelClassName?: string;
   className?: string;
+  header?: ReactNode;
 };
 
-/**
- * A unified Modal component that wraps BottomSheet with a standardized integrated style.
- * It ensures the "frosted glass" effect and Safari status bar transparency are maintained
- * by avoiding redundant nested containers like Cards.
- */
 export function Modal({
   open,
   onClose,
@@ -33,9 +29,10 @@ export function Modal({
   closeLabel = "닫기",
   panelClassName = "",
   className = "",
+  header,
 }: ModalProps) {
   return (
-    <BottomSheet
+    <Sheet
       open={open}
       onClose={onClose}
       title={title}
@@ -45,12 +42,11 @@ export function Modal({
       closeLabel={closeLabel}
       panelClassName={panelClassName}
       className={className}
+      header={header}
     >
-      <div className="modal-content-integrated">
-        {children}
-      </div>
-    </BottomSheet>
+      <div className="modal-content-integrated">{children}</div>
+    </Sheet>
   );
 }
 
-export type { BottomSheetPrimaryAction as ModalPrimaryAction };
+export type { SheetPrimaryAction as ModalPrimaryAction };
