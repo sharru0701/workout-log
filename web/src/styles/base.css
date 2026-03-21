@@ -10,6 +10,20 @@ body {
   min-height: 100dvh;
 }
 
+/* 바텀시트 오픈 시 Safari 상태바 frosted-glass 유지를 위한 배경 처리 */
+html[data-bottom-sheet-open="true"] body {
+  background-color: transparent;
+}
+
+html[data-bottom-sheet-open="true"] body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-color: var(--color-bg);
+  pointer-events: none;
+  z-index: -1;
+}
+
 *,
 *::before,
 *::after {

@@ -2,8 +2,9 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* Safe Area 포함 viewport 전체를 덮어, 오버레이 blur가 상태바 영역까지 이어지게 합니다.
-     Safe area를 제외했을 때 body::before 배경색이 노출되어 생기던 색띠 문제를 해결합니다. */
+  /* Safari 상태바 투명도 유지를 위해 모달 컨테이너를 viewport 전체(top: 0)로 설정하되, 
+     overlay 마스크를 사용하여 Safe Area 상단 영역의 불투명 오버레이를 제거합니다.
+     이 영역에 어떠한 레이어도 겹치지 않게 함으로써 Safari가 메인 화면의 배경색을 그대로 샘플링하게 합니다. */
   top: 0;
   left: 0;
   right: 0;
@@ -37,6 +38,11 @@
   height: 100%;
   pointer-events: auto;
   cursor: pointer;
+
+  /* Safari 상태바 영역(Safe Area Top)에는 오버레이가 겹치지 않도록 마스크 처리합니다.
+     이렇게 함으로써 Safari가 모달 뒤의 html/body 배경을 직접 샘플링하여 
+     메인 화면과 동일한 frosted-glass 블러 효과를 유지하도록 합니다. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black env(safe-area-inset-top, 0px));
 
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
