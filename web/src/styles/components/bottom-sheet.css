@@ -41,6 +41,7 @@
   /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
 }
+
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
 }
