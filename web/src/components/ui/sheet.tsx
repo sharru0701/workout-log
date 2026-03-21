@@ -54,6 +54,7 @@ export function Sheet({
   }, []);
 
   // Open/close the <dialog>
+  // `mounted` is in deps so the effect re-runs once the <dialog> element exists.
   useEffect(() => {
     const dialog = dialogRef.current;
     if (!dialog) return;
@@ -80,7 +81,7 @@ export function Sheet({
         animateClose(dialog);
       }
     }
-  }, [open]);
+  }, [open, mounted]);
 
   const animateClose = useCallback(
     (dialog: HTMLDialogElement) => {
