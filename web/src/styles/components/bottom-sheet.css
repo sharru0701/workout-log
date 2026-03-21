@@ -2,7 +2,6 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* 메인 화면과 동일하게 viewport 전체를 덮습니다. */
   top: 0;
   left: 0;
   right: 0;
@@ -27,9 +26,9 @@
   position: absolute;
   inset: 0;
   background-color: var(--color-overlay);
-  /* 오버레이에 직접적인 backdrop-filter를 주어 Safari가 모달 하단 영역에 대해 frosted-glass를 형성하게 합니다. */
-  backdrop-filter: blur(12px) saturate(160%);
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
+  /* 메인 화면과의 일관성을 위해 블러 강도 조정 */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   appearance: none;
   -webkit-appearance: none;
   border: none;
@@ -38,13 +37,12 @@
   pointer-events: auto;
   cursor: pointer;
 
-  /* Safari 상태바 영역 투명화 리팩터링: 
-     하드한 마스크 대신, 오버레이 자체가 상단에서 투명해지도록 하여 
-     Safari 브라우저 크롬이 body::before 배경을 자연스럽게 샘플링하도록 유도합니다. */
-  mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 20px));
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 20px));
+  /* Safari 상태바 영역 투명화: 
+     메인 화면처럼 상태바 뒤로 컨텐츠가 지나가는 것을 보여주기 위해 
+     최상단 영역(Safe Area)의 오버레이 마스크를 정교하게 조정합니다. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 12px));
+  mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 12px));
 
-  /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
 }
 
@@ -57,7 +55,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  /* 메인 화면 .container와 동일한 여백 유지 */
+  /* 좌우 여백을 메인 컨테이너와 일치시키고, 하단 Safe Area를 보장합니다. */
   padding: 0 var(--space-md) calc(env(safe-area-inset-bottom, 0px) + var(--space-md));
 
   transform: translateY(100%);
@@ -69,12 +67,10 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   transform: translateY(var(--mobile-bottom-sheet-drag-offset, 0px));
 }
 
-/* 드래그 도중에는 애니메이션 스무딩 제거 */
 .mobile-bottom-sheet-inner.is-dragging {
   transition: none;
 }
 
-/* 닫기 애니메이션 */
 html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bottom-sheet-inner.is-closing {
   transform: translateY(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 1, 1);
@@ -84,27 +80,34 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   position: relative;
   background-color: var(--color-surface);
   border-radius: 24px;
-  /* 메인 화면처럼 컨텐츠가 상태바 뒤로 지나가는 느낌을 주기 위해 max-height를 높이고 내부 스크롤을 유도합니다. */
-  max-height: 92dvh;
+  /* 핵심 수정: max-height를 높여 패널이 상태바 영역(Safe Area Top)을 덮도록 합니다.
+     이렇게 해야 패널 내부의 컨텐츠가 상태바 '뒤'로 지나가는 시각적 효과가 발생합니다. */
+  max-height: calc(100dvh - 12px); 
   display: flex;
   flex-direction: column;
   pointer-events: auto;
   box-shadow: 0 -8px 32px var(--shadow-color-strong);
-  padding: var(--space-md);
+  
+  /* 메인 화면(.app-main) 구조 계승: 상단 Safe Area 패딩 적용 */
+  padding-top: env(safe-area-inset-top, 0px);
   padding-bottom: var(--space-lg);
   overflow: hidden;
 }
 
-/* 드래그 핸들 영역 */
+/* 드래그 핸들: 패널 최상단(Safe Area 내)에 배치하여 iOS 시트 느낌 강조 */
 .mobile-bottom-sheet-drag-handle {
+  position: absolute;
+  top: env(safe-area-inset-top, 0px);
+  left: 0;
+  right: 0;
+  height: 24px;
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 8px 0 12px;
-  margin: -4px calc(-1 * var(--space-md)) 0;
   cursor: grab;
   user-select: none;
   touch-action: none;
+  z-index: 10;
 }
 
 .mobile-bottom-sheet-drag-handle-pill {
@@ -112,23 +115,19 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   height: 5px;
   border-radius: 2.5px;
   background-color: var(--color-border);
-  opacity: 0.6;
+  opacity: 0.4;
 }
 
-/* 모달 헤더 */
+/* 모달 헤더: 핸들 아래에 위치 */
 .mobile-bottom-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  margin-top: 12px;
   margin-bottom: var(--space-md);
+  padding: 0 var(--space-md);
   min-height: 48px;
-  cursor: grab;
-  user-select: none;
-  touch-action: none;
-}
-
-.mobile-bottom-sheet-inner.is-dragging .mobile-bottom-sheet-header {
-  cursor: grabbing;
+  flex-shrink: 0;
 }
 
 .mobile-bottom-sheet-title {
@@ -137,7 +136,6 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   font: var(--font-card-title);
   line-height: 1.25;
   padding: 0 var(--space-sm);
-  margin: 0;
 }
 
 .mobile-bottom-sheet-title h2 {
@@ -151,7 +149,6 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   margin: 4px 0 0;
 }
 
-/* 원형 액션 버튼 */
 .mobile-bottom-sheet-btn {
   width: 40px;
   height: 40px;
@@ -172,31 +169,15 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   transform: scale(0.95);
 }
 
-.mobile-bottom-sheet-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.mobile-bottom-sheet-btn svg {
-  width: 18px;
-  height: 18px;
-}
-
-.mobile-bottom-sheet-btn-spacer {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 .mobile-bottom-sheet-content {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-md);
+  padding: 0 var(--space-md) var(--space-md);
 }
 
-/* 푸터: 메인 패널과 분리된 별도 카드 스타일 */
 .mobile-bottom-sheet-footer {
   flex-shrink: 0;
   background-color: var(--color-surface);
@@ -204,4 +185,5 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   overflow: hidden;
   pointer-events: auto;
   box-shadow: 0 -4px 16px var(--shadow-color-soft);
+  margin-top: var(--space-xs);
 }
