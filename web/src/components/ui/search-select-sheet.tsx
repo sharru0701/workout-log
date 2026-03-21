@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
+import type { SheetPrimaryAction } from "@/components/ui/sheet-header";
 import { Modal } from "@/components/ui/modal";
 
 export type SearchSelectOption = {
@@ -35,7 +35,7 @@ type SearchSelectSheetProps = SearchSelectComboboxProps & {
   description?: string;
   closeLabel?: string;
   header?: ReactNode;
-  primaryAction?: BottomSheetPrimaryAction | null;
+  primaryAction?: SheetPrimaryAction | null;
   footer?: ReactNode;
   children?: ReactNode;
 };
