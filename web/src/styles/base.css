@@ -10,7 +10,13 @@ body {
   min-height: 100dvh;
 }
 
-/* 바텀시트 오픈 시 Safari 상태바 frosted-glass 유지를 위한 배경 처리 */
+/* 바텀시트 오픈 시 Safari 상태바 frosted-glass 유지를 위한 배경 처리
+   html, body 모두 transparent → Safari가 ::backdrop blur를 상태바/주소창에 반영
+   body::before가 시각적 배경색을 대신 담당 */
+html[data-sheet-open="true"] {
+  background-color: transparent;
+}
+
 html[data-sheet-open="true"] body {
   background-color: transparent;
 }
