@@ -47,6 +47,31 @@ dialog.sheet[data-closing]::backdrop {
   transition: opacity 0.28s ease;
 }
 
+/* Safari 하단 주소창 frosted-glass: 뷰포트 바닥에 불투명 배경을 깔아
+   반투명 ::backdrop 뒤의 teal 색 투과를 차단 */
+dialog.sheet::after {
+  content: "";
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: calc(env(safe-area-inset-bottom, 0px) + var(--space-md));
+  background-color: var(--color-bg);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+dialog.sheet[data-open]::after {
+  opacity: 1;
+}
+
+dialog.sheet[data-closing]::after {
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
 /* ── Panel ───────────────────────────────────────────────────────── */
 
 .sheet-panel {
