@@ -8,7 +8,7 @@ import {
   useSettingsModalHeaderActionState,
 } from "@/components/settings/settings-modal-header-action";
 import { SettingsHomeContent } from "@/components/settings/settings-home-content";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Modal } from "@/components/ui/modal";
 
 function modalTitleFromPathname(pathname: string) {
   if (pathname.startsWith("/settings/theme")) return "테마 설정";
@@ -96,7 +96,7 @@ function SettingsChildModal({
   return (
     <>
       <SettingsHomeContent />
-      <BottomSheet
+      <Modal
         open={sheetOpen}
         onClose={onClose}
         title={modalTitleFromPathname(pathname)}
@@ -105,8 +105,8 @@ function SettingsChildModal({
         panelClassName={panelClassName}
         primaryAction={headerAction}
       >
-        <div>{children}</div>
-      </BottomSheet>
+        {children}
+      </Modal>
     </>
   );
 }

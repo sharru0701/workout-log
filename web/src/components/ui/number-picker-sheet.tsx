@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { BottomSheet } from "./bottom-sheet";
+import { Modal } from "./modal";
 import { WheelPicker, generateNumberRange, type WheelPickerHandle } from "./wheel-picker";
 
 // ── NumberPickerSheet ────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ export function NumberPickerSheet({
   }, [draftValue, onChange, onClose]);
 
   return (
-    <BottomSheet
+    <Modal
       open={open}
       title={title}
       onClose={onClose}
@@ -67,21 +67,19 @@ export function NumberPickerSheet({
       }}
       footer={null}
     >
-      <div style={{ padding: "var(--space-md) 0 var(--space-xl)" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-md)" }}>
-          <WheelPicker
-            ref={pickerRef}
-            values={values}
-            value={draftValue}
-            onChange={handleChange}
-            itemHeight={48}
-            visibleCount={7}
-            formatValue={formatValue}
-          />
-          {unit ? <span style={{ fontSize: "1.25rem", color: "var(--color-text-muted)" }}>{unit}</span> : null}
-        </div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--space-md)", padding: "var(--space-md) 0 var(--space-sm)" }}>
+        <WheelPicker
+          ref={pickerRef}
+          values={values}
+          value={draftValue}
+          onChange={handleChange}
+          itemHeight={48}
+          visibleCount={7}
+          formatValue={formatValue}
+        />
+        {unit ? <span style={{ fontSize: "1.25rem", color: "var(--color-text-muted)" }}>{unit}</span> : null}
       </div>
-    </BottomSheet>
+    </Modal>
   );
 }
 

@@ -2,8 +2,7 @@
 
 import type { ReactNode } from "react";
 import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent } from "@/components/ui/card";
+import { Modal } from "@/components/ui/modal";
 
 export type SearchSelectOption = {
   key: string;
@@ -147,7 +146,7 @@ export function SearchSelectSheet({
   ...comboboxProps
 }: SearchSelectSheetProps) {
   return (
-    <BottomSheet
+    <Modal
       open={open}
       title={title}
       description={description}
@@ -157,10 +156,8 @@ export function SearchSelectSheet({
       primaryAction={primaryAction}
       footer={footer}
     >
-      <div className="search-select-sheet-container">
-        <SearchSelectCombobox {...comboboxProps} />
-        {children}
-      </div>
-    </BottomSheet>
+      <SearchSelectCombobox {...comboboxProps} />
+      {children}
+    </Modal>
   );
 }

@@ -168,7 +168,6 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   -webkit-overflow-scrolling: touch;
   padding: 0 var(--space-md) var(--space-md);
 }
-
 .mobile-bottom-sheet-footer {
   flex-shrink: 0;
   background-color: var(--color-surface);
@@ -176,5 +175,21 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   overflow: hidden;
   pointer-events: auto;
   box-shadow: 0 -4px 16px var(--shadow-color-soft);
+}
+
+/* 통합 모달 컨텐츠 스타일: 내부 Card를 대체하여 깔끔한 통합 룩 제공 */
+.modal-content-integrated {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  padding: var(--space-sm) 0;
+}
+
+.modal-content-integrated section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
   margin-top: var(--space-xs);
 }

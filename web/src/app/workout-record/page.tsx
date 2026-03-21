@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Modal } from "@/components/ui/modal";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionCard } from "@/components/ui/session-card";
@@ -1746,7 +1746,7 @@ export default function WorkoutRecordPage() {
       >
       </SearchSelectSheet>
 
-      <BottomSheet
+      <Modal
         open={addSheetOpen}
         title="운동 추가"
         description="기존 DB 종목 선택 또는 검색 후 기록 영역에 추가합니다."
@@ -1759,182 +1759,178 @@ export default function WorkoutRecordPage() {
         }}
         footer={null}
       >
-        <div>
-          <Card padding="md" elevated={false}>
-            <CardContent>
-              <SearchSelectCombobox
-                query={exerciseQuery}
-                placeholder="예: Squat"
-                onQueryChange={(nextQuery) => {
-                  setExerciseQuery(nextQuery);
-                  setExerciseOptionsError(null);
-                  setAddDraft((prev) => {
-                    if (!prev.exerciseId) return prev;
-                    if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                    return { ...prev, exerciseId: null, exerciseName: "" };
-                  });
-                }}
-                onQuerySubmit={() => {
-                  const first = filteredExerciseOptions[0] ?? null;
-                  if (!first) return;
-                  selectExerciseOption(first);
-                }}
-                onClearQuery={() => {
-                  setExerciseQuery("");
-                  setExerciseOptionsError(null);
-                }}
-                resultsAriaLabel="운동종목 검색 결과"
-                options={exerciseSearchOptions}
-                emptyText="검색 조건에 맞는 운동종목이 없습니다."
-                loading={exerciseOptionsLoading}
-                loadingText="검색 중..."
-                selectionSummary={
-                  selectedExerciseOption ? (
-                    <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
-                      <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택됨</span>
-                      <strong>
-                        {selectedExerciseOption.category
-                          ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
-                          : selectedExerciseOption.name}
-                      </strong>
-                      <button
-                        type="button"
-                        className="btn btn-inline-action"
-                        onClick={() => selectExerciseOption(null)}
-                      >
-                        선택 변경
-                      </button>
-                    </div>
-                  ) : null
-                }
-                hideOptions={Boolean(selectedExerciseOption)}
-              />
-            </CardContent>
-          </Card>
-
-          {exerciseOptionsError ? <p>{exerciseOptionsError}</p> : null}
-
-          <Card padding="md" elevated={false}>
-            <CardContent>
-              <section>
-                <div>
-                  <div>
-                    <span>무게 입력</span>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px" }}>
+            <SearchSelectCombobox
+              query={exerciseQuery}
+              placeholder="예: Squat"
+              onQueryChange={(nextQuery) => {
+                setExerciseQuery(nextQuery);
+                setExerciseOptionsError(null);
+                setAddDraft((prev) => {
+                  if (!prev.exerciseId) return prev;
+                  if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                  return { ...prev, exerciseId: null, exerciseName: "" };
+                });
+              }}
+              onQuerySubmit={() => {
+                const first = filteredExerciseOptions[0] ?? null;
+                if (!first) return;
+                selectExerciseOption(first);
+              }}
+              onClearQuery={() => {
+                setExerciseQuery("");
+                setExerciseOptionsError(null);
+              }}
+              resultsAriaLabel="운동종목 검색 결과"
+              options={exerciseSearchOptions}
+              emptyText="검색 조건에 맞는 운동종목이 없습니다."
+              loading={exerciseOptionsLoading}
+              loadingText="검색 중..."
+              selectionSummary={
+                selectedExerciseOption ? (
+                  <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
+                    <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택됨</span>
                     <strong>
-                      {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 설정" : "무게 설정"}
+                      {selectedExerciseOption.category
+                        ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
+                        : selectedExerciseOption.name}
                     </strong>
+                    <button
+                      type="button"
+                      className="btn btn-inline-action"
+                      onClick={() => selectExerciseOption(null)}
+                    >
+                      선택 변경
+                    </button>
                   </div>
-                  <span>{`${formatKgValue(addDraftIncrementKg)} 단위`}</span>
-                </div>
+                ) : null
+              }
+              hideOptions={Boolean(selectedExerciseOption)}
+            />
+          </div>
 
-                <AppNumberStepper
-                  label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
-                  value={addDraft.weightKg}
-                  min={0}
-                  max={1000}
-                  step={addDraftIncrementKg}
-                  inputMode="decimal"
-                  onChange={(value) =>
+          {exerciseOptionsError ? <p style={{ color: "var(--color-danger)", fontSize: "13px", padding: "0 4px" }}>{exerciseOptionsError}</p> : null}
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
+            <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 4px" }}>
+                <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+                  {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 설정" : "무게 설정"}
+                </span>
+                <span style={{ font: "var(--font-secondary)", color: "var(--color-text-subtle)" }}>{`${formatKgValue(addDraftIncrementKg)} 단위`}</span>
+              </div>
+
+              <AppNumberStepper
+                label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
+                value={addDraft.weightKg}
+                min={0}
+                max={1000}
+                step={addDraftIncrementKg}
+                inputMode="decimal"
+                onChange={(value) =>
+                  setAddDraft((prev) => ({
+                    ...prev,
+                    weightKg: resolveWeightWithCurrentPreferences(
+                      value,
+                      prev.exerciseId,
+                      prev.exerciseName,
+                    ),
+                  }))
+                }
+              />
+
+              {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
+                <p style={{ font: "var(--font-secondary)", color: "var(--color-info)", textAlign: "right", margin: 0, padding: "0 4px" }}>총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
+              ) : null}
+            </section>
+
+            <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              <div style={{ padding: "0 4px" }}>
+                <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>세트별 횟수 편집</span>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+                {addDraft.repsPerSet.map((setReps, index) => (
+                  <div key={`add-set-${index}`}>
+                    <AppNumberStepper
+                      label={`${index + 1}세트`}
+                      value={setReps}
+                      min={1}
+                      max={100}
+                      onChange={(value) =>
+                        setAddDraft((prev) => ({
+                          ...prev,
+                          repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
+                        }))
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
+                <button
+                  type="button"
+                  className="btn btn-inline-action btn-inline-action-primary"
+                  onClick={() =>
                     setAddDraft((prev) => ({
                       ...prev,
-                      weightKg: resolveWeightWithCurrentPreferences(
-                        value,
-                        prev.exerciseId,
-                        prev.exerciseName,
-                      ),
+                      repsPerSet: appendSetReps(prev.repsPerSet),
                     }))
                   }
-                />
+                >
+                  <AppPlusMinusIcon kind="plus" size={16} />
+                  <span>세트 추가</span>
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-inline-action btn-inline-action-danger"
+                  onClick={() =>
+                    setAddDraft((prev) => ({
+                      ...prev,
+                      repsPerSet: removeLastSetReps(prev.repsPerSet),
+                    }))
+                  }
+                  disabled={addDraft.repsPerSet.length <= 1}
+                >
+                  <AppPlusMinusIcon kind="minus" size={16} />
+                  <span>마지막 세트</span>
+                </button>
+              </div>
+            </section>
+          </div>
 
-                {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-                  <p>총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
-                ) : null}
-              </section>
-
-              <section>
-                <div>
-                  
-                  <span>빠른 편집</span>
-                </div>
-
-                <div>
-                  {addDraft.repsPerSet.map((setReps, index) => (
-                    <div key={`add-set-${index}`}>
-                      <AppNumberStepper
-                        label={`${index + 1}세트`}
-                        value={setReps}
-                        min={1}
-                        max={100}
-                        onChange={(value) =>
-                          setAddDraft((prev) => ({
-                            ...prev,
-                            repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
-                          }))
-                        }
-                      />
-                    </div>
-                  ))}
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
-                  <button
-                    type="button"
-                    className="btn btn-inline-action btn-inline-action-primary"
-                    onClick={() =>
-                      setAddDraft((prev) => ({
-                        ...prev,
-                        repsPerSet: appendSetReps(prev.repsPerSet),
-                      }))
-                    }
-                  >
-                    <AppPlusMinusIcon kind="plus" size={16} />
-                    <span>세트 추가</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-inline-action btn-inline-action-danger"
-                    onClick={() =>
-                      setAddDraft((prev) => ({
-                        ...prev,
-                        repsPerSet: removeLastSetReps(prev.repsPerSet),
-                      }))
-                    }
-                    disabled={addDraft.repsPerSet.length <= 1}
-                  >
-                    <AppPlusMinusIcon kind="minus" size={16} />
-                    <span>마지막 세트</span>
-                  </button>
-                </div>
-              </section>
-            </CardContent>
-          </Card>
-
-          {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
-            <Card tone="subtle" padding="sm" elevated={false}>
-              {addDraftIncrementInfo.source === "RULE" ? <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span> : null}
+          {(addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg)) ? (
+            <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-sm) var(--space-md)", borderRadius: "12px", display: "flex", flexDirection: "column", gap: "2px", font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+              {addDraftIncrementInfo.source === "RULE" ? <div>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</div> : null}
               {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-                <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
+                <div>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</div>
               ) : null}
-            </Card>
+            </div>
           ) : null}
 
-          <label>
-            <span>메모</span>
+          <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+            <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", paddingLeft: "4px" }}>메모</span>
             <AppTextarea
               variant="workout"
               value={addDraft.memo}
               onChange={(event) => setAddDraft((prev) => ({ ...prev, memo: event.target.value }))}
+              placeholder="특이사항 입력..."
             />
           </label>
 
-          <Link
-            href="/workout-record/exercise-catalog"
-            onClick={() => setAddSheetOpen(false)}
-          >
-            운동종목 CRUD 관리 열기
-          </Link>
+          <div style={{ display: "flex", justifyContent: "center", marginTop: "var(--space-sm)" }}>
+            <Link
+              href="/workout-record/exercise-catalog"
+              onClick={() => setAddSheetOpen(false)}
+              style={{ font: "var(--font-secondary)", color: "var(--color-action)", textDecoration: "underline" }}
+            >
+              운동종목 CRUD 관리 열기
+            </Link>
+          </div>
         </div>
-      </BottomSheet>
+      </Modal>
     </div>
   );
 }
