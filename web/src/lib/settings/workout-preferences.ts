@@ -223,14 +223,10 @@ export { computeBodyweightTotalLoadKg };
 
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
-  const root = document.documentElement;
-  const normalizedTheme = theme.toLowerCase();
-  root.setAttribute("data-theme-preference", normalizedTheme);
-
+  document.documentElement.setAttribute("data-theme-preference", theme.toLowerCase());
   // No theme-color injection: Safari uses natural frosted-glass,
   // blurring html { background-color: var(--color-bg) } behind the pill.
-  // We remove any dynamic theme-color meta tags that might have been injected.
-  document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.remove());
+  document.querySelectorAll(`meta[name="theme-color"][data-dynamic]`).forEach(m => m.remove());
 }
 
 export function readThemePreferenceFromLocalCache(): ThemePreference {

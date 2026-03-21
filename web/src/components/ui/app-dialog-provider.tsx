@@ -1,7 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Modal } from "@/components/ui/modal";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { Card, CardContent } from "@/components/ui/card";
 
 type DialogTone = "default" | "danger";
 
@@ -178,9 +179,10 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
   return (
     <AppDialogContext.Provider value={contextValue}>
       {children}
-      <Modal
+      <BottomSheet
         open={Boolean(active)}
         title={active?.title ?? ""}
+        description=""
         onClose={closeActiveAsCancel}
         closeLabel="닫기"
         footer={
@@ -190,7 +192,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: "var(--space-sm)",
+                gap: "var(--space-xs)",
                 width: "100%",
               }}
             >
@@ -215,13 +217,13 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         }
       >
         {active ? (
-          <div style={{ font: "var(--font-body)", color: "var(--color-text)", lineHeight: 1.6 }}>
-            {active.message.split("\n").map((line, i) => (
-              <p key={i} style={{ margin: 0 }}>{line}</p>
-            ))}
-          </div>
+          <Card tone={active.tone === "danger" ? "danger" : "subtle"} padding="md" elevated={false}>
+            <CardContent>
+              <p>{active.message}</p>
+            </CardContent>
+          </Card>
         ) : null}
-      </Modal>
+      </BottomSheet>
     </AppDialogContext.Provider>
   );
 }

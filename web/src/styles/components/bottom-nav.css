@@ -12,12 +12,6 @@
   gap: var(--space-sm);
 }
 
-/* Sheet 열림 시 FAB 숨김 → Safari 하단 주소창에 teal 투과 방지 */
-html[data-sheet-open="true"] .fab-container {
-  visibility: hidden;
-  pointer-events: none;
-}
-
 /* 닫혀있을 때 메인 버튼 */
 .fab-button {
   width: 56px;
