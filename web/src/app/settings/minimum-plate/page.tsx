@@ -8,7 +8,7 @@ import {
   NavigationRow,
   SectionFootnote,
   SectionHeader,
-} from "@/components/settings/settings-home-content";
+} from "@/components/ui/settings-list";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
@@ -139,23 +139,23 @@ export default function MinimumPlatePage() {
         <BaseGroupedList>
           <NavigationRow
             label="새 규칙 추가"
-            icon={
+            leading={
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
             }
-            onClick={openAddSheet}
+            onPress={openAddSheet}
           />
         </BaseGroupedList>
 
-        <BaseGroupedList title="설정된 규칙 목록">
+        <BaseGroupedList ariaLabel="설정된 규칙 목록">
           {rules.map((rule) => (
             <NavigationRow
               key={rule.exerciseId}
               label={rule.exerciseName}
-              value={`${rule.incrementKg.toFixed(2)}kg`}
-              onClick={() => openEditSheet(rule.exerciseId, rule.exerciseName, rule.incrementKg)}
+              value={`${Number(rule.incrementKg).toFixed(2)}kg`}
+              onPress={() => openEditSheet(rule.exerciseId, rule.exerciseName, Number(rule.incrementKg))}
             />
           ))}
         </BaseGroupedList>
@@ -241,7 +241,7 @@ export default function MinimumPlatePage() {
                       setRuleDraft((prev) => {
                         if (!prev.exerciseId) return prev;
                         if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                        return { ...prev, exerciseId: null, exerciseName: "" };
+                        return { ...prev, exerciseId: "", exerciseName: "" };
                       });
                     }}
                     onKeyDown={(event) => {
