@@ -89,6 +89,7 @@ export function BottomSheet({
   const [visualOpen, setVisualOpen] = useState(false);
   const [isTopSheet, setIsTopSheet] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
+  const innerRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const closeAnimationTimerRef = useRef<number | null>(null);
@@ -216,11 +217,11 @@ export function BottomSheet({
   }, []);
 
   const clearDragVisual = useCallback(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-    panel.classList.remove("is-dragging");
-    panel.classList.remove("is-closing");
-    panel.style.removeProperty("--mobile-bottom-sheet-drag-offset");
+    const inner = innerRef.current;
+    if (!inner) return;
+    inner.classList.remove("is-dragging");
+    inner.classList.remove("is-closing");
+    inner.style.removeProperty("--mobile-bottom-sheet-drag-offset");
   }, []);
 
   const clearDragState = useCallback(() => {
@@ -232,14 +233,14 @@ export function BottomSheet({
     }
   }, [clearDragListeners, clearDragVisual]);
 
-  // 닫기 애니메이션: is-closing 클래스로 패널 슬라이드 → 애니메이션 후 onClose() 호출
+  // 닫기 애니메이션: is-closing 클래스로 inner 슬라이드 → 애니메이션 후 onClose() 호출
   const handleClose = useCallback(() => {
     if (!isInteractiveSheet) return;
-    const panel = panelRef.current;
-    if (!panel) return;
-    if (panel.classList.contains("is-closing")) return;
+    const inner = innerRef.current;
+    if (!inner) return;
+    if (inner.classList.contains("is-closing")) return;
 
-    panel.classList.add("is-closing");
+    inner.classList.add("is-closing");
     window.setTimeout(() => {
       onClose();
     }, closeAnimationMs);
@@ -331,14 +332,14 @@ export function BottomSheet({
         const target = event.target as HTMLElement;
         if (target.closest('button, a, [role="button"]')) return;
       }
-      const panel = panelRef.current;
-      if (!panel) return;
+      const inner = innerRef.current;
+      if (!inner) return;
 
       event.preventDefault();
       clearDragState();
 
-      const panelHeight = panel.getBoundingClientRect().height;
-      const closeThresholdPx = Math.min(Math.max(panelHeight * 0.22, 88), 180);
+      const innerHeight = inner.getBoundingClientRect().height;
+      const closeThresholdPx = Math.min(Math.max(innerHeight * 0.22, 88), 180);
       const pointerId = event.pointerId;
       const startY = event.clientY;
       let dragOffset = 0;
@@ -346,27 +347,27 @@ export function BottomSheet({
       let lastTime = event.timeStamp;
       let velocityY = 0;
 
-      panel.classList.add("is-dragging");
-      panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
+      inner.classList.add("is-dragging");
+      inner.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
 
       const finish = (close: boolean) => {
         clearDragListeners();
-        panel.classList.remove("is-dragging");
+        inner.classList.remove("is-dragging");
         if (close) {
           // 드래그 놓는 위치에서 아래로 슬라이드 후 닫기
-          panel.classList.add("is-closing");
+          inner.classList.add("is-closing");
           window.setTimeout(() => {
             onClose();
           }, closeAnimationMs);
           return;
         }
-        panel.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
+        inner.style.setProperty("--mobile-bottom-sheet-drag-offset", "0px");
       };
 
       const onPointerMove = (moveEvent: PointerEvent) => {
         if (moveEvent.pointerId !== pointerId) return;
         dragOffset = Math.max(0, moveEvent.clientY - startY);
-        panel.style.setProperty("--mobile-bottom-sheet-drag-offset", `${dragOffset}px`);
+        inner.style.setProperty("--mobile-bottom-sheet-drag-offset", `${dragOffset}px`);
         if (dragOffset > 0) moveEvent.preventDefault();
 
         // 속도 추적 (px/ms)
@@ -415,50 +416,52 @@ export function BottomSheet({
           handleClose();
         }}
       />
-      <section
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-        className={`mobile-bottom-sheet-panel ${panelClassName}`}
-      >
-        <div
-          className="mobile-bottom-sheet-drag-handle"
-          onPointerDown={(e) => onHandlePointerDown(e, true)}
+      <div ref={innerRef} className="mobile-bottom-sheet-inner">
+        <section
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          tabIndex={-1}
+          className={`mobile-bottom-sheet-panel ${panelClassName}`}
         >
-          <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
-        </div>
-        {header ?? (primaryAction ? (
-          <BottomSheetActionHeader
-            title={title}
-            description={hasDescription ? description : undefined}
-            closeLabel={closeLabel}
-            onClose={handleClose}
-            action={primaryAction}
-            onPointerDown={onHandlePointerDown}
-          />
-        ) : (
-          <header
-            className="mobile-bottom-sheet-header"
-            onPointerDown={onHandlePointerDown}
+          <div
+            className="mobile-bottom-sheet-drag-handle"
+            onPointerDown={(e) => onHandlePointerDown(e, true)}
           >
-            <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
-            <div className="mobile-bottom-sheet-title">
-              <h2>{title}</h2>
-              {hasDescription ? <p>{description}</p> : null}
-            </div>
-            <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </header>
-        ))}
-        <div className="mobile-bottom-sheet-content">{children}</div>
+            <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
+          </div>
+          {header ?? (primaryAction ? (
+            <BottomSheetActionHeader
+              title={title}
+              description={hasDescription ? description : undefined}
+              closeLabel={closeLabel}
+              onClose={handleClose}
+              action={primaryAction}
+              onPointerDown={onHandlePointerDown}
+            />
+          ) : (
+            <header
+              className="mobile-bottom-sheet-header"
+              onPointerDown={onHandlePointerDown}
+            >
+              <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
+              <div className="mobile-bottom-sheet-title">
+                <h2>{title}</h2>
+                {hasDescription ? <p>{description}</p> : null}
+              </div>
+              <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </header>
+          ))}
+          <div className="mobile-bottom-sheet-content">{children}</div>
+        </section>
         {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
-      </section>
+      </div>
     </div>
   );
 
