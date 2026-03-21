@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "@/styles/index.css";
-import "@/styles/components/sheet.css";
+import "@/styles/components/bottom-sheet.css";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
@@ -10,6 +10,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   // No themeColor: let Safari use natural frosted-glass.
+  // The html background-color (--color-bg) fills behind the pill
+  // so frosted glass blurs the page color → looks transparent.
 };
 
 export const metadata: Metadata = {

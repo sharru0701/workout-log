@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
-import { Modal } from "@/components/ui/modal";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
@@ -306,7 +306,7 @@ function PlansManagePageContent() {
         </DashboardSection>
       </div>
 
-      <Modal
+      <BottomSheet
         open={Boolean(managePlanId)}
         onClose={() => {
           if (saving || deleting) return;
@@ -318,23 +318,25 @@ function PlansManagePageContent() {
       >
         {managedPlan ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px" }}>
-              <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</div>
-                <div style={{ font: "var(--font-card-title)" }}>{managedPlan.baseProgramName ?? "-"}</div>
+            <Card tone="subtle" padding="sm" elevated={false}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</div>
+                  <div style={{ font: "var(--font-card-title)" }}>{managedPlan.baseProgramName ?? "-"}</div>
+                </div>
+                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>생성일</div>
+                  <div>{formatDateTime(managedPlan.createdAt)}</div>
+                </div>
+                <div>
+                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>마지막 수행일</div>
+                  <div>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
+                </div>
               </div>
-              <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>생성일</div>
-                <div>{formatDateTime(managedPlan.createdAt)}</div>
-              </div>
-              <div>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>마지막 수행일</div>
-                <div>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
-              </div>
-            </div>
+            </Card>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)", paddingLeft: "4px" }}>플랜 이름 수정</span>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>플랜 이름</span>
               <AppTextInput
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
@@ -342,7 +344,7 @@ function PlansManagePageContent() {
               />
             </label>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               <PrimaryButton
                 as="a"
                 variant="primary"
@@ -380,11 +382,11 @@ function PlansManagePageContent() {
             </div>
           </div>
         ) : (
-          <div style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)" }}>
+          <Card tone="subtle" padding="sm" elevated={false}>
             관리할 플랜을 찾을 수 없습니다.
-          </div>
+          </Card>
         )}
-      </Modal>
+      </BottomSheet>
     </>
   );
 }

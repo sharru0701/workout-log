@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Modal } from "./modal";
+import { BottomSheet } from "./bottom-sheet";
 import { WheelPicker, generateNumberRange } from "./wheel-picker";
 
 export type MonthYearPickerSheetProps = {
@@ -43,7 +43,7 @@ export function MonthYearPickerSheet({
   }, [draftMonth, draftYear, onChange, onClose]);
 
   return (
-    <Modal
+    <BottomSheet
       open={open}
       title={title}
       onClose={onClose}
@@ -55,7 +55,7 @@ export function MonthYearPickerSheet({
       }}
       footer={null}
     >
-      <div style={{ padding: "var(--space-sm) 0 var(--space-md)" }}>
+      <div style={{ padding: "var(--space-sm) 0 var(--space-lg)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-md)" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <span style={{ display: "block", marginBottom: "var(--space-sm)", font: "var(--font-card-title)", color: "var(--color-text-muted)" }}>연도</span>
@@ -81,6 +81,6 @@ export function MonthYearPickerSheet({
           </div>
         </div>
       </div>
-    </Modal>
+    </BottomSheet>
   );
 }

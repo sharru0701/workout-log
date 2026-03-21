@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
-import { Modal } from "@/components/ui/modal";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
@@ -718,7 +718,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         loadingText="운동종목 불러오는 중..."
       />
 
-      <Modal
+      <BottomSheet
         open={activeSheet === "range"}
         title="기간 필터"
         description="기간을 선택하면 필터 조합으로 다시 조회합니다."
@@ -748,7 +748,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
             <p style={{ color: "var(--color-danger)", fontSize: "13px", marginTop: "var(--space-md)", margin: 0 }}>{rangeDraftError}</p>
           )}
         </div>
-      </Modal>
+      </BottomSheet>
 
       <SearchSelectSheet
         open={activeSheet === "program"}

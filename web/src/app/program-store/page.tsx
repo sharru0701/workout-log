@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
-import { Modal } from "@/components/ui/modal";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
@@ -1295,14 +1295,15 @@ export default function ProgramStorePage() {
         </Card>
       </DashboardSection>
 
-      <Modal
+      <BottomSheet
         open={Boolean(detailTarget)}
         title="프로그램 상세"
+        description=""
         onClose={() => setDetailTargetId(null)}
         closeLabel="닫기"
         footer={
           detailTarget ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", paddingTop: "var(--space-xs)" }}>
               <PrimaryButton
                 type="button"
                 variant="primary"
@@ -1354,7 +1355,6 @@ export default function ProgramStorePage() {
             color: "var(--text-session-context)",
             font: "var(--font-secondary)",
             marginBottom: "var(--space-xs)",
-            paddingLeft: "4px",
           } as const;
           const bodyTextStyle = {
             color: "var(--text-program-name)",
@@ -1363,25 +1363,28 @@ export default function ProgramStorePage() {
             margin: 0,
           } as const;
           return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
 
-              {/* 헤더 정보 */}
-              <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px", display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <strong style={{ display: "block", font: "var(--font-card-title)", color: "var(--text-program-name)", marginBottom: "2px" }}>
+              {/* 헤더 */}
+              <Card padding="md" elevated={false} tone="inset">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {/* INFO COLOR: program-name — 상세 헤더에서 프로그램명이 최우선 */}
+                    <strong style={{ display: "block", font: "var(--font-card-title)", color: "var(--text-program-name)" }}>
                     {formatProgramDisplayName(detailTarget.template.name)}
-                  </strong>
+                    </strong>
                   {info.scheduleLabel && (
                     <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>
                       {info.scheduleLabel}
                     </span>
                   )}
+                  </div>
+                  <span className={`${badge.className} label-sm`}>{badge.label}</span>
                 </div>
-                <span className={`${badge.className} label-sm`}>{badge.label}</span>
-              </div>
+              </Card>
 
-              {/* 스탯 리스트 */}
-              <div style={{ display: "flex", flexDirection: "column", gap: "2px", border: "1px solid var(--color-border)", borderRadius: "16px", overflow: "hidden" }}>
+              {/* 스탯 그리드 */}
+              <Card padding="md" elevated={false}>
                 {info.stats.map((stat, index) => (
                   <div
                     key={stat.label}
@@ -1390,48 +1393,47 @@ export default function ProgramStorePage() {
                       justifyContent: "space-between",
                       alignItems: "center",
                       gap: "var(--space-sm)",
-                      padding: "12px 16px",
-                      backgroundColor: index % 2 === 0 ? "transparent" : "var(--color-surface-hover)",
+                      padding: "6px 0",
                       borderBottom: index < info.stats.length - 1 ? "1px solid var(--color-border)" : "none",
                     }}
                   >
-                    <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>
+                    <span
+                      style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}
+                    >
                       {stat.label}
                     </span>
-                    <span style={{ color: "var(--text-metric-weight)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}>
+                    <span
+                      style={{ color: "var(--text-metric-weight)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}
+                    >
                       {stat.value}
                     </span>
                   </div>
                 ))}
-              </div>
+              </Card>
 
               {/* 프로그램 소개 */}
               {detailTarget.template.description && (
-                <section>
+                <Card padding="md" elevated={false}>
                   <span style={sectionLabelStyle}>프로그램 소개</span>
-                  <div style={{ padding: "0 4px" }}>
-                    <p style={bodyTextStyle}>
-                      {detailTarget.template.description}
-                    </p>
-                  </div>
-                </section>
+                  <p style={bodyTextStyle}>
+                    {detailTarget.template.description}
+                  </p>
+                </Card>
               )}
 
               {/* 진행 설정 (Operator) */}
               {info.progressionNote && (
-                <section>
-                  <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "12px", borderLeft: "4px solid var(--color-action)" }}>
-                    <span className="label label-tag-progression label-sm" style={{ marginBottom: "var(--space-xs)" }}>진행 설정</span>
-                    <p style={{ ...bodyTextStyle, color: "var(--text-meta)", fontSize: "14px" }}>{info.progressionNote}</p>
-                  </div>
-                </section>
+                <Card tone="subtle" padding="md" elevated={false}>
+                  <span className="label label-tag-progression label-sm">진행 설정</span>
+                  <p style={{ ...bodyTextStyle, color: "var(--text-meta)", marginTop: "var(--space-xs)" }}>{info.progressionNote}</p>
+                </Card>
               )}
 
               {/* 훈련 모듈 (Operator) */}
               {info.modules && info.modules.length > 0 && (
-                <section>
+                <Card padding="md" elevated={false}>
                   <span style={sectionLabelStyle}>훈련 모듈</span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", padding: "0 4px" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginTop: "var(--space-xs)" }}>
                     {info.modules.map((mod) => (
                       <div
                         key={mod}
@@ -1440,51 +1442,52 @@ export default function ProgramStorePage() {
                         <span className="label label-muscle-group label-sm">
                           {mod}
                         </span>
-                        <span style={{ color: "var(--text-program-name)", font: "var(--font-body)" }}>
+                        <span style={{ color: "var(--text-program-name)" }}>
                           {MODULE_NAMES[mod] ?? mod}
                         </span>
                       </div>
                     ))}
                   </div>
-                </section>
+                </Card>
               )}
 
               {/* 세션 구성 (Manual) */}
               {info.sessions && info.sessions.length > 0 && (
-                <section>
+                <Card padding="md" elevated={false}>
                   <span style={sectionLabelStyle}>세션 구성</span>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
                     {info.sessions.map((session) => (
                       <div
                         key={session.key}
-                        style={{ border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden" }}
+                        style={{ border: "1px solid var(--color-border)", borderRadius: "10px", overflow: "hidden" }}
                       >
                         <div
                           style={{
                             display: "flex",
                             alignItems: "center",
                             gap: "var(--space-xs)",
-                            padding: "8px 12px",
-                            background: "var(--color-surface-hover)",
+                            padding: "var(--space-xs) var(--space-sm)",
+                            background: "var(--color-surface-2)",
                             borderBottom: "1px solid var(--color-border)",
                           }}
                         >
                           <span className="label label-program label-sm">
+                            {/* INFO COLOR: session-context */}
                             {session.key}
                           </span>
-                          <span style={{ color: "var(--text-session-name)", fontWeight: 600 }}>
+                          <span style={{ color: "var(--text-session-name)" }}>
                             세션 {session.key}
                           </span>
                         </div>
-                        <div style={{ padding: "12px" }}>
+                        <div style={{ padding: "var(--space-sm)" }}>
                           {session.exercises.map((ex, i) => (
-                            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)", padding: "4px 0" }}>
-                              <span style={{ color: "var(--text-exercise-name)", font: "var(--font-body)" }}>
+                            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)", padding: "2px 0" }}>
+                              <span style={{ color: "var(--text-exercise-name)" }}>
                                 {ex.name}
                               </span>
                               {ex.setsReps && (
                                 <span
-                                  style={{ color: "var(--text-metric-reps)", font: "var(--font-secondary)" }}
+                                  style={{ color: "var(--text-metric-reps)" }}
                                 >
                                   {ex.setsReps}
                                 </span>
@@ -1495,12 +1498,13 @@ export default function ProgramStorePage() {
                       </div>
                     ))}
                   </div>
-                </section>
+                </Card>
               )}
 
               {/* 태그 */}
               {tags.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)", paddingTop: "var(--space-xs)" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
+                  {/* INFO COLOR: tag semantic — 상세 모달에서도 동일한 분류 적용 */}
                   {tags.map((tag) => (
                     <span key={tag} className={tagLabelClass(tag)}>
                       {tag}
@@ -1512,9 +1516,9 @@ export default function ProgramStorePage() {
             </div>
           );
         })()}
-      </Modal>
+      </BottomSheet>
 
-      <Modal
+      <BottomSheet
         open={Boolean(startProgramDraft)}
         title="시작 전 1RM 입력"
         description="모든 종목의 1RM 입력이 필수입니다."
@@ -1534,82 +1538,83 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {startProgramDraft ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
-            <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px", border: "1px solid var(--color-border)" }}>
-              <div style={{ font: "var(--font-card-title)", marginBottom: "4px" }}>{formatProgramDisplayName(startProgramDraft.template.name)}</div>
-              <div style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
+          <div>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>{formatProgramDisplayName(startProgramDraft.template.name)}</CardTitle>
+                <div>
                 TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
-              </div>
-            </div>
-
-            {startProgramDraft.recommendationStatus === "loading" && (
-              <p style={{ textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
-            )}
-            
-            {startProgramDraft.recommendationMessage && (
-              <p style={{ textAlign: "center", color: "var(--color-info)", font: "var(--font-secondary)", margin: 0 }}>{startProgramDraft.recommendationMessage}</p>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-              {startProgramDraft.targets.map((target) => (
-                <div key={target.key} style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", padding: "0 4px" }}>
-                    <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
-                      {target.label} 1RM (kg)
-                    </span>
-                    {startProgramDraft.recommendations[target.key] && (
-                      <button
-                        type="button"
-                        className="btn btn-inline-action"
-                        onClick={() =>
-                          setStartProgramDraft((prev) => {
-                            if (!prev) return prev;
-                            const recommendation = prev.recommendations[target.key];
-                            if (!recommendation) return prev;
-                            return {
-                              ...prev,
-                              oneRmInputs: {
-                                ...prev.oneRmInputs,
-                                [target.key]: String(recommendation.recommendedKg),
-                              },
-                            };
-                          })
-                        }
-                      >
-                        추천값 적용 ({formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg)
-                      </button>
-                    )}
-                  </div>
-                  <NumberPickerField
-                    label={`${target.label} 1RM`}
-                    value={Number(startProgramDraft.oneRmInputs[target.key]) || 0}
-                    min={0}
-                    max={500}
-                    step={0.5}
-                    unit="kg"
-                    variant="workout-number"
-                    formatValue={(v) => v.toFixed(1)}
-                    onChange={(v) =>
-                      setStartProgramDraft((prev) => {
-                        if (!prev) return prev;
-                        return {
-                          ...prev,
-                          oneRmInputs: {
-                            ...prev.oneRmInputs,
-                            [target.key]: String(v),
-                          },
-                        };
-                      })
-                    }
-                  />
                 </div>
-              ))}
-            </div>
+              </CardHeader>
+            </Card>
+            {startProgramDraft.recommendationStatus === "loading" ? (
+              <p>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
+            ) : null}
+            {startProgramDraft.recommendationMessage ? (
+              <p>{startProgramDraft.recommendationMessage}</p>
+            ) : null}
+            {startProgramDraft.targets.map((target) => (
+              <div key={target.key}>
+                <span>
+                  {target.label} 1RM (kg)
+                </span>
+                <NumberPickerField
+                  label={`${target.label} 1RM`}
+                  value={Number(startProgramDraft.oneRmInputs[target.key]) || 0}
+                  min={0}
+                  max={500}
+                  step={0.5}
+                  unit="kg"
+                  variant="workout-number"
+                  formatValue={(v) => v.toFixed(1)}
+                  onChange={(v) =>
+                    setStartProgramDraft((prev) => {
+                      if (!prev) return prev;
+                      return {
+                        ...prev,
+                        oneRmInputs: {
+                          ...prev.oneRmInputs,
+                          [target.key]: String(v),
+                        },
+                      };
+                    })
+                  }
+                />
+                {startProgramDraft.recommendations[target.key] ? (
+                  <div>
+                    <span>
+                      추천 {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
+                      {" · "}
+                      최근 e1RM {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStartProgramDraft((prev) => {
+                          if (!prev) return prev;
+                          const recommendation = prev.recommendations[target.key];
+                          if (!recommendation) return prev;
+                          return {
+                            ...prev,
+                            oneRmInputs: {
+                              ...prev.oneRmInputs,
+                              [target.key]: String(recommendation.recommendedKg),
+                            },
+                          };
+                        })
+                      }
+                    >
+                      추천값 적용
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ))}
           </div>
         ) : null}
-      </Modal>
+      </BottomSheet>
 
-      <Modal
+      <BottomSheet
         open={Boolean(customizeDraft)}
         title={isOperatorCustomization ? "Operator 커스터마이징" : "커스터마이징 모달"}
         description={
@@ -1637,7 +1642,7 @@ export default function ProgramStorePage() {
         {customizeDraft && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)", paddingLeft: "4px" }}>프로그램 이름</span>
+              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={customizeDraft.name}
@@ -1648,18 +1653,20 @@ export default function ProgramStorePage() {
             </label>
 
             {isOperatorCustomization ? (
-              <div style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px", borderLeft: "4px solid var(--color-action)" }}>
-                <div style={{ font: "var(--font-card-title)", marginBottom: "4px" }}>Operator 기본 구성</div>
-                <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: "4px 0" }}>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</p>
-                <p style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", margin: 0 }}>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</p>
-              </div>
+              <Card tone="subtle" padding="sm" elevated={false}>
+                <CardHeader style={{ marginBottom: 0 }}>
+                  <CardTitle>Operator 기본 구성</CardTitle>
+                  <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
+                  <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
+                </CardHeader>
+              </Card>
             ) : null}
 
-            <section>
-              <div style={{ padding: "0 4px" }}>
-                <span style={{ font: "var(--font-card-title)" }}>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <Card padding="sm" elevated={false}>
+              <CardHeader style={{ marginBottom: "var(--space-md)" }}>
+                <CardTitle>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</CardTitle>
+              </CardHeader>
+              <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {customizeDraft.sessions.map((session) => {
                 const meta = operatorSessionMeta(session.key);
                 const summary = session.exercises
@@ -1668,9 +1675,12 @@ export default function ProgramStorePage() {
                   .join(" + ");
 
                 return (
-                <div
+                <Card
                   key={session.id}
-                  style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px", border: "1px solid var(--color-border)" }}
+                  padding="none"
+                  tone="inset"
+                  elevated={false}
+                  style={{ padding: "var(--space-sm)", marginBottom: 0 }}
                   onDragOver={(event) => {
                     event.preventDefault();
                   }}
@@ -1695,7 +1705,7 @@ export default function ProgramStorePage() {
                 >
                   <header style={{ marginBottom: "var(--space-sm)" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <strong style={{ font: "var(--font-card-title)" }}>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
+                      <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
                       {isOperatorCustomization ? (
                         <span style={{ color: "var(--text-meta)", font: "var(--font-secondary)" }}>
                           {summary || meta.description}
@@ -1705,45 +1715,44 @@ export default function ProgramStorePage() {
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동이 없습니다.</div>
+                    <div>운동이 없습니다.</div>
                   )}
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-                    {session.exercises.map((exercise, exerciseIndex) => (
-                      <div
-                        key={exercise.id}
-                        ref={(node) => {
-                          if (node) {
-                            customizeExerciseRefs.current.set(exercise.id, node);
-                          } else {
-                            customizeExerciseRefs.current.delete(exercise.id);
-                          }
-                        }}
-                      >
-                        <ExerciseEditorRow
-                          exercise={exercise}
-                          sessionId={session.id}
-                          publicTemplates={publicTemplates}
-                          exerciseOptions={exerciseOptions}
-                          exerciseOptionsLoading={exerciseOptionsLoading}
-                          operatorStyle={isOperatorCustomization}
-                          highlighted={recentlyAddedCustomizeExerciseId === exercise.id}
-                          canMoveUp={exerciseIndex > 0}
-                          canMoveDown={exerciseIndex < session.exercises.length - 1}
-                          onPatch={patchCustomizeExercise}
-                          onMove={moveCustomizeExercise}
-                          onDelete={deleteCustomizeExercise}
-                          onDragStart={startExerciseDrag}
-                          onDrop={dropExerciseOnTarget}
-                        />
-                      </div>
-                    ))}
-                  </div>
+                  {session.exercises.map((exercise, exerciseIndex) => (
+                    <div
+                      key={exercise.id}
+                      style={{ marginTop: exerciseIndex === 0 ? 0 : "var(--space-sm)" }}
+                      ref={(node) => {
+                        if (node) {
+                          customizeExerciseRefs.current.set(exercise.id, node);
+                        } else {
+                          customizeExerciseRefs.current.delete(exercise.id);
+                        }
+                      }}
+                    >
+                      <ExerciseEditorRow
+                        exercise={exercise}
+                        sessionId={session.id}
+                        publicTemplates={publicTemplates}
+                        exerciseOptions={exerciseOptions}
+                        exerciseOptionsLoading={exerciseOptionsLoading}
+                        operatorStyle={isOperatorCustomization}
+                        highlighted={recentlyAddedCustomizeExerciseId === exercise.id}
+                        canMoveUp={exerciseIndex > 0}
+                        canMoveDown={exerciseIndex < session.exercises.length - 1}
+                        onPatch={patchCustomizeExercise}
+                        onMove={moveCustomizeExercise}
+                        onDelete={deleteCustomizeExercise}
+                        onDragStart={startExerciseDrag}
+                        onDrop={dropExerciseOnTarget}
+                      />
+                    </div>
+                  ))}
 
                   <button
                     type="button"
                     className="btn btn-secondary btn-full"
-                    style={{ marginTop: "var(--space-md)" }}
+                    style={{ marginTop: "var(--space-sm)" }}
                     onClick={() => {
                       const addedExercise = createEmptyExerciseDraft(
                         isOperatorCustomization ? null : customizeDraft.baseTemplate.slug,
@@ -1770,16 +1779,16 @@ export default function ProgramStorePage() {
                     </span>
                     <span>운동 추가</span>
                   </button>
-                </div>
+                </Card>
               );
             })}
-              </div>
-            </section>
+              </CardContent>
+            </Card>
           </div>
         )}
-      </Modal>
+      </BottomSheet>
 
-      <Modal
+      <BottomSheet
         open={Boolean(createDraft)}
         title="프로그램 생성/커스터마이징 모달"
         description="새 커스텀 프로그램 생성"
@@ -1799,9 +1808,9 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {createDraft && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)", paddingLeft: "4px" }}>프로그램 이름</span>
+          <div>
+            <label>
+              <span>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={createDraft.name}
@@ -1812,10 +1821,9 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
+            <div>
               <button
                 type="button"
-                className={`btn ${createDraft.mode === "MARKET_BASED" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() =>
                   setCreateDraft((prev) =>
                     prev
@@ -1827,11 +1835,10 @@ export default function ProgramStorePage() {
                   )
                 }
               >
-                시중 기반
+                시중 기반 커스터마이징
               </button>
               <button
                 type="button"
-                className={`btn ${createDraft.mode === "FULL_MANUAL" ? "btn-primary" : "btn-secondary"}`}
                 onClick={() =>
                   setCreateDraft((prev) =>
                     prev
@@ -1873,19 +1880,59 @@ export default function ProgramStorePage() {
               </AppSelect>
             )}
 
-            <section>
-              <div style={{ padding: "0 4px" }}>
-                <span style={{ font: "var(--font-card-title)" }}>세션 규칙 생성</span>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>세션 규칙 생성</CardTitle>
+              </CardHeader>
+              <CardContent>
+              <div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCreateDraft((prev) => {
+                      if (!prev) return prev;
+                      const nextRule: SessionRule = { type: "AB", count: 2 };
+                      return {
+                        ...prev,
+                        rule: nextRule,
+                        sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
+                      };
+                    })
+                  }
+                >
+                  A/B 규칙
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setCreateDraft((prev) => {
+                      if (!prev) return prev;
+                      const nextRule: SessionRule = { type: "NUMERIC", count: prev.rule.count || 2 };
+                      return {
+                        ...prev,
+                        rule: nextRule,
+                        sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
+                      };
+                    })
+                  }
+                >
+                  1~4 세션
+                </button>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
-                  <button
-                    type="button"
-                    className={`btn ${createDraft.rule.type === "AB" ? "btn-primary" : "btn-secondary"}`}
-                    onClick={() =>
+              {createDraft.rule.type === "NUMERIC" && (
+                <div>
+                  <span>세션 개수 (1~4)</span>
+                  <NumberPickerField
+                    label="세션 개수"
+                    value={createDraft.rule.count}
+                    min={1}
+                    max={4}
+                    step={1}
+                    variant="workout-number"
+                    onChange={(v) =>
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
-                        const nextRule: SessionRule = { type: "AB", count: 2 };
+                        const nextRule: SessionRule = { type: "NUMERIC", count: v };
                         return {
                           ...prev,
                           rule: nextRule,
@@ -1893,63 +1940,23 @@ export default function ProgramStorePage() {
                         };
                       })
                     }
-                  >
-                    A/B 규칙
-                  </button>
-                  <button
-                    type="button"
-                    className={`btn ${createDraft.rule.type === "NUMERIC" ? "btn-primary" : "btn-secondary"}`}
-                    onClick={() =>
-                      setCreateDraft((prev) => {
-                        if (!prev) return prev;
-                        const nextRule: SessionRule = { type: "NUMERIC", count: prev.rule.count || 2 };
-                        return {
-                          ...prev,
-                          rule: nextRule,
-                          sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-                        };
-                      })
-                    }
-                  >
-                    1~4 세션
-                  </button>
+                  />
                 </div>
-                {createDraft.rule.type === "NUMERIC" && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-                    <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>세션 개수 (1~4)</span>
-                    <NumberPickerField
-                      label="세션 개수"
-                      value={createDraft.rule.count}
-                      min={1}
-                      max={4}
-                      step={1}
-                      variant="workout-number"
-                      onChange={(v) =>
-                        setCreateDraft((prev) => {
-                          if (!prev) return prev;
-                          const nextRule: SessionRule = { type: "NUMERIC", count: v };
-                          return {
-                            ...prev,
-                            rule: nextRule,
-                            sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-                          };
-                        })
-                      }
-                    />
-                  </div>
-                )}
-              </div>
-            </section>
+              )}
+              </CardContent>
+            </Card>
 
-            <section>
-              <div style={{ padding: "0 4px" }}>
-                <span style={{ font: "var(--font-card-title)" }}>세션별 운동종목 배치</span>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <Card padding="sm" elevated={false}>
+              <CardHeader>
+                <CardTitle>세션 안에 운동종목 배치</CardTitle>
+              </CardHeader>
+              <CardContent>
               {createDraft.sessions.map((session) => (
-                <div
+                <Card
                   key={session.id}
-                  style={{ backgroundColor: "var(--color-surface-hover)", padding: "var(--space-md)", borderRadius: "16px", border: "1px solid var(--color-border)" }}
+                  padding="none"
+                  tone="inset"
+                  elevated={false}
                   onDragOver={(event) => {
                     event.preventDefault();
                   }}
@@ -1972,44 +1979,39 @@ export default function ProgramStorePage() {
                     setDragContext(null);
                   }}
                 >
-                  <header style={{ marginBottom: "var(--space-sm)" }}>
-                    <strong style={{ font: "var(--font-card-title)" }}>세션 {session.key}</strong>
+                  <header>
+                    <strong>세션 {session.key}</strong>
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동이 없습니다.</div>
+                    <div>운동이 없습니다.</div>
                   )}
 
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-                    {session.exercises.map((exercise, exerciseIndex) => (
-                      <ExerciseEditorRow
-                        key={exercise.id}
-                        sessionId={session.id}
-                        exercise={exercise}
-                        publicTemplates={publicTemplates}
-                        exerciseOptions={exerciseOptions}
-                        exerciseOptionsLoading={exerciseOptionsLoading}
-                        canMoveUp={exerciseIndex > 0}
-                        canMoveDown={exerciseIndex < session.exercises.length - 1}
-                        onPatch={patchCreateExercise}
-                        onMove={moveCreateExercise}
-                        onDelete={deleteCreateExercise}
-                        onDragStart={startExerciseDrag}
-                        onDrop={dropExerciseOnTarget}
-                      />
-                    ))}
-                  </div>
+                  {session.exercises.map((exercise, exerciseIndex) => (
+                    <ExerciseEditorRow
+                      key={exercise.id}
+                      sessionId={session.id}
+                      exercise={exercise}
+                      publicTemplates={publicTemplates}
+                      exerciseOptions={exerciseOptions}
+                      exerciseOptionsLoading={exerciseOptionsLoading}
+                      canMoveUp={exerciseIndex > 0}
+                      canMoveDown={exerciseIndex < session.exercises.length - 1}
+                      onPatch={patchCreateExercise}
+                      onMove={moveCreateExercise}
+                      onDelete={deleteCreateExercise}
+                      onDragStart={startExerciseDrag}
+                      onDrop={dropExerciseOnTarget}
+                    />
+                  ))}
 
                   <button
                     type="button"
-                    className="btn btn-secondary btn-full"
-                    style={{ marginTop: "var(--space-md)" }}
                     onClick={() =>
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
                         return {
                           ...prev,
-                          rule: prev.rule,
                           sessions: prev.sessions.map((entry) => {
                             if (entry.id !== session.id) return entry;
                             return {
@@ -2031,13 +2033,13 @@ export default function ProgramStorePage() {
                     </span>
                     <span>운동 추가</span>
                   </button>
-                </div>
+                </Card>
               ))}
-              </div>
-            </section>
+              </CardContent>
+            </Card>
           </div>
         )}
-      </Modal>
+      </BottomSheet>
     </div>
   );
 }

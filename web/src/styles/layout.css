@@ -4,14 +4,6 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
-  background-color: var(--color-bg);
-}
-
-/* Safari 주소창/상태바 frosted-glass: sheet 열림 시 app-shell 배경을
-   투명화하여 body::before(z-index:-1)만 배경 역할 → Safari가 teal FAB
-   대신 dark bg를 샘플링 */
-html[data-sheet-open="true"] .app-shell {
-  background-color: transparent;
 }
 
 .app-main {
