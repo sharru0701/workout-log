@@ -2,10 +2,8 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  /* Safari 상태바/주소창 투명도 유지:
-     모달 컨테이너를 Safe Area 상단 영역 아래에서 시작시켜, body 배경색(--color-bg)이
-     그대로 노출되도록 합니다. body는 transparent로 바꾸지 않으므로 Safari가
-     메인 화면과 동일하게 background-color를 샘플링할 수 있습니다. */
+  /* Safari 상태바 투명도 유지를 위해 모달 컨테이너를 Safe Area 상단 영역에서 완전히 제외합니다.
+     이 영역에 어떠한 레이어도 겹치지 않게 함으로써 Safari가 메인 화면의 배경색을 그대로 샘플링하게 합니다. */
   top: env(safe-area-inset-top, 0px);
   left: 0;
   right: 0;

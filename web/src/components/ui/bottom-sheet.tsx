@@ -272,7 +272,8 @@ export function BottomSheet({
       body.style.left = "0";
       body.style.right = "0";
       body.style.width = "100%";
-      // overflow: hidden 미사용 — Safari 상태바/주소창 frosted-glass 유지를 위함
+      // body.style.overflow = "hidden" 제거: Safari 상태바/주소창 Frosted glass 효과 유지를 위함
+      // root.style.overflow = "hidden" 제거: 상동
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
