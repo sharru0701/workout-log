@@ -104,7 +104,7 @@ export function SearchSelectCombobox({
         {selectionSummary}
 
         {!hideOptions ? (
-          <div role="listbox" aria-label={resultsAriaLabel} style={{ display: "flex", flexDirection: "column", gap: "2px", maxHeight: "300px", overflowY: "auto" }}>
+          <div role="listbox" aria-label={resultsAriaLabel} style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
             {loading ? (
               <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{loadingText}</span>
             ) : options.length === 0 ? (
@@ -157,12 +157,8 @@ export function SearchSelectSheet({
       primaryAction={primaryAction}
       footer={footer}
     >
-      <div>
-        <Card padding="md" elevated={false}>
-          <CardContent>
-            <SearchSelectCombobox {...comboboxProps} />
-          </CardContent>
-        </Card>
+      <div className="search-select-sheet-container">
+        <SearchSelectCombobox {...comboboxProps} />
         {children}
       </div>
     </BottomSheet>

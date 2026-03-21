@@ -26,7 +26,6 @@
   position: absolute;
   inset: 0;
   background-color: var(--color-overlay);
-  /* 메인 화면과의 일관성을 위해 블러 강도 조정 */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   appearance: none;
@@ -37,12 +36,9 @@
   pointer-events: auto;
   cursor: pointer;
 
-  /* Safari 상태바 영역 투명화: 
-     메인 화면처럼 상태바 뒤로 컨텐츠가 지나가는 것을 보여주기 위해 
-     최상단 영역(Safe Area)의 오버레이 마스크를 정교하게 조정합니다. */
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 12px));
-  mask-image: linear-gradient(to bottom, transparent 0, transparent env(safe-area-inset-top, 0px), black calc(env(safe-area-inset-top, 0px) + 12px));
-
+  /* Safari 상태바 영역 투명화 리팩터링: 
+     메인 화면 구조를 따라가기 위해 오버레이의 마스크를 제거합니다. 
+     대신 모달 패널 자체가 상태바 영역을 덮으면서 네이티브 frosted glass를 형성하게 합니다. */
   transition: opacity 0.3s ease;
 }
 
@@ -55,7 +51,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-sm);
-  /* 좌우 여백을 메인 컨테이너와 일치시키고, 하단 Safe Area를 보장합니다. */
+  /* 메인 화면 컨테이너 구조 계승: 하단 Safe Area 보장 */
   padding: 0 var(--space-md) calc(env(safe-area-inset-bottom, 0px) + var(--space-md));
 
   transform: translateY(100%);
@@ -78,29 +74,30 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 
 .mobile-bottom-sheet-panel {
   position: relative;
-  background-color: var(--color-surface);
+  /* 모달 패널 배경을 약간 반투명하게 하고 backdrop-filter를 주어 
+     상태바 영역에서 'frost glass' 느낌과 컨텐츠가 투과되는 시각적 깊이를 구현합니다. */
+  background-color: color-mix(in srgb, var(--color-surface) 96%, transparent);
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  
   border-radius: 24px;
-  /* 핵심 수정: max-height를 높여 패널이 상태바 영역(Safe Area Top)을 덮도록 합니다.
-     이렇게 해야 패널 내부의 컨텐츠가 상태바 '뒤'로 지나가는 시각적 효과가 발생합니다. */
-  max-height: calc(100dvh - 12px); 
+  /* 메인 화면 구조: 컨텐츠가 상태바 뒤로 지나갈 수 있도록 전체 높이 허용 */
+  max-height: 100dvh;
   display: flex;
   flex-direction: column;
   pointer-events: auto;
   box-shadow: 0 -8px 32px var(--shadow-color-strong);
   
-  /* 메인 화면(.app-main) 구조 계승: 상단 Safe Area 패딩 적용 */
-  padding-top: env(safe-area-inset-top, 0px);
+  /* 패널 자체는 Safe Area Top에 패딩을 두지 않고, 내부 요소에서 처리하여 컨텐츠가 '잘리지' 않게 합니다. */
   padding-bottom: var(--space-lg);
   overflow: hidden;
 }
 
-/* 드래그 핸들: 패널 최상단(Safe Area 내)에 배치하여 iOS 시트 느낌 강조 */
+/* 드래그 핸들: Safe Area를 고려하여 패널 상단에 배치 */
 .mobile-bottom-sheet-drag-handle {
-  position: absolute;
-  top: env(safe-area-inset-top, 0px);
-  left: 0;
-  right: 0;
-  height: 24px;
+  flex-shrink: 0;
+  height: calc(env(safe-area-inset-top, 0px) + 24px);
+  padding-top: env(safe-area-inset-top, 0px);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -115,15 +112,14 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   height: 5px;
   border-radius: 2.5px;
   background-color: var(--color-border);
-  opacity: 0.4;
+  opacity: 0.5;
 }
 
-/* 모달 헤더: 핸들 아래에 위치 */
+/* 모달 헤더 */
 .mobile-bottom-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 12px;
   margin-bottom: var(--space-md);
   padding: 0 var(--space-md);
   min-height: 48px;
@@ -162,11 +158,6 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
   flex-shrink: 0;
-}
-
-.mobile-bottom-sheet-btn:active {
-  background-color: var(--color-border);
-  transform: scale(0.95);
 }
 
 .mobile-bottom-sheet-content {
