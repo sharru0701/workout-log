@@ -8,6 +8,9 @@ import { BottomSheetActionHeader, type BottomSheetPrimaryAction } from "./bottom
 
 const SHEET_STACK_EVENT = "mobile-bottom-sheet-stack-change";
 const SHEET_STACK_DATA_KEY = "bottomSheetStack";
+const BOTTOM_SHEET_BG_COLOR = "var(--color-bg)"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+const BOTTOM_SHEET_BODY_BG_DATA_KEY = "bottomSheetPrevBodyBg"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+const BOTTOM_SHEET_HTML_BG_DATA_KEY = "bottomSheetPrevHtmlBg"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
 
 function readSheetStack(body: HTMLElement) {
   const raw = body.dataset[SHEET_STACK_DATA_KEY];
@@ -86,7 +89,6 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const sheetId = useId();
   const [mounted, setMounted] = useState(false);
-  const [visualOpen, setVisualOpen] = useState(false);
   const [isTopSheet, setIsTopSheet] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
@@ -108,15 +110,11 @@ export function BottomSheet({
     }
 
     if (!open) {
-      setVisualOpen(false);
       return;
     }
 
-    // Start from the closed transform first, then animate in next frame.
-    setVisualOpen(false);
     openAnimationFrameRef.current = window.requestAnimationFrame(() => {
       openAnimationFrameRef.current = window.requestAnimationFrame(() => {
-        setVisualOpen(true);
         openAnimationFrameRef.current = null;
       });
     });
@@ -266,14 +264,18 @@ export function BottomSheet({
     if (lockCount === 0) {
       const scrollY = window.scrollY;
       body.dataset.bottomSheetScrollY = String(scrollY);
-      root.dataset.bottomSheetOpen = "true";
-      body.style.position = "fixed";
-      body.style.top = `-${scrollY}px`;
-      body.style.left = "0";
-      body.style.right = "0";
-      body.style.width = "100%";
-      body.style.overflow = "hidden";
-      root.style.overflow = "hidden";
+      body.dataset[BOTTOM_SHEET_BODY_BG_DATA_KEY] = body.style.backgroundColor; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.dataset[BOTTOM_SHEET_HTML_BG_DATA_KEY] = root.style.backgroundColor; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.dataset.bottomSheetOpen = "true"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.backgroundColor = BOTTOM_SHEET_BG_COLOR; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.style.backgroundColor = BOTTOM_SHEET_BG_COLOR; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.position = "fixed"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.top = `-${scrollY}px`; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.left = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.right = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.width = "100%"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -284,17 +286,23 @@ export function BottomSheet({
       if (nextLockCount > 0) return;
 
       const scrollY = Number(body.dataset.bottomSheetScrollY ?? "0");
-      delete body.dataset.bottomSheetLockCount;
-      delete body.dataset.bottomSheetScrollY;
-      body.style.position = "";
-      body.style.top = "";
-      body.style.left = "";
-      body.style.right = "";
-      body.style.width = "";
-      body.style.overflow = "";
-      delete root.dataset.bottomSheetOpen;
-      root.style.overflow = "";
-      window.scrollTo(0, scrollY);
+      const prevBodyBackgroundColor = body.dataset[BOTTOM_SHEET_BODY_BG_DATA_KEY] ?? ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      const prevHtmlBackgroundColor = root.dataset[BOTTOM_SHEET_HTML_BG_DATA_KEY] ?? ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      delete body.dataset.bottomSheetLockCount; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      delete body.dataset.bottomSheetScrollY; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      delete body.dataset[BOTTOM_SHEET_BODY_BG_DATA_KEY]; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      delete root.dataset[BOTTOM_SHEET_HTML_BG_DATA_KEY]; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.position = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.top = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.left = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.right = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.width = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.overflow = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.backgroundColor = prevBodyBackgroundColor; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      delete root.dataset.bottomSheetOpen; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.style.overflow = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.style.backgroundColor = prevHtmlBackgroundColor; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      window.scrollTo(0, scrollY); // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
     };
   }, [open]);
 

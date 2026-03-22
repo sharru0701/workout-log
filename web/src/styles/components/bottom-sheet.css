@@ -1,5 +1,13 @@
 /* components/bottom-sheet.css */
 
+html[data-bottom-sheet-open="true"] { /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+  background-color: var(--color-bg); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+} /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+
+html[data-bottom-sheet-open="true"] body { /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+  background-color: var(--color-bg); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+} /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+
 .mobile-bottom-sheet {
   position: fixed;
   inset: 0;
@@ -67,7 +75,7 @@
   pointer-events: auto;
   box-shadow: 0 -4px 20px var(--shadow-color-strong);
   padding: var(--space-md);
-  padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
+  padding-bottom: var(--space-md); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
 
   transform: translateY(100%); /* 기본 닫혀있음 */
   /* 스프링 이징: 오픈/스냅백 시 자연스러운 탄성 효과 */
@@ -205,9 +213,10 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: var(--space-md);
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
 }
 
 .mobile-bottom-sheet-footer {
   flex-shrink: 0;
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
 }
