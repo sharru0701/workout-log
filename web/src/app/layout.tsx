@@ -8,6 +8,7 @@ import { PwaRegister } from "@/components/pwa-register";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineQueueFlush } from "@/components/offline-queue-flush";
+import { StatusBarBlur } from "@/components/status-bar-blur";
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -43,6 +44,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body>
+        <StatusBarBlur />
         <AppLaunchSplash />
         <ThemePreferenceSync />
         <AppShell>{children}</AppShell>

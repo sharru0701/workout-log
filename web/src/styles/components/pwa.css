@@ -1,6 +1,30 @@
 /* ==========================================================================
-   PWA UI — Offline indicator + Install prompt banner
+   PWA UI — Status bar blur, Offline indicator, Install prompt banner
    ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Status bar frosted glass — standalone 모드 전용
+   apple-mobile-web-app-status-bar-style: black-translucent 일 때
+   완전 투명한 상태바 영역에 blur 오버레이를 씌움
+   -------------------------------------------------------------------------- */
+.status-bar-blur {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* 상태바+노치 높이만큼 — 0이면 사실상 비표시 */
+  height: env(safe-area-inset-top, 0px);
+  z-index: 200;
+
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+
+  /* 테마 배경색 기반 반투명 — 다크/라이트 자동 대응 */
+  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+
+  /* 터치 이벤트 통과 */
+  pointer-events: none;
+}
 
 /* --------------------------------------------------------------------------
    Offline indicator — fixed top bar, slides in over safe area
