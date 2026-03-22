@@ -458,7 +458,7 @@ export function BottomSheet({
             </button>
           </header>
         ))}
-        <div className="mobile-bottom-sheet-content pb-[env(safe-area-inset-bottom)]">{/* [수정됨] 사파리 주소창 대응: 하단 여백 확보 */}{children}</div>
+        <div className="mobile-bottom-sheet-content">{children}</div>
         {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
       </section>
     </div>

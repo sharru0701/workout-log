@@ -4,7 +4,7 @@
 .fab-container {
   position: fixed;
   right: var(--space-md);
-  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); // [수정됨] 사파리 주소창 대응: Safe Area 상단으로 위치 조정
+  bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
   z-index: 50;
   display: flex;
   flex-direction: column;

@@ -12,7 +12,7 @@
   /* 상단 상태표시줄(노치) 영역 침범 방지 */
   padding-top: env(safe-area-inset-top, 0px);
   /* FAB 메뉴 개편으로 하단 고정바가 사라졌으므로 시스템 UI 스크롤 투과를 위한 최소 여백만 둡니다. */
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); // [수정됨] 사파리 주소창 대응: 하단 여백 및 Safe Area 확보
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
 }
 
 /* Base utility padding container */

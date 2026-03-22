@@ -2,13 +2,12 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background-color: var(--color-bg); // [수정됨] 사파리 주소창 대응: 배경색 고정
+  background-color: var(--color-bg);
   color: var(--color-text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, sans-serif;
   /* 동적 뷰포트를 항상 채우도록 설정 */
   min-height: 100vh;
   min-height: 100dvh;
-  overscroll-behavior: none; // [수정됨] 사파리 주소창 대응: 과도한 스크롤 방지
 }
 
 *,
