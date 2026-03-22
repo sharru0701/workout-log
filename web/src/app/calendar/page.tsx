@@ -704,8 +704,6 @@ export default function CalendarPage() {
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="캘린더 새로고침 중..."
-        completeLabel="캘린더 갱신 완료"
       />
       {/* Plan selector bar */}
       {plans.length > 0 && (

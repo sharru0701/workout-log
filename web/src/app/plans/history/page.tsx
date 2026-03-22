@@ -287,8 +287,6 @@ function PlanHistoryPageContent() {
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="플랜 히스토리 새로고침 중..."
-        completeLabel="플랜 히스토리 갱신 완료"
       />
 
       <DashboardSection

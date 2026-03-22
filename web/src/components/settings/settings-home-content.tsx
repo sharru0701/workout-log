@@ -80,8 +80,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="설정 새로고침 중..."
-        completeLabel="설정 다시 확인 완료"
       />
       <DashboardSection
         title="설정"

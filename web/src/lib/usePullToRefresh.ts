@@ -9,7 +9,6 @@ type PullToRefreshOptions = {
   maxPull?: number;
   completeDelayMs?: number;
   triggerSelector?: string;
-  edgeThreshold?: number;
   enabled?: boolean;
 };
 
@@ -29,7 +28,7 @@ const DISABLED_BIND: PullToRefreshBind = {
   onTouchMove: () => {},
   onTouchEnd: () => {},
   onTouchCancel: () => {},
-  style: { touchAction: "pan-x pan-down" },
+  style: { touchAction: "pan-y" },
   "data-ptr-enabled": "false",
 };
 
@@ -54,7 +53,6 @@ export function usePullToRefresh({
   maxPull = 120,
   completeDelayMs = 720,
   triggerSelector,
-  edgeThreshold = 96,
   enabled,
 }: PullToRefreshOptions) {
   const [pullOffset, setPullOffset] = useState(0);
@@ -109,15 +107,11 @@ export function usePullToRefresh({
     const trigger = triggerSelector ? source?.closest(triggerSelector) : event.currentTarget;
     if (!trigger || !event.currentTarget.contains(trigger)) return;
 
-    const triggerRect = trigger.getBoundingClientRect();
-    const upperBound = Math.max(edgeThreshold, triggerRect.top + edgeThreshold);
-    if (touch.clientY > upperBound) return;
-
     startXRef.current = touch.clientX;
     startYRef.current = touch.clientY;
     isPullingRef.current = true;
     scrollTargetRef.current = event.currentTarget;
-  }, [clearCompletionTimeout, edgeThreshold, isEnabled, isRefreshing, triggerSelector]);
+  }, [clearCompletionTimeout, isEnabled, isRefreshing, triggerSelector]);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isEnabled || !isPullingRef.current || startYRef.current === null || isRefreshing) return;
@@ -200,7 +194,7 @@ export function usePullToRefresh({
       onTouchMove,
       onTouchEnd,
       onTouchCancel: onTouchEnd,
-      style: { touchAction: "pan-x pan-down" },
+      style: { touchAction: "pan-y", overscrollBehaviorY: "none" },
       "data-ptr-enabled": "true",
     };
   }, [isEnabled, onTouchEnd, onTouchMove, onTouchStart]);

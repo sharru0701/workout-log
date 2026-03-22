@@ -1194,8 +1194,6 @@ export default function ProgramStorePage() {
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="스토어 새로고침 중..."
-        completeLabel="스토어 갱신 완료"
       />
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>

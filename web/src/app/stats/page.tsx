@@ -94,8 +94,6 @@ function StatsPageContent() {
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="통계 새로고침 중..."
-        completeLabel="통계 갱신 완료"
       />
       
       <DashboardScreen>
