@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
@@ -138,7 +138,6 @@ function PlansManagePageContent() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   function openManageSheet(plan: Plan) {
@@ -227,14 +226,7 @@ function PlansManagePageContent() {
 
   return (
     <>
-      <div
-        {...pullToRefresh.bind}
-      >
-        <PullToRefreshIndicator
-          pullOffset={pullToRefresh.pullOffset}
-          progress={pullToRefresh.progress}
-          status={pullToRefresh.status}
-        />
+      <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
         <DashboardSection
           title="플랜 목록"
@@ -302,7 +294,7 @@ function PlansManagePageContent() {
             </div>
           ) : null}
         </DashboardSection>
-      </div>
+      </PullToRefreshShell>
 
       <BottomSheet
         open={Boolean(managePlanId)}

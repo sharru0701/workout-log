@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { apiGet, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
@@ -237,7 +237,6 @@ export default function SystemStatsPage() {
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => setRefreshTick(t => t + 1),
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   useEffect(() => {
@@ -263,12 +262,7 @@ export default function SystemStatsPage() {
   }, [refreshTick, lookback]);
 
   return (
-    <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       <DashboardScreen>
         <DashboardHero 
           tone="quiet"
@@ -329,6 +323,6 @@ export default function SystemStatsPage() {
           </div>
         </DashboardSection>
       </DashboardScreen>
-    </div>
+    </PullToRefreshShell>
   );
 }

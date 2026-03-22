@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import {
   BaseGroupedList,
   NavigationRow,
@@ -68,19 +68,13 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
     onRefresh: () => {
       router.refresh();
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   return (
-    <div
-      {...pullToRefresh.bind}
+    <PullToRefreshShell
+      pullToRefresh={pullToRefresh}
       className={className || undefined}
     >
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
       <DashboardSection
         title="설정"
         description="앱 동작, 데이터, 기록 보조 설정을 관리합니다."
@@ -100,6 +94,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
         </BaseGroupedList>
         <SectionFootnote>모든 설정은 저장 즉시 반영되며, 실패 시 안내와 함께 이전 값으로 복구됩니다.</SectionFootnote>
       </DashboardSection>
-    </div>
+    </PullToRefreshShell>
   );
 }
