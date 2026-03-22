@@ -8,10 +8,11 @@ import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  viewportFit: "cover",
-  // No themeColor: let Safari use natural frosted-glass.
-  // The html background-color (--color-bg) fills behind the pill
-  // so frosted glass blurs the page color → looks transparent.
+  viewportFit: "cover", // [수정됨] 사파리 주소창 대응
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fdf6e3" }, // [수정됨] 사파리 주소창 대응: 라이트 테마 크림색
+    { media: "(prefers-color-scheme: dark)", color: "#0d1117" },  // [수정됨] 사파리 주소창 대응: 다크 테마 배경색
+  ],
 };
 
 export const metadata: Metadata = {
