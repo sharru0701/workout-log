@@ -264,10 +264,10 @@ export default function SystemStatsPage() {
 
   return (
     <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator 
-        {...pullToRefresh}
-        refreshingLabel="시스템 통계 갱신 중..."
-        completeLabel="시스템 통계 확인 완료"
+      <PullToRefreshIndicator
+        pullOffset={pullToRefresh.pullOffset}
+        progress={pullToRefresh.progress}
+        status={pullToRefresh.status}
       />
       <DashboardScreen>
         <DashboardHero 

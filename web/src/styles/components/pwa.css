@@ -218,52 +218,109 @@
   background: var(--color-success);
 }
 
+/* --------------------------------------------------------------------------
+   PWA standard: disable native overscroll in installed/standalone mode
+   so custom pull-to-refresh is the only gesture handler
+   -------------------------------------------------------------------------- */
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  html,
+  body {
+    overscroll-behavior-y: none;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Pull-to-refresh indicator — Apple iOS UIRefreshControl style
+   -------------------------------------------------------------------------- */
 .pull-to-refresh-indicator {
   overflow: hidden;
   pointer-events: none;
+  /* Smooth height transition only on the way back down */
+  transition: height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Disable transition while actively pulling to keep it snappy */
+[data-ptr-enabled="true"]:active .pull-to-refresh-indicator,
+[data-ptr-enabled="true"] .pull-to-refresh-indicator[data-status="pulling"],
+[data-ptr-enabled="true"] .pull-to-refresh-indicator[data-status="armed"] {
+  transition: none;
 }
 
 .pull-to-refresh-indicator__content {
-  height: 100%;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+}
+
+/* ----- Circular arc (pulling / armed state) ----- */
+.ptr-arc-icon {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  overflow: visible;
+}
+
+.ptr-arc-track {
+  stroke: var(--color-border);
+  stroke-width: 1.5;
+  fill: none;
+}
+
+.ptr-arc-fill {
+  stroke: var(--color-text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  fill: none;
+  transition: stroke 0.15s;
+}
+
+.ptr-arc-arrow {
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s;
+}
+
+/* Armed state: highlight the arc */
+.ptr-arc-icon[data-armed="true"] .ptr-arc-fill,
+.ptr-arc-icon[data-armed="true"] .ptr-arc-arrow {
+  stroke: var(--color-action-strong);
+}
+
+/* ----- iOS activity spinner (refreshing state) ----- */
+.ptr-spinner {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  display: inline-block;
   color: var(--color-text-muted);
 }
 
-.pull-to-refresh-indicator__glyph {
-  width: 24px;
-  height: 24px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.ptr-spinner__line {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 6px;
+  margin-top: -9px; /* shift so bottom is at center */
+  margin-left: -1px;
+  background: currentColor;
+  border-radius: 1px;
+  transform-origin: 50% 100%; /* rotate around bottom (center of circle) */
+  animation: ptr-ios-fade 1s linear infinite;
+  opacity: 0.15;
 }
 
-.pull-to-refresh-indicator__glyph svg {
-  width: 100%;
-  height: 100%;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* Fade out spinner when refresh is complete */
+.pull-to-refresh-indicator[data-status="complete"] .ptr-spinner {
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-.pull-to-refresh-indicator[data-status="refreshing"] .pull-to-refresh-indicator__glyph svg {
-  animation: ptr-spin 0.88s linear infinite;
-}
-
-.pull-to-refresh-indicator[data-status="complete"] .pull-to-refresh-indicator__glyph,
-.pull-to-refresh-indicator[data-status="armed"] .pull-to-refresh-indicator__glyph {
-  color: var(--color-action-strong);
-}
-
-.pull-to-refresh-indicator__label {
-  font-size: 0.9375rem;
-}
-
-@keyframes ptr-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+@keyframes ptr-ios-fade {
+  0%   { opacity: 1; }
+  100% { opacity: 0.15; }
 }

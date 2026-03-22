@@ -234,8 +234,6 @@ function PlansManagePageContent() {
           pullOffset={pullToRefresh.pullOffset}
           progress={pullToRefresh.progress}
           status={pullToRefresh.status}
-          refreshingLabel="플랜 새로고침 중..."
-          completeLabel="플랜 갱신 완료"
         />
 
         <DashboardSection

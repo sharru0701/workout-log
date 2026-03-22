@@ -1273,8 +1273,6 @@ export default function WorkoutTodayPage() {
         pullOffset={pullToRefresh.pullOffset}
         progress={pullToRefresh.progress}
         status={pullToRefresh.status}
-        refreshingLabel="운동 데이터 새로고침 중..."
-        completeLabel="운동 데이터 갱신 완료"
       />
 
       <Card data-pull-refresh-trigger="true">
