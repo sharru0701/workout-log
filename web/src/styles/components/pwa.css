@@ -217,3 +217,53 @@
 .offline-sync-bar--done {
   background: var(--color-success);
 }
+
+.pull-to-refresh-indicator {
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.pull-to-refresh-indicator__content {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  color: var(--color-text-muted);
+}
+
+.pull-to-refresh-indicator__glyph {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pull-to-refresh-indicator__glyph svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pull-to-refresh-indicator[data-status="refreshing"] .pull-to-refresh-indicator__glyph svg {
+  animation: ptr-spin 0.88s linear infinite;
+}
+
+.pull-to-refresh-indicator[data-status="complete"] .pull-to-refresh-indicator__glyph,
+.pull-to-refresh-indicator[data-status="armed"] .pull-to-refresh-indicator__glyph {
+  color: var(--color-action-strong);
+}
+
+.pull-to-refresh-indicator__label {
+  font-size: 0.9375rem;
+}
+
+@keyframes ptr-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

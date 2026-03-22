@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties } from "react";
 import type { PullToRefreshStatus } from "@/lib/usePullToRefresh";
 
 type PullToRefreshIndicatorProps = {
@@ -40,39 +39,29 @@ export function PullToRefreshIndicator(props: PullToRefreshIndicatorProps) {
 
   const isVisible = status !== "idle";
   const visibleHeight = status === "refreshing" || status === "complete"
-    ? 58
-    : Math.min(58, Math.max(0, pullOffset));
-  const arrowRotation = -20 + progress * 200;
-  const style = {
-    height: `${visibleHeight}px`,
-    "--pull-progress": progress.toFixed(3),
-  } as CSSProperties;
+    ? 60
+    : Math.min(60, Math.max(0, pullOffset));
+  const rotation = -90 + progress * 180;
 
   return (
     <div
-      style={{ ...style, overflow: "hidden" }}
+      className="pull-to-refresh-indicator"
+      style={{ height: `${visibleHeight}px` }}
       aria-hidden={!isVisible}
+      data-status={status}
     >
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100%", gap: "var(--space-sm)", color: "var(--color-text-muted)" }}>
-        <span aria-hidden="true" style={{ width: "24px", height: "24px", display: "inline-block" }}>
-          <svg viewBox="0 0 24 24" focusable="false" style={{ width: "100%", height: "100%" }}>
-            <g
-              style={{ transform: `rotate(${arrowRotation}deg)` }}
-            >
-              <path d="M12 4.75v10.5" />
-              <path d="m7.75 11.5 4.25 4.25 4.25-4.25" />
+      <div className="pull-to-refresh-indicator__content">
+        <span className="pull-to-refresh-indicator__glyph" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false">
+            <g style={{ transform: status === "refreshing" ? undefined : `rotate(${rotation}deg)` }}>
+              <path d="M12 3.75a8.25 8.25 0 1 0 7.78 10.95" />
+              <path d="M15.45 3.9h4.8v4.8" />
             </g>
-            <path d="M20 12a8 8 0 1 1-3.1-6.34" />
-            <path d="m8.25 12.35 2.35 2.4 5.15-5.35" />
+            {status === "complete" ? <path d="m8.2 12.2 2.45 2.45 5.15-5.25" /> : null}
           </svg>
         </span>
-        <div aria-live="polite" aria-atomic="true">
-          <span>
-            {resolveLabel({ status, pullLabel, releaseLabel, refreshingLabel, completeLabel })}
-          </span>
-          <span aria-hidden="true">
-            <span />
-          </span>
+        <div className="pull-to-refresh-indicator__label" aria-live="polite" aria-atomic="true">
+          {resolveLabel({ status, pullLabel, releaseLabel, refreshingLabel, completeLabel })}
         </div>
       </div>
     </div>
