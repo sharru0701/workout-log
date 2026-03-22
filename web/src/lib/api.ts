@@ -15,7 +15,24 @@ type ApiMutationOptions = {
   invalidateCache?: boolean;
   // PERF: 전체 캐시 삭제 대신 특정 prefix만 무효화 → 유효한 캐시 엔트리 보존
   invalidateCachePrefixes?: string[];
+  // 네트워크 오류 시 IndexedDB 큐에 저장 후 재연결 시 자동 전송
+  queueIfOffline?: boolean;
 };
+
+/**
+ * 뮤테이션이 오프라인 큐에 저장되었을 때 throw되는 에러.
+ * 호출 측에서 isOfflineQueuedError()로 구분하여 UX 처리 가능.
+ */
+export class OfflineQueuedError extends Error {
+  constructor() {
+    super("요청이 오프라인 큐에 저장되었어요. 연결되면 자동으로 전송됩니다.");
+    this.name = "OfflineQueuedError";
+  }
+}
+
+export function isOfflineQueuedError(error: unknown): error is OfflineQueuedError {
+  return error instanceof OfflineQueuedError;
+}
 
 type ApiCacheEntry = {
   data: unknown;
@@ -332,12 +349,37 @@ async function apiMutate<T>(
 
   const endNetworkRequest = beginApiNetworkRequest();
   try {
-    const res = await fetch(path, {
-      method,
-      headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
-      body: body === undefined ? undefined : JSON.stringify(body),
-      signal,
-    });
+    let res: Response;
+    try {
+      res = await fetch(path, {
+        method,
+        headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
+        body: body === undefined ? undefined : JSON.stringify(body),
+        signal,
+      });
+    } catch (fetchError) {
+      // TypeError = 네트워크 오류 (DNS 실패, 연결 거부, 오프라인 등).
+      // HTTP 오류(4xx/5xx)는 fetch가 resolve하므로 여기 오지 않음.
+      if (
+        options.queueIfOffline &&
+        fetchError instanceof TypeError &&
+        typeof window !== "undefined"
+      ) {
+        // 동적 import: api.ts를 서버 번들에서 분리 유지
+        const { enqueueMutation } = await import("./offline-queue");
+        await enqueueMutation({
+          method,
+          path,
+          body,
+          headers: Object.keys(requestHeaders).length > 0 ? requestHeaders : undefined,
+          invalidateCache,
+          invalidateCachePrefixes: options.invalidateCachePrefixes,
+        });
+        throw new OfflineQueuedError();
+      }
+      throw fetchError;
+    }
+
     const data = (await res.json().catch(() => null)) as unknown;
     if (!res.ok) {
       throw new Error(resolveApiErrorMessage(data, `${method} ${path} failed: ${res.status}`));

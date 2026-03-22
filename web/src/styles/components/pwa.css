@@ -1,0 +1,219 @@
+/* ==========================================================================
+   PWA UI — Offline indicator + Install prompt banner
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Offline indicator — fixed top bar, slides in over safe area
+   -------------------------------------------------------------------------- */
+.offline-indicator {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  /* Sit above the safe-area-inset-top so it's visible behind the notch area */
+  padding-top: max(env(safe-area-inset-top, 0px), 0px);
+  padding-bottom: var(--space-xs);
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  animation: pwa-slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add safe-area padding so text isn't hidden behind the notch */
+.offline-indicator > * {
+  padding-top: var(--space-xs);
+}
+
+.offline-indicator--offline {
+  background: var(--color-danger);
+  color: #fff;
+}
+
+.offline-indicator--online {
+  background: var(--color-success);
+  color: #fff;
+}
+
+@keyframes pwa-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Install banner — slides up from bottom, respects safe area
+   -------------------------------------------------------------------------- */
+.pwa-install-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
+  box-shadow: 0 -4px 20px var(--shadow-color-medium);
+  padding: var(--space-sm) var(--space-md)
+    calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  animation: pwa-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.pwa-install-banner__content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.pwa-install-banner__text {
+  flex: 1;
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.45;
+}
+
+.pwa-install-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.pwa-install-banner__install {
+  background: var(--color-action);
+  color: var(--color-text-on-action);
+  border: none;
+  border-radius: 8px;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.pwa-install-banner__install:active {
+  opacity: 0.8;
+}
+
+.pwa-install-banner__dismiss {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: var(--space-xs);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.pwa-install-banner__dismiss:active {
+  opacity: 0.6;
+}
+
+@keyframes pwa-slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   SW Update Toast — 플로팅 카드, FAB와 겹치지 않도록 하단 좌측 배치
+   -------------------------------------------------------------------------- */
+.sw-update-toast {
+  position: fixed;
+  /* FAB(56px) + space-md(16px) 간격 위에 배치 */
+  bottom: calc(56px + var(--space-md) + var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  left: var(--space-md);
+  right: calc(56px + var(--space-md) * 2);
+  z-index: 9001;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px var(--shadow-color-strong);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  animation: pwa-slide-up 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sw-update-toast__text {
+  flex: 1;
+  font-size: 0.875rem;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.sw-update-toast__reload {
+  background: var(--color-action);
+  color: var(--color-text-on-action);
+  border: none;
+  border-radius: 8px;
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.15s;
+}
+
+.sw-update-toast__reload:active {
+  opacity: 0.8;
+}
+
+.sw-update-toast__dismiss {
+  background: transparent;
+  color: var(--color-text-muted);
+  border: none;
+  padding: var(--space-xs);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* --------------------------------------------------------------------------
+   Offline Sync Bar — 큐 처리 상태를 오프라인 인디케이터와 같은 위치에 표시
+   -------------------------------------------------------------------------- */
+.offline-sync-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  padding-top: calc(max(env(safe-area-inset-top, 0px), 0px) + var(--space-xs));
+  padding-bottom: var(--space-xs);
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 500;
+  background: var(--color-info);
+  color: #fff;
+  animation: pwa-slide-down 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.offline-sync-bar--done {
+  background: var(--color-success);
+}
