@@ -12,18 +12,63 @@
   top: 0;
   left: 0;
   right: 0;
-  /* 상태바+노치 높이만큼 — 0이면 사실상 비표시 */
-  height: env(safe-area-inset-top, 0px);
+  /*
+    iOS 26 계열의 frosted-glass처럼 상태바 아래로 살짝 번지는 페이드를 만든다.
+    안전 영역까지만 단색으로 덮지 않고, 몇 px 더 내려오며 자연스럽게 투명해진다.
+  */
+  height: calc(env(safe-area-inset-top, 0px) + 20px);
   z-index: 200;
-
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
-
-  /* 테마 배경색 기반 반투명 — 다크/라이트 자동 대응 */
-  background: color-mix(in srgb, var(--color-bg) 80%, transparent);
+  overflow: hidden;
 
   /* 터치 이벤트 통과 */
   pointer-events: none;
+}
+
+.status-bar-blur::before,
+.status-bar-blur::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+}
+
+.status-bar-blur::before {
+  /* 노치/상태바 영역은 조금 더 진한 프로스트 처리 */
+  backdrop-filter: blur(24px) saturate(1.5);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--color-bg) 54%, transparent) 0,
+      color-mix(in srgb, var(--color-bg) 28%, transparent) env(safe-area-inset-top, 0px),
+      transparent 100%
+    );
+  mask-image: linear-gradient(
+    to bottom,
+    black 0,
+    black calc(env(safe-area-inset-top, 0px) + 4px),
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    black 0,
+    black calc(env(safe-area-inset-top, 0px) + 4px),
+    transparent 100%
+  );
+}
+
+.status-bar-blur::after {
+  /* 안전 영역 아래쪽에 매우 얕은 블러 페이드 레이어를 추가 */
+  top: env(safe-area-inset-top, 0px);
+  height: 20px;
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--color-bg) 18%, transparent) 0,
+    transparent 100%
+  );
+  mask-image: linear-gradient(to bottom, black 0, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, black 0, transparent 100%);
 }
 
 /* --------------------------------------------------------------------------
