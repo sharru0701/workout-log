@@ -1,3 +1,7 @@
+html {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+}
+
 /* ==========================================================================
    PWA UI — Status bar blur, Offline indicator, Install prompt banner
    ========================================================================== */
@@ -233,18 +237,20 @@
    Pull-to-refresh indicator — Apple Safari / UIRefreshControl aligned
    -------------------------------------------------------------------------- */
 [data-ptr-container="true"] {
-  overscroll-behavior-y: none;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .pull-to-refresh-trigger-zone {
-  height: calc(env(safe-area-inset-top, 0px) + 28px);
-  margin-top: calc(-1 * env(safe-area-inset-top, 0px));
+  height: calc(var(--safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
+  margin-top: calc(-1 * var(--safe-area-top, env(safe-area-inset-top, 0px)));
   pointer-events: none;
 }
 
 .pull-to-refresh-indicator {
   overflow: hidden;
   pointer-events: none;
+  transform: translateY(var(--ptr-indicator-offset, 0px));
   transition: height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -259,6 +265,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.ptr-apple-control[data-visible="true"] {
+  filter: saturate(1.04);
 }
 
 .ptr-apple-control {

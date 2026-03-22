@@ -13,6 +13,7 @@ const SPINNER_PERIOD_MS = 1000;
 
 export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToRefreshIndicatorProps) {
   const isVisible = status !== "idle";
+  const statusLabel = status === "refreshing" ? "새로고침 중" : status === "complete" ? "새로고침 완료" : "아래로 당겨 새로고침";
   const visibleHeight =
     status === "refreshing" || status === "complete"
       ? 60
@@ -27,12 +28,14 @@ export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToR
     <div
       className="pull-to-refresh-indicator"
       style={{ height: `${visibleHeight}px` }}
-      aria-hidden="true"
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
       data-status={status}
     >
       {isVisible ? (
         <div className="pull-to-refresh-indicator__content">
-          <div className="ptr-apple-control" data-refreshing={isRefreshing ? "true" : "false"}>
+          <div className="ptr-apple-control" data-refreshing={isRefreshing ? "true" : "false"} data-visible={isVisible ? "true" : "false"}>
             <svg
               className="ptr-apple-arrow"
               viewBox="0 0 24 24"
@@ -51,7 +54,7 @@ export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToR
               <path d="M8.5 11.5 12 15l3.5-3.5" className="ptr-apple-arrow__stroke" />
             </svg>
 
-            <span className="ptr-spinner" role="status" aria-label="새로고침 중">
+            <span className="ptr-spinner" aria-hidden="true">
               {Array.from({ length: SPINNER_COUNT }, (_, i) => (
                 <span
                   key={i}
@@ -63,6 +66,7 @@ export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToR
                 />
               ))}
             </span>
+            <span className="sr-only">{statusLabel}</span>
           </div>
         </div>
       ) : null}

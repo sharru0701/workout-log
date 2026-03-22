@@ -12,6 +12,7 @@ type PullToRefreshOptions = {
   completeDelayMs?: number;
   triggerSelector?: string;
   enabled?: boolean;
+  topTriggerHeight?: number;
 };
 
 export type PullToRefreshStatus = "idle" | "pulling" | "armed" | "refreshing" | "complete";
@@ -44,6 +45,28 @@ function isStandaloneDisplayMode() {
   );
 }
 
+function isIosSafariLikeBrowser() {
+  if (typeof window === "undefined") return false;
+
+  const navigatorValue = window.navigator as Navigator & { standalone?: boolean };
+  const ua = navigatorValue.userAgent ?? "";
+  const platform = navigatorValue.platform ?? "";
+  const touchPoints = navigatorValue.maxTouchPoints ?? 0;
+  const isAppleMobileDevice = /iPhone|iPad|iPod/i.test(ua) || (platform === "MacIntel" && touchPoints > 1);
+  if (!isAppleMobileDevice) return false;
+
+  const isWebKit = /WebKit/i.test(ua);
+  const isExcluded = /CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/i.test(ua);
+  return isWebKit && !isExcluded;
+}
+
+function getSafeAreaInsetTop() {
+  if (typeof window === "undefined") return 0;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue("--safe-area-top").trim();
+  const parsed = Number.parseFloat(raw.replace("px", ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
 function getRootScrollTop() {
   if (typeof window === "undefined") return 0;
   return window.scrollY || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -56,11 +79,12 @@ export function usePullToRefresh({
   completeDelayMs = 720,
   triggerSelector = PULL_TO_REFRESH_TRIGGER_SELECTOR,
   enabled,
+  topTriggerHeight = 56,
 }: PullToRefreshOptions) {
   const [pullOffset, setPullOffset] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
-  const [isStandalone, setIsStandalone] = useState(false);
+  const [isSupported, setIsSupported] = useState(false);
 
   const completionTimeoutRef = useRef<number | null>(null);
   const startXRef = useRef<number | null>(null);
@@ -69,10 +93,10 @@ export function usePullToRefresh({
   const scrollTargetRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    setIsStandalone(isStandaloneDisplayMode());
+    setIsSupported(isStandaloneDisplayMode() || isIosSafariLikeBrowser());
   }, []);
 
-  const isEnabled = enabled ?? isStandalone;
+  const isEnabled = enabled ?? isSupported;
 
   const clearCompletionTimeout = useCallback(() => {
     if (completionTimeoutRef.current === null || typeof window === "undefined") return;
@@ -107,13 +131,15 @@ export function usePullToRefresh({
 
     const source = event.target instanceof Element ? event.target : null;
     const trigger = triggerSelector ? source?.closest(triggerSelector) : event.currentTarget;
-    if (!trigger || !event.currentTarget.contains(trigger)) return;
+    const isFromMarkedTrigger = Boolean(trigger && event.currentTarget.contains(trigger));
+    const isFromTopTriggerBand = touch.clientY <= getSafeAreaInsetTop() + topTriggerHeight;
+    if (!isFromMarkedTrigger && !isFromTopTriggerBand) return;
 
     startXRef.current = touch.clientX;
     startYRef.current = touch.clientY;
     isPullingRef.current = true;
     scrollTargetRef.current = event.currentTarget;
-  }, [clearCompletionTimeout, isEnabled, isRefreshing, triggerSelector]);
+  }, [clearCompletionTimeout, isEnabled, isRefreshing, topTriggerHeight, triggerSelector]);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isEnabled || !isPullingRef.current || startYRef.current === null || isRefreshing) return;
@@ -196,7 +222,7 @@ export function usePullToRefresh({
       onTouchMove,
       onTouchEnd,
       onTouchCancel: onTouchEnd,
-      style: { touchAction: "pan-y", overscrollBehaviorY: "none" },
+      style: { touchAction: "pan-y", overscrollBehaviorY: "contain" },
       "data-ptr-enabled": "true",
     };
   }, [isEnabled, onTouchEnd, onTouchMove, onTouchStart]);
