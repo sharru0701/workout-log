@@ -11,7 +11,7 @@ import { APP_ROUTES } from "@/lib/app-routes";
 import { apiGet } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { Stats1RMDetailed, type Stats1RMDetailedRef } from "./_components/stats-1rm-detailed";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useSearchParams } from "next/navigation";
 import React from "react";
@@ -38,7 +38,6 @@ function StatsPageContent() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   useEffect(() => {
@@ -89,12 +88,7 @@ function StatsPageContent() {
   };
 
   return (
-    <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       
       <DashboardScreen>
         <DashboardHero
@@ -215,6 +209,6 @@ function StatsPageContent() {
         </DashboardSection>
 
       </DashboardScreen>
-    </div>
+    </PullToRefreshShell>
   );
 }

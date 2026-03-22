@@ -3,7 +3,7 @@
 
 import dynamic from "next/dynamic";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { apiGet, apiPost, isAbortError } from "@/lib/api";
 import {
   computeExternalLoadFromTotalKg,
@@ -441,7 +441,6 @@ export default function WorkoutTodayPage() {
   }, [refreshTick]);
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshPageData,
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   function applyRecentSessionSelection(id: string) {
@@ -1266,14 +1265,7 @@ export default function WorkoutTodayPage() {
   }, [bodyweightKg, sets, snapshot]);
 
   return (
-    <div
-      {...pullToRefresh.bind}
-    >
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
       <Card data-pull-refresh-trigger="true">
         <div>기록 모드</div>
@@ -1971,6 +1963,6 @@ export default function WorkoutTodayPage() {
         />
       ) : null}
 
-    </div>
+    </PullToRefreshShell>
   );
 }

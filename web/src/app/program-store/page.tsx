@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -751,7 +751,6 @@ export default function ProgramStorePage() {
     onRefresh: async () => {
       await Promise.all([loadStore(), loadExerciseOptions()]);
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   useEffect(() => {
@@ -1189,12 +1188,7 @@ export default function ProgramStorePage() {
   const hasStoreQuery = storeQuery.trim().length > 0;
 
   return (
-    <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {Array.from({ length: 3 }).map((_, i) => (
@@ -2038,6 +2032,6 @@ export default function ProgramStorePage() {
           </div>
         )}
       </BottomSheet>
-    </div>
+    </PullToRefreshShell>
   );
 }

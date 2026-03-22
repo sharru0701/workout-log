@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { SessionCard } from "@/components/ui/session-card";
@@ -312,7 +312,6 @@ export default function CalendarPage() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   // Load plans
@@ -699,12 +698,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {/* Plan selector bar */}
       {plans.length > 0 && (
         <div data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-md)" }}>
@@ -930,6 +924,6 @@ export default function CalendarPage() {
         maxYear={getYear(today) + 10}
         onChange={handleMonthPickerChange}
       />
-    </div>
+    </PullToRefreshShell>
   );
 }

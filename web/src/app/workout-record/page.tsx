@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardContent } from "@/components/ui/card";
@@ -1373,7 +1373,6 @@ export default function WorkoutRecordPage() {
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshRecordPage,
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
@@ -1381,12 +1380,7 @@ export default function WorkoutRecordPage() {
   const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
-    <div {...pullToRefresh.bind}>
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           {/* 선택된 플랜 카드 */}
@@ -1933,6 +1927,6 @@ export default function WorkoutRecordPage() {
           </Link>
         </div>
       </BottomSheet>
-    </div>
+    </PullToRefreshShell>
   );
 }

@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
@@ -233,7 +233,6 @@ function PlanHistoryPageContent() {
     onRefresh: async () => {
       setRefreshTick((prev) => prev + 1);
     },
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   const loadedLogCount = logs.length;
@@ -280,14 +279,7 @@ function PlanHistoryPageContent() {
   }
 
   return (
-    <div
-      {...pullToRefresh.bind}
-    >
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
       <DashboardSection
         title="플랜 수행 히스토리"
@@ -488,7 +480,7 @@ function PlanHistoryPageContent() {
         ) : null}
         </div>
       </DashboardSection>
-    </div>
+    </PullToRefreshShell>
   );
 }
 

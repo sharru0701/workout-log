@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, TouchEvent } from "react";
 
+export const PULL_TO_REFRESH_TRIGGER_SELECTOR = "[data-pull-refresh-trigger]";
+
 type PullToRefreshOptions = {
   onRefresh: () => Promise<void> | void;
   threshold?: number;
@@ -52,7 +54,7 @@ export function usePullToRefresh({
   threshold = 72,
   maxPull = 120,
   completeDelayMs = 720,
-  triggerSelector,
+  triggerSelector = PULL_TO_REFRESH_TRIGGER_SELECTOR,
   enabled,
 }: PullToRefreshOptions) {
   const [pullOffset, setPullOffset] = useState(0);

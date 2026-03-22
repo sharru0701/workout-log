@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { HomeDashboard } from "@/components/home/home-dashboard";
-import { PullToRefreshIndicator } from "@/components/pull-to-refresh-indicator";
+import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import {
   ApiHomeDataSource,
@@ -52,7 +52,6 @@ export default function HomePage() {
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: loadHomeData,
-    triggerSelector: "[data-pull-refresh-trigger]",
   });
 
   useEffect(() => {
@@ -81,14 +80,7 @@ export default function HomePage() {
   const viewData = homeData;
 
   return (
-    <div
-      {...pullToRefresh.bind}
-    >
-      <PullToRefreshIndicator
-        pullOffset={pullToRefresh.pullOffset}
-        progress={pullToRefresh.progress}
-        status={pullToRefresh.status}
-      />
+    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {!hasResolvedHomeData ? (
         <>
           {loading && (
@@ -199,6 +191,6 @@ export default function HomePage() {
           {!error && <HomeDashboard data={viewData ?? HOME_PREVIEW_DATA} />}
         </>
       )}
-    </div>
+    </PullToRefreshShell>
   );
 }
