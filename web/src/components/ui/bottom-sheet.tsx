@@ -262,7 +262,6 @@ export function BottomSheet({
       const scrollY = window.scrollY;
       body.dataset.bottomSheetScrollY = String(scrollY);
       root.dataset.bottomSheetOpen = "true";
-      root.style.setProperty("--mobile-bottom-sheet-scroll-offset", `${scrollY}px`);
       body.style.position = "fixed"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.top = `-${scrollY}px`; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.left = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
@@ -290,7 +289,6 @@ export function BottomSheet({
       body.style.overflow = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       delete root.dataset.bottomSheetOpen;
       root.style.overflow = "";
-      root.style.removeProperty("--mobile-bottom-sheet-scroll-offset");
       window.scrollTo(0, scrollY); // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
     };
   }, [open]);
