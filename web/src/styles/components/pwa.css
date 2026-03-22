@@ -139,10 +139,10 @@
    -------------------------------------------------------------------------- */
 .sw-update-toast {
   position: fixed;
-  /* FAB(56px) + space-md(16px) 간격 위에 배치 */
-  bottom: calc(56px + var(--space-md) + var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  /* 탭바(56px) + safe area + 여백 위에 배치 */
+  bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--space-sm));
   left: var(--space-md);
-  right: calc(56px + var(--space-md) * 2);
+  right: var(--space-md);
   z-index: 9001;
   background: var(--color-surface);
   border: 1px solid var(--color-border);

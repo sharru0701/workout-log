@@ -8,11 +8,10 @@
 
 .app-main {
   flex: 1;
-  /* Phase 3,6: Safe-area 패딩 처리 및 Safari 투명화 복원 */
   /* 상단 상태표시줄(노치) 영역 침범 방지 */
   padding-top: env(safe-area-inset-top, 0px);
-  /* FAB 메뉴 개편으로 하단 고정바가 사라졌으므로 시스템 UI 스크롤 투과를 위한 최소 여백만 둡니다. */
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
+  /* 하단 탭바(56px) + iOS 홈 인디케이터 영역 + 여백 */
+  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--space-md));
 }
 
 /* Base utility padding container */

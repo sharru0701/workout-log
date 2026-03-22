@@ -1,16 +1,10 @@
 "use client";
 
-import type { CSSProperties, MouseEvent } from "react";
-import { memo, useCallback, useEffect, useLayoutEffect, useState } from "react";
+import { memo } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
-import { useRef } from "react";
+import { usePathname } from "next/navigation";
 
-type TabIconProps = {
-  className?: string;
-};
-
-function HomeIcon({ className }: TabIconProps) {
+function HomeIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 11L12 4.5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -20,7 +14,7 @@ function HomeIcon({ className }: TabIconProps) {
   );
 }
 
-function RecordIcon({ className }: TabIconProps) {
+function RecordIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 12h16" strokeLinecap="round" />
@@ -32,7 +26,7 @@ function RecordIcon({ className }: TabIconProps) {
   );
 }
 
-function CalendarIcon({ className }: TabIconProps) {
+function CalendarIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
@@ -48,7 +42,7 @@ function CalendarIcon({ className }: TabIconProps) {
   );
 }
 
-function PlanIcon({ className }: TabIconProps) {
+function PlanIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
@@ -63,7 +57,7 @@ function PlanIcon({ className }: TabIconProps) {
   );
 }
 
-function StoreIcon({ className }: TabIconProps) {
+function StoreIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M6 2.5L3 8.5h18l-3-6H6z" strokeLinecap="round" strokeLinejoin="round" />
@@ -73,7 +67,7 @@ function StoreIcon({ className }: TabIconProps) {
   );
 }
 
-function StatsIcon({ className }: TabIconProps) {
+function StatsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 20h18" strokeLinecap="round" />
@@ -84,7 +78,7 @@ function StatsIcon({ className }: TabIconProps) {
   );
 }
 
-function SettingsIcon({ className }: TabIconProps) {
+function SettingsIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 6h4" strokeLinecap="round" />
@@ -111,104 +105,45 @@ const tabs = [
 ];
 
 function tabIsActive(pathname: string, href: string) {
-  if (href === "/") {
-    return pathname === "/";
-  }
+  if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-type TabRouteDirection = "forward" | "backward";
-
-type FabItemProps = {
+type TabItemProps = {
   tab: (typeof tabs)[number];
-  tabIndex: number;
   isActive: boolean;
-  onPress: (event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => void;
 };
 
-// PERF: 탭 아이템을 메모화된 컴포넌트로 분리해 pathname 변경 시 비활성 탭 불필요한 재렌더 방지
-const FabItem = memo(function FabItem({ tab, tabIndex, isActive, onPress }: FabItemProps) {
+// PERF: pathname이 바뀌어도 비활성 탭은 재렌더링하지 않음
+const TabItem = memo(function TabItem({ tab, isActive }: TabItemProps) {
   const Icon = tab.Icon;
   return (
     <Link
       href={tab.href}
       aria-current={isActive ? "page" : undefined}
       aria-label={tab.ariaLabel}
-      title={tab.ariaLabel}
-      onClick={(event) => onPress(event, tabIndex, tab.href)}
-      className="fab-item"
+      className={`bottom-tab-item${isActive ? " bottom-tab-item--active" : ""}`}
     >
-      <div className="fab-icon">
+      <span className="bottom-tab-icon" aria-hidden="true">
         <Icon />
-      </div>
-      <span>{tab.label}</span>
+      </span>
+      <span className="bottom-tab-label">{tab.label}</span>
     </Link>
   );
 });
 
 export function BottomNav() {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-  const pathActiveTabIndex = tabs.findIndex((tab) => tabIsActive(pathname, tab.href));
-  const [visualActiveTabIndex, setVisualActiveTabIndex] = useState(pathActiveTabIndex);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-
-  // 현재 활성화된 탭 싱크
-  useEffect(() => {
-    setVisualActiveTabIndex(pathActiveTabIndex);
-  }, [pathActiveTabIndex]);
-
-  // 메뉴 외부 클릭 시 닫기
-  useEffect(() => {
-    function handleClickOutside(event: globalThis.MouseEvent) {
-      if (isOpen && menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [isOpen]);
-
-  const onTabPress = useCallback((event: React.MouseEvent<HTMLAnchorElement>, tabIndex: number, href: string) => {
-    if (event.defaultPrevented) return;
-    if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-
-    setIsOpen(false); // 탭 클릭 시 메뉴 닫기
-    setVisualActiveTabIndex(tabIndex);
-  }, []);
 
   return (
-    <div className="fab-container" ref={menuRef}>
-      {/* 확장 메뉴 리스트 */}
-      <div className={`fab-menu ${isOpen ? "is-open" : ""}`} aria-hidden={!isOpen}>
-        {tabs.map((tab, tabIndex) => (
-          <FabItem
-            key={tab.href}
-            tab={tab}
-            tabIndex={tabIndex}
-            isActive={tabIsActive(pathname, tab.href)}
-            onPress={onTabPress}
-          />
-        ))}
-      </div>
-
-      {/* 메인 FAB 버튼 */}
-      <button
-        type="button"
-        className={`fab-button ${isOpen ? "is-open" : ""}`}
-        aria-label="메뉴 열기"
-        aria-expanded={isOpen}
-        onClick={() => setIsOpen(!isOpen)}
-      >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="4" y1="7" x2="20" y2="7"></line>
-          <line x1="4" y1="12" x2="20" y2="12"></line>
-          <line x1="4" y1="17" x2="20" y2="17"></line>
-        </svg>
-      </button>
-    </div>
+    <nav className="bottom-tab-bar" aria-label="메인 내비게이션">
+      {tabs.map((tab) => (
+        <TabItem
+          key={tab.href}
+          tab={tab}
+          isActive={tabIsActive(pathname, tab.href)}
+        />
+      ))}
+    </nav>
   );
 }
