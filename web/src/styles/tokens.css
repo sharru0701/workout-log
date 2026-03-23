@@ -132,9 +132,9 @@
   --label-workout-type-bg: var(--label-program-bg);
   --label-workout-type-text: var(--label-program-text);
   --label-workout-type-border: var(--label-program-border);
-  --label-complete-bg: color-mix(in srgb, var(--color-success) 22%, white);
-  --label-complete-text: var(--color-success-strong);
-  --label-complete-border: color-mix(in srgb, var(--color-success) 52%, var(--color-border));
+  --label-complete-bg: color-mix(in srgb, var(--color-success) 30%, white);
+  --label-complete-text: color-mix(in srgb, var(--color-success-strong) 88%, var(--color-text));
+  --label-complete-border: color-mix(in srgb, var(--color-success) 66%, var(--color-border));
   --label-pr-bg: var(--label-personal-record-bg);
   --label-pr-text: var(--label-personal-record-text);
   --label-pr-border: var(--label-personal-record-border);
@@ -460,9 +460,9 @@
     --label-workout-type-bg: var(--label-program-bg);
     --label-workout-type-text: var(--label-program-text);
     --label-workout-type-border: var(--label-program-border);
-    --label-complete-bg: color-mix(in srgb, var(--color-success) 26%, var(--color-surface-2));
-    --label-complete-text: var(--color-success-strong);
-    --label-complete-border: color-mix(in srgb, var(--color-success) 52%, transparent);
+    --label-complete-bg: color-mix(in srgb, var(--color-success) 34%, var(--color-surface-2));
+    --label-complete-text: color-mix(in srgb, var(--color-success-strong) 90%, white);
+    --label-complete-border: color-mix(in srgb, var(--color-success) 64%, transparent);
     --label-pr-bg: var(--label-personal-record-bg);
     --label-pr-text: var(--label-personal-record-text);
     --label-pr-border: var(--label-personal-record-border);
@@ -685,9 +685,9 @@
   --label-workout-type-bg: var(--label-program-bg);
   --label-workout-type-text: var(--label-program-text);
   --label-workout-type-border: var(--label-program-border);
-  --label-complete-bg: color-mix(in srgb, var(--color-success) 26%, var(--color-surface-2));
-  --label-complete-text: var(--color-success-strong);
-  --label-complete-border: color-mix(in srgb, var(--color-success) 52%, transparent);
+  --label-complete-bg: color-mix(in srgb, var(--color-success) 34%, var(--color-surface-2));
+  --label-complete-text: color-mix(in srgb, var(--color-success-strong) 90%, white);
+  --label-complete-border: color-mix(in srgb, var(--color-success) 64%, transparent);
   --label-pr-bg: var(--label-personal-record-bg);
   --label-pr-text: var(--label-personal-record-text);
   --label-pr-border: var(--label-personal-record-border);
