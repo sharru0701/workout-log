@@ -80,7 +80,12 @@
   --label-border: var(--label-note-border);
 }
 
-.label-complete,
+.label-complete {
+  --label-bg: var(--label-complete-bg);
+  --label-text: var(--label-complete-text);
+  --label-border: var(--label-complete-border);
+}
+
 .label-success {
   --label-bg: var(--label-success-bg);
   --label-text: var(--label-success-text);
