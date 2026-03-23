@@ -362,12 +362,11 @@ html {
    ----------------------------------------------------------------------- */
 .ptr-spinner-arc {
   position: absolute;
-  inset: 2px;
+  inset: 0; /* glass-control 과 동일한 36×36 — 좌표계 완전 일치 */
   opacity: 0;
   /* transform 은 animation 에서만 제어 — scale 충돌 방지 */
   transition: opacity 0.18s ease;
-  transform-origin: center;
-  overflow: visible;
+  transform-origin: 50% 50%;
 }
 
 .ptr-glass-control[data-refreshing="true"] .ptr-spinner-arc {

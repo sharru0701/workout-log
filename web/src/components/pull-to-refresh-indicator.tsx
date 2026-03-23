@@ -106,12 +106,12 @@ export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToR
             {/* 회전 원호 스피너 (refreshing 단계) */}
             <svg
               className="ptr-spinner-arc"
-              viewBox="0 0 32 32"
+              viewBox="0 0 36 36"
               aria-hidden="true"
             >
               <circle
                 className="ptr-spinner-arc__circle"
-                cx="16" cy="16" r="11"
+                cx="18" cy="18" r="11"
               />
             </svg>
 
