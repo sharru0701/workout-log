@@ -34,14 +34,24 @@ export function PwaRegister() {
     };
 
     const register = async () => {
+      // controllerchange 리스너를 register() 이전에 등록:
+      // iOS PWA에서는 skipWaiting()이 즉시 실행되어 register() await 중에
+      // controllerchange가 발생할 수 있으므로, 먼저 등록해야 이벤트를 놓치지 않음
+      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
+
       try {
         registration = await navigator.serviceWorker.register("/sw.js");
       } catch (err) {
         console.debug("[PWA] Service worker registration failed:", err);
         return;
       }
-      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
-      document.addEventListener("visibilitychange", handleVisibilityChange);
+
+      // 리스너 등록 전에 이미 대기 중인 SW가 있는 경우 대비
+      // (register() 완료 시점에 이미 waiting 상태면 controllerchange를 놓쳤을 수 있음)
+      if (registration.waiting && prevController) {
+        setUpdateAvailable(true);
+      }
     };
 
     if (document.readyState === "complete") {
@@ -51,6 +61,7 @@ export function PwaRegister() {
     }
 
     return () => {
+      // register()가 실패한 경우에도 리스너가 등록됐을 수 있으므로 항상 제거
       navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
