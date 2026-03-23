@@ -32,11 +32,10 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 3px;
 
   /* 탭 영역 최소 높이 */
   min-height: 56px;
-  padding: 8px 2px 6px;
+  padding: 4px 2px;
 
   color: var(--color-text-muted);
   text-decoration: none;
@@ -57,6 +56,25 @@
 }
 
 /* --------------------------------------------------------------------------
+   Pill wrapper — 아이콘 + 레이블을 함께 감쌈
+   -------------------------------------------------------------------------- */
+.bottom-tab-pill {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  transition: background 0.2s ease, transform 0.15s ease;
+}
+
+/* 활성 탭 pill 강조 */
+.bottom-tab-item--active .bottom-tab-pill {
+  background: color-mix(in srgb, var(--color-action-strong) 15%, transparent);
+  transform: translateY(-1px);
+}
+
+/* --------------------------------------------------------------------------
    아이콘
    -------------------------------------------------------------------------- */
 .bottom-tab-icon {
@@ -66,25 +84,12 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  /* pill 배경을 위한 패딩 + 전환 */
-  padding: 5px 14px;
-  width: auto;
-  height: auto;
-  border-radius: 16px;
-  transition: background 0.2s ease, transform 0.15s ease;
 }
 
 .bottom-tab-icon svg {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
-}
-
-/* 활성 탭 아이콘 — pill 강조 + 굵은 stroke */
-.bottom-tab-item--active .bottom-tab-icon {
-  background: color-mix(in srgb, var(--color-action-strong) 15%, transparent);
-  transform: translateY(-1px);
 }
 
 .bottom-tab-item--active .bottom-tab-icon svg {
@@ -99,7 +104,6 @@
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
-  /* 긴 레이블 말줄임 방지 — 모든 탭이 같은 너비 */
   white-space: nowrap;
 }
 

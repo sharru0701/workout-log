@@ -124,10 +124,12 @@ const TabItem = memo(function TabItem({ tab, isActive }: TabItemProps) {
       aria-label={tab.ariaLabel}
       className={`bottom-tab-item${isActive ? " bottom-tab-item--active" : ""}`}
     >
-      <span className="bottom-tab-icon" aria-hidden="true">
-        <Icon />
+      <span className="bottom-tab-pill">
+        <span className="bottom-tab-icon" aria-hidden="true">
+          <Icon />
+        </span>
+        <span className="bottom-tab-label">{tab.label}</span>
       </span>
-      <span className="bottom-tab-label">{tab.label}</span>
     </Link>
   );
 });
