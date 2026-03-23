@@ -107,6 +107,8 @@ export type NumberPickerFieldProps = {
   variant?: "default" | "workout-number" | "stepper";
   /** Whether the field is in "complete" state */
   complete?: boolean;
+  /** Metric tone for complete-state highlight color */
+  tone?: "reps" | "weight" | "default";
 };
 
 export function NumberPickerField({
@@ -122,6 +124,7 @@ export function NumberPickerField({
   className = "",
   variant = "default",
   complete = false,
+  tone = "default",
 }: NumberPickerFieldProps) {
   const [open, setOpen] = useState(false);
 
@@ -139,13 +142,26 @@ export function NumberPickerField({
       };
     }
     if (variant === "workout-number") {
+      const isReps = tone === "reps";
       return {
         justifyContent: "center" as const,
         borderRadius: "6px",
         minHeight: "36px",
         padding: "4px 8px",
-        backgroundColor: complete ? "var(--color-surface-hover)" : "transparent",
-        color: complete ? "var(--color-text)" : "var(--color-text-muted)",
+        backgroundColor: complete
+          ? isReps
+            ? "var(--label-program-bg)"
+            : "var(--color-surface-hover)"
+          : "transparent",
+        color: complete
+          ? isReps
+            ? "var(--metric-reps-color)"
+            : "var(--color-text)"
+          : "var(--color-text-muted)",
+        border: complete && isReps
+          ? "1px solid var(--label-program-border)"
+          : undefined,
+        fontWeight: complete && isReps ? "700" : undefined,
         font: "var(--font-secondary)",
       };
     }

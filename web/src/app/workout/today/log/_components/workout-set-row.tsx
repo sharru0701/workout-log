@@ -201,6 +201,8 @@ const WorkoutSetRow = memo(function WorkoutSetRow({
               max={100}
               step={1}
               variant="workout-number"
+              complete={row.reps > 0}
+              tone="reps"
               onChange={(v) => updateRow(idx, (prev) => ({ ...prev, reps: v }))}
             />
           </div>
