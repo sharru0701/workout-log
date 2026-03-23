@@ -129,6 +129,7 @@ export function NumberPickerField({
   const [open, setOpen] = useState(false);
 
   const displayText = formatValue ? formatValue(value) : String(value);
+  const isCompletedReps = variant === "workout-number" && complete && tone === "reps";
   const variantStyles = (() => {
     if (variant === "stepper") {
       return {
@@ -150,16 +151,19 @@ export function NumberPickerField({
         padding: "4px 8px",
         backgroundColor: complete
           ? isReps
-            ? "var(--label-program-bg)"
+            ? "var(--color-selected-weak)"
             : "var(--color-surface-hover)"
           : "transparent",
         color: complete
           ? isReps
-            ? "var(--metric-reps-color)"
+            ? "var(--color-action-strong)"
             : "var(--color-text)"
           : "var(--color-text-muted)",
         border: complete && isReps
-          ? "1px solid var(--label-program-border)"
+          ? "1px solid var(--color-selected-border)"
+          : undefined,
+        boxShadow: complete && isReps
+          ? "inset 0 0 0 1px color-mix(in srgb, var(--color-action) 18%, transparent)"
           : undefined,
         fontWeight: complete && isReps ? "700" : undefined,
         font: "var(--font-secondary)",
@@ -195,7 +199,7 @@ export function NumberPickerField({
         }}
       >
         <span style={{ fontVariantNumeric: "tabular-nums" }}>{displayText}</span>
-        {unit ? <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{unit}</span> : null}
+        {unit ? <span style={{ color: isCompletedReps ? "var(--color-action-strong)" : "var(--color-text-muted)", font: "var(--font-secondary)", fontWeight: isCompletedReps ? 600 : undefined }}>{unit}</span> : null}
       </button>
       <NumberPickerSheet
         open={open}
