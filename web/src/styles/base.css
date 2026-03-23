@@ -68,3 +68,16 @@ input[type="search"]::-webkit-search-results-decoration {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }
+
+/* 스크린 리더 전용 — 시각적으로 숨기되 보조 기술에는 노출 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
