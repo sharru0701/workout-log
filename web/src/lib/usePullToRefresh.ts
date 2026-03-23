@@ -103,6 +103,9 @@ export function usePullToRefresh({
   const onTouchStart = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isEnabled || isRefreshing) return;
 
+    // 바텀시트가 열려 있으면 PTR 비활성화 — 모달 스와이프 닫기와 충돌 방지
+    if (document.documentElement.dataset.bottomSheetOpen === "true") return;
+
     clearCompletionTimeout();
     setIsCompleting(false);
 
