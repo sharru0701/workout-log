@@ -169,7 +169,10 @@ export function usePullToRefresh({
 
     setIsRefreshing(true);
     try {
-      await onRefresh();
+      await Promise.all([
+        onRefresh(),
+        new Promise<void>((resolve) => setTimeout(resolve, 500)),
+      ]);
       clearCompletionTimeout();
       setIsCompleting(true);
       if (typeof window !== "undefined") {

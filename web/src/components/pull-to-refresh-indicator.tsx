@@ -8,9 +8,6 @@ type PullToRefreshIndicatorProps = {
   status: PullToRefreshStatus;
 };
 
-const SPINNER_COUNT = 12;
-const SPINNER_PERIOD_MS = 1000;
-
 /**
  * iOS 26 Liquid Glass 스타일 PTR 인디케이터
  *
@@ -106,19 +103,17 @@ export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToR
               />
             </svg>
 
-            {/* 스피너 (refreshing 단계) */}
-            <span className="ptr-spinner" aria-hidden="true">
-              {Array.from({ length: SPINNER_COUNT }, (_, i) => (
-                <span
-                  key={i}
-                  className="ptr-spinner__line"
-                  style={{
-                    transform: `rotate(${i * (360 / SPINNER_COUNT)}deg)`,
-                    animationDelay: `-${((SPINNER_COUNT - i) / SPINNER_COUNT) * (SPINNER_PERIOD_MS / 1000)}s`,
-                  }}
-                />
-              ))}
-            </span>
+            {/* 회전 원호 스피너 (refreshing 단계) */}
+            <svg
+              className="ptr-spinner-arc"
+              viewBox="0 0 32 32"
+              aria-hidden="true"
+            >
+              <circle
+                className="ptr-spinner-arc__circle"
+                cx="16" cy="16" r="11"
+              />
+            </svg>
 
             <span className="sr-only">{statusLabel}</span>
           </div>

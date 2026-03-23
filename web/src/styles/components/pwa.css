@@ -358,45 +358,41 @@ html {
 
 /* -----------------------------------------------------------------------
    스피너 (refreshing / complete 단계)
+   회전 원호(arc) 스피너 — 명확한 로딩 표시
    ----------------------------------------------------------------------- */
-.ptr-spinner {
+.ptr-spinner-arc {
   position: absolute;
-  inset: 3px;
-  display: inline-block;
-  color: var(--color-text-muted);
+  inset: 2px;
   opacity: 0;
   transform: scale(0.85);
   transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transform-origin: center;
+  overflow: visible;
 }
 
-.ptr-glass-control[data-refreshing="true"] .ptr-spinner {
+.ptr-glass-control[data-refreshing="true"] .ptr-spinner-arc {
   opacity: 1;
   transform: scale(1);
+  animation: ptr-spin 0.75s linear infinite;
 }
 
-.ptr-spinner__line {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 2px;
-  height: 5.5px;
-  margin-top: -8px;
-  margin-left: -1px;
-  background: currentColor;
-  border-radius: 1px;
-  transform-origin: 50% 100%;
-  animation: ptr-ios-fade 1s linear infinite;
-  opacity: 0.15;
+.ptr-spinner-arc__circle {
+  fill: none;
+  stroke: var(--color-action-strong);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  /* r=14 circumference≈88, 약 75% 호 */
+  stroke-dasharray: 66 22;
 }
 
 /* complete: 스피너 페이드아웃 */
-.pull-to-refresh-indicator[data-status="complete"] .ptr-glass-control[data-refreshing="true"] .ptr-spinner {
+.pull-to-refresh-indicator[data-status="complete"] .ptr-glass-control[data-refreshing="true"] .ptr-spinner-arc {
   opacity: 0;
   transform: scale(0.85);
+  animation: none;
   transition: opacity 0.32s ease, transform 0.32s ease;
 }
 
-@keyframes ptr-ios-fade {
-  0%   { opacity: 1; }
-  100% { opacity: 0.15; }
+@keyframes ptr-spin {
+  to { transform: rotate(360deg); }
 }
