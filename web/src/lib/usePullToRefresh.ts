@@ -3,19 +3,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, TouchEvent } from "react";
 
-export const PULL_TO_REFRESH_TRIGGER_SELECTOR = "[data-pull-refresh-trigger]";
+export type PullToRefreshStatus = "idle" | "pulling" | "armed" | "refreshing" | "complete";
 
 type PullToRefreshOptions = {
   onRefresh: () => Promise<void> | void;
   threshold?: number;
   maxPull?: number;
   completeDelayMs?: number;
-  triggerSelector?: string;
   enabled?: boolean;
-  topTriggerHeight?: number;
 };
-
-export type PullToRefreshStatus = "idle" | "pulling" | "armed" | "refreshing" | "complete";
 
 type PullToRefreshBind = {
   onTouchStart: (event: TouchEvent<HTMLElement>) => void;
@@ -35,6 +31,11 @@ const DISABLED_BIND: PullToRefreshBind = {
   "data-ptr-enabled": "false",
 };
 
+/**
+ * PWA 표준 준수: 독립 실행 모드(standalone/fullscreen/minimal-ui)에서만
+ * 커스텀 PTR을 활성화합니다. 일반 브라우저 모드에서는 브라우저 기본
+ * 새로고침(iOS 26 Safari 네이티브 PTR 포함)을 사용합니다.
+ */
 function isStandaloneDisplayMode() {
   if (typeof window === "undefined") return false;
   return Boolean(
@@ -43,21 +44,6 @@ function isStandaloneDisplayMode() {
     window.matchMedia?.("(display-mode: minimal-ui)").matches ||
     (window.navigator as Navigator & { standalone?: boolean }).standalone,
   );
-}
-
-function isIosSafariLikeBrowser() {
-  if (typeof window === "undefined") return false;
-
-  const navigatorValue = window.navigator as Navigator & { standalone?: boolean };
-  const ua = navigatorValue.userAgent ?? "";
-  const platform = navigatorValue.platform ?? "";
-  const touchPoints = navigatorValue.maxTouchPoints ?? 0;
-  const isAppleMobileDevice = /iPhone|iPad|iPod/i.test(ua) || (platform === "MacIntel" && touchPoints > 1);
-  if (!isAppleMobileDevice) return false;
-
-  const isWebKit = /WebKit/i.test(ua);
-  const isExcluded = /CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo/i.test(ua);
-  return isWebKit && !isExcluded;
 }
 
 function getSafeAreaInsetTop() {
@@ -77,9 +63,7 @@ export function usePullToRefresh({
   threshold = 72,
   maxPull = 120,
   completeDelayMs = 720,
-  triggerSelector = PULL_TO_REFRESH_TRIGGER_SELECTOR,
   enabled,
-  topTriggerHeight = 56,
 }: PullToRefreshOptions) {
   const [pullOffset, setPullOffset] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -90,10 +74,9 @@ export function usePullToRefresh({
   const startXRef = useRef<number | null>(null);
   const startYRef = useRef<number | null>(null);
   const isPullingRef = useRef(false);
-  const scrollTargetRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    setIsSupported(isStandaloneDisplayMode() || isIosSafariLikeBrowser());
+    setIsSupported(isStandaloneDisplayMode());
   }, []);
 
   const isEnabled = enabled ?? isSupported;
@@ -114,7 +97,6 @@ export function usePullToRefresh({
     startXRef.current = null;
     startYRef.current = null;
     isPullingRef.current = false;
-    scrollTargetRef.current = null;
     setPullOffset(0);
   }, []);
 
@@ -124,22 +106,20 @@ export function usePullToRefresh({
     clearCompletionTimeout();
     setIsCompleting(false);
 
+    // 스크롤이 최상단이 아니면 PTR 시작 안 함
     if (getRootScrollTop() > 0) return;
 
     const touch = event.touches[0];
     if (!touch) return;
 
-    const source = event.target instanceof Element ? event.target : null;
-    const trigger = triggerSelector ? source?.closest(triggerSelector) : event.currentTarget;
-    const isFromMarkedTrigger = Boolean(trigger && event.currentTarget.contains(trigger));
-    const isFromTopTriggerBand = touch.clientY <= getSafeAreaInsetTop() + topTriggerHeight;
-    if (!isFromMarkedTrigger && !isFromTopTriggerBand) return;
+    // 화면 최상단(safe area 포함) 영역에서만 시작 — 표준 PTR 트리거 영역
+    const safeTop = getSafeAreaInsetTop();
+    if (touch.clientY > safeTop + 120) return;
 
     startXRef.current = touch.clientX;
     startYRef.current = touch.clientY;
     isPullingRef.current = true;
-    scrollTargetRef.current = event.currentTarget;
-  }, [clearCompletionTimeout, isEnabled, isRefreshing, topTriggerHeight, triggerSelector]);
+  }, [clearCompletionTimeout, isEnabled, isRefreshing]);
 
   const onTouchMove = useCallback((event: TouchEvent<HTMLElement>) => {
     if (!isEnabled || !isPullingRef.current || startYRef.current === null || isRefreshing) return;
@@ -152,6 +132,7 @@ export function usePullToRefresh({
     const touch = event.touches[0];
     if (!touch) return;
 
+    // 수평 스와이프이면 PTR 취소
     if (startXRef.current !== null) {
       const horizontalDelta = Math.abs(touch.clientX - startXRef.current);
       const verticalDelta = Math.abs(touch.clientY - startYRef.current);
@@ -167,6 +148,7 @@ export function usePullToRefresh({
       return;
     }
 
+    // 저항 물리 — iOS UIScrollView와 동일한 감쇠 곡선
     const resisted = Math.min(maxPull, Math.pow(raw, 0.84));
     setPullOffset(resisted);
 
@@ -222,7 +204,11 @@ export function usePullToRefresh({
       onTouchMove,
       onTouchEnd,
       onTouchCancel: onTouchEnd,
-      style: { touchAction: "pan-y", overscrollBehaviorY: "contain" },
+      style: {
+        touchAction: "pan-y",
+        // standalone 모드에서 브라우저 overscroll bounce 방지
+        overscrollBehaviorY: "contain",
+      },
       "data-ptr-enabled": "true",
     };
   }, [isEnabled, onTouchEnd, onTouchMove, onTouchStart]);
