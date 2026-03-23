@@ -104,7 +104,7 @@ export function SearchSelectCombobox({
         {selectionSummary}
 
         {!hideOptions ? (
-          <div role="listbox" aria-label={resultsAriaLabel} style={{ display: "flex", flexDirection: "column", gap: "2px", maxHeight: "300px", overflowY: "auto" }}>
+          <div role="listbox" aria-label={resultsAriaLabel} style={{ display: "flex", flexDirection: "column", gap: "2px", height: "300px", overflowY: "auto" }}>
             {loading ? (
               <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{loadingText}</span>
             ) : options.length === 0 ? (
