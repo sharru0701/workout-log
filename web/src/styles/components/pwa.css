@@ -234,86 +234,141 @@ html {
 }
 
 /* --------------------------------------------------------------------------
-   Pull-to-refresh indicator — Apple Safari / UIRefreshControl aligned
+   Pull-to-refresh — iOS 26 Liquid Glass 스타일
+   PWA 표준: standalone 모드에서만 활성화, 일반 브라우저는 네이티브 PTR 사용
    -------------------------------------------------------------------------- */
+
+/* standalone/PWA 컨테이너: 브라우저 overscroll bounce 억제 */
 [data-ptr-container="true"] {
   overscroll-behavior-y: contain;
   -webkit-overflow-scrolling: touch;
 }
 
-.pull-to-refresh-trigger-zone {
-  height: calc(var(--safe-area-top, env(safe-area-inset-top, 0px)) + 56px);
-  margin-top: calc(-1 * var(--safe-area-top, env(safe-area-inset-top, 0px)));
-  pointer-events: none;
-}
-
+/* 인디케이터 래퍼: 높이 전환으로 당김 거리를 표현 */
 .pull-to-refresh-indicator {
   overflow: hidden;
   pointer-events: none;
-  transform: translateY(var(--ptr-indicator-offset, 0px));
+  /* 안전 영역(노치) 아래 8px에 배치 */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
+  box-sizing: border-box;
   transition: height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-[data-ptr-enabled="true"]:active .pull-to-refresh-indicator,
+/* 터치 중에는 높이 전환 없이 즉각 반응 */
 [data-ptr-enabled="true"] .pull-to-refresh-indicator[data-status="pulling"],
 [data-ptr-enabled="true"] .pull-to-refresh-indicator[data-status="armed"] {
   transition: none;
 }
 
 .pull-to-refresh-indicator__content {
-  height: 60px;
+  height: 52px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.ptr-apple-control[data-visible="true"] {
-  filter: saturate(1.04);
-}
-
-.ptr-apple-control {
+/* -----------------------------------------------------------------------
+   iOS 26 Liquid Glass 컨트롤
+   - 반투명 원형 배경 + backdrop-filter blur
+   - 아이콘과 스피너가 같은 컨테이너 안에 겹쳐짐
+   ----------------------------------------------------------------------- */
+.ptr-glass-control {
   position: relative;
-  width: 24px;
-  height: 24px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: color-mix(in srgb, var(--color-text-muted) 88%, white);
+
+  /* Liquid Glass */
+  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow:
+    0 1px 8px color-mix(in srgb, var(--color-shadow, #000) 12%, transparent),
+    0 0 0 0.5px color-mix(in srgb, var(--color-border) 60%, transparent);
+
+  transition: box-shadow 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.ptr-apple-arrow {
-  width: 24px;
-  height: 24px;
-  fill: none;
-  transition: opacity 0.18s ease, transform 0.18s ease;
+/* armed 상태: 살짝 확대로 햅틱 느낌 강조 */
+.ptr-glass-control[data-armed="true"] {
+  transform: scale(1.08);
+  box-shadow:
+    0 2px 12px color-mix(in srgb, var(--color-action-strong) 20%, transparent),
+    0 0 0 1.5px color-mix(in srgb, var(--color-action-strong) 40%, transparent);
 }
 
-.ptr-apple-arrow__stroke {
+/* -----------------------------------------------------------------------
+   원형 진행 링 (pulling 단계)
+   ----------------------------------------------------------------------- */
+.ptr-progress-ring {
+  position: absolute;
+  inset: -3px;
+  width: calc(100% + 6px);
+  height: calc(100% + 6px);
+  overflow: visible;
+  transform: rotate(-90deg); /* 12시 방향에서 시작 */
+}
+
+.ptr-progress-ring__track {
   fill: none;
-  stroke: currentColor;
-  stroke-width: 2.25;
+  stroke: color-mix(in srgb, var(--color-border) 50%, transparent);
+  stroke-width: 2;
+}
+
+.ptr-progress-ring__fill {
+  fill: none;
+  stroke: var(--color-text-muted);
+  stroke-width: 2;
   stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 1;
-  transition: stroke 0.15s ease, stroke-dashoffset 0.12s linear;
+  transition: stroke-dashoffset 0.05s linear, stroke 0.15s ease;
 }
 
-.pull-to-refresh-indicator[data-status="armed"] .ptr-apple-arrow__stroke {
+.pull-to-refresh-indicator[data-status="armed"] .ptr-progress-ring__fill {
   stroke: var(--color-action-strong);
 }
 
+/* -----------------------------------------------------------------------
+   화살표 아이콘
+   ----------------------------------------------------------------------- */
+.ptr-arrow-icon {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  transition: opacity 0.18s ease, transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--color-text-muted);
+}
+
+.ptr-arrow-icon__stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.15s ease;
+}
+
+.pull-to-refresh-indicator[data-status="armed"] .ptr-arrow-icon {
+  color: var(--color-action-strong);
+}
+
+/* -----------------------------------------------------------------------
+   스피너 (refreshing / complete 단계)
+   ----------------------------------------------------------------------- */
 .ptr-spinner {
   position: absolute;
-  inset: 1px;
+  inset: 3px;
   display: inline-block;
   color: var(--color-text-muted);
   opacity: 0;
-  transform: scale(0.92);
-  transition: opacity 0.16s ease, transform 0.16s ease;
+  transform: scale(0.85);
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-.ptr-apple-control[data-refreshing="true"] .ptr-spinner,
-.pull-to-refresh-indicator[data-status="complete"] .ptr-spinner {
+.ptr-glass-control[data-refreshing="true"] .ptr-spinner {
   opacity: 1;
   transform: scale(1);
 }
@@ -323,8 +378,8 @@ html {
   top: 50%;
   left: 50%;
   width: 2px;
-  height: 6px;
-  margin-top: -9px;
+  height: 5.5px;
+  margin-top: -8px;
   margin-left: -1px;
   background: currentColor;
   border-radius: 1px;
@@ -333,9 +388,11 @@ html {
   opacity: 0.15;
 }
 
-.pull-to-refresh-indicator[data-status="complete"] .ptr-spinner {
+/* complete: 스피너 페이드아웃 */
+.pull-to-refresh-indicator[data-status="complete"] .ptr-glass-control[data-refreshing="true"] .ptr-spinner {
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transform: scale(0.85);
+  transition: opacity 0.32s ease, transform 0.32s ease;
 }
 
 @keyframes ptr-ios-fade {
