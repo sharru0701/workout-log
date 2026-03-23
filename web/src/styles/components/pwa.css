@@ -244,13 +244,12 @@ html {
   -webkit-overflow-scrolling: touch;
 }
 
-/* 인디케이터 래퍼: 높이 전환으로 당김 거리를 표현 */
+/* 인디케이터 래퍼: 높이 전환으로 당김 거리를 표현
+   app-main 이 이미 padding-top: safe-area-inset-top 을 갖고 있으므로
+   여기서는 추가 패딩 없이 단순 overflow:hidden 박스로만 사용 */
 .pull-to-refresh-indicator {
   overflow: hidden;
   pointer-events: none;
-  /* 안전 영역(노치) 아래 8px에 배치 */
-  padding-top: calc(env(safe-area-inset-top, 0px) + 8px);
-  box-sizing: border-box;
   transition: height 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -260,11 +259,13 @@ html {
   transition: none;
 }
 
+/* __content 는 항상 52px — overflow:hidden 으로 당김 거리만큼 위에서부터 reveal */
 .pull-to-refresh-indicator__content {
   height: 52px;
   display: flex;
-  align-items: center;
+  align-items: flex-end;   /* glass circle 을 하단에 배치 → 당길수록 아래서 등장 */
   justify-content: center;
+  padding-bottom: 8px;
 }
 
 /* -----------------------------------------------------------------------
