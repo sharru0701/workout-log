@@ -112,7 +112,11 @@ async function staleWhileRevalidate(request, cacheName) {
       if (response.ok) cache.put(request, response.clone());
       return response;
     })
-    .catch(() => cached);
+    .catch(() =>
+      // cached 가 undefined(캐시 미스)인 경우에도 반드시 Response를 반환해야 함.
+      // undefined를 respondWith에 넘기면 SW가 오류를 발생시킴.
+      cached ?? new Response('Network error', { status: 503 })
+    );
 
   return cached ?? networkFetch;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -39,31 +39,33 @@ function isIOSSafari(): boolean {
 export function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSHint, setShowIOSHint] = useState(false);
-  const iosTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     if (isInStandalone()) return;
 
+    const cleanups: Array<() => void> = [];
+
     // Android / Chrome desktop: capture the native install prompt.
+    // beforeinstallprompt is never fired on iOS, so this branch is harmless there.
     if (!localStorage.getItem(ANDROID_DISMISSED_KEY)) {
       const handleBeforeInstall = (e: Event) => {
         e.preventDefault();
         setDeferredPrompt(e as BeforeInstallPromptEvent);
       };
       window.addEventListener("beforeinstallprompt", handleBeforeInstall);
-
-      return () => {
-        window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
-        clearTimeout(iosTimer.current);
-      };
+      cleanups.push(() =>
+        window.removeEventListener("beforeinstallprompt", handleBeforeInstall)
+      );
     }
 
     // iOS Safari: show a one-time hint after a short delay (not during initial paint).
+    // Previously unreachable because the Android branch returned early.
     if (isIOSSafari() && !localStorage.getItem(IOS_HINT_DISMISSED_KEY)) {
-      iosTimer.current = setTimeout(() => setShowIOSHint(true), 4000);
+      const timer = setTimeout(() => setShowIOSHint(true), 4000);
+      cleanups.push(() => clearTimeout(timer));
     }
 
-    return () => clearTimeout(iosTimer.current);
+    return () => cleanups.forEach((fn) => fn());
   }, []);
 
   const dismissAndroid = () => {

@@ -18,22 +18,30 @@ export function PwaRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
+    // 등록 이전에 캡처: 기존 controller가 있으면 업데이트, 없으면 최초 설치
+    const prevController = navigator.serviceWorker.controller;
+    let registration: ServiceWorkerRegistration | null = null;
+
+    const handleControllerChange = () => {
+      if (prevController) setUpdateAvailable(true);
+    };
+
+    // visibilitychange: 앱 복귀 시 새 SW가 대기 중인지 확인
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible" && registration) {
+        registration.update().catch(() => {});
+      }
+    };
+
     const register = async () => {
       try {
-        await navigator.serviceWorker.register("/sw.js");
+        registration = await navigator.serviceWorker.register("/sw.js");
       } catch (err) {
         console.debug("[PWA] Service worker registration failed:", err);
         return;
       }
-
-      // controllerchange: 새 SW가 이 페이지를 제어하기 시작했음을 의미
-      // prevController가 null이면 최초 설치 → 토스트 불필요
-      const prevController = navigator.serviceWorker.controller;
-      navigator.serviceWorker.addEventListener("controllerchange", () => {
-        if (prevController) {
-          setUpdateAvailable(true);
-        }
-      });
+      navigator.serviceWorker.addEventListener("controllerchange", handleControllerChange);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
     };
 
     if (document.readyState === "complete") {
@@ -41,6 +49,11 @@ export function PwaRegister() {
     } else {
       window.addEventListener("load", () => void register(), { once: true });
     }
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", handleControllerChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   if (!updateAvailable) return null;
