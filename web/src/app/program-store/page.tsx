@@ -561,6 +561,7 @@ function operatorSessionMeta(sessionKey: string) {
   if (key === "D1") return { title: "D1", description: "Squat + Bench + Pull-Up" };
   if (key === "D2") return { title: "D2", description: "Squat + Bench + Pull-Up" };
   if (key === "D3") return { title: "D3", description: "Squat + Bench + Deadlift" };
+  if (key === "D4") return { title: "D4", description: "Overhead Press" };
   return { title: sessionKey, description: "" };
 }
 

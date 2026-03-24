@@ -261,6 +261,38 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     };
   }
 
+  if (def.kind === "531") {
+    const sessionsPerWeek = def.schedule?.sessionsPerWeek as number | undefined;
+    const weeks = def.schedule?.weeks as number | undefined;
+    const parts: string[] = [];
+    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
+    if (weeks) parts.push(`${weeks}주 사이클`);
+
+    const stats: ProgramStatItem[] = [
+      { label: "난이도", value: difficultyValue },
+      { label: "주간 빈도", value: sessionsPerWeek ? `주 ${sessionsPerWeek}회` : "-" },
+      { label: "사이클", value: weeks ? `${weeks}주` : "-" },
+      { label: "방식", value: typeValue },
+    ];
+
+    const modules = Array.isArray(def.modules) ? (def.modules as string[]) : null;
+    const tmPercent = typeof defaults?.tmPercent === "number" ? Math.round(defaults.tmPercent * 100) : null;
+    const assistance = String(def.assistance ?? "NONE").toUpperCase();
+    const progressionParts: string[] = [];
+    if (tmPercent) progressionParts.push(`TM ${tmPercent}%`);
+    if (assistance === "FSL") progressionParts.push("FSL 보조");
+    else if (assistance === "BBB") progressionParts.push("BBB 보조");
+    else progressionParts.push("보조 없음");
+
+    return {
+      scheduleLabel: parts.join(" · "),
+      stats,
+      sessions: null,
+      modules,
+      progressionNote: progressionParts.join(" · ") || null,
+    };
+  }
+
   if (def.kind === "manual" && Array.isArray(def.sessions)) {
     type RawSet = { reps?: number; note?: string };
     type RawItem = { exerciseName: string; sets?: RawSet[] };
@@ -542,6 +574,16 @@ export function inferSessionDraftsFromTemplate(template: ProgramTemplate): Progr
   }
   if (isOperatorTemplate(template)) {
     return operatorSessionDrafts();
+  }
+
+  if (definition?.kind === "531") {
+    const modules: string[] = Array.isArray(definition.modules) ? definition.modules as string[] : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
+    const dayLabels = ["D1", "D2", "D3", "D4"];
+    return modules.slice(0, 4).map((target, i) => ({
+      id: uid("session"),
+      key: dayLabels[i] ?? `D${i + 1}`,
+      exercises: [createFixedExerciseDraft(defaultExerciseNameForTarget(target), "AUTO", target as ProgramProgressionTarget)],
+    }));
   }
 
   const targets = normalizeTargets(definition);
