@@ -54,6 +54,7 @@ type LogicDefinitionV1 = {
   mainLifts?: string[]; // legacy support
   cluster?: string[]; // legacy support
   progression?: Record<string, any>;
+  assistance?: string; // 5/3/1: "FSL" | "BBB" | "NONE"
 };
 
 type PlannedSet = {
@@ -423,17 +424,21 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
   const target = targets[(ctx.day - 1) % targets.length] ?? targets[0];
   const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
   const weekInCycle = ((ctx.week - 1) % 4) + 1;
+  const progressionTarget = normalizeProgressionTarget(target);
 
-  const table: Record<number, Array<{ reps: number; percent: number; note?: string }>> = {
+  // 공식 5/3/1 메인 세트 테이블 (TM 기준 %)
+  // Week 1: 3×5 (65/75/85%), Week 2: 3×3 (70/80/90%)
+  // Week 3: 5/3/1 (75/85/95%), Week 4: 딜로드 3×5 (40/50/60%)
+  const mainTable: Record<number, Array<{ reps: number; percent: number; note?: string }>> = {
     1: [
       { reps: 5, percent: 0.65 },
       { reps: 5, percent: 0.75 },
       { reps: 5, percent: 0.85, note: "5+" },
     ],
     2: [
-      { reps: 3, percent: 0.7 },
-      { reps: 3, percent: 0.8 },
-      { reps: 3, percent: 0.9, note: "3+" },
+      { reps: 3, percent: 0.70 },
+      { reps: 3, percent: 0.80 },
+      { reps: 3, percent: 0.90, note: "3+" },
     ],
     3: [
       { reps: 5, percent: 0.75 },
@@ -441,21 +446,61 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
       { reps: 1, percent: 0.95, note: "1+" },
     ],
     4: [
-      { reps: 5, percent: 0.4, note: "deload" },
-      { reps: 5, percent: 0.5 },
-      { reps: 5, percent: 0.6 },
+      { reps: 5, percent: 0.40, note: "deload" },
+      { reps: 5, percent: 0.50 },
+      { reps: 5, percent: 0.60 },
     ],
   };
 
-  return [
+  const weekSets = mainTable[weekInCycle] ?? mainTable[1];
+  const firstSetPercent = weekSets[0]?.percent ?? 0.65;
+
+  const exercises: PlannedExercise[] = [
     {
       exerciseName: defaultExerciseNameForTarget(target),
       role: "MAIN",
+      rowType: "AUTO",
       sourceBlockTarget: target,
       order: ctx.orderBase,
-      sets: buildPercentSets(tm, table[weekInCycle] ?? table[1]),
+      progressionTarget: progressionTarget ?? null,
+      progressionKey: target,
+      sets: buildPercentSets(tm, weekSets),
     },
   ];
+
+  const assistance = String(def.assistance ?? "NONE").toUpperCase();
+
+  if (assistance === "FSL") {
+    // FSL(First Set Last): 5×5 — 메인 첫 번째 세트 중량으로 5세트 반복
+    exercises.push({
+      exerciseName: defaultExerciseNameForTarget(target),
+      role: "ASSIST",
+      sourceBlockTarget: `${target}_FSL`,
+      order: ctx.orderBase + 1,
+      sets: Array.from({ length: 5 }, () => ({
+        reps: 5,
+        percent: firstSetPercent,
+        targetWeightKg: roundToNearest2p5(tm * firstSetPercent),
+        note: "FSL",
+      })),
+    });
+  } else if (assistance === "BBB") {
+    // BBB(Boring But Big): 5×10 — TM의 50%로 5세트 10회
+    exercises.push({
+      exerciseName: defaultExerciseNameForTarget(target),
+      role: "ASSIST",
+      sourceBlockTarget: `${target}_BBB`,
+      order: ctx.orderBase + 1,
+      sets: Array.from({ length: 5 }, () => ({
+        reps: 10,
+        percent: 0.50,
+        targetWeightKg: roundToNearest2p5(tm * 0.50),
+        note: "BBB",
+      })),
+    });
+  }
+
+  return exercises;
 }
 
 function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {

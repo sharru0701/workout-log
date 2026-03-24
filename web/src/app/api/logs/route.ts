@@ -367,12 +367,17 @@ async function POSTImpl(req: Request) {
         ),
       );
 
+      const progressionOverride =
+        body.progressionOverride === "hold" || body.progressionOverride === "increase" || body.progressionOverride === "reset"
+          ? body.progressionOverride
+          : null;
       const progressionResult = await applyAutoProgressionFromLog({
         tx,
         userId,
         planId: submittedPlanId,
         logId: log.id,
         sets,
+        progressionOverride,
       });
       const progressionEvent = await readProgressEventByLog({
         tx,

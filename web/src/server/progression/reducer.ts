@@ -1,6 +1,13 @@
 import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 
-export type ProgressionProgram = "operator" | "greyskull-lp";
+export type ProgressionProgram =
+  | "operator"
+  | "greyskull-lp"
+  | "starting-strength-lp"
+  | "stronglifts-5x5"
+  | "texas-method"
+  | "gzclp"
+  | "wendler-531";
 
 export type ProgressionEventType = "INCREASE" | "HOLD" | "RESET" | "ADVANCE_WEEK";
 
@@ -141,7 +148,7 @@ function progressionIdentityForSet(set: LoggedSetInput): {
   };
 }
 
-function rulesFor(program: ProgressionProgram, target: string) {
+export function rulesFor(program: ProgressionProgram, target: string) {
   if (program === "operator") {
     return {
       increaseEverySuccesses: 3,
@@ -151,6 +158,40 @@ function rulesFor(program: ProgressionProgram, target: string) {
     };
   }
 
+  if (program === "wendler-531") {
+    // 짐 웬들러 5/3/1: 4주 사이클, 상체+2.5kg / 하체+5kg, 10% 감소 딜로드
+    const increaseKg = target === "DEADLIFT" || target === "SQUAT" ? 5 : 2.5;
+    return {
+      increaseEverySuccesses: 1,
+      failResetThreshold: 3,
+      increaseKg,
+      resetFactor: 0.9,
+    };
+  }
+
+  if (program === "gzclp") {
+    // T1 기준: 3회 연속 실패 시 15% 감소
+    return {
+      increaseEverySuccesses: 1,
+      failResetThreshold: 3,
+      increaseKg: target === "DEADLIFT" ? 5 : 2.5,
+      resetFactor: 0.85,
+    };
+  }
+
+  if (program === "texas-method") {
+    // 주간 3세션(볼륨/회복/강도) 중 3회 연속 강도일 실패 시 10% 감소
+    // increaseEverySuccesses: 3 = 3세션(1주) 연속 성공 시 증량
+    return {
+      increaseEverySuccesses: 3,
+      failResetThreshold: 3,
+      increaseKg: target === "DEADLIFT" ? 5 : 2.5,
+      resetFactor: 0.9,
+    };
+  }
+
+  // greyskull-lp, starting-strength-lp, stronglifts-5x5:
+  // 매 세션 증량, 3회 연속 실패 시 10% 감소
   return {
     increaseEverySuccesses: 1,
     failResetThreshold: 3,
@@ -161,6 +202,7 @@ function rulesFor(program: ProgressionProgram, target: string) {
 
 function targetsFor(program: ProgressionProgram): ProgressionTarget[] {
   if (program === "operator") return ["SQUAT", "BENCH", "DEADLIFT", "PULL"];
+  if (program === "wendler-531") return ["SQUAT", "BENCH", "OHP", "DEADLIFT"];
   return ["SQUAT", "BENCH", "OHP", "DEADLIFT", "PULL"];
 }
 
@@ -250,8 +292,17 @@ export function resolveAutoProgressionProgram(programSlug: string, definition?: 
 
   if (slug === "operator") return "operator";
   if (slug === "greyskull-lp") return "greyskull-lp";
+  if (slug === "starting-strength-lp") return "starting-strength-lp";
+  if (slug === "stronglifts-5x5") return "stronglifts-5x5";
+  if (slug === "texas-method") return "texas-method";
+  if (slug === "gzclp") return "gzclp";
+  if (slug === "wendler-531" || slug === "wendler-531-fsl" || slug === "wendler-531-bbb") return "wendler-531";
   if (kind === "operator" || family === "operator" || def.operatorStyle === true) return "operator";
   if (kind === "greyskull-lp" || family === "greyskull-lp") return "greyskull-lp";
+  if (kind === "starting-strength-lp" || family === "starting-strength-lp") return "starting-strength-lp";
+  if (kind === "stronglifts-5x5" || family === "stronglifts-5x5") return "stronglifts-5x5";
+  if (kind === "texas-method" || family === "texas-method") return "texas-method";
+  if (kind === "gzclp" || family === "gzclp") return "gzclp";
   return null;
 }
 
@@ -369,7 +420,8 @@ export function reduceProgressionState(input: {
       next.workKg = outcome.averageWeightKg ?? 0;
     }
 
-    if (input.program === "operator") {
+    if (input.program === "operator" || input.program === "wendler-531") {
+      // 블록 기반 프로그램: LP 진행 로직 없이 스트릭만 누적
       if (success) {
         next.successStreak += 1;
         reason = "hold:block-success";
@@ -496,6 +548,71 @@ export function reduceProgressionState(input: {
             successStreak: 0,
             failureStreak: 0,
           };
+        }
+      }
+    }
+  }
+
+  // Wendler 5/3/1: 4주×4일 블록 사이클
+  if (input.program === "wendler-531") {
+    const loggedTargets = Array.from(outcomes.keys()).filter((key) => outcomes.get(key)?.total);
+    const completedBlock = state.week === 4 && state.day === 4;
+
+    if (loggedTargets.length > 0) {
+      state.day += 1;
+      if (state.day > 4) {
+        state.day = 1;
+        state.week += 1;
+        if (state.week > 4) {
+          state.week = 1;
+          state.cycle += 1;
+        }
+      }
+      didAdvanceSession = true;
+    }
+
+    if (completedBlock && loggedTargets.length > 0) {
+      const targetEntries = Object.entries(state.targets);
+      const hadBlockFailure = targetEntries.some(([, targetState]) => (targetState?.failureStreak ?? 0) > 0);
+      if (!hadBlockFailure) {
+        for (const [key, currentTargetState] of targetEntries) {
+          const progressionTarget = parseProgressionTarget(currentTargetState?.progressionTarget) ?? parseProgressionTarget(key);
+          if (!progressionTarget) continue;
+          const before = state.targets[key] ?? initTargetState(progressionTarget, 0);
+          if (before.workKg <= 0) {
+            state.targets[key] = { ...before, successStreak: 0, failureStreak: 0 };
+            continue;
+          }
+          const increaseKg = rulesFor("wendler-531", progressionTarget).increaseKg;
+          const after: TargetRuntimeState = {
+            progressionTarget,
+            workKg: toPositiveRounded2p5(before.workKg + increaseKg),
+            successStreak: 0,
+            failureStreak: 0,
+          };
+          state.targets[key] = after;
+
+          const decisionLabel = outcomes.get(key)?.displayTarget ?? key;
+          const index = decisions.findIndex((d) => d.key === key);
+          const updatedDecision: TargetDecision = {
+            key,
+            target: decisionLabel,
+            progressionTarget,
+            outcome: index >= 0 ? decisions[index]!.outcome : "SUCCESS",
+            eventType: "INCREASE",
+            reason: `increase:+${increaseKg}kg`,
+            before,
+            after,
+          };
+          if (index >= 0) {
+            decisions[index] = updatedDecision;
+          } else {
+            decisions.push(updatedDecision);
+          }
+        }
+      } else {
+        for (const [key, current] of Object.entries(state.targets)) {
+          state.targets[key] = { ...current, successStreak: 0, failureStreak: 0 };
         }
       }
     }

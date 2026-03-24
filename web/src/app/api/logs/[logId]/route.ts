@@ -218,6 +218,10 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
         ),
       );
 
+      const progressionOverride =
+        body.progressionOverride === "hold" || body.progressionOverride === "increase" || body.progressionOverride === "reset"
+          ? body.progressionOverride
+          : null;
       const progressionResult = await applyAutoProgressionFromLog({
         tx,
         userId,
@@ -225,6 +229,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
         logId,
         sets,
         mode: "replay",
+        progressionOverride,
       });
       const progressionEvent = await readProgressEventByLog({
         tx,

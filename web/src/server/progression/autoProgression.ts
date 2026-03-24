@@ -13,9 +13,12 @@ import {
   ProgressionProgram,
   reduceProgressionState,
   resolveAutoProgressionProgram,
+  rulesFor,
 } from "./reducer";
 
 const AUTO_PROGRESSION_ENGINE_VERSION = 1;
+
+export type ProgressionOverride = "hold" | "increase" | "reset";
 
 type ApplyAutoProgressionInput = {
   tx: any;
@@ -24,6 +27,7 @@ type ApplyAutoProgressionInput = {
   logId: string;
   sets: unknown[];
   mode?: "upsert" | "replay";
+  progressionOverride?: ProgressionOverride | null;
 };
 
 type ResolvedAutoProgressionContext =
@@ -191,24 +195,94 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       sets: toLoggedSetRows(input.sets),
       logId: input.logId,
     });
+
+    let finalNextState = reduced.nextState;
+    let finalEventType = reduced.eventType;
+    let finalReason = reduced.reason;
+
+    const sessionKeys = new Set(Object.keys(reduced.outcomes));
+    const prevTargets = ((beforeState as Record<string, unknown>).targets ?? {}) as Record<string, Record<string, unknown>>;
+
+    if (input.progressionOverride === "hold") {
+      // workKg는 이전 값 유지, streak은 0으로 초기화 (새 시작)
+      const nextTargets = { ...reduced.nextState.targets };
+      for (const key of Object.keys(nextTargets)) {
+        const prev = prevTargets[key];
+        if (prev) {
+          nextTargets[key] = {
+            ...nextTargets[key],
+            workKg: Number(prev.workKg ?? 0),
+            successStreak: 0,
+            failureStreak: 0,
+          };
+        }
+      }
+      finalNextState = { ...reduced.nextState, targets: nextTargets };
+      finalEventType = "HOLD";
+      finalReason = "override:hold";
+    } else if (input.progressionOverride === "increase") {
+      // 이전 상태(prevTargets) 기준으로 증량 적용 — 자동 증량 중복 방지
+      const nextTargets = { ...reduced.nextState.targets };
+      for (const key of Object.keys(nextTargets)) {
+        if (!sessionKeys.has(key)) continue;
+        const target = nextTargets[key];
+        if (!target) continue;
+        const prev = prevTargets[key];
+        const baseKg = prev ? Number(prev.workKg ?? 0) : target.workKg;
+        const { increaseKg } = rulesFor(resolved.progressionProgram, target.progressionTarget);
+        nextTargets[key] = {
+          ...target,
+          workKg: Math.round((baseKg + increaseKg) / 2.5) * 2.5,
+          successStreak: 0,
+          failureStreak: 0,
+        };
+      }
+      finalNextState = { ...reduced.nextState, targets: nextTargets };
+      finalEventType = "INCREASE";
+      finalReason = "override:increase";
+    } else if (input.progressionOverride === "reset") {
+      // 이전 상태(prevTargets) 기준으로 감소 적용
+      const nextTargets = { ...reduced.nextState.targets };
+      for (const key of Object.keys(nextTargets)) {
+        if (!sessionKeys.has(key)) continue;
+        const target = nextTargets[key];
+        if (!target) continue;
+        const prev = prevTargets[key];
+        const baseKg = prev ? Number(prev.workKg ?? 0) : target.workKg;
+        const { resetFactor } = rulesFor(resolved.progressionProgram, target.progressionTarget);
+        nextTargets[key] = {
+          ...target,
+          workKg: Math.round((baseKg * resetFactor) / 2.5) * 2.5,
+          successStreak: 0,
+          failureStreak: 0,
+        };
+      }
+      finalNextState = { ...reduced.nextState, targets: nextTargets };
+      finalEventType = "RESET";
+      finalReason = "override:reset";
+    }
+
     await input.tx.insert(planProgressEvent).values({
       planId: resolved.planId,
       logId: input.logId,
       userId: input.userId,
-      eventType: reduced.eventType,
+      eventType: finalEventType,
       programSlug: resolved.templateSlug,
-      reason: reduced.reason,
+      reason: finalReason,
       beforeState,
-      afterState: reduced.nextState,
-      meta: toProgressionEventMeta(reduced),
+      afterState: finalNextState,
+      meta: {
+        ...toProgressionEventMeta(reduced),
+        ...(input.progressionOverride ? { override: input.progressionOverride } : {}),
+      },
     });
     await upsertAutoProgressionRuntimeState({
       tx: input.tx,
       planId: resolved.planId,
       userId: input.userId,
-      nextState: reduced.nextState,
+      nextState: finalNextState,
     });
-    return reduced;
+    return { ...reduced, nextState: finalNextState, eventType: finalEventType, reason: finalReason };
   }
 
   const existingEventRows = await input.tx

@@ -22,7 +22,7 @@ export type SeedRunOptions = {
 };
 
 export async function runSeed(options: SeedRunOptions = {}) {
-  const legacyProgramSlugs = ["starter-fullbody-3day", "531", "candito-linear"] as const;
+  const legacyProgramSlugs = ["starter-fullbody-3day", "531", "candito-linear", "wendler-531", "wendler-531-fsl", "wendler-531-bbb"] as const;
   const shouldHardReset = options.shouldHardReset === true;
   const includeDemoPlans = options.includeDemoPlans === true;
 
@@ -597,6 +597,73 @@ export async function runSeed(options: SeedRunOptions = {}) {
     changelog: "Canonical base tier split with T3 AMRAP",
   });
 
+  // 3) Wendler 5/3/1 — 3가지 변형 (보조 없음 / FSL / BBB)
+  const template531 = await upsertTemplate("wendler-531", {
+    slug: "wendler-531",
+    name: "Jim Wendler 5/3/1 (No Assistance)",
+    type: "LOGIC",
+    visibility: "PUBLIC",
+    description:
+      "짐 웬들러(Jim Wendler)의 근력 프로그램. 트레이닝 맥스(실제 1RM의 90%)를 기준으로 4주 사이클을 반복한다. Week 1: 3×5 (65/75/85%), Week 2: 3×3 (70/80/90%), Week 3: 5/3/1 (75/85/95%), Week 4: 딜로드 3×5 (40/50/60%). 마지막 세트는 항상 AMRAP(최대 반복)으로 수행한다. 사이클 완료 시 상체 +2.5kg, 하체 +5kg 증량. 보조 운동 없이 메인 세트만 수행하는 기본 구성.",
+    tags: ["strength", "barbell", "5/3/1", "wendler", "intermediate"],
+  });
+
+  const template531V1 = await upsertVersion(template531.id, 1, {
+    definition: {
+      dslVersion: 1,
+      kind: "531",
+      assistance: "NONE",
+      schedule: { weeks: 4, sessionsPerWeek: 4 },
+      modules: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
+    },
+    defaults: { tmPercent: 0.9 },
+    changelog: "Base 5/3/1 without assistance",
+  });
+
+  const template531FSL = await upsertTemplate("wendler-531-fsl", {
+    slug: "wendler-531-fsl",
+    name: "Jim Wendler 5/3/1 + FSL",
+    type: "LOGIC",
+    visibility: "PUBLIC",
+    description:
+      "5/3/1 메인 세트 완료 후 FSL(First Set Last) 보조 루틴을 수행하는 변형. 메인 첫 번째 세트와 동일한 중량(65–75% TM)으로 5×5를 추가한다. 기술 훈련과 볼륨 증가를 동시에 달성하며, 웬들러가 '가장 효과적인 보조 템플릿'으로 추천하는 구성이다.",
+    tags: ["strength", "barbell", "5/3/1", "wendler", "fsl", "intermediate"],
+  });
+
+  const template531FSLV1 = await upsertVersion(template531FSL.id, 1, {
+    definition: {
+      dslVersion: 1,
+      kind: "531",
+      assistance: "FSL",
+      schedule: { weeks: 4, sessionsPerWeek: 4 },
+      modules: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
+    },
+    defaults: { tmPercent: 0.9 },
+    changelog: "5/3/1 with First Set Last 5x5",
+  });
+
+  const template531BBB = await upsertTemplate("wendler-531-bbb", {
+    slug: "wendler-531-bbb",
+    name: "Jim Wendler 5/3/1 + BBB",
+    type: "LOGIC",
+    visibility: "PUBLIC",
+    description:
+      "5/3/1 메인 세트 완료 후 BBB(Boring But Big) 보조 루틴을 수행하는 변형. TM의 50%로 5×10을 추가해 근비대와 작업 용량을 동시에 키운다. 웬들러가 근육량과 근력을 모두 늘리고 싶은 훈련자에게 권장하는 볼륨 중심 구성이다.",
+    tags: ["strength", "barbell", "5/3/1", "wendler", "bbb", "hypertrophy", "intermediate"],
+  });
+
+  const template531BBBV1 = await upsertVersion(template531BBB.id, 1, {
+    definition: {
+      dslVersion: 1,
+      kind: "531",
+      assistance: "BBB",
+      schedule: { weeks: 4, sessionsPerWeek: 4 },
+      modules: ["SQUAT", "BENCH", "DEADLIFT", "OHP"],
+    },
+    defaults: { tmPercent: 0.9 },
+    changelog: "5/3/1 with Boring But Big 5x10",
+  });
+
   const templateGreyskull = await upsertTemplate("greyskull-lp", {
     slug: "greyskull-lp",
     name: "Greyskull LP (Base)",
@@ -769,6 +836,48 @@ export async function runSeed(options: SeedRunOptions = {}) {
         },
       });
     }
+
+    if (template531V1?.id) {
+      await upsertPlanForUser(devUserId, "Program 5/3/1 (No Assistance)", {
+        type: "SINGLE",
+        rootProgramVersionId: template531V1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          sessionKeyMode: "PROGRESSION",
+          autoProgression: true,
+          trainingMaxKg: { SQUAT: 120, BENCH: 85, OHP: 55, DEADLIFT: 150 },
+        },
+      });
+    }
+
+    if (template531FSLV1?.id) {
+      await upsertPlanForUser(devUserId, "Program 5/3/1 + FSL", {
+        type: "SINGLE",
+        rootProgramVersionId: template531FSLV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          sessionKeyMode: "PROGRESSION",
+          autoProgression: true,
+          trainingMaxKg: { SQUAT: 120, BENCH: 85, OHP: 55, DEADLIFT: 150 },
+        },
+      });
+    }
+
+    if (template531BBBV1?.id) {
+      await upsertPlanForUser(devUserId, "Program 5/3/1 + BBB", {
+        type: "SINGLE",
+        rootProgramVersionId: template531BBBV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          sessionKeyMode: "PROGRESSION",
+          autoProgression: true,
+          trainingMaxKg: { SQUAT: 120, BENCH: 85, OHP: 55, DEADLIFT: 150 },
+        },
+      });
+    }
   }
 
   console.log(
@@ -779,7 +888,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     devUserId,
     includeDemoPlans,
     shouldHardReset,
-    baseTemplateCount: 7,
+    baseTemplateCount: 10,
     baseExerciseCount: seededExercises.length,
   };
 }

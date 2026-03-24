@@ -6,6 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionCard } from "@/components/ui/session-card";
 import { SessionSummaryCard } from "@/components/ui/session-summary-card";
@@ -689,6 +690,131 @@ function ExerciseRow({
   );
 }
 
+// --- 프로그레션 프로토콜 헬퍼 ---
+
+type ProgressionTargetStateSnapshot = {
+  workKg: number;
+  failureStreak: number;
+  successStreak: number;
+};
+
+type ProgressionRuntimeStateSnapshot = {
+  cycle: number;
+  week: number;
+  day: number;
+  targets: Record<string, ProgressionTargetStateSnapshot>;
+};
+
+type FailedProgressionExercise = {
+  exerciseName: string;
+  target: string;
+};
+
+function mapExerciseNameToProgressionTarget(name: string): string | null {
+  const n = name.trim().toLowerCase();
+  if (n.includes("squat")) return "SQUAT";
+  if (n.includes("bench")) return "BENCH";
+  if (n.includes("deadlift")) return "DEADLIFT";
+  if (n.includes("overhead press") || n === "ohp" || n.includes("shoulder press")) return "OHP";
+  if (n.includes("row") || n.includes("pull-up") || n.includes("pull up") || n.includes("pulldown")) return "PULL";
+  return null;
+}
+
+function detectFailedProgressionExercises(
+  visibleExercises: WorkoutExerciseViewModel[],
+  programEntryState: WorkoutProgramExerciseEntryStateMap,
+): FailedProgressionExercise[] {
+  const seen = new Set<string>();
+  const failed: FailedProgressionExercise[] = [];
+  for (const exercise of visibleExercises) {
+    if (exercise.source !== "PROGRAM") continue;
+    const entryState = programEntryState[exercise.id];
+    if (!entryState) continue;
+    const hasFail = exercise.set.repsPerSet.some((_, i) => {
+      const actual = Number(entryState.repsInputs[i]?.trim() ?? "");
+      const planned = entryState.plannedRepsPerSet[i];
+      return Number.isFinite(actual) && actual > 0 && typeof planned === "number" && planned > 0 && actual < planned;
+    });
+    if (!hasFail) continue;
+    const target = mapExerciseNameToProgressionTarget(exercise.exerciseName);
+    if (!target || seen.has(target)) continue;
+    seen.add(target);
+    failed.push({ exerciseName: exercise.exerciseName, target });
+  }
+  return failed;
+}
+
+// Operator 블록 완료 모달 메시지 (6주 사이클)
+function buildOperatorBlockCompletionMessage(state: ProgressionRuntimeStateSnapshot | null): string {
+  const lines: string[] = ["6주 블록을 완료했습니다.", "다음 사이클에 적용할 무게를 선택하세요.", ""];
+  if (state) {
+    const hadFailure = Object.values(state.targets).some((t) => t.failureStreak > 0);
+    if (hadFailure) {
+      lines.push("이번 블록에서 실패가 있었습니다.");
+      lines.push("");
+    }
+    const targetLabels: Record<string, string> = {
+      SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스", PULL: "풀",
+    };
+    for (const [key, t] of Object.entries(state.targets)) {
+      if (t.workKg <= 0) continue;
+      const label = targetLabels[key] ?? key;
+      const increaseKg = key === "DEADLIFT" ? 5 : 2.5;
+      const resetKg = Math.round((t.workKg * 0.95) / 2.5) * 2.5;
+      lines.push(`• ${label}: ${t.workKg}kg`);
+      lines.push(`  증량 → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소 → ${resetKg}kg`);
+    }
+  }
+  return lines.join("\n");
+}
+
+// 5/3/1 블록 완료 모달 메시지 (4주 사이클)
+function build531BlockCompletionMessage(state: ProgressionRuntimeStateSnapshot | null): string {
+  const lines: string[] = ["4주 사이클을 완료했습니다.", "다음 사이클에 적용할 트레이닝 맥스를 선택하세요.", ""];
+  if (state) {
+    const hadFailure = Object.values(state.targets).some((t) => t.failureStreak > 0);
+    if (hadFailure) {
+      lines.push("이번 사이클에서 실패한 세트가 있었습니다.");
+      lines.push("");
+    }
+    const targetLabels: Record<string, string> = {
+      SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스",
+    };
+    for (const [key, t] of Object.entries(state.targets)) {
+      if (t.workKg <= 0) continue;
+      const label = targetLabels[key] ?? key;
+      // 5/3/1: 하체(스쿼트·데드리프트) +5kg, 상체(벤치·오버헤드) +2.5kg
+      const increaseKg = key === "DEADLIFT" || key === "SQUAT" ? 5 : 2.5;
+      const resetKg = Math.round((t.workKg * 0.9) / 2.5) * 2.5;
+      lines.push(`• ${label}: ${t.workKg}kg`);
+      lines.push(`  증량(+${increaseKg}kg) → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소(10%) → ${resetKg}kg`);
+    }
+  }
+  return lines.join("\n");
+}
+
+// 연속 실패 리셋 모달 메시지 (Greyskull, Starting Strength, StrongLifts, GZCLP 등)
+function buildResetProtocolMessage(
+  failures: FailedProgressionExercise[],
+  state: ProgressionRuntimeStateSnapshot | null,
+  resetFactor: number,
+): string {
+  const pct = Math.round((1 - resetFactor) * 100);
+  const lines: string[] = [`3회 연속 실패 기준에 도달했습니다.`, ""];
+  for (const f of failures) {
+    const workKg = state?.targets[f.target]?.workKg ?? null;
+    if (workKg !== null) {
+      const resetKg = Math.round((workKg * resetFactor) / 2.5) * 2.5;
+      const increaseKg = f.target === "DEADLIFT" ? 5 : 2.5;
+      lines.push(`• ${f.exerciseName}: ${workKg}kg`);
+      lines.push(`  감소(${pct}%) → ${resetKg}kg / 유지 → ${workKg}kg / 증량 → ${workKg + increaseKg}kg`);
+    } else {
+      lines.push(`• ${f.exerciseName}`);
+    }
+  }
+  return lines.join("\n");
+}
+
 export default function WorkoutRecordPage() {
   const router = useRouter();
   const { alert, confirm } = useAppDialog();
@@ -723,6 +849,13 @@ export default function WorkoutRecordPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
+
+  const [failureProtocolSheet, setFailureProtocolSheet] = useState<{
+    title: string;
+    message: string;
+    mode: "block-completion" | "greyskull-reset";
+  } | null>(null);
+  const failureProtocolResolveRef = useRef<((choice: FailureProtocolChoice) => void) | null>(null);
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -1376,6 +1509,71 @@ export default function WorkoutRecordPage() {
       return;
     }
 
+    // Auto-progression 프로토콜 확인
+    let progressionOverride: "hold" | "increase" | "reset" | null = null;
+    if (selectedPlan?.params?.autoProgression === true && selectedPlan.id) {
+      const isOperatorBlockEnd = draft.session.week === 6 && draft.session.day === 3;
+      const is531BlockEnd = draft.session.week === 4 && draft.session.day === 4;
+      const failures = detectFailedProgressionExercises(visibleExercises, programEntryState);
+      const shouldCheck = isOperatorBlockEnd || is531BlockEnd || failures.length > 0;
+
+      if (shouldCheck) {
+        try {
+          const progressionData = await apiGet<{
+            program: "operator" | "greyskull-lp" | "starting-strength-lp" | "stronglifts-5x5" | "texas-method" | "gzclp" | "wendler-531" | null;
+            state: ProgressionRuntimeStateSnapshot | null;
+          }>(`/api/plans/${encodeURIComponent(selectedPlan.id)}/progression-state`);
+
+          const showSheet = (title: string, message: string, mode: "block-completion" | "greyskull-reset") =>
+            new Promise<FailureProtocolChoice>((resolve) => {
+              failureProtocolResolveRef.current = resolve;
+              setFailureProtocolSheet({ title, message, mode });
+            });
+
+          if (progressionData.program === "operator" && isOperatorBlockEnd) {
+            // Operator: 6주 블록 완료 → 다음 사이클 무게 사용자가 결정
+            const message = buildOperatorBlockCompletionMessage(progressionData.state);
+            const choice = await showSheet("블록 완료 — 무게 설정", message, "block-completion");
+            setFailureProtocolSheet(null);
+            failureProtocolResolveRef.current = null;
+            if (choice === "cancel") return;
+            progressionOverride = choice === "increase" ? "increase" : choice === "hold" ? "hold" : choice === "reset" ? "reset" : null;
+
+          } else if (progressionData.program === "wendler-531" && is531BlockEnd) {
+            // 5/3/1: 4주 사이클 완료 → 다음 사이클 TM 사용자가 결정
+            const message = build531BlockCompletionMessage(progressionData.state);
+            const choice = await showSheet("4주 사이클 완료 — TM 설정", message, "block-completion");
+            setFailureProtocolSheet(null);
+            failureProtocolResolveRef.current = null;
+            if (choice === "cancel") return;
+            progressionOverride = choice === "increase" ? "increase" : choice === "hold" ? "hold" : choice === "reset" ? "reset" : null;
+
+          } else if (
+            progressionData.program !== null &&
+            progressionData.program !== "operator" &&
+            failures.length > 0
+          ) {
+            // LP/텍사스/GZCLP: 3회 연속 실패 기준 도달 시 모달
+            const resetFactor = progressionData.program === "gzclp" ? 0.85 : 0.9;
+            const resetFailures = failures.filter(
+              (f) => (progressionData.state?.targets[f.target]?.failureStreak ?? 0) >= 2,
+            );
+            if (resetFailures.length > 0) {
+              const message = buildResetProtocolMessage(resetFailures, progressionData.state, resetFactor);
+              const choice = await showSheet("연속 실패 기준 도달", message, "greyskull-reset");
+              setFailureProtocolSheet(null);
+              failureProtocolResolveRef.current = null;
+              if (choice === "cancel") return;
+              // "reset" = 기본 알고리즘 적용 (override 없음)
+              progressionOverride = choice === "hold" ? "hold" : choice === "increase" ? "increase" : null;
+            }
+          }
+        } catch {
+          // 프로그레션 상태 조회 실패 시 그냥 저장 진행
+        }
+      }
+    }
+
     try {
       setWorkflowState("saving");
       setSaveError(null);
@@ -1383,10 +1581,11 @@ export default function WorkoutRecordPage() {
         bodyweightKg: workoutPreferences.bodyweightKg,
         isBodyweightExercise: isBodyweightExerciseName,
       });
+      const payloadWithOverride = progressionOverride ? { ...payload, progressionOverride } : payload;
       if (draft.session.logId) {
-        await apiPatch(`/api/logs/${encodeURIComponent(draft.session.logId)}`, payload);
+        await apiPatch(`/api/logs/${encodeURIComponent(draft.session.logId)}`, payloadWithOverride);
       } else {
-        await apiPost("/api/logs", payload);
+        await apiPost("/api/logs", payloadWithOverride);
       }
       
       // 저장 성공 시 드래프트 삭제
@@ -1400,7 +1599,7 @@ export default function WorkoutRecordPage() {
       setSaveError(e?.message ?? "운동기록 저장에 실패했습니다.");
       setWorkflowState("editing");
     }
-  }, [draft, programEntryState, router, visibleExercises, workoutPreferences.bodyweightKg]);
+  }, [draft, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
 
   const refreshRecordPage = useCallback(async () => {
     if (workflowState === "saving") return;
@@ -1452,6 +1651,7 @@ export default function WorkoutRecordPage() {
   const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
+    <>
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
@@ -2000,5 +2200,15 @@ export default function WorkoutRecordPage() {
         </div>
       </BottomSheet>
     </PullToRefreshShell>
+    <FailureProtocolSheet
+      open={failureProtocolSheet !== null}
+      title={failureProtocolSheet?.title ?? ""}
+      message={failureProtocolSheet?.message ?? ""}
+      mode={failureProtocolSheet?.mode ?? "block-completion"}
+      onSelect={(choice) => {
+        failureProtocolResolveRef.current?.(choice);
+      }}
+    />
+    </>
   );
 }

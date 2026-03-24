@@ -228,7 +228,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         {active ? (
           <Card tone={active.tone === "danger" ? "danger" : "subtle"} padding="md" elevated={false}>
             <CardContent>
-              <p>{active.message}</p>
+              <p style={{ whiteSpace: "pre-line" }}>{active.message}</p>
             </CardContent>
           </Card>
         ) : null}
