@@ -670,9 +670,17 @@ export default function ProgramStorePage() {
       setStartProgramDraft((prev) => {
         if (!prev || prev.template.id !== templateId) return prev;
         const hasAnyRecommendation = Object.keys(recommendations).length > 0;
+        const oneRmInputs = { ...prev.oneRmInputs };
+        for (const target of prev.targets) {
+          const rec = recommendations[target.key];
+          if (rec && oneRmInputs[target.key] === "50") {
+            oneRmInputs[target.key] = String(rec.recommendedKg);
+          }
+        }
         return {
           ...prev,
           recommendations,
+          oneRmInputs,
           recommendationStatus: "ready",
           recommendationMessage: hasAnyRecommendation
             ? "추천값을 찾았습니다. 필요하면 종목별 '추천값 적용'을 누르세요."
@@ -840,7 +848,7 @@ export default function ProgramStorePage() {
       const oneRmInputs: Record<string, string> = {};
       for (const target of targets) {
         const preset = existing ? readOneRmFromPlanParams(existing.params, target.key, tmPercent, target.fallbackKey) : null;
-        oneRmInputs[target.key] = preset !== null ? String(preset) : "";
+        oneRmInputs[target.key] = preset !== null ? String(preset) : "50";
       }
 
       setStartProgramDraft({
