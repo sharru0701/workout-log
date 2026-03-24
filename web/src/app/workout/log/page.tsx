@@ -1666,6 +1666,8 @@ export default function WorkoutRecordPage() {
         if (persistenceKey) await clearWorkoutDraft(persistenceKey);
         return;
       }
+      // "다시 불러오기" 선택 시: 자동저장이 로컬 드래프트를 덮어쓰기 전에 명시적으로 삭제
+      if (persistenceKey) await clearWorkoutDraft(persistenceKey);
     }
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
