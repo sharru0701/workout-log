@@ -927,8 +927,6 @@ export default function WorkoutRecordPage() {
         });
 
         if (shouldKeep) {
-          // 복구 승인 시 다시 한번 플래그를 확인/설정하여 PTR 레이스 컨디션 방지
-          isRestoredRef.current = true;
           setDraft(data.draft);
           setProgramEntryState(data.programEntryState);
           setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
@@ -1666,6 +1664,8 @@ export default function WorkoutRecordPage() {
 
   const refreshRecordPage = useCallback(async () => {
     if (workflowState === "saving") return;
+    // 복구 모달이 열려 있는 동안 PTR을 차단 — loadWorkoutContext 중복 호출 및 UI 깨짐 방지
+    if (isRestoringRef.current) return;
 
     if (workflowState === "editing") {
       const result = await confirm({
@@ -1691,10 +1691,7 @@ export default function WorkoutRecordPage() {
     resetRestoreState(persistenceKey);
 
     // isRestoredRef 초기화: 이전 복구 상태가 남아있으면 loadWorkoutContext가 setDraft를 건너뜀
-    // 단, 복구 모달이 떠 있는 중이라면 초기화하지 않음 (레이스 컨디션 방지)
-    if (!isRestoringRef.current) {
-      isRestoredRef.current = false;
-    }
+    isRestoredRef.current = false;
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
     const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
