@@ -1574,14 +1574,15 @@ export default function ProgramStorePage() {
                   }
                 />
                 {startProgramDraft.recommendations[target.key] ? (
-                  <div>
-                    <span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "6px" }}>
+                    <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
                       추천 {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
                       {" · "}
                       최근 e1RM {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
                     </span>
                     <button
                       type="button"
+                      className="btn btn-inline-action btn-inline-action-primary"
                       onClick={() =>
                         setStartProgramDraft((prev) => {
                           if (!prev) return prev;
