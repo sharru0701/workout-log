@@ -128,5 +128,9 @@ export function useWorkoutRecordPersistence(
     }
   }, [key, attemptRestore, options.enabled]);
 
-  return { forceSave: forceSaveSync };
+  const cancelPendingSave = useCallback(() => {
+    debouncedSave.cancel();
+  }, [debouncedSave]);
+
+  return { forceSave: forceSaveSync, cancelPendingSave };
 }

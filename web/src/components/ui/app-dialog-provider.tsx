@@ -20,6 +20,7 @@ export type AppConfirmOptions = {
   cancelText?: string;
   tone?: DialogTone;
   closeAsConfirm?: boolean;
+  closeAsNull?: boolean; // X/backdrop 닫기 시 null 반환 (confirm/cancel과 구분)
 };
 
 type AlertRequest = {
@@ -39,14 +40,15 @@ type ConfirmRequest = {
   cancelText: string;
   tone: DialogTone;
   closeAsConfirm: boolean;
-  resolve: (confirmed: boolean) => void;
+  closeAsNull: boolean;
+  resolve: (confirmed: boolean | null) => void;
 };
 
 type DialogRequest = AlertRequest | ConfirmRequest;
 
 type AppDialogContextValue = {
   alert: (input: string | AppAlertOptions) => Promise<void>;
-  confirm: (input: string | AppConfirmOptions) => Promise<boolean>;
+  confirm: (input: string | AppConfirmOptions) => Promise<boolean | null>;
 };
 
 const AppDialogContext = createContext<AppDialogContextValue | null>(null);
@@ -81,6 +83,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
   cancelText: string;
   tone: DialogTone;
   closeAsConfirm: boolean;
+  closeAsNull: boolean;
 } {
   if (typeof input === "string") {
     return {
@@ -90,6 +93,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
       cancelText: "취소",
       tone: "default" as const,
       closeAsConfirm: false,
+      closeAsNull: false,
     };
   }
 
@@ -100,6 +104,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
     cancelText: String(input.cancelText ?? "").trim() || "취소",
     tone: input.tone === "danger" ? "danger" : "default",
     closeAsConfirm: input.closeAsConfirm === true,
+    closeAsNull: input.closeAsNull === true,
   };
 }
 
@@ -122,11 +127,15 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
 
   const active = queue[0] ?? null;
 
-  // 시트 닫기(backdrop/X) 전용 — closeAsConfirm 옵션 적용
+  // 시트 닫기(backdrop/X) 전용 — closeAsConfirm/closeAsNull 옵션 적용
   const closeActiveAsCancel = useCallback(() => {
     if (!active) return;
-    if (active.kind === "confirm") active.resolve(active.closeAsConfirm ? true : false);
-    else active.resolve();
+    if (active.kind === "confirm") {
+      if (active.closeAsNull) active.resolve(null);
+      else active.resolve(active.closeAsConfirm ? true : false);
+    } else {
+      active.resolve();
+    }
     setQueue((prev) => prev.slice(1));
   }, [active]);
 
@@ -162,7 +171,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
 
   const confirm = useCallback((input: string | AppConfirmOptions) => {
     const normalized = normalizeConfirmInput(input);
-    return new Promise<boolean>((resolve) => {
+    return new Promise<boolean | null>((resolve) => {
       const request: ConfirmRequest = {
         kind: "confirm",
         title: normalized.title,
@@ -171,6 +180,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         cancelText: normalized.cancelText,
         tone: normalized.tone,
         closeAsConfirm: normalized.closeAsConfirm,
+        closeAsNull: normalized.closeAsNull,
         resolve,
       };
       setQueue((prev) => [...prev, request]);
