@@ -833,6 +833,7 @@ export default function WorkoutRecordPage() {
   const persistenceKeyRef = useRef<string | null>(null);
   const reloadDraftContextRef = useRef<(() => Promise<void>) | null>(null);
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
+  const [recentLogItems, setRecentLogItems] = useState<RecentLogItem[]>([]);
   const [lastSession, setLastSession] = useState<{
     dateLabel: string | null;
     weekLabel: string;
@@ -1113,6 +1114,7 @@ export default function WorkoutRecordPage() {
             console.log("[WorkoutRecordPage] Restored data present, skipping log data setDraft");
           }
 
+          setRecentLogItems(logsRes.items ?? []);
           setLastSession(
             buildLastSessionSummary(
               logsRes.items ?? [],
@@ -1180,6 +1182,7 @@ export default function WorkoutRecordPage() {
           console.log("[WorkoutRecordPage] Restored data present, skipping generated session setDraft");
         }
 
+        setRecentLogItems(logsRes.items ?? []);
         setLastSession(
           buildLastSessionSummary(
             logsRes.items ?? [],
@@ -1422,20 +1425,38 @@ export default function WorkoutRecordPage() {
 
   const selectExerciseOption = useCallback(
     (option: ExerciseOption | null) => {
+      const name = option?.name ?? "";
+      let baseWeight = 50;
+      if (name) {
+        const normalizedName = name.toLowerCase();
+        for (const log of recentLogItems) {
+          for (const set of log.sets) {
+            if (
+              set.exerciseName.toLowerCase() === normalizedName &&
+              set.weightKg != null &&
+              set.weightKg > 0
+            ) {
+              baseWeight = set.weightKg;
+              break;
+            }
+          }
+          if (baseWeight !== 50) break;
+        }
+      }
       setAddDraft((prev) => ({
         ...prev,
         exerciseId: option?.id ?? null,
-        exerciseName: option?.name ?? "",
+        exerciseName: name,
         weightKg: resolveWeightWithCurrentPreferences(
-          prev.weightKg,
+          baseWeight,
           option?.id ?? null,
-          option?.name ?? "",
+          name,
         ),
       }));
       setExerciseOptionsError(null);
       setExerciseQuery("");
     },
-    [resolveWeightWithCurrentPreferences],
+    [resolveWeightWithCurrentPreferences, recentLogItems],
   );
   const planSheetOptions = useMemo(
     () =>
