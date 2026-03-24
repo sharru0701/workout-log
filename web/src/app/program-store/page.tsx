@@ -1608,12 +1608,10 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(customizeDraft)}
-        title={isOperatorCustomization ? "Operator 커스터마이징" : "커스터마이징 모달"}
+        title="커스터마이징"
         description={
           customizeDraft
-            ? isOperatorCustomization
-              ? `기본 3일 구성 편집 · ${customizeDraft.baseTemplate.name}`
-              : `컨텍스트: ${customizeDraft.baseTemplate.name}`
+            ? `기본 구성 편집 · ${customizeDraft.baseTemplate.name}`
             : ""
         }
         onClose={() => setCustomizeDraft(null)}
@@ -1644,19 +1642,23 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            {isOperatorCustomization ? (
-              <Card tone="subtle" padding="sm" elevated={false}>
-                <CardHeader style={{ marginBottom: 0 }}>
-                  <CardTitle>Operator 기본 구성</CardTitle>
-                  <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
-                  <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
-                </CardHeader>
-              </Card>
-            ) : null}
+            <Card tone="subtle" padding="sm" elevated={false}>
+              <CardHeader style={{ marginBottom: 0 }}>
+                <CardTitle>기본 구성</CardTitle>
+                {isOperatorCustomization ? (
+                  <>
+                    <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
+                    <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
+                  </>
+                ) : (
+                  <CardDescription>기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다.</CardDescription>
+                )}
+              </CardHeader>
+            </Card>
 
             <Card padding="sm" elevated={false}>
               <CardHeader style={{ marginBottom: "var(--space-md)" }}>
-                <CardTitle>{isOperatorCustomization ? "Day별 종목 변경" : "세션별 종목 변경 (수정/삭제/추가)"}</CardTitle>
+                <CardTitle>Day별 종목 변경</CardTitle>
               </CardHeader>
               <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {customizeDraft.sessions.map((session) => {
@@ -1697,12 +1699,10 @@ export default function ProgramStorePage() {
                 >
                   <header style={{ marginBottom: "var(--space-sm)" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <strong>{isOperatorCustomization ? meta.title : `세션 ${session.key}`}</strong>
-                      {isOperatorCustomization ? (
-                        <span style={{ color: "var(--text-meta)", font: "var(--font-secondary)" }}>
-                          {summary || meta.description}
-                        </span>
-                      ) : null}
+                      <strong>{meta.title}</strong>
+                      <span style={{ color: "var(--text-meta)", font: "var(--font-secondary)" }}>
+                        {summary || meta.description}
+                      </span>
                     </div>
                   </header>
 
@@ -1728,7 +1728,7 @@ export default function ProgramStorePage() {
                         publicTemplates={publicTemplates}
                         exerciseOptions={exerciseOptions}
                         exerciseOptionsLoading={exerciseOptionsLoading}
-                        operatorStyle={isOperatorCustomization}
+                        operatorStyle={true}
                         highlighted={recentlyAddedCustomizeExerciseId === exercise.id}
                         canMoveUp={exerciseIndex > 0}
                         canMoveDown={exerciseIndex < session.exercises.length - 1}
@@ -1746,10 +1746,7 @@ export default function ProgramStorePage() {
                     className="btn btn-secondary btn-full"
                     style={{ marginTop: "var(--space-sm)" }}
                     onClick={() => {
-                      const addedExercise = createEmptyExerciseDraft(
-                        isOperatorCustomization ? null : customizeDraft.baseTemplate.slug,
-                        isOperatorCustomization ? "CUSTOM" : null,
-                      );
+                      const addedExercise = createEmptyExerciseDraft(null, "CUSTOM");
                       setPendingCustomizeScrollId(addedExercise.id);
                       setCustomizeDraft((prev) => {
                         if (!prev) return prev;
