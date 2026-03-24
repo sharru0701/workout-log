@@ -911,26 +911,27 @@ export default function WorkoutRecordPage() {
 
       const capturedKey = persistenceKeyRef.current;
 
-      setTimeout(async () => {
-        console.log("[WorkoutRecordPage] Showing restore confirm");
-        const shouldKeep = await confirm({
-          title: "기록 복구",
-          message: "이전에 입력 중이던 기록을 불러왔습니다.",
-          confirmText: "복구",
-          cancelText: "삭제",
-          closeAsConfirm: true,
-        });
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      console.log("[WorkoutRecordPage] Showing restore confirm");
+      const shouldKeep = await confirm({
+        title: "기록 복구",
+        message: "이전에 입력 중이던 기록을 불러왔습니다.",
+        confirmText: "복구",
+        cancelText: "삭제",
+        closeAsConfirm: true,
+      });
 
-        if (shouldKeep) {
-          setDraft(data.draft);
-          setProgramEntryState(data.programEntryState);
-          setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
-        } else {
-          isRestoredRef.current = false;
-          if (capturedKey) await clearWorkoutDraft(capturedKey);
-          await reloadDraftContextRef.current?.();
-        }
-      }, 150);
+      if (shouldKeep) {
+        setDraft(data.draft);
+        setProgramEntryState(data.programEntryState);
+        setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
+        return true;
+      }
+
+      isRestoredRef.current = false;
+      if (capturedKey) await clearWorkoutDraft(capturedKey);
+      await reloadDraftContextRef.current?.();
+      return false;
     }, [confirm]),
     { enabled: true } // 즉시 복구 시도
   );
