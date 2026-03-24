@@ -136,5 +136,11 @@ export function useWorkoutRecordPersistence(
     debouncedSave.cancel();
   }, [debouncedSave]);
 
-  return { forceSave: forceSaveSync, cancelPendingSave };
+  const resetRestoreState = useCallback((targetKey?: string | null) => {
+    if (!targetKey || lastSavedKeyRef.current === targetKey) {
+      lastSavedKeyRef.current = null;
+    }
+  }, []);
+
+  return { forceSave: forceSaveSync, cancelPendingSave, resetRestoreState };
 }

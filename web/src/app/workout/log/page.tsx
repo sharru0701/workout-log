@@ -902,7 +902,7 @@ export default function WorkoutRecordPage() {
     isRestoredRef.current = false;
   }, [persistenceKey]);
 
-  const { cancelPendingSave } = useWorkoutRecordPersistence(
+  const { cancelPendingSave, resetRestoreState } = useWorkoutRecordPersistence(
     persistenceKey,
     draft,
     programEntryState,
@@ -1687,6 +1687,9 @@ export default function WorkoutRecordPage() {
       if (persistenceKey) await clearWorkoutDraft(persistenceKey);
     }
 
+    // 이전 복구 시도가 화면 반영 전에 끝난 경우, 같은 키에 대한 복구 확인을 다시 허용한다.
+    resetRestoreState(persistenceKey);
+
     // isRestoredRef 초기화: 이전 복구 상태가 남아있으면 loadWorkoutContext가 setDraft를 건너뜀
     // 단, 복구 모달이 떠 있는 중이라면 초기화하지 않음 (레이스 컨디션 방지)
     if (!isRestoringRef.current) {
@@ -1719,7 +1722,7 @@ export default function WorkoutRecordPage() {
       planSchedule: selectedPlan?.params?.schedule,
       planParams: selectedPlan?.params ?? null,
     });
-  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, persistenceKey, query, selectedPlan, workoutPreferences, workflowState]);
+  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshRecordPage,
