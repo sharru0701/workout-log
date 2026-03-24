@@ -1660,9 +1660,12 @@ export default function WorkoutRecordPage() {
         title: "입력 내용 다시 불러오기",
         message: "저장하지 않은 변경사항이 사라집니다.\n지금 화면 데이터를 다시 불러올까요?",
         confirmText: "다시 불러오기",
-        cancelText: "취소",
+        cancelText: "삭제",
       });
-      if (!shouldReload) return;
+      if (!shouldReload) {
+        if (persistenceKey) await clearWorkoutDraft(persistenceKey);
+        return;
+      }
     }
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
@@ -1691,7 +1694,7 @@ export default function WorkoutRecordPage() {
       planSchedule: selectedPlan?.params?.schedule,
       planParams: selectedPlan?.params ?? null,
     });
-  }, [confirm, draft, loadWorkoutContext, query, selectedPlan, workoutPreferences, workflowState]);
+  }, [confirm, draft, loadWorkoutContext, persistenceKey, query, selectedPlan, workoutPreferences, workflowState]);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshRecordPage,
