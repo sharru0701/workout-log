@@ -857,6 +857,7 @@ export default function WorkoutRecordPage() {
     return q.planId || "";
   });
   const isRestoredRef = useRef(false);
+  const isRestoringRef = useRef(false);
   const persistenceKeyRef = useRef<string | null>(null);
   const reloadDraftContextRef = useRef<(() => Promise<void>) | null>(null);
   const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
@@ -897,6 +898,8 @@ export default function WorkoutRecordPage() {
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
   useEffect(() => {
     persistenceKeyRef.current = persistenceKey;
+    // 플랜이나 날짜가 바뀌면 이전 복구 상태는 더 이상 유효하지 않음
+    isRestoredRef.current = false;
   }, [persistenceKey]);
 
   const { cancelPendingSave } = useWorkoutRecordPersistence(
@@ -908,30 +911,37 @@ export default function WorkoutRecordPage() {
       // loadWorkoutContext가 복구 데이터를 덮어쓰지 못하도록 먼저 플래그 설정
       // setDraft는 확인 후에만 호출 → 자동저장 디바운스 누수 방지
       isRestoredRef.current = true;
+      isRestoringRef.current = true;
 
       const capturedKey = persistenceKeyRef.current;
 
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      console.log("[WorkoutRecordPage] Showing restore confirm");
-      const shouldKeep = await confirm({
-        title: "기록 복구",
-        message: "이전에 입력 중이던 기록을 불러왔습니다.",
-        confirmText: "복구",
-        cancelText: "삭제",
-        closeAsConfirm: true,
-      });
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 150));
+        console.log("[WorkoutRecordPage] Showing restore confirm");
+        const shouldKeep = await confirm({
+          title: "기록 복구",
+          message: "이전에 입력 중이던 기록을 불러왔습니다.",
+          confirmText: "복구",
+          cancelText: "삭제",
+          closeAsConfirm: true,
+        });
 
-      if (shouldKeep) {
-        setDraft(data.draft);
-        setProgramEntryState(data.programEntryState);
-        setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
-        return true;
+        if (shouldKeep) {
+          // 복구 승인 시 다시 한번 플래그를 확인/설정하여 PTR 레이스 컨디션 방지
+          isRestoredRef.current = true;
+          setDraft(data.draft);
+          setProgramEntryState(data.programEntryState);
+          setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
+          return true;
+        }
+
+        isRestoredRef.current = false;
+        if (capturedKey) await clearWorkoutDraft(capturedKey);
+        await reloadDraftContextRef.current?.();
+        return false;
+      } finally {
+        isRestoringRef.current = false;
       }
-
-      isRestoredRef.current = false;
-      if (capturedKey) await clearWorkoutDraft(capturedKey);
-      await reloadDraftContextRef.current?.();
-      return false;
     }, [confirm]),
     { enabled: true } // 즉시 복구 시도
   );
@@ -1652,7 +1662,7 @@ export default function WorkoutRecordPage() {
       setSaveError(e?.message ?? "운동기록 저장에 실패했습니다.");
       setWorkflowState("editing");
     }
-  }, [draft, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
+  }, [draft, persistenceKey, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
 
   const refreshRecordPage = useCallback(async () => {
     if (workflowState === "saving") return;
@@ -1678,7 +1688,10 @@ export default function WorkoutRecordPage() {
     }
 
     // isRestoredRef 초기화: 이전 복구 상태가 남아있으면 loadWorkoutContext가 setDraft를 건너뜀
-    isRestoredRef.current = false;
+    // 단, 복구 모달이 떠 있는 중이라면 초기화하지 않음 (레이스 컨디션 방지)
+    if (!isRestoringRef.current) {
+      isRestoredRef.current = false;
+    }
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
     const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
