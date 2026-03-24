@@ -1151,7 +1151,7 @@ export default function WorkoutRecordPage() {
               input.preferences.bodyweightKg,
             ),
           );
-          setWorkflowState("idle");
+          setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
           return;
         }
 
@@ -1222,7 +1222,7 @@ export default function WorkoutRecordPage() {
             input.preferences.bodyweightKg,
           ),
         );
-        setWorkflowState("idle");
+        setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
       } catch (e: any) {
         setDraft(null);
         setProgramEntryState({});
