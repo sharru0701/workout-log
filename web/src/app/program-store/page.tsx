@@ -927,7 +927,7 @@ export default function ProgramStorePage() {
       await loadStore();
       setStartProgramDraft(null);
       router.push(
-        `/workout-record?planId=${encodeURIComponent(targetPlanId)}&date=${startProgramDraft.today}&context=today`,
+        `/workout/log?planId=${encodeURIComponent(targetPlanId)}&date=${startProgramDraft.today}&context=today`,
       );
     } catch (e: any) {
       setError(e?.message ?? "프로그램 시작에 실패했습니다.");

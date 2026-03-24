@@ -47,6 +47,11 @@
   --card-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
 }
 
+.card[data-card-tone="success"] {
+  --card-bg: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  --card-border: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+}
+
 .card[data-card-interactive="true"] {
   cursor: pointer;
 }

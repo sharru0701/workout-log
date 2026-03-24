@@ -12,9 +12,9 @@ export const APP_ROUTES = {
   calendarHome: "/calendar",
   calendarOptions: "/calendar/options",
   todayHome: "/workout/today",
-  todayLog: "/workout-record",
+  todayLog: "/workout/log",
   todayOverrides: "/workout/today/overrides",
-  workoutRecord: "/workout-record",
+  workoutRecord: "/workout/log",
   statsHome: "/stats",
   systemStats: "/settings/system-stats",
 } as const;

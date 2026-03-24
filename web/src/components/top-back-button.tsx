@@ -6,9 +6,9 @@ import { usePathname, useRouter } from "next/navigation";
 
 function titleFromPathname(pathname: string) {
   if (pathname === "/") return "홈";
-  if (pathname.startsWith("/workout-record/add-exercise")) return "운동 추가";
-  if (pathname.startsWith("/workout-record/exercise-catalog")) return "운동 카탈로그";
-  if (pathname.startsWith("/workout-record")) return "기록";
+  if (pathname.startsWith("/workout/log/add-exercise")) return "운동 추가";
+  if (pathname.startsWith("/workout/log/exercise-catalog")) return "운동 카탈로그";
+  if (pathname.startsWith("/workout/log")) return "기록";
   if (pathname.startsWith("/program-store/create")) return "프로그램 만들기";
   if (pathname.startsWith("/program-store/customize")) return "프로그램 수정";
   if (pathname.startsWith("/program-store/detail")) return "프로그램 상세";

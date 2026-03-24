@@ -20,5 +20,5 @@ export function buildTodayLogHref({
   params.set("date", date);
   if (logId) params.set("logId", logId);
   const query = params.toString();
-  return `/workout-record${query ? `?${query}` : ""}`;
+  return `/workout/log${query ? `?${query}` : ""}`;
 }

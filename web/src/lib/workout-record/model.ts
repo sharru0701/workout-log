@@ -10,6 +10,7 @@ export type WorkoutSetModel = {
 export type WorkoutPlannedSetMeta = {
   percentPerSet: Array<number | null>;
   targetWeightKgPerSet: Array<number | null>;
+  repsPerSet: Array<number | null>;
 };
 
 export type WorkoutNoteModel = {
@@ -158,6 +159,10 @@ function toPlannedSetMeta(sets: SnapshotSet[] | undefined): WorkoutPlannedSetMet
       const weightKg = Number(set?.targetWeightKg ?? set?.weightKg);
       return Number.isFinite(weightKg) && weightKg >= 0 ? weightKg : null;
     }),
+    repsPerSet: sets.map((set) => {
+      const reps = Number(set?.reps);
+      return Number.isFinite(reps) && reps >= 0 ? reps : null;
+    }),
   };
 }
 
@@ -214,7 +219,7 @@ function toNumber(value: unknown, fallback: number) {
 function normalizeRepsValue(value: unknown, fallback = 5) {
   const parsed = Number(value);
   if (!Number.isFinite(parsed)) return fallback;
-  return Math.min(100, Math.max(1, Math.round(parsed)));
+  return Math.min(100, Math.max(0, Math.round(parsed)));
 }
 
 function normalizeRepsPerSetArray(
@@ -864,7 +869,7 @@ export function toWorkoutLogPayload(
         exerciseId: exercise.exerciseId,
         exerciseName,
         setNumber: index + 1,
-        reps: Math.max(1, Math.round(repsValue)),
+        reps: Math.max(0, Math.round(repsValue)),
         weightKg,
         rpe: 0,
         isExtra: exercise.badge === "ADDED",

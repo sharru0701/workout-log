@@ -535,7 +535,7 @@ function buildRecentSessions(plans: PlanItem[], logs: WorkoutLogItem[], recentLi
         title: planName,
         subtitle: formatDate(entry.performedAt),
         description: `${setCount}세트 / 대표 운동: ${primaryExercise}`,
-        href: `/workout-record?context=recent&logId=${encodeURIComponent(entry.id)}`,
+        href: `/workout/log?context=recent&logId=${encodeURIComponent(entry.id)}`,
       };
     });
 }
@@ -584,7 +584,7 @@ function buildLastSession(
     totalSets,
     totalVolume: Math.round(totalVolume),
     exercises,
-    href: `/workout-record?context=recent&logId=${encodeURIComponent(lastLog.id)}`,
+    href: `/workout/log?context=recent&logId=${encodeURIComponent(lastLog.id)}`,
   };
 }
 
@@ -699,7 +699,7 @@ export const HOME_PREVIEW_DATA: HomeData = {
     programName: "5/3/1 BBB",
     meta: "Back Squat, Bench Press 외 16세트",
     completedSets: 0,
-    href: "/workout-record?planId=preview-plan-531&date=2026-03-03",
+    href: "/workout/log?planId=preview-plan-531&date=2026-03-03",
     loggedExercises: [],
     plannedExercises: [
       { name: "Back Squat", role: "MAIN", totalSets: 3, summary: "3x5 @ 110kg" },
@@ -733,9 +733,9 @@ export const HOME_PREVIEW_DATA: HomeData = {
   },
   recentLimit: DEFAULT_RECENT_LIMIT,
   recentSessions: [
-    { id: "preview-1", title: "5/3/1 BBB", subtitle: "3월 2일 (월)", description: "16세트 / 대표 운동: Back Squat", href: "/workout-record?context=recent&logId=preview-1" },
-    { id: "preview-2", title: "My A/B Strength", subtitle: "3월 1일 (일)", description: "12세트 / 대표 운동: Deadlift", href: "/workout-record?context=recent&logId=preview-2" },
-    { id: "preview-3", title: "StrongLifts 5x5", subtitle: "2월 28일 (토)", description: "15세트 / 대표 운동: Bench Press", href: "/workout-record?context=recent&logId=preview-3" },
+    { id: "preview-1", title: "5/3/1 BBB", subtitle: "3월 2일 (월)", description: "16세트 / 대표 운동: Back Squat", href: "/workout/log?context=recent&logId=preview-1" },
+    { id: "preview-2", title: "My A/B Strength", subtitle: "3월 1일 (일)", description: "12세트 / 대표 운동: Deadlift", href: "/workout/log?context=recent&logId=preview-2" },
+    { id: "preview-3", title: "StrongLifts 5x5", subtitle: "2월 28일 (토)", description: "15세트 / 대표 운동: Bench Press", href: "/workout/log?context=recent&logId=preview-3" },
   ],
   lastSession: {
     id: "preview-1",
@@ -748,7 +748,7 @@ export const HOME_PREVIEW_DATA: HomeData = {
       { name: "Leg Press", sets: 5, bestSet: "5x10 @ 180kg", weightDelta: null },
       { name: "Leg Curl", sets: 3, bestSet: "3x12 @ 40kg", weightDelta: null },
     ],
-    href: "/workout-record?context=recent&logId=preview-1",
+    href: "/workout/log?context=recent&logId=preview-1",
   },
   strengthProgress: [
     { exerciseName: "Back Squat", exerciseId: "ex-squat", bestE1rm: 145, latestE1rm: 140, improvement: 12, trend: "up" },

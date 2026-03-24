@@ -22,5 +22,5 @@ export default async function WorkoutAddExercisePage({
   if (planId) next.set("planId", planId);
   if (date) next.set("date", date);
 
-  redirect(`/workout-record?${next.toString()}`);
+  redirect(`/workout/log?${next.toString()}`);
 }

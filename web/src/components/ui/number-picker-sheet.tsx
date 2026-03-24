@@ -151,21 +151,18 @@ export function NumberPickerField({
         padding: "4px 8px",
         backgroundColor: complete
           ? isReps
-            ? "var(--color-selected-weak)"
+            ? "var(--color-success-weak)"
             : "var(--color-surface-hover)"
           : "transparent",
         color: complete
           ? isReps
-            ? "var(--color-action-strong)"
+            ? "var(--color-success-strong)"
             : "var(--color-text)"
           : "var(--color-text-muted)",
         border: complete && isReps
-          ? "1px solid var(--color-selected-border)"
+          ? "1px solid color-mix(in srgb, var(--color-success) 35%, var(--color-border))"
           : undefined,
-        boxShadow: complete && isReps
-          ? "inset 0 0 0 1px color-mix(in srgb, var(--color-action) 18%, transparent)"
-          : undefined,
-        fontWeight: complete && isReps ? "700" : undefined,
+        fontWeight: complete && isReps ? "600" : undefined,
         font: "var(--font-secondary)",
       };
     }
@@ -186,7 +183,7 @@ export function NumberPickerField({
         type="button"
         onClick={() => setOpen(true)}
         aria-label={label ? `${label}: ${displayText}` : displayText}
-        className={className}
+        className={[className, isCompletedReps ? "reps-complete" : ""].join(" ").trim()}
         style={{
           width: "100%",
           border: "1px solid var(--color-border)",

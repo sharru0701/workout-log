@@ -306,7 +306,7 @@ function workoutExerciseBadgeMeta(badge: WorkoutExerciseViewModel["badge"]) {
 }
 
 function clampReps(value: number) {
-  return Math.min(100, Math.max(1, Math.round(value)));
+  return Math.min(100, Math.max(0, Math.round(value)));
 }
 
 function normalizeRepsPerSet(value: number[], fallback = 5) {
@@ -342,6 +342,12 @@ function createFallbackProgramEntryState(
 ): WorkoutProgramExerciseEntryState {
   return {
     repsInputs: Array.from({ length: exercise.set.repsPerSet.length }, (_, index) => current?.repsInputs[index] ?? ""),
+    // 우선순위: 저장된 불변값 > plannedSetMeta(안정적) > set.repsPerSet(편집 전이면 정확)
+    plannedRepsPerSet: current?.plannedRepsPerSet
+      ?? exercise.set.repsPerSet.map((fallback, i) => {
+           const fromMeta = exercise.plannedSetMeta?.repsPerSet?.[i];
+           return typeof fromMeta === "number" && fromMeta > 0 ? fromMeta : fallback;
+         }),
     memoInput: current?.memoInput ?? "",
     memoPlaceholder: current?.memoPlaceholder ?? "",
   };
@@ -361,6 +367,40 @@ function formatCompactWeightValue(value: number, step = 0.5) {
   return rounded.toFixed(precision);
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ width: "1.1rem", height: "1.1rem" }}
+    >
+      <path d="M5 12l5 5L20 7" />
+    </svg>
+  );
+}
+
+function FailureIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="3.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      style={{ width: "1.1rem", height: "1.1rem" }}
+    >
+      <path d="M18 6L6 18M6 6l12 12" />
+    </svg>
+  );
+}
+
 function WorkoutRecordInlinePicker({
   label,
   value,
@@ -371,6 +411,7 @@ function WorkoutRecordInlinePicker({
   formatValue,
   sheetTitle,
   complete = false,
+  failed = false,
   color,
 }: {
   label: string;
@@ -382,6 +423,7 @@ function WorkoutRecordInlinePicker({
   formatValue?: (value: number) => string;
   sheetTitle?: string;
   complete?: boolean;
+  failed?: boolean;
   color?: string;
 }) {
   const [open, setOpen] = useState(false);
@@ -396,8 +438,20 @@ function WorkoutRecordInlinePicker({
           padding: "var(--space-xs)",
           border: "1px solid var(--color-border)",
           borderRadius: "6px",
-          backgroundColor: complete ? "var(--color-surface-hover)" : "transparent",
-          color: color || (complete ? "var(--color-text)" : "var(--color-text-muted)"),
+          backgroundColor: failed
+            ? "color-mix(in srgb, var(--color-danger) 25%, var(--color-surface))"
+            : complete
+              ? color === "var(--text-metric-reps)"
+                ? "var(--color-success-weak)"
+                : "color-mix(in srgb, var(--color-success) 18%, var(--color-surface))"
+              : "transparent",
+          color: failed
+            ? "var(--color-danger-strong)"
+            : complete
+              ? color === "var(--text-metric-reps)"
+                ? "var(--color-success-strong)"
+                : "var(--color-text)"
+              : color || "var(--color-text-muted)",
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
@@ -452,11 +506,11 @@ function ExerciseRow({
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
   const isBodyweightExercise = isBodyweightExerciseName(exercise.exerciseName);
   const badgeMeta = workoutExerciseBadgeMeta(exercise.badge);
-  const showBadgeAfterName = exercise.badge === "AUTO";
   const usesProgramPlaceholders = Boolean(programEntryState);
   const weightStepMeta = `${formatKgValue(minimumPlateIncrementKg)} 단위`;
   const plannedPercentPerSet = exercise.plannedSetMeta?.percentPerSet ?? [];
   const plannedWeightKgPerSet = exercise.plannedSetMeta?.targetWeightKgPerSet ?? [];
+  const plannedRepsPerSet = exercise.plannedSetMeta?.repsPerSet ?? [];
   const firstPlannedWeightKg =
     plannedWeightKgPerSet.find((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) ?? null;
   const resolvedFirstPlannedWeightKg =
@@ -473,8 +527,16 @@ function ExerciseRow({
   const usesPlannedRowWeights =
     typeof resolvedFirstPlannedWeightKg === "number" &&
     Math.abs(exercise.set.weightKg - resolvedFirstPlannedWeightKg) < 0.01;
+
+
   return (
-    <Card as="article" tone="inset" elevated={false} padding="none" style={{ marginBottom: "var(--space-md)" }}>
+    <Card
+      as="article"
+      tone="inset"
+      elevated={false}
+      padding="none"
+      style={{ marginBottom: "var(--space-md)", position: "relative" }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)", backgroundColor: "var(--color-surface-hover)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
           <strong
@@ -483,14 +545,11 @@ function ExerciseRow({
           >
             {exercise.exerciseName}
           </strong>
-          {showBadgeAfterName && badgeMeta ? (
+          {badgeMeta ? (
             <span className={badgeMeta.className}>{badgeMeta.label}</span>
           ) : null}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-          {badgeMeta && !showBadgeAfterName ? (
-            <span className={badgeMeta.className}>{badgeMeta.label}</span>
-          ) : null}
           <button
             type="button"
             className="btn btn-icon btn-icon-danger"
@@ -505,23 +564,31 @@ function ExerciseRow({
 
       <section style={{ padding: "var(--space-md)" }}>
         <div style={{ marginBottom: "var(--space-md)" }}>
-          <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
+          <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
             <span style={{ color: "var(--text-metric-sets)" }}>Sets</span>
             <span style={{ color: "var(--text-metric-percent)" }}>TM%</span>
             <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
             <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
+            <span />
           </div>
 
           <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
             {exercise.set.repsPerSet.map((setReps, index) => {
               const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
               const parsedSetValue = Number(rawSetValue);
-              const isSetComplete =
-                usesProgramPlaceholders &&
-                rawSetValue.length > 0 &&
-                Number.isFinite(parsedSetValue) &&
-                parsedSetValue >= 1 &&
-                parsedSetValue <= 100;
+              const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
+              const hasReps = Number.isFinite(actualRepsValue) && actualRepsValue > 0;
+              // program 운동: entryState에 불변값으로 저장된 계획 reps 사용
+              // 일반 운동: plannedSetMeta의 계획 reps 사용 (없으면 비교 안 함)
+              const plannedReps: number | undefined = usesProgramPlaceholders
+                ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
+                : typeof plannedRepsPerSet[index] === "number"
+                  ? (plannedRepsPerSet[index] as number)
+                  : undefined;
+
+              const isFailure = hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
+              const isSetComplete = hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
+
               const plannedWeightKg = plannedWeightKgPerSet[index];
               const resolvedPlannedWeightKg =
                 typeof plannedWeightKg === "number" && Number.isFinite(plannedWeightKg) && plannedWeightKg >= 0
@@ -543,7 +610,7 @@ function ExerciseRow({
                   : exercise.set.weightKg;
 
               return (
-                <div key={`${exercise.id}-set-${index}`} role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr", gap: "var(--space-xs)", alignItems: "center", marginBottom: "var(--space-xs)", textAlign: "center" }}>
+                <div key={`${exercise.id}-set-${index}`} role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", alignItems: "center", marginBottom: "var(--space-xs)", textAlign: "center" }}>
                   <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
                   <span style={{ font: "var(--font-secondary)", color: "var(--text-metric-percent)" }}>
                     {formatPercentLabel(plannedPercentPerSet[index])}
@@ -556,19 +623,25 @@ function ExerciseRow({
                     step={minimumPlateIncrementKg}
                     formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
                     color="var(--text-metric-weight)"
+                    complete={isSetComplete}
+                    failed={isFailure}
                     onChange={onChangeWeight}
                   />
                   <WorkoutRecordInlinePicker
                     label={`${index + 1}세트 횟수`}
                     value={setReps}
-                    min={1}
+                    min={0}
                     max={100}
                     step={1}
                     complete={isSetComplete}
+                    failed={isFailure}
                     formatValue={(value) => String(Math.round(value))}
                     color="var(--text-metric-reps)"
                     onChange={(value) => onChangeSetReps(index, value)}
                   />
+                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", color: isFailure ? "var(--color-danger)" : "var(--color-success)", minWidth: "1.2rem" }}>
+                    {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
+                  </div>
                 </div>
               );
             })}
@@ -671,14 +744,12 @@ export default function WorkoutRecordPage() {
     programEntryState,
     useCallback(async (data) => {
       console.log("[WorkoutRecordPage] onRestore called", data);
+      // loadWorkoutContext가 복구 데이터를 덮어쓰지 못하도록 먼저 플래그 설정
+      // setDraft는 확인 후에만 호출 → 자동저장 디바운스 누수 방지
       isRestoredRef.current = true;
-      // 순서를 보장하여 상태 업데이트
-      setDraft(data.draft);
-      setProgramEntryState(data.programEntryState);
 
       const capturedKey = persistenceKeyRef.current;
 
-      // Safari 등에서 렌더링 프레임 확보를 위해 약간의 지연 후 알림
       setTimeout(async () => {
         console.log("[WorkoutRecordPage] Showing restore confirm");
         const shouldKeep = await confirm({
@@ -689,11 +760,12 @@ export default function WorkoutRecordPage() {
           closeAsConfirm: true,
         });
 
-        if (!shouldKeep) {
-          if (capturedKey) await clearWorkoutDraft(capturedKey);
+        if (shouldKeep) {
+          setDraft(data.draft);
+          setProgramEntryState(data.programEntryState);
+        } else {
           isRestoredRef.current = false;
-          setDraft(null);
-          setProgramEntryState({});
+          if (capturedKey) await clearWorkoutDraft(capturedKey);
           await reloadDraftContextRef.current?.();
         }
       }, 150);
@@ -1920,7 +1992,7 @@ export default function WorkoutRecordPage() {
           </label>
 
           <Link
-            href="/workout-record/exercise-catalog"
+            href="/workout/log/exercise-catalog"
             onClick={() => setAddSheetOpen(false)}
           >
             운동종목 CRUD 관리 열기

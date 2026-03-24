@@ -122,9 +122,18 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
 
   const active = queue[0] ?? null;
 
+  // 시트 닫기(backdrop/X) 전용 — closeAsConfirm 옵션 적용
   const closeActiveAsCancel = useCallback(() => {
     if (!active) return;
     if (active.kind === "confirm") active.resolve(active.closeAsConfirm ? true : false);
+    else active.resolve();
+    setQueue((prev) => prev.slice(1));
+  }, [active]);
+
+  // 취소 버튼 전용 — 항상 false (closeAsConfirm 무시)
+  const closeActiveAsCancelButton = useCallback(() => {
+    if (!active) return;
+    if (active.kind === "confirm") active.resolve(false);
     else active.resolve();
     setQueue((prev) => prev.slice(1));
   }, [active]);
@@ -207,7 +216,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
                 <button
                   type="button"
                   className="btn btn-secondary btn-full"
-                  onClick={closeActiveAsCancel}
+                  onClick={closeActiveAsCancelButton}
                 >
                   {active.cancelText}
                 </button>

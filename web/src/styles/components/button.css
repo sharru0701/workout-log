@@ -175,3 +175,11 @@
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* 운동 세트 reps 완료 강조 */
+.reps-complete {
+  background-color: var(--color-success-weak) !important;
+  color: var(--color-success-strong) !important;
+  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border)) !important;
+  font-weight: 600 !important;
+}

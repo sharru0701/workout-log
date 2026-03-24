@@ -11,7 +11,7 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
   {
     key: "workout.today.log",
     title: "오늘 운동 로그",
-    path: "/workout-record",
+    path: "/workout/log",
     section: "훈련",
     keywords: ["운동", "로그", "세트", "저장", "sync", "today"],
     description: "오늘 세션 생성, 기록, 저장",

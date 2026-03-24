@@ -96,7 +96,7 @@ function SettingsIcon() {
 
 const tabs = [
   { href: "/", label: "홈", ariaLabel: "홈", Icon: HomeIcon },
-  { href: "/workout-record", label: "기록", ariaLabel: "운동기록", Icon: RecordIcon },
+  { href: "/workout/log", label: "기록", ariaLabel: "운동기록", Icon: RecordIcon },
   { href: "/calendar", label: "캘린더", ariaLabel: "캘린더", Icon: CalendarIcon },
   { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
   { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },

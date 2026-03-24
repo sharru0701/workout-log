@@ -2,6 +2,7 @@ import type { WorkoutExerciseModel, WorkoutExerciseViewModel, WorkoutRecordDraft
 
 export type WorkoutProgramExerciseEntryState = {
   repsInputs: string[];
+  plannedRepsPerSet: number[]; // 세션 시작 시 캡처된 계획 reps (불변)
   memoInput: string;
   memoPlaceholder: string;
 };
@@ -13,6 +14,7 @@ export function createWorkoutProgramExerciseEntryState(
 ): WorkoutProgramExerciseEntryState {
   return {
     repsInputs: exercise.set.repsPerSet.map(() => ""),
+    plannedRepsPerSet: [...exercise.set.repsPerSet],
     memoInput: "",
     memoPlaceholder: exercise.note.memo,
   };

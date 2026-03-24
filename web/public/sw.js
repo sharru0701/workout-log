@@ -58,8 +58,10 @@ self.addEventListener('fetch', (event) => {
   if (url.pathname.startsWith('/api/')) return;
 
   // Next.js immutable static assets (content-hashed filenames) — cache-first.
+  // 개발 환경(localhost)에서는 파일명에 해시가 없어 재컴파일 시 갱신이 안 되므로 캐시하지 않음.
   if (url.pathname.startsWith('/_next/static/')) {
-    event.respondWith(cacheFirst(request, STATIC_CACHE));
+    const isDev = self.location.hostname === 'localhost' || self.location.hostname === '127.0.0.1';
+    if (!isDev) event.respondWith(cacheFirst(request, STATIC_CACHE));
     return;
   }
 
