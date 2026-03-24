@@ -41,6 +41,13 @@ COPY --from=builder /app/public ./public
 # Copy scripts and migrations manually as they're needed for entrypoint
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/src/server/db ./src/server/db
+# tsx (used by seed-if-needed.mjs at deploy time) and its full transitive
+# dependency chain are not reliably traced by Next.js standalone; copy explicitly
+COPY --from=deps /app/node_modules/tsx ./node_modules/tsx
+COPY --from=deps /app/node_modules/get-tsconfig ./node_modules/get-tsconfig
+COPY --from=deps /app/node_modules/resolve-pkg-maps ./node_modules/resolve-pkg-maps
+COPY --from=deps /app/node_modules/esbuild ./node_modules/esbuild
+COPY --from=deps /app/node_modules/@esbuild ./node_modules/@esbuild
 
 EXPOSE 3000
 # Migrations run as a dedicated deploy job before the web container is switched.
