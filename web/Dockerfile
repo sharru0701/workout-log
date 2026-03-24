@@ -28,13 +28,13 @@ RUN --mount=type=cache,id=next,target=/app/.next/cache \
 
 # Pre-compile seed.ts to plain JS so tsx is not needed at runtime.
 # dotenv is bundled in; pg and drizzle-orm remain external (already in standalone).
-RUN node_modules/.bin/esbuild src/server/db/seed.ts \
+RUN node_modules/.bin/esbuild src/server/db/seed-runner.ts \
     --bundle \
     --platform=node \
-    --format=esm \
+    --format=cjs \
     --external:pg \
     --external:drizzle-orm \
-    --outfile=scripts/seed-compiled.mjs
+    --outfile=scripts/seed-compiled.cjs
 
 FROM base AS runner
 ARG APP_VERSION=unknown
