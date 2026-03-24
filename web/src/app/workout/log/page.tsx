@@ -239,6 +239,33 @@ function formatDateFriendly(isoOrDateKey: string) {
   }).format(date);
 }
 
+function applyRecentWeightsToCustomExercises(
+  draft: WorkoutRecordDraft,
+  recentLogs: RecentLogItem[],
+): WorkoutRecordDraft {
+  let result = draft;
+  for (const exercise of draft.seedExercises) {
+    if (exercise.badge !== "CUSTOM" || exercise.set.weightKg > 0) continue;
+    const name = exercise.exerciseName.toLowerCase();
+    let foundWeight: number | null = null;
+    outer: for (const log of recentLogs) {
+      for (const set of log.sets) {
+        if (
+          set.exerciseName.toLowerCase() === name &&
+          set.weightKg != null &&
+          set.weightKg > 0
+        ) {
+          foundWeight = set.weightKg;
+          break outer;
+        }
+      }
+    }
+    const weightKg = foundWeight ?? 50;
+    result = patchSeedExercise(result, exercise.id, { set: { weightKg } });
+  }
+  return result;
+}
+
 function buildLastSessionSummary(
   logs: RecentLogItem[],
   todayKey: string,
@@ -1163,13 +1190,16 @@ export default function WorkoutRecordPage() {
         ]);
 
         const prepared = prepareWorkoutRecordDraftForEntry(
-          applyWeightRulesToDraft(
-            createWorkoutRecordDraft(sessionRes.session, input.planName, {
-              sessionDate: input.dateKey,
-              timezone: browserTimezone,
-              planSchedule: input.planSchedule,
-            }),
-            input.preferences,
+          applyRecentWeightsToCustomExercises(
+            applyWeightRulesToDraft(
+              createWorkoutRecordDraft(sessionRes.session, input.planName, {
+                sessionDate: input.dateKey,
+                timezone: browserTimezone,
+                planSchedule: input.planSchedule,
+              }),
+              input.preferences,
+            ),
+            logsRes.items ?? [],
           ),
         );
         setSelectedPlanId(input.planId);
