@@ -899,7 +899,7 @@ export default function WorkoutRecordPage() {
     persistenceKeyRef.current = persistenceKey;
   }, [persistenceKey]);
 
-  useWorkoutRecordPersistence(
+  const { cancelPendingSave } = useWorkoutRecordPersistence(
     persistenceKey,
     draft,
     programEntryState,
@@ -1656,19 +1656,27 @@ export default function WorkoutRecordPage() {
     if (workflowState === "saving") return;
 
     if (workflowState === "editing") {
-      const shouldReload = await confirm({
+      const result = await confirm({
         title: "입력 내용 다시 불러오기",
         message: "저장하지 않은 변경사항이 사라집니다.\n지금 화면 데이터를 다시 불러올까요?",
         confirmText: "다시 불러오기",
         cancelText: "삭제",
+        closeAsNull: true, // X 버튼은 아무 동작 없이 닫기
       });
-      if (!shouldReload) {
+      if (result === null) return; // X 닫기 — 아무것도 하지 않음
+      if (!result) {
+        // "삭제" 선택 — 드래프트 삭제 후 종료
+        cancelPendingSave();
         if (persistenceKey) await clearWorkoutDraft(persistenceKey);
         return;
       }
-      // "다시 불러오기" 선택 시: 자동저장이 로컬 드래프트를 덮어쓰기 전에 명시적으로 삭제
+      // "다시 불러오기" 선택 — debounce 취소 후 드래프트 삭제, 재로드
+      cancelPendingSave();
       if (persistenceKey) await clearWorkoutDraft(persistenceKey);
     }
+
+    // isRestoredRef 초기화: 이전 복구 상태가 남아있으면 loadWorkoutContext가 setDraft를 건너뜀
+    isRestoredRef.current = false;
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
     const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
@@ -1696,7 +1704,7 @@ export default function WorkoutRecordPage() {
       planSchedule: selectedPlan?.params?.schedule,
       planParams: selectedPlan?.params ?? null,
     });
-  }, [confirm, draft, loadWorkoutContext, persistenceKey, query, selectedPlan, workoutPreferences, workflowState]);
+  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, persistenceKey, query, selectedPlan, workoutPreferences, workflowState]);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshRecordPage,

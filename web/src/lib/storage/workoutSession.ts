@@ -110,14 +110,18 @@ export async function clearSession(sessionId: string): Promise<void> {
  * @param func The function to debounce.
  * @param delay The debounce delay in ms.
  */
-export function debounce<F extends (...args: any[]) => any>(func: F, delay: number): (...args: Parameters<F>) => void {
+export function debounce<F extends (...args: any[]) => any>(
+  func: F,
+  delay: number
+): ((...args: Parameters<F>) => void) & { cancel: () => void } {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
-  return (...args: Parameters<F>) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    timeoutId = setTimeout(() => {
-      func(...args);
-    }, delay);
+  const fn = (...args: Parameters<F>) => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => { func(...args); }, delay);
   };
+  fn.cancel = () => {
+    if (timeoutId) clearTimeout(timeoutId);
+    timeoutId = null;
+  };
+  return fn;
 }
