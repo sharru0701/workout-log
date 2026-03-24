@@ -13,7 +13,7 @@ export function useWorkoutRecordPersistence(
   key: string | null,
   draft: WorkoutRecordDraft | null,
   programEntryState: WorkoutProgramExerciseEntryStateMap,
-  onRestore: (data: WorkoutDraftData) => void,
+  onRestore: (data: WorkoutDraftData) => Promise<boolean> | boolean,
   options: { enabled?: boolean } = { enabled: true }
 ) {
   const isRestoringRef = useRef(false);
@@ -72,9 +72,13 @@ export function useWorkoutRecordPersistence(
             lastSavedKeyRef.current = targetKey;
           } else {
             console.log(`[Persistence] Valid draft found (updatedAt: ${loaded.updatedAt}), calling onRestore`);
-            onRestore(loaded);
-            lastSavedKeyRef.current = targetKey;
-            console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
+            const restored = await onRestore(loaded);
+            if (restored) {
+              lastSavedKeyRef.current = targetKey;
+              console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
+            } else {
+              console.log(`[Persistence] onRestore declined for key: ${targetKey}`);
+            }
           }
         } else {
           console.log(`[Persistence] Expired draft found, ignoring`);
