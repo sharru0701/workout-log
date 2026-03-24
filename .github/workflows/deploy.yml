@@ -45,6 +45,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set app version
+        id: appver
+        run: |
+          SHORT_SHA="${TARGET_SHA:0:7}"
+          BUILD_DATE="$(date -u +'%Y%m%d')"
+          echo "value=${BUILD_DATE}-${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
       - name: Docker metadata (tags + labels)
         id: meta
         uses: docker/metadata-action@v6
@@ -66,6 +73,7 @@ jobs:
           push: true
           build-args: |
             APP_VERSION=${{ env.TARGET_SHA }}
+            NEXT_PUBLIC_APP_VERSION=${{ steps.appver.outputs.value }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

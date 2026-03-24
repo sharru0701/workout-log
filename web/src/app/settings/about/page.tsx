@@ -1,4 +1,3 @@
-import pkg from "../../../../package.json";
 import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } from "@/components/ui/settings-list";
 
 export default function SettingsAboutPage() {
@@ -16,7 +15,7 @@ export default function SettingsAboutPage() {
           <ValueRow
             label="버전"
             description="Version"
-            value={pkg.version}
+            value={process.env.NEXT_PUBLIC_APP_VERSION ?? "dev"}
             showChevron={false}
           />
           <ValueRow

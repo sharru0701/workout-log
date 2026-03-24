@@ -50,7 +50,7 @@ const rows = [
     href: "/settings/about",
     label: "앱 정보",
     subtitle: "App Info",
-    description: "버전 및 앱 정보",
+    description: `v${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}`,
     symbol: "AB",
   },
   {

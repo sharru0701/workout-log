@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+const SW_INSTALLED_KEY = "sw-installed";
+
 /**
  * 서비스 워커를 등록하고, 새 버전이 활성화되면 업데이트 토스트를 표시.
  *
@@ -10,7 +12,11 @@ import { useEffect, useState } from "react";
  *  2. 기존 페이지의 controller가 교체 → controllerchange 이벤트
  *  3. 토스트 표시: "앱이 업데이트되었어요" + 새로고침 버튼
  *
- * 최초 설치(이전 controller 없음)에서는 토스트를 표시하지 않음.
+ * 최초 설치에서는 토스트를 표시하지 않음.
+ *
+ * iOS Safari PWA에서는 앱을 열 때 navigator.serviceWorker.controller가
+ * null로 시작하는 경우가 있어 prevController 방식이 신뢰할 수 없음.
+ * localStorage 플래그로 최초 설치 여부를 판단.
  */
 export function PwaRegister() {
   const [updateAvailable, setUpdateAvailable] = useState(false);
@@ -18,12 +24,18 @@ export function PwaRegister() {
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
 
-    // 등록 이전에 캡처: 기존 controller가 있으면 업데이트, 없으면 최초 설치
-    const prevController = navigator.serviceWorker.controller;
+    // iOS Safari PWA에서는 controller가 null로 시작할 수 있으므로
+    // localStorage로 "이미 설치된 적 있는지" 판단
+    const wasInstalled = localStorage.getItem(SW_INSTALLED_KEY) === "true";
     let registration: ServiceWorkerRegistration | null = null;
 
     const handleControllerChange = () => {
-      if (prevController) setUpdateAvailable(true);
+      if (wasInstalled) {
+        setUpdateAvailable(true);
+      } else {
+        // 최초 설치 완료 — 다음 controllerchange부터 업데이트로 처리
+        localStorage.setItem(SW_INSTALLED_KEY, "true");
+      }
     };
 
     // visibilitychange: 앱 복귀 시 새 SW가 대기 중인지 확인
@@ -49,7 +61,7 @@ export function PwaRegister() {
 
       // 리스너 등록 전에 이미 대기 중인 SW가 있는 경우 대비
       // (register() 완료 시점에 이미 waiting 상태면 controllerchange를 놓쳤을 수 있음)
-      if (registration.waiting && prevController) {
+      if (registration.waiting && wasInstalled) {
         setUpdateAvailable(true);
       }
     };

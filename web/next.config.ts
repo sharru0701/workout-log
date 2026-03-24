@@ -1,6 +1,11 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  env: {
+    // CI: Dockerfile builder stage에서 NEXT_PUBLIC_APP_VERSION 주입 (예: 20260324-ab3f19c)
+    // 로컬 dev: "dev" fallback
+    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
+  },
   output: "standalone",
   outputFileTracingIncludes: {
     "/api/health": [
