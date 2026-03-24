@@ -197,18 +197,26 @@ async function releaseAdvisoryLock(client, lockHeld) {
 }
 
 async function runSeedScript() {
+  // Prefer pre-compiled JS (production Docker build); fall back to tsx for local dev
+  const compiledPath = path.resolve(process.cwd(), "scripts/seed-compiled.mjs");
   const seedScriptPath = path.resolve(process.cwd(), "src/server/db/seed.ts");
-  if (!existsSync(seedScriptPath)) {
-    throw new Error(`[seed-sync] seed script not found: ${seedScriptPath}`);
-  }
 
-  const tsxCliPath = path.resolve(process.cwd(), "node_modules/tsx/dist/cli.mjs");
-  if (!existsSync(tsxCliPath)) {
-    throw new Error(`[seed-sync] tsx cli not found: ${tsxCliPath}`);
+  let scriptArgs;
+  if (existsSync(compiledPath)) {
+    scriptArgs = [compiledPath];
+  } else {
+    if (!existsSync(seedScriptPath)) {
+      throw new Error(`[seed-sync] seed script not found: ${seedScriptPath}`);
+    }
+    const tsxCliPath = path.resolve(process.cwd(), "node_modules/tsx/dist/cli.mjs");
+    if (!existsSync(tsxCliPath)) {
+      throw new Error(`[seed-sync] tsx cli not found: ${tsxCliPath}`);
+    }
+    scriptArgs = [tsxCliPath, seedScriptPath];
   }
 
   await new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [tsxCliPath, seedScriptPath], {
+    const child = spawn(process.execPath, scriptArgs, {
       stdio: "inherit",
       env: process.env,
     });

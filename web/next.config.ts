@@ -14,7 +14,6 @@ const nextConfig: NextConfig = {
       "./src/server/db/migrations/*",
       "./node_modules/drizzle-orm/**/*",
       "./node_modules/pg/**/*",
-      "./node_modules/tsx/**/*",
     ],
   },
   // production 빌드(Turbopack)에서만 React Compiler 활성화.
