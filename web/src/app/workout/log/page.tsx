@@ -924,6 +924,7 @@ export default function WorkoutRecordPage() {
         if (shouldKeep) {
           setDraft(data.draft);
           setProgramEntryState(data.programEntryState);
+          setWorkflowState("editing"); // 복구 후 PTR 시 확인 모달이 뜨도록
         } else {
           isRestoredRef.current = false;
           if (capturedKey) await clearWorkoutDraft(capturedKey);
