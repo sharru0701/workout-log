@@ -275,9 +275,23 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
       { label: "방식", value: typeValue },
     ];
 
-    const modules = Array.isArray(def.modules) ? (def.modules as string[]) : null;
-    const tmPercent = typeof defaults?.tmPercent === "number" ? Math.round(defaults.tmPercent * 100) : null;
+    const rawModules: string[] = Array.isArray(def.modules) ? (def.modules as string[]) : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
+    const dayLabels = ["D1", "D2", "D3", "D4"];
     const assistance = String(def.assistance ?? "NONE").toUpperCase();
+
+    const sessions: ProgramSessionBreakdown[] = rawModules.slice(0, 4).map((mod, i) => {
+      const exercises: Array<{ name: string; setsReps: string; hasAmrap: boolean }> = [
+        { name: targetLabel(mod), setsReps: "3세트 (주차별 %)", hasAmrap: true },
+      ];
+      if (assistance === "FSL") {
+        exercises.push({ name: `${targetLabel(mod)} FSL`, setsReps: "5×5", hasAmrap: false });
+      } else if (assistance === "BBB") {
+        exercises.push({ name: `${targetLabel(mod)} BBB`, setsReps: "5×10", hasAmrap: false });
+      }
+      return { key: dayLabels[i] ?? `D${i + 1}`, exercises };
+    });
+
+    const tmPercent = typeof defaults?.tmPercent === "number" ? Math.round(defaults.tmPercent * 100) : null;
     const progressionParts: string[] = [];
     if (tmPercent) progressionParts.push(`TM ${tmPercent}%`);
     if (assistance === "FSL") progressionParts.push("FSL 보조");
@@ -287,8 +301,8 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     return {
       scheduleLabel: parts.join(" · "),
       stats,
-      sessions: null,
-      modules,
+      sessions,
+      modules: null,
       progressionNote: progressionParts.join(" · ") || null,
     };
   }
