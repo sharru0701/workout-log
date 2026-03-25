@@ -1669,20 +1669,18 @@ export default function WorkoutRecordPage() {
 
     if (workflowState === "editing") {
       const result = await confirm({
-        title: "입력 내용 다시 불러오기",
-        message: "저장하지 않은 변경사항이 사라집니다.\n지금 화면 데이터를 다시 불러올까요?",
-        confirmText: "다시 불러오기",
-        cancelText: "삭제",
+        title: "화면 새로고침",
+        message: "저장하지 않은 변경사항이 사라지고 다시 불러옵니다.\n계속할까요?",
+        confirmText: "새로고침",
+        cancelText: "취소",
         closeAsNull: true, // X 버튼은 아무 동작 없이 닫기
       });
       if (result === null) return; // X 닫기 — 아무것도 하지 않음
       if (!result) {
-        // "삭제" 선택 — 드래프트 삭제 후 종료
-        cancelPendingSave();
-        if (persistenceKey) await clearWorkoutDraft(persistenceKey);
+        // "취소" 선택 — 화면 상태와 드래프트를 모두 유지한 채 PTR 종료
         return;
       }
-      // "다시 불러오기" 선택 — debounce 취소 후 드래프트 삭제, 재로드
+      // "새로고침" 선택 — debounce 취소 후 드래프트 삭제, 재로드
       cancelPendingSave();
       if (persistenceKey) await clearWorkoutDraft(persistenceKey);
     }
