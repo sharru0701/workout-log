@@ -587,15 +587,17 @@ function ExerciseRow({
           ) : null}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-          <button
-            type="button"
-            className="btn btn-icon btn-icon-danger"
-            aria-label="운동 삭제"
-            title="운동 삭제"
-            onClick={onDelete}
-          >
-            <AppPlusMinusIcon kind="minus" />
-          </button>
+          {exercise.badge !== "AUTO" ? (
+            <button
+              type="button"
+              className="btn btn-icon btn-icon-danger"
+              aria-label="운동 삭제"
+              title="운동 삭제"
+              onClick={onDelete}
+            >
+              <AppPlusMinusIcon kind="minus" />
+            </button>
+          ) : null}
         </div>
       </div>
 
