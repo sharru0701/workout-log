@@ -41,6 +41,7 @@ export function ExerciseCatalogContent() {
   const [notice, setNotice] = useState<string | null>(null);
   const [items, setItems] = useState<ExerciseItem[]>([]);
   const loadRequestIdRef = useRef(0);
+  const catalogLoadedRef = useRef(false);
 
   const [query, setQuery] = useState("");
   const [activeLoadQuery, setActiveLoadQuery] = useState("");
@@ -53,11 +54,11 @@ export function ExerciseCatalogContent() {
   const [savingEdit, setSavingEdit] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const loadExercises = useCallback(async (search = "") => {
+  const loadExercises = useCallback(async (search = "", isSilent = false) => {
     const requestId = loadRequestIdRef.current + 1;
     loadRequestIdRef.current = requestId;
     try {
-      setLoading(true);
+      if (!catalogLoadedRef.current && !isSilent) setLoading(true);
       setError(null);
       const normalizedSearch = search.trim().toLowerCase();
       setActiveLoadQuery(normalizedSearch);
@@ -67,6 +68,7 @@ export function ExerciseCatalogContent() {
       }
       const res = await apiGet<ExerciseResponse>(`/api/exercises?${params.toString()}`);
       if (requestId !== loadRequestIdRef.current) return;
+      catalogLoadedRef.current = true;
       setItems(res.items ?? []);
     } catch (e: any) {
       if (requestId !== loadRequestIdRef.current) return;
@@ -174,17 +176,28 @@ export function ExerciseCatalogContent() {
                       try {
                         setSavingCreate(true);
                         setNotice(null);
-                        const res = await apiPost<ExerciseCreateResponse>("/api/exercises", {
-                          name: createName.trim(),
-                          category: createCategory.trim() || null,
-                        });
+                        const newName = createName.trim();
+                        const newCategory = createCategory.trim() || null;
+                        
+                        // Optimistic UI for Create
+                        const tempId = `temp-${Date.now()}`;
+                        setItems((prev) => [
+                          { id: tempId, name: newName, category: newCategory, aliases: [] },
+                          ...prev,
+                        ]);
                         setCreateName("");
                         setCreateCategory("");
                         setCreateOpen(false);
+
+                        const res = await apiPost<ExerciseCreateResponse>("/api/exercises", {
+                          name: newName,
+                          category: newCategory,
+                        });
                         setNotice(res.created ? "운동종목이 추가되었습니다." : "이미 존재하는 운동종목입니다.");
-                        await loadExercises(query);
+                        await loadExercises(query, true);
                       } catch (e: any) {
                         setError(e?.message ?? "운동종목 추가에 실패했습니다.");
+                        void loadExercises(query, true); // Rollback
                       } finally {
                         setSavingCreate(false);
                       }
@@ -268,11 +281,16 @@ export function ExerciseCatalogContent() {
                             try {
                               setDeletingId(item.id);
                               setNotice(null);
+
+                              // Optimistic UI for Delete
+                              setItems((prev) => prev.filter((it) => it.id !== item.id));
+
                               await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
                               setNotice("운동종목이 삭제되었습니다.");
-                              await loadExercises(query);
+                              await loadExercises(query, true);
                             } catch (e: any) {
                               setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
+                              void loadExercises(query, true); // Rollback
                             } finally {
                               setDeletingId(null);
                             }
@@ -335,15 +353,27 @@ export function ExerciseCatalogContent() {
                           try {
                             setSavingEdit(true);
                             setNotice(null);
-                            await apiPatch(`/api/exercises/${encodeURIComponent(editing.id)}`, {
-                              name: editing.name.trim(),
-                              category: editing.category.trim() || null,
-                            });
+                            const targetId = editing.id;
+                            const newName = editing.name.trim();
+                            const newCategory = editing.category.trim() || null;
+
+                            // Optimistic UI for Update
+                            setItems((prev) =>
+                              prev.map((it) =>
+                                it.id === targetId ? { ...it, name: newName, category: newCategory } : it
+                              )
+                            );
                             setEditing(null);
+
+                            await apiPatch(`/api/exercises/${encodeURIComponent(targetId)}`, {
+                              name: newName,
+                              category: newCategory,
+                            });
                             setNotice("운동종목이 수정되었습니다.");
-                            await loadExercises(query);
+                            await loadExercises(query, true);
                           } catch (e: any) {
                             setError(e?.message ?? "운동종목 수정에 실패했습니다.");
+                            void loadExercises(query, true); // Rollback
                           } finally {
                             setSavingEdit(false);
                           }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle } from "react";
+import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
@@ -261,9 +261,11 @@ export type Stats1RMDetailedRef = {
 export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: number }>(function Stats1RMDetailed({ refreshTick = 0 }, ref) {
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
+  const optionsHasLoadedRef = useRef(false);
   const [optionsLoadKey, setOptionsLoadKey] = useState("stats-1rm:options:init");
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const dataHasLoadedRef = useRef(false);
   const [dataLoadKey, setDataLoadKey] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [internalRefreshTick, setInternalRefreshTick] = useState(0);
@@ -306,7 +308,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
   const loadFilterOptions = useCallback(async () => {
     try {
-      setOptionsLoading(true);
+      if (!optionsHasLoadedRef.current) {
+        setOptionsLoading(true);
+      }
       setOptionsLoadKey(`stats-1rm:options:${Date.now()}`);
       setOptionsError(null);
       const [exerciseRes, planRes] = await Promise.all([
@@ -329,6 +333,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         return nextExercises[0]?.id ?? null;
       });
       setSelectedPlanId((prev) => (prev && nextPlans.some((entry) => entry.id === prev) ? prev : ""));
+      optionsHasLoadedRef.current = true;
     } catch (e: any) {
       setOptionsError(e?.message ?? "필터 옵션을 불러오지 못했습니다.");
     } finally {
@@ -363,7 +368,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
     (async () => {
       try {
-        setLoading(true);
+        if (!dataHasLoadedRef.current) {
+          setLoading(true);
+        }
         setDataLoadKey(nextLoadKey);
         setError(null);
 
@@ -379,6 +386,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         if (cancelled) return;
         setStats(response);
         setActivePointIndex(response.series.length > 0 ? response.series.length - 1 : 0);
+        dataHasLoadedRef.current = true;
       } catch (e: any) {
         if (cancelled) return;
         setError(e?.message ?? "1RM 데이터를 불러오지 못했습니다.");

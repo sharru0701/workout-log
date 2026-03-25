@@ -614,6 +614,7 @@ export default function ProgramStorePage() {
   const [queryState, setQueryState] = useState(() => readSearchQueryFromLocation());
   const customizeExerciseRefs = useRef(new Map<string, HTMLDivElement>());
   const storeLoadControllerRef = useRef<AbortController | null>(null);
+  const storeHasLoadedRef = useRef(false);
   const exerciseOptionsControllerRef = useRef<AbortController | null>(null);
   const oneRmRecommendationControllerRef = useRef<AbortController | null>(null);
   const [pendingCustomizeScrollId, setPendingCustomizeScrollId] = useState<string | null>(null);
@@ -711,10 +712,12 @@ export default function ProgramStorePage() {
     }
   }, []);
 
-  const loadStore = useCallback(async () => {
+  const loadStore = useCallback(async (options?: { isRefresh?: boolean }) => {
     const controller = replaceAbortController(storeLoadControllerRef);
     try {
-      setLoading(true);
+      if (!storeHasLoadedRef.current && !options?.isRefresh) {
+        setLoading(true);
+      }
       setError(null);
       setStoreLoadKey(`program-store:${Date.now()}`);
       const [templatesRes, plansRes] = await Promise.all([
@@ -722,6 +725,7 @@ export default function ProgramStorePage() {
         apiGet<PlansResponse>("/api/plans", { signal: controller.signal }),
       ]);
       if (storeLoadControllerRef.current !== controller) return;
+      storeHasLoadedRef.current = true;
       setTemplates(templatesRes.items ?? []);
       setPlans(plansRes.items ?? []);
     } catch (e: any) {
@@ -765,7 +769,7 @@ export default function ProgramStorePage() {
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => {
-      await Promise.all([loadStore(), loadExerciseOptions()]);
+      await Promise.all([loadStore({ isRefresh: true }), loadExerciseOptions()]);
     },
   });
 
@@ -940,7 +944,7 @@ export default function ProgramStorePage() {
         throw new Error("플랜 생성/갱신 결과가 올바르지 않습니다.");
       }
 
-      await loadStore();
+      void loadStore({ isRefresh: true });
       setStartProgramDraft(null);
       router.push(
         `/workout/log?planId=${encodeURIComponent(targetPlanId)}&date=${startProgramDraft.today}&context=today`,
@@ -968,6 +972,10 @@ export default function ProgramStorePage() {
         setSaving(true);
         setError(null);
         setNotice(null);
+
+        // Optimistic UI: 삭제 대상 리스트에서 즉시 제거
+        setTemplates((prev) => prev.filter((t) => t.id !== item.template.id));
+
         const res = await apiDelete<DeleteTemplateResponse>(
           `/api/templates/${encodeURIComponent(item.template.slug)}`,
         );
@@ -979,10 +987,14 @@ export default function ProgramStorePage() {
         setDetailTargetId(null);
         setCustomizeDraft(null);
         setStartProgramDraft(null);
-        await loadStore();
+        
+        // 백그라운드 동기화용 (화면 로딩 없음)
+        void loadStore({ isRefresh: true });
         setNotice(`커스텀 프로그램 삭제 완료: ${formatProgramDisplayName(item.template.name)}${deletedPlanSuffix}`);
       } catch (e: any) {
         setError(e?.message ?? "커스텀 프로그램 삭제에 실패했습니다.");
+        // 실패 시 데이터 원상복구
+        void loadStore({ isRefresh: true });
       } finally {
         setSaving(false);
       }
@@ -1021,10 +1033,14 @@ export default function ProgramStorePage() {
         });
         await putProgramVersionDefinition(fork.version.id, definition);
 
+        // Optimistic UI: 새로 생성한 커스텀 템플릿 목록에 즉각 추가
+        setTemplates((prev) => [fork.template, ...prev]);
+
         setNotice(`커스터마이징 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
         setCustomizeDraft(null);
         setDetailTargetId(null);
-        await loadStore();
+        
+        void loadStore({ isRefresh: true });
       } catch (e: any) {
         setError(e?.message ?? "커스터마이징 저장에 실패했습니다.");
       } finally {
@@ -1066,9 +1082,12 @@ export default function ProgramStorePage() {
         const definition = toManualDefinition(draft.sessions);
         await putProgramVersionDefinition(fork.version.id, definition);
 
+        // Optimistic UI: 생성된 템플릿 최상단 즉각 반영
+        setTemplates((prev) => [fork.template, ...prev]);
+
         setNotice(`커스텀 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
         setCreateDraft(null);
-        await loadStore();
+        void loadStore({ isRefresh: true });
       } catch (e: any) {
         setError(e?.message ?? "커스텀 프로그램 생성에 실패했습니다.");
       } finally {

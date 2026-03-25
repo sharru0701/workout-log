@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -139,6 +139,7 @@ export default function TemplatesPage() {
   const [logicSubstitutions, setLogicSubstitutions] = useState<SubstitutionRow[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState("");
+  const templatesLoadedRef = useRef(false);
 
   const allTags = useMemo(() => {
     const tags = templates.flatMap((t) => t.tags ?? []).map((x) => String(x).trim()).filter(Boolean);
@@ -190,10 +191,11 @@ export default function TemplatesPage() {
   const showVersionsEmpty = isVersionsSettled && Boolean(selectedTemplate) && versions.length === 0;
 
   async function loadTemplates() {
-    setLoadingTemplates(true);
+    if (!templatesLoadedRef.current) setLoadingTemplates(true);
     setTemplatesLoadKey(`templates-manage:templates:${Date.now()}`);
     try {
       const res = await apiGet<{ items: TemplateItem[] }>("/api/templates?limit=200");
+      templatesLoadedRef.current = true;
       setTemplates(res.items);
       setSelectedSlug((prev) => {
         if (prev && res.items.some((t) => t.slug === prev)) return prev;

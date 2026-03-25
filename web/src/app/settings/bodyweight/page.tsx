@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   SectionFootnote,
   SectionHeader,
@@ -26,6 +26,7 @@ export default function SettingsBodyweightPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverBodyweightKg, setServerBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
   const [draftBodyweightKg, setDraftBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
+  const hasLoadedRef = useRef(false);
 
   const bodyweight = useSettingRowMutation<number>({
     key: SETTINGS_KEYS.bodyweightKg,
@@ -38,11 +39,12 @@ export default function SettingsBodyweightPage() {
 
   const loadBodyweight = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       const snapshot = await fetchSettingsSnapshot();
       const parsed = Number(snapshot[SETTINGS_KEYS.bodyweightKg]);
       const resolved = normalizeBodyweightKg(Number.isFinite(parsed) ? parsed : DEFAULT_BODYWEIGHT_KG);
+      hasLoadedRef.current = true;
       setServerBodyweightKg(resolved);
       setDraftBodyweightKg(resolved);
     } catch (e: any) {

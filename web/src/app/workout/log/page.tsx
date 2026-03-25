@@ -1115,14 +1115,17 @@ export default function WorkoutRecordPage() {
     planParams?: Record<string, unknown> | null;
     logId?: string | null;
     initialLog?: DetailedLogItem | null;
+    isRefresh?: boolean;
   };
+
+  const contextHasLoadedRef = useRef(false);
 
   const loadWorkoutContext = useCallback(
     async (
       input: LoadWorkoutContextInput,
     ) => {
       try {
-        setLoading(true);
+        if (!contextHasLoadedRef.current && !input.isRefresh) setLoading(true);
         setError(null);
         setSaveError(null);
         const recentLogsPath = input.planId
@@ -1170,6 +1173,7 @@ export default function WorkoutRecordPage() {
             ),
           );
           setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
+          contextHasLoadedRef.current = true;
           return;
         }
 
@@ -1241,6 +1245,7 @@ export default function WorkoutRecordPage() {
           ),
         );
         setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
+        contextHasLoadedRef.current = true;
       } catch (e: any) {
         setDraft(null);
         setProgramEntryState({});
@@ -1712,6 +1717,7 @@ export default function WorkoutRecordPage() {
         planSchedule: selectedPlan?.params?.schedule,
         planParams: selectedPlan?.params ?? null,
         logId: query.logId,
+        isRefresh: true,
       });
       return;
     }
@@ -1725,6 +1731,7 @@ export default function WorkoutRecordPage() {
       planAutoProgression: selectedPlan?.params?.autoProgression === true,
       planSchedule: selectedPlan?.params?.schedule,
       planParams: selectedPlan?.params ?? null,
+      isRefresh: true,
     });
   }, [cancelPendingSave, confirm, draft, loadWorkoutContext, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
 

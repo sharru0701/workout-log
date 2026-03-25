@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
@@ -36,12 +36,14 @@ export default function HomePage() {
   const [homeData, setHomeData] = useState<HomeData | null>(HOME_PREVIEW_MODE ? HOME_PREVIEW_DATA : null);
   const [loading, setLoading] = useState(!HOME_PREVIEW_MODE);
   const [error, setError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
 
-  const loadHomeData = useCallback(async () => {
+  const loadHomeData = useCallback(async (options?: { isRefresh?: boolean }) => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current && !options?.isRefresh) setLoading(true);
       setError(null);
       const nextData = await dataSource.load();
+      hasLoadedRef.current = true;
       setHomeData(nextData);
     } catch (e: any) {
       setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
@@ -51,7 +53,7 @@ export default function HomePage() {
   }, [dataSource]);
 
   const pullToRefresh = usePullToRefresh({
-    onRefresh: loadHomeData,
+    onRefresh: async () => loadHomeData({ isRefresh: true }),
   });
 
   useEffect(() => {
@@ -60,10 +62,13 @@ export default function HomePage() {
 
     (async () => {
       try {
-        setLoading(true);
+        if (!hasLoadedRef.current) setLoading(true);
         setError(null);
         const nextData = await dataSource.load();
-        if (!cancelled) setHomeData(nextData);
+        if (!cancelled) {
+          hasLoadedRef.current = true;
+          setHomeData(nextData);
+        }
       } catch (e: any) {
         if (!cancelled) setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
       } finally {

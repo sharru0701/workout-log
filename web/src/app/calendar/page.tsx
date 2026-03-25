@@ -287,6 +287,10 @@ export default function CalendarPage() {
   const [selectedSessionLoading, setSelectedSessionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const plansLoadedRef = useRef(false);
+  const logFetchCacheRef = useRef<Set<string>>(new Set());
+  const sessionDetailCacheRef = useRef<Set<string>>(new Set());
+  
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
@@ -319,9 +323,10 @@ export default function CalendarPage() {
     let cancelled = false;
     (async () => {
       try {
-        setLoading(true);
+        if (!plansLoadedRef.current) setLoading(true);
         const res = await apiGet<{ items: Plan[] }>("/api/plans");
         if (cancelled) return;
+        plansLoadedRef.current = true;
         setPlans(res.items);
         setPlanId((prev) => {
           if (prev && res.items.some((p) => p.id === prev)) return prev;
@@ -376,7 +381,7 @@ export default function CalendarPage() {
 
     (async () => {
       try {
-        setSelectedLogLoading(true);
+        if (!logFetchCacheRef.current.has(fetchKey)) setSelectedLogLoading(true);
         setError(null);
         const sp = new URLSearchParams();
         sp.set("planId", planId);
@@ -385,6 +390,7 @@ export default function CalendarPage() {
         sp.set("limit", "1");
         const res = await apiGet<{ items: WorkoutLogForDate[] }>(`/api/logs?${sp.toString()}`);
         if (cancelled) return;
+        logFetchCacheRef.current.add(fetchKey);
         setSelectedLog(res.items[0] ?? null);
         setCompletedLogKey(fetchKey);
       } catch (e: any) {
@@ -601,7 +607,8 @@ export default function CalendarPage() {
 
     (async () => {
       try {
-        setSelectedSessionLoading(true);
+        const fetchKey = selectedSession.id;
+        if (!sessionDetailCacheRef.current.has(fetchKey)) setSelectedSessionLoading(true);
         const sp = new URLSearchParams();
         sp.set("id", selectedSession.id);
         sp.set("includeSnapshot", "1");
@@ -611,6 +618,7 @@ export default function CalendarPage() {
           `/api/generated-sessions?${sp.toString()}`,
         );
         if (cancelled) return;
+        sessionDetailCacheRef.current.add(fetchKey);
         setSelectedSessionDetail(res.items[0] ?? null);
       } catch (e: any) {
         if (!cancelled) {

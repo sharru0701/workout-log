@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
@@ -61,6 +61,7 @@ export default function SettingsMinimumPlatePage() {
   const [loading, setLoading] = useState(true);
   const [settingsLoadKey, setSettingsLoadKey] = useState("minimum-plate:init");
   const [loadError, setLoadError] = useState<string | null>(null);
+  const hasLoadedRef = useRef(false);
   const [exercises, setExercises] = useState<ExerciseOption[]>([]);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [defaultDraftKg, setDefaultDraftKg] = useState(DEFAULT_MINIMUM_PLATE_KG);
@@ -117,7 +118,7 @@ export default function SettingsMinimumPlatePage() {
 
   const loadSettingsAndExercises = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       setSettingsLoadKey(`minimum-plate:${Date.now()}`);
       const [snapshot, exerciseRes] = await Promise.all([
@@ -130,6 +131,7 @@ export default function SettingsMinimumPlatePage() {
       );
       const rulesRaw = snapshot[SETTINGS_KEYS.minimumPlateRulesJson];
       const nextRulesJson = serializeMinimumPlateRules(parseMinimumPlateRules(rulesRaw));
+      hasLoadedRef.current = true;
       setServerDefaultKg(nextDefaultKg);
       setDefaultDraftKg(nextDefaultKg);
       setServerRulesJson(nextRulesJson);
@@ -214,20 +216,34 @@ export default function SettingsMinimumPlatePage() {
 
     const filtered = editingRuleKey ? rules.filter((rule) => toRuleKey(rule) !== editingRuleKey) : rules;
     const nextRules = dedupeRules([...filtered, nextRule]);
+    
+    // Optimistic UI
+    const prevRulesJson = serverRulesJson;
+    setServerRulesJson(serializeMinimumPlateRules(nextRules));
+    setSheetOpen(false);
+
     const result = await rulesSetting.commit(serializeMinimumPlateRules(nextRules));
     if (!result.ignored && result.ok) {
       setServerRulesJson(result.value);
-      setSheetOpen(false);
+    } else {
+      setServerRulesJson(prevRulesJson);
     }
   };
 
   const deleteRule = async () => {
     if (!editingRuleKey) return;
     const nextRules = rules.filter((rule) => toRuleKey(rule) !== editingRuleKey);
+    
+    // Optimistic UI
+    const prevRulesJson = serverRulesJson;
+    setServerRulesJson(serializeMinimumPlateRules(nextRules));
+    setSheetOpen(false);
+
     const result = await rulesSetting.commit(serializeMinimumPlateRules(nextRules));
     if (!result.ignored && result.ok) {
       setServerRulesJson(result.value);
-      setSheetOpen(false);
+    } else {
+      setServerRulesJson(prevRulesJson);
     }
   };
 

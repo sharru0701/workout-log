@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
@@ -132,11 +132,14 @@ function PlanHistoryPageContent() {
     [plans, selectedPlanId],
   );
 
-  const loadPlans = useCallback(async () => {
+  const plansLoadedRef = useRef(false);
+
+  const loadPlans = useCallback(async (options?: { isRefresh?: boolean }) => {
     try {
-      setPlansLoading(true);
+      if (!plansLoadedRef.current && !options?.isRefresh) setPlansLoading(true);
       setPlansError(null);
       const res = await apiGet<{ items: Plan[] }>("/api/plans", { cachePolicy: "network-only" });
+      plansLoadedRef.current = true;
       setPlans(res.items ?? []);
     } catch (e: any) {
       setPlansError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
@@ -145,7 +148,7 @@ function PlanHistoryPageContent() {
     }
   }, []);
 
-  const loadLogs = useCallback(async (planId: string, cursor?: string | null, append = false) => {
+  const loadLogs = useCallback(async (planId: string, cursor?: string | null, append = false, silent = false) => {
     if (!planId) {
       setLogs([]);
       setNextCursor(null);
@@ -153,10 +156,12 @@ function PlanHistoryPageContent() {
     }
 
     try {
-      if (append) {
-        setLogsLoadingMore(true);
-      } else {
-        setLogsLoading(true);
+      if (!silent) {
+        if (append) {
+          setLogsLoadingMore(true);
+        } else {
+          setLogsLoading(true);
+        }
       }
       setLogsError(null);
 
@@ -189,7 +194,7 @@ function PlanHistoryPageContent() {
   }, []);
 
   useEffect(() => {
-    void loadPlans();
+    void loadPlans({ isRefresh: refreshTick > 0 });
   }, [loadPlans, refreshTick]);
 
   useEffect(() => {
@@ -254,10 +259,14 @@ function PlanHistoryPageContent() {
     try {
       setDeletingLogId(log.id);
       setLogsError(null);
+
+      // Optimistic UI: 삭제된 아이템 즉시 목록에서 제거
+      setLogs((prev) => prev.filter((item) => item.id !== log.id));
+
       await apiDelete<{ deleted: boolean }>(`/api/logs/${encodeURIComponent(log.id)}`);
       await Promise.all([
-        loadPlans(),
-        selectedPlanId ? loadLogs(selectedPlanId, null, false) : Promise.resolve(),
+        loadPlans({ isRefresh: true }),
+        selectedPlanId ? loadLogs(selectedPlanId, null, false, true) : Promise.resolve(),
       ]);
       await alert({
         title: "삭제 완료",
@@ -265,6 +274,8 @@ function PlanHistoryPageContent() {
         buttonText: "확인",
       });
     } catch (e: any) {
+      // 에러 발생 시 원래 상태로 복구 (재조회)
+      if (selectedPlanId) void loadLogs(selectedPlanId, null, false, true);
       const message = e?.message ?? "수행 로그 삭제에 실패했습니다.";
       setLogsError(message);
       await alert({

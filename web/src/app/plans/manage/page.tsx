@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
@@ -89,6 +89,7 @@ function PlansManagePageContent() {
   const [error, setError] = useState<string | null>(null);
   const [refreshTick, setRefreshTick] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const storeHasLoadedRef = useRef(false);
 
   const [managePlanId, setManagePlanId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
@@ -108,12 +109,13 @@ function PlansManagePageContent() {
     );
   }, [plans, searchQuery]);
 
-  const loadPlans = useCallback(async () => {
+  const loadPlans = useCallback(async (options?: { isRefresh?: boolean }) => {
     try {
-      setLoading(true);
+      if (!storeHasLoadedRef.current && !options?.isRefresh) setLoading(true);
       setLoadKey(`plans-manage:load:${Date.now()}`);
       setError(null);
       const res = await apiGet<{ items: Plan[] }>("/api/plans");
+      storeHasLoadedRef.current = true;
       setPlans(res.items ?? []);
     } catch (e: any) {
       setError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
@@ -123,7 +125,7 @@ function PlansManagePageContent() {
   }, []);
 
   useEffect(() => {
-    void loadPlans();
+    void loadPlans({ isRefresh: refreshTick > 0 });
   }, [loadPlans, refreshTick]);
 
   useEffect(() => {
@@ -159,12 +161,19 @@ function PlansManagePageContent() {
       return;
     }
 
+    const prevPlanName = managedPlan.name;
+
     try {
       setSaving(true);
       setError(null);
+      
+      // Optimistic UI: 즉각적으로 이름 업데이트
+      setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? { ...item, name: nextName } : item)));
+
       const res = await apiPatch<{ plan: Plan }>(`/api/plans/${encodeURIComponent(managedPlan.id)}`, {
         name: nextName,
       });
+      // 서버 응답으로 정확히 재동기화
       setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? res.plan : item)));
       setManagePlanId("");
       await alert({
@@ -173,6 +182,10 @@ function PlansManagePageContent() {
         buttonText: "확인",
       });
     } catch (e: any) {
+      // 롤백
+      if (managedPlan) {
+        setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? { ...item, name: prevPlanName } : item)));
+      }
       const message = e?.message ?? "플랜 이름 수정에 실패했습니다.";
       setError(message);
       await alert({
@@ -200,17 +213,23 @@ function PlansManagePageContent() {
     try {
       setDeleting(true);
       setError(null);
-      await apiDelete<{ deleted: boolean; planId: string }>(
-        `/api/plans/${encodeURIComponent(managedPlan.id)}`,
-      );
+      
+      // Optimistic UI: 즉각적으로 목록에서 제거
+      const targetId = managedPlan.id;
       setManagePlanId("");
-      setPlans((prev) => prev.filter((item) => item.id !== managedPlan.id));
+      setPlans((prev) => prev.filter((item) => item.id !== targetId));
+
+      await apiDelete<{ deleted: boolean; planId: string }>(
+        `/api/plans/${encodeURIComponent(targetId)}`,
+      );
       await alert({
         title: "삭제 완료",
         message: `플랜이 삭제되었습니다.\n${managedPlan.name}`,
         buttonText: "확인",
       });
     } catch (e: any) {
+      // 실패 시 데이터 원상 복구
+      void loadPlans({ isRefresh: true });
       const message = e?.message ?? "플랜 삭제에 실패했습니다.";
       setError(message);
       await alert({

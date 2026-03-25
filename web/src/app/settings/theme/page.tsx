@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   BaseGroupedList,
   NavigationRow,
@@ -80,6 +80,7 @@ export default function SettingsThemePage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverTheme, setServerTheme] = useState<ThemePreference>("SYSTEM");
+  const hasLoadedRef = useRef(false);
 
   const themeSetting = useSettingRowMutation<string>({
     key: SETTINGS_KEYS.theme,
@@ -92,9 +93,10 @@ export default function SettingsThemePage() {
 
   const loadTheme = useCallback(async () => {
     try {
-      setLoading(true);
+      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       const snapshot = await fetchSettingsSnapshot();
+      hasLoadedRef.current = true;
       setServerTheme(normalizeThemePreference(snapshot[SETTINGS_KEYS.theme]));
     } catch (e: any) {
       setLoadError(e?.message ?? "테마 설정을 불러오지 못했습니다.");
