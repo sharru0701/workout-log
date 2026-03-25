@@ -252,12 +252,10 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number) {
 
 // ─── Volume Series ────────────────────────────────────────────────────────────
 
-async function fetchVolumeSeries(userId: string, from: Date, to: Date) {
-  // PERF: 날짜를 일 단위로 잘라 동일 날짜 내 반복 요청에서 캐시 히트율 향상
+async function fetchVolumeSeries(userId: string) {
   const cacheParams = {
-    from: from.toISOString().slice(0, 10),
-    to: to.toISOString().slice(0, 10),
-    bucket: "week",
+    bucket: "session",
+    limit: 7,
     exerciseId: null,
     exerciseName: null,
     perExercise: false,
@@ -273,22 +271,22 @@ async function fetchVolumeSeries(userId: string, from: Date, to: Date) {
   });
   if (cached) return { series: cached.series };
 
-  const periodExpr = sql`date_trunc('week', ${workoutLog.performedAt} at time zone 'UTC')`;
-
   const rows = await db
     .select({
-      period: sql<string>`to_char(${periodExpr}, 'YYYY-MM-DD')`,
+      period: sql<string>`to_char(${workoutLog.performedAt}, 'YYYY-MM-DD')`,
       tonnage: sql<number>`coalesce(sum(${workoutSet.weightKg} * ${workoutSet.reps}), 0)`,
       reps: sql<number>`coalesce(sum(${workoutSet.reps}), 0)`,
       sets: sql<number>`count(*)`,
     })
     .from(workoutLog)
     .innerJoin(workoutSet, eq(workoutSet.logId, workoutLog.id))
-    .where(and(eq(workoutLog.userId, userId), gte(workoutLog.performedAt, from), lte(workoutLog.performedAt, to)))
-    .groupBy(periodExpr)
-    .orderBy(periodExpr);
+    .where(eq(workoutLog.userId, userId))
+    .groupBy(workoutLog.id, workoutLog.performedAt)
+    .orderBy(desc(workoutLog.performedAt))
+    .limit(7);
 
-  const series = rows.map((r) => ({
+  // 오래된 순서로 역정렬해서 차트에 시간 순서대로 표시
+  const series = rows.reverse().map((r) => ({
     period: r.period,
     tonnage: Number(r.tonnage ?? 0),
     reps: Number(r.reps ?? 0),
@@ -363,19 +361,16 @@ async function GETImpl(req: Request) {
     const nowKey = dateOnlyInTimezone(new Date(), timezone);
 
     const prRangeDays = 365;
-    const volRangeDays = 28;
     const to = new Date();
     const prFrom = new Date(to);
     prFrom.setDate(prFrom.getDate() - prRangeDays);
-    const volFrom = new Date(to);
-    volFrom.setDate(volFrom.getDate() - volRangeDays);
 
     // PERF: 4개 DB 쿼리 그룹을 병렬 실행 (서버→DB 지연 ~2ms, 총 ~10-30ms)
     const [plansResult, logsResult, prsResult, volResult] = await Promise.all([
       fetchPlans(userId),
       fetchLogs(userId, 40),
       fetchPrs(userId, prFrom, to, 4),
-      fetchVolumeSeries(userId, volFrom, to),
+      fetchVolumeSeries(userId),
     ]);
 
     // PERF: 세션 생성은 highlightedPlan이 필요해 순차 실행하지만, 서버 내부 처리라 RTT 없음

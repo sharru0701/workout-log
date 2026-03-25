@@ -609,11 +609,17 @@ function buildStrengthProgress(prItems: PrApiItem[]): HomeStrengthItem[] {
 function buildVolumeTrend(series: VolumeSeriesPoint[]): HomeVolumeTrendPoint[] {
   return series.map((point) => ({
     period: point.period,
-    label: formatWeekLabel(point.period),
+    label: formatSessionLabel(point.period),
     tonnage: Math.round(point.tonnage),
     sets: Number(point.sets ?? 0),
     reps: Number(point.reps ?? 0),
   }));
+}
+
+function formatSessionLabel(period: string) {
+  const date = new Date(period);
+  if (Number.isNaN(date.getTime())) return period;
+  return DATE_FORMATTER_MONTH_DAY.format(date);
 }
 
 function buildQuickStats(logs: WorkoutLogItem[]): HomeQuickStats {

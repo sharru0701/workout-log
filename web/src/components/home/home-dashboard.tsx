@@ -183,14 +183,14 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>주간 볼륨</h2>
+        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>최근 세션 볼륨</h2>
       </div>
       <Card padding="md">
         {selected && (
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)", padding: "var(--space-sm)", backgroundColor: "var(--color-surface-secondary)", borderRadius: "8px" }}>
             <span style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
               {/* INFO COLOR: session-context — 주차는 컨텍스트 정보 */}
-              <span style={{ fontWeight: 600, color: "var(--text-session-context)" }}>{selected.label} 주</span>
+              <span style={{ fontWeight: 600, color: "var(--text-session-context)" }}>{selected.label}</span>
               <span className={`label ${progressLabelClassForRatio(selected.tonnage / maxTonnage)} label-sm`}>
                 {progressLabelText(selected.tonnage / maxTonnage)}
               </span>
