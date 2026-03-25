@@ -139,14 +139,15 @@ async function fetchLogs(userId: string, limit: number) {
       exerciseName: workoutSet.exerciseName,
       reps: workoutSet.reps,
       weightKg: workoutSet.weightKg,
+      meta: workoutSet.meta,
     })
     .from(workoutSet)
     .where(inArray(workoutSet.logId, logIds));
 
-  const setsByLogId = new Map<string, Array<{ exerciseName: string; reps: number | null; weightKg: number | null }>>();
+  const setsByLogId = new Map<string, Array<{ exerciseName: string; reps: number | null; weightKg: number | null; meta: Record<string, unknown> | null }>>();
   for (const s of sets) {
     const list = setsByLogId.get(s.logId) ?? [];
-    list.push({ exerciseName: s.exerciseName, reps: s.reps, weightKg: s.weightKg });
+    list.push({ exerciseName: s.exerciseName, reps: s.reps, weightKg: s.weightKg, meta: s.meta as Record<string, unknown> | null });
     setsByLogId.set(s.logId, list);
   }
 

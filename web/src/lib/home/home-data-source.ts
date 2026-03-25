@@ -1,5 +1,6 @@
 import { apiGet } from "@/lib/api";
 import { buildTodayLogHref, toLocalDateKey } from "@/lib/workout-links";
+import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -129,6 +130,7 @@ type WorkoutSetItem = {
   exerciseName: string;
   reps: number | null;
   weightKg: number | null;
+  meta?: Record<string, unknown> | null;
 };
 
 type WorkoutLogItem = {
@@ -433,7 +435,8 @@ function groupLoggedExercises(sets: WorkoutSetItem[]): Array<{
     const name = String(set.exerciseName ?? "").trim();
     if (!name) continue;
 
-    const weight = Number(set.weightKg ?? 0);
+    // 풀업 등 맨몸 운동은 meta.totalLoadKg(체중+추가중량)를 사용
+    const weight = Number(resolveLoggedTotalLoadKg({ exerciseName: name, weightKg: set.weightKg, meta: set.meta }) ?? set.weightKg ?? 0);
     const reps = Number(set.reps ?? 0);
     const current = grouped.get(name);
 
