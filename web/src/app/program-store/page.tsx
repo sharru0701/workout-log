@@ -1390,17 +1390,17 @@ export default function ProgramStorePage() {
                 커스터마이징해서 사용하기
               </PrimaryButton>
               {detailTarget.source === "CUSTOM" ? (
-                <button
+                <PrimaryButton
                   type="button"
-                  className="btn btn-inline-action btn-inline-action-danger"
-                  style={{ alignSelf: "center" }}
+                  variant="danger"
+                  fullWidth
                   disabled={saving}
                   onClick={() => {
                     void deleteCustomTemplate(detailTarget);
                   }}
                 >
                   커스텀 프로그램 삭제
-                </button>
+                </PrimaryButton>
               ) : null}
             </div>
           ) : null

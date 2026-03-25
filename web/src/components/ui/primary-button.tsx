@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ElementType, ReactNode } from "react";
 
-type PillButtonVariant = "primary" | "secondary";
+type PillButtonVariant = "primary" | "secondary" | "danger";
 type PillButtonSize = "md" | "lg";
 
 type PrimaryButtonOwnProps = {
