@@ -66,8 +66,6 @@ function SwipeableExerciseRow({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          borderRadius: "12px",
-          backgroundColor: "var(--color-danger-bg, #fee2e2)",
         }}
       >
         <button
@@ -281,7 +279,7 @@ export function ExerciseCatalogContent() {
       <NoticeStateRows message={notice} label="안내" />
 
       <section style={{ marginBottom: "var(--space-lg)" }}>
-        <h2 className="settings-section-title">운동종목 관리</h2>
+
         <SearchInput
           bare
           value={query}
@@ -292,7 +290,7 @@ export function ExerciseCatalogContent() {
       </section>
 
       <section style={{ marginBottom: "var(--space-lg)" }}>
-        <h2 className="settings-section-title">추가 (Create)</h2>
+
         <Card padding="md" elevated={false}>
           <CardContent>
             {!createOpen ? (
@@ -402,7 +400,7 @@ export function ExerciseCatalogContent() {
       </section>
 
       <section>
-        <h2 className="settings-section-title">수정 / 삭제 (Update / Delete)</h2>
+
         <EmptyStateRows
           when={isListSettled && !error && visibleItems.length === 0}
           label="운동종목이 없습니다"
