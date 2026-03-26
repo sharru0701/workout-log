@@ -603,6 +603,7 @@ function SwipeableSetRow({
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
           backgroundColor: "var(--color-surface)",
+          borderRadius: "6px",
           position: "relative",
           zIndex: 1,
           touchAction: "pan-y",
