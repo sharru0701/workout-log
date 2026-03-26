@@ -725,7 +725,9 @@ function ExerciseRow({
                 : undefined;
 
               const isFailure = isAutoExercise && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
-              const isSetComplete = isAutoExercise && hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
+              const isSetComplete = isAutoExercise
+                ? hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps)
+                : hasReps;
 
               const plannedWeightKg = plannedWeightKgPerSet[index];
               const resolvedPlannedWeightKg =
