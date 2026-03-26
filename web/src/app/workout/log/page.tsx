@@ -718,13 +718,14 @@ function ExerciseRow({
               const parsedSetValue = Number(rawSetValue);
               const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
               const hasReps = Number.isFinite(actualRepsValue) && actualRepsValue > 0;
-              // program(AUTO) 운동만 실패 체크 대상 — 일반 운동은 plannedReps 미적용
-              const plannedReps: number | undefined = usesProgramPlaceholders
+              // AUTO badge 운동만 실패 체크 대상 (CUSTOM/ADDED/USER는 제외)
+              const isAutoExercise = exercise.badge === "AUTO";
+              const plannedReps: number | undefined = isAutoExercise
                 ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
                 : undefined;
 
-              const isFailure = usesProgramPlaceholders && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
-              const isSetComplete = usesProgramPlaceholders && hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
+              const isFailure = isAutoExercise && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
+              const isSetComplete = isAutoExercise && hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
 
               const plannedWeightKg = plannedWeightKgPerSet[index];
               const resolvedPlannedWeightKg =
