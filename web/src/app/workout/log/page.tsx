@@ -752,7 +752,9 @@ function ExerciseRow({
               return (
                 <SwipeableSetRow
                   key={`${exercise.id}-set-${index}`}
-                  disabled={exercise.set.repsPerSet.length <= 1}
+                  disabled={usesProgramPlaceholders
+                    ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
+                    : exercise.set.repsPerSet.length <= 1}
                   onDelete={() => onRemoveSet(index)}
                 >
                   <div role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
