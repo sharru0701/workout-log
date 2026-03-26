@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { StoreSearchInput } from "@/components/ui/store-search-input";
+import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
@@ -216,7 +216,6 @@ function ProgramListCard({
   onPress: () => void;
 }) {
   const badge = sourceBadgeMeta(item.source);
-  const scheduleLabel = getProgramScheduleLabel(item.template);
   const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
 
   return (
@@ -235,10 +234,6 @@ function ProgramListCard({
           <strong style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)" }}>
             {formatProgramDisplayName(item.name)}
           </strong>
-          {/* INFO COLOR: session-context — 스케줄 정보는 muted */}
-          {scheduleLabel ? (
-            <span style={{ font: "var(--font-secondary)", color: "var(--text-session-context)", marginLeft: "var(--space-xs)" }}>{scheduleLabel}</span>
-          ) : null}
         </div>
         <span className={`${badge.className} label-sm`}>
           {badge.label}
@@ -1278,18 +1273,12 @@ export default function ProgramStorePage() {
       <NoticeStateRows message={notice} label="프로그램 안내" />
 
       {listItems.length > 0 || hasStoreQuery ? (
-        <DashboardSurface data-pull-refresh-trigger="true">
-          <div>
-            <StoreSearchInput
-              value={storeQuery}
-              onChange={setStoreQuery}
-              placeholder="프로그램명, 설명, 태그 검색"
-              ariaLabel="스토어 검색"
-              shellAriaLabel="스토어 검색 입력"
-              chrome="plain"
-            />
-          </div>
-        </DashboardSurface>
+        <SearchInput
+          value={storeQuery}
+          onChange={setStoreQuery}
+          placeholder="프로그램명, 설명, 태그 검색"
+          ariaLabel="스토어 검색"
+        />
       ) : null}
 
       <EmptyStateRows
@@ -1433,11 +1422,6 @@ export default function ProgramStorePage() {
                     <strong style={{ display: "block", font: "var(--font-card-title)", color: "var(--text-program-name)" }}>
                     {formatProgramDisplayName(detailTarget.template.name)}
                     </strong>
-                  {info.scheduleLabel && (
-                    <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>
-                      {info.scheduleLabel}
-                    </span>
-                  )}
                   </div>
                   <span className={`${badge.className} label-sm`}>{badge.label}</span>
                 </div>

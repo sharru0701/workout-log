@@ -5,6 +5,7 @@ import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { SessionCard } from "@/components/ui/session-card";
+import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { apiGet } from "@/lib/api";
 import {
   dateOnlyToUtcDate,
@@ -710,29 +711,14 @@ export default function CalendarPage() {
       {/* Plan selector bar */}
       {plans.length > 0 && (
         <div data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-md)" }}>
-          <button
-            type="button"
-            aria-label="플랜 선택 열기"
-            aria-haspopup="dialog"
+          <PlanSelectorButton
+            planName={selectedPlan?.name ?? "플랜 선택"}
             aria-expanded={planSheetOpen}
-            className="btn btn-secondary btn-full"
             onClick={() => {
               setPlanQuery("");
               setPlanSheetOpen(true);
             }}
-            style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid var(--color-border)", borderRadius: "12px", backgroundColor: "var(--color-surface-secondary)", cursor: "pointer" }}
-          >
-            <div style={{ textAlign: "left" }}>
-              <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "2px" }}>진행 중인 플랜</div>
-              <div style={{ font: "var(--font-body)", fontWeight: 600 }}>{selectedPlan?.name ?? "플랜 선택"}</div>
-            </div>
-            <span aria-hidden="true" style={{ color: "var(--color-text-muted)" }}>
-              <svg viewBox="0 0 12 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-                <path d="M2 5.5L6 2L10 5.5" />
-                <path d="M2 10.5L6 14L10 10.5" />
-              </svg>
-            </span>
-          </button>
+          />
         </div>
       )}
 

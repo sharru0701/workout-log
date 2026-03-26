@@ -43,15 +43,23 @@ select {
 button:focus-visible,
 a:focus-visible,
 [role="button"]:focus-visible,
-[tabindex]:focus-visible {
-  outline: 2px solid var(--color-focus-ring);
-  outline-offset: 2px;
-}
-
+[tabindex]:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  box-shadow: 0 0 0 3px var(--color-focus-ring);
+  outline: none;
+}
+
+.search-card-focus-ring {
+  border-radius: 12px;
+}
+
+.search-bare-focus-ring {
+  border-radius: 8px;
+}
+
+.search-magnifier-icon {
+  transition: color 0.15s ease;
 }
 
 /* 커스텀 clear 버튼과 겹치지 않도록 브라우저 기본 search 취소 아이콘 제거 */

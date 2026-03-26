@@ -12,7 +12,7 @@
 [data-settings-section-header] h2,
 .settings-section-title {
   font: var(--font-card-title);
-  margin: 0;
+  margin: 0 0 var(--space-sm);
   color: var(--color-text);
   font-weight: 600;
 }

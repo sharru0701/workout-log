@@ -18,7 +18,10 @@ async function GETImpl(req: Request) {
       const nameRows = await db
         .select({ id: exercise.id, name: exercise.name, category: exercise.category })
         .from(exercise)
-        .where(sql`lower(${exercise.name}) like lower(${`%${query}%`})`)
+        .where(
+          sql`lower(${exercise.name}) like lower(${`%${query}%`})
+            or (${exercise.category} is not null and lower(${exercise.category}) like lower(${`%${query}%`}))`
+        )
         .limit(limit);
 
       const aliasRows = await db

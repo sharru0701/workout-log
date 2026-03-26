@@ -6,7 +6,8 @@ import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
-import { AppTextInput } from "@/components/ui/form-controls";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { SearchInput } from "@/components/ui/search-input";
 
 type ExerciseItem = {
   id: string;
@@ -34,6 +35,57 @@ type EditingState = {
   category: string;
 };
 
+function CategoryField({
+  label,
+  value,
+  onChange,
+  categories,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  categories: string[];
+}) {
+  const isInitiallyCustom = value !== "" && !categories.includes(value);
+  const [customMode, setCustomMode] = useState(isInitiallyCustom);
+  const selectValue = customMode ? "__custom__" : value;
+
+  return (
+    <div>
+      <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>{label}</span>
+      <AppSelect
+        variant="compact"
+        value={selectValue}
+        onChange={(e) => {
+          const v = e.target.value;
+          if (v === "__custom__") {
+            setCustomMode(true);
+            onChange("");
+          } else {
+            setCustomMode(false);
+            onChange(v);
+          }
+        }}
+      >
+        <option value="">미지정</option>
+        {categories.map((cat) => (
+          <option key={cat} value={cat}>{cat}</option>
+        ))}
+        <option value="__custom__">직접 입력...</option>
+      </AppSelect>
+      {customMode && (
+        <AppTextInput
+          variant="compact"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder="카테고리 직접 입력"
+          style={{ marginTop: "var(--space-xs)" }}
+        />
+      )}
+    </div>
+  );
+}
+
 export function ExerciseCatalogContent() {
   const { confirm } = useAppDialog();
   const [loading, setLoading] = useState(true);
@@ -48,7 +100,10 @@ export function ExerciseCatalogContent() {
   const [createOpen, setCreateOpen] = useState(false);
   const [createName, setCreateName] = useState("");
   const [createCategory, setCreateCategory] = useState("");
+  const [createAliases, setCreateAliases] = useState("");
   const [savingCreate, setSavingCreate] = useState(false);
+
+  const [categories, setCategories] = useState<string[]>([]);
 
   const [editing, setEditing] = useState<EditingState | null>(null);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -89,6 +144,12 @@ export function ExerciseCatalogContent() {
     };
   }, [loadExercises, query]);
 
+  useEffect(() => {
+    apiGet<{ categories: string[] }>("/api/exercises/categories")
+      .then((res) => setCategories(res.categories ?? []))
+      .catch(() => {});
+  }, []);
+
   const visibleItems = useMemo(() => items, [items]);
   const listQueryKey = `exercise-catalog:${activeLoadQuery}`;
   const isListSettled = useQuerySettled(listQueryKey, loading);
@@ -110,24 +171,18 @@ export function ExerciseCatalogContent() {
       />
       <NoticeStateRows message={notice} label="안내" />
 
-      <section>
-        <h2 className="settings-section-title">운동종목 CRUD</h2>
-        <Card padding="md" elevated={false}>
-          <CardContent>
-            <label>
-              <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>검색</span>
-              <AppTextInput
-                variant="compact"
-                value={query}
-                placeholder="운동종목 검색"
-                onChange={(event) => setQuery(event.target.value)}
-              />
-            </label>
-          </CardContent>
-        </Card>
+      <section style={{ marginBottom: "var(--space-lg)" }}>
+        <h2 className="settings-section-title">운동종목 관리</h2>
+        <SearchInput
+          bare
+          value={query}
+          onChange={setQuery}
+          placeholder="운동종목 검색"
+          ariaLabel="운동종목 검색"
+        />
       </section>
 
-      <section>
+      <section style={{ marginBottom: "var(--space-lg)" }}>
         <h2 className="settings-section-title">추가 (Create)</h2>
         <Card padding="md" elevated={false}>
           <CardContent>
@@ -141,28 +196,37 @@ export function ExerciseCatalogContent() {
               </button>
             ) : (
               <>
-                <label>
-                  <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
-                  <AppTextInput
-                    variant="compact"
-                    value={createName}
-                    onChange={(event) => setCreateName(event.target.value)}
-                    placeholder="예: Incline Bench Press"
-                  />
-                </label>
-                <label>
-                  <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>카테고리 (선택)</span>
-                  <AppTextInput
-                    variant="compact"
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                  <label>
+                    <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
+                    <AppTextInput
+                      variant="compact"
+                      value={createName}
+                      onChange={(event) => setCreateName(event.target.value)}
+                      placeholder="예: Incline Bench Press"
+                    />
+                  </label>
+                  <CategoryField
+                    label="카테고리 (선택)"
                     value={createCategory}
-                    onChange={(event) => setCreateCategory(event.target.value)}
-                    placeholder="예: Chest"
+                    onChange={setCreateCategory}
+                    categories={categories}
                   />
-                </label>
-                <CardActionGroup style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-sm)", marginTop: "var(--space-sm)" }}>
+                  <label>
+                    <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>별칭 (선택, 쉼표로 구분)</span>
+                    <AppTextInput
+                      variant="compact"
+                      value={createAliases}
+                      onChange={(event) => setCreateAliases(event.target.value)}
+                      placeholder="예: 인클라인 벤치, Incline"
+                    />
+                  </label>
+                </div>
+                <CardActionGroup style={{ display: "flex", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
                   <button
                     type="button"
                     className="btn btn-secondary"
+                    style={{ flex: 1 }}
                     disabled={savingCreate}
                     onClick={() => setCreateOpen(false)}
                   >
@@ -171,6 +235,7 @@ export function ExerciseCatalogContent() {
                   <button
                     type="button"
                     className="btn btn-primary"
+                    style={{ flex: 1 }}
                     disabled={savingCreate || !createName.trim()}
                     onClick={async () => {
                       try {
@@ -178,21 +243,36 @@ export function ExerciseCatalogContent() {
                         setNotice(null);
                         const newName = createName.trim();
                         const newCategory = createCategory.trim() || null;
-                        
+                        const newAliases = createAliases
+                          .split(",")
+                          .map((a) => a.trim())
+                          .filter(Boolean);
+
                         // Optimistic UI for Create
                         const tempId = `temp-${Date.now()}`;
                         setItems((prev) => [
-                          { id: tempId, name: newName, category: newCategory, aliases: [] },
+                          { id: tempId, name: newName, category: newCategory, aliases: newAliases },
                           ...prev,
                         ]);
                         setCreateName("");
                         setCreateCategory("");
+                        setCreateAliases("");
                         setCreateOpen(false);
 
                         const res = await apiPost<ExerciseCreateResponse>("/api/exercises", {
                           name: newName,
                           category: newCategory,
                         });
+
+                        if (res.exercise?.id && newAliases.length > 0) {
+                          for (const alias of newAliases) {
+                            await apiPost("/api/exercises/alias", {
+                              exerciseId: res.exercise.id,
+                              alias,
+                            });
+                          }
+                        }
+
                         setNotice(res.created ? "운동종목이 추가되었습니다." : "이미 존재하는 운동종목입니다.");
                         await loadExercises(query, true);
                       } catch (e: any) {
@@ -224,7 +304,7 @@ export function ExerciseCatalogContent() {
           const editingThis = editing?.id === item.id;
           const deletingThis = deletingId === item.id;
           return (
-            <Card key={item.id} padding="md" elevated={false} tone={editingThis ? "accent" : "default"}>
+            <Card key={item.id} padding="md" elevated={false} tone="default">
               <CardContent>
                 {!editingThis ? (
                   <>
@@ -324,30 +404,38 @@ export function ExerciseCatalogContent() {
                   </>
                 ) : (
                   <>
-                    <label>
-                      <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
-                      <AppTextInput
-                        variant="compact"
-                        value={editing.name}
-                        onChange={(event) =>
-                          setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
-                        }
-                      />
-                    </label>
-                    <label>
-                      <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>카테고리</span>
-                      <AppTextInput
-                        variant="compact"
+                    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                      <label>
+                        <span style={{ display: "block", marginBottom: "var(--space-xs)", color: "var(--color-text-muted)" }}>운동종목명</span>
+                        <AppTextInput
+                          variant="compact"
+                          value={editing.name}
+                          onChange={(event) =>
+                            setEditing((prev) => (prev ? { ...prev, name: event.target.value } : prev))
+                          }
+                        />
+                      </label>
+                      <CategoryField
+                        key={editing.id}
+                        label="카테고리"
                         value={editing.category}
-                        onChange={(event) =>
-                          setEditing((prev) => (prev ? { ...prev, category: event.target.value } : prev))
-                        }
+                        onChange={(v) => setEditing((prev) => (prev ? { ...prev, category: v } : prev))}
+                        categories={categories}
                       />
-                    </label>
-                    <CardActionGroup style={{ display: "flex", justifyContent: "flex-end", gap: "var(--space-sm)", marginTop: "var(--space-sm)" }}>
+                    </div>
+                    <CardActionGroup style={{ display: "flex", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ flex: 1 }}
+                        onClick={() => setEditing(null)}
+                      >
+                        취소
+                      </button>
                       <button
                         type="button"
                         className="btn btn-primary"
+                        style={{ flex: 1 }}
                         disabled={savingEdit || !editing.name.trim()}
                         onClick={async () => {
                           try {
@@ -380,13 +468,6 @@ export function ExerciseCatalogContent() {
                         }}
                       >
                         {savingEdit ? "저장 중..." : "수정 저장"}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        onClick={() => setEditing(null)}
-                      >
-                        취소
                       </button>
                     </CardActionGroup>
                   </>

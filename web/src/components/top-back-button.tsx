@@ -17,7 +17,7 @@ function titleFromPathname(pathname: string) {
   if (pathname.startsWith("/settings/theme")) return "테마";
   if (pathname.startsWith("/settings/minimum-plate")) return "최소 원판";
   if (pathname.startsWith("/settings/bodyweight")) return "몸무게";
-  if (pathname.startsWith("/settings/exercise-management")) return "운동 카탈로그";
+  if (pathname.startsWith("/settings/exercise-management")) return "운동종목 관리";
   if (pathname.startsWith("/settings/data-export")) return "데이터 내보내기";
   if (pathname.startsWith("/settings/about")) return "앱 정보";
   if (pathname.startsWith("/settings")) return "설정";

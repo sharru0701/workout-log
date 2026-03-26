@@ -6,5 +6,8 @@
       "Bash(git add web/src/app/calendar/options/page.tsx)",
       "Bash(docker compose -f docker-compose.dev.yml up --build -d)"
     ]
+  },
+  "enabledPlugins": {
+    "telegram@claude-plugins-official": true
   }
 }

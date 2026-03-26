@@ -10,7 +10,8 @@ import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/u
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionCard } from "@/components/ui/session-card";
 import { SessionSummaryCard } from "@/components/ui/session-summary-card";
-import { AppNumberStepper, AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
+import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
+import { AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
 import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchSelectCombobox, SearchSelectSheet } from "@/components/ui/search-select-sheet";
@@ -367,11 +368,14 @@ function appendSetReps(values: number[]) {
   return [...next, last];
 }
 
-function removeLastSetReps(values: number[]) {
+
+function removeSetRepsAtIndex(values: number[], index: number) {
   const next = normalizeRepsPerSet(values);
   if (next.length <= 1) return next;
-  return next.slice(0, next.length - 1);
+  if (index < 0 || index >= next.length) return next;
+  return [...next.slice(0, index), ...next.slice(index + 1)];
 }
+
 
 function createFallbackProgramEntryState(
   exercise: WorkoutExerciseViewModel,
@@ -515,6 +519,102 @@ function WorkoutRecordInlinePicker({
   );
 }
 
+function SwipeableSetRow({
+  children,
+  onDelete,
+  disabled
+}: {
+  children: React.ReactNode;
+  onDelete: () => void;
+  disabled?: boolean;
+}) {
+  const [offsetX, setOffsetX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef<number | null>(null);
+  const currentXRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disabled) return;
+    startXRef.current = e.touches[0].clientX;
+    currentXRef.current = e.touches[0].clientX;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (disabled || !isDragging || startXRef.current === null) return;
+    currentXRef.current = e.touches[0].clientX;
+    const diff = currentXRef.current - startXRef.current;
+    if (diff < 0) {
+      setOffsetX(Math.max(diff, -44));
+    } else if (offsetX < 0) {
+      setOffsetX(Math.min(0, offsetX + diff));
+      startXRef.current = currentXRef.current;
+    } else {
+      setOffsetX(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled) return;
+    setIsDragging(false);
+    if (offsetX < -22) {
+      setOffsetX(-44);
+    } else {
+      setOffsetX(0);
+    }
+  };
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: "6px", marginBottom: "var(--space-xs)" }}>
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: "44px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "6px",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setOffsetX(0);
+            onDelete();
+          }}
+          style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-danger)", backgroundColor: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
+          aria-label="세트 삭제"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: "22px", height: "22px" }}>
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        style={{
+          transform: `translateX(${offsetX}px)`,
+          transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
+          backgroundColor: "var(--color-surface)",
+          position: "relative",
+          zIndex: 1,
+          touchAction: "pan-y",
+          padding: "2px 0",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ExerciseRow({
   exercise,
   minimumPlateIncrementKg,
@@ -536,7 +636,7 @@ function ExerciseRow({
   onChangeWeight: (value: number) => void;
   onChangeSetReps: (setIndex: number, value: number) => void;
   onAddSet: () => void;
-  onRemoveSet: () => void;
+  onRemoveSet: (index: number) => void;
   onChangeMemo: (value: string) => void;
   onDelete: () => void;
 }) {
@@ -608,7 +708,7 @@ function ExerciseRow({
             <span style={{ color: "var(--text-metric-percent)" }}>TM%</span>
             <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
             <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
-            <span />
+            <span>Done</span>
           </div>
 
           <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
@@ -649,71 +749,110 @@ function ExerciseRow({
                   : exercise.set.weightKg;
 
               return (
-                <div key={`${exercise.id}-set-${index}`} role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", alignItems: "center", marginBottom: "var(--space-xs)", textAlign: "center" }}>
-                  <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
-                  <span style={{ font: "var(--font-secondary)", color: "var(--text-metric-percent)" }}>
-                    {formatPercentLabel(plannedPercentPerSet[index])}
-                  </span>
-                  <WorkoutRecordInlinePicker
-                    label={`${index + 1}세트 무게`}
-                    value={resolvedRowWeightKg}
-                    min={0}
-                    max={1000}
-                    step={minimumPlateIncrementKg}
-                    formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
-                    color="var(--text-metric-weight)"
-                    complete={isSetComplete}
-                    failed={isFailure}
-                    onChange={onChangeWeight}
-                  />
-                  <WorkoutRecordInlinePicker
-                    label={`${index + 1}세트 횟수`}
-                    value={setReps}
-                    min={0}
-                    max={100}
-                    step={1}
-                    complete={isSetComplete}
-                    failed={isFailure}
-                    formatValue={(value) => String(Math.round(value))}
-                    color="var(--text-metric-reps)"
-                    onChange={(value) => onChangeSetReps(index, value)}
-                  />
-                  <div style={{ display: "flex", justifyContent: "center", alignItems: "center", color: isFailure ? "var(--color-danger)" : "var(--color-success)", minWidth: "1.2rem" }}>
-                    {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
+                <SwipeableSetRow
+                  key={`${exercise.id}-set-${index}`}
+                  disabled={exercise.set.repsPerSet.length <= 1}
+                  onDelete={() => onRemoveSet(index)}
+                >
+                  <div role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
+                    <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
+                    <span style={{ font: "var(--font-secondary)", color: "var(--text-metric-percent)" }}>
+                      {formatPercentLabel(plannedPercentPerSet[index])}
+                    </span>
+                    <WorkoutRecordInlinePicker
+                      label={`${index + 1}세트 무게`}
+                      value={resolvedRowWeightKg}
+                      min={0}
+                      max={1000}
+                      step={minimumPlateIncrementKg}
+                      formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
+                      color="var(--text-metric-weight)"
+                      complete={isSetComplete}
+                      failed={isFailure}
+                      onChange={onChangeWeight}
+                    />
+                    <WorkoutRecordInlinePicker
+                      label={`${index + 1}세트 횟수`}
+                      value={setReps}
+                      min={0}
+                      max={100}
+                      step={1}
+                      complete={isSetComplete}
+                      failed={isFailure}
+                      formatValue={(value) => String(Math.round(value))}
+                      color="var(--text-metric-reps)"
+                      onChange={(value) => onChangeSetReps(index, value)}
+                    />
+                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", color: isFailure ? "var(--color-danger)" : "var(--color-success)", minWidth: "1.2rem" }}>
+                      {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
+                    </div>
                   </div>
-                </div>
+                </SwipeableSetRow>
               );
             })}
           </div>
         </div>
 
-        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-lg)", marginBottom: "var(--space-md)" }}>
+        <div style={{ display: "flex", marginTop: "var(--space-md)", marginBottom: "var(--space-md)" }}>
           <button
             type="button"
-            className="btn btn-inline-action btn-inline-action-primary"
+            style={{
+              width: "100%",
+              padding: "10px",
+              backgroundColor: "transparent",
+              border: "2px dashed var(--color-border)",
+              borderRadius: "12px",
+              color: "var(--color-text-muted)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "var(--space-xs)",
+              font: "var(--font-secondary)",
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
             onClick={onAddSet}
           >
             <AppPlusMinusIcon kind="plus" size={16} />
             <span>세트 추가</span>
           </button>
-          <button
-            type="button"
-            className="btn btn-inline-action btn-inline-action-danger"
-            onClick={onRemoveSet}
-            disabled={exercise.set.repsPerSet.length <= 1}
-          >
-            <AppPlusMinusIcon kind="minus" size={16} />
-            <span>삭제</span>
-          </button>
         </div>
-
-        <p>{weightStepMeta}로 입력됩니다.</p>
-        {isBodyweightExercise && bodyweightKg ? (
-          <p>총하중 기준: {formatKgValue(totalLoadKg)}</p>
-        ) : null}
-        {showMinimumPlateInfo ? (
-          <p>최소 원판 Increment 규칙이 적용된 값입니다.</p>
-        ) : null}
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "2px",
+            padding: "8px 10px",
+            backgroundColor: "color-mix(in srgb, var(--color-surface-hover) 50%, transparent)",
+            borderRadius: "6px",
+            fontSize: "11px",
+            color: "color-mix(in srgb, var(--color-text-muted) 80%, transparent)",
+            lineHeight: 1.3,
+            marginBottom: "var(--space-md)",
+            opacity: 0.8
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "12px", height: "12px", flexShrink: 0, opacity: 0.7 }}>
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>{weightStepMeta}로 입력됩니다.</span>
+          </div>
+          {isBodyweightExercise && bodyweightKg ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "12px", height: "12px", opacity: 0, flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle></svg>
+              <span>총하중 기준: {formatKgValue(totalLoadKg)}</span>
+            </div>
+          ) : null}
+          {showMinimumPlateInfo ? (
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "12px", height: "12px", opacity: 0, flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle></svg>
+              <span>최소 원판 Increment 규칙이 적용된 값입니다.</span>
+            </div>
+          ) : null}
+        </div>
       </section>
 
       <label style={{ display: "block", padding: "0 var(--space-md) var(--space-md)" }}>
@@ -1841,32 +1980,15 @@ export default function WorkoutRecordPage() {
         <>
           <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
             <h2 style={{ font: "var(--font-heading)", marginBottom: "var(--space-sm)" }}>선택된 플랜</h2>
-            <Card as="article" padding="md">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid var(--color-border)", borderRadius: "12px", backgroundColor: "var(--color-surface-secondary)", cursor: isEditingExistingLog ? "default" : "pointer" }}
-                aria-label="플랜 선택 열기"
-                aria-haspopup="dialog"
-                aria-expanded={isEditingExistingLog ? false : planSheetOpen}
-                onClick={isEditingExistingLog ? undefined : openPlanSheet}
-                disabled={isEditingExistingLog}
-              >
-                <div style={{ textAlign: "left" }}>
-                  <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "2px" }}>진행 중인 플랜</div>
-                  <div style={{ font: "var(--font-body)", fontWeight: 600 }}>{selectedPlan?.name ?? draft.session.planName}</div>
-                </div>
-                <span aria-hidden="true" style={{ color: "var(--color-text-muted)" }}>
-                  <svg viewBox="0 0 12 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-                    <path d="M2 5.5L6 2L10 5.5" />
-                    <path d="M2 10.5L6 14L10 10.5" />
-                  </svg>
-                </span>
-              </button>
-              {isEditingExistingLog ? (
-                <p>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
-              ) : null}
-            </Card>
+            <PlanSelectorButton
+              planName={selectedPlan?.name ?? draft.session.planName}
+              aria-expanded={isEditingExistingLog ? false : planSheetOpen}
+              onClick={isEditingExistingLog ? undefined : openPlanSheet}
+              disabled={isEditingExistingLog}
+            />
+            {isEditingExistingLog ? (
+              <p style={{ marginTop: "var(--space-sm)", fontSize: "13px", color: "var(--text-meta)" }}>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
+            ) : null}
           </section>
 
           <section style={{ marginBottom: "var(--space-xl)" }}>
@@ -1968,8 +2090,8 @@ export default function WorkoutRecordPage() {
                             }
                             applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
                           }}
-                          onRemoveSet={() => {
-                            const repsPerSet = removeLastSetReps(exercise.set.repsPerSet);
+                          onRemoveSet={(index) => {
+                            const repsPerSet = removeSetRepsAtIndex(exercise.set.repsPerSet, index);
                             if (exercise.source === "PROGRAM") {
                               setProgramEntryState((prev) => {
                                 const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
@@ -1977,7 +2099,10 @@ export default function WorkoutRecordPage() {
                                   ...prev,
                                   [exercise.id]: {
                                     ...current,
-                                    repsInputs: current.repsInputs.slice(0, Math.max(repsPerSet.length, 1)),
+                                    repsInputs: [
+                                      ...current.repsInputs.slice(0, index),
+                                      ...current.repsInputs.slice(index + 1)
+                                    ],
                                   },
                                 };
                               });
@@ -2174,98 +2299,92 @@ export default function WorkoutRecordPage() {
           {exerciseOptionsError ? <p>{exerciseOptionsError}</p> : null}
 
           <Card padding="md" elevated={false}>
-            <CardContent>
-              <section>
-                <div>
-                  <div>
-                    <span>무게 입력</span>
-                    <strong>
-                      {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 설정" : "무게 설정"}
-                    </strong>
-                  </div>
-                  <span>{`${formatKgValue(addDraftIncrementKg)} 단위`}</span>
+            <section style={{ padding: "var(--space-md)" }}>
+              <div style={{ marginBottom: "var(--space-md)" }}>
+                <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
+                  <span>Sets</span>
+                  <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
+                  <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
                 </div>
 
-                <AppNumberStepper
-                  label={isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? "추가중량 (kg)" : "무게 (kg)"}
-                  value={addDraft.weightKg}
-                  min={0}
-                  max={1000}
-                  step={addDraftIncrementKg}
-                  inputMode="decimal"
-                  onChange={(value) =>
-                    setAddDraft((prev) => ({
-                      ...prev,
-                      weightKg: resolveWeightWithCurrentPreferences(
-                        value,
-                        prev.exerciseId,
-                        prev.exerciseName,
-                      ),
-                    }))
-                  }
-                />
-
-                {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-                  <p>총하중 기준: {formatKgValue(addDraftTotalLoadKg)}</p>
-                ) : null}
-              </section>
-
-              <section>
-                <div>
-                  
-                  <span>빠른 편집</span>
-                </div>
-
-                <div>
+                <div role="list" aria-label="세트 편집">
                   {addDraft.repsPerSet.map((setReps, index) => (
-                    <div key={`add-set-${index}`}>
-                      <AppNumberStepper
-                        label={`${index + 1}세트`}
-                        value={setReps}
-                        min={1}
-                        max={100}
-                        onChange={(value) =>
-                          setAddDraft((prev) => ({
-                            ...prev,
-                            repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
-                          }))
-                        }
-                      />
-                    </div>
+                    <SwipeableSetRow
+                      key={`add-set-${index}`}
+                      disabled={addDraft.repsPerSet.length <= 1}
+                      onDelete={() =>
+                        setAddDraft((prev) => ({
+                          ...prev,
+                          repsPerSet: prev.repsPerSet.filter((_, i) => i !== index),
+                        }))
+                      }
+                    >
+                      <div role="listitem" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
+                        <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
+                        <WorkoutRecordInlinePicker
+                          label={`${index + 1}세트 무게`}
+                          value={addDraft.weightKg}
+                          min={0}
+                          max={1000}
+                          step={addDraftIncrementKg}
+                          formatValue={(value) => formatCompactWeightValue(value, addDraftIncrementKg)}
+                          color="var(--text-metric-weight)"
+                          onChange={(value) =>
+                            setAddDraft((prev) => ({
+                              ...prev,
+                              weightKg: resolveWeightWithCurrentPreferences(value, prev.exerciseId, prev.exerciseName),
+                            }))
+                          }
+                        />
+                        <WorkoutRecordInlinePicker
+                          label={`${index + 1}세트 횟수`}
+                          value={setReps}
+                          min={1}
+                          max={100}
+                          step={1}
+                          formatValue={(value) => String(Math.round(value))}
+                          color="var(--text-metric-reps)"
+                          onChange={(value) =>
+                            setAddDraft((prev) => ({
+                              ...prev,
+                              repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
+                            }))
+                          }
+                        />
+                      </div>
+                    </SwipeableSetRow>
                   ))}
                 </div>
+              </div>
 
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "var(--space-sm)", marginTop: "var(--space-md)" }}>
-                  <button
-                    type="button"
-                    className="btn btn-inline-action btn-inline-action-primary"
-                    onClick={() =>
-                      setAddDraft((prev) => ({
-                        ...prev,
-                        repsPerSet: appendSetReps(prev.repsPerSet),
-                      }))
-                    }
-                  >
-                    <AppPlusMinusIcon kind="plus" size={16} />
-                    <span>세트 추가</span>
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-inline-action btn-inline-action-danger"
-                    onClick={() =>
-                      setAddDraft((prev) => ({
-                        ...prev,
-                        repsPerSet: removeLastSetReps(prev.repsPerSet),
-                      }))
-                    }
-                    disabled={addDraft.repsPerSet.length <= 1}
-                  >
-                    <AppPlusMinusIcon kind="minus" size={16} />
-                    <span>마지막 세트</span>
-                  </button>
-                </div>
-              </section>
-            </CardContent>
+              <button
+                type="button"
+                style={{
+                  width: "100%",
+                  padding: "10px",
+                  backgroundColor: "transparent",
+                  border: "2px dashed var(--color-border)",
+                  borderRadius: "12px",
+                  color: "var(--color-text-muted)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "var(--space-xs)",
+                  font: "var(--font-secondary)",
+                  fontWeight: 500,
+                  cursor: "pointer",
+                }}
+                onClick={() =>
+                  setAddDraft((prev) => ({
+                    ...prev,
+                    repsPerSet: appendSetReps(prev.repsPerSet),
+                  }))
+                }
+              >
+                <AppPlusMinusIcon kind="plus" size={16} />
+                <span>세트 추가</span>
+              </button>
+            </section>
           </Card>
 
           {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
@@ -2288,9 +2407,10 @@ export default function WorkoutRecordPage() {
 
           <Link
             href="/workout/log/exercise-catalog"
+            className="btn btn-secondary btn-full"
             onClick={() => setAddSheetOpen(false)}
           >
-            운동종목 CRUD 관리 열기
+            운동종목 관리
           </Link>
         </div>
       </BottomSheet>

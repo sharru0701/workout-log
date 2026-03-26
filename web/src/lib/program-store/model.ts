@@ -179,6 +179,13 @@ export function getProgramScheduleLabel(template: ProgramTemplate): string {
     return parts.join(" · ");
   }
 
+  if (def.kind === "531") {
+    const rawModules: string[] = Array.isArray(def.modules) ? (def.modules as string[]) : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
+    const count = Math.min(rawModules.length, 4);
+    const dayLabels = ["D1", "D2", "D3", "D4"].slice(0, count);
+    return `${count}분할 · ${dayLabels.join("/")}`;
+  }
+
   if (def.kind === "manual" && Array.isArray(def.sessions) && def.sessions.length > 0) {
     const keys = (def.sessions as Array<{ key: string }>).map((s) => s.key).join("/");
     return `${def.sessions.length}분할 · ${keys}`;

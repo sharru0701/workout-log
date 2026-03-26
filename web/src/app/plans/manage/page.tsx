@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
+import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { StoreSearchInput } from "@/components/ui/store-search-input";
+import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -253,18 +253,12 @@ function PlansManagePageContent() {
           headerTrigger
         >
           {plans.length > 0 || searchQuery.trim().length > 0 ? (
-            <DashboardSurface>
-              <div>
-                <StoreSearchInput
-                  value={searchQuery}
-                  onChange={setSearchQuery}
-                  placeholder="플랜명 또는 기반 프로그램 검색"
-                  ariaLabel="플랜 검색"
-                  shellAriaLabel="플랜 검색 입력"
-                  chrome="plain"
-                />
-              </div>
-            </DashboardSurface>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder="플랜명 또는 기반 프로그램 검색"
+              ariaLabel="플랜 검색"
+            />
           ) : null}
 
           {loading && (

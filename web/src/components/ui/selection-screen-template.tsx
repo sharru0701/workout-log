@@ -3,6 +3,7 @@
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { BaseGroupedList, NavigationRow, SectionFootnote, SectionHeader } from "./settings-list";
 import { EmptyStateRows } from "./settings-state";
+import { SearchInput } from "./search-input";
 
 type SelectionOption = {
   value: string;
@@ -92,47 +93,6 @@ function SelectionLayout({ children }: SelectionLayoutProps) {
   );
 }
 
-function SearchInput({
-  value,
-  onChange,
-  placeholder,
-}: {
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-}) {
-  return (
-    <section>
-      <SectionHeader title="검색" />
-      <div aria-label="검색 입력">
-        <span aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.8-3.8" />
-          </svg>
-        </span>
-        <input
-          type="search"
-          inputMode="search"
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-          placeholder={placeholder}
-          aria-label={placeholder}
-        />
-        {value.trim().length > 0 ? (
-          <button
-            type="button"
-            aria-label="검색어 지우기"
-            onClick={() => onChange("")}
-          >
-            ×
-          </button>
-        ) : null}
-      </div>
-      <SectionFootnote>검색어를 입력해 항목을 빠르게 찾습니다.</SectionFootnote>
-    </section>
-  );
-}
 
 export function SingleSelectionScreen({
   title,
@@ -152,7 +112,7 @@ export function SingleSelectionScreen({
 
   return (
     <SelectionLayout>
-      {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
+      {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} ariaLabel={searchPlaceholder} /> : null}
       <section>
         <SectionHeader title={sectionTitle} />
         {filtered.length === 0 ? (
@@ -198,7 +158,7 @@ export function MultiSelectionScreen({
 
   return (
     <SelectionLayout>
-      {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} /> : null}
+      {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={searchPlaceholder} ariaLabel={searchPlaceholder} /> : null}
       <section>
         <SectionHeader title={sectionTitle} />
         {filtered.length === 0 ? (
