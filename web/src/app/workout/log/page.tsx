@@ -723,8 +723,8 @@ function ExerciseRow({
                 ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
                 : undefined;
 
-              const isFailure = hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
-              const isSetComplete = hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
+              const isFailure = usesProgramPlaceholders && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
+              const isSetComplete = usesProgramPlaceholders && hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
 
               const plannedWeightKg = plannedWeightKgPerSet[index];
               const resolvedPlannedWeightKg =
