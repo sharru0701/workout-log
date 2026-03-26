@@ -62,6 +62,44 @@ export default function SettingsDataPage() {
   const [resetting, setResetting] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [clearingCache, setClearingCache] = useState(false);
+
+  const runClearCache = async () => {
+    const confirmed = await confirm({
+      title: "캐시 전체 삭제",
+      message: "서버 통계 캐시, 클라이언트 API 캐시, 브라우저 캐시(Service Worker)를 모두 삭제합니다.\n\n운동 기록이나 설정은 변경되지 않습니다.",
+      confirmText: "삭제",
+      cancelText: "취소",
+      tone: "default",
+    });
+    if (!confirmed) return;
+
+    try {
+      setClearingCache(true);
+      setError(null);
+      setNotice(null);
+
+      await apiPost("/api/settings/clear-cache", {});
+      apiInvalidateCache();
+
+      if (typeof window !== "undefined" && "caches" in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((key) => window.caches.delete(key)));
+      }
+
+      setNotice("캐시를 성공적으로 삭제했습니다.");
+    } catch (e: any) {
+      const message = e?.message ?? "캐시 삭제에 실패했습니다.";
+      setError(message);
+      await alert({
+        title: "캐시 삭제 실패",
+        message,
+        tone: "danger",
+      });
+    } finally {
+      setClearingCache(false);
+    }
+  };
 
   const runReset = async () => {
     const confirmed = await confirm({
@@ -84,6 +122,12 @@ export default function SettingsDataPage() {
       });
 
       clearLocalAppState();
+
+      await apiPost("/api/settings/clear-cache", {});
+      if (typeof window !== "undefined" && "caches" in window) {
+        const keys = await window.caches.keys();
+        await Promise.all(keys.map((key) => window.caches.delete(key)));
+      }
 
       const summary =
         response.summary
@@ -114,6 +158,36 @@ export default function SettingsDataPage() {
     <div>
       <NoticeStateRows message={notice} tone="success" label="초기화 완료" />
       <NoticeStateRows message={error} tone="warning" label="초기화 실패" />
+
+      <section>
+        <SectionHeader title="캐시 관리" description="캐시가 오래되거나 표시 오류가 있을 때 수동으로 삭제할 수 있습니다." />
+        <BaseGroupedList ariaLabel="Cache actions">
+          <InfoRow
+            label="서버 통계 캐시"
+            description="e1rm, 볼륨, 준수율, PR 등 집계 결과물"
+            value="Stats"
+            tone="neutral"
+          />
+          <InfoRow
+            label="브라우저 캐시"
+            description="Service Worker가 보관하는 오프라인용 리소스 캐시"
+            value="SW Cache"
+            tone="neutral"
+          />
+        </BaseGroupedList>
+        <button
+          type="button"
+          className="btn btn-secondary btn-full"
+          style={{ marginTop: "var(--space-sm)" }}
+          onClick={() => {
+            void runClearCache();
+          }}
+          disabled={clearingCache}
+        >
+          {clearingCache ? "캐시 삭제 중..." : "캐시 전체 삭제"}
+        </button>
+        <SectionFootnote>삭제 후 다음 조회 시 자동으로 재생성됩니다. 운동 기록과 설정은 변경되지 않습니다.</SectionFootnote>
+      </section>
 
       <section>
         <SectionHeader title="데이터 작업" description="내보내기와 전체 초기화를 한 화면에서 관리합니다." />
