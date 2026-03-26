@@ -9,6 +9,115 @@ import { Card, CardActionGroup, CardContent } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { SearchInput } from "@/components/ui/search-input";
 
+function SwipeableExerciseRow({
+  children,
+  onDelete,
+  disabled,
+}: {
+  children: React.ReactNode;
+  onDelete: () => void;
+  disabled?: boolean;
+}) {
+  const [offsetX, setOffsetX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const startXRef = useRef<number | null>(null);
+  const currentXRef = useRef<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (disabled) return;
+    startXRef.current = e.touches[0].clientX;
+    currentXRef.current = e.touches[0].clientX;
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (disabled || !isDragging || startXRef.current === null) return;
+    currentXRef.current = e.touches[0].clientX;
+    const diff = currentXRef.current - startXRef.current;
+    if (diff < 0) {
+      setOffsetX(Math.max(diff, -72));
+    } else if (offsetX < 0) {
+      setOffsetX(Math.min(0, offsetX + diff));
+      startXRef.current = currentXRef.current;
+    } else {
+      setOffsetX(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (disabled) return;
+    setIsDragging(false);
+    if (offsetX < -36) {
+      setOffsetX(-72);
+    } else {
+      setOffsetX(0);
+    }
+  };
+
+  return (
+    <div style={{ position: "relative", overflow: "hidden", borderRadius: "12px", marginBottom: "var(--space-sm)" }}>
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: 0,
+          bottom: 0,
+          width: "72px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          borderRadius: "12px",
+          backgroundColor: "var(--color-danger-bg, #fee2e2)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            setOffsetX(0);
+            onDelete();
+          }}
+          style={{
+            width: "100%",
+            height: "100%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "var(--color-danger)",
+            backgroundColor: "transparent",
+            border: "none",
+            boxShadow: "none",
+            cursor: "pointer",
+          }}
+          aria-label="운동종목 삭제"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true" style={{ width: "22px", height: "22px" }}>
+            <path d="M4.5 7.5h15" strokeLinecap="round" />
+            <path d="M9.75 3.75h4.5" strokeLinecap="round" />
+            <path d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M10.5 10.5v5.25" strokeLinecap="round" />
+            <path d="M13.5 10.5v5.25" strokeLinecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
+        style={{
+          transform: `translateX(${offsetX}px)`,
+          transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
+          position: "relative",
+          zIndex: 1,
+          touchAction: "pan-y",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 type ExerciseItem = {
   id: string;
   name: string;
@@ -303,8 +412,34 @@ export function ExerciseCatalogContent() {
         {visibleItems.map((item) => {
           const editingThis = editing?.id === item.id;
           const deletingThis = deletingId === item.id;
+
+          const handleDelete = async () => {
+            const confirmDelete = await confirm({
+              title: "운동종목 삭제",
+              message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
+              confirmText: "삭제",
+              cancelText: "취소",
+              tone: "danger",
+            });
+            if (!confirmDelete) return;
+            try {
+              setDeletingId(item.id);
+              setNotice(null);
+              setItems((prev) => prev.filter((it) => it.id !== item.id));
+              await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
+              setNotice("운동종목이 삭제되었습니다.");
+              await loadExercises(query, true);
+            } catch (e: any) {
+              setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
+              void loadExercises(query, true);
+            } finally {
+              setDeletingId(null);
+            }
+          };
+
           return (
-            <Card key={item.id} padding="md" elevated={false} tone="default">
+            <SwipeableExerciseRow key={item.id} onDelete={handleDelete} disabled={editingThis || deletingThis}>
+            <Card padding="md" elevated={false} tone="default" style={{ marginBottom: 0 }}>
               <CardContent>
                 {!editingThis ? (
                   <>
@@ -341,58 +476,6 @@ export function ExerciseCatalogContent() {
                               strokeLinejoin="round"
                             />
                             <path d="m13.5 6.5 4 4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn-icon btn-icon-danger"
-                          aria-label={deletingThis ? `${item.name} 삭제 중` : `${item.name} 삭제`}
-                          title={deletingThis ? "삭제 중..." : "운동종목 삭제"}
-                          disabled={deletingThis}
-                          onClick={async () => {
-                            const confirmDelete = await confirm({
-                              title: "운동종목 삭제",
-                              message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
-                              confirmText: "삭제",
-                              cancelText: "취소",
-                              tone: "danger",
-                            });
-                            if (!confirmDelete) return;
-                            try {
-                              setDeletingId(item.id);
-                              setNotice(null);
-
-                              // Optimistic UI for Delete
-                              setItems((prev) => prev.filter((it) => it.id !== item.id));
-
-                              await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
-                              setNotice("운동종목이 삭제되었습니다.");
-                              await loadExercises(query, true);
-                            } catch (e: any) {
-                              setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
-                              void loadExercises(query, true); // Rollback
-                            } finally {
-                              setDeletingId(null);
-                            }
-                          }}
-                        >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.1"
-                            aria-hidden="true"
-                            style={{ width: "22px", height: "22px" }}
-                          >
-                            <path d="M4.5 7.5h15" strokeLinecap="round" />
-                            <path d="M9.75 3.75h4.5" strokeLinecap="round" />
-                            <path
-                              d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path d="M10.5 10.5v5.25" strokeLinecap="round" />
-                            <path d="M13.5 10.5v5.25" strokeLinecap="round" />
                           </svg>
                         </button>
                       </div>
@@ -474,6 +557,7 @@ export function ExerciseCatalogContent() {
                 )}
               </CardContent>
             </Card>
+            </SwipeableExerciseRow>
           );
         })}
       </section>
