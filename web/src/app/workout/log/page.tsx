@@ -718,13 +718,10 @@ function ExerciseRow({
               const parsedSetValue = Number(rawSetValue);
               const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
               const hasReps = Number.isFinite(actualRepsValue) && actualRepsValue > 0;
-              // program 운동: entryState에 불변값으로 저장된 계획 reps 사용
-              // 일반 운동: plannedSetMeta의 계획 reps 사용 (없으면 비교 안 함)
+              // program(AUTO) 운동만 실패 체크 대상 — 일반 운동은 plannedReps 미적용
               const plannedReps: number | undefined = usesProgramPlaceholders
                 ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
-                : typeof plannedRepsPerSet[index] === "number"
-                  ? (plannedRepsPerSet[index] as number)
-                  : undefined;
+                : undefined;
 
               const isFailure = hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
               const isSetComplete = hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps);
