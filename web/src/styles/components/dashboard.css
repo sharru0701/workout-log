@@ -115,8 +115,11 @@
 }
 
 .dashboard-section__title {
-  font: var(--font-section-title);
-  color: var(--color-text);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
@@ -124,6 +127,7 @@
 .dashboard-section__description {
   font: var(--font-secondary);
   color: var(--text-hint);
+  font-size: 12px;
   margin: 4px 0 0 0;
 }
 

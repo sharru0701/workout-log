@@ -1,0 +1,311 @@
+/* =====================================================
+   Workout Log — Exercise Card & Set Row System
+   Stitch-inspired: editorial hierarchy, clear states
+   ===================================================== */
+
+/* ── Exercise Card ─────────────────────────────────── */
+
+.exercise-card {
+  position: relative;
+  margin-bottom: var(--space-md);
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  overflow: hidden;
+}
+
+.exercise-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-surface-hover);
+  border-bottom: 1px solid var(--color-border);
+  gap: var(--space-sm);
+  min-height: 52px;
+}
+
+.exercise-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-wrap: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.exercise-card__name {
+  font: var(--font-card-title);
+  color: var(--text-exercise-name);
+  font-weight: var(--font-weight-exercise-name, 700);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.exercise-card__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+
+.exercise-card__prev-ref {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+  white-space: nowrap;
+  cursor: default;
+  user-select: none;
+}
+
+/* ── Set Table ─────────────────────────────────────── */
+
+.set-table {
+  padding: var(--space-md) var(--space-md) var(--space-xs);
+}
+
+.set-table__header {
+  display: grid;
+  grid-template-columns: 2rem 1fr 1fr 2rem;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.set-table__h-set {
+  color: var(--text-metric-sets);
+  text-align: left;
+  padding-left: 4px;
+}
+
+.set-table__h-weight { color: var(--text-metric-weight); }
+.set-table__h-reps   { color: var(--text-metric-reps); }
+.set-table__h-done   { color: var(--color-text-muted); }
+
+/* ── Set Rows ──────────────────────────────────────── */
+
+.set-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 2rem 1fr 1fr 2rem;
+  gap: var(--space-xs);
+  align-items: center;
+  text-align: center;
+  padding: 3px 0;
+  border-radius: 6px;
+  transition: background-color 0.15s ease;
+}
+
+/* Active set: forest-green left accent + subtle wash */
+.set-row--active {
+  background: color-mix(in srgb, var(--color-action) 7%, transparent);
+  box-shadow: inset 3px 0 0 0 var(--color-action);
+  border-radius: 0 6px 6px 0;
+}
+
+/* Complete set: green tint */
+.set-row--complete {
+  background: color-mix(in srgb, var(--color-success) 8%, transparent);
+}
+
+/* Pending sets: dimmed */
+.set-row--pending {
+  opacity: 0.42;
+}
+
+/* Failure set: red tint */
+.set-row--failure {
+  background: color-mix(in srgb, var(--color-danger) 8%, transparent);
+}
+
+.set-row__number {
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-metric-sets);
+  padding-left: 4px;
+  line-height: 1;
+}
+
+.set-row--active .set-row__number   { color: var(--color-action); }
+.set-row--complete .set-row__number { color: var(--color-success); }
+.set-row--failure .set-row__number  { color: var(--color-danger); }
+
+.set-row__done {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: var(--color-border);
+  min-width: 2rem;
+  height: 2rem;
+}
+
+.set-row--complete .set-row__done { color: var(--color-success); }
+.set-row--failure  .set-row__done { color: var(--color-danger); }
+
+/* ── Add Set Button ────────────────────────────────── */
+
+.set-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 11px var(--space-md);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.set-add-btn:hover {
+  background: var(--color-surface-hover);
+}
+
+.set-add-btn:active {
+  background: var(--color-surface-2);
+  color: var(--color-action);
+}
+
+.set-add-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+/* ── Set Hint / Info Footer ────────────────────────── */
+
+.set-hint {
+  padding: 0 var(--space-md) var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.set-hint__item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--color-text-subtle);
+  opacity: 0.75;
+}
+
+.set-hint__item svg {
+  width: 11px;
+  height: 11px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+/* ── Session Progress Header ───────────────────────── */
+
+.session-progress-header {
+  margin-bottom: var(--space-lg);
+}
+
+.session-progress-header__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-action);
+  margin-bottom: 4px;
+}
+
+.session-progress-header__title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+  color: var(--color-text);
+  margin: 0 0 var(--space-sm);
+  line-height: 1.2;
+}
+
+.session-progress-header__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.session-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
+}
+
+.session-chip--active {
+  background: var(--color-action-weak);
+  color: var(--color-action-strong);
+  border-color: var(--color-selected-border);
+}
+
+.session-chip--date {
+  background: transparent;
+  color: var(--color-text-muted);
+  border-color: var(--color-border);
+}
+
+/* ── Finish Workout CTA ────────────────────────────── */
+
+.finish-workout-cta {
+  margin-top: var(--space-lg);
+}
+
+/* ── Plan Selector Strip ───────────────────────────── */
+
+.plan-selector-strip {
+  margin-bottom: var(--space-xl);
+}
+
+.plan-selector-strip__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+/* ── Last Session Inline Card ──────────────────────── */
+
+.last-session-strip {
+  margin-bottom: var(--space-xl);
+}
+
+.last-session-strip__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-xs);
+}

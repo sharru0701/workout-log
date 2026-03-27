@@ -70,7 +70,7 @@
 
 /* 활성 탭 pill 강조 */
 .bottom-tab-item--active .bottom-tab-pill {
-  background: color-mix(in srgb, var(--color-action-strong) 15%, transparent);
+  background: color-mix(in srgb, var(--color-action) 14%, transparent);
   transform: translateY(-1px);
 }
 

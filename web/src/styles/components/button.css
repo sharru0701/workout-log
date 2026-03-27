@@ -28,9 +28,10 @@
 
 .btn-lg {
   padding: 14px var(--space-lg);
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  border-radius: 14px;
+  letter-spacing: 0.01em;
 }
 
 .btn-full {
@@ -40,7 +41,8 @@
 .btn-primary {
   background-color: var(--color-action);
   color: var(--color-text-on-action);
-  border: 1px solid var(--color-selected-border);
+  border: 1px solid transparent;
+  font-weight: 600;
 }
 
 .btn-primary:active {

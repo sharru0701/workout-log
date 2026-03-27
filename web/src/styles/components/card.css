@@ -38,8 +38,8 @@
 }
 
 .card[data-card-tone="accent"] {
-  --card-bg: color-mix(in srgb, var(--color-action) 12%, var(--color-surface));
-  --card-border: var(--color-selected-border);
+  --card-bg: color-mix(in srgb, var(--color-action) 10%, var(--color-surface));
+  --card-border: color-mix(in srgb, var(--color-action) 28%, var(--color-border));
 }
 
 .card[data-card-tone="danger"] {

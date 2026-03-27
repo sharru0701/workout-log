@@ -9,7 +9,6 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { SessionCard } from "@/components/ui/session-card";
-import { SessionSummaryCard } from "@/components/ui/session-summary-card";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
 import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
@@ -394,10 +393,6 @@ function createFallbackProgramEntryState(
   };
 }
 
-function formatPercentLabel(percent: number | null | undefined) {
-  if (typeof percent !== "number" || !Number.isFinite(percent) || percent <= 0) return "-";
-  return `${Math.round(percent * 100)}%`;
-}
 
 function formatCompactWeightValue(value: number, step = 0.5) {
   if (!Number.isFinite(value)) return "0";
@@ -622,6 +617,7 @@ function ExerciseRow({
   showMinimumPlateInfo,
   bodyweightKg,
   programEntryState,
+  prevPerformance,
   onChangeWeight,
   onChangeSetReps,
   onAddSet,
@@ -634,6 +630,7 @@ function ExerciseRow({
   showMinimumPlateInfo: boolean;
   bodyweightKg: number | null;
   programEntryState?: WorkoutProgramExerciseEntryState;
+  prevPerformance?: string;
   onChangeWeight: (value: number) => void;
   onChangeSetReps: (setIndex: number, value: number) => void;
   onAddSet: () => void;
@@ -646,9 +643,7 @@ function ExerciseRow({
   const badgeMeta = workoutExerciseBadgeMeta(exercise.badge);
   const usesProgramPlaceholders = Boolean(programEntryState);
   const weightStepMeta = `${formatKgValue(minimumPlateIncrementKg)} 단위`;
-  const plannedPercentPerSet = exercise.plannedSetMeta?.percentPerSet ?? [];
   const plannedWeightKgPerSet = exercise.plannedSetMeta?.targetWeightKgPerSet ?? [];
-  const plannedRepsPerSet = exercise.plannedSetMeta?.repsPerSet ?? [];
   const firstPlannedWeightKg =
     plannedWeightKgPerSet.find((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) ?? null;
   const resolvedFirstPlannedWeightKg =
@@ -667,27 +662,30 @@ function ExerciseRow({
     Math.abs(exercise.set.weightKg - resolvedFirstPlannedWeightKg) < 0.01;
 
 
+  // Determine the first incomplete set index for "active" state highlight
+  const firstIncompleteIndex = exercise.set.repsPerSet.findIndex((setReps, i) => {
+    const rawVal = programEntryState?.repsInputs[i]?.trim() ?? "";
+    const actual = usesProgramPlaceholders ? Number(rawVal) : setReps;
+    return !Number.isFinite(actual) || actual <= 0;
+  });
+
   return (
-    <Card
-      as="article"
-      tone="inset"
-      elevated={false}
-      padding="none"
-      style={{ marginBottom: "var(--space-md)", position: "relative" }}
-    >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)", backgroundColor: "var(--color-surface-hover)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-          <strong
-            aria-label={`운동종목 ${exercise.exerciseName}`}
-            style={{ font: "var(--font-section-title)", color: "var(--text-exercise-name)", fontWeight: "var(--font-weight-exercise-name)" }}
-          >
-            {exercise.exerciseName}
-          </strong>
+    <article className="exercise-card" aria-label={`운동종목 ${exercise.exerciseName}`}>
+      {/* ── Exercise Header ── */}
+      <div className="exercise-card__header">
+        <div className="exercise-card__name-row">
+          <strong className="exercise-card__name">{exercise.exerciseName}</strong>
           {badgeMeta ? (
             <span className={badgeMeta.className}>{badgeMeta.label}</span>
           ) : null}
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+        <div className="exercise-card__header-actions">
+          {prevPerformance ? (
+            <span className="exercise-card__prev-ref" title="이전 최고 기록">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              {prevPerformance}
+            </span>
+          ) : null}
           {exercise.badge !== "AUTO" ? (
             <button
               type="button"
@@ -702,162 +700,137 @@ function ExerciseRow({
         </div>
       </div>
 
-      <section style={{ padding: "var(--space-md)" }}>
-        <div style={{ marginBottom: "var(--space-md)" }}>
-          <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
-            <span style={{ color: "var(--text-metric-sets)" }}>Sets</span>
-            <span style={{ color: "var(--text-metric-percent)" }}>TM%</span>
-            <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
-            <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
-            <span>Done</span>
-          </div>
+      {/* ── Set Table ── */}
+      <div className="set-table">
+        <div className="set-table__header" aria-hidden="true">
+          <span className="set-table__h-set">Set</span>
+          <span className="set-table__h-weight">Weight</span>
+          <span className="set-table__h-reps">Reps</span>
+          <span className="set-table__h-done">✓</span>
+        </div>
 
-          <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
-            {exercise.set.repsPerSet.map((setReps, index) => {
-              const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
-              const parsedSetValue = Number(rawSetValue);
-              const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
-              const hasReps = Number.isFinite(actualRepsValue) && actualRepsValue > 0;
-              // AUTO badge 운동만 실패 체크 대상 (CUSTOM/ADDED/USER는 제외)
-              const isAutoExercise = exercise.badge === "AUTO";
-              const plannedReps: number | undefined = isAutoExercise
-                ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
-                : undefined;
+        <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
+          {exercise.set.repsPerSet.map((setReps, index) => {
+            const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
+            const parsedSetValue = Number(rawSetValue);
+            const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
+            const hasReps = Number.isFinite(actualRepsValue) && actualRepsValue > 0;
+            const isAutoExercise = exercise.badge === "AUTO";
+            const plannedReps: number | undefined = isAutoExercise
+              ? (programEntryState?.plannedRepsPerSet?.[index] ?? undefined)
+              : undefined;
 
-              const isFailure = isAutoExercise && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
-              const isSetComplete = isAutoExercise
-                ? hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps)
-                : hasReps;
+            const isFailure = isAutoExercise && hasReps && typeof plannedReps === "number" && plannedReps > 0 && actualRepsValue < plannedReps;
+            const isSetComplete = isAutoExercise
+              ? hasReps && (typeof plannedReps !== "number" || plannedReps <= 0 || actualRepsValue >= plannedReps)
+              : hasReps;
+            const isActive = !isSetComplete && !isFailure && index === firstIncompleteIndex;
+            const isPending = !isSetComplete && !isFailure && index !== firstIncompleteIndex;
 
-              const plannedWeightKg = plannedWeightKgPerSet[index];
-              const resolvedPlannedWeightKg =
-                typeof plannedWeightKg === "number" && Number.isFinite(plannedWeightKg) && plannedWeightKg >= 0
-                  ? snapWeightToIncrementKg(
-                      computeExternalLoadFromTotalKg(
-                        exercise.exerciseName,
-                        plannedWeightKg,
-                        bodyweightKg,
-                      ) ?? plannedWeightKg,
-                      minimumPlateIncrementKg,
-                    )
-                  : null;
-              const resolvedRowWeightKg =
-                usesPlannedRowWeights &&
-                typeof resolvedPlannedWeightKg === "number" &&
-                Number.isFinite(resolvedPlannedWeightKg) &&
-                resolvedPlannedWeightKg >= 0
-                  ? resolvedPlannedWeightKg
-                  : exercise.set.weightKg;
+            const rowClass = [
+              "set-row",
+              isFailure    ? "set-row--failure"  : "",
+              isSetComplete ? "set-row--complete" : "",
+              isActive      ? "set-row--active"   : "",
+              isPending     ? "set-row--pending"   : "",
+            ].filter(Boolean).join(" ");
 
-              return (
-                <SwipeableSetRow
-                  key={`${exercise.id}-set-${index}`}
-                  disabled={usesProgramPlaceholders
-                    ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
-                    : exercise.set.repsPerSet.length <= 1}
-                  onDelete={() => onRemoveSet(index)}
-                >
-                  <div role="listitem" style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr 1.8fr 1.2fr 0.7fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
-                    <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
-                    <span style={{ font: "var(--font-secondary)", color: "var(--text-metric-percent)" }}>
-                      {formatPercentLabel(plannedPercentPerSet[index])}
-                    </span>
-                    <WorkoutRecordInlinePicker
-                      label={`${index + 1}세트 무게`}
-                      value={resolvedRowWeightKg}
-                      min={0}
-                      max={1000}
-                      step={minimumPlateIncrementKg}
-                      formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
-                      color="var(--text-metric-weight)"
-                      complete={isSetComplete}
-                      failed={isFailure}
-                      onChange={onChangeWeight}
-                    />
-                    <WorkoutRecordInlinePicker
-                      label={`${index + 1}세트 횟수`}
-                      value={setReps}
-                      min={0}
-                      max={100}
-                      step={1}
-                      complete={isSetComplete}
-                      failed={isFailure}
-                      formatValue={(value) => String(Math.round(value))}
-                      color="var(--text-metric-reps)"
-                      onChange={(value) => onChangeSetReps(index, value)}
-                    />
-                    <div style={{ display: "flex", justifyContent: "center", alignItems: "center", color: isFailure ? "var(--color-danger)" : "var(--color-success)", minWidth: "1.2rem" }}>
-                      {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
-                    </div>
+            const plannedWeightKg = plannedWeightKgPerSet[index];
+            const resolvedPlannedWeightKg =
+              typeof plannedWeightKg === "number" && Number.isFinite(plannedWeightKg) && plannedWeightKg >= 0
+                ? snapWeightToIncrementKg(
+                    computeExternalLoadFromTotalKg(
+                      exercise.exerciseName,
+                      plannedWeightKg,
+                      bodyweightKg,
+                    ) ?? plannedWeightKg,
+                    minimumPlateIncrementKg,
+                  )
+                : null;
+            const resolvedRowWeightKg =
+              usesPlannedRowWeights &&
+              typeof resolvedPlannedWeightKg === "number" &&
+              Number.isFinite(resolvedPlannedWeightKg) &&
+              resolvedPlannedWeightKg >= 0
+                ? resolvedPlannedWeightKg
+                : exercise.set.weightKg;
+
+            return (
+              <SwipeableSetRow
+                key={`${exercise.id}-set-${index}`}
+                disabled={usesProgramPlaceholders
+                  ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
+                  : exercise.set.repsPerSet.length <= 1}
+                onDelete={() => onRemoveSet(index)}
+              >
+                <div role="listitem" className={rowClass}>
+                  <span className="set-row__number">{index + 1}</span>
+                  <WorkoutRecordInlinePicker
+                    label={`${index + 1}세트 무게`}
+                    value={resolvedRowWeightKg}
+                    min={0}
+                    max={1000}
+                    step={minimumPlateIncrementKg}
+                    formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
+                    color="var(--text-metric-weight)"
+                    complete={isSetComplete}
+                    failed={isFailure}
+                    onChange={onChangeWeight}
+                  />
+                  <WorkoutRecordInlinePicker
+                    label={`${index + 1}세트 횟수`}
+                    value={setReps}
+                    min={0}
+                    max={100}
+                    step={1}
+                    complete={isSetComplete}
+                    failed={isFailure}
+                    formatValue={(value) => String(Math.round(value))}
+                    color="var(--text-metric-reps)"
+                    onChange={(value) => onChangeSetReps(index, value)}
+                  />
+                  <div className="set-row__done">
+                    {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
                   </div>
-                </SwipeableSetRow>
-              );
-            })}
-          </div>
+                </div>
+              </SwipeableSetRow>
+            );
+          })}
         </div>
+      </div>
 
-        <div style={{ display: "flex", marginTop: "var(--space-md)", marginBottom: "var(--space-md)" }}>
-          <button
-            type="button"
-            style={{
-              width: "100%",
-              padding: "10px",
-              backgroundColor: "transparent",
-              border: "2px dashed var(--color-border)",
-              borderRadius: "12px",
-              color: "var(--color-text-muted)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "var(--space-xs)",
-              font: "var(--font-secondary)",
-              fontWeight: 500,
-              cursor: "pointer",
-            }}
-            onClick={onAddSet}
-          >
-            <AppPlusMinusIcon kind="plus" size={16} />
-            <span>세트 추가</span>
-          </button>
-        </div>
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "2px",
-            padding: "8px 10px",
-            backgroundColor: "color-mix(in srgb, var(--color-surface-hover) 50%, transparent)",
-            borderRadius: "6px",
-            fontSize: "11px",
-            color: "color-mix(in srgb, var(--color-text-muted) 80%, transparent)",
-            lineHeight: 1.3,
-            marginBottom: "var(--space-md)",
-            opacity: 0.8
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: "12px", height: "12px", flexShrink: 0, opacity: 0.7 }}>
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="16" x2="12" y2="12"></line>
-              <line x1="12" y1="8" x2="12.01" y2="8"></line>
-            </svg>
-            <span>{weightStepMeta}로 입력됩니다.</span>
-          </div>
-          {isBodyweightExercise && bodyweightKg ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "12px", height: "12px", opacity: 0, flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle></svg>
-              <span>총하중 기준: {formatKgValue(totalLoadKg)}</span>
-            </div>
-          ) : null}
+      {/* ── Add Set ── */}
+      <button
+        type="button"
+        className="set-add-btn"
+        onClick={onAddSet}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+        세트 추가
+      </button>
+
+      {/* ── Hint Footer ── */}
+      {(showMinimumPlateInfo || (isBodyweightExercise && bodyweightKg)) ? (
+        <div className="set-hint">
           {showMinimumPlateInfo ? (
-            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: "12px", height: "12px", opacity: 0, flexShrink: 0 }}><circle cx="12" cy="12" r="10"></circle></svg>
-              <span>최소 원판 Increment 규칙이 적용된 값입니다.</span>
-            </div>
+            <span className="set-hint__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              {weightStepMeta}로 입력됩니다.
+            </span>
+          ) : null}
+          {isBodyweightExercise && bodyweightKg ? (
+            <span className="set-hint__item">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              총하중 기준: {formatKgValue(totalLoadKg)}
+            </span>
           ) : null}
         </div>
-      </section>
+      ) : null}
 
+      {/* ── Memo ── */}
       <label style={{ display: "block", padding: "0 var(--space-md) var(--space-md)" }}>
         <AppTextarea
           variant="workout"
@@ -866,7 +839,7 @@ function ExerciseRow({
           placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "세트 메모를 입력하세요." : "세트 메모를 입력하세요."}
         />
       </label>
-    </Card>
+    </article>
   );
 }
 
@@ -1179,6 +1152,42 @@ export default function WorkoutRecordPage() {
   );
 
   const visibleExercises = useMemo(() => (draft ? materializeWorkoutExercises(draft) : []), [draft]);
+
+  // Previous performance map: exercise name → "Xkg × Y" best set from most recent log
+  const prevPerformanceMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const log of recentLogItems) {
+      const best = new Map<string, { weight: number; reps: number }>();
+      for (const set of log.sets) {
+        const w = set.weightKg ?? 0;
+        const r = set.reps ?? 0;
+        const existing = best.get(set.exerciseName);
+        if (!existing || w > existing.weight || (w === existing.weight && r > existing.reps)) {
+          best.set(set.exerciseName, { weight: w, reps: r });
+        }
+      }
+      for (const [name, data] of best.entries()) {
+        if (!map[name]) {
+          map[name] = data.weight > 0
+            ? `${formatKgValue(data.weight)} × ${data.reps}`
+            : `${data.reps}회`;
+        }
+      }
+    }
+    return map;
+  }, [recentLogItems]);
+
+  // Count exercises with at least one completed set for the progress chip
+  const completedExercisesCount = useMemo(() => {
+    return visibleExercises.filter((exercise) => {
+      return exercise.set.repsPerSet.some((setReps, i) => {
+        const entryState = programEntryState[exercise.id];
+        const rawVal = entryState?.repsInputs[i]?.trim() ?? "";
+        const actual = exercise.source === "PROGRAM" ? Number(rawVal) : setReps;
+        return Number.isFinite(actual) && actual > 0;
+      });
+    }).length;
+  }, [visibleExercises, programEntryState]);
   const addDraftIncrementKg = useMemo(
     () =>
       resolveMinimumPlateIncrementKg(workoutPreferences, {
@@ -1981,8 +1990,9 @@ export default function WorkoutRecordPage() {
 
       {!noPlan && draft && (
         <>
-          <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
-            <h2 style={{ font: "var(--font-heading)", marginBottom: "var(--space-sm)" }}>선택된 플랜</h2>
+          {/* ── Plan Selector ── */}
+          <section className="plan-selector-strip" data-pull-refresh-trigger="true">
+            <div className="plan-selector-strip__label">선택 플랜</div>
             <PlanSelectorButton
               planName={selectedPlan?.name ?? draft.session.planName}
               aria-expanded={isEditingExistingLog ? false : planSheetOpen}
@@ -1990,12 +2000,13 @@ export default function WorkoutRecordPage() {
               disabled={isEditingExistingLog}
             />
             {isEditingExistingLog ? (
-              <p style={{ marginTop: "var(--space-sm)", fontSize: "13px", color: "var(--text-meta)" }}>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
+              <p style={{ marginTop: "var(--space-xs)", fontSize: "12px", color: "var(--text-hint)" }}>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
             ) : null}
           </section>
 
-          <section style={{ marginBottom: "var(--space-xl)" }}>
-            <h2 style={{ font: "var(--font-heading)", marginBottom: "var(--space-sm)" }}>지난 세션</h2>
+          {/* ── Last Session ── */}
+          <section className="last-session-strip">
+            <div className="last-session-strip__label">지난 세션</div>
             <SessionCard
               variant="last"
               title={lastSession?.dateLabel ? `${lastSession.weekLabel} · ${lastSession.sessionLabel}` : ""}
@@ -2007,24 +2018,35 @@ export default function WorkoutRecordPage() {
             />
           </section>
 
+          {/* ── Today Session ── */}
           <section>
-            <h2 style={{ font: "var(--font-section-title)", marginBottom: "var(--space-md)" }}>{isEditingExistingLog ? "선택 날짜 기록" : "오늘 세션"}</h2>
-            <SessionSummaryCard
-              variant="today"
-              data={{
-                badgeLabel: `Week ${draft.session.week} · ${draft.session.sessionType}`,
-                dateLabel: formatDateFriendly(draft.session.sessionDate),
-                bodyweightKg: workoutPreferences.bodyweightKg,
-              }}
-            >
-              <div aria-hidden="true" />
+            {/* Session Progress Header — Stitch editorial style */}
+            <div className="session-progress-header">
+              <div className="session-progress-header__eyebrow">
+                {isEditingExistingLog ? "기록 수정" : "Active Session"}
+              </div>
+              <h2 className="session-progress-header__title">
+                Week {draft.session.week} · {draft.session.sessionType}
+              </h2>
+              <div className="session-progress-header__chips">
+                <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
+                  {completedExercisesCount}/{visibleExercises.length} 운동
+                </span>
+                <span className="session-chip session-chip--date">
+                  {formatDateFriendly(draft.session.sessionDate)}
+                </span>
+                {workoutPreferences.bodyweightKg ? (
+                  <span className="session-chip">BW {workoutPreferences.bodyweightKg.toFixed(1)}kg</span>
+                ) : null}
+              </div>
+            </div>
 
-              <div>
-                {visibleExercises.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)", marginTop: "var(--space-md)" }}>
-                    {visibleExercises.map((exercise) => (
-                      <div key={exercise.id}>
-                        <ExerciseRow
+            <div>
+              {visibleExercises.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column" }}>
+                  {visibleExercises.map((exercise) => (
+                    <div key={exercise.id}>
+                      <ExerciseRow
                           exercise={exercise}
                           minimumPlateIncrementKg={resolveMinimumPlateIncrementKg(workoutPreferences, {
                             exerciseId: exercise.exerciseId,
@@ -2037,6 +2059,7 @@ export default function WorkoutRecordPage() {
                             }).source === "RULE"
                           }
                           bodyweightKg={workoutPreferences.bodyweightKg}
+                          prevPerformance={prevPerformanceMap[exercise.exerciseName]}
                           programEntryState={
                             exercise.source === "PROGRAM"
                               ? createFallbackProgramEntryState(exercise, programEntryState[exercise.id])
@@ -2145,70 +2168,70 @@ export default function WorkoutRecordPage() {
                 )}
 
                 {visibleExercises.length === 0 && (
-                  <div>
-                    <strong>기록할 운동이 없습니다.</strong>
+                  <div style={{ padding: "var(--space-md) 0", color: "var(--text-hint)", fontSize: "14px" }}>
+                    기록할 운동이 없습니다.
                   </div>
                 )}
-
-                {visibleExercises.length > 0 ? <div aria-hidden="true" /> : null}
-
-                <div style={{ marginBottom: "var(--space-md)" }}>
-                  <button
-                    type="button"
-                    className="btn-add-exercise"
-                    onClick={() => {
-                      resetAddExerciseSheetState();
-                      setAddSheetOpen(true);
-                    }}
-                  >
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ width: "32px", height: "32px" }}>
-                      <line x1="12" y1="5" x2="12" y2="19" />
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                    </svg>
-                    <span>Add Exercise</span>
-                  </button>
-                </div>
-
-                <label>
-                  <AppTextarea
-                    variant="workout"
-                    value={draft.session.note.memo}
-                    onChange={(event) => {
-                      const next = event.target.value;
-                      applyEditing((prev) => ({
-                        ...prev,
-                        session: {
-                          ...prev.session,
-                          note: {
-                            memo: next,
-                          },
-                        },
-                      }));
-                    }}
-                    placeholder="오늘 세션 전체 메모"
-                  />
-                </label>
               </div>
-            </SessionSummaryCard>
 
-            <div>
-              <PrimaryButton
-                type="button"
-                variant="primary"
-                size="lg"
-                fullWidth
-                onClick={() => {
-                  void handleSave();
-                }}
-                disabled={workflowState === "saving"}
-              >
-                {workflowState === "saving"
-                  ? "저장 중..."
-                  : isEditingExistingLog
-                    ? "운동기록 수정"
-                    : "운동기록 완료"}
-              </PrimaryButton>
-            </div>
+              {/* ── Add Exercise Button ── */}
+              <div style={{ marginBottom: "var(--space-md)" }}>
+                <button
+                  type="button"
+                  className="btn-add-exercise"
+                  onClick={() => {
+                    resetAddExerciseSheetState();
+                    setAddSheetOpen(true);
+                  }}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ width: "28px", height: "28px" }}>
+                    <line x1="12" y1="5" x2="12" y2="19" />
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                  <span>운동 추가</span>
+                </button>
+              </div>
+
+              {/* ── Session Memo ── */}
+              <label style={{ display: "block", marginBottom: "var(--space-md)" }}>
+                <AppTextarea
+                  variant="workout"
+                  value={draft.session.note.memo}
+                  onChange={(event) => {
+                    const next = event.target.value;
+                    applyEditing((prev) => ({
+                      ...prev,
+                      session: {
+                        ...prev.session,
+                        note: {
+                          memo: next,
+                        },
+                      },
+                    }));
+                  }}
+                  placeholder="오늘 세션 전체 메모"
+                />
+              </label>
+
+              {/* ── Finish Workout CTA ── */}
+              <div className="finish-workout-cta">
+                <PrimaryButton
+                  type="button"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  onClick={() => {
+                    void handleSave();
+                  }}
+                  disabled={workflowState === "saving"}
+                >
+                  {workflowState === "saving"
+                    ? "저장 중..."
+                    : isEditingExistingLog
+                      ? "운동기록 수정"
+                      : "운동기록 완료"}
+                </PrimaryButton>
+              </div>
           </section>
         </>
       )}

@@ -654,7 +654,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
               <header style={{ padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
-                    <h2 style={{ font: "var(--font-section-title)", color: "var(--color-text)", margin: "0 0 2px 0" }}>
+                    <h2 style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)", margin: "0 0 2px 0" }}>
                       e1RM 상세 추이
                     </h2>
                     {stats && (

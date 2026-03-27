@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { Manrope } from "next/font/google";
 import "@/styles/index.css";
 import "@/styles/components/bottom-sheet.css";
 import { AppShell } from "@/components/app-shell";
@@ -8,6 +9,13 @@ import { PwaRegister } from "@/components/pwa-register";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineQueueFlush } from "@/components/offline-queue-flush";
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-manrope",
+  display: "swap",
+  weight: ["400", "500", "600", "700", "800"],
+});
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -41,7 +49,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={manrope.variable}>
       <body>
         <AppLaunchSplash />
         <ThemePreferenceSync />

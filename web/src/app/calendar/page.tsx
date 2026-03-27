@@ -736,7 +736,7 @@ export default function CalendarPage() {
             aria-label="연도와 월 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={monthPickerOpen}
-            style={{ background: "none", border: "none", font: "var(--font-section-title)", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)" }}
+            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)", fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)" }}
           >
             <span>{getYear(anchorDate)}년</span>
             <span>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
@@ -807,7 +807,7 @@ export default function CalendarPage() {
       {/* Selected date detail panel */}
       <div style={{ marginTop: "var(--space-md)" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
-          <span style={{ font: "var(--font-section-title)" }}>{formatKoreanDay(selectedDate)}</span>
+          <span style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{formatKoreanDay(selectedDate)}</span>
           {selectedDate === today && <span className="label label-status label-sm">오늘</span>}
         </div>
 

@@ -2,12 +2,12 @@
   /* ============================
      THEME: Solarized Light (default)
      ============================ */
-  --color-bg: #fdf6e3;
-  --color-surface: #eee8d5;
-  --color-surface-2: #e6dfcb;
+  --color-bg: #fff9eb;
+  --color-surface: #f2e8c4;
+  --color-surface-2: #e8ddb8;
   --color-surface-secondary: var(--color-surface-2);
-  --color-surface-hover: #f4eedc;
-  --color-surface-active: #ddd5bf;
+  --color-surface-hover: #f8f2de;
+  --color-surface-active: #dbd0a5;
   --color-border: #a7b0ad;
   --color-border-strong: #657b83;
 
@@ -37,8 +37,8 @@
   --color-info-strong: color-mix(in srgb, var(--color-info) 82%, var(--color-text));
   --color-accent-strong: color-mix(in srgb, var(--color-accent) 82%, var(--color-text));
   --color-highlight-weak: color-mix(in srgb, var(--color-highlight-strong) 14%, transparent);
-  --color-action: var(--color-info);
-  --color-action-strong: var(--color-info-strong);
+  --color-action: #1c6d25;
+  --color-action-strong: #144d1b;
   --color-action-weak: color-mix(in srgb, var(--color-action) 16%, var(--color-surface));
   --color-text-on-action: var(--color-text-on-primary);
   --color-selected-bg: var(--color-action);
@@ -56,12 +56,12 @@
   --color-icon-button-danger-text: color-mix(in srgb, var(--color-danger) 54%, var(--color-text));
 
   /* Interactive states */
-  --color-focus-ring: rgba(38, 139, 210, 0.35);
+  --color-focus-ring: rgba(28, 109, 37, 0.35);
   --color-link: var(--color-primary);
   --color-link-hover: var(--color-primary-strong);
   --color-highlight: rgba(203, 75, 22, 0.16);
   --color-highlight-strong: #9b3d13;
-  --color-selection: rgba(38, 139, 210, 0.2);
+  --color-selection: rgba(28, 109, 37, 0.18);
   --color-overlay: rgba(88, 110, 117, 0.24);
 
   --shadow-color-soft: rgba(88, 110, 117, 0.12);
@@ -313,12 +313,13 @@
   /* ============================
      TYPOGRAPHY SYSTEM
      ============================ */
-  --font-page-title: 700 24px/1.2 system-ui, -apple-system, sans-serif;
-  --font-section-title: 600 20px/1.3 system-ui, -apple-system, sans-serif;
-  --font-card-title: 600 16px/1.4 system-ui, -apple-system, sans-serif;
-  --font-body: 400 16px/1.5 system-ui, -apple-system, sans-serif;
-  --font-secondary: 400 14px/1.5 system-ui, -apple-system, sans-serif;
-  --font-numeric-metric: 700 28px/1 system-ui, -apple-system, sans-serif;
+  --font-family: var(--font-manrope, 'Manrope'), system-ui, -apple-system, sans-serif;
+  --font-page-title: 700 24px/1.2 var(--font-family);
+  --font-section-title: 600 20px/1.3 var(--font-family);
+  --font-card-title: 600 16px/1.4 var(--font-family);
+  --font-body: 400 16px/1.5 var(--font-family);
+  --font-secondary: 400 14px/1.5 var(--font-family);
+  --font-numeric-metric: 700 28px/1 var(--font-family);
   --font-heading: var(--font-section-title);
 
   /* ============================

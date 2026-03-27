@@ -39,21 +39,25 @@ const ProgramStatusSection = memo(function ProgramStatusSection({ data }: { data
 
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>현재 프로그램</h2>
-      </div>
-      <Card as={Link} href={planHref} padding="md">
-        {/* INFO COLOR: plan-name — 현재 플랜명이 가장 먼저 읽히도록 강조 */}
-        <div style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)", marginBottom: "2px" }}>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
-        {planOverview.highlightedProgramName && (
-          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-name)", marginBottom: "var(--space-xs)" }}>{planOverview.highlightedProgramName}</div>
-        )}
-        <div style={{ display: "flex", gap: "var(--space-sm)", font: "var(--font-secondary)", color: "var(--text-meta)", marginBottom: "var(--space-md)" }}>
-          {planOverview.lastPerformedAtLabel && (
-            <span>마지막 수행 {planOverview.lastPerformedAtLabel}</span>
-          )}
-          <span>최근 7일 {weeklySummary.activeDays}일 운동</span>
+      <Card as={Link} href={planHref} padding="md" data-card-tone="accent">
+        {/* Eyebrow — Stitch "CURRENT FOCUS" 스타일 */}
+        <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-action)", marginBottom: "var(--space-xs)" }}>
+          Current Focus
         </div>
+        {/* INFO COLOR: plan-name — 현재 플랜명이 가장 먼저 읽히도록 강조 */}
+        <div style={{ font: "var(--font-page-title)", color: "var(--text-plan-name)", marginBottom: "2px", letterSpacing: "-0.3px" }}>{planOverview.highlightedPlanName ?? "플랜 없음"}</div>
+        {planOverview.highlightedProgramName && (
+          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-name)", marginBottom: "var(--space-sm)" }}>{planOverview.highlightedProgramName}</div>
+        )}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)" }}>
+          <div style={{ font: "var(--font-secondary)", color: "var(--text-meta)" }}>
+            {planOverview.lastPerformedAtLabel && (
+              <span>마지막 수행 {planOverview.lastPerformedAtLabel} · </span>
+            )}
+            <span>최근 {weeklySummary.activeDays}일 운동</span>
+          </div>
+        </div>
+        {/* Weekly progress dots */}
         <div aria-label="최근 7일 운동 활동" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "var(--space-xs)", textAlign: "center" }}>
           {weeklySummary.days.map((day) => (
             <div
@@ -84,10 +88,10 @@ const TodaySessionSection = memo(function TodaySessionSection({ data }: { data: 
 
   return (
     <section data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>오늘의 운동</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)" }}>
+        <h2 style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>오늘의 운동</h2>
         {hasTodayActivity && (
-          <span style={{ font: "var(--font-secondary)", color: "var(--text-status-completed)" }}>{today.completedSets}세트 완료</span>
+          <span style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-action)", letterSpacing: "0.04em" }}>{today.completedSets}세트 완료</span>
         )}
       </div>
       <SessionCard
@@ -107,8 +111,8 @@ const TodaySessionSection = memo(function TodaySessionSection({ data }: { data: 
 const LastSessionSection = memo(function LastSessionSection({ session }: { session: HomeLastSession }) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>지난 세션</h2>
+      <div style={{ marginBottom: "var(--space-sm)" }}>
+        <h2 style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>지난 세션</h2>
       </div>
       <SessionCard
         variant="last"
@@ -134,8 +138,8 @@ const StrengthProgressSection = memo(function StrengthProgressSection({ items }:
 
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>스트렝스 진행</h2>
+      <div style={{ marginBottom: "var(--space-sm)" }}>
+        <h2 style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>스트렝스 진행</h2>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
         {items.map((item) => {
@@ -182,8 +186,8 @@ function VolumeTrendSection({ points }: { points: HomeVolumeTrendPoint[] }) {
 
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>최근 세션 볼륨</h2>
+      <div style={{ marginBottom: "var(--space-sm)" }}>
+        <h2 style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>최근 세션 볼륨</h2>
       </div>
       <Card padding="md">
         {selected && (
@@ -248,8 +252,8 @@ const QuickStatsSection = memo(function QuickStatsSection({ stats }: { stats: Ho
 
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
-      <div style={{ marginBottom: "var(--space-md)" }}>
-        <h2 style={{ font: "var(--font-section-title)", color: "var(--text-section-title)", margin: 0 }}>요약 통계</h2>
+      <div style={{ marginBottom: "var(--space-sm)" }}>
+        <h2 style={{ fontSize: "11px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>요약 통계</h2>
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
         <Card padding="md" className="metric-badge metric-progress">
