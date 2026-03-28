@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle, useRef } from "react";
-import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
@@ -650,7 +649,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
         {showChartSection && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            <DashboardSurface>
+            <Card padding="none">
               <header style={{ padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
@@ -690,7 +689,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                   </div>
                 </div>
               )}
-            </DashboardSurface>
+            </Card>
 
             <Card tone="inset" padding="md" elevated={false} style={{ margin: 0 }}>
               <div className="metric-1rm" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

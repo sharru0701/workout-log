@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -29,18 +29,14 @@ const overrideCards = [
 export default function WorkoutOverridesPage() {
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="세션 조정"
-        title="세션 오버라이드"
-        description="오버라이드는 독립된 시작 화면이 아니라 오늘 기록 중 필요할 때 쓰는 보조 기능입니다. 실제 적용은 오늘 기록 화면에서 이어집니다."
-        primaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록으로 돌아가기", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더", tone: "secondary" }}
-        metrics={[
-          { label: "대상", value: "교체 / 보조 운동" },
-          { label: "사용 시점", value: "기록 중간" },
-          { label: "실행 위치", value: "오늘 기록 화면" },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Session Adjustments</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>세션 오버라이드</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>오버라이드는 독립된 시작 화면이 아니라 오늘 기록 중 필요할 때 쓰는 보조 기능입니다.</p>
+        <Link href={APP_ROUTES.todayLog} style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+          오늘 기록으로 돌아가기
+        </Link>
+      </div>
 
       <DashboardActionSection
         title="오버라이드 동작"

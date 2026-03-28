@@ -2,7 +2,6 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
@@ -292,11 +291,13 @@ function PlanHistoryPageContent() {
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
-      <DashboardSection
-        title="플랜 수행 히스토리"
-        description="플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다."
-        headerTrigger
-      >
+      <section>
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Plan History</span>
+          <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 4px" }}>수행 히스토리</h1>
+          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.4 }}>플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다.</p>
+        </div>
+
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
 
         {plansLoading && (
@@ -331,25 +332,30 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <Card tone="subtle" padding="sm" elevated={false}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택 플랜</div>
-              <div style={{ font: "var(--font-card-title)" }}>{selectedPlan.name}</div>
+          <div style={{ background: "var(--color-surface-2)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
+            <div style={{ gridColumn: "1 / -1" }}>
+              <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>선택 플랜</div>
+              <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--color-text)", letterSpacing: "-0.2px" }}>{selectedPlan.name}</div>
               {selectedPlan.baseProgramName ? (
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-                  기반 프로그램: {selectedPlan.baseProgramName}
+                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", marginTop: "2px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
+                  {selectedPlan.baseProgramName}
                 </div>
               ) : null}
             </div>
-            <div style={{ marginTop: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-              최근 수행: {formatDateTime(selectedPlan.lastPerformedAt)}
+            <div>
+              <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>최근 수행</div>
+              <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
             </div>
-          </Card>
+          </div>
         ) : null}
         </div>
-      </DashboardSection>
+      </section>
 
-      <DashboardSection title="수행 로그" description="기록 시점, 운동 구성, 핵심 지표를 확인합니다.">
+      <section style={{ marginTop: "var(--space-lg)" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
+          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Session Log</span>
+          <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>수행 로그</h2>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
         <NoticeStateRows
           message={
@@ -409,67 +415,63 @@ function PlanHistoryPageContent() {
 
               return (
                 <Card as="article" key={log.id} tone="inset" padding="sm" elevated={false}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-                      <strong>{formatDateTime(log.performedAt)}</strong>
-                      <span style={{ color: "var(--color-text)" }}>{exerciseSummary}</span>
-                      {sessionLabel || progressionText ? (
-                        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
-                          {sessionLabel ? (
-                            <span className="label label-program label-sm">
-                              {sessionLabel}
-                            </span>
-                          ) : null}
-                          {progressionText ? (
-                            <span className={progressionBadgeClass(progressionBadgeTone)}>
-                              {progressionText}
-                            </span>
-                          ) : null}
-                        </div>
-                      ) : null}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
+                    <div>
+                      <strong style={{ fontSize: "14px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", display: "block" }}>{formatDateTime(log.performedAt)}</strong>
+                      <span style={{ fontSize: "12px", color: "var(--color-text-muted)", marginTop: "2px", display: "block" }}>{exerciseSummary}</span>
                     </div>
-
-                    <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                      <a
-                        className="btn btn-inline-action btn-inline-action-primary"
-                        href={`/workout/session/${encodeURIComponent(log.id)}`}
-                      >
-                        세션 상세
-                      </a>
-                      <button
-                        type="button"
-                        className="btn btn-inline-action btn-inline-action-danger"
-                        disabled={deletingLogId === log.id}
-                        onClick={() => {
-                          void deleteLog(log);
-                        }}
-                      >
-                        {deletingLogId === log.id ? "삭제 중..." : "히스토리 삭제"}
-                      </button>
-                    </div>
+                    {sessionLabel || progressionText ? (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)", justifyContent: "flex-end" }}>
+                        {sessionLabel ? (
+                          <span className="label label-program label-sm">{sessionLabel}</span>
+                        ) : null}
+                        {progressionText ? (
+                          <span className={progressionBadgeClass(progressionBadgeTone)}>{progressionText}</span>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </div>
 
-                  <div style={{ marginTop: "var(--space-sm)", display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface)", borderRadius: 10, padding: "var(--space-sm)" }}>
                     <div>
-                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>작업 세트</div>
-                      <div style={{ font: "var(--font-card-title)" }}>{workSetCount}세트</div>
+                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세트</div>
+                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{workSetCount}</div>
                     </div>
                     <div>
-                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기록 시간</div>
-                      <div style={{ font: "var(--font-card-title)" }}>{formatDuration(log.durationMinutes)}</div>
+                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간</div>
+                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{formatDuration(log.durationMinutes)}</div>
                     </div>
                     <div>
-                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>추정 볼륨</div>
-                      <div style={{ font: "var(--font-card-title)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
+                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>볼륨</div>
+                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
                     </div>
                   </div>
 
                   {noteText ? (
-                    <div style={{ marginTop: "var(--space-sm)", borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)" }}>
-                      <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>노트</div>
-                      <div style={{ marginTop: "2px" }}>{noteText}</div>
+                    <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)", marginBottom: "var(--space-xs)" }}>
+                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>노트</div>
+                      <div style={{ fontSize: "13px", color: "var(--color-text)" }}>{noteText}</div>
                     </div>
                   ) : null}
+
+                  <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+                    <a
+                      className="btn btn-inline-action btn-inline-action-primary"
+                      href={`/workout/session/${encodeURIComponent(log.id)}`}
+                    >
+                      세션 상세
+                    </a>
+                    <button
+                      type="button"
+                      className="btn btn-inline-action btn-inline-action-danger"
+                      disabled={deletingLogId === log.id}
+                      onClick={() => {
+                        void deleteLog(log);
+                      }}
+                    >
+                      {deletingLogId === log.id ? "삭제 중..." : "히스토리 삭제"}
+                    </button>
+                  </div>
                 </Card>
               );
             })}
@@ -490,7 +492,7 @@ function PlanHistoryPageContent() {
           </div>
         ) : null}
         </div>
-      </DashboardSection>
+      </section>
     </PullToRefreshShell>
   );
 }

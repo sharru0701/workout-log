@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -74,18 +74,28 @@ export default async function CalendarOptionsPage({
 
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="캘린더 설정"
-        title="날짜를 눌렀을 때 어떻게 열지 정하기"
-        description="캘린더에서 날짜를 눌렀을 때 열기만 할지, 세션 생성까지 이어질지 정하는 화면입니다."
-        primaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.calendarHome, label: "캘린더 홈", tone: "secondary" }}
-        metrics={[
-          { label: "보기", value: viewMode },
-          { label: "열기", value: autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만" },
-          { label: "시간", value: openTime },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Calendar Settings</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>캘린더 옵션</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>날짜를 눌렀을 때 열기만 할지, 세션 생성까지 이어질지 정하는 화면입니다.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-xs)", marginBottom: "var(--space-md)", background: "var(--color-surface-2)", borderRadius: 12, padding: "var(--space-sm)" }}>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>보기</div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)" }}>{viewMode}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>열기</div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)" }}>{autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만"}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간</div>
+            <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)" }}>{openTime}</div>
+          </div>
+        </div>
+        <Link href={APP_ROUTES.calendarHome} style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+          캘린더로 돌아가기
+        </Link>
+      </div>
 
       <DashboardActionSection
         title="옵션 항목"

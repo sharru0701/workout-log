@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
-import { DashboardSection, DashboardSurface } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1231,34 +1230,31 @@ export default function ProgramStorePage() {
             <div style={{ ...skeletonStyle, height: 48, borderRadius: 10 }} />
           </div>
 
-          <section className="dashboard-section">
-            <div className="dashboard-section__header">
-              <div style={{ ...skeletonStyle, height: 22, width: "35%", marginBottom: "var(--space-sm)" }} />
-              <div style={{ ...skeletonStyle, height: 14, width: "65%", borderRadius: 4 }} />
+          <section>
+            <div style={{ marginBottom: "var(--space-sm)" }}>
+              <div style={{ ...skeletonStyle, height: 10, width: "25%", marginBottom: "6px" }} />
+              <div style={{ ...skeletonStyle, height: 18, width: "40%" }} />
             </div>
-            
-            <div className="dashboard-section__content">
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i} className="card" data-card-tone="inset" data-card-elevated="false" style={{ padding: "var(--space-md)" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
-                      <div style={{ flex: 1 }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
-                          <div style={{ ...skeletonStyle, height: 18, width: "60%" }} />
-                          <div style={{ ...skeletonStyle, height: 14, width: "20%", borderRadius: 4 }} />
-                        </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="card" data-card-tone="inset" data-card-elevated="false" style={{ padding: "var(--space-md)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
+                        <div style={{ ...skeletonStyle, height: 18, width: "60%" }} />
+                        <div style={{ ...skeletonStyle, height: 14, width: "20%", borderRadius: 4 }} />
                       </div>
-                      <div style={{ ...skeletonStyle, height: 22, width: 44, borderRadius: 12 }} />
                     </div>
-                    <div style={{ ...skeletonStyle, height: 14, width: "85%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
-                    <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                      {Array.from({ length: 3 }).map((_, j) => (
-                        <div key={j} style={{ ...skeletonStyle, height: 22, width: 56, borderRadius: 12 }} />
-                      ))}
-                    </div>
+                    <div style={{ ...skeletonStyle, height: 22, width: 44, borderRadius: 12 }} />
                   </div>
-                ))}
-              </div>
+                  <div style={{ ...skeletonStyle, height: 14, width: "85%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
+                  <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} style={{ ...skeletonStyle, height: 22, width: 56, borderRadius: 12 }} />
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </section>
         </div>
@@ -1288,11 +1284,11 @@ export default function ProgramStorePage() {
       />
 
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
-        <DashboardSection
-          title="공식 프로그램"
-          description="검증된 근력 훈련 프로그램 라이브러리"
-          headerTrigger
-        >
+        <section style={{ marginBottom: "var(--space-lg)" }}>
+          <div style={{ marginBottom: "var(--space-sm)" }}>
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Library</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>공식 프로그램</h2>
+          </div>
           <EmptyStateRows
             when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
             label="표시할 프로그램이 없습니다"
@@ -1310,11 +1306,15 @@ export default function ProgramStorePage() {
               ))}
             </div>
           )}
-        </DashboardSection>
+        </section>
       )}
 
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
-        <DashboardSection title="내 프로그램" description="커스터마이징하거나 직접 만든 프로그램">
+        <section style={{ marginBottom: "var(--space-lg)" }}>
+          <div style={{ marginBottom: "var(--space-sm)" }}>
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>My Programs</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>내 프로그램</h2>
+          </div>
           <div>
             {customListItems.map((item) => (
               <ProgramListCard
@@ -1326,23 +1326,23 @@ export default function ProgramStorePage() {
               />
             ))}
           </div>
-        </DashboardSection>
+        </section>
       ) : null}
 
-      <DashboardSection title="프로그램 만들기" description="기존 프로그램 기반으로 커스터마이징하거나 직접 구성">
-        <Card
-          as="button"
+      <section style={{ marginBottom: "var(--space-lg)" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
+          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Create</span>
+          <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>프로그램 만들기</h2>
+        </div>
+        <button
           type="button"
-          padding="md"
-          interactive
           onClick={openCreateSheet}
+          style={{ width: "100%", background: "var(--color-action)", color: "#fff", border: "none", borderRadius: 14, padding: "var(--space-md)", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: "4px" }}
         >
-          <span>새 프로그램 만들기</span>
-          <span>
-            기존 프로그램 복사 또는 빈 템플릿에서 시작
-          </span>
-        </Card>
-      </DashboardSection>
+          <span style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px" }}>새 프로그램 만들기</span>
+          <span style={{ fontSize: "12px", opacity: 0.82 }}>기존 프로그램 복사 또는 빈 템플릿에서 시작</span>
+        </button>
+      </section>
 
       <BottomSheet
         open={Boolean(detailTarget)}

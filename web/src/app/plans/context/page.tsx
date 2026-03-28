@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -100,18 +100,33 @@ export default async function PlanContextPage({
 
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="플랜 기준"
-        title="고급 생성 기준 확인"
-        description="이 화면은 플랜 생성에 쓰이는 날짜, 시간대, 세션 키 기준을 점검하는 용도입니다. 실제 시작은 프로그램 선택 또는 커스텀 프로그램 만들기 흐름에서 진행합니다."
-        primaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 고르기", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
-        metrics={[
-          { label: "시작일", value: startDate },
-          { label: "시간대", value: timezone },
-          { label: "세션 키", value: sessionKeyMode },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Advanced</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>생성 기준 확인</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>날짜, 시간대, 세션 키 기준을 점검하는 화면입니다.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "var(--space-xs)", marginBottom: "var(--space-md)", background: "var(--color-surface-2)", borderRadius: 12, padding: "var(--space-sm)" }}>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시작일</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text)" }}>{startDate}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간대</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text)" }}>{timezone}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세션 키</div>
+            <div style={{ fontSize: "12px", fontWeight: 700, color: "var(--color-text)" }}>{sessionKeyMode}</div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+          <Link href={APP_ROUTES.programStore} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+            프로그램 고르기
+          </Link>
+          <Link href={APP_ROUTES.programCreate} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 16px", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
+            커스텀 만들기
+          </Link>
+        </div>
+      </div>
 
       <DashboardActionSection
         title="기준 항목"

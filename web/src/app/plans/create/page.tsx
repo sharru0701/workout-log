@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -47,18 +47,19 @@ const creationCards = [
 export default function PlanCreatePage() {
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="플랜 생성 안내"
-        title="새 플랜은 프로그램 화면에서 시작합니다"
-        description="이 페이지는 생성 방식 안내용입니다. 실제 시작은 프로그램 스토어에서 고르거나 커스텀 프로그램을 만드는 흐름으로 진행됩니다."
-        primaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 고르기", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.programCreate, label: "커스텀 프로그램 만들기", tone: "secondary" }}
-        metrics={[
-          { label: "권장 시작", value: "프로그램 선택" },
-          { label: "직접 만들기", value: "커스텀 프로그램" },
-          { label: "고급 점검", value: "생성 기준 확인" },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Plan Setup</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>새 플랜 시작하기</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>실제 시작은 프로그램 스토어에서 고르거나 커스텀 프로그램을 만드는 흐름으로 진행됩니다.</p>
+        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+          <Link href={APP_ROUTES.programStore} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+            프로그램 고르기
+          </Link>
+          <Link href={APP_ROUTES.programCreate} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 16px", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
+            커스텀 만들기
+          </Link>
+        </div>
+      </div>
 
       <DashboardActionSection
         title="시작 경로"

@@ -10,7 +10,6 @@ import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { AccordionSection } from "@/components/ui/accordion-section";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
-import { DashboardScreen, DashboardHero, DashboardSection } from "@/components/dashboard/dashboard-primitives";
 
 // 임시로 주석 처리하거나 올바른 경로로 수정
 // const StatsFiltersSheet = dynamic(() => import("../../stats/_components/stats-filters-sheet"), {
@@ -263,15 +262,18 @@ export default function SystemStatsPage() {
 
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
-      <DashboardScreen>
-        <DashboardHero 
-          tone="quiet"
-          eyebrow="관리 도구"
-          title="시스템 통계"
-          description="앱 운영 상태와 UX 퍼널 지표를 모니터링합니다."
-        />
+      <div>
+        <div style={{ marginBottom: "var(--space-lg)" }}>
+          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Admin Tools</span>
+          <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 4px" }}>시스템 통계</h1>
+          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.4 }}>앱 운영 상태와 UX 퍼널 지표를 모니터링합니다.</p>
+        </div>
 
-        <DashboardSection title="데이터베이스 마이그레이션" headerTrigger>
+        <section style={{ marginBottom: "var(--space-lg)" }}>
+          <div style={{ marginBottom: "var(--space-sm)" }}>
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Database</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>마이그레이션</h2>
+          </div>
           <Card padding="md">
             <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
               {MIGRATION_LOOKBACK_PRESETS.map(p => (
@@ -288,9 +290,13 @@ export default function SystemStatsPage() {
               </div>
             )}
           </Card>
-        </DashboardSection>
+        </section>
 
-        <DashboardSection title="UX 퍼널 분석">
+        <section style={{ marginBottom: "var(--space-lg)" }}>
+          <div style={{ marginBottom: "var(--space-sm)" }}>
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Analytics</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>UX 퍼널 분석</h2>
+          </div>
           {uxSnapshot?.funnel && (
             <div style={{ display: "grid", gap: "var(--space-md)" }}>
               {uxSnapshot.funnel.steps.map(step => (
@@ -306,9 +312,13 @@ export default function SystemStatsPage() {
               ))}
             </div>
           )}
-        </DashboardSection>
+        </section>
 
-        <DashboardSection title="주요 지표 기준치 점검">
+        <section>
+          <div style={{ marginBottom: "var(--space-sm)" }}>
+            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Thresholds</span>
+            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>주요 지표 기준치</h2>
+          </div>
           <div style={{ display: "grid", gap: "var(--space-sm)" }}>
             {uxSnapshot?.thresholds.map(t => (
               <Card key={t.id} padding="sm">
@@ -321,8 +331,8 @@ export default function SystemStatsPage() {
               </Card>
             ))}
           </div>
-        </DashboardSection>
-      </DashboardScreen>
+        </section>
+      </div>
     </PullToRefreshShell>
   );
 }

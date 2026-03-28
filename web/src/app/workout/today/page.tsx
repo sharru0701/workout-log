@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -59,18 +59,19 @@ const supportCards = [
 export default function WorkoutTodayIndexPage() {
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="오늘 운동"
-        title="오늘 세션 생성과 기록"
-        description="실제 핵심 흐름은 플랜 준비 후 오늘 기록 화면에서 세션을 만들고 저장하는 것입니다. 이 화면은 그 동선과 보조 도구를 함께 정리합니다."
-        primaryAction={{ href: APP_ROUTES.todayLog, label: "오늘 기록 열기", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.programStore, label: "플랜 준비", tone: "secondary" }}
-        metrics={[
-          { label: "핵심 흐름", value: "플랜 준비 -> 세션 생성 -> 저장" },
-          { label: "날짜 기준", value: "오늘 / 특정 날짜" },
-          { label: "보조 기능", value: "오버라이드 / 캘린더" },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Workout</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>오늘 세션 생성과 기록</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>실제 핵심 흐름은 플랜 준비 후 오늘 기록 화면에서 세션을 만들고 저장하는 것입니다.</p>
+        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+          <Link href={APP_ROUTES.todayLog} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+            오늘 기록 열기
+          </Link>
+          <Link href={APP_ROUTES.programStore} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 16px", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
+            플랜 준비
+          </Link>
+        </div>
+      </div>
 
       <DashboardActionSection
         title="핵심 동선"

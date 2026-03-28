@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { DashboardSection } from "@/components/dashboard/dashboard-primitives";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
@@ -34,22 +33,25 @@ function PlanListCard({
   onManage: () => void;
 }) {
   return (
-    <Card padding="md" tone="inset" elevated={false}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
+    <Card padding="md" tone="inset" elevated={false} style={{ marginBottom: "var(--space-sm)" }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-sm)" }}>
         <div style={{ flex: 1 }}>
-          <strong style={{ font: "var(--font-card-title)", display: "block", marginBottom: "2px" }}>
+          <strong style={{ font: "var(--font-card-title)", display: "block", marginBottom: "3px" }}>
             {plan.name}
           </strong>
-          <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "block", marginBottom: "2px" }}>기반 프로그램: {plan.baseProgramName ?? "-"}</span>
+          {plan.baseProgramName ? (
+            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--color-text-muted)", display: "block", marginBottom: "2px" }}>
+              {plan.baseProgramName}
+            </span>
+          ) : null}
           <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", display: "block" }}>
-            최근 수행: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
+            최근: {plan.lastPerformedAt ? formatDateTime(plan.lastPerformedAt) : "기록 없음"}
           </span>
         </div>
         <button
           type="button"
           onClick={onManage}
-          className="label label-note"
-          style={{ cursor: "pointer", marginLeft: "var(--space-sm)" }}
+          style={{ flexShrink: 0, padding: "6px 14px", borderRadius: 10, background: "var(--color-surface-2)", border: "1px solid var(--color-border)", fontSize: "12px", fontWeight: 700, color: "var(--color-text)", cursor: "pointer", letterSpacing: "-0.1px" }}
         >
           관리
         </button>
@@ -57,8 +59,8 @@ function PlanListCard({
 
       <PrimaryButton
         as="a"
-        variant="primary"
-        size="lg"
+        variant="secondary"
+        size="md"
         fullWidth
         href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
       >
@@ -247,11 +249,13 @@ function PlansManagePageContent() {
     <>
       <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
-        <DashboardSection
-          title="플랜 목록"
-          description="진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요."
-          headerTrigger
-        >
+        <section>
+          <div style={{ marginBottom: "var(--space-md)" }}>
+            <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Plan Management</span>
+            <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 4px" }}>플랜 목록</h1>
+            <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.4 }}>진행 중인 플랜을 빠르게 확인하고, 필요할 때 이름 변경 또는 삭제를 관리하세요.</p>
+          </div>
+
           {plans.length > 0 || searchQuery.trim().length > 0 ? (
             <SearchInput
               value={searchQuery}
@@ -296,7 +300,7 @@ function PlansManagePageContent() {
           />
 
           {filteredPlans.length > 0 ? (
-            <div>
+            <div style={{ marginTop: "var(--space-sm)" }}>
               {filteredPlans.map((plan) => (
                 <PlanListCard
                   key={plan.id}
@@ -306,7 +310,7 @@ function PlansManagePageContent() {
               ))}
             </div>
           ) : null}
-        </DashboardSection>
+        </section>
       </PullToRefreshShell>
 
       <BottomSheet
@@ -321,25 +325,23 @@ function PlansManagePageContent() {
       >
         {managedPlan ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            <Card tone="subtle" padding="sm" elevated={false}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
-                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</div>
-                  <div style={{ font: "var(--font-card-title)" }}>{managedPlan.baseProgramName ?? "-"}</div>
-                </div>
-                <div style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "var(--space-xs)" }}>
-                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>생성일</div>
-                  <div>{formatDateTime(managedPlan.createdAt)}</div>
-                </div>
-                <div>
-                  <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>마지막 수행일</div>
-                  <div>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
-                </div>
+            <div style={{ background: "var(--color-surface-2)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-md)" }}>
+              <div>
+                <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>기반 프로그램</div>
+                <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>{managedPlan.baseProgramName ?? "-"}</div>
               </div>
-            </Card>
+              <div>
+                <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>생성일</div>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{formatDateTime(managedPlan.createdAt)}</div>
+              </div>
+              <div style={{ gridColumn: "1 / -1" }}>
+                <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>마지막 수행일</div>
+                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}</div>
+              </div>
+            </div>
 
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>플랜 이름</span>
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>플랜 이름</span>
               <AppTextInput
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}

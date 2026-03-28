@@ -1,6 +1,6 @@
+import Link from "next/link";
 import {
   DashboardActionSection,
-  DashboardHero,
   DashboardScreen,
 } from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -50,18 +50,19 @@ const integrationCards = [
 export default function TemplatesIndexPage() {
   return (
     <DashboardScreen>
-      <DashboardHero
-        eyebrow="템플릿"
-        title="프로그램의 원본을 다루는 화면"
-        description="템플릿은 직접 기록 화면으로 가지 않고, 프로그램 생성과 커스터마이징의 재료 역할을 합니다."
-        primaryAction={{ href: APP_ROUTES.templatesManage, label: "템플릿 관리", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 스토어", tone: "secondary" }}
-        metrics={[
-          { label: "역할", value: "프로그램 원본" },
-          { label: "주요 작업", value: "탐색 / 포크 / 편집" },
-          { label: "연결", value: "스토어 / 커스텀" },
-        ]}
-      />
+      <div style={{ marginBottom: "var(--space-lg)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Templates</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>프로그램 템플릿</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>템플릿은 직접 기록 화면으로 가지 않고, 프로그램 생성과 커스터마이징의 재료 역할을 합니다.</p>
+        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+          <Link href={APP_ROUTES.templatesManage} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
+            템플릿 관리
+          </Link>
+          <Link href={APP_ROUTES.programStore} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 16px", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
+            프로그램 스토어
+          </Link>
+        </div>
+      </div>
 
       <DashboardActionSection
         title="템플릿 작업"

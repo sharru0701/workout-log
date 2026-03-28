@@ -263,6 +263,11 @@ export function ExerciseCatalogContent() {
 
   return (
     <div>
+      <div style={{ marginBottom: "var(--space-md)" }}>
+        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Exercise Library</span>
+        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 0" }}>운동 종목 관리</h1>
+      </div>
+
       <LoadingStateRows
         active={loading}
         delayMs={120}
