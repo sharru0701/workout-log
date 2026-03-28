@@ -52,14 +52,18 @@ dialog.sheet[data-closing]::backdrop {
 
 .sheet-panel {
   position: relative;
-  background-color: color-mix(in srgb, var(--color-surface) 96%, transparent);
-  backdrop-filter: blur(16px) saturate(180%);
-  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  background-color: color-mix(in srgb, var(--color-surface) 97%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
+  /* Subtle border for glass effect delineation */
+  border: 1px solid var(--color-border);
   max-height: 100dvh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 -8px 32px var(--shadow-color-strong);
+  box-shadow:
+    0 -8px 32px var(--shadow-color-strong),
+    0 -2px 8px var(--shadow-color-soft);
   padding-bottom: var(--space-lg);
   overflow: hidden;
 
@@ -94,7 +98,7 @@ dialog.sheet[data-closing] .sheet-panel {
 
 .sheet-drag-handle {
   flex-shrink: 0;
-  height: calc(env(safe-area-inset-top, 0px) + 24px);
+  height: calc(env(safe-area-inset-top, 0px) + 28px);
   padding-top: env(safe-area-inset-top, 0px);
   display: flex;
   justify-content: center;
@@ -106,16 +110,18 @@ dialog.sheet[data-closing] .sheet-panel {
 }
 
 .sheet-drag-pill {
-  width: 36px;
-  height: 5px;
-  border-radius: 2.5px;
+  width: 40px;
+  height: 4px;
+  border-radius: 2px;
   background-color: var(--color-border);
-  opacity: 0.5;
-  transition: opacity 0.2s;
+  opacity: 0.7;
+  transition: width 0.2s ease, opacity 0.2s ease;
 }
 
-.sheet-drag-handle:active .sheet-drag-pill {
-  opacity: 0.8;
+.sheet-drag-handle:active .sheet-drag-pill,
+.sheet-panel[data-dragging] .sheet-drag-pill {
+  width: 52px;
+  opacity: 0.9;
 }
 
 /* ── Header ──────────────────────────────────────────────────────── */
@@ -125,7 +131,8 @@ dialog.sheet[data-closing] .sheet-panel {
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-md);
-  padding: 0 var(--space-md);
+  padding: 0 var(--space-md) var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
   min-height: 48px;
   flex-shrink: 0;
 }
@@ -133,35 +140,46 @@ dialog.sheet[data-closing] .sheet-panel {
 .sheet-title {
   flex: 1;
   text-align: center;
-  font: var(--font-card-title);
-  line-height: 1.25;
   padding: 0 var(--space-sm);
 }
 
 .sheet-title h2 {
   margin: 0;
-  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--color-text);
+  line-height: 1.2;
 }
 
 .sheet-title p {
-  font: var(--font-secondary);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--color-text-muted);
-  margin: 4px 0 0;
+  margin: 3px 0 0;
+  line-height: 1.4;
 }
 
+/* ── Sheet buttons ───────────────────────────────────────────────── */
+
 .sheet-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-surface-hover);
-  color: var(--color-text);
+  background-color: var(--color-surface-2);
+  color: var(--color-text-muted);
   border: 1px solid var(--color-border);
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.15s;
+  transition: background-color 0.15s, transform 0.15s, color 0.15s;
   flex-shrink: 0;
+}
+
+.sheet-btn:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
 .sheet-btn:active {
@@ -169,8 +187,8 @@ dialog.sheet[data-closing] .sheet-panel {
 }
 
 .sheet-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .sheet-btn-spacer {
@@ -182,6 +200,12 @@ dialog.sheet[data-closing] .sheet-panel {
   background-color: var(--color-action);
   color: #fff;
   border-color: var(--color-action);
+}
+
+.sheet-btn-action:hover {
+  background-color: var(--color-action);
+  color: #fff;
+  opacity: 0.9;
 }
 
 .sheet-btn-action:disabled {

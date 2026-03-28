@@ -51,7 +51,7 @@ export function BottomSheetActionHeader({
       </div>
       <button
         type="button"
-        className="mobile-bottom-sheet-btn"
+        className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn--action"
         onClick={action.onPress}
         aria-label={action.ariaLabel}
         disabled={action.disabled}

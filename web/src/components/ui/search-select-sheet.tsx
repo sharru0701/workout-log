@@ -82,9 +82,9 @@ export function SearchSelectCombobox({
             style={{ display: "flex", flexDirection: "column", gap: "2px", height: "300px", overflowY: "auto", marginTop: "var(--space-sm)" }}
           >
             {loading ? (
-              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{loadingText}</span>
+              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{loadingText}</span>
             ) : options.length === 0 ? (
-              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{emptyText}</span>
+              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{emptyText}</span>
             ) : (
               options.map((option) => (
                 <button
@@ -92,11 +92,26 @@ export function SearchSelectCombobox({
                   type="button"
                   aria-current={option.ariaCurrent ? "true" : undefined}
                   onClick={option.onSelect}
-                  style={{ display: "flex", alignItems: "center", width: "100%", padding: "12px", border: "none", borderRadius: "8px", backgroundColor: option.active ? "var(--color-selected-weak)" : "transparent", color: option.active ? "var(--color-action-strong)" : "var(--color-text)", cursor: "pointer", textAlign: "left", font: "var(--font-body)", fontWeight: option.active ? 600 : 400 }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    width: "100%",
+                    padding: "11px 12px",
+                    border: option.active ? "1px solid var(--color-selected-border)" : "1px solid transparent",
+                    borderRadius: "10px",
+                    backgroundColor: option.active ? "var(--color-action-weak)" : "transparent",
+                    color: option.active ? "var(--color-action-strong)" : "var(--color-text)",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    fontSize: "14px",
+                    fontWeight: option.active ? 700 : 500,
+                    letterSpacing: option.active ? "-0.1px" : "0",
+                    transition: "background-color 0.12s ease",
+                  }}
                 >
                   <span style={{ flex: 1 }}>{option.label}</span>
                   {option.active && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0 }}>
                       <path d="M20 6L9 17l-5-5" />
                     </svg>
                   )}

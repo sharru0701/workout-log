@@ -41,7 +41,7 @@
 [data-settings-touch-target] {
   display: flex;
   align-items: center;
-  min-height: 52px;
+  min-height: 56px;
   padding: var(--space-sm) var(--space-md);
   text-decoration: none;
   color: inherit;
@@ -50,11 +50,15 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: background-color 0.12s ease;
+}
+
+[data-settings-touch-target]:hover {
+  background-color: var(--color-surface-hover);
 }
 
 [data-settings-touch-target]:active {
-  background-color: var(--color-surface-secondary);
+  background-color: var(--color-surface-2);
 }
 
 [data-settings-touch-target]:focus-visible {
@@ -78,13 +82,16 @@
 
 [data-settings-row] .row-label {
   font: var(--font-body);
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 [data-settings-row] .row-subtitle {
   font: var(--font-secondary);
-  color: var(--text-meta);
-  font-size: 13px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
 [data-settings-row] .row-trailing {

@@ -7,10 +7,9 @@
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  pointer-events: none; /* 오버레이에만 클릭 이벤트를 줌 */
+  pointer-events: none;
 }
 
-/* state가 inert(닫힘) 상태일 땐 화면에서 감춤 */
 .mobile-bottom-sheet[inert] {
   opacity: 0;
   pointer-events: none;
@@ -19,46 +18,51 @@
   opacity: 1;
 }
 
+/* ── Overlay ──────────────────────────────────────────── */
+
 .mobile-bottom-sheet-overlay {
   position: absolute;
   inset: 0;
   background-color: var(--color-overlay);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   appearance: none;
   -webkit-appearance: none;
   border: none;
   width: 100%;
   height: 100%;
-  pointer-events: auto; /* 터치 잡아먹기 */
+  pointer-events: auto;
   cursor: pointer;
-
-  /* 애니메이션 페이드 용 */
   transition: opacity 0.3s ease;
-
 }
+
 .mobile-bottom-sheet[inert] .mobile-bottom-sheet-overlay {
   opacity: 0;
 }
 
-/* Safari 상단/하단 UI 투명화를 유지하기 위해 app-shell filter fallback은 비활성화 */
+/* ── Panel ────────────────────────────────────────────── */
 
 .mobile-bottom-sheet-panel {
   position: relative;
   background-color: var(--color-surface);
-  border-top-left-radius: 16px;
-  border-top-right-radius: 16px;
-  max-height: min(90vh, calc(100dvh - env(safe-area-inset-top, 0px)));
+  border-top-left-radius: 22px;
+  border-top-right-radius: 22px;
+  /* Subtle top border for delineation */
+  border-top: 1px solid var(--color-border);
+  border-left: 1px solid var(--color-border);
+  border-right: 1px solid var(--color-border);
+  max-height: min(92vh, calc(100dvh - env(safe-area-inset-top, 0px)));
   margin-top: env(safe-area-inset-top, 0px);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
-  box-shadow: 0 -4px 20px var(--shadow-color-strong);
+  box-shadow:
+    0 -8px 32px var(--shadow-color-strong),
+    0 -2px 8px var(--shadow-color-soft);
   padding: var(--space-md);
-  padding-bottom: var(--space-md); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+  padding-bottom: var(--space-md);
 
-  transform: translateY(100%); /* 기본 닫혀있음 */
-  /* 스프링 이징: 오픈/스냅백 시 자연스러운 탄성 효과 */
+  transform: translateY(100%);
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   overflow: hidden;
 }
@@ -67,30 +71,28 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   transform: translateY(var(--mobile-bottom-sheet-drag-offset, 0px));
 }
 
-/* 드래그 도중에는 애니메이션 스무딩 제거 */
 .mobile-bottom-sheet-panel.is-dragging {
   transition: none;
 }
 
-/* 닫기 애니메이션: 패널을 아래로 슬라이드 (ease-in으로 자연스러운 이탈감) */
 html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bottom-sheet-panel.is-closing {
   transform: translateY(100%);
   transition: transform 0.35s cubic-bezier(0.4, 0, 1, 1);
   pointer-events: none;
 }
 
-/* 닫기 중 오버레이 페이드아웃 */
 .mobile-bottom-sheet:has(.mobile-bottom-sheet-panel.is-closing) .mobile-bottom-sheet-overlay {
   opacity: 0;
   transition: opacity 0.35s cubic-bezier(0.4, 0, 1, 1);
 }
 
-/* 드래그 핸들 영역 */
+/* ── Drag handle ──────────────────────────────────────── */
+
 .mobile-bottom-sheet-drag-handle {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 0 8px;
+  padding: 6px 0 10px;
   margin: -4px calc(-1 * var(--space-md)) 0;
   cursor: grab;
   user-select: none;
@@ -101,26 +103,29 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   cursor: grabbing;
 }
 
-/* 드래그 pill 인디케이터 */
 .mobile-bottom-sheet-drag-handle-pill {
-  width: 36px;
+  width: 40px;
   height: 4px;
   border-radius: 2px;
   background-color: var(--color-border);
+  opacity: 0.7;
   transition: width 0.2s ease, opacity 0.2s ease;
 }
 
 .mobile-bottom-sheet-panel.is-dragging .mobile-bottom-sheet-drag-handle-pill {
-  width: 44px;
-  opacity: 0.7;
+  width: 52px;
+  opacity: 0.9;
 }
 
-/* 모달 헤더 (원형 액션 버튼 양반 양옆 배치) */
+/* ── Header ───────────────────────────────────────────── */
+
 .mobile-bottom-sheet-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-border);
   min-height: 44px;
   cursor: grab;
   user-select: none;
@@ -134,52 +139,62 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 .mobile-bottom-sheet-title {
   flex: 1;
   text-align: center;
-  font: var(--font-card-title);
-  line-height: 1.25;
   padding: 0 var(--space-sm);
   margin: 0;
 }
 
 .mobile-bottom-sheet-title h2 {
   margin: 0;
-  font: inherit;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  color: var(--color-text);
+  line-height: 1.2;
 }
 
 .mobile-bottom-sheet-title p {
-  font: var(--font-secondary);
+  font-size: 12px;
+  font-weight: 500;
   color: var(--color-text-muted);
-  margin: 2px 0 0;
+  margin: 3px 0 0;
+  line-height: 1.4;
 }
 
-/* 원형 액션 버튼 */
+/* ── Action buttons ───────────────────────────────────── */
+
 .mobile-bottom-sheet-btn {
-  width: 40px;
-  height: 40px;
-  border-radius: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-surface-hover);
-  color: var(--color-text);
+  background-color: var(--color-surface-2);
+  color: var(--color-text-muted);
   border: 1px solid var(--color-border);
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.2s;
+  transition: background-color 0.15s, transform 0.15s, color 0.15s;
   flex-shrink: 0;
+}
+
+.mobile-bottom-sheet-btn:hover {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text);
 }
 
 .mobile-bottom-sheet-btn:active {
   background-color: var(--color-border);
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .mobile-bottom-sheet-btn:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
 .mobile-bottom-sheet-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 16px;
+  height: 16px;
 }
 
 .mobile-bottom-sheet-btn-spacer {
@@ -187,16 +202,38 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   pointer-events: none;
 }
 
+/* Primary action button (save / confirm) */
+.mobile-bottom-sheet-btn--action {
+  background-color: var(--color-action);
+  color: #fff;
+  border-color: var(--color-action);
+}
+
+.mobile-bottom-sheet-btn--action:hover {
+  background-color: var(--color-action);
+  color: #fff;
+  opacity: 0.9;
+}
+
+.mobile-bottom-sheet-btn--action:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Content ──────────────────────────────────────────── */
+
 .mobile-bottom-sheet-content {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
 }
+
+/* ── Footer ───────────────────────────────────────────── */
 
 .mobile-bottom-sheet-footer {
   flex-shrink: 0;
-  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px)); /* [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응 */
+  padding-bottom: calc(var(--space-md) + env(safe-area-inset-bottom, 0px));
 }
