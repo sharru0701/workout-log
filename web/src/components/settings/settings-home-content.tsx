@@ -165,7 +165,7 @@ const aboutRows = [
 
 function SettingsSection({ title, rows }: { title: string; rows: typeof workoutRows }) {
   return (
-    <div style={{ marginBottom: "var(--space-xl)" }}>
+    <section style={{ marginBottom: "var(--space-xl)" }}>
       <div
         style={{
           fontSize: "9px",
@@ -209,7 +209,7 @@ function SettingsSection({ title, rows }: { title: string; rows: typeof workoutR
           />
         ))}
       </BaseGroupedList>
-    </div>
+    </section>
   );
 }
 
