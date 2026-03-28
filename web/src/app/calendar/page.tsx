@@ -736,10 +736,13 @@ export default function CalendarPage() {
             aria-label="연도와 월 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={monthPickerOpen}
-            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)", fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)" }}
+            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)", fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)" }}
           >
-            <span>{getYear(anchorDate)}년</span>
-            <span>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+            <span>{getYear(anchorDate)}</span>
+            <span style={{ color: "var(--color-action)" }}>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, color: "var(--color-text-muted)", opacity: 0.6 }}>
+              <path d="M6 9l6 6 6-6" />
+            </svg>
           </button>
         </div>
         <div style={{ display: "flex", gap: "var(--space-xs)" }}>
@@ -806,9 +809,32 @@ export default function CalendarPage() {
 
       {/* Selected date detail panel */}
       <div style={{ marginTop: "var(--space-md)" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
-          <span style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{formatKoreanDay(selectedDate)}</span>
-          {selectedDate === today && <span className="label label-status label-sm">오늘</span>}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "var(--space-sm)",
+          marginBottom: "var(--space-md)",
+          paddingBottom: "var(--space-md)",
+          borderBottom: "1px solid var(--color-border)",
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-action)", marginBottom: "2px" }}>
+              Selected
+            </div>
+            <span style={{ fontSize: "20px", fontWeight: 800, letterSpacing: "-0.4px", color: "var(--color-text)" }}>{formatKoreanDay(selectedDate)}</span>
+          </div>
+          {selectedDate === today && (
+            <span style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              color: "var(--color-action-strong)",
+              background: "var(--color-action-weak)",
+              border: "1px solid var(--color-selected-border)",
+              padding: "4px 12px",
+              borderRadius: "20px",
+              letterSpacing: "0.04em",
+            }}>오늘</span>
+          )}
         </div>
 
         {error && <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-sm)", font: "var(--font-secondary)" }}>{error}</div>}
@@ -846,31 +872,60 @@ export default function CalendarPage() {
           />
         ) : (
           /* No session yet */
-          <div style={{ textAlign: "center", padding: "var(--space-lg)", color: "var(--color-text-muted)" }}>
-            <div style={{ marginBottom: "var(--space-md)" }}>
-              <div aria-hidden="true" />
-              <div>
-                {isPastDateCreationBlocked ? null : (
-                  <span style={{ display: "block", fontWeight: 600 }}>
-                    {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
-                  </span>
-                )}
-                <span style={{ display: "block", fontSize: "13px", marginTop: "var(--space-xs)" }}>
-                  {isPastDateCreationBlocked
-                    ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다."
-                    : selectedCtx?.planned
+          <div style={{
+            padding: "24px 20px",
+            borderRadius: "14px",
+            border: "1px dashed var(--color-border)",
+            background: "var(--color-surface)",
+            textAlign: "center",
+          }}>
+            {isPastDateCreationBlocked ? (
+              <>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--color-surface-2)", border: "1px solid var(--color-border)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, color: "var(--color-text-muted)" }}>
+                    <circle cx="12" cy="12" r="10" /><path d="M4.93 4.93l14.14 14.14" />
+                  </svg>
+                </div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "4px" }}>기록 불가</div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+                  자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "color-mix(in srgb, var(--color-cta) 10%, var(--color-surface))", border: "1px solid color-mix(in srgb, var(--color-cta) 20%, var(--color-border))", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18, color: "var(--color-cta)" }}>
+                    <path d="M12 5v14M5 12h14" />
+                  </svg>
+                </div>
+                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "4px" }}>
+                  {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
+                </div>
+                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "16px", lineHeight: 1.5 }}>
+                  {selectedCtx?.planned
                     ? "기록하기를 누르면 이 날짜 세션을 준비하고 바로 기록을 시작합니다."
                     : "기록하기를 누르면 이 날짜 기록 화면으로 바로 이동합니다."}
-                </span>
-              </div>
-            </div>
-            {!isPastDateCreationBlocked ? (
-              <div>
-                <a href={workoutHref} className="btn btn-primary" style={{ display: "inline-flex" }}>
+                </div>
+                <a href={workoutHref} style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "10px 20px",
+                  borderRadius: "10px",
+                  background: "var(--color-cta)",
+                  color: "var(--color-cta-on)",
+                  textDecoration: "none",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  letterSpacing: "0.02em",
+                }}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
+                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+                  </svg>
                   기록하기
                 </a>
-              </div>
-            ) : null}
+              </>
+            )}
           </div>
         )}
       </div>

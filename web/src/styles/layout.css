@@ -10,8 +10,8 @@
   flex: 1;
   /* 상단 상태표시줄(노치) 영역 침범 방지 */
   padding-top: env(safe-area-inset-top, 0px);
-  /* 하단 탭바(56px) + iOS 홈 인디케이터 영역 + 여백 */
-  padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px) + var(--space-md));
+  /* 하단 탭바(64px) + iOS 홈 인디케이터 영역 + 여백 */
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--space-md));
 }
 
 /* Base utility padding container */

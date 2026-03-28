@@ -1,89 +1,230 @@
-import {
-  DashboardActionSection,
-  DashboardHero,
-  DashboardScreen,
-} from "@/components/dashboard/dashboard-primitives";
+import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 
-const managementCards = [
+type NavItem = {
+  href: string;
+  label: string;
+  subtitle: string;
+  description: string;
+  accentColor: string;
+  symbol: string;
+};
+
+const managementItems: NavItem[] = [
   {
     href: APP_ROUTES.plansManage,
-    title: "보유 플랜 관리",
-    subtitle: "운영 중인 플랜",
-    description: "이미 시작한 플랜의 이름, 최근 수행, 삭제와 히스토리를 관리합니다.",
-    meta: "운영 화면",
+    label: "보유 플랜 관리",
+    subtitle: "Active Plans",
+    description: "운영 중인 플랜 목록 · 오늘 운동 연결 · 삭제",
+    accentColor: "var(--color-action)",
     symbol: "PM",
-    tone: "accent" as const,
   },
   {
     href: APP_ROUTES.plansHistory,
-    title: "수행 히스토리",
-    subtitle: "기록 복기",
-    description: "플랜별 수행 로그와 진행 흐름을 되짚어 봅니다.",
-    meta: "복기와 비교",
+    label: "수행 히스토리",
+    subtitle: "History",
+    description: "플랜별 수행 로그와 진행 흐름",
+    accentColor: "var(--color-text-muted)",
     symbol: "HS",
-    tone: "neutral" as const,
   },
 ];
 
-const setupCards = [
+const setupItems: NavItem[] = [
   {
     href: APP_ROUTES.programStore,
-    title: "프로그램에서 새 플랜 시작",
-    subtitle: "권장 시작",
-    description: "새 플랜이 필요하면 프로그램을 고르고 바로 시작 흐름으로 연결합니다.",
-    meta: "새 플랜 준비",
+    label: "프로그램에서 새 플랜 시작",
+    subtitle: "Program Store",
+    description: "프로그램을 고르고 바로 플랜으로 연결",
+    accentColor: "var(--color-success)",
     symbol: "ST",
-    tone: "success" as const,
   },
   {
     href: APP_ROUTES.programCreate,
-    title: "커스텀 프로그램 만들기",
-    subtitle: "직접 구성",
-    description: "내 루틴을 직접 만든 뒤 플랜으로 이어갑니다.",
-    meta: "커스텀 시작",
+    label: "커스텀 프로그램 만들기",
+    subtitle: "Custom",
+    description: "내 루틴을 직접 만들고 플랜으로 시작",
+    accentColor: "var(--color-cta)",
     symbol: "CP",
-    tone: "warning" as const,
   },
   {
     href: APP_ROUTES.plansContext,
-    title: "생성 기준 확인",
-    subtitle: "고급 설정",
-    description: "날짜, 시간대, 세션 키 규칙 같은 고급 생성 기준을 점검합니다.",
-    meta: "생성 전 점검",
+    label: "생성 기준 확인",
+    subtitle: "Advanced",
+    description: "날짜, 세션 키 규칙 등 고급 생성 기준 점검",
+    accentColor: "var(--color-text-muted)",
     symbol: "CX",
-    tone: "default" as const,
   },
 ];
 
+function SectionTitle({ eyebrow, title }: { eyebrow: string; title: string }) {
+  return (
+    <div style={{ marginBottom: "var(--space-sm)" }}>
+      <div style={{
+        fontSize: "9px",
+        fontWeight: 700,
+        letterSpacing: "0.16em",
+        textTransform: "uppercase",
+        color: "var(--color-text-muted)",
+        marginBottom: "2px",
+      }}>
+        {eyebrow}
+      </div>
+      <h2 style={{
+        fontSize: "15px",
+        fontWeight: 800,
+        letterSpacing: "-0.2px",
+        color: "var(--color-text)",
+        margin: 0,
+      }}>
+        {title}
+      </h2>
+    </div>
+  );
+}
+
+function NavRow({ item }: { item: NavItem }) {
+  return (
+    <Link
+      href={item.href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-md)",
+        padding: "14px 16px",
+        borderRadius: "12px",
+        background: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
+        textDecoration: "none",
+        transition: "background 0.12s ease",
+        boxShadow: "0 1px 3px var(--shadow-color-soft)",
+      }}
+    >
+      {/* Symbol badge */}
+      <div style={{
+        width: 40,
+        height: 40,
+        borderRadius: 10,
+        background: `color-mix(in srgb, ${item.accentColor} 12%, var(--color-surface))`,
+        border: `1px solid color-mix(in srgb, ${item.accentColor} 25%, var(--color-border))`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        flexShrink: 0,
+        fontSize: "11px",
+        fontWeight: 800,
+        letterSpacing: "0.03em",
+        color: item.accentColor,
+      }}>
+        {item.symbol}
+      </div>
+
+      {/* Text */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: item.accentColor, marginBottom: "1px" }}>
+          {item.subtitle}
+        </div>
+        <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text)", letterSpacing: "-0.1px", marginBottom: "2px" }}>
+          {item.label}
+        </div>
+        <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.4 }}>
+          {item.description}
+        </div>
+      </div>
+
+      {/* Chevron */}
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0, color: "var(--color-text-muted)", opacity: 0.5 }}>
+        <path d="M9 18l6-6-6-6" />
+      </svg>
+    </Link>
+  );
+}
+
 export default function PlansIndexPage() {
   return (
-    <DashboardScreen>
-      <DashboardHero
-        eyebrow="플랜"
-        title="보유 플랜 운영과 새 시작 준비"
-        description="이 앱에서 플랜은 기록 전 준비 단계입니다. 이미 있는 플랜은 관리 화면에서 바로 오늘 운동으로 연결하고, 새로 시작할 때는 프로그램 선택 또는 직접 만들기로 들어갑니다."
-        primaryAction={{ href: APP_ROUTES.plansManage, label: "보유 플랜 관리", tone: "primary" }}
-        secondaryAction={{ href: APP_ROUTES.programStore, label: "프로그램 고르기", tone: "secondary" }}
-        metrics={[
-          { label: "현재 역할", value: "기록 전 준비" },
-          { label: "새 시작", value: "프로그램 선택 / 직접 만들기" },
-          { label: "빠른 연결", value: "관리 화면에서 오늘 운동" },
-        ]}
-      />
+    <div>
+      {/* ── Editorial Header ── */}
+      <div style={{
+        marginBottom: "var(--space-xl)",
+        paddingBottom: "var(--space-md)",
+        borderBottom: "1px solid var(--color-border)",
+      }}>
+        <div style={{
+          fontSize: "9px",
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
+          color: "var(--color-action)",
+          marginBottom: "4px",
+        }}>
+          Training Plans
+        </div>
+        <h1 style={{
+          fontSize: "28px",
+          fontWeight: 800,
+          letterSpacing: "-0.5px",
+          color: "var(--color-text)",
+          margin: 0,
+        }}>
+          플랜 관리
+        </h1>
+        <p style={{
+          fontSize: "13px",
+          color: "var(--color-text-muted)",
+          marginTop: "4px",
+          lineHeight: 1.5,
+        }}>
+          운영 중인 플랜을 관리하거나 새 플랜을 시작합니다.
+        </p>
+      </div>
 
-      <DashboardActionSection
-        title="보유 플랜 운영"
-        description="이미 사용 중인 플랜을 확인하고 바로 이어서 관리할 수 있습니다."
-        items={managementCards}
-        gridClassName="app-dashboard-action-grid--two"
-      />
+      {/* ── Primary CTA ── */}
+      <Link
+        href={APP_ROUTES.plansManage}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          width: "100%",
+          padding: "16px",
+          borderRadius: "14px",
+          background: "var(--color-action)",
+          color: "#fff",
+          textDecoration: "none",
+          fontSize: "15px",
+          fontWeight: 800,
+          letterSpacing: "-0.1px",
+          marginBottom: "var(--space-xl)",
+          boxShadow: "0 2px 8px color-mix(in srgb, var(--color-action) 30%, transparent)",
+          transition: "opacity 0.12s ease",
+        }}
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18 }}>
+          <rect x="3.5" y="4" width="17" height="16.5" rx="2" />
+          <path d="M3.5 9.5h17M7.5 13.5h4M7.5 17.5h4M14.5 12.5l1 1 2.5-2M14.5 16.5l1 1 2.5-2" />
+        </svg>
+        보유 플랜 관리
+      </Link>
 
-      <DashboardActionSection
-        title="새 플랜 준비"
-        description="새로 시작할 때 필요한 진입점만 별도로 묶었습니다."
-        items={setupCards}
-      />
-    </DashboardScreen>
+      {/* ── Management Section ── */}
+      <div style={{ marginBottom: "var(--space-xl)" }}>
+        <SectionTitle eyebrow="Manage" title="플랜 운영" />
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+          {managementItems.map((item) => (
+            <NavRow key={item.href} item={item} />
+          ))}
+        </div>
+      </div>
+
+      {/* ── Setup Section ── */}
+      <div style={{ marginBottom: "var(--space-xl)" }}>
+        <SectionTitle eyebrow="Setup" title="새 플랜 시작" />
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+          {setupItems.map((item) => (
+            <NavRow key={item.href} item={item} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

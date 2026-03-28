@@ -4,8 +4,14 @@ import { memo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-function HomeIcon() {
-  return (
+function HomeIcon({ active }: { active: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M4 11L12 4.5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M6 9.5V20h12V9.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9.5 20v-5.5h5V20" strokeLinecap="round" strokeLinejoin="round" fill="currentColor" stroke="none" />
+    </svg>
+  ) : (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M4 11L12 4.5l8 6.5" strokeLinecap="round" strokeLinejoin="round" />
       <path d="M6 9.5V20h12V9.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -14,94 +20,88 @@ function HomeIcon() {
   );
 }
 
-function RecordIcon() {
-  return (
+function RecordIcon({ active }: { active: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <rect x="4" y="3" width="16" height="18" rx="2" strokeLinejoin="round" />
+      <path d="M8 8h8" strokeLinecap="round" />
+      <path d="M8 12h5" strokeLinecap="round" />
+      <path d="M8 16h3" strokeLinecap="round" />
+      <circle cx="17" cy="16" r="3" fill="currentColor" stroke="none" />
+      <path d="M16 16l0.7 0.7L18 15.3" stroke="var(--color-cta-on)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ) : (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M4 12h16" strokeLinecap="round" />
-      <path d="M6.5 9.5v5" strokeLinecap="round" />
-      <path d="M9 7.5v9" strokeLinecap="round" />
-      <path d="M15 7.5v9" strokeLinecap="round" />
-      <path d="M17.5 9.5v5" strokeLinecap="round" />
+      <rect x="4" y="3" width="16" height="18" rx="2" strokeLinejoin="round" />
+      <path d="M8 8h8" strokeLinecap="round" />
+      <path d="M8 12h5" strokeLinecap="round" />
+      <path d="M8 16h3" strokeLinecap="round" />
+      <circle cx="17" cy="16" r="3" />
+      <path d="M16 16l0.7 0.7L18 15.3" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-function CalendarIcon() {
-  return (
+function CalendarIcon({ active }: { active: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
+      <path d="M3.5 9.5h17" strokeLinecap="round" />
+      <path d="M8 2.5v3" strokeLinecap="round" />
+      <path d="M16 2.5v3" strokeLinecap="round" />
+      <rect x="7" y="12" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="13" y="12" width="3.5" height="3.5" rx="0.5" fill="currentColor" stroke="none" />
+    </svg>
+  ) : (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
       <path d="M3.5 9.5h17" strokeLinecap="round" />
       <path d="M8 2.5v3" strokeLinecap="round" />
       <path d="M16 2.5v3" strokeLinecap="round" />
-      <path d="M8 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="7" y="12" width="3.5" height="3.5" rx="0.5" />
+      <rect x="13" y="12" width="3.5" height="3.5" rx="0.5" />
     </svg>
   );
 }
 
-function PlanIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
-      <path d="M3.5 9.5h17" strokeLinecap="round" />
-      <path d="M8 2.5v3" strokeLinecap="round" />
-      <path d="M16 2.5v3" strokeLinecap="round" />
-      <path d="M7.5 13.5h4" strokeLinecap="round" />
-      <path d="M7.5 17.5h4" strokeLinecap="round" />
-      <path d="M14.5 12.5l1 1 2.5-2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M14.5 16.5l1 1 2.5-2" strokeLinecap="round" strokeLinejoin="round" />
+function StatsIcon({ active }: { active: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <path d="M3 20h18" strokeLinecap="round" />
+      <rect x="5.5" y="12" width="3" height="8" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="10.5" y="7" width="3" height="13" rx="0.5" fill="currentColor" stroke="none" />
+      <rect x="15.5" y="4" width="3" height="16" rx="0.5" fill="currentColor" stroke="none" />
     </svg>
-  );
-}
-
-function StoreIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M6 2.5L3 8.5h18l-3-6H6z" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 8.5v11a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-11" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M9 12.5a3 3 0 0 0 6 0" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function StatsIcon() {
-  return (
+  ) : (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
       <path d="M3 20h18" strokeLinecap="round" />
-      <path d="M7 20V10" strokeLinecap="round" />
-      <path d="M12 20V5" strokeLinecap="round" />
-      <path d="M17 20V13" strokeLinecap="round" />
+      <path d="M7 20V12" strokeLinecap="round" />
+      <path d="M12 20V7" strokeLinecap="round" />
+      <path d="M17 20V4" strokeLinecap="round" />
     </svg>
   );
 }
 
-function SettingsIcon() {
-  return (
+function SettingsIcon({ active }: { active: boolean }) {
+  return active ? (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+      <circle cx="12" cy="12" r="3" fill="currentColor" stroke="none" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  ) : (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
-      <path d="M4 6h4" strokeLinecap="round" />
-      <circle cx="10" cy="6" r="2" />
-      <path d="M12 6h8" strokeLinecap="round" />
-      <path d="M4 12h10" strokeLinecap="round" />
-      <circle cx="16" cy="12" r="2" />
-      <path d="M18 12h2" strokeLinecap="round" />
-      <path d="M4 18h2" strokeLinecap="round" />
-      <circle cx="8" cy="18" r="2" />
-      <path d="M10 18h10" strokeLinecap="round" />
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
 
 const tabs = [
-  { href: "/", label: "홈", ariaLabel: "홈", Icon: HomeIcon },
-  { href: "/workout/log", label: "기록", ariaLabel: "운동기록", Icon: RecordIcon },
-  { href: "/calendar", label: "캘린더", ariaLabel: "캘린더", Icon: CalendarIcon },
-  { href: "/plans/manage", label: "플랜", ariaLabel: "플랜 관리", Icon: PlanIcon },
-  { href: "/program-store", label: "스토어", ariaLabel: "프로그램 스토어", Icon: StoreIcon },
-  { href: "/stats", label: "통계", ariaLabel: "통계", Icon: StatsIcon },
-  { href: "/settings", label: "설정", ariaLabel: "설정", Icon: SettingsIcon },
+  { href: "/", label: "Home", ariaLabel: "홈", Icon: HomeIcon },
+  { href: "/workout/log", label: "Record", ariaLabel: "운동기록", Icon: RecordIcon },
+  { href: "/calendar", label: "Calendar", ariaLabel: "캘린더", Icon: CalendarIcon },
+  { href: "/stats", label: "Stats", ariaLabel: "통계", Icon: StatsIcon },
+  { href: "/settings", label: "Settings", ariaLabel: "설정", Icon: SettingsIcon },
 ];
 
 function tabIsActive(pathname: string, href: string) {
@@ -114,7 +114,6 @@ type TabItemProps = {
   isActive: boolean;
 };
 
-// PERF: pathname이 바뀌어도 비활성 탭은 재렌더링하지 않음
 const TabItem = memo(function TabItem({ tab, isActive }: TabItemProps) {
   const Icon = tab.Icon;
   return (
@@ -126,7 +125,7 @@ const TabItem = memo(function TabItem({ tab, isActive }: TabItemProps) {
     >
       <span className="bottom-tab-pill">
         <span className="bottom-tab-icon" aria-hidden="true">
-          <Icon />
+          <Icon active={isActive} />
         </span>
         <span className="bottom-tab-label">{tab.label}</span>
       </span>

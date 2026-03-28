@@ -16,6 +16,12 @@
   --color-text-subtle: #93a1a1;
   --color-text-on-primary: #fdf6e3;
 
+  /* CTA — Stitch tertiary-fixed orange: vivid action color for primary CTAs, active nav */
+  --color-cta: #fb5b2d;
+  --color-cta-strong: #d94a1e;
+  --color-cta-weak: color-mix(in srgb, #fb5b2d 12%, var(--color-surface));
+  --color-cta-on: #fff7f5;
+
   /* Brand + semantic accents */
   --color-primary: #268bd2;
   --color-primary-strong: #1a6ba3;
@@ -374,6 +380,10 @@
     --color-action: var(--color-info);
     --color-action-strong: var(--color-info-strong);
     --color-action-weak: color-mix(in srgb, var(--color-action) 18%, var(--color-surface));
+    --color-cta: #fb5b2d;
+    --color-cta-strong: #e8512a;
+    --color-cta-weak: color-mix(in srgb, #fb5b2d 14%, var(--color-surface));
+    --color-cta-on: #fff7f5;
     --color-text-on-action: var(--color-text-on-primary);
     --color-selected-bg: var(--color-action);
     --color-selected-text: var(--color-text-on-action);
@@ -606,6 +616,10 @@
   --color-selected-border: color-mix(in srgb, var(--color-action) 36%, transparent);
   --color-calendar-saturday: var(--color-text);
   --color-calendar-dot: var(--color-action-strong);
+  --color-cta: #fb5b2d;
+  --color-cta-strong: #e8512a;
+  --color-cta-weak: color-mix(in srgb, #fb5b2d 14%, var(--color-surface));
+  --color-cta-on: #fff7f5;
   --color-icon-button-bg: color-mix(in srgb, var(--color-surface-2) 88%, var(--color-surface));
   --color-icon-button-border: color-mix(in srgb, var(--color-border-strong) 24%, var(--color-border));
   --color-icon-button-text: color-mix(in srgb, var(--color-text-muted) 92%, var(--color-text));

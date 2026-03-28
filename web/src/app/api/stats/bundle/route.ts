@@ -200,20 +200,22 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Pr
     .slice(0, limit);
 }
 
-async function GETImpl(_req: Request) {
+async function GETImpl(req: Request) {
   try {
     const userId = getAuthenticatedUserId();
+    const url = new URL(req.url);
+    // days=0 means "all time"; default 30
+    const daysParam = url.searchParams.get("days");
+    const days = daysParam !== null ? parseInt(daysParam, 10) : 30;
+
     const to = new Date();
-    const from30 = new Date(to);
-    from30.setDate(from30.getDate() - 30);
-    const from90 = new Date(to);
-    from90.setDate(from90.getDate() - 90);
+    const from = days > 0 ? new Date(to.getTime() - days * 86_400_000) : new Date(0);
 
     // PERF: 캐시 파라미터를 일 단위 문자열로 고정 → 동일 날짜 내 반복 요청에서 캐시 히트
     const cacheParams = {
       to: to.toISOString().slice(0, 10),
-      from30: from30.toISOString().slice(0, 10),
-      from90: from90.toISOString().slice(0, 10),
+      from: from.toISOString().slice(0, 10),
+      days,
       prsLimit: 10,
     };
 
@@ -222,18 +224,18 @@ async function GETImpl(_req: Request) {
       tonnage30d: number;
       compliance90d: ComplianceResult;
       prs90d: PrItem[];
-    }>({ userId, metric: "bundle_v1", params: cacheParams, maxAgeSeconds: 300 });
+    }>({ userId, metric: "bundle_v2", params: cacheParams, maxAgeSeconds: 300 });
     if (cached) return NextResponse.json(cached);
 
     const [sessions30d, tonnage30d, compliance90d, prs90d] = await Promise.all([
-      fetchSavedLogs(userId, from30, to),
-      fetchVolumeTonnage(userId, from30, to),
-      fetchCompliance(userId, from90, to),
-      fetchPrs(userId, from90, to, 10),
+      fetchSavedLogs(userId, from, to),
+      fetchVolumeTonnage(userId, from, to),
+      fetchCompliance(userId, from, to),
+      fetchPrs(userId, from, to, 10),
     ]);
 
     const payload = { sessions30d, tonnage30d, compliance90d, prs90d };
-    await setStatsCache({ userId, metric: "bundle_v1", params: cacheParams, payload });
+    await setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload });
 
     return NextResponse.json(payload);
   } catch (e: any) {

@@ -469,11 +469,12 @@ function WorkoutRecordInlinePicker({
     <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
       <button
         type="button"
+        className="workout-record-picker-btn"
         style={{
           width: "100%",
-          padding: "var(--space-xs)",
+          padding: "6px 4px",
           border: "1px solid var(--color-border)",
-          borderRadius: "6px",
+          borderRadius: "8px",
           backgroundColor: failed
             ? "color-mix(in srgb, var(--color-danger) 25%, var(--color-surface))"
             : complete
@@ -491,8 +492,12 @@ function WorkoutRecordInlinePicker({
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          font: "var(--font-primary)",
-          fontWeight: color ? 700 : "inherit",
+          fontSize: "22px",
+          fontWeight: 700,
+          letterSpacing: "-0.5px",
+          lineHeight: 1,
+          fontVariantNumeric: "tabular-nums",
+          minHeight: "44px",
         }}
         onClick={() => setOpen(true)}
         aria-label={`${label}: ${displayValue}`}
@@ -2004,30 +2009,28 @@ export default function WorkoutRecordPage() {
             ) : null}
           </section>
 
-          {/* ── Last Session ── */}
-          <section className="last-session-strip">
-            <div className="last-session-strip__label">지난 세션</div>
-            <SessionCard
-              variant="last"
-              title={lastSession?.dateLabel ? `${lastSession.weekLabel} · ${lastSession.sessionLabel}` : ""}
-              date={lastSession?.dateLabel ?? null}
-              totalSets={lastSession?.totalSets}
-              totalVolume={lastSession?.totalVolume}
-              bodyweightKg={lastSession?.bodyweightKg}
-              exercises={lastSession?.exercises?.map((ex) => ({ name: ex.name, summary: ex.bestSet })) ?? []}
-            />
-          </section>
-
           {/* ── Today Session ── */}
           <section>
-            {/* Session Progress Header — Stitch editorial style */}
+            {/* Session Progress Header — finish quick-action at top right */}
             <div className="session-progress-header">
-              <div className="session-progress-header__eyebrow">
-                {isEditingExistingLog ? "기록 수정" : "Active Session"}
+              <div className="session-progress-header__top-row">
+                <div className="session-progress-header__title-group">
+                  <div className="session-progress-header__eyebrow">
+                    {isEditingExistingLog ? "기록 수정" : "Active Session"}
+                  </div>
+                  <h2 className="session-progress-header__title">
+                    Week {draft.session.week} · {draft.session.sessionType}
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="btn-finish-quick"
+                  onClick={() => { void handleSave(); }}
+                  disabled={workflowState === "saving"}
+                >
+                  {workflowState === "saving" ? "저장 중…" : isEditingExistingLog ? "수정 완료" : "운동 완료"}
+                </button>
               </div>
-              <h2 className="session-progress-header__title">
-                Week {draft.session.week} · {draft.session.sessionType}
-              </h2>
               <div className="session-progress-header__chips">
                 <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
                   {completedExercisesCount}/{visibleExercises.length} 운동
@@ -2040,6 +2043,30 @@ export default function WorkoutRecordPage() {
                 ) : null}
               </div>
             </div>
+
+            {/* ── Compact Last Session Banner ── */}
+            {lastSession && (
+              <div className="last-session-banner">
+                <div className="last-session-banner__icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
+                    <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
+                  </svg>
+                </div>
+                <div className="last-session-banner__body">
+                  <div className="last-session-banner__label">지난 세션</div>
+                  <div className="last-session-banner__title">
+                    {lastSession.weekLabel} · {lastSession.sessionLabel}
+                  </div>
+                  <div className="last-session-banner__meta">{lastSession.dateLabel}</div>
+                </div>
+                {lastSession.totalSets != null && (
+                  <div className="last-session-banner__stat">
+                    <div className="last-session-banner__stat-value">{lastSession.totalSets}</div>
+                    <div className="last-session-banner__stat-label">세트</div>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div>
               {visibleExercises.length > 0 && (
@@ -2213,7 +2240,7 @@ export default function WorkoutRecordPage() {
                 />
               </label>
 
-              {/* ── Finish Workout CTA ── */}
+              {/* ── Finish Workout CTA (bottom — also reachable from top header btn) ── */}
               <div className="finish-workout-cta">
                 <PrimaryButton
                   type="button"
@@ -2228,8 +2255,8 @@ export default function WorkoutRecordPage() {
                   {workflowState === "saving"
                     ? "저장 중..."
                     : isEditingExistingLog
-                      ? "운동기록 수정"
-                      : "운동기록 완료"}
+                      ? "운동기록 수정 완료"
+                      : "운동기록 완료 및 저장"}
                 </PrimaryButton>
               </div>
           </section>

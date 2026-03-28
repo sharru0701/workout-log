@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Bottom Tab Bar — PWA 스타일 하단 고정 탭 내비게이션
+   Bottom Tab Bar — 5탭 Stitch-style, premium mobile nav
    ========================================================================== */
 
 .bottom-tab-bar {
@@ -12,13 +12,13 @@
   display: flex;
   align-items: stretch;
 
-  /* 탭 아이콘+레이블 영역 높이 56px + iOS 홈 인디케이터 영역 */
+  /* 탭 영역 64px + iOS 홈 인디케이터 */
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* Glassmorphism 배경 — 스크롤 콘텐츠가 비쳐 보임 */
-  background: color-mix(in srgb, var(--color-surface) 85%, transparent);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  /* Frosted glass background */
+  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
 
   border-top: 1px solid var(--color-border);
 }
@@ -33,53 +33,52 @@
   align-items: center;
   justify-content: center;
 
-  /* 탭 영역 최소 높이 */
-  min-height: 56px;
-  padding: 4px 2px;
+  min-height: 64px;
+  padding: 6px 2px;
 
   color: var(--color-text-muted);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.15s ease;
-
-  /* 터치 영역 확보 */
+  transition: color 0.12s ease;
   cursor: pointer;
 }
 
 .bottom-tab-item:active {
-  opacity: 0.65;
+  opacity: 0.55;
+  transform: scale(0.94);
+  transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
-/* 활성 탭 */
+/* 활성 탭 — CTA orange */
 .bottom-tab-item--active {
-  color: var(--color-action-strong);
+  color: var(--color-cta);
 }
 
 /* --------------------------------------------------------------------------
-   Pill wrapper — 아이콘 + 레이블을 함께 감쌈
+   Pill wrapper — 아이콘 위에 indicator dot
    -------------------------------------------------------------------------- */
 .bottom-tab-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
-  padding: 5px 14px;
+  gap: 4px;
+  padding: 4px 12px;
   border-radius: 20px;
-  transition: background 0.2s ease, transform 0.15s ease;
+  transition: background 0.18s ease;
+  position: relative;
 }
 
-/* 활성 탭 pill 강조 */
+/* 활성 탭 pill — orange tint background */
 .bottom-tab-item--active .bottom-tab-pill {
-  background: color-mix(in srgb, var(--color-action) 14%, transparent);
-  transform: translateY(-1px);
+  background: var(--color-cta-weak);
 }
 
 /* --------------------------------------------------------------------------
    아이콘
    -------------------------------------------------------------------------- */
 .bottom-tab-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,27 +86,30 @@
 }
 
 .bottom-tab-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   flex-shrink: 0;
+  transition: stroke-width 0.12s ease;
 }
 
 .bottom-tab-item--active .bottom-tab-icon svg {
-  stroke-width: 2.4;
+  stroke-width: 2.5;
 }
 
 /* --------------------------------------------------------------------------
-   레이블
+   레이블 — Space Grotesk-inspired: uppercase, tight tracking
    -------------------------------------------------------------------------- */
 .bottom-tab-label {
-  font-size: 10px;
-  font-weight: 500;
+  font-size: 9px;
+  font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.01em;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
 /* 활성 탭 레이블 */
 .bottom-tab-item--active .bottom-tab-label {
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: 0.1em;
 }
