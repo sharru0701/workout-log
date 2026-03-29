@@ -141,6 +141,14 @@ const MODULE_NAMES: Record<string, string> = {
   PULL: "풀업 / 로우",
 };
 
+const STORE_CATEGORIES = [
+  { key: "all", label: "전체" },
+  { key: "strength", label: "근력" },
+  { key: "hypertrophy", label: "근비대" },
+  { key: "beginner", label: "입문" },
+  { key: "endurance", label: "지구력" },
+] as const;
+
 const skeletonStyle: React.CSSProperties = {
   background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
   backgroundSize: "200% 100%",
@@ -207,6 +215,39 @@ function tagLabelClass(tag: string): string {
   return "label label-tag-custom label-sm";
 }
 
+function programCardBadge(item: ProgramListItem): { label: string; style: React.CSSProperties } {
+  const tags = (item.template.tags ?? []).map((t) => t.toLowerCase());
+  const isBeginnerProgram = tags.some((t) => ["novice", "beginner", "입문", "초보"].includes(t));
+  if (item.source === "CUSTOM") {
+    return {
+      label: "커스텀",
+      style: {
+        background: "color-mix(in srgb, var(--color-secondary) 15%, transparent)",
+        color: "var(--color-secondary)",
+        border: "1px solid color-mix(in srgb, var(--color-secondary) 20%, transparent)",
+      },
+    };
+  }
+  if (isBeginnerProgram) {
+    return {
+      label: "입문 추천",
+      style: {
+        background: "color-mix(in srgb, var(--color-tertiary) 15%, transparent)",
+        color: "var(--color-tertiary)",
+        border: "1px solid color-mix(in srgb, var(--color-tertiary) 20%, transparent)",
+      },
+    };
+  }
+  return {
+    label: "공식",
+    style: {
+      background: "color-mix(in srgb, var(--color-primary) 15%, transparent)",
+      color: "var(--color-primary)",
+      border: "1px solid color-mix(in srgb, var(--color-primary) 20%, transparent)",
+    },
+  };
+}
+
 function ProgramListCard({
   item,
   onPress,
@@ -214,48 +255,157 @@ function ProgramListCard({
   item: ProgramListItem;
   onPress: () => void;
 }) {
-  const badge = sourceBadgeMeta(item.source);
+  const info = getProgramDetailInfo(item.template);
   const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
+  const isMarket = item.source === "MARKET";
+
+  const badge = programCardBadge(item);
+
+  const difficultyStat = info.stats.find((s) => s.label === "난이도");
+  const frequencyStat = info.stats.find((s) => s.label === "주간 빈도");
+  const cycleStat = info.stats.find((s) => s.label === "사이클");
+  const splitStat = info.stats.find((s) => s.label === "분할");
+  const periodStat = info.stats.find((s) => s.label === "기간");
+
+  const levelLabel = difficultyStat?.value ?? "일반";
+  const frequencyLabel = frequencyStat?.value ?? splitStat?.value ?? null;
+  const durationLabel = cycleStat?.value ?? periodStat?.value ?? null;
+
+  const intensityMap: Record<string, number> = { "초급": 2, "중급": 3, "고급": 4, "일반": 3 };
+  const intensityFill = intensityMap[levelLabel] ?? 3;
+
+  const metaItems = [
+    durationLabel ? { icon: "calendar_today", label: "기간", value: durationLabel } : null,
+    frequencyLabel ? { icon: "event_repeat", label: "빈도", value: frequencyLabel } : null,
+    { icon: "leaderboard", label: "난이도", value: levelLabel },
+  ].filter((m): m is { icon: string; label: string; value: string } => m !== null);
+
+  const badgeLabelStyle: React.CSSProperties = {
+    fontFamily: "var(--font-label-family)",
+    fontSize: "10px",
+    fontWeight: 700,
+    letterSpacing: "0.1em",
+    textTransform: "uppercase",
+    padding: "2px 8px",
+    borderRadius: 4,
+    display: "inline-block",
+    ...badge.style,
+  };
 
   return (
-    <Card
-      as="button"
-      type="button"
-      padding="sm"
-      tone="inset"
-      elevated={false}
-      interactive
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onPress}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onPress(); }}
+      style={{
+        background: "var(--color-surface-container-low)",
+        borderRadius: 16,
+        padding: "var(--space-lg)",
+        cursor: "pointer",
+        marginBottom: "var(--space-md)",
+        outline: "none",
+      }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--color-surface-container)"; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--color-surface-container-low)"; }}
+      onFocus={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--color-surface-container)"; }}
+      onBlur={(e) => { (e.currentTarget as HTMLDivElement).style.background = "var(--color-surface-container-low)"; }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
-        <div>
-          {/* INFO COLOR: plan-name — 프로그램명은 명시적 색상으로 계층 보장 */}
-          <strong style={{ font: "var(--font-card-title)", color: "var(--text-plan-name)" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <span style={badgeLabelStyle}>{badge.label}</span>
+          {/* INFO COLOR: plan-name */}
+          <h2 style={{
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "20px",
+            fontWeight: 800,
+            letterSpacing: "-0.3px",
+            color: "var(--text-plan-name)",
+            margin: "var(--space-xs) 0 2px",
+            lineHeight: 1.2,
+          }}>
             {formatProgramDisplayName(item.name)}
-          </strong>
+          </h2>
+          {item.subtitle ? (
+            <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>
+              {item.subtitle}
+            </p>
+          ) : null}
         </div>
-        <span className={`${badge.className} label-sm`}>
-          {badge.label}
-        </span>
+        {tags.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 4, justifyContent: "flex-end", flexShrink: 0, marginLeft: "var(--space-sm)" }}>
+            {/* INFO COLOR: tag semantic */}
+            {tags.slice(0, 2).map((tag) => (
+              <span key={tag} className={tagLabelClass(tag)}>{tag}</span>
+            ))}
+          </div>
+        )}
       </div>
 
       {item.template.description ? (
-        <p style={{ font: "var(--font-secondary)", color: "var(--text-meta)", marginBottom: "var(--space-sm)", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
           {item.template.description}
         </p>
       ) : null}
 
-      {tags.length > 0 ? (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
-          {/* INFO COLOR: tag semantic — 태그 속성별로 색상 분류 */}
-          {tags.slice(0, 5).map((tag) => (
-            <span key={tag} className={tagLabelClass(tag)}>
-              {tag}
-            </span>
+      {/* Meta info */}
+      {metaItems.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-md)", marginBottom: "var(--space-md)", background: "var(--color-surface-container-lowest)", padding: "var(--space-sm) var(--space-md)", borderRadius: 10 }}>
+          {metaItems.map((meta) => (
+            <div key={meta.label} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--color-text-subtle)" }}>
+                {meta.label}
+              </span>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text)", display: "flex", alignItems: "center", gap: 4 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: 14 }}>{meta.icon}</span>
+                {meta.value}
+              </span>
+            </div>
           ))}
         </div>
-      ) : null}
-    </Card>
+      )}
+
+      {/* Intensity bar + CTA */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-sm)" }}>
+        <div style={{ flex: 1 }}>
+          <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--color-text-subtle)", display: "block", marginBottom: 6 }}>
+            강도
+          </span>
+          <div style={{ display: "flex", gap: 3 }}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div
+                key={i}
+                style={{
+                  height: 6,
+                  flex: 1,
+                  borderRadius: 9999,
+                  background: i <= intensityFill ? "var(--color-primary)" : "var(--color-surface-container-highest)",
+                }}
+              />
+            ))}
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); onPress(); }}
+          style={{
+            background: isMarket ? "var(--color-action)" : "var(--color-surface-container-highest)",
+            color: isMarket ? "#fff" : "var(--color-text)",
+            border: "none",
+            borderRadius: 10,
+            padding: "10px 20px",
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "13px",
+            fontWeight: 700,
+            cursor: "pointer",
+            flexShrink: 0,
+          }}
+        >
+          {isMarket ? "시작하기" : "편집"}
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -599,6 +749,7 @@ export default function ProgramStorePage() {
   const [notice, setNotice] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [storeQuery, setStoreQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
   const [detailTargetId, setDetailTargetId] = useState<string | null>(null);
   const [startProgramDraft, setStartProgramDraft] = useState<StartProgramDraft | null>(null);
@@ -630,6 +781,20 @@ export default function ProgramStorePage() {
       ).includes(normalizedQuery);
     });
   }, [listItems, storeQuery]);
+  const categoryFilteredItems = useMemo(() => {
+    if (categoryFilter === "all") return filteredListItems;
+    return filteredListItems.filter((item) => {
+      const tags = (item.template.tags ?? []).map((t) => t.toLowerCase()).join(" ");
+      switch (categoryFilter) {
+        case "strength": return tags.includes("strength") || tags.includes("근력") || tags.includes("power");
+        case "hypertrophy": return tags.includes("hypertrophy") || tags.includes("근비대");
+        case "beginner": return tags.includes("beginner") || tags.includes("novice") || tags.includes("입문") || tags.includes("초보");
+        case "endurance": return tags.includes("endurance") || tags.includes("지구력");
+        default: return true;
+      }
+    });
+  }, [filteredListItems, categoryFilter]);
+
   const publicTemplates = useMemo(
     () => templates.filter((template) => template.visibility === "PUBLIC"),
     [templates],
@@ -648,12 +813,12 @@ export default function ProgramStorePage() {
     [listItems],
   );
   const marketListItems = useMemo(
-    () => filteredListItems.filter((entry) => entry.source === "MARKET"),
-    [filteredListItems],
+    () => categoryFilteredItems.filter((entry) => entry.source === "MARKET"),
+    [categoryFilteredItems],
   );
   const customListItems = useMemo(
-    () => filteredListItems.filter((entry) => entry.source === "CUSTOM"),
-    [filteredListItems],
+    () => categoryFilteredItems.filter((entry) => entry.source === "CUSTOM"),
+    [categoryFilteredItems],
   );
   const isOperatorCustomization = useMemo(
     () => isOperatorTemplate(customizeDraft?.baseTemplate),
@@ -1243,21 +1408,31 @@ export default function ProgramStorePage() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="card" data-card-tone="inset" data-card-elevated="false" style={{ padding: "var(--space-md)" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
+                <div key={i} style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-lg)" }}>
+                  {/* badge + title */}
+                  <div style={{ ...skeletonStyle, height: 18, width: "18%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
+                  <div style={{ ...skeletonStyle, height: 22, width: "65%", marginBottom: "var(--space-xs)" }} />
+                  <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: "var(--space-md)", borderRadius: 4 }} />
+                  {/* meta row */}
+                  <div style={{ display: "flex", gap: "var(--space-md)", background: "var(--color-surface-container-lowest)", padding: "var(--space-sm) var(--space-md)", borderRadius: 10, marginBottom: "var(--space-md)" }}>
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        <div style={{ ...skeletonStyle, height: 10, width: 36, borderRadius: 4 }} />
+                        <div style={{ ...skeletonStyle, height: 14, width: 56, borderRadius: 4 }} />
+                      </div>
+                    ))}
+                  </div>
+                  {/* intensity + cta */}
+                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-md)" }}>
                     <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
-                        <div style={{ ...skeletonStyle, height: 18, width: "60%" }} />
-                        <div style={{ ...skeletonStyle, height: 14, width: "20%", borderRadius: 4 }} />
+                      <div style={{ ...skeletonStyle, height: 10, width: 32, marginBottom: 6, borderRadius: 4 }} />
+                      <div style={{ display: "flex", gap: 3 }}>
+                        {Array.from({ length: 5 }).map((_, k) => (
+                          <div key={k} style={{ ...skeletonStyle, height: 6, flex: 1, borderRadius: 9999 }} />
+                        ))}
                       </div>
                     </div>
-                    <div style={{ ...skeletonStyle, height: 22, width: 44, borderRadius: 12 }} />
-                  </div>
-                  <div style={{ ...skeletonStyle, height: 14, width: "85%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
-                  <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                    {Array.from({ length: 3 }).map((_, j) => (
-                      <div key={j} style={{ ...skeletonStyle, height: 22, width: 56, borderRadius: 12 }} />
-                    ))}
+                    <div style={{ ...skeletonStyle, height: 40, width: 88, borderRadius: 10 }} />
                   </div>
                 </div>
               ))}
@@ -1283,10 +1458,56 @@ export default function ProgramStorePage() {
         />
       ) : null}
 
+      {/* Category Filter Chips */}
+      {listItems.length > 0 && (
+        <div
+          style={{
+            display: "flex",
+            gap: "var(--space-sm)",
+            overflowX: "auto",
+            paddingBottom: "var(--space-xs)",
+            marginBottom: "var(--space-md)",
+            scrollbarWidth: "none",
+            msOverflowStyle: "none",
+          } as React.CSSProperties}
+        >
+          {STORE_CATEGORIES.map((cat) => (
+            <button
+              key={cat.key}
+              type="button"
+              onClick={() => setCategoryFilter(cat.key)}
+              style={{
+                padding: "8px 20px",
+                borderRadius: 9999,
+                border: categoryFilter === cat.key ? "none" : "1px solid var(--color-border)",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "11px",
+                fontWeight: 700,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                flexShrink: 0,
+                background: categoryFilter === cat.key ? "var(--color-primary-container)" : "var(--color-surface-container-low)",
+                color: categoryFilter === cat.key ? "var(--color-on-primary)" : "var(--color-text-muted)",
+              }}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <EmptyStateRows
         when={isStoreSettled && !error && listItems.length > 0 && filteredListItems.length === 0}
         label="검색 결과가 없습니다"
         description="프로그램명, 태그, 설명으로 다시 검색해 보세요."
+      />
+
+      <EmptyStateRows
+        when={isStoreSettled && !error && filteredListItems.length > 0 && categoryFilteredItems.length === 0}
+        label="해당 카테고리의 프로그램이 없습니다"
+        description="다른 카테고리를 선택하거나 전체를 확인해 보세요."
       />
 
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
