@@ -749,7 +749,80 @@ PRD 기준: 4px 그리드 시스템 (4, 8, 12, 16, 24, 32).
 
 ---
 
-## 18. 43개 화면 체크리스트 (PRD)
+## 18. 프로그램 스토어 카드 패턴
+
+`program-store/page.tsx`의 `ProgramListCard` 컴포넌트 기준.
+
+### 카드 구조
+
+```
+┌─────────────────────────────────────┐
+│ [뱃지]                   [태그 1-2] │
+│ 프로그램명 (20px 800)               │
+│ 부제목 (13px text-muted)            │
+├─────────────────────────────────────┤
+│ 설명 (2줄 clamp)                    │
+├─────────────────────────────────────┤
+│ ╔════════════════════════════════╗  │
+│ ║ 기간 · 빈도 · 난이도 메타 행  ║  │
+│ ╚════════════════════════════════╝  │
+├─────────────────────────────────────┤
+│ 강도 바 ████░  [시작하기 버튼]      │
+└─────────────────────────────────────┘
+```
+
+### 강도 인디케이터 (5단계 세그먼트 바)
+
+```tsx
+const intensityMap = { "초급": 2, "중급": 3, "고급": 4, "일반": 3 };
+const intensityFill = intensityMap[levelLabel] ?? 3;
+
+<div style={{ display: "flex", gap: 3 }}>
+  {[1,2,3,4,5].map(i => (
+    <div key={i} style={{
+      height: 6, flex: 1, borderRadius: 9999,
+      background: i <= intensityFill ? "var(--color-primary)" : "var(--color-surface-container-highest)",
+    }} />
+  ))}
+</div>
+```
+
+### 카테고리 필터 칩 (가로 스크롤)
+
+```tsx
+const STORE_CATEGORIES = [
+  { key: "all", label: "전체" },
+  { key: "strength", label: "근력" },
+  { key: "hypertrophy", label: "근비대" },
+  { key: "beginner", label: "입문" },
+  { key: "endurance", label: "지구력" },
+];
+
+// 활성 칩: background var(--color-primary-container), color var(--color-on-primary)
+// 비활성 칩: background var(--color-surface-container-low), border var(--color-border)
+// borderRadius: 9999 (pill), font-label, 11px, 700, uppercase
+```
+
+### 뱃지 시맨틱 색상
+
+| 상태 | 레이블 | 배경 | 텍스트 |
+|------|--------|------|--------|
+| MARKET 일반 | 공식 | primary 15% mix | `--color-primary` |
+| MARKET + beginner 태그 | 입문 추천 | tertiary 15% mix | `--color-tertiary` |
+| CUSTOM | 커스텀 | secondary 15% mix | `--color-secondary` |
+
+### 메타 정보 추출 (`getProgramDetailInfo` 활용)
+
+| stat label | 용도 |
+|------------|------|
+| `난이도` | 레벨 표시 + 강도 바 계산 |
+| `주간 빈도` | 빈도 표시 |
+| `사이클` / `기간` | 기간 표시 |
+| `분할` | 빈도 fallback |
+
+---
+
+## 20. 43개 화면 체크리스트 (PRD)
 
 1. Home (/)
 2. Workout Log main
@@ -797,7 +870,7 @@ PRD 기준: 4px 그리드 시스템 (4, 8, 12, 16, 24, 32).
 
 ---
 
-## 19. 파일 구조 참조
+## 21. 파일 구조 참조
 
 ```
 web/src/
