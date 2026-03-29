@@ -515,8 +515,8 @@ function ExerciseFormModal({
       onClose={onClose}
       title={title}
       primaryAction={{
-        label: saving ? `${submitLabel} 중...` : submitLabel,
-        onClick: onSubmit,
+        ariaLabel: saving ? `${submitLabel} 중...` : submitLabel,
+        onPress: onSubmit,
         disabled: saving || !name.trim(),
       }}
       closeLabel="취소"
