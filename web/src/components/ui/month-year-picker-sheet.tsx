@@ -58,7 +58,7 @@ export function MonthYearPickerSheet({
       <div style={{ padding: "var(--space-sm) 0 var(--space-lg)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-md)" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Year</span>
+            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Year</span>
             <WheelPicker
               values={years}
               value={draftYear}
@@ -69,7 +69,7 @@ export function MonthYearPickerSheet({
             />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Month</span>
+            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Month</span>
             <WheelPicker
               values={months}
               value={draftMonth}

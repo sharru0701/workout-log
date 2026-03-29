@@ -20,6 +20,14 @@ const PERIODS: Period[] = [
   { label: "전체", days: 0 },
 ];
 
+const CAPS_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-label-family)",
+  fontSize: "10px",
+  fontWeight: 700,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+};
+
 // ─── Helpers ──────────────────────────────────────────────────────
 
 function formatVolume(kg: number): { value: string; unit: string } {
@@ -48,7 +56,7 @@ function PeriodChips({ value, onChange }: { value: number; onChange: (days: numb
               padding: "6px 14px",
               borderRadius: "20px",
               border: `1px solid ${active ? "var(--color-selected-border)" : "var(--color-border)"}`,
-              background: active ? "var(--color-action-weak)" : "var(--color-surface-2)",
+              background: active ? "var(--color-action-weak)" : "var(--color-surface-container)",
               color: active ? "var(--color-action-strong)" : "var(--color-text-muted)",
               fontSize: "12px",
               fontWeight: active ? 700 : 600,
@@ -91,7 +99,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
-        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-sets)", marginBottom: "8px" }}>Sessions</div>
+        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-sets)", marginBottom: "8px" }}>Sessions</div>
         <div style={{ fontSize: "40px", fontWeight: 800, letterSpacing: "-1.5px", color: "var(--color-text)", lineHeight: 1 }}>
           {sessions ?? "—"}
         </div>
@@ -106,7 +114,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
-        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-weight)", marginBottom: "8px" }}>Volume</div>
+        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-weight)", marginBottom: "8px" }}>Volume</div>
         <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
           <span style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1px", color: "var(--color-text)", lineHeight: 1 }}>
             {vol?.value ?? "—"}
@@ -124,7 +132,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
-        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-reps)", marginBottom: "8px" }}>Compliance</div>
+        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-reps)", marginBottom: "8px" }}>Compliance</div>
         <div style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1px", lineHeight: 1, color: pct >= 80 ? "var(--color-success)" : pct >= 50 ? "var(--color-action)" : "var(--color-text)" }}>
           {complianceData !== null ? `${pct}%` : "—"}
         </div>
@@ -139,7 +147,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
-        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "8px" }}>Top e1RM</div>
+        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--color-primary)", marginBottom: "8px" }}>Top e1RM</div>
         {topPr ? (
           <>
             <div style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.8px", color: "var(--color-text)", lineHeight: 1 }}>
@@ -161,7 +169,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
 function SectionHeading({ label, title, description }: { label: string; title: string; description?: string }) {
   return (
     <div style={{ marginBottom: "var(--space-md)" }}>
-      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-action)", marginBottom: "2px" }}>
+      <div style={{ ...CAPS_LABEL_STYLE, letterSpacing: "0.14em", color: "var(--color-action)", marginBottom: "2px" }}>
         {label}
       </div>
       <div style={{ fontSize: "17px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{title}</div>
@@ -192,7 +200,7 @@ function ComplianceRow({ r }: { r: any }) {
           {r.done} / {r.planned} 세션 완료
         </div>
         {/* Progress bar */}
-        <div style={{ marginTop: "6px", height: "4px", borderRadius: "2px", background: "var(--color-surface-2)", overflow: "hidden" }}>
+        <div style={{ marginTop: "6px", height: "4px", borderRadius: "2px", background: "var(--color-surface-container)", overflow: "hidden" }}>
           <div style={{
             height: "100%",
             width: `${Math.min(pct, 100)}%`,
@@ -247,7 +255,7 @@ function PrRow({ r }: { r: any }) {
         <div style={{ fontSize: "15px", fontWeight: 800, color: impColor, letterSpacing: "-0.3px" }}>
           {imp > 0 ? `+${imp}` : imp === 0 ? "0.0" : imp}
         </div>
-        <div style={{ fontSize: "9px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>
+        <div style={{ ...CAPS_LABEL_STYLE, fontWeight: 600, letterSpacing: "0.08em", color: "var(--color-text-muted)" }}>
           IMPROVED
         </div>
       </div>
@@ -328,10 +336,8 @@ function StatsPageContent() {
           borderBottom: "1px solid var(--color-border)",
         }}>
           <div style={{
-            fontSize: "9px",
-            fontWeight: 700,
+            ...CAPS_LABEL_STYLE,
             letterSpacing: "0.14em",
-            textTransform: "uppercase",
             color: "var(--color-action)",
             marginBottom: "4px",
           }}>

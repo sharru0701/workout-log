@@ -332,9 +332,9 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <div style={{ background: "var(--color-surface-2)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
+          <div style={{ background: "var(--color-surface-container)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
             <div style={{ gridColumn: "1 / -1" }}>
-              <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>선택 플랜</div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>선택 플랜</div>
               <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--color-text)", letterSpacing: "-0.2px" }}>{selectedPlan.name}</div>
               {selectedPlan.baseProgramName ? (
                 <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", marginTop: "2px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
@@ -343,7 +343,7 @@ function PlanHistoryPageContent() {
               ) : null}
             </div>
             <div>
-              <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>최근 수행</div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>최근 수행</div>
               <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
             </div>
           </div>
@@ -433,22 +433,22 @@ function PlanHistoryPageContent() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface-container)", borderRadius: 10, padding: "var(--space-sm)" }}>
                     <div>
-                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세트</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세트</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{workSetCount}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{formatDuration(log.durationMinutes)}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>볼륨</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>볼륨</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
                     </div>
                   </div>
 
                   {noteText ? (
                     <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)", marginBottom: "var(--space-xs)" }}>
-                      <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>노트</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>노트</div>
                       <div style={{ fontSize: "13px", color: "var(--color-text)" }}>{noteText}</div>
                     </div>
                   ) : null}

@@ -38,7 +38,6 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
     }
   };
 
-  const isSelected = (dateStr: string) => dateStr === startDate || dateStr === endDate;
   const isStart = (dateStr: string) => dateStr === startDate;
   const isEnd = (dateStr: string) => dateStr === endDate;
   const isInRange = (dateStr: string) => startDate && endDate && dateStr > startDate && dateStr < endDate;
@@ -56,12 +55,12 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
     <div style={{ font: "var(--font-body)", color: "var(--color-text)" }}>
       {/* Search status header */}
       <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: "var(--space-sm)" }}>
-        <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-2)", borderRadius: "12px", textAlign: "center", border: !isSelectingEnd && startDate ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
+        <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-container)", borderRadius: "12px", textAlign: "center", border: !isSelectingEnd && startDate ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
           <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>시작일</div>
           <div style={{ fontSize: "14px", fontWeight: 700 }}>{startDate || "-"}</div>
         </div>
         <div style={{ alignSelf: "center", color: "var(--color-text-muted)" }}>→</div>
-        <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-2)", borderRadius: "12px", textAlign: "center", border: isSelectingEnd ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
+        <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-container)", borderRadius: "12px", textAlign: "center", border: isSelectingEnd ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
           <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>종료일</div>
           <div style={{ fontSize: "14px", fontWeight: 700 }}>{(!isSelectingEnd && endDate && startDate !== endDate) ? endDate : "-"}</div>
         </div>
@@ -73,18 +72,18 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
         </div>
         <button 
           onClick={() => onRangeChange("", "")}
-          style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontSize: "12px", textDecoration: "underline", cursor: "pointer", padding: "4px" }}
+          style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontSize: "12px", textDecoration: "underline", cursor: "pointer", minHeight: "44px", minWidth: "44px", padding: "10px 12px" }}
         >
           초기화
         </button>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)", padding: "0 4px" }}>
-        <button onClick={() => changeMonth(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", padding: "4px" }}>◀</button>
+        <button onClick={() => changeMonth(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", minHeight: "44px", minWidth: "44px", padding: "8px" }}>◀</button>
         <span style={{ font: "var(--font-section-title)", fontWeight: 700 }}>
           {viewDateStr.split("-")[0]}년 {MONTH_NAMES[parseInt(viewDateStr.split("-")[1]) - 1]}
         </span>
-        <button onClick={() => changeMonth(1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", padding: "4px" }}>▶</button>
+        <button onClick={() => changeMonth(1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", minHeight: "44px", minWidth: "44px", padding: "8px" }}>▶</button>
       </div>
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "12px", fontWeight: 600, color: "var(--color-text-subtle)", marginBottom: "var(--space-xs)" }}>
@@ -108,7 +107,7 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
             color: "var(--color-selected-text)",
             zIndex: 2,
           } : range ? {
-            background: "var(--color-surface-2)",
+            background: "var(--color-surface-container)",
             color: "var(--color-text)",
             borderRadius: 0,
           } : {};
