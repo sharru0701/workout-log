@@ -802,20 +802,11 @@ export default function CalendarPage() {
         className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
         style={{
           display: "flex",
-          justifyContent: "space-between",
+          justifyContent: "flex-end",
           alignItems: "center",
           marginBottom: "var(--space-sm)",
         }}
       >
-        <div style={{
-          fontFamily: "var(--font-headline-family)",
-          fontSize: "18px",
-          fontWeight: 700,
-          letterSpacing: "-0.3px",
-          color: "var(--color-text)",
-        }}>
-          {getYear(anchorDate)}년 {MONTH_NAMES[getMonth(anchorDate) - 1]}
-        </div>
         <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => shiftMonthWithFeedback(-1)}
