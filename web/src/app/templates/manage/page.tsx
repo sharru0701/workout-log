@@ -341,10 +341,7 @@ export default function TemplatesPage() {
           <span>템플릿/프로그램 검색</span>
           <div>
             <span aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <circle cx="11" cy="11" r="7" />
-                <path d="m20 20-3.8-3.8" />
-              </svg>
+              <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
             </span>
             <input
               type="search"
@@ -396,7 +393,7 @@ export default function TemplatesPage() {
           {(loadingTemplates || loadingVersions) && (
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
+                <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
               ))}
             </div>
           )}
@@ -495,7 +492,10 @@ export default function TemplatesPage() {
       </div>
 
       <Card padding="lg">
-        <div>템플릿 편집기</div>
+        <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Templates</div>
+          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", margin: 0 }}>템플릿 편집기</h1>
+        </div>
         <EmptyStateRows
           when={showTemplateEditorEmpty}
           label="설정 값 없음"
@@ -528,7 +528,7 @@ export default function TemplatesPage() {
             {loadingVersions && (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
                 {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
+                  <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
                 ))}
               </div>
             )}
@@ -540,7 +540,7 @@ export default function TemplatesPage() {
                 summarySlot={<span>{manualSessions.length} sessions</span>}
               >
                 <div>
-                  <div>MANUAL session editor</div>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>MANUAL session editor</h2>
                   <button onClick={addManualSession}>
                     + Session
                   </button>
@@ -798,7 +798,7 @@ export default function TemplatesPage() {
                 description="스케줄과 대체 규칙을 설정합니다."
                 summarySlot={<span>{logicFrequency}/week</span>}
               >
-                <div>로직 안전 파라미터</div>
+                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>로직 안전 파라미터</h2>
                 <div>
                   <div>
                     <span>TM % (defaults.tmPercent)</span>
@@ -842,7 +842,7 @@ export default function TemplatesPage() {
                 </div>
 
                 <div>
-                  <div>Exercise substitutions</div>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Exercise substitutions</h2>
                   {logicSubstitutions.map((row, idx) => (
                     <div key={idx}>
                       <label>
@@ -893,7 +893,7 @@ export default function TemplatesPage() {
               summarySlot={<span>v{selectedBaseVersion?.version ?? "-"}</span>}
             >
               <Card padding="sm">
-                <div>새 버전 생성</div>
+                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>새 버전 생성</h2>
                 <label>
                   <span>changelog</span>
                   <AppTextInput

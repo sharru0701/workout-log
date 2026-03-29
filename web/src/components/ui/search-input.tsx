@@ -42,19 +42,7 @@ export function SearchInputRow({
           color: "var(--color-text-muted)",
         }}
       >
-        <svg
-          viewBox="0 0 24 24"
-          focusable="false"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          style={{ width: "100%", height: "100%" }}
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="m20 20-3.5-3.5" />
-        </svg>
+        <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
       </span>
 
       {/* bare input — card provides the visual container */}
@@ -96,16 +84,7 @@ export function SearchInputRow({
             flexShrink: 0,
           }}
         >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            style={{ width: 14, height: 14 }}
-          >
-            <path d="M18 6L6 18M6 6l12 12" />
-          </svg>
+          <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 500" }}>close</span>
         </button>
       ) : null}
     </div>
@@ -166,7 +145,7 @@ export function SearchInput({
           padding: "var(--space-sm) var(--space-md)",
           border: "1px solid var(--color-border)",
           borderRadius: "8px",
-          backgroundColor: "var(--color-surface)",
+          backgroundColor: "var(--color-surface-container-low)",
           boxSizing: "border-box",
         }}
       >

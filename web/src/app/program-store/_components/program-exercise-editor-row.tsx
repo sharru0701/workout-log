@@ -193,7 +193,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         border: highlighted ? "1px solid var(--color-selected-border)" : "1px solid var(--color-border)",
         borderRadius: "10px",
         padding: "var(--space-sm)",
-        background: highlighted ? "var(--color-selected-bg)" : "var(--color-surface)",
+        background: highlighted ? "var(--color-selected-bg)" : "var(--color-surface-container-low)",
         display: "flex",
         flexDirection: "column",
         gap: "var(--space-md)",
@@ -222,9 +222,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
             onClick={() => onMove(sessionId, exercise.id, "up")}
             disabled={!canMoveUp}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-              <path d="m6.75 14.25 5.25-5.25 5.25 5.25" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>expand_less</span>
           </button>
           <button
             type="button"
@@ -234,9 +232,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
             onClick={() => onMove(sessionId, exercise.id, "down")}
             disabled={!canMoveDown}
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-              <path d="m6.75 9.75 5.25 5.25 5.25-5.25" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>expand_more</span>
           </button>
           <button
             type="button"
@@ -295,14 +291,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                     justifyContent: "center",
                   }}
                 >
-                  <svg
-                    viewBox="0 0 24 24"
-                    focusable="false"
-                    style={{ width: "100%", height: "100%", fill: "none", stroke: "currentColor", strokeWidth: "2" }}
-                  >
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.8-3.8" />
-                  </svg>
+                  <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
                 </span>
                 <AppTextInput
                   ref={exerciseInputRef}
@@ -358,10 +347,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                       setExercisePickerOpen(true);
                     }}
                   >
-                    <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                      <path d="M2 2 10 10" />
-                      <path d="M10 2 2 10" />
-                    </svg>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 14, fontVariationSettings: "'wght' 500" }}>close</span>
                   </button>
                 ) : null}
               </div>

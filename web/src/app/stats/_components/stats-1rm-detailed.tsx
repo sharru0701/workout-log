@@ -107,17 +107,7 @@ function clampIndex(index: number, length: number) {
 
 function CalendarIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ width: "20px", height: "20px" }}>
-      <rect x="3.5" y="4" width="17" height="16.5" rx="2" strokeLinejoin="round" />
-      <path d="M3.5 9.5h17" strokeLinecap="round" />
-      <path d="M8 2.5v3" strokeLinecap="round" />
-      <path d="M16 2.5v3" strokeLinecap="round" />
-      <path d="M8 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M16 13.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M8 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M12 17.5h.01" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
+    <span className="material-symbols-outlined" style={{ fontSize: 20, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>calendar_today</span>
   );
 }
 
@@ -482,7 +472,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         <button
           type="button"
           onClick={() => setActiveSheet("exercise")}
-          className="dashboard-surface-btn"
+          className="btn"
           style={{ 
             display: "flex", 
             justifyContent: "space-between", 
@@ -604,8 +594,8 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       <div>
         {optionsLoading && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
           </div>
         )}
         <ErrorStateRows
@@ -625,10 +615,10 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           <>
             {loading && (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 180 }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 180 }} />
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
                 </div>
               </div>
             )}

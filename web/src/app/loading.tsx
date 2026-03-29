@@ -3,7 +3,7 @@
 // 이 파일이 있으면 라우트 진입 즉시 스켈레톤 UI가 표시됨 (TTFB → FCP 단축)
 
 const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)",
+  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
   backgroundSize: "200% 100%",
   animation: "skeleton-shimmer 1.4s ease infinite",
   borderRadius: 8,

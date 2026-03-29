@@ -137,7 +137,7 @@ export function NumberPickerField({
         borderRadius: "8px",
         minHeight: "44px",
         padding: "8px 12px",
-        backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface)",
+        backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface-container-low)",
         color: complete ? "var(--color-text)" : "var(--color-text-muted)",
         font: "var(--font-body)",
       };
@@ -171,7 +171,7 @@ export function NumberPickerField({
       borderRadius: "8px",
       minHeight: "44px",
       padding: "10px 12px",
-      backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface)",
+      backgroundColor: complete ? "var(--color-surface-hover)" : "var(--color-surface-container-low)",
       color: complete ? "var(--color-text)" : "var(--color-text)",
       font: "var(--font-body)",
     };

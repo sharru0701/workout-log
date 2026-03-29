@@ -292,16 +292,16 @@ function PlanHistoryPageContent() {
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
 
       <section>
-        <div style={{ marginBottom: "var(--space-md)" }}>
-          <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Plan History</span>
-          <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 4px" }}>수행 히스토리</h1>
-          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.4 }}>플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다.</p>
+        <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Plan History</div>
+          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>수행 히스토리</h1>
+          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다.</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
 
         {plansLoading && (
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
         )}
         <ErrorStateRows
           message={plansError}
@@ -353,8 +353,7 @@ function PlanHistoryPageContent() {
 
       <section style={{ marginTop: "var(--space-lg)" }}>
         <div style={{ marginBottom: "var(--space-sm)" }}>
-          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Session Log</span>
-          <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>수행 로그</h2>
+          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>수행 로그</h2>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
         <NoticeStateRows
@@ -372,13 +371,13 @@ function PlanHistoryPageContent() {
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 8 }} />
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "70%", marginBottom: 12 }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 8 }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "70%", marginBottom: 12 }} />
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
                   {Array.from({ length: 3 }).map((_, j) => (
                     <div key={j}>
-                      <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "60%", marginBottom: 4 }} />
-                      <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "80%" }} />
+                      <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "60%", marginBottom: 4 }} />
+                      <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "80%" }} />
                     </div>
                   ))}
                 </div>
@@ -432,7 +431,7 @@ function PlanHistoryPageContent() {
                     ) : null}
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface)", borderRadius: 10, padding: "var(--space-sm)" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface-container)", borderRadius: 10, padding: "var(--space-sm)" }}>
                     <div>
                       <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세트</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{workSetCount}</div>

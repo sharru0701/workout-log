@@ -52,17 +52,14 @@ dialog.sheet[data-closing]::backdrop {
 
 .sheet-panel {
   position: relative;
-  background-color: color-mix(in srgb, var(--color-surface) 97%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  -webkit-backdrop-filter: blur(20px) saturate(180%);
-  border-radius: 24px;
-  /* Subtle border for glass effect delineation */
-  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-container-low);
+  border-radius: 32px 32px 0 0;
+  border-top: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
   max-height: 100dvh;
   display: flex;
   flex-direction: column;
   box-shadow:
-    0 -8px 32px var(--shadow-color-strong),
+    0 -12px 48px var(--shadow-color-strong),
     0 -2px 8px var(--shadow-color-soft);
   padding-bottom: var(--space-lg);
   overflow: hidden;
@@ -98,7 +95,7 @@ dialog.sheet[data-closing] .sheet-panel {
 
 .sheet-drag-handle {
   flex-shrink: 0;
-  height: calc(env(safe-area-inset-top, 0px) + 28px);
+  height: calc(env(safe-area-inset-top, 0px) + 32px);
   padding-top: env(safe-area-inset-top, 0px);
   display: flex;
   justify-content: center;
@@ -110,18 +107,18 @@ dialog.sheet[data-closing] .sheet-panel {
 }
 
 .sheet-drag-pill {
-  width: 40px;
+  width: 48px;
   height: 4px;
   border-radius: 2px;
-  background-color: var(--color-border);
-  opacity: 0.7;
+  background-color: var(--color-outline-variant);
+  opacity: 0.3;
   transition: width 0.2s ease, opacity 0.2s ease;
 }
 
 .sheet-drag-handle:active .sheet-drag-pill,
 .sheet-panel[data-dragging] .sheet-drag-pill {
-  width: 52px;
-  opacity: 0.9;
+  width: 56px;
+  opacity: 0.5;
 }
 
 /* ── Header ──────────────────────────────────────────────────────── */
@@ -132,7 +129,7 @@ dialog.sheet[data-closing] .sheet-panel {
   justify-content: space-between;
   margin-bottom: var(--space-md);
   padding: 0 var(--space-md) var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
   min-height: 48px;
   flex-shrink: 0;
 }
@@ -145,6 +142,7 @@ dialog.sheet[data-closing] .sheet-panel {
 
 .sheet-title h2 {
   margin: 0;
+  font-family: var(--font-headline-family);
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.3px;
@@ -169,16 +167,16 @@ dialog.sheet[data-closing] .sheet-panel {
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-surface-2);
+  background-color: var(--color-surface-container-high);
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  border: none;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.15s, color 0.15s;
   flex-shrink: 0;
 }
 
 .sheet-btn:hover {
-  background-color: var(--color-surface-hover);
+  background-color: var(--color-surface-container-highest);
   color: var(--color-text);
 }
 
@@ -186,9 +184,8 @@ dialog.sheet[data-closing] .sheet-panel {
   transform: scale(0.92);
 }
 
-.sheet-btn svg {
-  width: 16px;
-  height: 16px;
+.sheet-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .sheet-btn-spacer {
@@ -197,15 +194,15 @@ dialog.sheet[data-closing] .sheet-panel {
 }
 
 .sheet-btn-action {
-  background-color: var(--color-action);
-  color: #fff;
-  border-color: var(--color-action);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
 }
 
 .sheet-btn-action:hover {
-  background-color: var(--color-action);
-  color: #fff;
-  opacity: 0.9;
+  background-color: var(--color-primary-strong);
+  color: var(--color-text-on-primary);
+  opacity: 1;
 }
 
 .sheet-btn-action:disabled {
@@ -228,8 +225,8 @@ dialog.sheet[data-closing] .sheet-panel {
 
 .sheet-footer {
   flex-shrink: 0;
-  background-color: var(--color-surface);
-  border-radius: 24px;
+  background-color: var(--color-surface-container-low);
+  border-radius: 32px 32px 0 0;
   overflow: hidden;
   box-shadow: 0 -4px 16px var(--shadow-color-soft);
 }

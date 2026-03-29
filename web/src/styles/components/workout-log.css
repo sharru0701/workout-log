@@ -1,6 +1,7 @@
 /* =====================================================
-   Workout Log — Stitch-grade flagship screen redesign
-   Premium set row system, strong active state, editorial header
+   Workout Log — Stitch Editorial Design System
+   Bento-style session cards, semantic set row states,
+   Material Symbols icons, surface-container hierarchy
    ===================================================== */
 
 /* ── Exercise Card ─────────────────────────────────── */
@@ -8,9 +9,8 @@
 .exercise-card {
   position: relative;
   margin-bottom: var(--space-lg);
-  border-radius: 14px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
+  border-radius: 16px;
+  background: var(--color-surface-container-low);
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow-color-soft);
 }
@@ -19,11 +19,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px var(--space-md);
-  background: var(--color-surface-hover);
-  border-bottom: 1px solid var(--color-border);
+  padding: 14px var(--space-md);
+  background: var(--color-surface-container);
   gap: var(--space-sm);
-  min-height: 56px;
+  min-height: 58px;
 }
 
 .exercise-card__name-row {
@@ -36,13 +35,31 @@
 }
 
 .exercise-card__name {
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.2px;
+  font-family: var(--font-headline-family);
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
   color: var(--text-exercise-name);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.exercise-card__category-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: var(--font-label-family);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: var(--color-surface-container-highest);
+  color: var(--color-text-muted);
+  border: 1px solid var(--color-outline-variant);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .exercise-card__header-actions {
@@ -58,12 +75,13 @@
   gap: 3px;
   padding: 3px 8px;
   border-radius: 20px;
+  font-family: var(--font-label-family);
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.03em;
-  background: var(--color-surface-2);
+  letter-spacing: 0.02em;
+  background: var(--color-surface-container-highest);
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-outline-variant);
   white-space: nowrap;
   cursor: default;
   user-select: none;
@@ -77,24 +95,25 @@
 
 .set-table__header {
   display: grid;
-  grid-template-columns: 2rem 1fr 1fr 2.5rem;
+  grid-template-columns: 2.25rem 1fr 1fr 2.5rem;
   gap: var(--space-xs);
   margin-bottom: 8px;
   text-align: center;
+  font-family: var(--font-label-family);
   font-size: 9px;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .set-table__h-set {
-  color: var(--text-metric-sets);
+  color: var(--color-text-muted);
   text-align: left;
-  padding-left: 4px;
+  padding-left: 2px;
 }
 
-.set-table__h-weight { color: var(--text-metric-weight); }
-.set-table__h-reps   { color: var(--text-metric-reps); }
+.set-table__h-weight { color: var(--metric-weight-color); }
+.set-table__h-reps   { color: var(--metric-reps-color); }
 .set-table__h-done   { color: var(--color-text-muted); }
 
 /* ── Set Rows ──────────────────────────────────────── */
@@ -102,68 +121,103 @@
 .set-row {
   position: relative;
   display: grid;
-  grid-template-columns: 2rem 1fr 1fr 2.5rem;
+  grid-template-columns: 2.25rem 1fr 1fr 2.5rem;
   gap: var(--space-xs);
   align-items: center;
   text-align: center;
-  min-height: 52px;
+  min-height: 54px;
   padding: 4px 0;
   border-radius: 8px;
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-/* Active set — strong left accent, green tint background */
+/* Active set — strong left accent, blue-tint background */
 .set-row--active {
-  background: color-mix(in srgb, var(--color-action) 8%, transparent);
-  box-shadow: inset 4px 0 0 0 var(--color-action);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  box-shadow: inset 4px 0 0 0 var(--color-primary);
   border-radius: 0 8px 8px 0;
 }
 
-/* Complete set — subtle green wash */
+/* Complete set — green wash from label-complete-bg */
 .set-row--complete {
-  background: color-mix(in srgb, var(--color-success) 7%, transparent);
+  background: var(--label-complete-bg);
 }
 
-/* Pending sets — strongly dimmed and desaturated */
+/* Pending sets — strongly dimmed */
 .set-row--pending {
-  opacity: 0.36;
-  filter: saturate(0.6);
+  opacity: 0.35;
+  filter: saturate(0.55);
 }
 
-/* Failure set — red tint */
+/* Failure set — red tint using set-failure tokens */
 .set-row--failure {
-  background: color-mix(in srgb, var(--color-danger) 9%, transparent);
+  background: var(--set-failure-bg);
 }
+
+/* Warmup set */
+.set-row--warmup {
+  background: var(--set-warmup-bg);
+}
+
+/* Work set */
+.set-row--work {
+  background: var(--set-work-bg);
+}
+
+/* ── Set Number Badge ──────────────────────────────── */
 
 .set-row__number {
-  text-align: left;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--text-metric-sets);
-  padding-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  margin-left: 4px;
+  font-family: var(--font-label-family);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  background: var(--color-surface-container-highest);
   line-height: 1;
-  letter-spacing: 0.02em;
+  letter-spacing: 0;
+  flex-shrink: 0;
 }
 
-.set-row--active .set-row__number   { color: var(--color-action); }
-.set-row--complete .set-row__number { color: var(--color-success); }
-.set-row--failure .set-row__number  { color: var(--color-danger); }
+.set-row--active   .set-row__number { color: var(--color-primary); background: var(--color-primary-weak); }
+.set-row--complete .set-row__number { color: var(--label-complete-text); background: var(--label-complete-bg); }
+.set-row--failure  .set-row__number { color: var(--set-failure-text); background: var(--set-failure-bg); }
 
-/* Set row value cells — make the numbers BIG and readable */
+/* Set row value cells — large, readable numeric values */
 .set-row .workout-record-picker-btn {
+  font-family: var(--font-label-family) !important;
   font-size: 22px !important;
   font-weight: 700 !important;
   letter-spacing: -0.5px;
   min-height: 44px;
 }
 
+/* Weight value: metric-weight-color */
+.set-row .workout-record-picker-btn--weight {
+  color: var(--metric-weight-color);
+}
+
+/* Reps value: metric-reps-color */
+.set-row .workout-record-picker-btn--reps {
+  color: var(--metric-reps-color);
+}
+
 .set-row__done {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--color-border);
+  color: var(--color-outline-variant);
   min-width: 2.5rem;
   height: 2.5rem;
+}
+
+.set-row__done .material-symbols-outlined {
+  font-size: 22px;
 }
 
 .set-row--complete .set-row__done { color: var(--color-success); }
@@ -180,9 +234,10 @@
   padding: 13px var(--space-md);
   background: transparent;
   border: none;
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-outline-variant);
   color: var(--color-text-muted);
-  font-size: 10px;
+  font-family: var(--font-label-family);
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -192,14 +247,12 @@
 
 .set-add-btn:hover,
 .set-add-btn:active {
-  background: var(--color-surface-hover);
-  color: var(--color-action);
+  background: var(--color-surface-container);
+  color: var(--color-primary);
 }
 
-.set-add-btn svg {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
+.set-add-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 /* ── Set Hint / Info Footer ────────────────────────── */
@@ -215,15 +268,14 @@
   display: flex;
   align-items: center;
   gap: 4px;
+  font-family: var(--font-label-family);
   font-size: 11px;
   color: var(--color-text-subtle);
-  opacity: 0.75;
+  opacity: 0.8;
 }
 
-.set-hint__item svg {
-  width: 11px;
-  height: 11px;
-  flex-shrink: 0;
+.set-hint__item .material-symbols-outlined {
+  font-size: 13px;
   opacity: 0.6;
 }
 
@@ -232,10 +284,9 @@
 .session-progress-header {
   margin-bottom: var(--space-lg);
   padding: var(--space-md) 0 var(--space-md);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-outline-variant);
 }
 
-/* Top row: title group + finish quick-action */
 .session-progress-header__top-row {
   display: flex;
   justify-content: space-between;
@@ -250,15 +301,17 @@
 }
 
 .session-progress-header__eyebrow {
-  font-size: 9px;
+  font-family: var(--font-label-family);
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-action);
+  color: var(--color-primary);
   margin-bottom: 4px;
 }
 
 .session-progress-header__title {
+  font-family: var(--font-headline-family);
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.5px;
@@ -276,21 +329,22 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 8px 16px;
-  border-radius: 10px;
-  background: var(--color-cta);
-  color: var(--color-cta-on);
+  padding: 10px 18px;
+  border-radius: 12px;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
   border: none;
+  font-family: var(--font-headline-family);
   font-size: 13px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: opacity 0.12s ease, transform 0.12s ease;
   white-space: nowrap;
 }
 
 .btn-finish-quick:active {
-  opacity: 0.8;
+  opacity: 0.85;
   transform: scale(0.96);
 }
 
@@ -312,24 +366,25 @@
   gap: 3px;
   padding: 4px 10px;
   border-radius: 20px;
+  font-family: var(--font-label-family);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
-  background: var(--color-surface-2);
+  background: var(--color-surface-container-high);
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-outline-variant);
 }
 
 .session-chip--active {
-  background: var(--color-action-weak);
-  color: var(--color-action-strong);
-  border-color: var(--color-selected-border);
+  background: var(--color-primary-weak);
+  color: var(--color-primary-strong);
+  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
 }
 
 .session-chip--date {
   background: transparent;
   color: var(--color-text-muted);
-  border-color: var(--color-border);
+  border-color: var(--color-outline-variant);
 }
 
 /* ── Compact Last Session Banner ───────────────────── */
@@ -338,23 +393,27 @@
   display: flex;
   align-items: center;
   gap: var(--space-sm);
-  padding: 10px 14px;
+  padding: 12px 14px;
   margin-bottom: var(--space-md);
-  border-radius: 10px;
-  background: var(--color-surface-hover);
-  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-surface-container);
+  border: 1px solid var(--color-outline-variant);
 }
 
 .last-session-banner__icon {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface));
+  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface-container));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: var(--color-success);
+}
+
+.last-session-banner__icon .material-symbols-outlined {
+  font-size: 16px;
 }
 
 .last-session-banner__body {
@@ -363,6 +422,7 @@
 }
 
 .last-session-banner__label {
+  font-family: var(--font-label-family);
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.1em;
@@ -372,6 +432,7 @@
 }
 
 .last-session-banner__title {
+  font-family: var(--font-headline-family);
   font-size: 13px;
   font-weight: 700;
   color: var(--color-text);
@@ -381,6 +442,7 @@
 }
 
 .last-session-banner__meta {
+  font-family: var(--font-label-family);
   font-size: 11px;
   color: var(--color-text-muted);
   margin-top: 1px;
@@ -392,13 +454,15 @@
 }
 
 .last-session-banner__stat-value {
-  font-size: 16px;
+  font-family: var(--font-label-family);
+  font-size: 18px;
   font-weight: 800;
   color: var(--color-text);
   line-height: 1;
 }
 
 .last-session-banner__stat-label {
+  font-family: var(--font-label-family);
   font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.08em;
@@ -413,7 +477,8 @@
 }
 
 .plan-selector-strip__label {
-  font-size: 9px;
+  font-family: var(--font-label-family);
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -426,7 +491,7 @@
 .finish-workout-cta {
   margin-top: var(--space-xl);
   padding-top: var(--space-md);
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid var(--color-outline-variant);
 }
 
 /* ── Add Exercise Button ───────────────────────────── */
@@ -437,21 +502,234 @@
   justify-content: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: 14px var(--space-md);
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
+  padding: 16px var(--space-md);
+  border: 2px dashed var(--color-outline-variant);
+  border-radius: 16px;
   background: transparent;
   color: var(--color-text-muted);
-  font-size: 13px;
+  font-family: var(--font-label-family);
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
   transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
 }
 
 .btn-add-exercise:hover,
 .btn-add-exercise:active {
-  border-color: var(--color-action);
-  color: var(--color-action);
-  background: var(--color-action-weak);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-weak);
+}
+
+.btn-add-exercise .material-symbols-outlined {
+  font-size: 24px;
+}
+
+/* ── Session Detail: Summary Bento ─────────────────── */
+
+.session-summary-bento {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+}
+
+.session-summary-bento__cell {
+  background: var(--color-surface-container-low);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.session-summary-bento__label {
+  font-family: var(--font-label-family);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.session-summary-bento__value {
+  font-family: var(--font-label-family);
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--color-text);
+}
+
+.session-summary-bento__value--volume { color: var(--metric-weight-color); }
+.session-summary-bento__value--reps   { color: var(--metric-reps-color); }
+
+/* ── Session Log Card (Recent Sessions list) ─────────── */
+
+.session-log-card {
+  background: var(--color-surface-container-low);
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: var(--space-sm);
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+  text-decoration: none;
+  display: block;
+  border: 1px solid var(--color-outline-variant);
+}
+
+.session-log-card:active {
+  background: var(--color-surface-container);
+  transform: scale(0.99);
+}
+
+.session-log-card__name {
+  font-family: var(--font-headline-family);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 4px;
+}
+
+.session-log-card__date {
+  font-family: var(--font-label-family);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-session-date);
+  margin-bottom: 12px;
+}
+
+.session-log-card__metrics {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-sm);
+}
+
+.session-log-card__metric {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-label-family);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.session-log-card__metric--volume { color: var(--metric-weight-color); }
+.session-log-card__metric--sets   { color: var(--color-text-muted); }
+.session-log-card__metric--duration { color: var(--color-text-muted); }
+
+.session-log-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.session-log-card__status-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-family: var(--font-label-family);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.session-log-card__status-chip--complete {
+  background: var(--label-complete-bg);
+  color: var(--label-complete-text);
+  border: 1px solid var(--label-complete-border);
+}
+
+.session-log-card__status-chip--in-progress {
+  background: var(--color-primary-weak);
+  color: var(--color-primary-strong);
+  border: 1px solid color-mix(in srgb, var(--color-primary) 38%, transparent);
+}
+
+/* ── Workout Log Page Header ─────────────────────────── */
+
+.workout-log-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) 0;
+  margin-bottom: var(--space-md);
+}
+
+.workout-log-header__title {
+  font-family: var(--font-headline-family);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.workout-log-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.workout-log-section-title {
+  font-family: var(--font-label-family);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-sm);
+  margin-top: var(--space-lg);
+}
+
+/* ── Bottom Sheet: Stitch Pattern ─────────────────────── */
+
+.workout-sheet-drag-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--color-outline-variant);
+  margin: 0 auto 16px;
+}
+
+/* ── FAB-style CTA button ─────────────────────────────── */
+
+.workout-fab-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: 16px var(--space-md);
+  border-radius: 16px;
+  background: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
+  font-family: var(--font-headline-family);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: opacity 0.12s ease, transform 0.1s ease;
+}
+
+.workout-fab-cta:active {
+  opacity: 0.85;
+  transform: scale(0.98);
+}
+
+.workout-fab-cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.workout-fab-cta .material-symbols-outlined {
+  font-size: 20px;
 }

@@ -88,13 +88,7 @@ function SwipeableExerciseRow({
           }}
           aria-label="운동종목 삭제"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.1" aria-hidden="true" style={{ width: "22px", height: "22px" }}>
-            <path d="M4.5 7.5h15" strokeLinecap="round" />
-            <path d="M9.75 3.75h4.5" strokeLinecap="round" />
-            <path d="M7.5 7.5v10.5A1.5 1.5 0 0 0 9 19.5h6a1.5 1.5 0 0 0 1.5-1.5V7.5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M10.5 10.5v5.25" strokeLinecap="round" />
-            <path d="M13.5 10.5v5.25" strokeLinecap="round" />
-          </svg>
+          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}>delete</span>
         </button>
       </div>
       <div
@@ -465,21 +459,7 @@ export function ExerciseCatalogContent() {
                             })
                           }
                         >
-                          <svg
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2.05"
-                            aria-hidden="true"
-                            style={{ width: "22px", height: "22px" }}
-                          >
-                            <path
-                              d="M4.75 19.25h4.1l9.56-9.56a1.75 1.75 0 0 0 0-2.47l-1.63-1.63a1.75 1.75 0 0 0-2.47 0l-9.56 9.56v4.1Z"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                            <path d="m13.5 6.5 4 4" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
+                          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}>edit</span>
                         </button>
                       </div>
                     </div>

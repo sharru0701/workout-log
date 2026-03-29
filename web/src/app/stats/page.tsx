@@ -87,8 +87,8 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         gridRow: "1 / 2",
         padding: "16px",
         borderRadius: "14px",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
+        background: "var(--color-surface-container-low)",
+        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
         <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-sets)", marginBottom: "8px" }}>Sessions</div>
@@ -102,8 +102,8 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
       <div style={{
         padding: "16px",
         borderRadius: "14px",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
+        background: "var(--color-surface-container-low)",
+        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
         <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-weight)", marginBottom: "8px" }}>Volume</div>
@@ -120,8 +120,8 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
       <div style={{
         padding: "16px",
         borderRadius: "14px",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
+        background: "var(--color-surface-container-low)",
+        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
         <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text-metric-reps)", marginBottom: "8px" }}>Compliance</div>
@@ -135,11 +135,11 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
       <div style={{
         padding: "16px",
         borderRadius: "14px",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
+        background: "var(--color-surface-container-low)",
+        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
         boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}>
-        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-cta)", marginBottom: "8px" }}>Top e1RM</div>
+        <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "8px" }}>Top e1RM</div>
         {topPr ? (
           <>
             <div style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.8px", color: "var(--color-text)", lineHeight: 1 }}>
@@ -181,8 +181,8 @@ function ComplianceRow({ r }: { r: any }) {
       gap: "var(--space-sm)",
       padding: "12px 14px",
       borderRadius: "10px",
-      background: "var(--color-surface)",
-      border: "1px solid var(--color-border)",
+      background: "var(--color-surface-container-low)",
+      border: "1px solid color-mix(in srgb, var(--color-outline-variant) 25%, transparent)",
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -228,8 +228,8 @@ function PrRow({ r }: { r: any }) {
         gap: "var(--space-sm)",
         padding: "12px 14px",
         borderRadius: "10px",
-        background: "var(--color-surface)",
-        border: "1px solid var(--color-border)",
+        background: "var(--color-surface-container-low)",
+        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 25%, transparent)",
         textDecoration: "none",
         transition: "background 0.12s ease",
       }}
@@ -251,9 +251,7 @@ function PrRow({ r }: { r: any }) {
           IMPROVED
         </div>
       </div>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, flexShrink: 0, color: "var(--color-text-muted)", opacity: 0.5 }}>
-        <path d="M9 18l6-6-6-6" />
-      </svg>
+      <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--color-text-muted)", opacity: 0.5, flexShrink: 0, fontVariationSettings: "'FILL' 0, 'wght' 300" }} aria-hidden="true">chevron_right</span>
     </Link>
   );
 }

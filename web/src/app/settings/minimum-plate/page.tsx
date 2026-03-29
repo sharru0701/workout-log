@@ -251,13 +251,13 @@ export default function SettingsMinimumPlatePage() {
     <div>
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
           <div className="card" style={{ padding: "var(--space-md)" }}>
 
             {Array.from({ length: 3 }).map((_, i) => (
               <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
+                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
               </div>
             ))}
           </div>
@@ -394,10 +394,7 @@ export default function SettingsMinimumPlatePage() {
                         justifyContent: "center",
                       }}
                     >
-                      <svg viewBox="0 0 24 24" focusable="false" style={{ width: "100%", height: "100%", fill: "none", stroke: "currentColor", strokeWidth: "2" }}>
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="m20 20-3.8-3.8" />
-                      </svg>
+                      <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
                     </span>
                     <AppTextInput
                       type="text"
@@ -451,10 +448,7 @@ export default function SettingsMinimumPlatePage() {
                           setSheetError(null);
                         }}
                       >
-                        <svg viewBox="0 0 12 12" width="10" height="10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
-                          <path d="M2 2 10 10" />
-                          <path d="M10 2 2 10" />
-                        </svg>
+                        <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'wght' 500" }}>close</span>
                       </button>
                     ) : null}
                   </div>

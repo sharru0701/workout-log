@@ -62,7 +62,7 @@ html {
   left: 0;
   right: 0;
   z-index: 9000;
-  background: var(--color-surface);
+  background: var(--color-surface-container-low);
   border-top: 1px solid var(--color-border);
   box-shadow: 0 -4px 20px var(--shadow-color-medium);
   padding: var(--space-sm) var(--space-md)
@@ -148,7 +148,7 @@ html {
   left: var(--space-md);
   right: var(--space-md);
   z-index: 9001;
-  background: var(--color-surface);
+  background: var(--color-surface-container-low);
   border: 1px solid var(--color-border);
   border-radius: 12px;
   box-shadow: 0 4px 20px var(--shadow-color-strong);
@@ -283,7 +283,7 @@ html {
   justify-content: center;
 
   /* Liquid Glass */
-  background: color-mix(in srgb, var(--color-surface) 72%, transparent);
+  background: color-mix(in srgb, var(--color-surface-container-low) 72%, transparent);
   backdrop-filter: blur(16px) saturate(1.6);
   -webkit-backdrop-filter: blur(16px) saturate(1.6);
   box-shadow:

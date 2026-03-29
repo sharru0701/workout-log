@@ -142,7 +142,7 @@ const MODULE_NAMES: Record<string, string> = {
 };
 
 const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)",
+  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
   backgroundSize: "200% 100%",
   animation: "skeleton-shimmer 1.4s ease infinite",
   borderRadius: 8,
@@ -1286,8 +1286,7 @@ export default function ProgramStorePage() {
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
         <section style={{ marginBottom: "var(--space-lg)" }}>
           <div style={{ marginBottom: "var(--space-sm)" }}>
-            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Library</span>
-            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>공식 프로그램</h2>
+            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>공식 프로그램</h2>
           </div>
           <EmptyStateRows
             when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
@@ -1312,8 +1311,7 @@ export default function ProgramStorePage() {
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <section style={{ marginBottom: "var(--space-lg)" }}>
           <div style={{ marginBottom: "var(--space-sm)" }}>
-            <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>My Programs</span>
-            <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>내 프로그램</h2>
+            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>내 프로그램</h2>
           </div>
           <div>
             {customListItems.map((item) => (
@@ -1331,8 +1329,7 @@ export default function ProgramStorePage() {
 
       <section style={{ marginBottom: "var(--space-lg)" }}>
         <div style={{ marginBottom: "var(--space-sm)" }}>
-          <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Create</span>
-          <h2 style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", margin: "1px 0 0" }}>프로그램 만들기</h2>
+          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>프로그램 만들기</h2>
         </div>
         <button
           type="button"

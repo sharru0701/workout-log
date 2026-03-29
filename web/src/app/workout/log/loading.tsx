@@ -1,6 +1,6 @@
 // PERF: 운동 기록 라우트 loading.tsx - 라우트 전환 시 즉각 피드백
 const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)",
+  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
   backgroundSize: "200% 100%",
   animation: "skeleton-shimmer 1.4s ease infinite",
   borderRadius: 8,

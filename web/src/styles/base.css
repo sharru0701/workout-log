@@ -4,7 +4,7 @@ body {
   padding: 0;
   background-color: var(--color-bg);
   color: var(--color-text);
-  font-family: var(--font-manrope, 'Manrope'), system-ui, -apple-system, sans-serif;
+  font-family: var(--font-family);
   /* 동적 뷰포트를 항상 채우도록 설정 */
   min-height: 100vh;
   min-height: 100dvh;

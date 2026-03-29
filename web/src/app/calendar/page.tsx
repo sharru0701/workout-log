@@ -10,8 +10,8 @@ import { apiGet } from "@/lib/api";
 import {
   dateOnlyToUtcDate,
   monthStart,
-  monthGrid, 
-  dayOfMonth, 
+  monthGrid,
+  dayOfMonth,
   getDayOfWeek,
   getYear,
   getMonth,
@@ -291,7 +291,7 @@ export default function CalendarPage() {
   const plansLoadedRef = useRef(false);
   const logFetchCacheRef = useRef<Set<string>>(new Set());
   const sessionDetailCacheRef = useRef<Set<string>>(new Set());
-  
+
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
@@ -508,7 +508,6 @@ export default function CalendarPage() {
     if (loggedDate && loggedDate !== dateOnly) return null;
 
     // For auto-progression plans: hide unlogged sessions when progression has already moved past this date.
-    // Covers past dates (< today) and any date where a later log already exists.
     if (!loggedDate && isAutoProgression) {
       const hasLaterLog = Array.from(logDates).some((d) => d > dateOnly);
       if (dateOnly < today || hasLaterLog) return null;
@@ -547,6 +546,7 @@ export default function CalendarPage() {
 
   function handleMonthPickerChange(value: { year: number; month: number }) {
     setCalendarMonth(value);
+    setMonthPickerOpen(false);
   }
 
   const selectedCtx = useMemo(
@@ -655,7 +655,22 @@ export default function CalendarPage() {
           const isSelected = dateOnly === selectedForGrid;
           const isOutside = !dateOnly.startsWith(baseMonthKey);
           const hasDot = !!selectedPlan && logDates.has(dateOnly);
-          const dow = getDayOfWeek(dateOnly);
+
+          // Today: filled primary circle; Selected (non-today): surface-container-high rounded-xl; Outside: muted
+          const cellBg = isToday
+            ? "var(--color-primary)"
+            : isSelected
+              ? "var(--color-surface-container-high)"
+              : "transparent";
+          const cellColor = isToday
+            ? "var(--color-text-on-primary)"
+            : isOutside
+              ? "var(--color-text-subtle)"
+              : "var(--color-text)";
+          const cellRadius = isToday ? "50%" : isSelected ? "10px" : "50%";
+          const dotColor = isToday
+            ? "var(--color-text-on-primary)"
+            : "var(--color-primary)";
 
           return (
             <button
@@ -673,16 +688,16 @@ export default function CalendarPage() {
                 height: "36px",
                 margin: "4px auto",
                 padding: 0,
-                border: isSelected ? "1px solid var(--color-selected-border)" : "1px solid transparent",
-                background: isSelected ? "var(--color-selected-bg)" : "transparent",
-                color: isSelected ? "var(--color-selected-text)" : isOutside ? "var(--color-text-subtle)" : dow === 0 ? "var(--color-danger)" : dow === 6 ? "var(--color-calendar-saturday)" : "var(--color-text)",
-                borderRadius: "50%",
-                transform: isSelected ? "scale(1.01)" : "scale(1)",
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                border: "none",
+                background: cellBg,
+                color: cellColor,
+                borderRadius: cellRadius,
+                transition: "background 0.15s ease, color 0.15s ease",
                 fontWeight: isToday || isSelected ? 700 : 400,
                 cursor: "pointer",
                 position: "relative",
                 fontSize: "14px",
+                fontFamily: "var(--font-label-family)",
               }}
             >
               <span>{dayOfMonth(dateOnly)}</span>
@@ -693,7 +708,7 @@ export default function CalendarPage() {
                     width: "4px",
                     height: "4px",
                     borderRadius: "50%",
-                    backgroundColor: isSelected ? "var(--color-bg)" : "var(--color-calendar-dot)",
+                    backgroundColor: dotColor,
                     position: "absolute",
                     bottom: "3px",
                   }}
@@ -708,91 +723,168 @@ export default function CalendarPage() {
 
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
-      {/* Plan selector bar */}
-      {plans.length > 0 && (
-        <div data-pull-refresh-trigger="true" style={{ marginBottom: "var(--space-md)" }}>
-          <PlanSelectorButton
-            planName={selectedPlan?.name ?? "플랜 선택"}
-            aria-expanded={planSheetOpen}
-            onClick={() => {
-              setPlanQuery("");
-              setPlanSheetOpen(true);
-            }}
-          />
-        </div>
-      )}
 
-      {/* Month navigation header */}
-      <div>
+      {/* ── Page Header ── */}
       <div
         data-pull-refresh-trigger="true"
-        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
-        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)" }}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "var(--space-md)",
+        }}
       >
-        <div>
+        <h1 style={{
+          fontFamily: "var(--font-headline-family)",
+          fontSize: "26px",
+          fontWeight: 800,
+          letterSpacing: "-0.5px",
+          color: "var(--color-text)",
+          margin: 0,
+        }}>
+          Calendar
+        </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+          {/* MonthYear picker trigger */}
           <button
             type="button"
             onClick={() => setMonthPickerOpen(true)}
             aria-label="연도와 월 선택 열기"
             aria-haspopup="dialog"
             aria-expanded={monthPickerOpen}
-            style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "var(--space-xs)", fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "4px",
+              background: "var(--color-surface-container-high)",
+              border: "none",
+              borderRadius: "20px",
+              padding: "6px 12px",
+              cursor: "pointer",
+              fontFamily: "var(--font-label-family)",
+              fontSize: "13px",
+              fontWeight: 600,
+              color: "var(--color-text)",
+            }}
           >
             <span>{getYear(anchorDate)}</span>
-            <span style={{ color: "var(--color-action)" }}>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, color: "var(--color-text-muted)", opacity: 0.6 }}>
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <span style={{ color: "var(--color-primary)" }}>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "var(--color-text-muted)" }}>expand_more</span>
           </button>
+          {/* Filter icon — plan selector trigger */}
+          {plans.length > 0 && (
+            <button
+              type="button"
+              aria-label="플랜 필터"
+              onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                width: "36px",
+                height: "36px",
+                background: "var(--color-surface-container-high)",
+                border: "none",
+                borderRadius: "50%",
+                cursor: "pointer",
+                color: "var(--color-text-muted)",
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>filter_list</span>
+            </button>
+          )}
         </div>
-        <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+      </div>
+
+      {/* ── Month navigation ── */}
+      <div
+        data-pull-refresh-trigger="true"
+        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "var(--space-sm)",
+        }}
+      >
+        <div style={{
+          fontFamily: "var(--font-headline-family)",
+          fontSize: "18px",
+          fontWeight: 700,
+          letterSpacing: "-0.3px",
+          color: "var(--color-text)",
+        }}>
+          {getYear(anchorDate)}년 {MONTH_NAMES[getMonth(anchorDate) - 1]}
+        </div>
+        <div style={{ display: "flex", gap: "4px" }}>
           <button
             onClick={() => shiftMonthWithFeedback(-1)}
             aria-label="이전 달"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "32px",
+              height: "32px",
+              background: "var(--color-surface-container-high)",
+              border: "none",
+              borderRadius: "50%",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+            }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ width: "20px", height: "20px" }}
-            >
-              <path d="M6 15l6-6 6 6" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>chevron_left</span>
           </button>
           <button
             onClick={() => shiftMonthWithFeedback(1)}
             aria-label="다음 달"
-            style={{ background: "none", border: "none", cursor: "pointer", padding: "var(--space-xs)", display: "flex", alignItems: "center", justifyContent: "center" }}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "32px",
+              height: "32px",
+              background: "var(--color-surface-container-high)",
+              border: "none",
+              borderRadius: "50%",
+              cursor: "pointer",
+              color: "var(--color-text-muted)",
+            }}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              style={{ width: "20px", height: "20px" }}
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>chevron_right</span>
           </button>
         </div>
       </div>
 
-      {/* Weekday header row */}
-      <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "var(--space-xs)" }}>
+      {/* ── Weekday header row ── */}
+      <div
+        aria-hidden="true"
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(7, 1fr)",
+          textAlign: "center",
+          marginBottom: "2px",
+        }}
+      >
         {WEEKDAY_SHORT.map((name) => (
-          <div key={name} style={{ padding: "var(--space-xs) 0" }}>
+          <div
+            key={name}
+            style={{
+              padding: "4px 0",
+              fontFamily: "var(--font-label-family)",
+              fontSize: "11px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--color-text-muted)",
+            }}
+          >
             {name}
           </div>
         ))}
       </div>
 
-      {/* Date grid */}
+      {/* ── Date grid ── */}
       <div
         role="grid"
         aria-label="날짜 선택"
@@ -802,52 +894,101 @@ export default function CalendarPage() {
         {renderMonthRows(anchorDate, selectedDate)}
       </div>
 
-      </div>{/* /ios-cal-gesture-area */}
+      {/* ── Divider ── */}
+      <div
+        role="separator"
+        style={{
+          height: "1px",
+          background: "var(--color-outline-variant)",
+          marginBottom: "var(--space-md)",
+          opacity: 0.6,
+        }}
+      />
 
-      {/* Divider */}
-      <div role="separator" />
-
-      {/* Selected date detail panel */}
-      <div style={{ marginTop: "var(--space-md)" }}>
+      {/* ── Selected date detail panel ── */}
+      <div>
+        {/* Date label + today badge */}
         <div style={{
           display: "flex",
           alignItems: "center",
           gap: "var(--space-sm)",
           marginBottom: "var(--space-md)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
         }}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-action)", marginBottom: "2px" }}>
-              Selected
+            <div style={{
+              fontFamily: "var(--font-headline-family)",
+              fontSize: "18px",
+              fontWeight: 700,
+              letterSpacing: "-0.3px",
+              color: "var(--color-text)",
+            }}>
+              {formatKoreanDay(selectedDate)}
             </div>
-            <span style={{ fontSize: "20px", fontWeight: 800, letterSpacing: "-0.4px", color: "var(--color-text)" }}>{formatKoreanDay(selectedDate)}</span>
+            {selectedPlan && (
+              <div style={{
+                fontFamily: "var(--font-label-family)",
+                fontSize: "12px",
+                color: "var(--color-text-muted)",
+                marginTop: "2px",
+              }}>
+                {selectedPlan.name}
+              </div>
+            )}
           </div>
           {selectedDate === today && (
             <span style={{
+              fontFamily: "var(--font-label-family)",
               fontSize: "11px",
               fontWeight: 700,
-              color: "var(--color-action-strong)",
-              background: "var(--color-action-weak)",
-              border: "1px solid var(--color-selected-border)",
+              color: "var(--color-text-on-primary)",
+              background: "var(--color-primary)",
               padding: "4px 12px",
               borderRadius: "20px",
               letterSpacing: "0.04em",
-            }}>오늘</span>
+            }}>
+              오늘
+            </span>
           )}
         </div>
 
-        {error && <div style={{ color: "var(--color-danger)", marginBottom: "var(--space-sm)", font: "var(--font-secondary)" }}>{error}</div>}
+        {error && (
+          <div style={{
+            color: "var(--color-danger)",
+            marginBottom: "var(--space-sm)",
+            fontFamily: "var(--font-label-family)",
+            fontSize: "13px",
+          }}>
+            {error}
+          </div>
+        )}
 
         {loading || selectedLogLoading || selectedSessionLoading || (!!planId && completedLogKey !== currentLogKey) ? (
-          <div style={{ display: "flex", gap: "var(--space-sm)", justifyContent: "center", padding: "var(--space-lg)" }}>
-            <span />
-            <span />
-            <span />
+          <div style={{
+            display: "flex",
+            gap: "6px",
+            justifyContent: "center",
+            padding: "var(--space-xl)",
+          }}>
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-outline-variant)", display: "inline-block" }} />
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-outline-variant)", display: "inline-block" }} />
+            <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: "var(--color-outline-variant)", display: "inline-block" }} />
           </div>
         ) : !selectedPlan ? (
-          <div style={{ padding: "var(--space-lg)", textAlign: "center", color: "var(--color-text-muted)" }}>
-            <p>플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.</p>
+          <div style={{
+            padding: "var(--space-xl)",
+            textAlign: "center",
+            background: "var(--color-surface-container-low)",
+            borderRadius: "16px",
+          }}>
+            <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "8px" }}>calendar_month</span>
+            <p style={{
+              fontFamily: "var(--font-label-family)",
+              fontSize: "13px",
+              color: "var(--color-text-muted)",
+              margin: 0,
+            }}>
+              플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.
+            </p>
           </div>
         ) : selectedLog ? (
           <SessionCard
@@ -874,54 +1015,72 @@ export default function CalendarPage() {
           /* No session yet */
           <div style={{
             padding: "24px 20px",
-            borderRadius: "14px",
-            border: "1px dashed var(--color-border)",
-            background: "var(--color-surface)",
+            borderRadius: "16px",
+            background: "var(--color-surface-container-low)",
             textAlign: "center",
           }}>
             {isPastDateCreationBlocked ? (
               <>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--color-surface-2)", border: "1px solid var(--color-border)", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, color: "var(--color-text-muted)" }}>
-                    <circle cx="12" cy="12" r="10" /><path d="M4.93 4.93l14.14 14.14" />
-                  </svg>
+                <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "10px" }}>block</span>
+                <div style={{
+                  fontFamily: "var(--font-headline-family)",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "var(--color-text)",
+                  marginBottom: "6px",
+                }}>
+                  기록 불가
                 </div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "4px" }}>기록 불가</div>
-                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+                <div style={{
+                  fontFamily: "var(--font-label-family)",
+                  fontSize: "12px",
+                  color: "var(--color-text-muted)",
+                  lineHeight: 1.5,
+                }}>
                   자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
                 </div>
               </>
             ) : (
               <>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "color-mix(in srgb, var(--color-cta) 10%, var(--color-surface))", border: "1px solid color-mix(in srgb, var(--color-cta) 20%, var(--color-border))", display: "inline-flex", alignItems: "center", justifyContent: "center", marginBottom: "12px" }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 18, height: 18, color: "var(--color-cta)" }}>
-                    <path d="M12 5v14M5 12h14" />
-                  </svg>
-                </div>
-                <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "4px" }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-primary)", display: "block", marginBottom: "10px" }}>fitness_center</span>
+                <div style={{
+                  fontFamily: "var(--font-headline-family)",
+                  fontSize: "14px",
+                  fontWeight: 700,
+                  color: "var(--color-text)",
+                  marginBottom: "6px",
+                }}>
                   {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
                 </div>
-                <div style={{ fontSize: "12px", color: "var(--color-text-muted)", marginBottom: "16px", lineHeight: 1.5 }}>
+                <div style={{
+                  fontFamily: "var(--font-label-family)",
+                  fontSize: "12px",
+                  color: "var(--color-text-muted)",
+                  marginBottom: "18px",
+                  lineHeight: 1.5,
+                }}>
                   {selectedCtx?.planned
                     ? "기록하기를 누르면 이 날짜 세션을 준비하고 바로 기록을 시작합니다."
                     : "기록하기를 누르면 이 날짜 기록 화면으로 바로 이동합니다."}
                 </div>
-                <a href={workoutHref} style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "10px 20px",
-                  borderRadius: "10px",
-                  background: "var(--color-cta)",
-                  color: "var(--color-cta-on)",
-                  textDecoration: "none",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  letterSpacing: "0.02em",
-                }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ width: 14, height: 14 }}>
-                    <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                  </svg>
+                <a
+                  href={workoutHref}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "10px 22px",
+                    borderRadius: "12px",
+                    background: "var(--color-primary)",
+                    color: "var(--color-text-on-primary)",
+                    textDecoration: "none",
+                    fontFamily: "var(--font-label-family)",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>add</span>
                   기록하기
                 </a>
               </>

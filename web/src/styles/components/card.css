@@ -1,5 +1,5 @@
 .card {
-  --card-bg: var(--color-surface);
+  --card-bg: var(--color-surface-container-low);
   --card-border: var(--color-border);
   --card-text: var(--color-text);
   background-color: var(--card-bg);
@@ -23,12 +23,12 @@
 }
 
 .card[data-card-tone="default"] {
-  --card-bg: var(--color-surface);
+  --card-bg: var(--color-surface-container-low);
   --card-border: var(--color-border);
 }
 
 .card[data-card-tone="subtle"] {
-  --card-bg: color-mix(in srgb, var(--color-surface-2) 82%, var(--color-surface));
+  --card-bg: color-mix(in srgb, var(--color-surface-2) 82%, var(--color-surface-container-low));
   --card-border: color-mix(in srgb, var(--color-border-strong) 18%, var(--color-border));
 }
 
@@ -38,17 +38,17 @@
 }
 
 .card[data-card-tone="accent"] {
-  --card-bg: color-mix(in srgb, var(--color-action) 10%, var(--color-surface));
+  --card-bg: color-mix(in srgb, var(--color-action) 10%, var(--color-surface-container-low));
   --card-border: color-mix(in srgb, var(--color-action) 28%, var(--color-border));
 }
 
 .card[data-card-tone="danger"] {
-  --card-bg: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface));
+  --card-bg: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low));
   --card-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
 }
 
 .card[data-card-tone="success"] {
-  --card-bg: color-mix(in srgb, var(--color-success) 12%, var(--color-surface));
+  --card-bg: color-mix(in srgb, var(--color-success) 12%, var(--color-surface-container-low));
   --card-border: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
 }
 

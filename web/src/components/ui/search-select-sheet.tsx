@@ -111,9 +111,7 @@ export function SearchSelectCombobox({
                 >
                   <span style={{ flex: 1 }}>{option.label}</span>
                   {option.active && (
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16, flexShrink: 0 }}>
-                      <path d="M20 6L9 17l-5-5" />
-                    </svg>
+                    <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1, 'wght' 500", flexShrink: 0, color: "var(--color-primary)" }}>check</span>
                   )}
                 </button>
               ))

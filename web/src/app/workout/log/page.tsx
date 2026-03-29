@@ -405,35 +405,13 @@ function formatCompactWeightValue(value: number, step = 0.5) {
 
 function CheckIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ width: "1.1rem", height: "1.1rem" }}
-    >
-      <path d="M5 12l5 5L20 7" />
-    </svg>
+    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "1.1rem", fontVariationSettings: "'FILL' 0, 'wght' 600", lineHeight: 1 }}>check</span>
   );
 }
 
 function FailureIcon() {
   return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="3.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-      style={{ width: "1.1rem", height: "1.1rem" }}
-    >
-      <path d="M18 6L6 18M6 6l12 12" />
-    </svg>
+    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "1.1rem", fontVariationSettings: "'FILL' 0, 'wght' 600", lineHeight: 1 }}>close</span>
   );
 }
 
@@ -476,11 +454,11 @@ function WorkoutRecordInlinePicker({
           border: "1px solid var(--color-border)",
           borderRadius: "8px",
           backgroundColor: failed
-            ? "color-mix(in srgb, var(--color-danger) 25%, var(--color-surface))"
+            ? "color-mix(in srgb, var(--color-danger) 25%, var(--color-surface-container-low))"
             : complete
               ? color === "var(--text-metric-reps)"
                 ? "var(--color-success-weak)"
-                : "color-mix(in srgb, var(--color-success) 18%, var(--color-surface))"
+                : "color-mix(in srgb, var(--color-success) 18%, var(--color-surface-container-low))"
               : "transparent",
           color: failed
             ? "var(--color-danger-strong)"
@@ -588,10 +566,7 @@ function SwipeableSetRow({
           style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-danger)", backgroundColor: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
           aria-label="세트 삭제"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: "22px", height: "22px" }}>
-            <polyline points="3 6 5 6 21 6"></polyline>
-            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-          </svg>
+          <span className="material-symbols-outlined" style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}>delete</span>
         </button>
       </div>
       <div
@@ -602,7 +577,7 @@ function SwipeableSetRow({
         style={{
           transform: `translateX(${offsetX}px)`,
           transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
-          backgroundColor: "var(--color-surface)",
+          backgroundColor: "var(--color-surface-container-low)",
           borderRadius: "6px",
           position: "relative",
           zIndex: 1,
@@ -687,7 +662,7 @@ function ExerciseRow({
         <div className="exercise-card__header-actions">
           {prevPerformance ? (
             <span className="exercise-card__prev-ref" title="이전 최고 기록">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: "10px", height: "10px" }}><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+              <span className="material-symbols-outlined" style={{ fontSize: 12, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>history</span>
               {prevPerformance}
             </span>
           ) : null}
@@ -810,10 +785,7 @@ function ExerciseRow({
         className="set-add-btn"
         onClick={onAddSet}
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>add</span>
         세트 추가
       </button>
 
@@ -822,13 +794,13 @@ function ExerciseRow({
         <div className="set-hint">
           {showMinimumPlateInfo ? (
             <span className="set-hint__item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>info</span>
               {weightStepMeta}로 입력됩니다.
             </span>
           ) : null}
           {isBodyweightExercise && bodyweightKg ? (
             <span className="set-hint__item">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>info</span>
               총하중 기준: {formatKgValue(totalLoadKg)}
             </span>
           ) : null}
@@ -1908,22 +1880,22 @@ export default function WorkoutRecordPage() {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {/* 선택된 플랜 카드 */}
           <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 12 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 12 }} />
             <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "35%", marginBottom: 6 }} />
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 20, width: "60%" }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "35%", marginBottom: 6 }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 20, width: "60%" }} />
             </div>
           </div>
           {/* 지난 세션 */}
           <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "30%", marginBottom: 12 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "30%", marginBottom: 12 }} />
             <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "50%", marginBottom: 8 }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "50%", marginBottom: 8 }} />
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-sm)" }}>
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i}>
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "70%", marginBottom: 4 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "90%" }} />
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "70%", marginBottom: 4 }} />
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "90%" }} />
                   </div>
                 ))}
               </div>
@@ -1931,23 +1903,23 @@ export default function WorkoutRecordPage() {
           </div>
           {/* 오늘 세션 */}
           <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
             <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "40%", marginBottom: 12 }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "40%", marginBottom: 12 }} />
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} style={{ paddingBlock: 10, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 14, width: "55%", marginBottom: 6 }} />
+                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 14, width: "55%", marginBottom: 6 }} />
                   <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 2 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 2 }} />
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
+                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
                   </div>
                 </div>
               ))}
             </div>
           </div>
           {/* 기록 저장 버튼 */}
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface) 0%, var(--color-surface-2) 50%, var(--color-surface) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 48 }} />
+          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 48 }} />
         </div>
       )}
       <ErrorStateRows
@@ -2048,9 +2020,7 @@ export default function WorkoutRecordPage() {
             {lastSession && (
               <div className="last-session-banner">
                 <div className="last-session-banner__icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: 16, height: 16 }}>
-                    <polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>
-                  </svg>
+                  <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>history</span>
                 </div>
                 <div className="last-session-banner__body">
                   <div className="last-session-banner__label">지난 세션</div>
@@ -2211,10 +2181,7 @@ export default function WorkoutRecordPage() {
                     setAddSheetOpen(true);
                   }}
                 >
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true" style={{ width: "28px", height: "28px" }}>
-                    <line x1="12" y1="5" x2="12" y2="19" />
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                  </svg>
+                  <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 28, fontVariationSettings: "'wght' 300" }}>add</span>
                   <span>운동 추가</span>
                 </button>
               </div>

@@ -44,20 +44,17 @@
 
 .mobile-bottom-sheet-panel {
   position: relative;
-  background-color: var(--color-surface);
-  border-top-left-radius: 22px;
-  border-top-right-radius: 22px;
-  /* Subtle top border for delineation */
-  border-top: 1px solid var(--color-border);
-  border-left: 1px solid var(--color-border);
-  border-right: 1px solid var(--color-border);
+  background-color: var(--color-surface-container-low);
+  border-top-left-radius: 32px;
+  border-top-right-radius: 32px;
+  border-top: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
   max-height: min(92vh, calc(100dvh - env(safe-area-inset-top, 0px)));
   margin-top: env(safe-area-inset-top, 0px);
   display: flex;
   flex-direction: column;
   pointer-events: auto;
   box-shadow:
-    0 -8px 32px var(--shadow-color-strong),
+    0 -12px 48px var(--shadow-color-strong),
     0 -2px 8px var(--shadow-color-soft);
   padding: var(--space-md);
   padding-bottom: var(--space-md);
@@ -92,7 +89,7 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 6px 0 10px;
+  padding: 12px 0 8px;
   margin: -4px calc(-1 * var(--space-md)) 0;
   cursor: grab;
   user-select: none;
@@ -104,17 +101,17 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 }
 
 .mobile-bottom-sheet-drag-handle-pill {
-  width: 40px;
+  width: 48px;
   height: 4px;
   border-radius: 2px;
-  background-color: var(--color-border);
-  opacity: 0.7;
+  background-color: var(--color-outline-variant);
+  opacity: 0.3;
   transition: width 0.2s ease, opacity 0.2s ease;
 }
 
 .mobile-bottom-sheet-panel.is-dragging .mobile-bottom-sheet-drag-handle-pill {
-  width: 52px;
-  opacity: 0.9;
+  width: 56px;
+  opacity: 0.5;
 }
 
 /* ── Header ───────────────────────────────────────────── */
@@ -125,7 +122,7 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   justify-content: space-between;
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-sm);
-  border-bottom: 1px solid var(--color-border);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
   min-height: 44px;
   cursor: grab;
   user-select: none;
@@ -145,6 +142,7 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 
 .mobile-bottom-sheet-title h2 {
   margin: 0;
+  font-family: var(--font-headline-family);
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.3px;
@@ -169,21 +167,21 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--color-surface-2);
+  background-color: var(--color-surface-container-high);
   color: var(--color-text-muted);
-  border: 1px solid var(--color-border);
+  border: none;
   cursor: pointer;
   transition: background-color 0.15s, transform 0.15s, color 0.15s;
   flex-shrink: 0;
 }
 
 .mobile-bottom-sheet-btn:hover {
-  background-color: var(--color-surface-hover);
+  background-color: var(--color-surface-container-highest);
   color: var(--color-text);
 }
 
 .mobile-bottom-sheet-btn:active {
-  background-color: var(--color-border);
+  background-color: var(--color-surface-container-highest);
   transform: scale(0.92);
 }
 
@@ -192,9 +190,8 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
   cursor: not-allowed;
 }
 
-.mobile-bottom-sheet-btn svg {
-  width: 16px;
-  height: 16px;
+.mobile-bottom-sheet-btn .material-symbols-outlined {
+  font-size: 18px;
 }
 
 .mobile-bottom-sheet-btn-spacer {
@@ -204,15 +201,15 @@ html[data-bottom-sheet-open="true"] .mobile-bottom-sheet:not([inert]) .mobile-bo
 
 /* Primary action button (save / confirm) */
 .mobile-bottom-sheet-btn--action {
-  background-color: var(--color-action);
-  color: #fff;
-  border-color: var(--color-action);
+  background-color: var(--color-primary);
+  color: var(--color-text-on-primary);
+  border: none;
 }
 
 .mobile-bottom-sheet-btn--action:hover {
-  background-color: var(--color-action);
-  color: #fff;
-  opacity: 0.9;
+  background-color: var(--color-primary-strong);
+  color: var(--color-text-on-primary);
+  opacity: 1;
 }
 
 .mobile-bottom-sheet-btn--action:disabled {

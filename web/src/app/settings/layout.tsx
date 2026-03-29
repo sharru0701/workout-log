@@ -67,7 +67,59 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
     }, 400);
   }, [router]);
 
-  if (isRoot) return <>{children}</>;
+  if (isRoot) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+        {/* ── Sticky header ── */}
+        <header
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 50,
+            backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 24px",
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: "var(--font-headline-family)",
+                fontSize: 22,
+                fontWeight: 700,
+                letterSpacing: "-0.4px",
+                color: "var(--color-text)",
+                margin: 0,
+              }}
+            >
+              Settings
+            </h1>
+          </div>
+        </header>
+
+        {/* ── Page content ── */}
+        <main
+          style={{
+            flex: 1,
+            maxWidth: 576,
+            width: "100%",
+            margin: "0 auto",
+            padding: "16px 16px 128px",
+          }}
+        >
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <SettingsModalHeaderActionProvider>
@@ -95,7 +147,54 @@ function SettingsChildModal({
 
   return (
     <>
-      <SettingsHomeContent />
+      {/* ── Root layout rendered behind the sheet ── */}
+      <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
+        <header
+          style={{
+            position: "sticky",
+            top: 0,
+            zIndex: 50,
+            backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+            borderBottom: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+              padding: "14px 24px",
+            }}
+          >
+            <h1
+              style={{
+                fontFamily: "var(--font-headline-family)",
+                fontSize: 22,
+                fontWeight: 700,
+                letterSpacing: "-0.4px",
+                color: "var(--color-text)",
+                margin: 0,
+              }}
+            >
+              Settings
+            </h1>
+          </div>
+        </header>
+        <main
+          style={{
+            flex: 1,
+            maxWidth: 576,
+            width: "100%",
+            margin: "0 auto",
+            padding: "16px 16px 128px",
+          }}
+        >
+          <SettingsHomeContent />
+        </main>
+      </div>
+
       <BottomSheet
         open={sheetOpen}
         onClose={onClose}

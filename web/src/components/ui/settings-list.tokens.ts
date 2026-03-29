@@ -7,7 +7,7 @@ export const settingsListTokenDefaults = {
   "--settings-row-padding-inline": "1.1rem",
   "--settings-row-content-gap": "0.84rem",
   "--settings-group-radius": "1.68rem",
-  "--settings-group-background": "var(--color-surface)",
+  "--settings-group-background": "var(--color-surface-container-low)",
   "--settings-group-border-color": "var(--color-border)",
   "--settings-row-divider-color": "color-mix(in srgb, var(--color-border) 52%, transparent)",
   "--settings-row-divider-inset-start": "var(--settings-row-padding-inline)",

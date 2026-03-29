@@ -77,10 +77,7 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
       <SectionHeader title="검색" />
       <div>
         <span aria-hidden="true">
-          <svg viewBox="0 0 24 24" focusable="false">
-            <circle cx="11" cy="11" r="7" />
-            <path d="m20 20-3.8-3.8" />
-          </svg>
+          <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
         </span>
         <input
           type="search"

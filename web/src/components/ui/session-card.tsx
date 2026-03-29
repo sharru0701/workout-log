@@ -144,16 +144,12 @@ function TodayCard({
         href ? (
           <PrimaryButton as="div" variant="primary" size="lg" fullWidth interactive={false} className="btn btn-primary" style={{ marginTop: "var(--space-md)" }}>
             <span>{ctaLabel}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, marginLeft: "var(--space-xs)" }}>
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: 20, fontVariationSettings: "'wght' 400", marginLeft: "var(--space-xs)" }}>chevron_right</span>
           </PrimaryButton>
         ) : (
           <PrimaryButton as="a" href={ctaHref} variant="primary" size="lg" fullWidth className="btn btn-primary" style={{ marginTop: "var(--space-md)" }}>
             <span>{ctaLabel}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 20, height: 20, marginLeft: "var(--space-xs)" }}>
-              <path d="m9 18 6-6-6-6" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: 20, fontVariationSettings: "'wght' 400", marginLeft: "var(--space-xs)" }}>chevron_right</span>
           </PrimaryButton>
         )
       )}

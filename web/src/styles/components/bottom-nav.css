@@ -16,11 +16,13 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Frosted glass background */
-  background: color-mix(in srgb, var(--color-bg) 90%, transparent);
+  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
   backdrop-filter: blur(24px) saturate(1.6);
   -webkit-backdrop-filter: blur(24px) saturate(1.6);
 
-  border-top: 1px solid var(--color-border);
+  border-top: 1px solid color-mix(in srgb, var(--color-outline-variant, var(--color-border)) 60%, transparent);
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
 }
 
 /* --------------------------------------------------------------------------
@@ -39,7 +41,7 @@
   color: var(--color-text-muted);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: color 0.12s ease;
+  transition: color 0.15s ease;
   cursor: pointer;
 }
 
@@ -49,67 +51,55 @@
   transition: transform 0.1s ease, opacity 0.1s ease;
 }
 
-/* 활성 탭 — CTA orange */
+/* 활성 탭 — primary blue */
 .bottom-tab-item--active {
-  color: var(--color-cta);
+  color: var(--color-primary);
 }
 
 /* --------------------------------------------------------------------------
-   Pill wrapper — 아이콘 위에 indicator dot
+   Pill wrapper
    -------------------------------------------------------------------------- */
 .bottom-tab-pill {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
+  gap: 3px;
+  padding: 4px 14px;
   border-radius: 20px;
   transition: background 0.18s ease;
   position: relative;
 }
 
-/* 활성 탭 pill — orange tint background */
+/* 활성 탭 pill — primary tint background */
 .bottom-tab-item--active .bottom-tab-pill {
-  background: var(--color-cta-weak);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
 }
 
 /* --------------------------------------------------------------------------
-   아이콘
+   아이콘 — Material Symbols Outlined
    -------------------------------------------------------------------------- */
 .bottom-tab-icon {
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.bottom-tab-icon svg {
-  width: 24px;
-  height: 24px;
-  flex-shrink: 0;
-  transition: stroke-width 0.12s ease;
-}
-
-.bottom-tab-item--active .bottom-tab-icon svg {
-  stroke-width: 2.5;
+  font-size: 24px;
+  line-height: 1;
+  display: block;
+  /* font-variation-settings set inline per active/inactive state */
 }
 
 /* --------------------------------------------------------------------------
-   레이블 — Space Grotesk-inspired: uppercase, tight tracking
+   레이블 — Space Grotesk uppercase tracking
    -------------------------------------------------------------------------- */
 .bottom-tab-label {
+  font-family: var(--font-label-family);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   white-space: nowrap;
 }
 
 /* 활성 탭 레이블 */
 .bottom-tab-item--active .bottom-tab-label {
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.12em;
 }

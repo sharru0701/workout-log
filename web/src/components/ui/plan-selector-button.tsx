@@ -32,10 +32,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
         </div>
       </div>
       <span aria-hidden="true" style={{ color: "var(--color-text-muted)" }}>
-        <svg viewBox="0 0 12 16" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-          <path d="M2 5.5L6 2L10 5.5" />
-          <path d="M2 10.5L6 14L10 10.5" />
-        </svg>
+        <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>unfold_more</span>
       </span>
     </Card>
   );

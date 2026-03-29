@@ -1,90 +1,248 @@
 import Link from "next/link";
-import {
-  DashboardActionSection,
-  DashboardScreen,
-} from "@/components/dashboard/dashboard-primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 
-const primaryFlowCards = [
+type NavItem = {
+  href: string;
+  label: string;
+  subtitle: string;
+  description: string;
+  iconSymbol: string;
+};
+
+const primaryItems: NavItem[] = [
   {
     href: APP_ROUTES.todayLog,
-    title: "오늘 기록 열기",
-    subtitle: "핵심 화면",
+    label: "오늘 기록 열기",
+    subtitle: "Today's Log",
     description: "선택한 플랜으로 세션을 만들고 세트 입력과 저장을 이어갑니다.",
-    meta: "가장 자주 쓰는 시작점",
-    symbol: "WO",
-    tone: "accent" as const,
+    iconSymbol: "fitness_center",
   },
   {
     href: APP_ROUTES.programStore,
-    title: "프로그램/플랜 준비",
-    subtitle: "준비 단계",
-    description: "보유 플랜이 없으면 먼저 프로그램을 고르거나 직접 만든 뒤 오늘 운동으로 들어갑니다.",
-    meta: "기록 전 준비",
-    symbol: "PL",
-    tone: "success" as const,
+    label: "프로그램/플랜 준비",
+    subtitle: "Programs",
+    description: "보유 플랜이 없으면 먼저 프로그램을 고르거나 직접 만들고 오늘 운동으로 들어갑니다.",
+    iconSymbol: "library_books",
   },
 ];
 
-const supportCards = [
+const toolItems: NavItem[] = [
   {
     href: APP_ROUTES.calendarHome,
-    title: "날짜로 열기",
-    subtitle: "캘린더",
+    label: "날짜로 열기",
+    subtitle: "Calendar",
     description: "오늘이 아닌 특정 날짜 기준으로 세션을 열거나 생성합니다.",
-    meta: "캘린더 연동",
-    symbol: "DT",
-    tone: "default" as const,
+    iconSymbol: "calendar_today",
   },
   {
     href: APP_ROUTES.todayOverrides,
-    title: "세션 조정",
-    subtitle: "고급 제어",
+    label: "세션 조정",
+    subtitle: "Overrides",
     description: "교체 운동과 보조 운동 규칙을 세밀하게 조정합니다.",
-    meta: "오버라이드",
-    symbol: "OV",
-    tone: "warning" as const,
+    iconSymbol: "tune",
   },
   {
     href: APP_ROUTES.workoutRecord,
-    title: "기록 워크스페이스",
-    subtitle: "보조 기록 화면",
+    label: "기록 워크스페이스",
+    subtitle: "Record",
     description: "플랜 기반 기록을 다시 보거나 세부 편집이 필요할 때 사용합니다.",
-    meta: "보조 입력 화면",
-    symbol: "RC",
-    tone: "neutral" as const,
+    iconSymbol: "edit_note",
   },
 ];
 
-export default function WorkoutTodayIndexPage() {
+function NavRow({ item }: { item: NavItem }) {
   return (
-    <DashboardScreen>
-      <div style={{ marginBottom: "var(--space-lg)" }}>
-        <span style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Workout</span>
-        <h1 style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "2px 0 6px" }}>오늘 세션 생성과 기록</h1>
-        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.4 }}>실제 핵심 흐름은 플랜 준비 후 오늘 기록 화면에서 세션을 만들고 저장하는 것입니다.</p>
-        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-          <Link href={APP_ROUTES.todayLog} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-action)", color: "#fff", borderRadius: 12, padding: "10px 16px", fontWeight: 700, fontSize: "14px", textDecoration: "none", letterSpacing: "-0.1px" }}>
-            오늘 기록 열기
-          </Link>
-          <Link href={APP_ROUTES.programStore} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", borderRadius: 12, padding: "10px 16px", fontWeight: 600, fontSize: "14px", textDecoration: "none" }}>
-            플랜 준비
-          </Link>
+    <Link
+      href={item.href}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "var(--space-md)",
+        padding: "14px 16px",
+        borderRadius: "14px",
+        background: "var(--color-surface-container-low)",
+        textDecoration: "none",
+        transition: "background 0.12s ease",
+      }}
+    >
+      <span
+        className="material-symbols-outlined"
+        style={{
+          fontSize: 22,
+          color: "var(--color-primary)",
+          flexShrink: 0,
+          fontVariationSettings: "'FILL' 0, 'wght' 300",
+        }}
+        aria-hidden="true"
+      >
+        {item.iconSymbol}
+      </span>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div
+          style={{
+            fontFamily: "var(--font-label-family)",
+            fontSize: "10px",
+            fontWeight: 700,
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            color: "var(--color-primary)",
+            marginBottom: "1px",
+          }}
+        >
+          {item.subtitle}
+        </div>
+        <div
+          style={{
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "15px",
+            fontWeight: 700,
+            color: "var(--color-text)",
+            letterSpacing: "-0.1px",
+            marginBottom: "2px",
+          }}
+        >
+          {item.label}
+        </div>
+        <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.4 }}>
+          {item.description}
         </div>
       </div>
 
-      <DashboardActionSection
-        title="핵심 동선"
-        description="기록을 시작할 때 가장 필요한 두 단계만 먼저 고정했습니다."
-        items={primaryFlowCards}
-        gridClassName="app-dashboard-action-grid--two"
-      />
+      <span
+        className="material-symbols-outlined"
+        style={{
+          fontSize: 18,
+          color: "var(--color-text-muted)",
+          opacity: 0.5,
+          flexShrink: 0,
+          fontVariationSettings: "'FILL' 0, 'wght' 300",
+        }}
+        aria-hidden="true"
+      >
+        chevron_right
+      </span>
+    </Link>
+  );
+}
 
-      <DashboardActionSection
-        title="보조 도구"
-        description="날짜 기반 열기와 세션 조정은 메인 기록 흐름 아래로 분리했습니다."
-        items={supportCards}
-      />
-    </DashboardScreen>
+export default function WorkoutTodayIndexPage() {
+  return (
+    <div>
+      {/* Header */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+          marginBottom: "var(--space-xl)",
+          paddingBottom: "var(--space-md)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <div>
+          <div
+            style={{
+              fontFamily: "var(--font-label-family)",
+              fontSize: "10px",
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+              color: "var(--color-primary)",
+              marginBottom: "4px",
+            }}
+          >
+            Workout
+          </div>
+          <h1
+            style={{
+              fontFamily: "var(--font-headline-family)",
+              fontSize: "28px",
+              fontWeight: 800,
+              letterSpacing: "-0.5px",
+              color: "var(--color-text)",
+              margin: 0,
+            }}
+          >
+            오늘 운동
+          </h1>
+        </div>
+        <Link
+          href={APP_ROUTES.todayLog}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            padding: "9px 16px",
+            borderRadius: "22px",
+            background: "var(--color-primary)",
+            color: "var(--color-text-on-primary)",
+            fontFamily: "var(--font-label-family)",
+            fontSize: "13px",
+            fontWeight: 700,
+            letterSpacing: "0.02em",
+            textDecoration: "none",
+            flexShrink: 0,
+          }}
+        >
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: 16, fontVariationSettings: "'FILL' 1, 'wght' 500" }}
+            aria-hidden="true"
+          >
+            play_arrow
+          </span>
+          기록 시작
+        </Link>
+      </div>
+
+      {/* Primary Section */}
+      <div style={{ marginBottom: "var(--space-xl)" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-headline-family)",
+              fontSize: "13px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--color-text-muted)",
+              margin: 0,
+            }}
+          >
+            핵심 동선
+          </h2>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+          {primaryItems.map((item) => (
+            <NavRow key={item.href} item={item} />
+          ))}
+        </div>
+      </div>
+
+      {/* Tools Section */}
+      <div style={{ marginBottom: "var(--space-xl)" }}>
+        <div style={{ marginBottom: "var(--space-sm)" }}>
+          <h2
+            style={{
+              fontFamily: "var(--font-headline-family)",
+              fontSize: "13px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--color-text-muted)",
+              margin: 0,
+            }}
+          >
+            보조 도구
+          </h2>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+          {toolItems.map((item) => (
+            <NavRow key={item.href} item={item} />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }

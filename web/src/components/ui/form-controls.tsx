@@ -47,21 +47,13 @@ export function AppPlusMinusIcon({
 }) {
   const resolvedSize = typeof size === "number" ? `${size}px` : size;
   return (
-    <svg
-      viewBox="0 0 24 24"
+    <span
+      className={`material-symbols-outlined${className ? ` ${className}` : ""}`}
       aria-hidden="true"
-      focusable="false"
-      className={className}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ width: resolvedSize, height: resolvedSize }}
+      style={{ fontSize: resolvedSize, fontVariationSettings: "'FILL' 0, 'wght' 400", lineHeight: 1 }}
     >
-      <path d="M5 12h14" />
-      {kind === "plus" ? <path d="M12 5v14" /> : null}
-    </svg>
+      {kind === "plus" ? "add" : "remove"}
+    </span>
   );
 }
 
@@ -69,14 +61,14 @@ export const AppTextInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & { variant?: FormControlVariant }
 >(function AppTextInput({ variant = "default", className, style, ...props }, ref) {
-  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", ...style }} {...props} />;
+  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", ...style }} {...props} />;
 });
 
 export const AppTextarea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & { variant?: FormControlVariant }
 >(function AppTextarea({ variant = "default", className, style, ...props }, ref) {
-  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", minHeight: "60px", resize: "vertical", ...style }} {...props} />;
+  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", minHeight: "60px", resize: "vertical", ...style }} {...props} />;
 });
 
 export const AppSelect = forwardRef<
@@ -120,7 +112,7 @@ export const AppSelect = forwardRef<
           border: "1px solid var(--color-border)",
           borderRadius: "8px",
           padding: "var(--space-sm) var(--space-md)",
-          backgroundColor: "var(--color-surface)",
+          backgroundColor: "var(--color-surface-container-low)",
           boxSizing: "border-box",
         }}
       >
@@ -164,10 +156,7 @@ export const AppSelect = forwardRef<
               flexShrink: 0,
             }}
           >
-            <svg viewBox="0 0 12 16" width="10" height="13" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" focusable="false">
-              <path d="M2 5.5L6 2L10 5.5" />
-              <path d="M2 10.5L6 14L10 10.5" />
-            </svg>
+            <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>unfold_more</span>
           </span>
         </span>
       </WrapperTag>
@@ -185,7 +174,7 @@ export const AppSelect = forwardRef<
     border: "1px solid var(--color-border)",
     borderRadius: "8px",
     font: "var(--font-body)",
-    backgroundColor: "var(--color-surface)",
+    backgroundColor: "var(--color-surface-container-low)",
     color: "var(--color-text)",
     outline: "none",
     boxSizing: "border-box" as const,
@@ -226,20 +215,7 @@ export const AppSelect = forwardRef<
           justifyContent: "center",
         }}
       >
-        <svg
-          viewBox="0 0 12 12"
-          width="12"
-          height="12"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="1.8"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          focusable="false"
-          style={{ width: "100%", height: "100%" }}
-        >
-          <path d="M2.5 4.5L6 8L9.5 4.5" />
-        </svg>
+        <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>expand_more</span>
       </span>
     </div>
   );
