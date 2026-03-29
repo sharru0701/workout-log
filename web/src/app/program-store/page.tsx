@@ -1218,6 +1218,12 @@ export default function ProgramStorePage() {
 
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
+      <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+        <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Program Store</div>
+        <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>프로그램 스토어</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>공식 및 커스텀 프로그램을 탐색하고 시작하세요.</p>
+      </div>
+
       {loading && (
         <div style={{ paddingBlock: "var(--space-md)" }}>
           <style>{`
@@ -1412,20 +1418,31 @@ export default function ProgramStorePage() {
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
 
               {/* 헤더 */}
-              <Card padding="md" elevated={false} tone="inset">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)" }}>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {/* INFO COLOR: program-name — 상세 헤더에서 프로그램명이 최우선 */}
-                    <strong style={{ display: "block", font: "var(--font-card-title)", color: "var(--text-program-name)" }}>
-                    {formatProgramDisplayName(detailTarget.template.name)}
-                    </strong>
-                  </div>
+              <div style={{ paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
                   <span className={`${badge.className} label-sm`}>{badge.label}</span>
+                  {tags.length > 0 && (
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "flex-end" }}>
+                      {tags.slice(0, 3).map((tag) => (
+                        <span key={tag} className={tagLabelClass(tag)}>{tag}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              </Card>
+                <strong style={{ display: "block", fontFamily: "var(--font-headline-family)", fontSize: "22px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)", marginBottom: tags.length > 3 ? "var(--space-xs)" : 0 }}>
+                  {formatProgramDisplayName(detailTarget.template.name)}
+                </strong>
+                {tags.length > 3 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "var(--space-xs)" }}>
+                    {tags.slice(3).map((tag) => (
+                      <span key={tag} className={tagLabelClass(tag)}>{tag}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* 스탯 그리드 */}
-              <Card padding="md" elevated={false}>
+              <Card padding="md" elevated={false} tone="subtle">
                 {info.stats.map((stat, index) => (
                   <div
                     key={stat.label}
@@ -1455,7 +1472,7 @@ export default function ProgramStorePage() {
               {/* 프로그램 소개 */}
               {detailTarget.template.description && (
                 <Card padding="md" elevated={false}>
-                  <span style={sectionLabelStyle}>프로그램 소개</span>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-xs)" }}>프로그램 소개</h2>
                   <p style={bodyTextStyle}>
                     {detailTarget.template.description}
                   </p>
@@ -1473,7 +1490,7 @@ export default function ProgramStorePage() {
               {/* 훈련 모듈 (Operator) */}
               {info.modules && info.modules.length > 0 && (
                 <Card padding="md" elevated={false}>
-                  <span style={sectionLabelStyle}>훈련 모듈</span>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>훈련 모듈</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginTop: "var(--space-xs)" }}>
                     {info.modules.map((mod) => (
                       <div
@@ -1495,7 +1512,7 @@ export default function ProgramStorePage() {
               {/* 세션 구성 (Manual) */}
               {info.sessions && info.sessions.length > 0 && (
                 <Card padding="md" elevated={false}>
-                  <span style={sectionLabelStyle}>세션 구성</span>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>세션 구성</h2>
                   <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
                     {info.sessions.map((session) => (
                       <div
@@ -1508,7 +1525,7 @@ export default function ProgramStorePage() {
                             alignItems: "center",
                             gap: "var(--space-xs)",
                             padding: "var(--space-xs) var(--space-sm)",
-                            background: "var(--color-surface-2)",
+                            background: "var(--color-surface-container-high)",
                             borderBottom: "1px solid var(--color-border)",
                           }}
                         >
@@ -1542,17 +1559,6 @@ export default function ProgramStorePage() {
                 </Card>
               )}
 
-              {/* 태그 */}
-              {tags.length > 0 && (
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)" }}>
-                  {/* INFO COLOR: tag semantic — 상세 모달에서도 동일한 분류 적용 */}
-                  {tags.map((tag) => (
-                    <span key={tag} className={tagLabelClass(tag)}>
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
 
             </div>
           );
@@ -1579,24 +1585,26 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {startProgramDraft ? (
-          <div>
-            <Card padding="sm" elevated={false}>
-              <CardHeader>
-                <CardTitle>{formatProgramDisplayName(startProgramDraft.template.name)}</CardTitle>
-                <div>
-                TM 계산 비율: {Math.round(startProgramDraft.tmPercent * 100)}%
-                </div>
-              </CardHeader>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <Card padding="md" tone="accent" elevated={false}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "var(--space-sm)" }}>
+                <strong style={{ fontFamily: "var(--font-headline-family)", fontSize: "15px", fontWeight: 700, color: "var(--color-text)" }}>
+                  {formatProgramDisplayName(startProgramDraft.template.name)}
+                </strong>
+                <span className="label label-tag-progression label-sm">
+                  TM {Math.round(startProgramDraft.tmPercent * 100)}%
+                </span>
+              </div>
             </Card>
             {startProgramDraft.recommendationStatus === "loading" ? (
-              <p>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
+              <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
             ) : null}
             {startProgramDraft.recommendationMessage ? (
-              <p>{startProgramDraft.recommendationMessage}</p>
+              <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>{startProgramDraft.recommendationMessage}</p>
             ) : null}
             {startProgramDraft.targets.map((target) => (
-              <div key={target.key}>
-                <span>
+              <div key={target.key} style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>
                   {target.label} 1RM (kg)
                 </span>
                 <NumberPickerField
@@ -1692,25 +1700,21 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            <Card tone="subtle" padding="sm" elevated={false}>
-              <CardHeader style={{ marginBottom: 0 }}>
-                <CardTitle>기본 구성</CardTitle>
-                {isOperatorCustomization ? (
-                  <>
-                    <CardDescription>D1/D2는 `Squat + Bench + Pull-Up`, D3는 `Squat + Bench + Deadlift` 기준으로 시작합니다.</CardDescription>
-                    <CardDescription>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있게 정리했습니다.</CardDescription>
-                  </>
-                ) : (
-                  <CardDescription>기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다.</CardDescription>
-                )}
-              </CardHeader>
+            <Card tone="subtle" padding="md" elevated={false}>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-xs)" }}>기본 구성</h2>
+              {isOperatorCustomization ? (
+                <>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 4px", lineHeight: 1.5 }}>D1/D2는 Squat + Bench + Pull-Up, D3는 Squat + Bench + Deadlift 기준으로 시작합니다.</p>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있습니다.</p>
+                </>
+              ) : (
+                <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다.</p>
+              )}
             </Card>
 
-            <Card padding="sm" elevated={false}>
-              <CardHeader style={{ marginBottom: "var(--space-md)" }}>
-                <CardTitle>Day별 종목 변경</CardTitle>
-              </CardHeader>
-              <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>Day별 종목 변경</h2>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {customizeDraft.sessions.map((session) => {
                 const meta = operatorSessionMeta(session.key);
                 const summary = session.exercises
@@ -1757,7 +1761,7 @@ export default function ProgramStorePage() {
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div>운동이 없습니다.</div>
+                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>운동이 없습니다.</p>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -1813,24 +1817,22 @@ export default function ProgramStorePage() {
                       });
                     }}
                   >
-                    <span aria-hidden="true">
-                      +
-                    </span>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>add</span>
                     <span>운동 추가</span>
                   </button>
                 </Card>
               );
             })}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         )}
       </BottomSheet>
 
       <BottomSheet
         open={Boolean(createDraft)}
-        title="프로그램 생성/커스터마이징 모달"
-        description="새 커스텀 프로그램 생성"
+        title="새 프로그램 만들기"
+        description="직접 구성하거나 공식 프로그램 기반으로 시작"
         onClose={() => setCreateDraft(null)}
         closeLabel="닫기"
         primaryAction={
@@ -1847,9 +1849,9 @@ export default function ProgramStorePage() {
         footer={null}
       >
         {createDraft && (
-          <div>
-            <label>
-              <span>프로그램 이름</span>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>프로그램 이름</span>
               <AppTextInput
                 variant="workout"
                 value={createDraft.name}
@@ -1860,36 +1862,28 @@ export default function ProgramStorePage() {
               />
             </label>
 
-            <div>
+            <div style={{ display: "flex", gap: "var(--space-xs)" }}>
               <button
                 type="button"
+                className={`btn btn-inline-action${createDraft.mode === "MARKET_BASED" ? " btn-inline-action-primary" : ""}`}
                 onClick={() =>
                   setCreateDraft((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          mode: "MARKET_BASED",
-                        }
-                      : prev,
+                    prev ? { ...prev, mode: "MARKET_BASED" } : prev,
                   )
                 }
               >
-                시중 기반 커스터마이징
+                공식 기반
               </button>
               <button
                 type="button"
+                className={`btn btn-inline-action${createDraft.mode === "FULL_MANUAL" ? " btn-inline-action-primary" : ""}`}
                 onClick={() =>
                   setCreateDraft((prev) =>
-                    prev
-                      ? {
-                          ...prev,
-                          mode: "FULL_MANUAL",
-                        }
-                      : prev,
+                    prev ? { ...prev, mode: "FULL_MANUAL" } : prev,
                   )
                 }
               >
-                완전 수동
+                직접 구성
               </button>
             </div>
 
@@ -1919,48 +1913,39 @@ export default function ProgramStorePage() {
               </AppSelect>
             )}
 
-            <Card padding="sm" elevated={false}>
-              <CardHeader>
-                <CardTitle>세션 규칙 생성</CardTitle>
-              </CardHeader>
-              <CardContent>
-              <div>
+            <Card padding="md" elevated={false} tone="subtle">
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>세션 규칙</h2>
+              <div style={{ display: "flex", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
                 <button
                   type="button"
+                  className={`btn btn-inline-action${createDraft.rule.type === "AB" ? " btn-inline-action-primary" : ""}`}
                   onClick={() =>
                     setCreateDraft((prev) => {
                       if (!prev) return prev;
                       const nextRule: SessionRule = { type: "AB", count: 2 };
-                      return {
-                        ...prev,
-                        rule: nextRule,
-                        sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-                      };
+                      return { ...prev, rule: nextRule, sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)) };
                     })
                   }
                 >
-                  A/B 규칙
+                  A/B 분할
                 </button>
                 <button
                   type="button"
+                  className={`btn btn-inline-action${createDraft.rule.type === "NUMERIC" ? " btn-inline-action-primary" : ""}`}
                   onClick={() =>
                     setCreateDraft((prev) => {
                       if (!prev) return prev;
                       const nextRule: SessionRule = { type: "NUMERIC", count: prev.rule.count || 2 };
-                      return {
-                        ...prev,
-                        rule: nextRule,
-                        sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-                      };
+                      return { ...prev, rule: nextRule, sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)) };
                     })
                   }
                 >
-                  1~4 세션
+                  숫자 분할
                 </button>
               </div>
               {createDraft.rule.type === "NUMERIC" && (
-                <div>
-                  <span>세션 개수 (1~4)</span>
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+                  <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>세션 개수 (1~4)</span>
                   <NumberPickerField
                     label="세션 개수"
                     value={createDraft.rule.count}
@@ -1972,33 +1957,23 @@ export default function ProgramStorePage() {
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
                         const nextRule: SessionRule = { type: "NUMERIC", count: v };
-                        return {
-                          ...prev,
-                          rule: nextRule,
-                          sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-                        };
+                        return { ...prev, rule: nextRule, sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)) };
                       })
                     }
                   />
                 </div>
               )}
-              </CardContent>
             </Card>
 
-            <Card padding="sm" elevated={false}>
-              <CardHeader>
-                <CardTitle>세션 안에 운동종목 배치</CardTitle>
-              </CardHeader>
-              <CardContent>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>세션별 운동 배치</h2>
               {createDraft.sessions.map((session) => (
                 <Card
                   key={session.id}
-                  padding="none"
+                  padding="sm"
                   tone="inset"
                   elevated={false}
-                  onDragOver={(event) => {
-                    event.preventDefault();
-                  }}
+                  onDragOver={(event) => { event.preventDefault(); }}
                   onDrop={(event) => {
                     event.preventDefault();
                     if (!dragContext) return;
@@ -2018,12 +1993,12 @@ export default function ProgramStorePage() {
                     setDragContext(null);
                   }}
                 >
-                  <header>
-                    <strong>세션 {session.key}</strong>
+                  <header style={{ marginBottom: "var(--space-sm)" }}>
+                    <span className="label label-program label-sm">세션 {session.key}</span>
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <div>운동이 없습니다.</div>
+                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>운동이 없습니다.</p>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -2046,6 +2021,8 @@ export default function ProgramStorePage() {
 
                   <button
                     type="button"
+                    className="btn btn-secondary btn-full"
+                    style={{ marginTop: "var(--space-sm)" }}
                     onClick={() =>
                       setCreateDraft((prev) => {
                         if (!prev) return prev;
@@ -2057,9 +2034,7 @@ export default function ProgramStorePage() {
                               ...entry,
                               exercises: [
                                 ...entry.exercises,
-                                createEmptyExerciseDraft(
-                                  prev.mode === "MARKET_BASED" ? prev.sourceTemplateSlug : null,
-                                ),
+                                createEmptyExerciseDraft(prev.mode === "MARKET_BASED" ? prev.sourceTemplateSlug : null),
                               ],
                             };
                           }),
@@ -2067,15 +2042,12 @@ export default function ProgramStorePage() {
                       })
                     }
                   >
-                    <span aria-hidden="true">
-                      +
-                    </span>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>add</span>
                     <span>운동 추가</span>
                   </button>
                 </Card>
               ))}
-              </CardContent>
-            </Card>
+            </div>
           </div>
         )}
       </BottomSheet>
