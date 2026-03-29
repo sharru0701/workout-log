@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
+import { ProgramDetailSheet } from "./_components/program-detail-sheet";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -1568,223 +1569,29 @@ export default function ProgramStorePage() {
         </button>
       </section>
 
-      <BottomSheet
+      <ProgramDetailSheet
         open={Boolean(detailTarget)}
-        title="프로그램 상세"
-        description=""
         onClose={() => setDetailTargetId(null)}
-        closeLabel="닫기"
-        footer={
-          detailTarget ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", paddingTop: "var(--space-xs)" }}>
-              <PrimaryButton
-                type="button"
-                variant="primary"
-                fullWidth
-                disabled={saving || !detailTarget.template.latestVersion}
-                onClick={() => {
-                  openStartProgramDraft(detailTarget.template);
-                }}
-              >
-                이 프로그램으로 시작하기
-              </PrimaryButton>
-              <PrimaryButton
-                type="button"
-                variant="secondary"
-                fullWidth
-                onClick={() => {
-                  setCustomizeDraft({
-                    name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
-                    baseTemplate: detailTarget.template,
-                    sessions: inferSessionDraftsFromTemplate(detailTarget.template),
-                  });
-                }}
-              >
-                커스터마이징해서 사용하기
-              </PrimaryButton>
-              {detailTarget.source === "CUSTOM" ? (
-                <PrimaryButton
-                  type="button"
-                  variant="danger"
-                  fullWidth
-                  disabled={saving}
-                  onClick={() => {
-                    void deleteCustomTemplate(detailTarget);
-                  }}
-                >
-                  커스텀 프로그램 삭제
-                </PrimaryButton>
-              ) : null}
-            </div>
-          ) : null
+        item={detailTarget}
+        saving={saving}
+        onStart={() => {
+          if (detailTarget) openStartProgramDraft(detailTarget.template);
+        }}
+        onCustomize={() => {
+          if (detailTarget) {
+            setCustomizeDraft({
+              name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
+              baseTemplate: detailTarget.template,
+              sessions: inferSessionDraftsFromTemplate(detailTarget.template),
+            });
+          }
+        }}
+        onDelete={
+          detailTarget?.source === "CUSTOM"
+            ? () => { void deleteCustomTemplate(detailTarget!); }
+            : undefined
         }
-      >
-        {detailTarget && (() => {
-          const info = getProgramDetailInfo(detailTarget.template);
-          const badge = sourceBadgeMeta(detailTarget.source);
-          const tags = Array.isArray(detailTarget.template.tags) ? detailTarget.template.tags : [];
-          const sectionLabelStyle = {
-            display: "block",
-            color: "var(--text-session-context)",
-            font: "var(--font-secondary)",
-            marginBottom: "var(--space-xs)",
-          } as const;
-          const bodyTextStyle = {
-            color: "var(--text-program-name)",
-            font: "var(--font-body)",
-            lineHeight: 1.55,
-            margin: 0,
-          } as const;
-          return (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-
-              {/* 헤더 */}
-              <div style={{ paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--space-sm)", marginBottom: "var(--space-xs)" }}>
-                  <span className={`${badge.className} label-sm`}>{badge.label}</span>
-                  {tags.length > 0 && (
-                    <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "flex-end" }}>
-                      {tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className={tagLabelClass(tag)}>{tag}</span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <strong style={{ display: "block", fontFamily: "var(--font-headline-family)", fontSize: "22px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)", marginBottom: tags.length > 3 ? "var(--space-xs)" : 0 }}>
-                  {formatProgramDisplayName(detailTarget.template.name)}
-                </strong>
-                {tags.length > 3 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", marginTop: "var(--space-xs)" }}>
-                    {tags.slice(3).map((tag) => (
-                      <span key={tag} className={tagLabelClass(tag)}>{tag}</span>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* 스탯 그리드 */}
-              <Card padding="md" elevated={false} tone="subtle">
-                {info.stats.map((stat, index) => (
-                  <div
-                    key={stat.label}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      gap: "var(--space-sm)",
-                      padding: "6px 0",
-                      borderBottom: index < info.stats.length - 1 ? "1px solid var(--color-border)" : "none",
-                    }}
-                  >
-                    <span
-                      style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}
-                    >
-                      {stat.label}
-                    </span>
-                    <span
-                      style={{ color: "var(--text-metric-weight)", font: "var(--font-card-title)", fontVariantNumeric: "tabular-nums" }}
-                    >
-                      {stat.value}
-                    </span>
-                  </div>
-                ))}
-              </Card>
-
-              {/* 프로그램 소개 */}
-              {detailTarget.template.description && (
-                <Card padding="md" elevated={false}>
-                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-xs)" }}>프로그램 소개</h2>
-                  <p style={bodyTextStyle}>
-                    {detailTarget.template.description}
-                  </p>
-                </Card>
-              )}
-
-              {/* 진행 설정 (Operator) */}
-              {info.progressionNote && (
-                <Card tone="subtle" padding="md" elevated={false}>
-                  <span className="label label-tag-progression label-sm">진행 설정</span>
-                  <p style={{ ...bodyTextStyle, color: "var(--text-meta)", marginTop: "var(--space-xs)" }}>{info.progressionNote}</p>
-                </Card>
-              )}
-
-              {/* 훈련 모듈 (Operator) */}
-              {info.modules && info.modules.length > 0 && (
-                <Card padding="md" elevated={false}>
-                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>훈련 모듈</h2>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginTop: "var(--space-xs)" }}>
-                    {info.modules.map((mod) => (
-                      <div
-                        key={mod}
-                        style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}
-                      >
-                        <span className="label label-muscle-group label-sm">
-                          {mod}
-                        </span>
-                        <span style={{ color: "var(--text-program-name)" }}>
-                          {MODULE_NAMES[mod] ?? mod}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-              {/* 세션 구성 (Manual) */}
-              {info.sessions && info.sessions.length > 0 && (
-                <Card padding="md" elevated={false}>
-                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>세션 구성</h2>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)", marginTop: "var(--space-xs)" }}>
-                    {info.sessions.map((session) => (
-                      <div
-                        key={session.key}
-                        style={{ border: "1px solid var(--color-border)", borderRadius: "10px", overflow: "hidden" }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "var(--space-xs)",
-                            padding: "var(--space-xs) var(--space-sm)",
-                            background: "var(--color-surface-container-high)",
-                            borderBottom: "1px solid var(--color-border)",
-                          }}
-                        >
-                          <span className="label label-program label-sm">
-                            {/* INFO COLOR: session-context */}
-                            {session.key}
-                          </span>
-                          <span style={{ color: "var(--text-session-name)" }}>
-                            세션 {session.key}
-                          </span>
-                        </div>
-                        <div style={{ padding: "var(--space-sm)" }}>
-                          {session.exercises.map((ex, i) => (
-                            <div key={i} style={{ display: "flex", justifyContent: "space-between", gap: "var(--space-sm)", padding: "2px 0" }}>
-                              <span style={{ color: "var(--text-exercise-name)" }}>
-                                {ex.name}
-                              </span>
-                              {ex.setsReps && (
-                                <span
-                                  style={{ color: "var(--text-metric-reps)" }}
-                                >
-                                  {ex.setsReps}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </Card>
-              )}
-
-
-            </div>
-          );
-        })()}
-      </BottomSheet>
+      />
 
       <BottomSheet
         open={Boolean(startProgramDraft)}
