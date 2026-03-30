@@ -345,36 +345,6 @@
   text-overflow: ellipsis;
 }
 
-/* Quick finish button — top right of session header */
-.btn-finish-quick {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 10px 18px;
-  border-radius: 12px;
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
-  border: none;
-  font-family: var(--font-headline-family);
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  transition: opacity 0.12s ease, transform 0.12s ease;
-  white-space: nowrap;
-}
-
-.btn-finish-quick:active {
-  opacity: 0.85;
-  transform: scale(0.96);
-}
-
-.btn-finish-quick:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .session-progress-header__chips {
   display: flex;
   flex-wrap: wrap;

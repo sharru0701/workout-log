@@ -2001,14 +2001,6 @@ export default function WorkoutRecordPage() {
                     Week {draft.session.week} · {draft.session.sessionType}
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  className="btn-finish-quick"
-                  onClick={() => { void handleSave(); }}
-                  disabled={workflowState === "saving"}
-                >
-                  {workflowState === "saving" ? "저장 중…" : isEditingExistingLog ? "수정 완료" : "운동 완료"}
-                </button>
               </div>
               <div className="session-progress-header__chips">
                 <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
