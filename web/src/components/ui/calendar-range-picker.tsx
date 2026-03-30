@@ -52,7 +52,7 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
   }).format(new Date(`${viewDateStr.slice(0, 10)}T00:00:00`));
   const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
     new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { weekday: "short" }).format(
-      new Date(`2026-03-${String(29 + index).padStart(2, "0")}T00:00:00`),
+      new Date(2026, 2, 29 + index),
     ),
   );
 
