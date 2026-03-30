@@ -7,6 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { LocalePreferenceSync } from "@/components/locale-preference-sync";
+import { LocaleProvider } from "@/components/locale-provider";
 import { PwaRegister } from "@/components/pwa-register";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
@@ -86,16 +87,18 @@ export default async function RootLayout({
         />
       </head>
       <body>
-        <AppLaunchSplash />
-        <AppShell initialLocale={initialLocale}>
-          <ThemePreferenceSync />
-          <LocalePreferenceSync />
-          {children}
-        </AppShell>
-        <OfflineIndicator />
-        <OfflineQueueFlush />
-        <PwaInstallPrompt />
-        <PwaRegister />
+        <LocaleProvider initialLocale={initialLocale}>
+          <AppLaunchSplash />
+          <AppShell initialLocale={initialLocale}>
+            <ThemePreferenceSync />
+            <LocalePreferenceSync />
+            {children}
+          </AppShell>
+          <OfflineIndicator />
+          <OfflineQueueFlush />
+          <PwaInstallPrompt />
+          <PwaRegister />
+        </LocaleProvider>
       </body>
     </html>
   );

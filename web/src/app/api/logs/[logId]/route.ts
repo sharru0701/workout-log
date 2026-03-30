@@ -262,6 +262,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
 
 async function DELETEImpl(_req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
     const userId = getAuthenticatedUserId();
 

@@ -76,6 +76,7 @@ test("prepareWorkoutRecordDraftForEntry clears program memo values but keeps pla
   assert.equal(prepared.draft.seedExercises[0]?.note.memo, "");
   assert.deepEqual(prepared.programEntryState["seed-1"], {
     repsInputs: ["", "", ""],
+    plannedRepsPerSet: [5, 5, 5],
     memoInput: "",
     memoPlaceholder: "Operator W1",
   });
@@ -87,6 +88,7 @@ test("validateWorkoutRecordEntryState requires explicit reps input for program s
     {
       "seed-1": {
         repsInputs: ["5", "", "5"],
+        plannedRepsPerSet: [5, 5, 5],
         memoInput: "",
         memoPlaceholder: "Operator W1",
       },
@@ -102,6 +104,7 @@ test("validateWorkoutRecordEntryState rejects non-numeric reps input", () => {
     {
       "seed-1": {
         repsInputs: ["5", "abc", "5"],
+        plannedRepsPerSet: [5, 5, 5],
         memoInput: "",
         memoPlaceholder: "Operator W1",
       },

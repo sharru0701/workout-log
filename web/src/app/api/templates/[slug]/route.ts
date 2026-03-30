@@ -13,8 +13,8 @@ type Ctx = {
 };
 
 async function DELETEImpl(_: Request, ctx: Ctx) {
+  const locale = await resolveRequestLocale();
   try {
-    const locale = await resolveRequestLocale();
     const { slug } = await ctx.params;
     const userId = getAuthenticatedUserId();
     const normalizedSlug = String(slug ?? "").trim();

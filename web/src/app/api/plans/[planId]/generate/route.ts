@@ -11,7 +11,7 @@ type Ctx = { params: Promise<{ planId: string }> };
 async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const { planId } = await ctx.params;
-    const locale = resolveRequestLocale();
+    const locale = await resolveRequestLocale();
 
     const body = await req.json();
     const userId = getAuthenticatedUserId();
