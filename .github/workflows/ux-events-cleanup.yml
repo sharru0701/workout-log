@@ -1,0 +1,44 @@
+name: ux-events-cleanup
+
+on:
+  schedule:
+    - cron: "20 18 * * *"  # UTC daily → 한국 시간 03:20
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "dry-run 모드 (실제 삭제 없음)"
+        required: false
+        default: "true"
+        type: choice
+        options:
+          - "true"
+          - "false"
+      retention_days:
+        description: "보존 기간 (일)"
+        required: false
+        default: "120"
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run UX events cleanup
+        run: pnpm --dir web run db:cleanup:ux-events
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          UX_EVENTS_RETENTION_DAYS: ${{ github.event.inputs.retention_days || '120' }}
+          UX_EVENTS_CLEANUP_DRY_RUN: ${{ github.event.inputs.dry_run || '0' }}

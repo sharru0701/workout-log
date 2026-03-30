@@ -4,7 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { apiGet } from "@/lib/api";
-import { Stats1RMDetailed, type Stats1RMDetailedRef } from "./_components/stats-1rm-detailed";
+import dynamic from "next/dynamic";
+import type { Stats1RMDetailedRef } from "./_components/stats-1rm-detailed";
+
+const Stats1RMDetailed = dynamic(
+  () => import("./_components/stats-1rm-detailed").then((m) => ({ default: m.Stats1RMDetailed })),
+  { ssr: false }
+);
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useSearchParams } from "next/navigation";

@@ -92,3 +92,62 @@ git push -u origin docs/local-dev-onboarding
 주의:
 - `.env.local` 같은 로컬 비밀값 파일은 커밋하지 않습니다.
 - `docker-compose.dev.yml`, `Dockerfile.dev`, `scripts/docker-dev-start.sh` 같은 개발환경 파일은 커밋해서 팀이 동일 환경을 재현하도록 유지합니다.
+
+---
+
+## 5) 운영 스케줄러 설정
+
+### UX 이벤트 로그 보존 정리
+
+`ux_event_log` 테이블 정리 작업을 스케줄로 실행해 저장소가 무한 증가하지 않도록 합니다.
+
+**기본 환경 변수**:
+```bash
+UX_EVENTS_RETENTION_DAYS=120   # 기본 보존 기간 (일)
+UX_EVENTS_CLEANUP_DRY_RUN=1    # dry-run 모드 (실제 삭제 없음)
+```
+
+**dry-run으로 먼저 확인**:
+```bash
+UX_EVENTS_CLEANUP_DRY_RUN=1 pnpm --dir web run db:cleanup:ux-events
+```
+
+#### Option A: Linux Cron (self-hosted)
+
+매일 `03:20` 에 실행:
+```cron
+20 3 * * * cd /home/dhshin/projects/workout-log && UX_EVENTS_RETENTION_DAYS=120 pnpm --dir web run db:cleanup:ux-events >> /var/log/workout-log-ux-cleanup.log 2>&1
+```
+
+#### Option B: GitHub Actions
+
+`.github/workflows/ux-events-cleanup.yml` 생성 (현재 미생성 — 다음 태스크):
+```yaml
+name: ux-events-cleanup
+on:
+  schedule:
+    - cron: "20 18 * * *"  # UTC daily (한국 시간 03:20)
+  workflow_dispatch:
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir web run db:cleanup:ux-events
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          UX_EVENTS_RETENTION_DAYS: "120"
+```
+
+**Rollout 체크리스트**:
+- `0008_lush_polaris` 마이그레이션이 프로덕션 DB에 적용됐는지 확인
+- `DATABASE_URL` 스케줄러 런타임에서 접근 가능한지 확인
+- dry-run 결과 `deletedRows` 수치 1~2일 모니터링 후 delete 모드 전환
