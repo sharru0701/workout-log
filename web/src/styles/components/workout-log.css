@@ -108,8 +108,8 @@
 
 .set-table__h-set {
   color: var(--color-text-muted);
-  text-align: left;
-  padding-left: 2px;
+  text-align: center;
+  padding-left: 10px;
 }
 
 .set-table__h-weight { color: var(--metric-weight-color); }
@@ -131,11 +131,15 @@
   transition: background-color 0.15s ease, opacity 0.15s ease;
 }
 
-/* Active set — strong left accent, blue-tint background */
+/* Active set — strong left accent, full-width blue-tint background */
 .set-row--active {
   background: color-mix(in srgb, var(--color-primary) 8%, transparent);
   box-shadow: inset 4px 0 0 0 var(--color-primary);
-  border-radius: 0 8px 8px 0;
+  border-radius: 0;
+  margin-left: calc(-1 * var(--space-md));
+  margin-right: calc(-1 * var(--space-md));
+  padding-left: var(--space-md);
+  padding-right: var(--space-md);
 }
 
 /* Complete set — green wash from label-complete-bg */
@@ -173,7 +177,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  margin-left: 4px;
+  margin-left: 10px;
   font-family: var(--font-label-family);
   font-size: 12px;
   font-weight: 700;
@@ -242,11 +246,29 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
   transition: background-color 0.12s ease, color 0.12s ease;
 }
 
-.set-add-btn:hover,
+@media (hover: hover) and (pointer: fine) {
+  .set-add-btn:hover {
+    background: var(--color-surface-container);
+    color: var(--color-primary);
+  }
+}
+
 .set-add-btn:active {
+  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+  color: var(--color-primary);
+}
+
+.set-add-btn:focus {
+  outline: none;
+}
+
+.set-add-btn:focus-visible {
   background: var(--color-surface-container);
   color: var(--color-primary);
 }
@@ -502,10 +524,10 @@
   justify-content: center;
   gap: var(--space-sm);
   width: 100%;
-  padding: 16px var(--space-md);
-  border: 2px dashed var(--color-outline-variant);
-  border-radius: 16px;
-  background: transparent;
+  padding: 18px var(--space-md);
+  border: none;
+  border-radius: 20px;
+  background: var(--color-surface-container-low);
   color: var(--color-text-muted);
   font-family: var(--font-label-family);
   font-size: 12px;
@@ -513,18 +535,17 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.15s ease, color 0.15s ease, background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .btn-add-exercise:hover,
 .btn-add-exercise:active {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
   background: var(--color-primary-weak);
+  color: var(--color-primary);
 }
 
 .btn-add-exercise .material-symbols-outlined {
-  font-size: 24px;
+  font-size: 22px;
 }
 
 /* ── Session Detail: Summary Bento ─────────────────── */

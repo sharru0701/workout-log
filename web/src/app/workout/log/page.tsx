@@ -7,8 +7,6 @@ import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
-import { Card, CardContent } from "@/components/ui/card";
-import { SessionCard } from "@/components/ui/session-card";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
 import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
@@ -808,14 +806,23 @@ function ExerciseRow({
       ) : null}
 
       {/* ── Memo ── */}
-      <label style={{ display: "block", padding: "0 var(--space-md) var(--space-md)" }}>
-        <AppTextarea
-          variant="workout"
-          value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
-          onChange={(event) => onChangeMemo(event.target.value)}
-          placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "세트 메모를 입력하세요." : "세트 메모를 입력하세요."}
-        />
-      </label>
+      <div style={{ padding: "0 var(--space-md) var(--space-md)" }}>
+        <label>
+          <AppTextarea
+            variant="workout"
+            value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
+            onChange={(event) => onChangeMemo(event.target.value)}
+            placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "메모" : "메모"}
+            style={{
+              border: "none",
+              borderRadius: "14px",
+              background: "var(--color-surface-container)",
+              fontSize: "13px",
+              minHeight: "48px",
+            }}
+          />
+        </label>
+      </div>
     </article>
   );
 }
@@ -2187,25 +2194,43 @@ export default function WorkoutRecordPage() {
               </div>
 
               {/* ── Session Memo ── */}
-              <label style={{ display: "block", marginBottom: "var(--space-md)" }}>
-                <AppTextarea
-                  variant="workout"
-                  value={draft.session.note.memo}
-                  onChange={(event) => {
-                    const next = event.target.value;
-                    applyEditing((prev) => ({
-                      ...prev,
-                      session: {
-                        ...prev.session,
-                        note: {
-                          memo: next,
+              <div style={{ marginBottom: "var(--space-md)" }}>
+                <div style={{
+                  fontFamily: "var(--font-label-family)",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                  marginBottom: "6px",
+                }}>
+                  세션 메모
+                </div>
+                <label>
+                  <AppTextarea
+                    variant="workout"
+                    value={draft.session.note.memo}
+                    onChange={(event) => {
+                      const next = event.target.value;
+                      applyEditing((prev) => ({
+                        ...prev,
+                        session: {
+                          ...prev.session,
+                          note: {
+                            memo: next,
+                          },
                         },
-                      },
-                    }));
-                  }}
-                  placeholder="오늘 세션 전체 메모"
-                />
-              </label>
+                      }));
+                    }}
+                    placeholder="오늘 세션 전체 메모"
+                    style={{
+                      border: "none",
+                      borderRadius: "16px",
+                      background: "var(--color-surface-container-low)",
+                    }}
+                  />
+                </label>
+              </div>
 
               {/* ── Finish Workout CTA (bottom — also reachable from top header btn) ── */}
               <div className="finish-workout-cta">
@@ -2263,161 +2288,210 @@ export default function WorkoutRecordPage() {
         }}
         footer={null}
       >
-        <div>
-          <Card padding="md" elevated={false}>
-            <CardContent>
-              <SearchSelectCombobox
-                query={exerciseQuery}
-                placeholder="예: Squat"
-                onQueryChange={(nextQuery) => {
-                  setExerciseQuery(nextQuery);
-                  setExerciseOptionsError(null);
-                  setAddDraft((prev) => {
-                    if (!prev.exerciseId) return prev;
-                    if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
-                    return { ...prev, exerciseId: null, exerciseName: "" };
-                  });
-                }}
-                onQuerySubmit={() => {
-                  const first = filteredExerciseOptions[0] ?? null;
-                  if (!first) return;
-                  selectExerciseOption(first);
-                }}
-                onClearQuery={() => {
-                  setExerciseQuery("");
-                  setExerciseOptionsError(null);
-                }}
-                resultsAriaLabel="운동종목 검색 결과"
-                options={exerciseSearchOptions}
-                emptyText="검색 조건에 맞는 운동종목이 없습니다."
-                loading={exerciseOptionsLoading}
-                loadingText="검색 중..."
-                selectionSummary={
-                  selectedExerciseOption ? (
-                    <div role="status" aria-live="polite" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
-                      <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>선택됨</span>
-                      <strong>
-                        {selectedExerciseOption.category
-                          ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
-                          : selectedExerciseOption.name}
-                      </strong>
-                      <button
-                        type="button"
-                        className="btn btn-inline-action"
-                        onClick={() => selectExerciseOption(null)}
-                      >
-                        선택 변경
-                      </button>
-                    </div>
-                  ) : null
-                }
-                hideOptions={Boolean(selectedExerciseOption)}
-              />
-            </CardContent>
-          </Card>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
 
-          {exerciseOptionsError ? <p>{exerciseOptionsError}</p> : null}
+          {/* ── 운동 검색 ── */}
+          <div>
+            <SearchSelectCombobox
+              query={exerciseQuery}
+              placeholder="예: Squat"
+              onQueryChange={(nextQuery) => {
+                setExerciseQuery(nextQuery);
+                setExerciseOptionsError(null);
+                setAddDraft((prev) => {
+                  if (!prev.exerciseId) return prev;
+                  if (nextQuery.trim().toLowerCase() === prev.exerciseName.trim().toLowerCase()) return prev;
+                  return { ...prev, exerciseId: null, exerciseName: "" };
+                });
+              }}
+              onQuerySubmit={() => {
+                const first = filteredExerciseOptions[0] ?? null;
+                if (!first) return;
+                selectExerciseOption(first);
+              }}
+              onClearQuery={() => {
+                setExerciseQuery("");
+                setExerciseOptionsError(null);
+              }}
+              resultsAriaLabel="운동종목 검색 결과"
+              options={exerciseSearchOptions}
+              emptyText="검색 조건에 맞는 운동종목이 없습니다."
+              loading={exerciseOptionsLoading}
+              loadingText="검색 중..."
+              selectionSummary={
+                selectedExerciseOption ? (
+                  <div
+                    role="status"
+                    aria-live="polite"
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px",
+                      marginBottom: "var(--space-sm)",
+                      padding: "10px 14px",
+                      background: "var(--color-primary-weak)",
+                      borderRadius: "12px",
+                    }}
+                  >
+                    <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "var(--color-primary)", fontVariationSettings: "'FILL' 1", flexShrink: 0 }}>check_circle</span>
+                    <span style={{ flex: 1, fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>
+                      {selectedExerciseOption.category
+                        ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
+                        : selectedExerciseOption.name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => selectExerciseOption(null)}
+                      style={{
+                        background: "none", border: "none", cursor: "pointer",
+                        fontFamily: "var(--font-label-family)", fontSize: "12px", fontWeight: 700,
+                        color: "var(--color-primary)", padding: "4px 8px",
+                        borderRadius: "8px", flexShrink: 0,
+                      }}
+                    >
+                      변경
+                    </button>
+                  </div>
+                ) : null
+              }
+              hideOptions={Boolean(selectedExerciseOption)}
+            />
+            {exerciseOptionsError && (
+              <p style={{ margin: "6px 0 0", fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-danger)" }}>
+                {exerciseOptionsError}
+              </p>
+            )}
+          </div>
 
-          <Card padding="md" elevated={false}>
-            <section style={{ padding: "var(--space-md)" }}>
-              <div style={{ marginBottom: "var(--space-md)" }}>
-                <div aria-hidden="true" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", fontSize: "12px", textAlign: "center" }}>
-                  <span>Sets</span>
-                  <span style={{ color: "var(--text-metric-weight)" }}>Weight</span>
-                  <span style={{ color: "var(--text-metric-reps)" }}>Reps</span>
-                </div>
+          {/* ── 세트 구성 ── */}
+          <div style={{ background: "var(--color-surface-container)", borderRadius: "20px", padding: "16px" }}>
+            {/* Column headers */}
+            <div
+              aria-hidden="true"
+              style={{
+                display: "grid",
+                gridTemplateColumns: "0.7fr 1.8fr 1.2fr",
+                gap: "var(--space-xs)",
+                marginBottom: "10px",
+                textAlign: "center",
+              }}
+            >
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Sets</span>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-metric-weight)" }}>Weight</span>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-metric-reps)" }}>Reps</span>
+            </div>
 
-                <div role="list" aria-label="세트 편집">
-                  {addDraft.repsPerSet.map((setReps, index) => (
-                    <SwipeableSetRow
-                      key={`add-set-${index}`}
-                      disabled={addDraft.repsPerSet.length <= 1}
-                      onDelete={() =>
+            <div role="list" aria-label="세트 편집">
+              {addDraft.repsPerSet.map((setReps, index) => (
+                <SwipeableSetRow
+                  key={`add-set-${index}`}
+                  disabled={addDraft.repsPerSet.length <= 1}
+                  onDelete={() =>
+                    setAddDraft((prev) => ({
+                      ...prev,
+                      repsPerSet: prev.repsPerSet.filter((_, i) => i !== index),
+                    }))
+                  }
+                >
+                  <div role="listitem" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
+                    <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
+                    <WorkoutRecordInlinePicker
+                      label={`${index + 1}세트 무게`}
+                      value={addDraft.weightKg}
+                      min={0}
+                      max={1000}
+                      step={addDraftIncrementKg}
+                      formatValue={(value) => formatCompactWeightValue(value, addDraftIncrementKg)}
+                      color="var(--text-metric-weight)"
+                      onChange={(value) =>
                         setAddDraft((prev) => ({
                           ...prev,
-                          repsPerSet: prev.repsPerSet.filter((_, i) => i !== index),
+                          weightKg: resolveWeightWithCurrentPreferences(value, prev.exerciseId, prev.exerciseName),
                         }))
                       }
-                    >
-                      <div role="listitem" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
-                        <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
-                        <WorkoutRecordInlinePicker
-                          label={`${index + 1}세트 무게`}
-                          value={addDraft.weightKg}
-                          min={0}
-                          max={1000}
-                          step={addDraftIncrementKg}
-                          formatValue={(value) => formatCompactWeightValue(value, addDraftIncrementKg)}
-                          color="var(--text-metric-weight)"
-                          onChange={(value) =>
-                            setAddDraft((prev) => ({
-                              ...prev,
-                              weightKg: resolveWeightWithCurrentPreferences(value, prev.exerciseId, prev.exerciseName),
-                            }))
-                          }
-                        />
-                        <WorkoutRecordInlinePicker
-                          label={`${index + 1}세트 횟수`}
-                          value={setReps}
-                          min={1}
-                          max={100}
-                          step={1}
-                          formatValue={(value) => String(Math.round(value))}
-                          color="var(--text-metric-reps)"
-                          onChange={(value) =>
-                            setAddDraft((prev) => ({
-                              ...prev,
-                              repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
-                            }))
-                          }
-                        />
-                      </div>
-                    </SwipeableSetRow>
-                  ))}
-                </div>
-              </div>
+                    />
+                    <WorkoutRecordInlinePicker
+                      label={`${index + 1}세트 횟수`}
+                      value={setReps}
+                      min={1}
+                      max={100}
+                      step={1}
+                      formatValue={(value) => String(Math.round(value))}
+                      color="var(--text-metric-reps)"
+                      onChange={(value) =>
+                        setAddDraft((prev) => ({
+                          ...prev,
+                          repsPerSet: patchSetRepsAtIndex(prev.repsPerSet, index, value),
+                        }))
+                      }
+                    />
+                  </div>
+                </SwipeableSetRow>
+              ))}
+            </div>
 
-              <button
-                type="button"
-                style={{
-                  width: "100%",
-                  padding: "10px",
-                  backgroundColor: "transparent",
-                  border: "2px dashed var(--color-border)",
-                  borderRadius: "12px",
-                  color: "var(--color-text-muted)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "var(--space-xs)",
-                  font: "var(--font-secondary)",
-                  fontWeight: 500,
-                  cursor: "pointer",
-                }}
-                onClick={() =>
-                  setAddDraft((prev) => ({
-                    ...prev,
-                    repsPerSet: appendSetReps(prev.repsPerSet),
-                  }))
-                }
-              >
-                <AppPlusMinusIcon kind="plus" size={16} />
-                <span>세트 추가</span>
-              </button>
-            </section>
-          </Card>
+            <button
+              type="button"
+              style={{
+                width: "100%",
+                marginTop: "12px",
+                padding: "10px",
+                background: "var(--color-surface-container-high)",
+                border: "none",
+                borderRadius: "12px",
+                color: "var(--color-text-muted)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "13px",
+                fontWeight: 700,
+                cursor: "pointer",
+              }}
+              onClick={() =>
+                setAddDraft((prev) => ({
+                  ...prev,
+                  repsPerSet: appendSetReps(prev.repsPerSet),
+                }))
+              }
+            >
+              <AppPlusMinusIcon kind="plus" size={14} />
+              <span>세트 추가</span>
+            </button>
+          </div>
 
-          {addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg) ? (
-            <Card tone="subtle" padding="sm" elevated={false}>
-              {addDraftIncrementInfo.source === "RULE" ? <span>적용 Increment: {addDraftIncrementKg.toFixed(2)}kg</span> : null}
-              {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg ? (
-                <span>{`총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}</span>
-              ) : null}
-            </Card>
-          ) : null}
+          {/* ── Increment / 체중 부하 정보 ── */}
+          {(addDraftIncrementInfo.source === "RULE" || (isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg)) && (
+            <div style={{
+              background: "var(--color-surface-container)",
+              borderRadius: "12px",
+              padding: "10px 14px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "4px",
+            }}>
+              {addDraftIncrementInfo.source === "RULE" && (
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)" }}>
+                  적용 Increment: {addDraftIncrementKg.toFixed(2)}kg
+                </span>
+              )}
+              {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg && (
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)" }}>
+                  총 부하(외부중량 + 체중): {addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg
+                </span>
+              )}
+            </div>
+          )}
 
-          <label>
-            <span>메모</span>
+          {/* ── 메모 ── */}
+          <label style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+            <span style={{
+              fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700,
+              letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)",
+            }}>
+              메모
+            </span>
             <AppTextarea
               variant="workout"
               value={addDraft.memo}
@@ -2425,11 +2499,27 @@ export default function WorkoutRecordPage() {
             />
           </label>
 
+          {/* ── 운동종목 관리 ── */}
           <Link
             href="/workout/log/exercise-catalog"
-            className="btn btn-secondary btn-full"
             onClick={() => setAddSheetOpen(false)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              padding: "12px",
+              borderRadius: "14px",
+              background: "var(--color-surface-container)",
+              color: "var(--color-text-muted)",
+              textDecoration: "none",
+              fontFamily: "var(--font-label-family)",
+              fontSize: "13px",
+              fontWeight: 700,
+              letterSpacing: "0.02em",
+            }}
           >
+            <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>tune</span>
             운동종목 관리
           </Link>
         </div>

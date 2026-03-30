@@ -4,8 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
-import { SessionCard } from "@/components/ui/session-card";
-import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { apiGet } from "@/lib/api";
 import {
   dateOnlyToUtcDate,
@@ -645,6 +643,13 @@ export default function CalendarPage() {
     [],
   );
 
+  // Recent past logs for the "최근 기록" section (excludes today, max 5)
+  const recentPastLogs = useMemo(() => {
+    return allPlanLogs
+      .filter((log) => dateOnlyInTimezone(new Date(log.performedAt), timezone) !== today)
+      .slice(0, 5);
+  }, [allPlanLogs, timezone, today]);
+
   const renderMonthRows = (baseDate: string, selectedForGrid: string) => {
     const baseMonthKey = monthStart(baseDate).slice(0, 7);
     const cells = monthGrid(baseDate);
@@ -656,21 +661,26 @@ export default function CalendarPage() {
           const isOutside = !dateOnly.startsWith(baseMonthKey);
           const hasDot = !!selectedPlan && logDates.has(dateOnly);
 
-          // Today: filled primary circle; Selected (non-today): surface-container-high rounded-xl; Outside: muted
+          // Today: light primary tint + border (rect); Selected non-today: filled primary circle
           const cellBg = isToday
-            ? "var(--color-primary)"
+            ? "color-mix(in srgb, var(--color-primary) 12%, var(--color-surface-container-low))"
             : isSelected
-              ? "var(--color-surface-container-high)"
+              ? "var(--color-primary)"
               : "transparent";
+          const cellBorder = isToday
+            ? "1px solid color-mix(in srgb, var(--color-primary) 30%, transparent)"
+            : "none";
           const cellColor = isToday
+            ? "var(--color-primary-strong)"
+            : isSelected
+              ? "var(--color-text-on-primary)"
+              : isOutside
+                ? "var(--color-text-subtle)"
+                : "var(--color-text)";
+          const cellRadius = isToday ? "10px" : "50%";
+          const dotColor = isSelected
             ? "var(--color-text-on-primary)"
-            : isOutside
-              ? "var(--color-text-subtle)"
-              : "var(--color-text)";
-          const cellRadius = isToday ? "50%" : isSelected ? "10px" : "50%";
-          const dotColor = isToday
-            ? "var(--color-text-on-primary)"
-            : "var(--color-primary)";
+            : "var(--color-calendar-dot)";
 
           return (
             <button
@@ -688,7 +698,7 @@ export default function CalendarPage() {
                 height: "36px",
                 margin: "4px auto",
                 padding: 0,
-                border: "none",
+                border: cellBorder,
                 background: cellBg,
                 color: cellColor,
                 borderRadius: cellRadius,
@@ -731,83 +741,174 @@ export default function CalendarPage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          marginBottom: "var(--space-md)",
+          paddingTop: "var(--space-sm)",
+          marginBottom: "var(--space-lg)",
         }}
       >
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          width: "36px",
+          height: "36px",
+        }}>
+          <span className="material-symbols-outlined" style={{ color: "var(--color-primary)", fontSize: "22px" }}>calendar_today</span>
+        </div>
         <h1 style={{
           fontFamily: "var(--font-headline-family)",
-          fontSize: "26px",
-          fontWeight: 800,
-          letterSpacing: "-0.5px",
+          fontSize: "20px",
+          fontWeight: 700,
+          letterSpacing: "-0.3px",
           color: "var(--color-text)",
           margin: 0,
         }}>
-          Calendar
+          캘린더
         </h1>
-        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-          {/* MonthYear picker trigger */}
+        <button
+          type="button"
+          aria-label="플랜 필터"
+          onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "36px",
+            height: "36px",
+            background: "var(--color-surface-container-high)",
+            border: "none",
+            borderRadius: "50%",
+            cursor: "pointer",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
+        </button>
+      </div>
+
+      {/* ── Filter Bar ── */}
+      <div
+        data-pull-refresh-trigger="true"
+        style={{
+          display: "flex",
+          gap: "10px",
+          marginBottom: "var(--space-lg)",
+        }}
+      >
+        {/* Month picker chip */}
+        <button
+          type="button"
+          onClick={() => setMonthPickerOpen(true)}
+          aria-label="연도와 월 선택 열기"
+          aria-haspopup="dialog"
+          aria-expanded={monthPickerOpen}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            background: "var(--color-surface-container-low)",
+            border: "none",
+            borderRadius: "12px",
+            padding: "8px 14px",
+            cursor: "pointer",
+            fontFamily: "var(--font-label-family)",
+            fontSize: "12px",
+            fontWeight: 700,
+            letterSpacing: "0.06em",
+            textTransform: "uppercase",
+            color: "var(--color-text-muted)",
+          }}
+        >
+          <span>{getYear(anchorDate)}년 {MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>expand_more</span>
+        </button>
+
+        {/* Plan selector chip */}
+        {selectedPlan && (
           <button
             type="button"
-            onClick={() => setMonthPickerOpen(true)}
-            aria-label="연도와 월 선택 열기"
-            aria-haspopup="dialog"
-            aria-expanded={monthPickerOpen}
+            onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
+            aria-label="플랜 변경"
             style={{
               display: "flex",
               alignItems: "center",
-              gap: "4px",
-              background: "var(--color-surface-container-high)",
+              gap: "6px",
+              background: "var(--color-surface-container-low)",
               border: "none",
-              borderRadius: "20px",
-              padding: "6px 12px",
+              borderRadius: "12px",
+              padding: "8px 14px",
               cursor: "pointer",
               fontFamily: "var(--font-label-family)",
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "var(--color-text)",
+              fontSize: "12px",
+              fontWeight: 700,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--color-text-muted)",
+              maxWidth: "160px",
+              overflow: "hidden",
             }}
           >
-            <span>{getYear(anchorDate)}</span>
-            <span style={{ color: "var(--color-primary)" }}>{MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
-            <span className="material-symbols-outlined" style={{ fontSize: "16px", color: "var(--color-text-muted)" }}>expand_more</span>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{selectedPlan.name}</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "16px", flexShrink: 0 }}>filter_list</span>
           </button>
-          {/* Filter icon — plan selector trigger */}
-          {plans.length > 0 && (
-            <button
-              type="button"
-              aria-label="플랜 필터"
-              onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
+        )}
+      </div>
+
+      {/* ── Calendar Card ── */}
+      <div
+        style={{
+          background: "var(--color-surface-container-low)",
+          borderRadius: "24px",
+          padding: "20px 16px",
+          marginBottom: "var(--space-lg)",
+        }}
+      >
+        {/* Weekday headers */}
+        <div
+          aria-hidden="true"
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(7, 1fr)",
+            textAlign: "center",
+            marginBottom: "4px",
+          }}
+        >
+          {WEEKDAY_SHORT.map((name) => (
+            <div
+              key={name}
               style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "36px",
-                height: "36px",
-                background: "var(--color-surface-container-high)",
-                border: "none",
-                borderRadius: "50%",
-                cursor: "pointer",
+                padding: "4px 0",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "10px",
+                fontWeight: 700,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
                 color: "var(--color-text-muted)",
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>filter_list</span>
-            </button>
-          )}
+              {name}
+            </div>
+          ))}
         </div>
-      </div>
 
-      {/* ── Month navigation ── */}
-      <div
-        data-pull-refresh-trigger="true"
-        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          marginBottom: "var(--space-sm)",
-        }}
-      >
-        <div style={{ display: "flex", gap: "4px" }}>
+        {/* Date grid */}
+        <div
+          role="grid"
+          aria-label="날짜 선택"
+          className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
+        >
+          {renderMonthRows(anchorDate, selectedDate)}
+        </div>
+
+        {/* Month navigation arrows */}
+        <div
+          className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: "4px",
+            marginTop: "12px",
+          }}
+        >
           <button
             onClick={() => shiftMonthWithFeedback(-1)}
             aria-label="이전 달"
@@ -815,8 +916,8 @@ export default function CalendarPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "32px",
-              height: "32px",
+              width: "30px",
+              height: "30px",
               background: "var(--color-surface-container-high)",
               border: "none",
               borderRadius: "50%",
@@ -824,7 +925,7 @@ export default function CalendarPage() {
               color: "var(--color-text-muted)",
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>chevron_left</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>chevron_left</span>
           </button>
           <button
             onClick={() => shiftMonthWithFeedback(1)}
@@ -833,8 +934,8 @@ export default function CalendarPage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "32px",
-              height: "32px",
+              width: "30px",
+              height: "30px",
               background: "var(--color-surface-container-high)",
               border: "none",
               borderRadius: "50%",
@@ -842,104 +943,58 @@ export default function CalendarPage() {
               color: "var(--color-text-muted)",
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>chevron_right</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>chevron_right</span>
           </button>
         </div>
       </div>
 
-      {/* ── Weekday header row ── */}
-      <div
-        aria-hidden="true"
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(7, 1fr)",
-          textAlign: "center",
-          marginBottom: "2px",
-        }}
-      >
-        {WEEKDAY_SHORT.map((name) => (
-          <div
-            key={name}
-            style={{
-              padding: "4px 0",
-              fontFamily: "var(--font-label-family)",
-              fontSize: "11px",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-            }}
-          >
-            {name}
-          </div>
-        ))}
-      </div>
-
-      {/* ── Date grid ── */}
-      <div
-        role="grid"
-        aria-label="날짜 선택"
-        className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
-        style={{ marginBottom: "var(--space-md)" }}
-      >
-        {renderMonthRows(anchorDate, selectedDate)}
-      </div>
-
-      {/* ── Divider ── */}
-      <div
-        role="separator"
-        style={{
-          height: "1px",
-          background: "var(--color-outline-variant)",
-          marginBottom: "var(--space-md)",
-          opacity: 0.6,
-        }}
-      />
-
-      {/* ── Selected date detail panel ── */}
-      <div>
-        {/* Date label + today badge */}
+      {/* ── Selected Date Section ── */}
+      <section style={{ marginBottom: "var(--space-xl)" }}>
+        {/* Section header */}
         <div style={{
           display: "flex",
           alignItems: "center",
-          gap: "var(--space-sm)",
+          justifyContent: "space-between",
           marginBottom: "var(--space-md)",
         }}>
-          <div style={{ flex: 1 }}>
-            <div style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "18px",
-              fontWeight: 700,
-              letterSpacing: "-0.3px",
-              color: "var(--color-text)",
-            }}>
-              {formatKoreanDay(selectedDate)}
-            </div>
-            {selectedPlan && (
-              <div style={{
+          <h2 style={{
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "18px",
+            fontWeight: 700,
+            color: "var(--color-text)",
+            margin: 0,
+          }}>
+            {selectedDate === today ? "오늘" : formatKoreanDay(selectedDate)}
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            {selectedPlan && selectedDate !== today && (
+              <span style={{
                 fontFamily: "var(--font-label-family)",
-                fontSize: "12px",
+                fontSize: "11px",
                 color: "var(--color-text-muted)",
-                marginTop: "2px",
+                maxWidth: "120px",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
               }}>
                 {selectedPlan.name}
-              </div>
+              </span>
+            )}
+            {selectedDate === today && (
+              <span style={{
+                fontFamily: "var(--font-label-family)",
+                fontSize: "11px",
+                fontWeight: 700,
+                color: "var(--color-text-on-primary)",
+                background: "var(--color-primary)",
+                padding: "4px 12px",
+                borderRadius: "20px",
+                letterSpacing: "0.04em",
+              }}>
+                오늘
+              </span>
             )}
           </div>
-          {selectedDate === today && (
-            <span style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: "11px",
-              fontWeight: 700,
-              color: "var(--color-text-on-primary)",
-              background: "var(--color-primary)",
-              padding: "4px 12px",
-              borderRadius: "20px",
-              letterSpacing: "0.04em",
-            }}>
-              오늘
-            </span>
-          )}
         </div>
 
         {error && (
@@ -969,7 +1024,7 @@ export default function CalendarPage() {
             padding: "var(--space-xl)",
             textAlign: "center",
             background: "var(--color-surface-container-low)",
-            borderRadius: "16px",
+            borderRadius: "20px",
           }}>
             <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "8px" }}>calendar_month</span>
             <p style={{
@@ -982,31 +1037,155 @@ export default function CalendarPage() {
             </p>
           </div>
         ) : selectedLog ? (
-          <SessionCard
-            variant="today"
-            title={selectedPlan.name}
-            meta={`기록 있음 · ${loggedSummary.totalSets}세트 · ${formatVolume(loggedSummary.totalVolume)}`}
-            badge={loggedDayLabel ?? undefined}
-            exercises={loggedSummary.exercises}
-            ctaLabel="기록수정"
-            ctaHref={workoutHref}
-          />
+          /* ── Logged session card ── */
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: "24px", padding: "24px" }}>
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <div style={{
+                  width: "40px", height: "40px", borderRadius: "50%",
+                  background: "var(--color-success-weak)",
+                  display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "var(--color-success)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                </div>
+                <div>
+                  <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "15px", fontWeight: 700, color: "var(--color-text)" }}>
+                    {selectedPlan.name}
+                  </div>
+                  <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                    기록 완료
+                  </div>
+                </div>
+              </div>
+              {loggedDayLabel && (
+                <span style={{
+                  fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700,
+                  color: "var(--color-primary)", background: "var(--color-primary-weak)",
+                  padding: "4px 10px", borderRadius: "20px", flexShrink: 0,
+                  border: "1px solid color-mix(in srgb, var(--color-primary) 28%, transparent)",
+                }}>
+                  {loggedDayLabel}
+                </span>
+              )}
+            </div>
+
+            {/* Exercise list */}
+            {loggedSummary.exercises.length > 0 && (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+                {loggedSummary.exercises.map((ex) => (
+                  <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>{ex.name}</span>
+                    <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Stats row */}
+            <div style={{ display: "flex", gap: "32px", borderTop: "1px solid var(--color-outline-variant)", paddingTop: "16px", marginBottom: "16px" }}>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>세트</span>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "18px", fontWeight: 700, color: "var(--color-text)" }}>{loggedSummary.totalSets}</span>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" }}>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>볼륨</span>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "18px", fontWeight: 700, color: "var(--color-text)" }}>{formatVolume(loggedSummary.totalVolume)}</span>
+              </div>
+            </div>
+
+            {/* CTA */}
+            <a
+              href={workoutHref}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "6px",
+                padding: "14px 20px", borderRadius: "14px",
+                background: "var(--color-primary)", color: "var(--color-text-on-primary)",
+                textDecoration: "none", fontFamily: "var(--font-headline-family)",
+                fontSize: "15px", fontWeight: 700,
+              }}
+            >
+              기록수정
+              <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>chevron_right</span>
+            </a>
+          </div>
         ) : selectedSession ? (
-          <SessionCard
-            variant="today"
-            title={selectedPlan.name}
-            meta={`생성됨 · ${new Date(selectedSession.updatedAt).toLocaleDateString("ko-KR")}`}
-            badge={selectedSessionWDLabel ?? undefined}
-            exercises={plannedExercises}
-            ctaLabel={isPastDateCreationBlocked ? undefined : "기록하기"}
-            ctaHref={isPastDateCreationBlocked ? undefined : workoutHref}
-            ctaNote={isPastDateCreationBlocked ? "자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다." : undefined}
-          />
+          /* ── Planned session card ── */
+          isPastDateCreationBlocked ? (
+            <div style={{ padding: "24px 20px", borderRadius: "20px", background: "var(--color-surface-container-low)", textAlign: "center" }}>
+              <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "10px" }}>block</span>
+              <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)", marginBottom: "6px" }}>기록 불가</div>
+              <div style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
+                자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
+              </div>
+            </div>
+          ) : (
+            <div style={{ background: "var(--color-surface-container-low)", borderRadius: "24px", padding: "24px" }}>
+              {/* Header */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: plannedExercises.length > 0 ? "16px" : "0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "12px", flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "50%",
+                    background: "var(--color-primary-weak)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "var(--color-primary)" }}>fitness_center</span>
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "15px", fontWeight: 700, color: "var(--color-text)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {selectedPlan.name}
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
+                      <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>시작 전</span>
+                      {selectedSessionWDLabel && (
+                        <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, color: "var(--color-primary)", background: "var(--color-primary-weak)", padding: "2px 8px", borderRadius: "20px" }}>
+                          {selectedSessionWDLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <a
+                  href={workoutHref}
+                  style={{
+                    display: "inline-flex", alignItems: "center", justifyContent: "center",
+                    padding: "10px 18px", borderRadius: "12px", flexShrink: 0, marginLeft: "12px",
+                    background: "var(--color-primary)", color: "var(--color-text-on-primary)",
+                    textDecoration: "none", fontFamily: "var(--font-headline-family)",
+                    fontSize: "14px", fontWeight: 700,
+                  }}
+                >
+                  기록하기
+                </a>
+              </div>
+
+              {/* Planned exercises */}
+              {plannedExercises.length > 0 && (
+                <div style={{ borderTop: "1px solid var(--color-outline-variant)", paddingTop: "16px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                  {plannedExercises.filter((ex) => ex.role === "MAIN").map((ex) => (
+                    <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <span style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>{ex.name}</span>
+                      <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
+                    </div>
+                  ))}
+                  {plannedExercises.filter((ex) => ex.role !== "MAIN").length > 0 && (
+                    <div style={{ borderTop: "1px dashed var(--color-outline-variant)", paddingTop: "8px", marginTop: "4px", display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {plannedExercises.filter((ex) => ex.role !== "MAIN").slice(0, 3).map((ex) => (
+                        <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text-muted)" }}>{ex.name}</span>
+                          <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text-subtle)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )
         ) : (
-          /* No session yet */
           <div style={{
             padding: "24px 20px",
-            borderRadius: "16px",
+            borderRadius: "20px",
             background: "var(--color-surface-container-low)",
             textAlign: "center",
           }}>
@@ -1078,7 +1257,113 @@ export default function CalendarPage() {
             )}
           </div>
         )}
-      </div>
+      </section>
+
+      {/* ── Recent Past Sessions ── */}
+      {recentPastLogs.length > 0 && (
+        <section style={{ marginBottom: "var(--space-xl)" }}>
+          <h2 style={{
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "18px",
+            fontWeight: 700,
+            color: "var(--color-text)",
+            margin: 0,
+            marginBottom: "var(--space-md)",
+          }}>
+            최근 기록
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            {recentPastLogs.map((log) => {
+              const logDate = dateOnlyInTimezone(new Date(log.performedAt), timezone);
+              const sessionLabel = log.generatedSessionId
+                ? (sessionKeyToWDLabel(generatedById.get(log.generatedSessionId)?.sessionKey ?? "") ?? null)
+                : null;
+              return (
+                <button
+                  key={log.id}
+                  type="button"
+                  onClick={() => {
+                    setAnchorDate(logDate);
+                    setSelectedDate(logDate);
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "16px 20px",
+                    background: "var(--color-surface-container-low)",
+                    border: "none",
+                    borderRadius: "20px",
+                    cursor: "pointer",
+                    textAlign: "left",
+                    width: "100%",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                    <div style={{
+                      width: "36px",
+                      height: "36px",
+                      borderRadius: "50%",
+                      background: "var(--color-success-weak)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}>
+                      <span
+                        className="material-symbols-outlined"
+                        style={{ fontSize: "18px", color: "var(--color-success)", fontVariationSettings: "'FILL' 1" }}
+                      >
+                        check_circle
+                      </span>
+                    </div>
+                    <div>
+                      <div style={{
+                        fontFamily: "var(--font-headline-family)",
+                        fontSize: "14px",
+                        fontWeight: 700,
+                        color: "var(--color-text)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}>
+                        {selectedPlan?.name ?? "기록"}
+                        {sessionLabel && (
+                          <span style={{
+                            fontFamily: "var(--font-label-family)",
+                            fontSize: "11px",
+                            fontWeight: 700,
+                            color: "var(--color-text-muted)",
+                            background: "var(--color-surface-container-high)",
+                            padding: "2px 8px",
+                            borderRadius: "20px",
+                          }}>
+                            {sessionLabel}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{
+                        fontFamily: "var(--font-label-family)",
+                        fontSize: "11px",
+                        fontWeight: 700,
+                        letterSpacing: "0.06em",
+                        textTransform: "uppercase",
+                        color: "var(--color-text-muted)",
+                        marginTop: "2px",
+                      }}>
+                        {formatKoreanDay(logDate)}
+                      </div>
+                    </div>
+                  </div>
+                  <span className="material-symbols-outlined" style={{ fontSize: "18px", color: "var(--color-text-subtle)", flexShrink: 0 }}>
+                    chevron_right
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <SearchSelectSheet
         open={planSheetOpen}
