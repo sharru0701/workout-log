@@ -286,6 +286,7 @@ export default function StatsIndexPage() {
 }
 
 function StatsPageContent() {
+  const { locale } = useLocale();
   const searchParams = useSearchParams();
   const detailedRef = useRef<Stats1RMDetailedRef>(null);
   const detailedSectionRef = useRef<HTMLDivElement>(null);
