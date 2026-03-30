@@ -138,63 +138,8 @@ function normalizeProgressionTarget(value: unknown): ProgramProgressionTarget | 
   return inferProgressionTargetFromExerciseName(String(value ?? ""));
 }
 
-export function toProgramListItems(templates: ProgramTemplate[]): ProgramListItem[] {
-  return templates
-    .map((template) => {
-      const source: ProgramListItem["source"] = template.visibility === "PUBLIC" ? "MARKET" : "CUSTOM";
-      const subtitle = source === "MARKET" ? "시중 프로그램" : "사용자 커스터마이징";
-      const fallbackDesc =
-        source === "MARKET"
-          ? "시중 프로그램 라이브러리에서 제공되는 기본 템플릿입니다."
-          : "사용자가 생성/커스터마이징한 프로그램입니다.";
-      const tagsText = Array.isArray(template.tags) && template.tags.length > 0 ? `태그: ${template.tags.join(", ")}` : "";
-      const versionText = template.latestVersion ? `v${template.latestVersion.version}` : "버전 없음";
-      const description = [template.description ?? "", tagsText, versionText].filter(Boolean).join(" / ") || fallbackDesc;
-
-      return {
-        key: `${source.toLowerCase()}-${template.id}`,
-        source,
-        name: template.name,
-        subtitle,
-        description,
-        template,
-      };
-    })
-    .sort((a, b) => {
-      if (a.source !== b.source) return a.source === "MARKET" ? -1 : 1;
-      return a.name.localeCompare(b.name);
-    });
-}
-
-export function getProgramScheduleLabel(template: ProgramTemplate): string {
-  const def = template.latestVersion?.definition;
-  if (!def) return "";
-
-  if (def.kind === "operator") {
-    const parts: string[] = [];
-    const sessionsPerWeek = def.schedule?.sessionsPerWeek;
-    const weeks = def.schedule?.weeks;
-    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
-    if (weeks) parts.push(`${weeks}주 사이클`);
-    return parts.join(" · ");
-  }
-
-  if (def.kind === "531") {
-    const rawModules: string[] = Array.isArray(def.modules) ? (def.modules as string[]) : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
-    const count = Math.min(rawModules.length, 4);
-    const dayLabels = ["D1", "D2", "D3", "D4"].slice(0, count);
-    return `${count}분할 · ${dayLabels.join("/")}`;
-  }
-
-  if (def.kind === "manual" && Array.isArray(def.sessions) && def.sessions.length > 0) {
-    const keys = (def.sessions as Array<{ key: string }>).map((s) => s.key).join("/");
-    return `${def.sessions.length}분할 · ${keys}`;
-  }
-
-  return "";
-}
-
 export type ProgramStatItem = {
+  key: "difficulty" | "frequency" | "cycle" | "type" | "split" | "duration";
   label: string;
   value: string;
 };
@@ -212,24 +157,181 @@ export type ProgramDetailInfo = {
   progressionNote: string | null;
 };
 
-export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailInfo {
+export type ProgramStoreLocale = "ko" | "en";
+
+const ENGLISH_PROGRAM_DESCRIPTIONS: Partial<Record<string, string>> = {
+  operator:
+    "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
+  manual:
+    "A fully open manual template for lifters who want to design every exercise, set, and rep themselves. There is no automatic progression engine, so each session can be logged exactly as written. It works well when you want full control instead of adapting to a prebuilt system.",
+  "starting-strength-lp":
+    "Mark Rippetoe's classic novice linear progression. Train an A/B full-body split three days per week with squats, presses, deadlifts, and power cleans, adding 2.5 to 5 kg whenever the work sets are completed. The program strips away distractions and leans hard into compound barbell lifts to maximize the novice effect.",
+  "stronglifts-5x5":
+    "A novice linear progression popularized by Mehdi. It resembles Starting Strength, but most main lifts are performed for 5x5 while deadlift stays lower in volume. Weight increases happen in small, predictable jumps, and the reset rules are simple enough that new lifters can run it with very little friction.",
+  "texas-method":
+    "A weekly undulating progression for intermediate lifters who have outgrown session-to-session linear gains. The standard flow is volume day, recovery day, and intensity day within the same week, letting stress, recovery, and peak output cycle together. It is a strong bridge for athletes who still want predictable progression without novice-level recovery speed.",
+  gzclp:
+    "Cody LeFever's tiered linear progression built around T1, T2, and T3 work. T1 lifts emphasize heavy strength practice, T2 movements drive additional volume, and T3 slots add high-rep work capacity and hypertrophy. It is a good fit for beginners and early intermediates who want more exercise variety than classic novice LPs.",
+  "wendler-531":
+    "Jim Wendler's 5/3/1 base template with no additional assistance work. It runs a 4-week cycle using a 90% training max, builds around submaximal top sets, and finishes each main week with an AMRAP set to drive long-term progress. This version is clean and minimal: just the main work and the progression engine.",
+  "wendler-531-fsl":
+    "A 5/3/1 variant that adds First Set Last work after the main sets. The first working-set load is repeated for 5x5, giving you extra technical practice and useful volume without losing the character of the original program. It is one of the most practical ways to make 5/3/1 feel more productive week to week.",
+  "wendler-531-bbb":
+    "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
+  "greyskull-lp":
+    "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
+};
+
+function t(locale: ProgramStoreLocale, ko: string, en: string) {
+  return locale === "ko" ? ko : en;
+}
+
+export function getProgramDescription(
+  template: ProgramTemplate,
+  locale: ProgramStoreLocale = "ko",
+) {
+  if (locale === "en") {
+    const override = ENGLISH_PROGRAM_DESCRIPTIONS[template.slug];
+    if (override) return override;
+  }
+  return template.description ?? null;
+}
+
+function statLabel(
+  key: ProgramStatItem["key"],
+  locale: ProgramStoreLocale,
+) {
+  if (key === "difficulty") return t(locale, "난이도", "Difficulty");
+  if (key === "frequency") return t(locale, "주간 빈도", "Frequency");
+  if (key === "cycle") return t(locale, "사이클", "Cycle");
+  if (key === "type") return t(locale, "방식", "Type");
+  if (key === "split") return t(locale, "분할", "Split");
+  return t(locale, "기간", "Duration");
+}
+
+function difficultyText(tags: string[], locale: ProgramStoreLocale) {
+  if (tags.some((t) => t === "novice" || t === "beginner")) return t(locale, "초급", "Beginner");
+  if (tags.some((t) => t === "intermediate")) return t(locale, "중급", "Intermediate");
+  if (tags.some((t) => t === "advanced")) return t(locale, "고급", "Advanced");
+  return t(locale, "일반", "Standard");
+}
+
+function typeText(type: ProgramTemplate["type"], locale: ProgramStoreLocale) {
+  return type === "LOGIC" ? t(locale, "자동 진행", "Auto Progression") : t(locale, "세션 고정", "Fixed Sessions");
+}
+
+function frequencyText(sessionsPerWeek: number | undefined, locale: ProgramStoreLocale) {
+  if (!sessionsPerWeek) return "-";
+  return locale === "ko" ? `주 ${sessionsPerWeek}회` : `${sessionsPerWeek} days/wk`;
+}
+
+function cycleText(weeks: number | undefined, locale: ProgramStoreLocale) {
+  if (!weeks) return "-";
+  return locale === "ko" ? `${weeks}주` : `${weeks} wk`;
+}
+
+function cycleDetailText(weeks: number | undefined, locale: ProgramStoreLocale) {
+  if (!weeks) return "";
+  return locale === "ko" ? `${weeks}주 사이클` : `${weeks}-week cycle`;
+}
+
+function splitText(count: number, locale: ProgramStoreLocale) {
+  return locale === "ko" ? `${count}분할` : `${count}-day split`;
+}
+
+function durationText(locale: ProgramStoreLocale) {
+  return t(locale, "무제한", "Open Ended");
+}
+
+function setsFallbackText(count: number, locale: ProgramStoreLocale) {
+  return locale === "ko" ? `${count}세트` : `${count} sets`;
+}
+
+export function toProgramListItems(
+  templates: ProgramTemplate[],
+  locale: ProgramStoreLocale = "ko",
+): ProgramListItem[] {
+  return templates
+    .map((template) => {
+      const source: ProgramListItem["source"] = template.visibility === "PUBLIC" ? "MARKET" : "CUSTOM";
+      const subtitle = source === "MARKET"
+        ? t(locale, "시중 프로그램", "Official Library")
+        : t(locale, "사용자 커스터마이징", "Custom Build");
+      const fallbackDesc =
+        source === "MARKET"
+          ? t(locale, "시중 프로그램 라이브러리에서 제공되는 기본 템플릿입니다.", "A curated template from the public program library.")
+          : t(locale, "사용자가 생성/커스터마이징한 프로그램입니다.", "A user-created or customized training program.");
+      const tagsText = Array.isArray(template.tags) && template.tags.length > 0
+        ? `${t(locale, "태그", "Tags")}: ${template.tags.join(", ")}`
+        : "";
+      const versionText = template.latestVersion
+        ? `v${template.latestVersion.version}`
+        : t(locale, "버전 없음", "No version");
+      const description = [getProgramDescription(template, locale) ?? "", tagsText, versionText].filter(Boolean).join(" / ") || fallbackDesc;
+
+      return {
+        key: `${source.toLowerCase()}-${template.id}`,
+        source,
+        name: template.name,
+        subtitle,
+        description,
+        template,
+      };
+    })
+    .sort((a, b) => {
+      if (a.source !== b.source) return a.source === "MARKET" ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+}
+
+export function getProgramScheduleLabel(
+  template: ProgramTemplate,
+  locale: ProgramStoreLocale = "ko",
+): string {
+  const def = template.latestVersion?.definition;
+  if (!def) return "";
+
+  if (def.kind === "operator") {
+    const parts: string[] = [];
+    const sessionsPerWeek = def.schedule?.sessionsPerWeek;
+    const weeks = def.schedule?.weeks;
+    if (sessionsPerWeek) parts.push(frequencyText(sessionsPerWeek, locale));
+    if (weeks) parts.push(cycleDetailText(weeks, locale));
+    return parts.join(" · ");
+  }
+
+  if (def.kind === "531") {
+    const rawModules: string[] = Array.isArray(def.modules) ? (def.modules as string[]) : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
+    const count = Math.min(rawModules.length, 4);
+    const dayLabels = ["D1", "D2", "D3", "D4"].slice(0, count);
+    return `${splitText(count, locale)} · ${dayLabels.join("/")}`;
+  }
+
+  if (def.kind === "manual" && Array.isArray(def.sessions) && def.sessions.length > 0) {
+    const keys = (def.sessions as Array<{ key: string }>).map((s) => s.key).join("/");
+    return `${splitText(def.sessions.length, locale)} · ${keys}`;
+  }
+
+  return "";
+}
+
+export function getProgramDetailInfo(
+  template: ProgramTemplate,
+  locale: ProgramStoreLocale = "ko",
+): ProgramDetailInfo {
   const def = template.latestVersion?.definition;
   const defaults = template.latestVersion?.defaults;
   const tags = Array.isArray(template.tags) ? template.tags : [];
 
-  let difficultyValue = "일반";
-  if (tags.some((t) => t === "novice" || t === "beginner")) difficultyValue = "초급";
-  else if (tags.some((t) => t === "intermediate")) difficultyValue = "중급";
-  else if (tags.some((t) => t === "advanced")) difficultyValue = "고급";
-
-  const typeValue = template.type === "LOGIC" ? "자동 진행" : "세션 고정";
+  const difficultyValue = difficultyText(tags, locale);
+  const typeValue = typeText(template.type, locale);
 
   if (!def) {
     return {
       scheduleLabel: "",
       stats: [
-        { label: "난이도", value: difficultyValue },
-        { label: "방식", value: typeValue },
+        { key: "difficulty", label: statLabel("difficulty", locale), value: difficultyValue },
+        { key: "type", label: statLabel("type", locale), value: typeValue },
       ],
       sessions: null,
       modules: null,
@@ -241,14 +343,14 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     const sessionsPerWeek = def.schedule?.sessionsPerWeek as number | undefined;
     const weeks = def.schedule?.weeks as number | undefined;
     const parts: string[] = [];
-    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
-    if (weeks) parts.push(`${weeks}주 사이클`);
+    if (sessionsPerWeek) parts.push(frequencyText(sessionsPerWeek, locale));
+    if (weeks) parts.push(cycleDetailText(weeks, locale));
 
     const stats: ProgramStatItem[] = [
-      { label: "난이도", value: difficultyValue },
-      { label: "주간 빈도", value: sessionsPerWeek ? `주 ${sessionsPerWeek}회` : "-" },
-      { label: "사이클", value: weeks ? `${weeks}주` : "-" },
-      { label: "방식", value: typeValue },
+      { key: "difficulty", label: statLabel("difficulty", locale), value: difficultyValue },
+      { key: "frequency", label: statLabel("frequency", locale), value: frequencyText(sessionsPerWeek, locale) },
+      { key: "cycle", label: statLabel("cycle", locale), value: cycleText(weeks, locale) },
+      { key: "type", label: statLabel("type", locale), value: typeValue },
     ];
 
     const modules = Array.isArray(def.modules) ? (def.modules as string[]) : null;
@@ -257,7 +359,7 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     const mainSets = def.progression?.mainSets as number | undefined;
     const progressionParts: string[] = [];
     if (tmPercent) progressionParts.push(`TM ${tmPercent}%`);
-    if (mainSets) progressionParts.push(`메인 ${mainSets}세트`);
+    if (mainSets) progressionParts.push(locale === "ko" ? `메인 ${mainSets}세트` : `Main ${mainSets} sets`);
 
     return {
       scheduleLabel: parts.join(" · "),
@@ -272,14 +374,14 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     const sessionsPerWeek = def.schedule?.sessionsPerWeek as number | undefined;
     const weeks = def.schedule?.weeks as number | undefined;
     const parts: string[] = [];
-    if (sessionsPerWeek) parts.push(`주 ${sessionsPerWeek}회`);
-    if (weeks) parts.push(`${weeks}주 사이클`);
+    if (sessionsPerWeek) parts.push(frequencyText(sessionsPerWeek, locale));
+    if (weeks) parts.push(cycleDetailText(weeks, locale));
 
     const stats: ProgramStatItem[] = [
-      { label: "난이도", value: difficultyValue },
-      { label: "주간 빈도", value: sessionsPerWeek ? `주 ${sessionsPerWeek}회` : "-" },
-      { label: "사이클", value: weeks ? `${weeks}주` : "-" },
-      { label: "방식", value: typeValue },
+      { key: "difficulty", label: statLabel("difficulty", locale), value: difficultyValue },
+      { key: "frequency", label: statLabel("frequency", locale), value: frequencyText(sessionsPerWeek, locale) },
+      { key: "cycle", label: statLabel("cycle", locale), value: cycleText(weeks, locale) },
+      { key: "type", label: statLabel("type", locale), value: typeValue },
     ];
 
     const rawModules: string[] = Array.isArray(def.modules) ? (def.modules as string[]) : ["SQUAT", "BENCH", "DEADLIFT", "OHP"];
@@ -288,7 +390,11 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
 
     const sessions: ProgramSessionBreakdown[] = rawModules.slice(0, 4).map((mod, i) => {
       const exercises: Array<{ name: string; setsReps: string; hasAmrap: boolean }> = [
-        { name: targetLabel(mod), setsReps: "3세트 (주차별 %)", hasAmrap: true },
+        {
+          name: targetLabel(mod),
+          setsReps: locale === "ko" ? "3세트 (주차별 %)" : "3 sets (% by week)",
+          hasAmrap: true,
+        },
       ];
       if (assistance === "FSL") {
         exercises.push({ name: `${targetLabel(mod)} FSL`, setsReps: "5×5", hasAmrap: false });
@@ -301,9 +407,9 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
     const tmPercent = typeof defaults?.tmPercent === "number" ? Math.round(defaults.tmPercent * 100) : null;
     const progressionParts: string[] = [];
     if (tmPercent) progressionParts.push(`TM ${tmPercent}%`);
-    if (assistance === "FSL") progressionParts.push("FSL 보조");
-    else if (assistance === "BBB") progressionParts.push("BBB 보조");
-    else progressionParts.push("보조 없음");
+    if (assistance === "FSL") progressionParts.push(locale === "ko" ? "FSL 보조" : "FSL assistance");
+    else if (assistance === "BBB") progressionParts.push(locale === "ko" ? "BBB 보조" : "BBB assistance");
+    else progressionParts.push(locale === "ko" ? "보조 없음" : "No assistance");
 
     return {
       scheduleLabel: parts.join(" · "),
@@ -331,7 +437,7 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
           setCount > 0 && firstReps != null
             ? `${setCount}×${firstReps}${hasAmrap ? "+" : ""}`
             : setCount > 0
-              ? `${setCount}세트`
+              ? setsFallbackText(setCount, locale)
               : "";
         return { name: item.exerciseName, setsReps, hasAmrap };
       }),
@@ -339,13 +445,13 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
 
     const sessionCount = sessions.length;
     const scheduleLabel =
-      sessionCount > 0 ? `${sessionCount}분할 · ${sessions.map((s) => s.key).join("/")}` : "";
+      sessionCount > 0 ? `${splitText(sessionCount, locale)} · ${sessions.map((s) => s.key).join("/")}` : "";
 
     const stats: ProgramStatItem[] = [
-      { label: "난이도", value: difficultyValue },
-      { label: "분할", value: sessionCount > 0 ? `${sessionCount}분할` : "-" },
-      { label: "기간", value: "무제한" },
-      { label: "방식", value: typeValue },
+      { key: "difficulty", label: statLabel("difficulty", locale), value: difficultyValue },
+      { key: "split", label: statLabel("split", locale), value: sessionCount > 0 ? splitText(sessionCount, locale) : "-" },
+      { key: "duration", label: statLabel("duration", locale), value: durationText(locale) },
+      { key: "type", label: statLabel("type", locale), value: typeValue },
     ];
 
     return { scheduleLabel, stats, sessions, modules: null, progressionNote: null };
@@ -354,8 +460,8 @@ export function getProgramDetailInfo(template: ProgramTemplate): ProgramDetailIn
   return {
     scheduleLabel: "",
     stats: [
-      { label: "난이도", value: difficultyValue },
-      { label: "방식", value: typeValue },
+      { key: "difficulty", label: statLabel("difficulty", locale), value: difficultyValue },
+      { key: "type", label: statLabel("type", locale), value: typeValue },
     ],
     sessions: null,
     modules: null,

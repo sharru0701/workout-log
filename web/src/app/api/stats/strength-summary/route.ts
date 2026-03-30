@@ -6,6 +6,7 @@ import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 function epley1RM(weightKg: number, reps: number) {
   if (reps <= 0) return 0;
@@ -132,7 +133,7 @@ async function GETImpl(req: Request) {
 
   } catch (e: any) {
     logError("api.stats.strength_summary.error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

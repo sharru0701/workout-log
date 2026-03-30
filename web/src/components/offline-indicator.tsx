@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 
 /**
  * Shows a subtle top bar when the user goes offline, and briefly when
@@ -8,6 +9,7 @@ import { useEffect, useRef, useState } from "react";
  * even in standalone / notch mode.
  */
 export function OfflineIndicator() {
+  const { locale } = useLocale();
   const [online, setOnline] = useState(true);
   const [showReconnected, setShowReconnected] = useState(false);
   const reconnectedTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -50,7 +52,9 @@ export function OfflineIndicator() {
         online ? "offline-indicator--online" : "offline-indicator--offline"
       }`}
     >
-      {online ? "다시 연결되었습니다" : "오프라인 — 인터넷 연결을 확인해 주세요"}
+      {online
+        ? (locale === "ko" ? "다시 연결되었습니다" : "Back online")
+        : (locale === "ko" ? "오프라인 — 인터넷 연결을 확인해 주세요" : "Offline. Check your internet connection.")}
     </div>
   );
 }

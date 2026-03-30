@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { monthGrid, getDayOfWeek, dayOfMonth, monthStart } from "@/lib/date-utils";
 
 type CalendarProps = {
@@ -9,13 +10,8 @@ type CalendarProps = {
   onRangeChange: (start: string, end: string) => void;
 };
 
-const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-const MONTH_NAMES = [
-  "1월", "2월", "3월", "4월", "5월", "6월",
-  "7월", "8월", "9월", "10월", "11월", "12월"
-];
-
 export function CalendarRangePicker({ startDate, endDate, onRangeChange }: CalendarProps) {
+  const { locale } = useLocale();
   const [viewDateStr, setViewDateStr] = useState(() => {
     const d = new Date(endDate || new Date());
     return d.toISOString().slice(0, 10);
@@ -50,44 +46,55 @@ export function CalendarRangePicker({ startDate, endDate, onRangeChange }: Calen
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const isSelectingEnd = startDate && endDate && startDate === endDate;
+  const monthHeading = new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    year: "numeric",
+    month: "long",
+  }).format(new Date(`${viewDateStr.slice(0, 10)}T00:00:00`));
+  const weekdayLabels = Array.from({ length: 7 }, (_, index) =>
+    new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", { weekday: "short" }).format(
+      new Date(`2026-03-${String(29 + index).padStart(2, "0")}T00:00:00`),
+    ),
+  );
 
   return (
     <div style={{ font: "var(--font-body)", color: "var(--color-text)" }}>
       {/* Search status header */}
       <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: "var(--space-sm)" }}>
         <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-container)", borderRadius: "12px", textAlign: "center", border: !isSelectingEnd && startDate ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
-          <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>시작일</div>
+          <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>{locale === "ko" ? "시작일" : "Start"}</div>
           <div style={{ fontSize: "14px", fontWeight: 700 }}>{startDate || "-"}</div>
         </div>
         <div style={{ alignSelf: "center", color: "var(--color-text-muted)" }}>→</div>
         <div style={{ flex: 1, padding: "var(--space-sm)", background: "var(--color-surface-container)", borderRadius: "12px", textAlign: "center", border: isSelectingEnd ? "1px solid var(--color-primary)" : "1px solid transparent" }}>
-          <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>종료일</div>
+          <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px" }}>{locale === "ko" ? "종료일" : "End"}</div>
           <div style={{ fontSize: "14px", fontWeight: 700 }}>{(!isSelectingEnd && endDate && startDate !== endDate) ? endDate : "-"}</div>
         </div>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-md)" }}>
         <div style={{ fontSize: "13px", color: "var(--color-primary)", fontWeight: 500 }}>
-          {isSelectingEnd ? "종료일을 선택해 주세요" : "달력에서 날짜를 선택하세요"}
+          {isSelectingEnd
+            ? (locale === "ko" ? "종료일을 선택해 주세요" : "Select an end date")
+            : (locale === "ko" ? "달력에서 날짜를 선택하세요" : "Choose dates from the calendar")}
         </div>
         <button 
           onClick={() => onRangeChange("", "")}
           style={{ background: "none", border: "none", color: "var(--color-text-muted)", fontSize: "12px", textDecoration: "underline", cursor: "pointer", minHeight: "44px", minWidth: "44px", padding: "10px 12px" }}
         >
-          초기화
+          {locale === "ko" ? "초기화" : "Reset"}
         </button>
       </div>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--space-sm)", padding: "0 4px" }}>
         <button onClick={() => changeMonth(-1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", minHeight: "44px", minWidth: "44px", padding: "8px" }}>◀</button>
         <span style={{ font: "var(--font-section-title)", fontWeight: 700 }}>
-          {viewDateStr.split("-")[0]}년 {MONTH_NAMES[parseInt(viewDateStr.split("-")[1]) - 1]}
+          {monthHeading}
         </span>
         <button onClick={() => changeMonth(1)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--color-text-muted)", fontSize: "18px", minHeight: "44px", minWidth: "44px", padding: "8px" }}>▶</button>
       </div>
       
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", textAlign: "center", fontSize: "12px", fontWeight: 600, color: "var(--color-text-subtle)", marginBottom: "var(--space-xs)" }}>
-        {WEEKDAYS.map(d => <div key={d}>{d}</div>)}
+        {weekdayLabels.map((d) => <div key={d}>{d}</div>)}
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px" }}>

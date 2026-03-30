@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "./bottom-sheet";
 import { WheelPicker, generateNumberRange } from "./wheel-picker";
 
@@ -25,6 +26,7 @@ export function MonthYearPickerSheet({
   maxYear,
   onChange,
 }: MonthYearPickerSheetProps) {
+  const { locale } = useLocale();
   const [draftYear, setDraftYear] = useState(year);
   const [draftMonth, setDraftMonth] = useState(month);
 
@@ -47,10 +49,10 @@ export function MonthYearPickerSheet({
       open={open}
       title={title}
       onClose={onClose}
-      closeLabel="닫기"
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
       panelClassName="month-year-picker-sheet-panel"
       primaryAction={{
-        ariaLabel: "확인",
+        ariaLabel: locale === "ko" ? "확인" : "Confirm",
         onPress: handleConfirm,
       }}
       footer={null}
@@ -58,25 +60,25 @@ export function MonthYearPickerSheet({
       <div style={{ padding: "var(--space-sm) 0 var(--space-lg)" }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: "var(--space-md)" }}>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Year</span>
+            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{locale === "ko" ? "연도" : "Year"}</span>
             <WheelPicker
               values={years}
               value={draftYear}
               onChange={setDraftYear}
               itemHeight={48}
               visibleCount={7}
-              formatValue={(value) => `${value}년`}
+              formatValue={(value) => locale === "ko" ? `${value}년` : String(value)}
             />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Month</span>
+            <span style={{ display: "block", marginBottom: "var(--space-sm)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{locale === "ko" ? "월" : "Month"}</span>
             <WheelPicker
               values={months}
               value={draftMonth}
               onChange={setDraftMonth}
               itemHeight={48}
               visibleCount={7}
-              formatValue={(value) => `${value}월`}
+              formatValue={(value) => locale === "ko" ? `${value}월` : `${value}`}
             />
           </div>
         </div>

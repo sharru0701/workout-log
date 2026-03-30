@@ -2,6 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
@@ -59,20 +60,20 @@ function formatDateTime(value: string | null | undefined) {
 }
 
 function formatDuration(value: number | null | undefined) {
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return "기록 없음";
-  return `${value}분`;
+  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
+  return value;
 }
 
-function summarizeExercises(sets: LogSet[]) {
+function summarizeExercises(sets: LogSet[], locale: "ko" | "en") {
   const names: string[] = [];
   for (const set of sets) {
     const name = String(set.exerciseName ?? "").trim();
     if (!name || names.includes(name)) continue;
     names.push(name);
   }
-  if (names.length === 0) return "운동 정보 없음";
+  if (names.length === 0) return locale === "ko" ? "운동 정보 없음" : "No exercise info";
   if (names.length <= 3) return names.join(", ");
-  return `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}개`;
+  return locale === "ko" ? `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}개` : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
 }
 
 function countWorkSets(sets: LogSet[]) {
@@ -108,6 +109,7 @@ function progressionBadgeClass(tone: ReturnType<typeof progressionTone>) {
 }
 
 function PlanHistoryPageContent() {
+  const { copy, locale } = useLocale();
   const { alert, confirm } = useAppDialog();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -141,11 +143,11 @@ function PlanHistoryPageContent() {
       plansLoadedRef.current = true;
       setPlans(res.items ?? []);
     } catch (e: any) {
-      setPlansError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
+      setPlansError(e?.message ?? (locale === "ko" ? "플랜 목록을 불러오지 못했습니다." : "Could not load plans."));
     } finally {
       setPlansLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   const loadLogs = useCallback(async (planId: string, cursor?: string | null, append = false, silent = false) => {
     if (!planId) {
@@ -181,7 +183,7 @@ function PlanHistoryPageContent() {
       });
       setNextCursor(res.nextCursor ?? null);
     } catch (e: any) {
-      setLogsError(e?.message ?? "수행 로그를 불러오지 못했습니다.");
+      setLogsError(e?.message ?? (locale === "ko" ? "수행 로그를 불러오지 못했습니다." : "Could not load workout logs."));
       if (!append) {
         setLogs([]);
         setNextCursor(null);
@@ -190,7 +192,7 @@ function PlanHistoryPageContent() {
       setLogsLoading(false);
       setLogsLoadingMore(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void loadPlans({ isRefresh: refreshTick > 0 });
@@ -247,10 +249,10 @@ function PlanHistoryPageContent() {
 
   async function deleteLog(log: LogItem) {
     const ok = await confirm({
-      title: "히스토리 삭제",
-      message: `이 수행 로그를 삭제하시겠습니까?\n${formatDateTime(log.performedAt)}\n삭제 후 자동 진행 상태도 남은 로그 기준으로 다시 계산됩니다.`,
-      confirmText: "삭제",
-      cancelText: "취소",
+      title: locale === "ko" ? "히스토리 삭제" : "Delete History",
+      message: locale === "ko" ? `이 수행 로그를 삭제하시겠습니까?\n${formatDateTime(log.performedAt)}\n삭제 후 자동 진행 상태도 남은 로그 기준으로 다시 계산됩니다.` : `Delete this workout log?\n${formatDateTime(log.performedAt)}\nAuto progression will be recalculated from the remaining logs afterward.`,
+      confirmText: locale === "ko" ? "삭제" : "Delete",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
       tone: "danger",
     });
     if (!ok) return;
@@ -268,19 +270,19 @@ function PlanHistoryPageContent() {
         selectedPlanId ? loadLogs(selectedPlanId, null, false, true) : Promise.resolve(),
       ]);
       await alert({
-        title: "삭제 완료",
-        message: "수행 로그가 삭제되었습니다.",
-        buttonText: "확인",
+        title: locale === "ko" ? "삭제 완료" : "Deleted",
+        message: locale === "ko" ? "수행 로그가 삭제되었습니다." : "The workout log was deleted.",
+        buttonText: locale === "ko" ? "확인" : "OK",
       });
     } catch (e: any) {
       // 에러 발생 시 원래 상태로 복구 (재조회)
       if (selectedPlanId) void loadLogs(selectedPlanId, null, false, true);
-      const message = e?.message ?? "수행 로그 삭제에 실패했습니다.";
+      const message = e?.message ?? (locale === "ko" ? "수행 로그 삭제에 실패했습니다." : "Failed to delete the workout log.");
       setLogsError(message);
       await alert({
-        title: "삭제 실패",
+        title: locale === "ko" ? "삭제 실패" : "Delete Failed",
         message,
-        buttonText: "확인",
+        buttonText: locale === "ko" ? "확인" : "OK",
         tone: "danger",
       });
     } finally {
@@ -293,9 +295,9 @@ function PlanHistoryPageContent() {
 
       <section>
         <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Plan History</div>
-          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>수행 히스토리</h1>
-          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>플랜별 수행 로그를 모아보고, 필요한 항목만 빠르게 확인합니다.</p>
+          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>{copy.plansHistory.headerEyebrow}</div>
+          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>{copy.plansHistory.title}</h1>
+          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>{copy.plansHistory.description}</p>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
@@ -305,20 +307,20 @@ function PlanHistoryPageContent() {
         )}
         <ErrorStateRows
           message={plansError}
-          title="플랜 목록 조회 실패"
+          title={copy.plansHistory.plansLoadError}
           onRetry={() => {
             void loadPlans();
           }}
         />
         <EmptyStateRows
           when={!plansLoading && !plansError && plans.length === 0}
-          label="플랜이 없습니다"
-          description="프로그램 스토어에서 먼저 플랜을 생성하세요."
+          label={copy.plansHistory.noPlans}
+          description={copy.plansHistory.noPlansDescription}
         />
 
         {plans.length > 0 ? (
           <AppSelect
-            label="플랜 선택"
+            label={copy.plansHistory.selectPlan}
             value={selectedPlanId}
             onChange={(event) => setSelectedPlanId(event.target.value)}
             disabled={plansLoading}
@@ -334,7 +336,7 @@ function PlanHistoryPageContent() {
         {selectedPlan ? (
           <div style={{ background: "var(--color-surface-container)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
             <div style={{ gridColumn: "1 / -1" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>선택 플랜</div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.selectedPlan}</div>
               <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--color-text)", letterSpacing: "-0.2px" }}>{selectedPlan.name}</div>
               {selectedPlan.baseProgramName ? (
                 <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", marginTop: "2px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
@@ -343,7 +345,7 @@ function PlanHistoryPageContent() {
               ) : null}
             </div>
             <div>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>최근 수행</div>
+              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.recentPerformed}</div>
               <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
             </div>
           </div>
@@ -353,17 +355,17 @@ function PlanHistoryPageContent() {
 
       <section style={{ marginTop: "var(--space-lg)" }}>
         <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>수행 로그</h2>
+          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>{copy.plansHistory.logsTitle}</h2>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
         <NoticeStateRows
           message={
             selectedPlan
-              ? `현재 ${loadedLogCount}개 로그 / ${loadedSetCount}세트를 표시합니다.`
-              : "표시할 플랜을 선택하세요."
+              ? copy.plansHistory.summaryWithCounts(loadedLogCount, loadedSetCount)
+              : copy.plansHistory.summarySelectPlan
           }
           tone="neutral"
-          label="히스토리 요약"
+          label={copy.plansHistory.summaryLabel}
           preferInline
         />
 
@@ -387,7 +389,7 @@ function PlanHistoryPageContent() {
         )}
         <ErrorStateRows
           message={logsError}
-          title="수행 로그 조회 실패"
+          title={copy.plansHistory.logsLoadError}
           onRetry={() => {
             if (!selectedPlanId) return;
             void loadLogs(selectedPlanId, null, false);
@@ -395,15 +397,15 @@ function PlanHistoryPageContent() {
         />
         <EmptyStateRows
           when={Boolean(selectedPlanId) && !logsLoading && !logsError && logs.length === 0}
-          label="수행 로그가 없습니다"
-          description="해당 플랜으로 운동을 기록하면 이 화면에 쌓입니다."
+          label={copy.plansHistory.noLogs}
+          description={copy.plansHistory.noLogsDescription}
         />
 
         {logs.length > 0 ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
             {logs.map((log) => {
               const workSetCount = countWorkSets(log.sets ?? []);
-              const exerciseSummary = summarizeExercises(log.sets ?? []);
+              const exerciseSummary = summarizeExercises(log.sets ?? [], locale);
               const volumeKg = estimateVolumeKg(log.sets ?? []);
               const noteText = shortenText(log.notes);
               const progressionText = summarizeProgression(log.progression ?? null);
@@ -433,22 +435,28 @@ function PlanHistoryPageContent() {
 
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface-container)", borderRadius: 10, padding: "var(--space-sm)" }}>
                     <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>세트</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.sets}</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{workSetCount}</div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>시간</div>
-                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{formatDuration(log.durationMinutes)}</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.time}</div>
+                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>
+                        {(() => {
+                          const duration = formatDuration(log.durationMinutes);
+                          if (duration === null) return locale === "ko" ? "기록 없음" : "No record";
+                          return locale === "ko" ? `${duration}분` : `${duration} min`;
+                        })()}
+                      </div>
                     </div>
                     <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>볼륨</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.volume}</div>
                       <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
                     </div>
                   </div>
 
                   {noteText ? (
                     <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)", marginBottom: "var(--space-xs)" }}>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>노트</div>
+                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.note}</div>
                       <div style={{ fontSize: "13px", color: "var(--color-text)" }}>{noteText}</div>
                     </div>
                   ) : null}
@@ -458,7 +466,7 @@ function PlanHistoryPageContent() {
                       className="btn btn-inline-action btn-inline-action-primary"
                       href={`/workout/session/${encodeURIComponent(log.id)}`}
                     >
-                      세션 상세
+                      {copy.plansHistory.sessionDetail}
                     </a>
                     <button
                       type="button"
@@ -468,7 +476,7 @@ function PlanHistoryPageContent() {
                         void deleteLog(log);
                       }}
                     >
-                      {deletingLogId === log.id ? "삭제 중..." : "히스토리 삭제"}
+                      {deletingLogId === log.id ? copy.plansHistory.deleting : copy.plansHistory.deleteHistory}
                     </button>
                   </div>
                 </Card>
@@ -485,7 +493,7 @@ function PlanHistoryPageContent() {
                   void loadLogs(selectedPlanId, nextCursor, true);
                 }}
               >
-                {logsLoadingMore ? "더 불러오는 중..." : "로그 더 보기"}
+                {logsLoadingMore ? copy.plansHistory.loadingMore : copy.plansHistory.loadMore}
               </button>
             ) : null}
           </div>

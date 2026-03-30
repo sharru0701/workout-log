@@ -46,14 +46,27 @@ type UseSettingRowMutationReturn<T extends SettingValue> = {
 
 const DEFAULT_NOTICE_TTL_MS = 2200;
 
+function resolveBrowserLocale(): "ko" | "en" {
+  if (typeof document !== "undefined") {
+    const lang = document.documentElement.lang.trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+    if (lang.startsWith("en")) return "en";
+  }
+  if (typeof navigator !== "undefined") {
+    const lang = String(navigator.language ?? "").trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+  }
+  return "en";
+}
+
 export function useSettingRowMutation<T extends SettingValue>({
   key,
   fallbackValue,
   serverValue,
   store: storeFromProps,
   persistServer,
-  successMessage = "변경사항을 저장했습니다.",
-  rollbackNotice = "저장 실패로 이전 값으로 되돌렸습니다.",
+  successMessage = resolveBrowserLocale() === "ko" ? "변경사항을 저장했습니다." : "Changes saved.",
+  rollbackNotice = resolveBrowserLocale() === "ko" ? "저장 실패로 이전 값으로 되돌렸습니다." : "Save failed, so the previous value was restored.",
   errorToMessage,
   noticeTtlMs = DEFAULT_NOTICE_TTL_MS,
 }: UseSettingRowMutationOptions<T>): UseSettingRowMutationReturn<T> {

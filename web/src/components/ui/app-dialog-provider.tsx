@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -53,7 +54,7 @@ type AppDialogContextValue = {
 
 const AppDialogContext = createContext<AppDialogContextValue | null>(null);
 
-function normalizeAlertInput(input: string | AppAlertOptions): {
+function normalizeAlertInput(input: string | AppAlertOptions, locale: "ko" | "en"): {
   title: string;
   message: string;
   buttonText: string;
@@ -61,22 +62,22 @@ function normalizeAlertInput(input: string | AppAlertOptions): {
 } {
   if (typeof input === "string") {
     return {
-      title: "안내",
+      title: locale === "ko" ? "안내" : "Notice",
       message: input,
-      buttonText: "확인",
+      buttonText: locale === "ko" ? "확인" : "OK",
       tone: "default" as const,
     };
   }
 
   return {
-    title: String(input.title ?? "").trim() || "안내",
+    title: String(input.title ?? "").trim() || (locale === "ko" ? "안내" : "Notice"),
     message: String(input.message ?? "").trim(),
-    buttonText: String(input.buttonText ?? "").trim() || "확인",
+    buttonText: String(input.buttonText ?? "").trim() || (locale === "ko" ? "확인" : "OK"),
     tone: input.tone === "danger" ? "danger" : "default",
   };
 }
 
-function normalizeConfirmInput(input: string | AppConfirmOptions): {
+function normalizeConfirmInput(input: string | AppConfirmOptions, locale: "ko" | "en"): {
   title: string;
   message: string;
   confirmText: string;
@@ -87,10 +88,10 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
 } {
   if (typeof input === "string") {
     return {
-      title: "확인",
+      title: locale === "ko" ? "확인" : "Confirm",
       message: input,
-      confirmText: "확인",
-      cancelText: "취소",
+      confirmText: locale === "ko" ? "확인" : "Confirm",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
       tone: "default" as const,
       closeAsConfirm: false,
       closeAsNull: false,
@@ -98,10 +99,10 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
   }
 
   return {
-    title: String(input.title ?? "").trim() || "확인",
+    title: String(input.title ?? "").trim() || (locale === "ko" ? "확인" : "Confirm"),
     message: String(input.message ?? "").trim(),
-    confirmText: String(input.confirmText ?? "").trim() || "확인",
-    cancelText: String(input.cancelText ?? "").trim() || "취소",
+    confirmText: String(input.confirmText ?? "").trim() || (locale === "ko" ? "확인" : "Confirm"),
+    cancelText: String(input.cancelText ?? "").trim() || (locale === "ko" ? "취소" : "Cancel"),
     tone: input.tone === "danger" ? "danger" : "default",
     closeAsConfirm: input.closeAsConfirm === true,
     closeAsNull: input.closeAsNull === true,
@@ -109,6 +110,7 @@ function normalizeConfirmInput(input: string | AppConfirmOptions): {
 }
 
 export function AppDialogProvider({ children }: { children: ReactNode }) {
+  const { locale } = useLocale();
   const [queue, setQueue] = useState<DialogRequest[]>([]);
   const queueRef = useRef<DialogRequest[]>([]);
 
@@ -155,7 +157,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
   }, [active]);
 
   const alert = useCallback((input: string | AppAlertOptions) => {
-    const normalized = normalizeAlertInput(input);
+    const normalized = normalizeAlertInput(input, locale);
     return new Promise<void>((resolve) => {
       const request: AlertRequest = {
         kind: "alert",
@@ -167,10 +169,10 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
       };
       setQueue((prev) => [...prev, request]);
     });
-  }, []);
+  }, [locale]);
 
   const confirm = useCallback((input: string | AppConfirmOptions) => {
-    const normalized = normalizeConfirmInput(input);
+    const normalized = normalizeConfirmInput(input, locale);
     return new Promise<boolean | null>((resolve) => {
       const request: ConfirmRequest = {
         kind: "confirm",
@@ -185,7 +187,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
       };
       setQueue((prev) => [...prev, request]);
     });
-  }, []);
+  }, [locale]);
 
   const contextValue = useMemo<AppDialogContextValue>(
     () => ({
@@ -203,7 +205,7 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
         title={active?.title ?? ""}
         description=""
         onClose={closeActiveAsCancel}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         footer={
           active ? (
             <div

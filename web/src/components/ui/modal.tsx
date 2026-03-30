@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { Sheet } from "./sheet";
 import type { SheetPrimaryAction } from "./sheet-header";
 
@@ -26,11 +27,12 @@ export function Modal({
   children,
   footer,
   primaryAction,
-  closeLabel = "닫기",
+  closeLabel,
   panelClassName = "",
   className = "",
   header,
 }: ModalProps) {
+  const { locale } = useLocale();
   return (
     <Sheet
       open={open}
@@ -39,7 +41,7 @@ export function Modal({
       description={description}
       footer={footer}
       primaryAction={primaryAction}
-      closeLabel={closeLabel}
+      closeLabel={closeLabel ?? (locale === "ko" ? "닫기" : "Close")}
       panelClassName={panelClassName}
       className={className}
       header={header}

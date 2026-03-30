@@ -5,6 +5,8 @@ import { plan, planModule, programTemplate, programVersion } from "@/server/db/s
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = {
   params: Promise<{ slug: string }>;
@@ -12,11 +14,12 @@ type Ctx = {
 
 async function DELETEImpl(_: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { slug } = await ctx.params;
     const userId = getAuthenticatedUserId();
     const normalizedSlug = String(slug ?? "").trim();
     if (!normalizedSlug) {
-      return NextResponse.json({ error: "slug required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "slug가 필요합니다." : "slug is required." }, { status: 400 });
     }
 
     const templateRows = await db
@@ -33,13 +36,13 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
 
     const template = templateRows[0];
     if (!template) {
-      return NextResponse.json({ error: "template not found" }, { status: 404 });
+      return NextResponse.json({ error: locale === "ko" ? "템플릿을 찾을 수 없습니다." : "Template not found." }, { status: 404 });
     }
     if (template.visibility !== "PRIVATE") {
-      return NextResponse.json({ error: "public template cannot be deleted" }, { status: 403 });
+      return NextResponse.json({ error: locale === "ko" ? "공개 템플릿은 삭제할 수 없습니다." : "Public templates cannot be deleted." }, { status: 403 });
     }
     if (template.ownerUserId !== userId) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
     }
 
     const versions = await db
@@ -108,14 +111,18 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
   } catch (e: any) {
     if (e?.code === "23503") {
       return NextResponse.json(
-        { error: "template is still referenced by plan modules" },
+        {
+          error:
+            locale === "ko"
+              ? "이 템플릿은 아직 플랜 모듈에서 참조 중입니다."
+              : "This template is still referenced by plan modules.",
+        },
         { status: 409 },
       );
     }
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
 export const DELETE = withApiLogging(DELETEImpl);
-

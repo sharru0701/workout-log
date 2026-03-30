@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import type { PullToRefreshStatus } from "@/lib/usePullToRefresh";
 
 type PullToRefreshIndicatorProps = {
@@ -17,11 +18,12 @@ type PullToRefreshIndicatorProps = {
  * - complete:   스피너 페이드아웃 후 사라짐
  */
 export function PullToRefreshIndicator({ pullOffset, progress, status }: PullToRefreshIndicatorProps) {
+  const { locale } = useLocale();
   const isVisible = status !== "idle";
   const statusLabel =
-    status === "refreshing" ? "새로고침 중" :
-    status === "complete"   ? "새로고침 완료" :
-                              "아래로 당겨 새로고침";
+    status === "refreshing" ? (locale === "ko" ? "새로고침 중" : "Refreshing") :
+    status === "complete"   ? (locale === "ko" ? "새로고침 완료" : "Refresh complete") :
+                              (locale === "ko" ? "아래로 당겨 새로고침" : "Pull down to refresh");
 
   // 인디케이터 컨테이너 높이 — refreshing/complete 는 고정 64 px
   const visibleHeight =

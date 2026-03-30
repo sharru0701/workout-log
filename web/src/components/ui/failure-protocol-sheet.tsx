@@ -1,5 +1,6 @@
 "use client";
 
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "./bottom-sheet";
 import { Card, CardContent } from "./card";
 
@@ -21,6 +22,7 @@ export function FailureProtocolSheet({
   mode,
   onSelect,
 }: FailureProtocolSheetProps) {
+  const { locale } = useLocale();
   const isBlockCompletion = mode === "block-completion";
 
   return (
@@ -29,7 +31,7 @@ export function FailureProtocolSheet({
       title={title}
       description=""
       onClose={() => onSelect("cancel")}
-      closeLabel="닫기"
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
       footer={
         <div
           style={{
@@ -42,30 +44,30 @@ export function FailureProtocolSheet({
           {isBlockCompletion ? (
             <>
               <button type="button" className="btn btn-primary btn-full" onClick={() => onSelect("increase")}>
-                증량하여 저장
+                {locale === "ko" ? "증량하여 저장" : "Increase and Save"}
               </button>
               <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("hold")}>
-                유지하여 저장
+                {locale === "ko" ? "유지하여 저장" : "Keep and Save"}
               </button>
               <button type="button" className="btn btn-danger btn-full" onClick={() => onSelect("reset")}>
-                감소하여 저장
+                {locale === "ko" ? "감소하여 저장" : "Reduce and Save"}
               </button>
             </>
           ) : (
             <>
               <button type="button" className="btn btn-danger btn-full" onClick={() => onSelect("reset")}>
-                감소 적용하여 저장
+                {locale === "ko" ? "감소 적용하여 저장" : "Apply Reduction and Save"}
               </button>
               <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("hold")}>
-                무게 유지하여 저장
+                {locale === "ko" ? "무게 유지하여 저장" : "Keep Weight and Save"}
               </button>
               <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("increase")}>
-                무게 증가하여 저장
+                {locale === "ko" ? "무게 증가하여 저장" : "Increase Weight and Save"}
               </button>
             </>
           )}
           <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("cancel")}>
-            취소
+            {locale === "ko" ? "취소" : "Cancel"}
           </button>
         </div>
       }

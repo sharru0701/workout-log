@@ -9,6 +9,8 @@ import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type LogCursor = {
   performedAt: string;
@@ -223,12 +225,13 @@ async function GETImpl(req: Request) {
     return NextResponse.json({ items, nextCursor, limit });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
 async function POSTImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const body = await req.json();
     const userId = getAuthenticatedUserId();
     const timezone = normalizeTimezone(typeof body.timezone === "string" ? body.timezone : null);
@@ -236,10 +239,10 @@ async function POSTImpl(req: Request) {
 
     const sets = Array.isArray(body.sets) ? body.sets : [];
     if (sets.length === 0) {
-      return NextResponse.json({ error: "sets required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "세트 정보가 필요합니다." : "Sets are required." }, { status: 400 });
     }
     if (!performedAt) {
-      return NextResponse.json({ error: "performedAt must be a valid datetime" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "performedAt은 올바른 날짜/시간이어야 합니다." : "performedAt must be a valid datetime." }, { status: 400 });
     }
 
     const submittedPlanId = typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : null;
@@ -261,8 +264,8 @@ async function POSTImpl(req: Request) {
         .from(plan)
         .where(eq(plan.id, submittedPlanId))
         .limit(1);
-      if (!p[0]) return NextResponse.json({ error: "plan not found" }, { status: 404 });
-      if (p[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      if (!p[0]) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+      if (p[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
       effectivePlan = p[0];
     }
 
@@ -272,11 +275,11 @@ async function POSTImpl(req: Request) {
         .from(generatedSession)
         .where(eq(generatedSession.id, submittedGeneratedSessionId))
         .limit(1);
-      if (!s[0]) return NextResponse.json({ error: "generatedSession not found" }, { status: 404 });
-      if (s[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      if (!s[0]) return NextResponse.json({ error: locale === "ko" ? "생성된 세션을 찾을 수 없습니다." : "Generated session not found." }, { status: 404 });
+      if (s[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
       if (submittedPlanId && s[0].planId !== submittedPlanId) {
         return NextResponse.json(
-          { error: "generatedSession does not belong to provided planId" },
+          { error: locale === "ko" ? "generatedSession이 전달된 planId에 속하지 않습니다." : "generatedSession does not belong to the provided planId." },
           { status: 400 },
         );
       }
@@ -286,8 +289,8 @@ async function POSTImpl(req: Request) {
           .from(plan)
           .where(eq(plan.id, s[0].planId))
           .limit(1);
-        if (!p[0]) return NextResponse.json({ error: "plan not found" }, { status: 404 });
-        if (p[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+        if (!p[0]) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+        if (p[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
         effectivePlan = p[0];
       }
     }
@@ -297,7 +300,12 @@ async function POSTImpl(req: Request) {
       const todayDate = dateOnlyInTimezone(new Date(), timezone);
       if (performedDate < todayDate) {
         return NextResponse.json(
-          { error: "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록을 수정해 주세요." },
+          {
+            error:
+              locale === "ko"
+                ? "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록을 수정해 주세요."
+                : "Auto-progression plans cannot create new workout logs for dates before today. Edit the existing log instead.",
+          },
           { status: 400 },
         );
       }
@@ -400,7 +408,7 @@ async function POSTImpl(req: Request) {
     return NextResponse.json(created, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

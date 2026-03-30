@@ -9,6 +9,7 @@ import {
   ToggleRow,
   ValueRow,
 } from "@/components/ui/settings-list";
+import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -22,6 +23,7 @@ function nextTimezone(current: string) {
 }
 
 export default function SettingsSavePolicyPage() {
+  const { copy } = useLocale();
   const [simulateFailureOnNextSave, setSimulateFailureOnNextSave] = useState(false);
 
   const consumeFailureFlag = useCallback(() => {
@@ -46,16 +48,16 @@ export default function SettingsSavePolicyPage() {
     key: "prefs.autoSync",
     fallbackValue: true,
     persistServer: persistAutoSync,
-    successMessage: "자동 동기화 설정을 저장했습니다.",
-    rollbackNotice: "자동 동기화 저장에 실패해 이전 값으로 복구했습니다.",
+    successMessage: copy.settings.savePolicyPage.saveSuccessAutoSync,
+    rollbackNotice: copy.settings.savePolicyPage.rollbackAutoSync,
   });
 
   const timezone = useSettingRowMutation<string>({
     key: "prefs.timezone",
     fallbackValue: "UTC",
     persistServer: persistTimezone,
-    successMessage: "시간대 설정을 저장했습니다.",
-    rollbackNotice: "시간대 저장에 실패해 이전 값으로 복구했습니다.",
+    successMessage: copy.settings.savePolicyPage.saveSuccessTimezone,
+    rollbackNotice: copy.settings.savePolicyPage.rollbackTimezone,
   });
 
   const latestNotice = useMemo(() => {
@@ -68,33 +70,33 @@ export default function SettingsSavePolicyPage() {
     <div>
 
       <section>
-        <SectionHeader title="실패 시뮬레이션" />
-        <BaseGroupedList ariaLabel="Save failure simulation">
+        <SectionHeader title={copy.settings.savePolicyPage.failureSimulation.title} />
+        <BaseGroupedList ariaLabel={copy.settings.savePolicyPage.failureSimulation.ariaLabel}>
           <ToggleRow
             rowId="row-fail-next-save"
-            label="다음 저장 실패"
-            description="테스트용: 다음 저장 1회를 실패 처리."
+            label={copy.settings.savePolicyPage.failureSimulation.nextSaveFailure}
+            description={copy.settings.savePolicyPage.failureSimulation.description}
             checked={simulateFailureOnNextSave}
             onCheckedChange={setSimulateFailureOnNextSave}
             badge={simulateFailureOnNextSave ? "!" : undefined}
             badgeTone="warning"
           />
         </BaseGroupedList>
-        <SectionFootnote>한 번만 실패 처리한 뒤 같은 Row에서 다시 시도하세요.</SectionFootnote>
+        <SectionFootnote>{copy.settings.savePolicyPage.failureSimulation.footnote}</SectionFootnote>
       </section>
 
       <section>
-        <SectionHeader title="즉시 반영 설정" />
-        <BaseGroupedList ariaLabel="Optimistic settings rows">
+        <SectionHeader title={copy.settings.savePolicyPage.optimistic.title} />
+        <BaseGroupedList ariaLabel={copy.settings.savePolicyPage.optimistic.ariaLabel}>
           <ToggleRow
             rowId="row-auto-sync"
-            label="자동 동기화"
+            label={copy.settings.savePolicyPage.optimistic.autoSync}
             description={
               autoSync.pending
-                ? "저장 중..."
+                ? copy.settings.savePolicyPage.optimistic.autoSyncPending
                 : autoSync.error
-                  ? `${autoSync.error} 이전 값으로 복구됨.`
-                  : "변경 즉시 반영 후 서버에 저장합니다."
+                  ? `${autoSync.error} ${copy.settings.savePolicyPage.optimistic.autoSyncErrorSuffix}`
+                  : copy.settings.savePolicyPage.optimistic.autoSyncDescription
             }
             checked={Boolean(autoSync.value)}
             onCheckedChange={(next) => {
@@ -104,14 +106,14 @@ export default function SettingsSavePolicyPage() {
           />
           <ValueRow
             rowId="row-timezone"
-            label="시간대"
-            subtitle="탭해서 순환"
+            label={copy.settings.savePolicyPage.optimistic.timezone}
+            subtitle={copy.settings.savePolicyPage.optimistic.timezoneSubtitle}
             description={
               timezone.pending
-                ? "저장 중..."
+                ? copy.settings.savePolicyPage.optimistic.timezonePending
                 : timezone.error
-                  ? `${timezone.error} 이전 값으로 복구됨.`
-                  : "탭하면 다음 시간대로 저장합니다."
+                  ? `${timezone.error} ${copy.settings.savePolicyPage.optimistic.timezoneErrorSuffix}`
+                  : copy.settings.savePolicyPage.optimistic.timezoneDescription
             }
             value={timezone.value}
             onPress={() => {
@@ -121,23 +123,23 @@ export default function SettingsSavePolicyPage() {
           />
           <InfoRow
             rowId="row-policy"
-            label="정책"
-            description="즉시 반영, 행 잠금, 롤백 규칙을 적용합니다."
-            value="표준화됨"
+            label={copy.settings.savePolicyPage.optimistic.policy}
+            description={copy.settings.savePolicyPage.optimistic.policyDescription}
+            value={copy.settings.savePolicyPage.optimistic.standardized}
             tone="success"
           />
         </BaseGroupedList>
-        <SectionFootnote>전체 로딩 오버레이 없이, 저장 중인 Row만 잠급니다.</SectionFootnote>
+        <SectionFootnote>{copy.settings.savePolicyPage.optimistic.footnote}</SectionFootnote>
       </section>
 
       <section>
-        <SectionHeader title="인라인 안내" />
+        <SectionHeader title={copy.settings.savePolicyPage.notice.title} />
         <NoticeStateRows
           message={latestNotice}
           tone={autoSync.error || timezone.error ? "warning" : "success"}
-          label={autoSync.error || timezone.error ? "저장 실패" : "저장 완료"}
+          label={autoSync.error || timezone.error ? copy.settings.savePolicyPage.notice.error : copy.settings.savePolicyPage.notice.success}
         />
-        <SectionFootnote>실패 시 안내 문구를 확인한 뒤 같은 Row에서 다시 시도하세요.</SectionFootnote>
+        <SectionFootnote>{copy.settings.savePolicyPage.notice.footnote}</SectionFootnote>
       </section>
     </div>
   );

@@ -242,7 +242,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "LOGIC",
     visibility: "PUBLIC",
     description:
-      "군인·경찰 등 전술 직업군을 위해 설계된 서브맥시멀 근력 프로그램. 실제 1RM의 90%를 트레이닝 맥스(TM)로 설정하고, TM의 70~95% 범위에서 스쿼트·벤치·데드리프트를 6주 웨이브 사이클로 수행한다. 실패 없이 안정적으로 강도를 쌓으며, 6주 완료 시 TM에 소폭 중량을 추가해 장기 점진적 과부하를 유지하는 것이 핵심이다.",
+      "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
     tags: ["strength", "barbell", "operator", "intermediate"],
   });
 
@@ -270,7 +270,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "운동 종목·세트·횟수를 직접 지정해 나만의 루틴을 만드는 완전 자유 구성 템플릿. 자동 진행 로직 없이 매 세션을 수동으로 기록하며, 기존 프로그램에 얽매이지 않고 자신의 훈련 철학대로 커스터마이징하고 싶은 훈련자에게 적합하다.",
+      "A fully open manual template for lifters who want to design every exercise, set, and rep themselves. There is no automatic progression engine, so each session can be logged exactly as written. It works well when you want full control instead of adapting to a prebuilt system.",
     tags: ["manual", "custom"],
   });
 
@@ -336,7 +336,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "마크 리피토(Mark Rippetoe)가 설계한 초급자용 선형 점진 프로그램. 스쿼트·벤치·데드리프트·오버헤드프레스·파워클린만으로 A/B 루틴을 주 3회 수행하며, 매 세션 2.5~5kg씩 중량을 올린다. 고립 운동을 배제하고 복합 다관절 운동에만 집중해 '노비스 이펙트'를 최대한 활용하도록 설계됐다.",
+      "Mark Rippetoe's classic novice linear progression. Train an A/B full-body split three days per week with squats, presses, deadlifts, and power cleans, adding 2.5 to 5 kg whenever the work sets are completed. The program strips away distractions and leans hard into compound barbell lifts to maximize the novice effect.",
     tags: ["manual", "strength", "linear", "novice"],
   });
 
@@ -390,7 +390,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "Mehdi가 설계한 노비스 선형 점진 프로그램. Starting Strength와 유사하지만 데드리프트를 제외한 모든 주요 운동을 5×5로 수행하는 것이 핵심 차이점이다. 5세트 완성 시마다 2.5kg을 추가하고, 실패 시 명확한 리셋 프로토콜을 따르며, 단순한 규칙 덕분에 입문자가 처음 시작하기에 최적화된 프로그램이다.",
+      "A novice linear progression popularized by Mehdi. It resembles Starting Strength, but most main lifts are performed for 5x5 while deadlift stays lower in volume. Weight increases happen in small, predictable jumps, and the reset rules are simple enough that new lifters can run it with very little friction.",
     tags: ["manual", "strength", "linear", "novice", "5x5"],
   });
 
@@ -444,7 +444,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "Starting Strength LP를 졸업한 중급자를 위한 주간 파동 주기화 프로그램. 월요일 볼륨 데이(5×5)→수요일 회복 데이(3×5)→금요일 강도 데이(1×5 PR)로 자극·회복·최대 발현 사이클을 한 주 안에 완성한다. 매주 금요일 PR 세트를 2.5kg씩 올리며, 선형 점진이 한계에 달한 훈련자가 주 단위로 강도 향상을 이어갈 수 있게 해준다.",
+      "A weekly undulating progression for intermediate lifters who have outgrown session-to-session linear gains. The standard flow is volume day, recovery day, and intensity day within the same week, letting stress, recovery, and peak output cycle together. It is a strong bridge for athletes who still want predictable progression without novice-level recovery speed.",
     tags: ["manual", "strength", "intermediate", "weekly-undulation"],
   });
 
@@ -515,7 +515,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "Cody LeFever가 설계한 3계층(T1/T2/T3) 선형 점진 프로그램. T1(주요 복합 운동, 5×3)은 최대 근력, T2(보조 복합 운동, 3×10)는 근비대, T3(고반복 AMRAP, 3×15+)은 작업 용량을 담당한다. Starting Strength보다 볼륨이 많고 운동 다양성이 높아 근력과 체형을 동시에 발전시키려는 초급~중급자에게 적합하다.",
+      "Cody LeFever's tiered linear progression built around T1, T2, and T3 work. T1 lifts emphasize heavy strength practice, T2 movements drive additional volume, and T3 slots add high-rep work capacity and hypertrophy. It is a good fit for beginners and early intermediates who want more exercise variety than classic novice LPs.",
     tags: ["manual", "strength", "tiers", "top-set", "amrap", "novice"],
   });
 
@@ -604,7 +604,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "LOGIC",
     visibility: "PUBLIC",
     description:
-      "짐 웬들러(Jim Wendler)의 근력 프로그램. 트레이닝 맥스(실제 1RM의 90%)를 기준으로 4주 사이클을 반복한다. Week 1: 3×5 (65/75/85%), Week 2: 3×3 (70/80/90%), Week 3: 5/3/1 (75/85/95%), Week 4: 딜로드 3×5 (40/50/60%). 마지막 세트는 항상 AMRAP(최대 반복)으로 수행한다. 사이클 완료 시 상체 +2.5kg, 하체 +5kg 증량. 보조 운동 없이 메인 세트만 수행하는 기본 구성.",
+      "Jim Wendler's 5/3/1 base template with no additional assistance work. It runs a 4-week cycle using a 90% training max, builds around submaximal top sets, and finishes each main week with an AMRAP set to drive long-term progress. This version is clean and minimal: just the main work and the progression engine.",
     tags: ["strength", "barbell", "5/3/1", "wendler", "intermediate"],
   });
 
@@ -626,7 +626,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "LOGIC",
     visibility: "PUBLIC",
     description:
-      "5/3/1 메인 세트 완료 후 FSL(First Set Last) 보조 루틴을 수행하는 변형. 메인 첫 번째 세트와 동일한 중량(65–75% TM)으로 5×5를 추가한다. 기술 훈련과 볼륨 증가를 동시에 달성하며, 웬들러가 '가장 효과적인 보조 템플릿'으로 추천하는 구성이다.",
+      "A 5/3/1 variant that adds First Set Last work after the main sets. The first working-set load is repeated for 5x5, giving you extra technical practice and useful volume without losing the character of the original program. It is one of the most practical ways to make 5/3/1 feel more productive week to week.",
     tags: ["strength", "barbell", "5/3/1", "wendler", "fsl", "intermediate"],
   });
 
@@ -648,7 +648,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "LOGIC",
     visibility: "PUBLIC",
     description:
-      "5/3/1 메인 세트 완료 후 BBB(Boring But Big) 보조 루틴을 수행하는 변형. TM의 50%로 5×10을 추가해 근비대와 작업 용량을 동시에 키운다. 웬들러가 근육량과 근력을 모두 늘리고 싶은 훈련자에게 권장하는 볼륨 중심 구성이다.",
+      "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
     tags: ["strength", "barbell", "5/3/1", "wendler", "bbb", "hypertrophy", "intermediate"],
   });
 
@@ -670,7 +670,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     type: "MANUAL",
     visibility: "PUBLIC",
     description:
-      "Starting Strength를 기반으로 '마지막 세트 AMRAP(+ 세트)'를 추가한 초급자 LP. 2×5 후 마지막 세트를 한계까지 수행해 컨디션에 따라 볼륨이 자동 조절되며, 실패 시 리셋이 아닌 10% 감량 후 재시도로 훈련을 이어간다. 플러그인 시스템으로 친업·복근 등 보조 운동을 모듈식으로 추가할 수 있어 체성분 개선을 원하는 초급자에게도 적합하다.",
+      "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
     tags: ["manual", "strength", "linear", "amrap", "novice"],
   });
 

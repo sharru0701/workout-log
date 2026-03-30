@@ -7,6 +7,19 @@ function roundTo2(value: number) {
   return Math.round(value * 100) / 100;
 }
 
+function resolveBrowserLocale(): "ko" | "en" {
+  if (typeof document !== "undefined") {
+    const lang = document.documentElement.lang.trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+    if (lang.startsWith("en")) return "en";
+  }
+  if (typeof navigator !== "undefined") {
+    const lang = String(navigator.language ?? "").trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+  }
+  return "en";
+}
+
 export function isBodyweightExerciseName(exerciseName: string): boolean {
   const normalized = exerciseName.trim().toLowerCase();
   if (!normalized) return false;
@@ -65,7 +78,9 @@ export function formatExerciseLoadLabel(input: {
   bodyweightKg: number | null;
   source?: "external" | "total";
   showTotal?: boolean;
+  locale?: "ko" | "en";
 }) {
+  const locale = input.locale ?? resolveBrowserLocale();
   const weightKg = toFiniteNumber(input.weightKg);
   if (weightKg === null) return "-";
   const source = input.source ?? "external";
@@ -90,11 +105,13 @@ export function formatExerciseLoadLabel(input: {
   const externalLabel =
     externalWeightKg !== null && externalWeightKg > 0
       ? `+${formatKgValue(externalWeightKg).replace("kg", "")}kg`
-      : "체중만";
+      : locale === "ko" ? "체중만" : "Bodyweight only";
 
   if (input.showTotal === false || totalLoadKg === null) {
     return externalLabel;
   }
 
-  return `${externalLabel} (총 ${formatKgValue(totalLoadKg)})`;
+  return locale === "ko"
+    ? `${externalLabel} (총 ${formatKgValue(totalLoadKg)})`
+    : `${externalLabel} (total ${formatKgValue(totalLoadKg)})`;
 }

@@ -7,6 +7,8 @@ import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type FunnelStep = {
   id: "generated_sessions" | "saved_logs" | "saved_logs_with_extra";
@@ -189,23 +191,23 @@ function parseWindowDays(raw: string | null): number[] {
   return unique.length ? unique : [1, 7, 14];
 }
 
-function buildSteps(totals: FunnelTotals): FunnelStep[] {
+function buildSteps(totals: FunnelTotals, locale: "ko" | "en"): FunnelStep[] {
   return [
     {
       id: "generated_sessions",
-      label: "세션 생성",
+      label: locale === "ko" ? "세션 생성" : "Session Generated",
       count: totals.generatedSessions,
       conversionFromPrevious: null,
     },
     {
       id: "saved_logs",
-      label: "기록 저장",
+      label: locale === "ko" ? "기록 저장" : "Workout Saved",
       count: totals.savedLogs,
       conversionFromPrevious: toRatio(totals.savedLogs, Math.max(1, totals.generatedSessions)),
     },
     {
       id: "saved_logs_with_extra",
-      label: "추가 운동 포함 저장",
+      label: locale === "ko" ? "추가 운동 포함 저장" : "Saved With Extra Exercise",
       count: totals.savedLogsWithExtraExercise,
       conversionFromPrevious: toRatio(totals.savedLogsWithExtraExercise, Math.max(1, totals.savedLogs)),
     },
@@ -274,35 +276,48 @@ function buildThresholds(input: {
   funnel: UxFunnelSnapshot;
   windows: UxSummaryWindow[];
   targets: UxThresholdTargets;
+  locale: "ko" | "en";
 }): UxThreshold[] {
-  const { funnel, windows, targets } = input;
+  const { funnel, windows, targets, locale } = input;
   const sevenDay = windows.find((window) => window.days === 7) ?? windows[0];
   const fourteenDay = windows.find((window) => window.days === 14) ?? sevenDay;
 
   return [
     buildThreshold({
       id: "funnel_save_from_generate",
-      label: "세션 생성→저장 전환율",
+      label: locale === "ko" ? "세션 생성→저장 전환율" : "Session Generate→Save Conversion",
       value: funnel.rates.saveFromGenerate,
       target: targets.saveFromGenerate,
-      warnHint: "생성 후 저장까지 이어지는 사용자가 적습니다. 저장 직전 마찰 구간을 확인하세요.",
-      okHint: "생성 후 저장 전환이 기준치를 유지하고 있습니다.",
+      warnHint: locale === "ko"
+        ? "생성 후 저장까지 이어지는 사용자가 적습니다. 저장 직전 마찰 구간을 확인하세요."
+        : "Too few users continue from generation to save. Inspect the friction points right before saving.",
+      okHint: locale === "ko"
+        ? "생성 후 저장 전환이 기준치를 유지하고 있습니다."
+        : "Generate-to-save conversion is holding above the target.",
     }),
     buildThreshold({
       id: "save_success_from_clicks_7d",
-      label: "7일 저장 클릭→성공율",
+      label: locale === "ko" ? "7일 저장 클릭→성공율" : "7-Day Save Click→Success Rate",
       value: sevenDay?.rates.saveSuccessFromClicks ?? 0,
       target: targets.saveSuccessFromClicks7d,
-      warnHint: "저장 클릭 대비 성공이 낮습니다. 실패 이벤트와 오프라인 큐 비율을 점검하세요.",
-      okHint: "저장 클릭 대비 성공률이 안정적입니다.",
+      warnHint: locale === "ko"
+        ? "저장 클릭 대비 성공이 낮습니다. 실패 이벤트와 오프라인 큐 비율을 점검하세요."
+        : "Save success is low relative to save clicks. Check failure events and the offline queue ratio.",
+      okHint: locale === "ko"
+        ? "저장 클릭 대비 성공률이 안정적입니다."
+        : "Save success rate is stable relative to save clicks.",
     }),
     buildThreshold({
       id: "add_after_sheet_open_14d",
-      label: "14일 시트 오픈→운동 추가율",
+      label: locale === "ko" ? "14일 시트 오픈→운동 추가율" : "14-Day Sheet Open→Add Exercise Rate",
       value: fourteenDay?.rates.addAfterSheetOpen ?? 0,
       target: targets.addAfterSheetOpen14d,
-      warnHint: "운동 추가 시트에서 실제 추가 전환이 낮습니다. 검색/추천 목록 진입성을 보완하세요.",
-      okHint: "운동 추가 시트 전환이 기준치를 유지하고 있습니다.",
+      warnHint: locale === "ko"
+        ? "운동 추가 시트에서 실제 추가 전환이 낮습니다. 검색/추천 목록 진입성을 보완하세요."
+        : "Actual add conversion is low from the add-exercise sheet. Improve search and recommendation discoverability.",
+      okHint: locale === "ko"
+        ? "운동 추가 시트 전환이 기준치를 유지하고 있습니다."
+        : "Add-exercise sheet conversion is holding above the target.",
     }),
   ];
 }
@@ -548,6 +563,7 @@ async function buildWindowSummary(input: {
 
 async function GETImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
     const { from, to, rangeDays } = parseDateRangeFromSearchParams(searchParams, 30);
@@ -558,7 +574,10 @@ async function GETImpl(req: Request) {
     const format = (searchParams.get("format") ?? "json").toLowerCase();
 
     if (format !== "json" && format !== "csv") {
-      return NextResponse.json({ error: "format must be json or csv" }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "format은 json 또는 csv여야 합니다." : "format must be json or csv." },
+        { status: 400 },
+      );
     }
 
     const cacheParams = {
@@ -579,7 +598,7 @@ async function GETImpl(req: Request) {
 
     if (!payload) {
       const totals = await computeFunnelTotals({ userId, from, to, planId });
-      const steps = buildSteps(totals);
+      const steps = buildSteps(totals, locale);
       const rates = buildFunnelRates(totals, rangeDays);
       const dropoff = buildDropoff(steps);
 
@@ -657,6 +676,7 @@ async function GETImpl(req: Request) {
           funnel,
           windows,
           targets: thresholdTargets,
+          locale,
         }),
       };
 
@@ -683,10 +703,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

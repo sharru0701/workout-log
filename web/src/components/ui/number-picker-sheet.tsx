@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "./bottom-sheet";
 import { WheelPicker, generateNumberRange, type WheelPickerHandle } from "./wheel-picker";
 
@@ -33,6 +34,7 @@ export function NumberPickerSheet({
   formatValue,
   unit,
 }: NumberPickerSheetProps) {
+  const { locale } = useLocale();
   const pickerRef = useRef<WheelPickerHandle>(null);
   const [draftValue, setDraftValue] = useState(value);
 
@@ -59,10 +61,10 @@ export function NumberPickerSheet({
       open={open}
       title={title}
       onClose={onClose}
-      closeLabel="닫기"
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
       panelClassName="number-picker-sheet-panel"
       primaryAction={{
-        ariaLabel: "확인",
+        ariaLabel: locale === "ko" ? "확인" : "Confirm",
         onPress: handleConfirm,
       }}
       footer={null}
@@ -126,6 +128,7 @@ export function NumberPickerField({
   complete = false,
   tone = "default",
 }: NumberPickerFieldProps) {
+  const { locale } = useLocale();
   const [open, setOpen] = useState(false);
 
   const displayText = formatValue ? formatValue(value) : String(value);
@@ -201,7 +204,7 @@ export function NumberPickerField({
       <NumberPickerSheet
         open={open}
         onClose={() => setOpen(false)}
-        title={sheetTitle ?? label ?? "숫자 선택"}
+        title={sheetTitle ?? label ?? (locale === "ko" ? "숫자 선택" : "Select Number")}
         value={value}
         min={min}
         max={max}

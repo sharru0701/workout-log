@@ -5,6 +5,8 @@ import { eq } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
@@ -28,6 +30,7 @@ type Ctx = { params: Promise<{ planId: string }> };
  */
 async function POSTImpl(req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
     const body = await req.json();
 
@@ -35,14 +38,14 @@ async function POSTImpl(req: Request, ctx: Ctx) {
 
     const planRow = await db.select().from(planTable).where(eq(planTable.id, planId)).limit(1);
     const p = planRow[0];
-    if (!p) return NextResponse.json({ error: "plan not found" }, { status: 404 });
-    if (p.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!p) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+    if (p.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const scope = body.scope;
     const patch = body.patch;
 
     if (!scope || !patch) {
-      return NextResponse.json({ error: "scope and patch required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "scope와 patch가 필요합니다." : "scope and patch are required." }, { status: 400 });
     }
 
     const [created] = await db
@@ -60,7 +63,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     return NextResponse.json({ override: created }, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

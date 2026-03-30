@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 import pkg from "../../../../package.json";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
@@ -60,6 +61,7 @@ async function getMissingTables(requiredTables: string[]) {
 }
 
 async function GETImpl(req: Request) {
+  const locale = await resolveRequestLocale();
   const version = process.env.APP_VERSION ?? pkg.version ?? "unknown";
   const ts = new Date().toISOString();
 
@@ -85,7 +87,7 @@ async function GETImpl(req: Request) {
             missing: missingTables,
           },
         },
-        error: missingTables.length > 0 ? "required tables missing" : undefined,
+        error: missingTables.length > 0 ? (locale === "ko" ? "필수 테이블이 누락되었습니다." : "Required tables are missing.") : undefined,
       };
       return NextResponse.json(payload, { status: payload.ok ? 200 : 503 });
     }
@@ -122,10 +124,10 @@ async function GETImpl(req: Request) {
       error: ok
         ? undefined
         : missingTables.length > 0
-          ? "required tables missing"
+          ? (locale === "ko" ? "필수 테이블이 누락되었습니다." : "Required tables are missing.")
           : migrationLedger.tableQualifiedName
-            ? "pending migrations detected"
-            : "migration metadata table missing",
+            ? (locale === "ko" ? "적용 대기 중인 마이그레이션이 있습니다." : "Pending migrations were detected.")
+            : (locale === "ko" ? "마이그레이션 메타데이터 테이블이 없습니다." : "The migration metadata table is missing."),
     };
 
     return NextResponse.json(payload, { status: ok ? 200 : 503 });
@@ -142,7 +144,10 @@ async function GETImpl(req: Request) {
           missing: ["program_template"],
         },
       },
-      error: error instanceof Error ? error.message : "db check failed",
+      error:
+        error instanceof Error
+          ? error.message
+          : (locale === "ko" ? "DB 점검에 실패했습니다." : "The DB health check failed."),
     };
     return NextResponse.json(payload, { status: 503 });
   }

@@ -5,6 +5,7 @@ import { generatedSession } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 async function GETImpl(req: Request) {
   try {
@@ -50,7 +51,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json({ items });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

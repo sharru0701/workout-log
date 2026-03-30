@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle, useRef } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
@@ -90,10 +91,10 @@ function toDefaultRange(): RangeFilter {
   };
 }
 
-function formatPointDate(dateIso: string) {
+function formatPointDate(dateIso: string, locale: "ko" | "en") {
   const date = new Date(dateIso);
   if (Number.isNaN(date.getTime())) return dateIso;
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
@@ -122,10 +123,12 @@ function E1RMInteractiveChart({
   series,
   activeIndex,
   onActiveIndexChange,
+  locale,
 }: {
   series: E1RMPoint[];
   activeIndex: number;
   onActiveIndexChange: (nextIndex: number) => void;
+  locale: "ko" | "en";
 }) {
   const width = 1000;
   const height = 400;
@@ -161,7 +164,7 @@ function E1RMInteractiveChart({
         viewBox={`0 0 ${width} ${height}`}
         style={{ width: "100%", height: "auto", display: "block", color: "var(--metric-1rm-color)" }}
         role="img"
-        aria-label="1RM trend chart"
+        aria-label={locale === "ko" ? "1RM 추이 차트" : "1RM trend chart"}
         onPointerDown={(event) => {
           const rect = event.currentTarget.getBoundingClientRect();
           onActiveIndexChange(resolveIndex(event.clientX, rect.left, rect.width, series.length));
@@ -248,6 +251,7 @@ export type Stats1RMDetailedRef = {
 };
 
 export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: number }>(function Stats1RMDetailed({ refreshTick = 0 }, ref) {
+  const { locale } = useLocale();
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
   const [optionsLoading, setOptionsLoading] = useState(true);
   const optionsHasLoadedRef = useRef(false);
@@ -281,9 +285,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     [exercises, selectedExerciseId],
   );
   const selectedProgramLabel = useMemo(() => {
-    if (!selectedPlanId) return "전체 플랜";
-    return plans.find((entry) => entry.id === selectedPlanId)?.name ?? "선택된 플랜";
-  }, [plans, selectedPlanId]);
+    if (!selectedPlanId) return locale === "ko" ? "전체 플랜" : "All Plans";
+    return plans.find((entry) => entry.id === selectedPlanId)?.name ?? (locale === "ko" ? "선택된 플랜" : "Selected Plan");
+  }, [locale, plans, selectedPlanId]);
   const series = stats?.series ?? [];
   const hasChartData = series.length > 0;
   const resolvedActiveIndex = hasChartData ? clampIndex(activePointIndex, series.length) : 0;
@@ -324,11 +328,11 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       setSelectedPlanId((prev) => (prev && nextPlans.some((entry) => entry.id === prev) ? prev : ""));
       optionsHasLoadedRef.current = true;
     } catch (e: any) {
-      setOptionsError(e?.message ?? "필터 옵션을 불러오지 못했습니다.");
+      setOptionsError(e?.message ?? (locale === "ko" ? "필터 옵션을 불러오지 못했습니다." : "Could not load filter options."));
     } finally {
       setOptionsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void loadFilterOptions();
@@ -378,7 +382,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         dataHasLoadedRef.current = true;
       } catch (e: any) {
         if (cancelled) return;
-        setError(e?.message ?? "1RM 데이터를 불러오지 못했습니다.");
+        setError(e?.message ?? (locale === "ko" ? "1RM 데이터를 불러오지 못했습니다." : "Could not load 1RM data."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -387,16 +391,16 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     return () => {
       cancelled = true;
     };
-  }, [activeDataQueryKey, rangeFilter, selectedExerciseId, selectedPlanId]);
+  }, [activeDataQueryKey, locale, rangeFilter, selectedExerciseId, selectedPlanId]);
 
   const applyRangeDraft = () => {
     if (rangeDraft.preset === "CUSTOM") {
       if (!rangeDraft.from || !rangeDraft.to) {
-        setRangeDraftError("시작일과 종료일을 모두 입력하세요.");
+        setRangeDraftError(locale === "ko" ? "시작일과 종료일을 모두 입력하세요." : "Enter both a start date and end date.");
         return;
       }
       if (rangeDraft.from > rangeDraft.to) {
-        setRangeDraftError("시작일이 종료일보다 늦을 수 없습니다.");
+        setRangeDraftError(locale === "ko" ? "시작일이 종료일보다 늦을 수 없습니다." : "The start date cannot be later than the end date.");
         return;
       }
       setRangeFilter(rangeDraft);
@@ -438,7 +442,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     const q = programQuery.trim().toLowerCase();
     const allOption = {
       key: "__all__",
-      label: "전체 플랜",
+      label: locale === "ko" ? "전체 플랜" : "All Plans",
       active: selectedPlanId === "",
       ariaCurrent: selectedPlanId === "",
       onSelect: () => {
@@ -458,9 +462,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           setActiveSheet(null);
         },
       }));
-    if (q && !"전체 플랜".includes(q)) return planOptions;
+    if (q && !(locale === "ko" ? "전체 플랜" : "All Plans").toLowerCase().includes(q)) return planOptions;
     return [allOption, ...planOptions];
-  }, [plans, programQuery, selectedPlanId]);
+  }, [locale, plans, programQuery, selectedPlanId]);
 
   const showNoExerciseState = isOptionsSettled && !optionsError && exercises.length === 0;
   const showDataEmptyState = isDataSettled && !error && !showNoExerciseState && series.length === 0;
@@ -487,9 +491,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           }}
         >
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>운동종목</div>
+            <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>{locale === "ko" ? "운동종목" : "Exercise"}</div>
             <div style={{ font: "var(--font-body)", fontWeight: 700, color: "var(--color-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {selectedExercise?.name ?? "선택"}
+              {selectedExercise?.name ?? (locale === "ko" ? "선택" : "Select")}
             </div>
           </div>
           <span aria-hidden="true" style={{ color: "var(--color-text-muted)", flexShrink: 0, marginLeft: "4px" }}>
@@ -516,7 +520,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           }}
         >
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>필터링</div>
+            <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>{locale === "ko" ? "필터링" : "Filter"}</div>
             <div style={{ font: "var(--font-body)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {selectedProgramLabel}
             </div>
@@ -570,7 +574,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
             })}
             <button
               onClick={() => setActiveSheet("range")}
-              aria-label="기간 지정"
+              aria-label={locale === "ko" ? "기간 지정" : "Choose date range"}
               style={{
                 width: "38px",
                 display: "flex",
@@ -600,15 +604,15 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         )}
         <ErrorStateRows
           message={optionsError}
-          title="필터 옵션을 불러오지 못했습니다"
+          title={locale === "ko" ? "필터 옵션을 불러오지 못했습니다" : "Could not load filter options"}
           onRetry={() => {
             void loadFilterOptions();
           }}
         />
         <EmptyStateRows
           when={showNoExerciseState}
-          label="운동종목이 없습니다"
-          description="운동종목이 준비되면 1RM 그래프를 표시할 수 있습니다."
+          label={locale === "ko" ? "운동종목이 없습니다" : "No exercises"}
+          description={locale === "ko" ? "운동종목이 준비되면 1RM 그래프를 표시할 수 있습니다." : "Once exercises are available, the 1RM chart can be shown."}
         />
 
         {!showNoExerciseState && (
@@ -624,15 +628,15 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
             )}
             <ErrorStateRows
               message={error}
-              title="1RM 데이터를 불러오지 못했습니다"
+              title={locale === "ko" ? "1RM 데이터를 불러오지 못했습니다" : "Could not load 1RM data"}
               onRetry={() => {
                 setInternalRefreshTick((prev) => prev + 1);
               }}
             />
             <EmptyStateRows
               when={showDataEmptyState}
-              label="선택한 필터 조합에 데이터가 없습니다"
-              description="필터를 변경하거나 운동 기록을 추가한 뒤 다시 확인하세요."
+              label={locale === "ko" ? "선택한 필터 조합에 데이터가 없습니다" : "No data for the selected filters"}
+              description={locale === "ko" ? "필터를 변경하거나 운동 기록을 추가한 뒤 다시 확인하세요." : "Change the filters or add workout logs, then check again."}
             />
           </>
         )}
@@ -644,11 +648,11 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <h2 style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)", margin: "0 0 2px 0" }}>
-                      e1RM 상세 추이
+                      {locale === "ko" ? "e1RM 상세 추이" : "Detailed e1RM Trend"}
                     </h2>
                     {stats && (
                       <div style={{ fontSize: "12px", color: "var(--color-text-muted)" }}>
-                        {formatPointDate(stats.from)} ~ {formatPointDate(stats.to)}
+                        {formatPointDate(stats.from, locale)} ~ {formatPointDate(stats.to, locale)}
                       </div>
                     )}
                   </div>
@@ -658,7 +662,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                       <span style={{ fontSize: "14px", marginLeft: "2px", fontWeight: 400 }}>kg</span>
                     </span>
                     <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
-                      {activePoint ? `${formatPointDate(activePoint.date)}` : "-"}
+                      {activePoint ? `${formatPointDate(activePoint.date, locale)}` : "-"}
                     </span>
                   </div>
                 </div>
@@ -669,13 +673,14 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                   series={series}
                   activeIndex={resolvedActiveIndex}
                   onActiveIndexChange={setActivePointIndex}
+                  locale={locale}
                 />
               </div>
 
               {activePoint && (
                 <div style={{ padding: "0 var(--space-md) var(--space-md) var(--space-md)", display: "flex", gap: "var(--space-sm)" }}>
                   <div className="label label-neutral label-sm">
-                    {activePoint.weightKg}kg × {activePoint.reps}회
+                    {activePoint.weightKg}kg × {activePoint.reps}{locale === "ko" ? "회" : " reps"}
                   </div>
                 </div>
               )}
@@ -684,9 +689,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
             <Card tone="inset" padding="md" elevated={false} style={{ margin: 0 }}>
               <div className="metric-1rm" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
-                  <span className="metric-label" style={{ display: "block", marginBottom: "2px" }}>Best e1RM</span>
+                  <span className="metric-label" style={{ display: "block", marginBottom: "2px" }}>{locale === "ko" ? "최고 e1RM" : "Best e1RM"}</span>
                   <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)", fontSize: "13px" }}>
-                    {stats?.best ? formatPointDate(stats.best.date) : "-"}
+                    {stats?.best ? formatPointDate(stats.best.date, locale) : "-"}
                   </span>
                 </div>
                 <div className="metric-value" style={{ fontSize: "24px", textAlign: "right" }}>
@@ -701,28 +706,28 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
       <SearchSelectSheet
         open={activeSheet === "exercise"}
-        title="운동종목 필터"
-        description="그래프 대상 운동종목을 선택합니다."
+        title={locale === "ko" ? "운동종목 필터" : "Exercise Filter"}
+        description={locale === "ko" ? "그래프 대상 운동종목을 선택합니다." : "Choose the exercise to plot."}
         onClose={() => setActiveSheet(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         query={exerciseQuery}
-        placeholder="운동종목 검색..."
+        placeholder={locale === "ko" ? "운동종목 검색..." : "Search exercises..."}
         onQueryChange={setExerciseQuery}
-        resultsAriaLabel="운동종목 목록"
+        resultsAriaLabel={locale === "ko" ? "운동종목 목록" : "Exercise list"}
         options={filteredExerciseOptions}
-        emptyText="검색 결과가 없습니다."
+        emptyText={locale === "ko" ? "검색 결과가 없습니다." : "No results found."}
         loading={optionsLoading}
-        loadingText="운동종목 불러오는 중..."
+        loadingText={locale === "ko" ? "운동종목 불러오는 중..." : "Loading exercises..."}
       />
 
       <BottomSheet
         open={activeSheet === "range"}
-        title="기간 필터"
-        description="기간을 선택하면 필터 조합으로 다시 조회합니다."
+        title={locale === "ko" ? "기간 필터" : "Date Range Filter"}
+        description={locale === "ko" ? "기간을 선택하면 필터 조합으로 다시 조회합니다." : "Choose a range to refetch the chart with the selected filters."}
         onClose={() => setActiveSheet(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         primaryAction={{
-          ariaLabel: "기간 적용",
+          ariaLabel: locale === "ko" ? "기간 적용" : "Apply range",
           onPress: applyRangeDraft,
           disabled: !canApplyRangeDraft,
         }}
@@ -749,18 +754,18 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
       <SearchSelectSheet
         open={activeSheet === "program"}
-        title="플랜 필터"
-        description="특정 플랜 기록만 보거나 전체를 볼 수 있습니다."
+        title={locale === "ko" ? "플랜 필터" : "Plan Filter"}
+        description={locale === "ko" ? "특정 플랜 기록만 보거나 전체를 볼 수 있습니다." : "View logs for a specific plan or across all plans."}
         onClose={() => setActiveSheet(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         query={programQuery}
-        placeholder="플랜 검색..."
+        placeholder={locale === "ko" ? "플랜 검색..." : "Search plans..."}
         onQueryChange={setProgramQuery}
-        resultsAriaLabel="플랜 목록"
+        resultsAriaLabel={locale === "ko" ? "플랜 목록" : "Plan list"}
         options={filteredProgramOptions}
-        emptyText="검색 결과가 없습니다."
+        emptyText={locale === "ko" ? "검색 결과가 없습니다." : "No results found."}
         loading={optionsLoading}
-        loadingText="플랜 불러오는 중..."
+        loadingText={locale === "ko" ? "플랜 불러오는 중..." : "Loading plans..."}
       />
     </div>
   );

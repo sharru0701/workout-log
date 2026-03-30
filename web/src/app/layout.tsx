@@ -1,14 +1,22 @@
 import type { Metadata, Viewport } from "next";
+import { cookies, headers } from "next/headers";
 import { Inter, Space_Grotesk } from "next/font/google";
 import "@/styles/index.css";
 import "@/styles/components/bottom-sheet.css";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
+import { LocalePreferenceSync } from "@/components/locale-preference-sync";
 import { PwaRegister } from "@/components/pwa-register";
 import { OfflineIndicator } from "@/components/offline-indicator";
 import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
 import { OfflineQueueFlush } from "@/components/offline-queue-flush";
+import {
+  LOCALE_COOKIE_NAME,
+  coerceAppLocale,
+  parseAcceptLanguage,
+  type AppLocale,
+} from "@/lib/i18n/messages";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -50,13 +58,26 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+async function resolveInitialLocale(): Promise<AppLocale> {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  if (cookieLocale) {
+    return coerceAppLocale(cookieLocale);
+  }
+
+  const requestHeaders = await headers();
+  return parseAcceptLanguage(requestHeaders.get("accept-language"));
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialLocale = await resolveInitialLocale();
+
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang={initialLocale} suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
         {/* Material Symbols Outlined — variable icon font used across all screens */}
         <link
@@ -66,8 +87,11 @@ export default function RootLayout({
       </head>
       <body>
         <AppLaunchSplash />
-        <ThemePreferenceSync />
-        <AppShell>{children}</AppShell>
+        <AppShell initialLocale={initialLocale}>
+          <ThemePreferenceSync />
+          <LocalePreferenceSync />
+          {children}
+        </AppShell>
         <OfflineIndicator />
         <OfflineQueueFlush />
         <PwaInstallPrompt />

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { Card } from "./card";
 
 export type SessionSummaryExercise = {
@@ -25,7 +26,7 @@ function formatVolume(kg: number) {
 export function SessionSummaryCard({
   data,
   variant = "default",
-  emptyMessage = "지난 세션 없음",
+  emptyMessage,
   children,
 }: {
   data: SessionSummaryCardData | null | undefined;
@@ -33,8 +34,10 @@ export function SessionSummaryCard({
   emptyMessage?: string;
   children?: ReactNode;
 }) {
+  const { locale } = useLocale();
   const isToday = variant === "today";
   const hasData = data && data.dateLabel;
+  const resolvedEmptyMessage = emptyMessage ?? (locale === "ko" ? "지난 세션 없음" : "No previous session");
   const hasStats =
     data != null &&
     (
@@ -58,7 +61,7 @@ export function SessionSummaryCard({
         {!isToday && hasStats ? (
           <div style={{ display: "flex", gap: "var(--space-xs)", font: "var(--font-secondary)", color: "var(--text-meta)" }}>
             {data.totalSets !== undefined && (
-              <span>{data.totalSets}세트</span>
+              <span>{locale === "ko" ? `${data.totalSets}세트` : `${data.totalSets} sets`}</span>
             )}
             {data.totalVolume !== undefined && data.totalVolume > 0 && (
               <>
@@ -69,13 +72,15 @@ export function SessionSummaryCard({
             {data.bodyweightKg != null && (
               <>
                 <span>·</span>
-                <span>BW {data.bodyweightKg.toFixed(1)}kg</span>
+                <span>{locale === "ko" ? `체중 ${data.bodyweightKg.toFixed(1)}kg` : `BW ${data.bodyweightKg.toFixed(1)}kg`}</span>
               </>
             )}
           </div>
         ) : null}
         {isToday && data.bodyweightKg != null && (
-          <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)" }}>BW {data.bodyweightKg.toFixed(1)}kg</span>
+          <span style={{ font: "var(--font-secondary)", color: "var(--text-meta)" }}>
+            {locale === "ko" ? `체중 ${data.bodyweightKg.toFixed(1)}kg` : `BW ${data.bodyweightKg.toFixed(1)}kg`}
+          </span>
         )}
       </div>
       {data.exercises && data.exercises.length > 0 && (
@@ -100,7 +105,7 @@ export function SessionSummaryCard({
     </>
   ) : (
     <>
-      <div style={{ color: "var(--text-hint)", font: "var(--font-secondary)" }}>{emptyMessage}</div>
+      <div style={{ color: "var(--text-hint)", font: "var(--font-secondary)" }}>{resolvedEmptyMessage}</div>
       {children}
     </>
   );

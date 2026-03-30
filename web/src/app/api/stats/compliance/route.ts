@@ -7,6 +7,8 @@ import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale, type AppLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type PlanCompliance = {
   planId: string;
@@ -21,8 +23,9 @@ async function computeCompliance(input: {
   planId?: string | null;
   from: Date;
   to: Date;
+  locale: AppLocale;
 }): Promise<{ planned: number; done: number; compliance: number; byPlan: PlanCompliance[] }> {
-  const { userId, planId, from, to } = input;
+  const { userId, planId, from, to, locale } = input;
 
   const plannedAtExpr = sql<Date>`coalesce(${generatedSession.scheduledAt}, ${generatedSession.updatedAt})`;
   const plannedWhere = and(
@@ -97,7 +100,7 @@ async function computeCompliance(input: {
       const planDone = bucket.done;
       return {
         planId: pId,
-        planName: planNameById.get(pId) ?? "Unknown plan",
+        planName: planNameById.get(pId) ?? (locale === "ko" ? "알 수 없는 플랜" : "Unknown plan"),
         planned: planPlanned,
         done: planDone,
         compliance: planPlanned > 0 ? Math.round((planDone / planPlanned) * 1000) / 1000 : 0,
@@ -113,6 +116,7 @@ async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
+    const locale = await resolveRequestLocale();
     const planId = searchParams.get("planId");
     const comparePrev = searchParams.get("comparePrev") === "1";
 
@@ -157,6 +161,7 @@ async function GETImpl(req: Request) {
       planId,
       from,
       to,
+      locale,
     });
 
     let previous:
@@ -182,6 +187,7 @@ async function GETImpl(req: Request) {
         planId,
         from: prevFrom,
         to: prevTo,
+        locale,
       });
 
       previous = {
@@ -218,7 +224,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

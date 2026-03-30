@@ -4,6 +4,8 @@ import { uxEventLog } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type IncomingUxEvent = {
   id: string;
@@ -52,6 +54,7 @@ function toSafeEvent(raw: unknown): IncomingUxEvent | null {
 
 async function POSTImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const userId = getAuthenticatedUserId();
     const body: unknown = await req.json().catch(() => ({}));
     const rawEvents: unknown[] =
@@ -60,7 +63,10 @@ async function POSTImpl(req: Request) {
       return NextResponse.json({ acceptedIds: [], acceptedCount: 0, droppedCount: 0 });
     }
     if (rawEvents.length > 200) {
-      return NextResponse.json({ error: "events must be <= 200" }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "events는 200개 이하여야 합니다." : "events must be <= 200." },
+        { status: 400 },
+      );
     }
 
     const normalized = rawEvents.map(toSafeEvent).filter((event): event is IncomingUxEvent => Boolean(event));
@@ -92,10 +98,7 @@ async function POSTImpl(req: Request) {
     });
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

@@ -9,6 +9,7 @@ import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 function epley1RM(weightKg: number, reps: number) {
   return weightKg * (1 + reps / 30);
@@ -171,7 +172,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

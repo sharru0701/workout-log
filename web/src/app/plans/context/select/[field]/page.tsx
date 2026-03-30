@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { ErrorStateRows } from "@/components/ui/settings-state";
 import { SingleSelectionScreen, type SelectionOption } from "@/components/ui/selection-screen-template";
 import { commonTimezoneOptions } from "@/lib/selection-options";
@@ -60,6 +61,7 @@ const configs: Record<SelectField, FieldConfig> = {
 };
 
 export default function PlansContextSelectFieldPage() {
+  const { locale } = useLocale();
   const params = useParams<{ field: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,9 +74,9 @@ export default function PlansContextSelectFieldPage() {
     return (
       <div>
         <ErrorStateRows
-          message={`Unknown selection field: ${rawField}`}
+          message={locale === "ko" ? `알 수 없는 선택 필드입니다: ${rawField}` : `Unknown selection field: ${rawField}`}
           onRetry={() => router.push("/plans/context")}
-          retryLabel="컨텍스트로 돌아가기"
+          retryLabel={locale === "ko" ? "컨텍스트로 돌아가기" : "Back to Context"}
         />
       </div>
     );
@@ -90,7 +92,7 @@ export default function PlansContextSelectFieldPage() {
       options={config.options}
       selectedValue={selectedValue}
       searchable={config.searchable}
-      searchPlaceholder={`${config.title} 검색`}
+      searchPlaceholder={locale === "ko" ? `${config.title} 검색` : `Search ${config.title}`}
       onSelect={(next) => {
         router.push(withPatchedQuery(returnTo, { [config.paramKey]: next }));
       }}

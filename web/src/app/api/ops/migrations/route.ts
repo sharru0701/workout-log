@@ -5,6 +5,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
 const MIGRATION_FILE_PATTERN = /^\d+_.+\.sql$/;
@@ -84,14 +85,21 @@ async function readLocalMigrationCount() {
 }
 
 async function GETImpl(req: Request) {
+  const locale = await resolveRequestLocale();
   const expectedToken = (process.env.OPS_MIGRATION_TOKEN ?? "").trim();
   if (!expectedToken) {
-    return NextResponse.json({ error: "ops migration endpoint disabled" }, { status: 404 });
+    return NextResponse.json(
+      { error: locale === "ko" ? "ops migration 엔드포인트가 비활성화되어 있습니다." : "The ops migration endpoint is disabled." },
+      { status: 404 },
+    );
   }
 
   const providedToken = extractToken(req);
   if (!providedToken || providedToken !== expectedToken) {
-    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: locale === "ko" ? "인증되지 않았습니다." : "Unauthorized." },
+      { status: 401 },
+    );
   }
 
   const { searchParams } = new URL(req.url);

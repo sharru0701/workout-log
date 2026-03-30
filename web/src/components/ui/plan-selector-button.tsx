@@ -1,15 +1,17 @@
 import type { ComponentPropsWithoutRef } from "react";
+import { useLocale } from "@/components/locale-provider";
 
 type PlanSelectorButtonProps = Omit<ComponentPropsWithoutRef<"button">, "type"> & {
   planName: string;
 };
 
 export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelectorButtonProps) {
+  const { copy, locale } = useLocale();
   return (
     <button
       type="button"
       disabled={disabled}
-      aria-label="플랜 선택 열기"
+      aria-label={locale === "ko" ? "플랜 선택 열기" : "Open plan selector"}
       aria-haspopup="dialog"
       style={{
         width: "100%",
@@ -36,7 +38,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
           color: "var(--color-text-muted)",
           marginBottom: "4px",
         }}>
-          진행 중인 플랜
+          {copy.workoutLog.activePlanLabel}
         </div>
         <div style={{
           fontFamily: "var(--font-headline-family)",

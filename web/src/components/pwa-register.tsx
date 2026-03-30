@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 
 const SW_INSTALLED_KEY = "sw-installed";
 
@@ -19,6 +20,7 @@ const SW_INSTALLED_KEY = "sw-installed";
  * localStorage 플래그로 최초 설치 여부를 판단.
  */
 export function PwaRegister() {
+  const { locale } = useLocale();
   const [updateAvailable, setUpdateAvailable] = useState(false);
 
   useEffect(() => {
@@ -83,17 +85,17 @@ export function PwaRegister() {
 
   return (
     <div className="sw-update-toast" role="status" aria-live="polite">
-      <span className="sw-update-toast__text">앱이 업데이트되었어요</span>
+      <span className="sw-update-toast__text">{locale === "ko" ? "앱이 업데이트되었어요" : "The app has been updated"}</span>
       <button
         className="sw-update-toast__reload"
         onClick={() => window.location.reload()}
       >
-        새로고침
+        {locale === "ko" ? "새로고침" : "Reload"}
       </button>
       <button
         className="sw-update-toast__dismiss"
         onClick={() => setUpdateAvailable(false)}
-        aria-label="닫기"
+        aria-label={locale === "ko" ? "닫기" : "Close"}
       >
         ✕
       </button>

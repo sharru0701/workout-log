@@ -5,6 +5,8 @@ import { userSetting } from "@/server/db/schema";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type SettingValue = string | number | boolean | null;
 type SettingsSnapshot = Record<string, SettingValue>;
@@ -16,6 +18,7 @@ type PatchRequestBody = {
 };
 
 const DEFAULT_SETTINGS: SettingsSnapshot = {
+  "prefs.locale": "ko",
   "prefs.theme.mode": "SYSTEM",
   "prefs.minimumPlate.defaultKg": 2.5,
   "prefs.minimumPlate.rulesJson": "[]",
@@ -106,29 +109,36 @@ async function GETImpl() {
       return NextResponse.json({ settings });
     }
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
 async function PATCHImpl(request: Request) {
   const userId = getAuthenticatedUserId();
+  const locale = await resolveRequestLocale();
   try {
     const body = (await request.json().catch(() => ({}))) as PatchRequestBody;
     const key = typeof body.key === "string" ? body.key.trim() : "";
 
     if (!key) {
-      return NextResponse.json({ error: "설정 키가 비어 있습니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "설정 키가 비어 있습니다." : "The settings key is empty." },
+        { status: 400 },
+      );
     }
 
     if (!Object.hasOwn(body, "value") || !isSettingValue(body.value)) {
-      return NextResponse.json({ error: "설정 값 형식이 잘못되었습니다." }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "설정 값 형식이 잘못되었습니다." : "The settings value format is invalid." },
+        { status: 400 },
+      );
     }
 
     if (body.simulateFailure === true) {
-      return NextResponse.json({ error: "테스트용 저장 실패가 강제되었습니다." }, { status: 503 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "테스트용 저장 실패가 강제되었습니다." : "A simulated save failure was forced for testing." },
+        { status: 503 },
+      );
     }
 
     const nextValue = body.value;
@@ -168,10 +178,7 @@ async function PATCHImpl(request: Request) {
     }
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

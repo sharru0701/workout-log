@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { formatExerciseLoadLabel, computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
@@ -91,6 +92,7 @@ function shortLogId(id: string) {
 }
 
 export default function WorkoutSessionDetailPage() {
+  const { locale } = useLocale();
   const params = useParams<{ logId: string }>();
   const logId = String(params?.logId ?? "");
 
@@ -123,7 +125,7 @@ export default function WorkoutSessionDetailPage() {
       } catch (e: any) {
         if (!cancelled) {
           setItem(null);
-          setError(e?.message ?? "세션 상세를 불러오지 못했습니다.");
+          setError(e?.message ?? (locale === "ko" ? "세션 상세를 불러오지 못했습니다." : "Could not load the session details."));
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -133,7 +135,7 @@ export default function WorkoutSessionDetailPage() {
     return () => {
       cancelled = true;
     };
-  }, [logId]);
+  }, [logId, locale]);
 
   const plannedRows = useMemo(
     () => plannedRowsFromSnapshot(item?.generatedSession?.snapshot, bodyweightKg),
@@ -187,6 +189,49 @@ export default function WorkoutSessionDetailPage() {
     () => compareRows.filter((row) => !(row.planned && row.actual)),
     [compareRows],
   );
+  const t = {
+    reloadFailed: locale === "ko" ? "다시 불러오기에 실패했습니다." : "Reload failed.",
+    performedAt: locale === "ko" ? "수행 시각" : "Performed At",
+    session: locale === "ko" ? "세션" : "Session",
+    manualLog: locale === "ko" ? "수동 로그" : "Manual Log",
+    logId: locale === "ko" ? "로그 ID" : "Log ID",
+    matched: locale === "ko" ? "일치" : "Matched",
+    missing: locale === "ko" ? "누락" : "Missing",
+    extra: locale === "ko" ? "추가" : "Extra",
+    progression: locale === "ko" ? "자동 진행" : "Auto Progression",
+    summary: locale === "ko" ? "요약" : "Summary",
+    details: locale === "ko" ? "자동 진행 상세 보기" : "View auto progression details",
+    event: locale === "ko" ? "이벤트" : "Event",
+    program: locale === "ko" ? "프로그램" : "Program",
+    sessionAdvanced: locale === "ko" ? "세션 진행" : "Session Advanced",
+    yes: locale === "ko" ? "예" : "Yes",
+    no: locale === "ko" ? "아니오" : "No",
+    appliedAt: locale === "ko" ? "적용 시각" : "Applied At",
+    result: locale === "ko" ? "결과" : "Result",
+    change: locale === "ko" ? "변화" : "Change",
+    reason: locale === "ko" ? "사유" : "Reason",
+    target: locale === "ko" ? "타겟" : "Target",
+    noTargetDecisions: locale === "ko" ? "타겟별 자동 진행 결정 없음" : "No per-target auto progression decisions",
+    noProgressionEvent: locale === "ko" ? "이 로그에는 자동 진행 이벤트가 없습니다." : "This log has no auto progression event.",
+    compareTitle: locale === "ko" ? "계획 대비 수행" : "Planned vs Performed",
+    noComparison: locale === "ko" ? "비교할 계획/수행 세트가 없습니다." : "There are no planned/performed sets to compare.",
+    addedSet: locale === "ko" ? "추가된 세트" : "Added Set",
+    missingSet: locale === "ko" ? "누락 세트" : "Missing Set",
+    allMatched: locale === "ko" ? "모든 세트가 계획과 일치합니다." : "All sets match the plan.",
+    compareResult: locale === "ko" ? "비교 결과" : "Comparison Result",
+    fullTable: locale === "ko" ? "전체 비교표 보기" : "View full comparison table",
+    exercise: locale === "ko" ? "운동" : "Exercise",
+    set: locale === "ko" ? "세트" : "Set",
+    planned: locale === "ko" ? "계획" : "Planned",
+    performed: locale === "ko" ? "수행" : "Performed",
+    diff: locale === "ko" ? "차이" : "Difference",
+    status: locale === "ko" ? "상태" : "Status",
+    statusExtra: locale === "ko" ? "추가" : "Extra",
+    statusMissing: locale === "ko" ? "누락" : "Missing",
+    statusDone: locale === "ko" ? "완료" : "Done",
+    statusLogged: locale === "ko" ? "기록됨" : "Logged",
+    noValues: locale === "ko" ? "설정 값 없음" : "No values",
+  };
 
   return (
     <div>
@@ -208,7 +253,7 @@ export default function WorkoutSessionDetailPage() {
             marginBottom: 6,
           }}
         >
-          세션 상세
+          {locale === "ko" ? "세션 상세" : "Session Details"}
         </div>
         <h1
           style={{
@@ -219,7 +264,7 @@ export default function WorkoutSessionDetailPage() {
             margin: 0,
           }}
         >
-          운동 기록
+          {locale === "ko" ? "운동 기록" : "Workout Log"}
         </h1>
       </div>
 
@@ -229,7 +274,7 @@ export default function WorkoutSessionDetailPage() {
             href={APP_ROUTES.todayLog}
             className="btn btn-secondary"
           >
-            오늘 기록으로 돌아가기
+            {locale === "ko" ? "오늘 기록으로 돌아가기" : "Back to Today's Log"}
           </a>
           <button
             className="btn btn-secondary"
@@ -239,11 +284,11 @@ export default function WorkoutSessionDetailPage() {
               setLoading(true);
               apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
                 .then((res) => setItem(res.item))
-                .catch((e: any) => setError(e?.message ?? "세션 상세를 다시 불러오지 못했습니다."))
+                .catch((e: any) => setError(e?.message ?? (locale === "ko" ? "세션 상세를 다시 불러오지 못했습니다." : "Could not reload the session details.")))
                 .finally(() => setLoading(false));
             }}
           >
-            다시 불러오기
+            {locale === "ko" ? "다시 불러오기" : "Reload"}
           </button>
         </div>
       </Card>
@@ -283,7 +328,7 @@ export default function WorkoutSessionDetailPage() {
           setLoading(true);
           apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`)
             .then((res) => setItem(res.item))
-            .catch((e: any) => setError(e?.message ?? "다시 불러오기에 실패했습니다."))
+            .catch((e: any) => setError(e?.message ?? t.reloadFailed))
             .finally(() => setLoading(false));
         }}
       />
@@ -292,13 +337,13 @@ export default function WorkoutSessionDetailPage() {
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
           <Card tone="subtle" padding="sm" elevated={false}>
             <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>수행 시각</div>
+              <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.performedAt}</div>
               <div style={{ font: "var(--font-card-title)" }}>{new Date(item.performedAt).toLocaleString()}</div>
               <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-                세션: {item.generatedSession?.sessionKey ? formatSessionKeyLabel(item.generatedSession.sessionKey) : "수동 로그"}
+                {t.session}: {item.generatedSession?.sessionKey ? formatSessionKeyLabel(item.generatedSession.sessionKey) : t.manualLog}
               </div>
               <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-                로그 ID: {shortLogId(item.id)}
+                {t.logId}: {shortLogId(item.id)}
               </div>
             </div>
           </Card>
@@ -306,47 +351,47 @@ export default function WorkoutSessionDetailPage() {
           <Card padding="sm" elevated={false}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
               <div>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>일치</div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.matched}</div>
                 <div style={{ font: "var(--font-card-title)" }}>{stats.matched}</div>
               </div>
               <div>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>누락</div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.missing}</div>
                 <div style={{ font: "var(--font-card-title)" }}>{stats.missing}</div>
               </div>
               <div>
-                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>추가</div>
+                <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.extra}</div>
                 <div style={{ font: "var(--font-card-title)" }}>{stats.extra}</div>
               </div>
             </div>
           </Card>
 
           <Card padding="sm" elevated={false}>
-            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>자동 진행</div>
+            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>{t.progression}</div>
             <NoticeStateRows
-              message={summarizeProgression(item.progression ?? null)}
+              message={summarizeProgression(item.progression ?? null, locale)}
               tone={progressionTone(item.progression ?? null)}
-              label="요약"
+              label={t.summary}
             />
             {item.progression?.event ? (
               <details style={{ marginTop: "var(--space-sm)" }}>
                 <summary style={{ cursor: "pointer", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-                  자동 진행 상세 보기
+                  {t.details}
                 </summary>
                 <div style={{ marginTop: "var(--space-sm)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
                   <div>
-                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>이벤트</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.event}</div>
                     <div>{item.progression.event.eventType}</div>
                   </div>
                   <div>
-                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>프로그램</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.program}</div>
                     <div>{item.progression.event.programSlug}</div>
                   </div>
                   <div>
-                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>세션 진행</div>
-                    <div>{item.progression.event.didAdvanceSession ? "예" : "아니오"}</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.sessionAdvanced}</div>
+                    <div>{item.progression.event.didAdvanceSession ? t.yes : t.no}</div>
                   </div>
                   <div>
-                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>적용 시각</div>
+                    <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{t.appliedAt}</div>
                     <div>{new Date(item.progression.event.createdAt).toLocaleString()}</div>
                   </div>
                 </div>
@@ -355,10 +400,10 @@ export default function WorkoutSessionDetailPage() {
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
-                          <th>Target</th>
-                          <th>결과</th>
-                          <th>변화</th>
-                          <th>사유</th>
+                          <th>{t.target}</th>
+                          <th>{t.result}</th>
+                          <th>{t.change}</th>
+                          <th>{t.reason}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -376,54 +421,54 @@ export default function WorkoutSessionDetailPage() {
                     </table>
                   </div>
                 ) : (
-                  <EmptyStateRows when label="타겟별 자동 진행 결정 없음" />
+                  <EmptyStateRows when label={t.noTargetDecisions} />
                 )}
               </details>
             ) : (
-              <EmptyStateRows when label="이 로그에는 자동 진행 이벤트가 없습니다." />
+              <EmptyStateRows when label={t.noProgressionEvent} />
             )}
           </Card>
 
           <Card padding="sm" elevated={false}>
-            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>계획 대비 수행</div>
+            <div style={{ marginBottom: "var(--space-xs)", font: "var(--font-card-title)" }}>{t.compareTitle}</div>
             {compareRows.length === 0 ? (
               <EmptyStateRows
                 when
-                label="설정 값 없음"
-                description="비교할 계획/수행 세트가 없습니다."
+                label={t.noValues}
+                description={t.noComparison}
               />
             ) : (
               <>
                 {mismatchRows.length > 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
                     {mismatchRows.map((r, idx) => {
-                      const status = !r.planned ? "추가된 세트" : "누락 세트";
+                      const status = !r.planned ? t.addedSet : t.missingSet;
                       return (
                         <div key={`mismatch-${r.exerciseName}-${r.setNumber}-${idx}`} style={{ border: "1px solid var(--color-border)", borderRadius: "8px", padding: "var(--space-xs) var(--space-sm)" }}>
-                          <strong>{r.exerciseName} {r.setNumber}세트</strong>
+                          <strong>{r.exerciseName} {locale === "ko" ? `${r.setNumber}세트` : `Set ${r.setNumber}`}</strong>
                           <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{status}</div>
                         </div>
                       );
                     })}
                   </div>
                 ) : (
-                  <NoticeStateRows message="모든 세트가 계획과 일치합니다." tone="success" label="비교 결과" preferInline />
+                  <NoticeStateRows message={t.allMatched} tone="success" label={t.compareResult} preferInline />
                 )}
 
                 <details>
                   <summary style={{ cursor: "pointer", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-                    전체 비교표 보기
+                    {t.fullTable}
                   </summary>
                   <div style={{ marginTop: "var(--space-sm)", overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse" }}>
                       <thead>
                         <tr>
-                          <th>운동</th>
-                          <th>세트</th>
-                          <th>계획</th>
-                          <th>수행</th>
-                          <th>차이</th>
-                          <th>상태</th>
+                          <th>{t.exercise}</th>
+                          <th>{t.set}</th>
+                          <th>{t.planned}</th>
+                          <th>{t.performed}</th>
+                          <th>{t.diff}</th>
+                          <th>{t.status}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -443,14 +488,14 @@ export default function WorkoutSessionDetailPage() {
                           })
                         : "-";
                       const plannedText = r.planned
-                        ? `${r.planned.reps || "-"}회 @ ${plannedLoadText}${
+                        ? `${r.planned.reps || "-"}${locale === "ko" ? "회" : " reps"} @ ${plannedLoadText}${
                             plannedPercent || plannedMeta
                               ? ` (${[plannedPercent, plannedMeta].filter(Boolean).join(" · ")})`
                               : ""
                           }`
                         : "-";
                       const performedText = r.actual
-                        ? `${r.actual.reps || "-"}회 @ ${formatExerciseLoadLabel({
+                        ? `${r.actual.reps || "-"}${locale === "ko" ? "회" : " reps"} @ ${formatExerciseLoadLabel({
                             exerciseName: r.exerciseName,
                             weightKg: r.actual.weightKg,
                             bodyweightKg,
@@ -460,15 +505,15 @@ export default function WorkoutSessionDetailPage() {
 
                       const repsDiff = (r.actual?.reps ?? 0) - (r.planned?.reps ?? 0);
                       const kgDiff = (r.actual?.weightKg ?? 0) - (r.planned?.weightKg ?? 0);
-                      const diffText = r.planned && r.actual ? `${repsDiff >= 0 ? "+" : ""}${repsDiff}회, ${kgDiff >= 0 ? "+" : ""}${kgDiff}kg` : "-";
+                      const diffText = r.planned && r.actual ? `${repsDiff >= 0 ? "+" : ""}${repsDiff}${locale === "ko" ? "회" : " reps"}, ${kgDiff >= 0 ? "+" : ""}${kgDiff}kg` : "-";
 
                       const status = !r.planned
-                        ? "extra"
+                        ? t.statusExtra
                         : !r.actual
-                          ? "missing"
+                          ? t.statusMissing
                           : r.actual.meta?.completed === true || r.actual.isExtra === false
-                            ? "done"
-                            : "logged";
+                            ? t.statusDone
+                            : t.statusLogged;
 
                       return (
                         <tr key={`${r.exerciseName}-${r.setNumber}-${idx}`}>

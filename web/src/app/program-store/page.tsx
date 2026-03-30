@@ -4,12 +4,12 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
 import { ProgramDetailSheet } from "./_components/program-detail-sheet";
+import { useLocale } from "@/components/locale-provider";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
-import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
@@ -134,21 +134,15 @@ type DeleteTemplateResponse = {
   deletedPlanCount: number;
 };
 
-const MODULE_NAMES: Record<string, string> = {
-  SQUAT: "스쿼트",
-  BENCH: "벤치프레스",
-  DEADLIFT: "데드리프트",
-  OHP: "오버헤드 프레스",
-  PULL: "풀업 / 로우",
-};
-
-const STORE_CATEGORIES = [
-  { key: "all", label: "전체" },
-  { key: "strength", label: "근력" },
-  { key: "hypertrophy", label: "근비대" },
-  { key: "beginner", label: "입문" },
-  { key: "endurance", label: "지구력" },
-] as const;
+function storeCategories(locale: "ko" | "en") {
+  return [
+    { key: "all", label: locale === "ko" ? "전체" : "All" },
+    { key: "strength", label: locale === "ko" ? "근력" : "Strength" },
+    { key: "hypertrophy", label: locale === "ko" ? "근비대" : "Hypertrophy" },
+    { key: "beginner", label: locale === "ko" ? "입문" : "Beginner" },
+    { key: "endurance", label: locale === "ko" ? "지구력" : "Endurance" },
+  ] as const;
+}
 
 const skeletonStyle: React.CSSProperties = {
   background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
@@ -176,13 +170,6 @@ function formatProgramDisplayName(name: string) {
     .replace(/\s*\(base[^)]*\)\s*/gi, " ")
     .replace(/\s{2,}/g, " ")
     .trim();
-}
-
-function sourceBadgeMeta(source: ProgramListItem["source"]) {
-  if (source === "CUSTOM") {
-    return { label: "커스텀", className: "label label-tag-custom" };
-  }
-  return { label: "기본", className: "label label-tag-session" };
 }
 
 /**
@@ -216,12 +203,12 @@ function tagLabelClass(tag: string): string {
   return "label label-tag-custom label-sm";
 }
 
-function programCardBadge(item: ProgramListItem): { label: string; style: React.CSSProperties } {
+function programCardBadge(item: ProgramListItem, locale: "ko" | "en"): { label: string; style: React.CSSProperties } {
   const tags = (item.template.tags ?? []).map((t) => t.toLowerCase());
   const isBeginnerProgram = tags.some((t) => ["novice", "beginner", "입문", "초보"].includes(t));
   if (item.source === "CUSTOM") {
     return {
-      label: "커스텀",
+      label: locale === "ko" ? "커스텀" : "Custom",
       style: {
         background: "color-mix(in srgb, var(--color-secondary) 15%, transparent)",
         color: "var(--color-secondary)",
@@ -231,7 +218,7 @@ function programCardBadge(item: ProgramListItem): { label: string; style: React.
   }
   if (isBeginnerProgram) {
     return {
-      label: "입문 추천",
+      label: locale === "ko" ? "입문 추천" : "Beginner Pick",
       style: {
         background: "color-mix(in srgb, var(--color-tertiary) 15%, transparent)",
         color: "var(--color-tertiary)",
@@ -240,7 +227,7 @@ function programCardBadge(item: ProgramListItem): { label: string; style: React.
     };
   }
   return {
-    label: "공식",
+    label: locale === "ko" ? "공식" : "Official",
     style: {
       background: "color-mix(in srgb, var(--color-primary) 15%, transparent)",
       color: "var(--color-primary)",
@@ -256,29 +243,39 @@ function ProgramListCard({
   item: ProgramListItem;
   onPress: () => void;
 }) {
-  const info = getProgramDetailInfo(item.template);
+  const { locale } = useLocale();
+  const info = getProgramDetailInfo(item.template, locale);
   const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
   const isMarket = item.source === "MARKET";
 
-  const badge = programCardBadge(item);
+  const badge = programCardBadge(item, locale);
 
-  const difficultyStat = info.stats.find((s) => s.label === "난이도");
-  const frequencyStat = info.stats.find((s) => s.label === "주간 빈도");
-  const cycleStat = info.stats.find((s) => s.label === "사이클");
-  const splitStat = info.stats.find((s) => s.label === "분할");
-  const periodStat = info.stats.find((s) => s.label === "기간");
+  const difficultyStat = info.stats.find((s) => s.key === "difficulty");
+  const frequencyStat = info.stats.find((s) => s.key === "frequency");
+  const cycleStat = info.stats.find((s) => s.key === "cycle");
+  const splitStat = info.stats.find((s) => s.key === "split");
+  const periodStat = info.stats.find((s) => s.key === "duration");
 
-  const levelLabel = difficultyStat?.value ?? "일반";
+  const levelLabel = difficultyStat?.value ?? (locale === "ko" ? "일반" : "Standard");
   const frequencyLabel = frequencyStat?.value ?? splitStat?.value ?? null;
   const durationLabel = cycleStat?.value ?? periodStat?.value ?? null;
 
-  const intensityMap: Record<string, number> = { "초급": 2, "중급": 3, "고급": 4, "일반": 3 };
+  const intensityMap: Record<string, number> = {
+    Beginner: 2,
+    Intermediate: 3,
+    Advanced: 4,
+    Standard: 3,
+    초급: 2,
+    중급: 3,
+    고급: 4,
+    일반: 3,
+  };
   const intensityFill = intensityMap[levelLabel] ?? 3;
 
   const metaItems = [
-    durationLabel ? { icon: "calendar_today", label: "기간", value: durationLabel } : null,
-    frequencyLabel ? { icon: "event_repeat", label: "빈도", value: frequencyLabel } : null,
-    { icon: "leaderboard", label: "난이도", value: levelLabel },
+    durationLabel ? { icon: "calendar_today", label: locale === "ko" ? "기간" : "Duration", value: durationLabel } : null,
+    frequencyLabel ? { icon: "event_repeat", label: locale === "ko" ? "빈도" : "Frequency", value: frequencyLabel } : null,
+    { icon: "leaderboard", label: locale === "ko" ? "난이도" : "Difficulty", value: levelLabel },
   ].filter((m): m is { icon: string; label: string; value: string } => m !== null);
 
   const badgeLabelStyle: React.CSSProperties = {
@@ -344,9 +341,9 @@ function ProgramListCard({
         )}
       </div>
 
-      {item.template.description ? (
+      {item.description ? (
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)", lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
-          {item.template.description}
+          {item.description}
         </p>
       ) : null}
 
@@ -371,7 +368,7 @@ function ProgramListCard({
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-sm)" }}>
         <div style={{ flex: 1 }}>
           <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--color-text-subtle)", display: "block", marginBottom: 6 }}>
-            강도
+            {locale === "ko" ? "강도" : "Intensity"}
           </span>
           <div style={{ display: "flex", gap: 3 }}>
             {[1, 2, 3, 4, 5].map((i) => (
@@ -403,7 +400,7 @@ function ProgramListCard({
             flexShrink: 0,
           }}
         >
-          {isMarket ? "시작하기" : "편집"}
+          {isMarket ? (locale === "ko" ? "시작하기" : "Start") : (locale === "ko" ? "편집" : "Edit")}
         </button>
       </div>
     </div>
@@ -456,15 +453,19 @@ function exerciseValidity(exercise: ProgramExerciseDraft) {
   return exercise.exerciseName.trim().length > 0 && exercise.sets > 0 && exercise.reps > 0;
 }
 
-function validateCustomSessions(sessions: ProgramSessionDraft[]) {
+function validateCustomSessions(sessions: ProgramSessionDraft[], locale: "ko" | "en") {
   const errors: string[] = [];
   if (!hasAtLeastOneExercise(sessions)) {
-    errors.push("최소 1개 운동을 추가해야 합니다.");
+    errors.push(locale === "ko" ? "최소 1개 운동을 추가해야 합니다." : "Add at least one exercise.");
   }
   sessions.forEach((session) => {
     session.exercises.forEach((exercise, index) => {
       if (!exerciseValidity(exercise)) {
-        errors.push(`세션 ${session.key}의 ${index + 1}번째 운동 입력값을 확인하세요.`);
+        errors.push(
+          locale === "ko"
+            ? `세션 ${session.key}의 ${index + 1}번째 운동 입력값을 확인해 주세요.`
+            : `Review the inputs for exercise ${index + 1} in session ${session.key}.`,
+        );
       }
     });
   });
@@ -708,12 +709,12 @@ function defaultStartPlanParamsFromTemplate(template: ProgramTemplate) {
   return params;
 }
 
-function operatorSessionMeta(sessionKey: string) {
+function operatorSessionMeta(sessionKey: string, locale: "ko" | "en") {
   const key = String(sessionKey ?? "").trim().toUpperCase();
-  if (key === "D1") return { title: "D1", description: "Squat + Bench + Pull-Up" };
-  if (key === "D2") return { title: "D2", description: "Squat + Bench + Pull-Up" };
-  if (key === "D3") return { title: "D3", description: "Squat + Bench + Deadlift" };
-  if (key === "D4") return { title: "D4", description: "Overhead Press" };
+  if (key === "D1") return { title: "D1", description: locale === "ko" ? "스쿼트 + 벤치 + 풀업" : "Squat + Bench + Pull-Up" };
+  if (key === "D2") return { title: "D2", description: locale === "ko" ? "스쿼트 + 벤치 + 풀업" : "Squat + Bench + Pull-Up" };
+  if (key === "D3") return { title: "D3", description: locale === "ko" ? "스쿼트 + 벤치 + 데드리프트" : "Squat + Bench + Deadlift" };
+  if (key === "D4") return { title: "D4", description: locale === "ko" ? "오버헤드 프레스" : "Overhead Press" };
   return { title: sessionKey, description: "" };
 }
 
@@ -737,6 +738,7 @@ function replaceAbortController(ref: { current: AbortController | null }) {
 }
 
 export default function ProgramStorePage() {
+  const { locale, copy } = useLocale();
   const router = useRouter();
   const { confirm } = useAppDialog();
 
@@ -765,13 +767,14 @@ export default function ProgramStorePage() {
   const oneRmRecommendationControllerRef = useRef<AbortController | null>(null);
   const [pendingCustomizeScrollId, setPendingCustomizeScrollId] = useState<string | null>(null);
   const [recentlyAddedCustomizeExerciseId, setRecentlyAddedCustomizeExerciseId] = useState<string | null>(null);
+  const categoryOptions = useMemo(() => storeCategories(locale), [locale]);
 
-  const listItems = useMemo(() => toProgramListItems(templates), [templates]);
+  const listItems = useMemo(() => toProgramListItems(templates, locale), [locale, templates]);
   const filteredListItems = useMemo(() => {
     const normalizedQuery = storeQuery.trim().toLowerCase();
     if (!normalizedQuery) return listItems;
     return listItems.filter((item) => {
-      const scheduleLabel = getProgramScheduleLabel(item.template);
+      const scheduleLabel = getProgramScheduleLabel(item.template, locale);
       const tags = Array.isArray(item.template.tags) ? item.template.tags.join(" ") : "";
       return normalizeSearchText(
         formatProgramDisplayName(item.name),
@@ -781,7 +784,7 @@ export default function ProgramStorePage() {
         tags,
       ).includes(normalizedQuery);
     });
-  }, [listItems, storeQuery]);
+  }, [listItems, locale, storeQuery]);
   const categoryFilteredItems = useMemo(() => {
     if (categoryFilter === "all") return filteredListItems;
     return filteredListItems.filter((item) => {
@@ -851,8 +854,10 @@ export default function ProgramStorePage() {
           oneRmInputs,
           recommendationStatus: "ready",
           recommendationMessage: hasAnyRecommendation
-            ? "추천값을 찾았습니다. 필요하면 종목별 '추천값 적용'을 누르세요."
-            : "추천 가능한 1RM 통계가 없습니다.",
+            ? (locale === "ko"
+              ? "추천값을 찾았습니다. 필요하면 종목별로 추천값 적용을 눌러 반영하세요."
+              : "Recommendations are ready. Apply them to each lift if needed.")
+            : (locale === "ko" ? "적용 가능한 1RM 추천값이 없습니다." : "No 1RM recommendations are available yet."),
         };
       });
     } catch (e: any) {
@@ -862,7 +867,7 @@ export default function ProgramStorePage() {
         return {
           ...prev,
           recommendationStatus: "failed",
-          recommendationMessage: e?.message ?? "1RM 통계 추천값 조회에 실패했습니다.",
+          recommendationMessage: e?.message ?? (locale === "ko" ? "1RM 추천값을 불러오지 못했습니다." : "Could not load 1RM recommendations."),
         };
       });
     } finally {
@@ -870,7 +875,7 @@ export default function ProgramStorePage() {
         oneRmRecommendationControllerRef.current = null;
       }
     }
-  }, []);
+  }, [locale]);
 
   const loadStore = useCallback(async (options?: { isRefresh?: boolean }) => {
     const controller = replaceAbortController(storeLoadControllerRef);
@@ -890,14 +895,14 @@ export default function ProgramStorePage() {
       setPlans(plansRes.items ?? []);
     } catch (e: any) {
       if (isAbortError(e) || storeLoadControllerRef.current !== controller) return;
-      setError(e?.message ?? "프로그램 데이터를 불러오지 못했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "프로그램 데이터를 불러오지 못했습니다." : "Could not load program data."));
     } finally {
       if (storeLoadControllerRef.current === controller) {
         storeLoadControllerRef.current = null;
         setLoading(false);
       }
     }
-  }, []);
+  }, [locale]);
 
   const loadExerciseOptions = useCallback(async () => {
     const controller = replaceAbortController(exerciseOptionsControllerRef);
@@ -991,7 +996,9 @@ export default function ProgramStorePage() {
       const item = listItems.find((entry) => entry.template.slug === customizeSlug);
       if (item) {
         setCustomizeDraft({
-          name: `${formatProgramDisplayName(item.template.name)} Custom`,
+          name: locale === "ko"
+            ? `${formatProgramDisplayName(item.template.name)} 커스텀`
+            : `${formatProgramDisplayName(item.template.name)} Custom`,
           baseTemplate: item.template,
           sessions: inferSessionDraftsFromTemplate(item.template),
         });
@@ -1000,12 +1007,12 @@ export default function ProgramStorePage() {
     if (createFlag === "1" && templates.length > 0) {
       setCreateDraft(buildInitialCreateDraft(templates));
     }
-  }, [listItems, queryState.create, queryState.customize, queryState.detail, templates]);
+  }, [listItems, locale, queryState.create, queryState.customize, queryState.detail, templates]);
 
   const openStartProgramDraft = useCallback(
     (template: ProgramTemplate) => {
       if (!template.latestVersion) {
-        setError("선택한 프로그램의 버전 정보가 없습니다.");
+        setError(locale === "ko" ? "선택한 프로그램의 버전 정보가 없습니다." : "The selected program has no version data.");
         return;
       }
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -1039,7 +1046,7 @@ export default function ProgramStorePage() {
 
       void loadOneRmRecommendations(template.id, targets);
     },
-    [loadOneRmRecommendations, plans],
+    [loadOneRmRecommendations, locale, plans],
   );
 
   const submitStartProgram = useCallback(async () => {
@@ -1050,7 +1057,7 @@ export default function ProgramStorePage() {
     for (const target of startProgramDraft.targets) {
       const parsed = parsePositiveNumber(startProgramDraft.oneRmInputs[target.key] ?? "");
       if (parsed === null) {
-        setError(`${target.label} 1RM을 kg 기준으로 입력하세요.`);
+        setError(locale === "ko" ? `${target.label} 1RM을 kg 기준으로 입력하세요.` : `Enter ${target.label} 1RM in kg.`);
         return;
       }
       oneRepMaxKg[target.key] = parsed;
@@ -1085,7 +1092,9 @@ export default function ProgramStorePage() {
         });
       } else {
         const created = await apiPost<{ plan: PlanItem }>("/api/plans", {
-          name: `${formatProgramDisplayName(startProgramDraft.template.name)} Program`,
+          name: locale === "ko"
+            ? `${formatProgramDisplayName(startProgramDraft.template.name)} 프로그램`
+            : `${formatProgramDisplayName(startProgramDraft.template.name)} Program`,
           type: startProgramDraft.expectedPlanType,
           rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
           params: {
@@ -1101,7 +1110,7 @@ export default function ProgramStorePage() {
       }
 
       if (!targetPlanId) {
-        throw new Error("플랜 생성/갱신 결과가 올바르지 않습니다.");
+        throw new Error(locale === "ko" ? "플랜 생성/갱신 결과가 올바르지 않습니다." : "The plan create/update result was invalid.");
       }
 
       void loadStore({ isRefresh: true });
@@ -1110,20 +1119,22 @@ export default function ProgramStorePage() {
         `/workout/log?planId=${encodeURIComponent(targetPlanId)}&date=${startProgramDraft.today}&context=today`,
       );
     } catch (e: any) {
-      setError(e?.message ?? "프로그램 시작에 실패했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "프로그램을 시작하지 못했습니다." : "Could not start the program."));
     } finally {
       setSaving(false);
     }
-  }, [loadStore, plans, router, startProgramDraft]);
+  }, [loadStore, locale, plans, router, startProgramDraft]);
 
   const deleteCustomTemplate = useCallback(
     async (item: ProgramListItem) => {
       if (item.source !== "CUSTOM") return;
       const confirmed = await confirm({
-        title: "커스텀 프로그램 삭제",
-        message: `커스텀 프로그램 "${item.template.name}"을(를) 삭제할까요?\n연결된 내 플랜도 함께 삭제됩니다.`,
-        confirmText: "삭제",
-        cancelText: "취소",
+        title: locale === "ko" ? "커스텀 프로그램 삭제" : "Delete Custom Program",
+        message: locale === "ko"
+          ? `커스텀 프로그램 "${item.template.name}"을(를) 삭제할까요?\n연결된 내 플랜도 함께 삭제됩니다.`
+          : `Delete custom program "${item.template.name}"?\nConnected plans will also be deleted.`,
+        confirmText: locale === "ko" ? "삭제" : "Delete",
+        cancelText: locale === "ko" ? "취소" : "Cancel",
         tone: "danger",
       });
       if (!confirmed) return;
@@ -1141,7 +1152,7 @@ export default function ProgramStorePage() {
         );
         const deletedPlanSuffix =
           Number(res.deletedPlanCount) > 0
-            ? ` (연결 플랜 ${res.deletedPlanCount}개 삭제)`
+            ? (locale === "ko" ? ` (연결 플랜 ${res.deletedPlanCount}개 삭제)` : ` (${res.deletedPlanCount} linked plan${res.deletedPlanCount === 1 ? "" : "s"} deleted)`)
             : "";
 
         setDetailTargetId(null);
@@ -1150,23 +1161,27 @@ export default function ProgramStorePage() {
         
         // 백그라운드 동기화용 (화면 로딩 없음)
         void loadStore({ isRefresh: true });
-        setNotice(`커스텀 프로그램 삭제 완료: ${formatProgramDisplayName(item.template.name)}${deletedPlanSuffix}`);
+        setNotice(
+          locale === "ko"
+            ? `커스텀 프로그램을 삭제했습니다: ${formatProgramDisplayName(item.template.name)}${deletedPlanSuffix}`
+            : `Deleted custom program: ${formatProgramDisplayName(item.template.name)}${deletedPlanSuffix}`,
+        );
       } catch (e: any) {
-        setError(e?.message ?? "커스텀 프로그램 삭제에 실패했습니다.");
+        setError(e?.message ?? (locale === "ko" ? "커스텀 프로그램을 삭제하지 못했습니다." : "Could not delete the custom program."));
         // 실패 시 데이터 원상복구
         void loadStore({ isRefresh: true });
       } finally {
         setSaving(false);
       }
     },
-    [confirm, loadStore],
+    [confirm, loadStore, locale],
   );
 
   const saveCustomizationDraft = useCallback(
     async (draft: CustomizeDraft) => {
-      const errors = validateCustomSessions(draft.sessions);
+      const errors = validateCustomSessions(draft.sessions, locale);
       if (!draft.name.trim()) {
-        errors.push("커스터마이징 프로그램 이름을 입력하세요.");
+        errors.push(locale === "ko" ? "커스터마이징 프로그램 이름을 입력하세요." : "Enter a name for the customized program.");
       }
       if (errors.length > 0) {
         setError(errors[0]);
@@ -1179,7 +1194,7 @@ export default function ProgramStorePage() {
         const forkSourceTemplate =
           draft.baseTemplate.type === "MANUAL" ? draft.baseTemplate : manualPublicTemplate;
         if (!forkSourceTemplate) {
-          throw new Error("세션 커스터마이징용 Manual 템플릿을 찾지 못했습니다.");
+          throw new Error(locale === "ko" ? "세션 커스터마이징용 Manual 템플릿을 찾지 못했습니다." : "Could not find a Manual template for session customization.");
         }
 
         const fork = await apiPost<ForkResponse>(`/api/templates/${encodeURIComponent(forkSourceTemplate.slug)}/fork`, {
@@ -1196,25 +1211,29 @@ export default function ProgramStorePage() {
         // Optimistic UI: 새로 생성한 커스텀 템플릿 목록에 즉각 추가
         setTemplates((prev) => [fork.template, ...prev]);
 
-        setNotice(`커스터마이징 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
+        setNotice(
+          locale === "ko"
+            ? `커스터마이징 프로그램을 만들었습니다: ${formatProgramDisplayName(fork.template.name)}`
+            : `Created customized program: ${formatProgramDisplayName(fork.template.name)}`,
+        );
         setCustomizeDraft(null);
         setDetailTargetId(null);
         
         void loadStore({ isRefresh: true });
       } catch (e: any) {
-        setError(e?.message ?? "커스터마이징 저장에 실패했습니다.");
+        setError(e?.message ?? (locale === "ko" ? "커스터마이징을 저장하지 못했습니다." : "Could not save the customization."));
       } finally {
         setSaving(false);
       }
     },
-    [loadStore, manualPublicTemplate],
+    [loadStore, locale, manualPublicTemplate],
   );
 
   const saveCreateDraft = useCallback(
     async (draft: CreateDraft) => {
-      const errors = validateCustomSessions(draft.sessions);
+      const errors = validateCustomSessions(draft.sessions, locale);
       if (!draft.name.trim()) {
-        errors.push("프로그램 이름을 입력하세요.");
+        errors.push(locale === "ko" ? "프로그램 이름을 입력하세요." : "Enter a program name.");
       }
 
       let sourceSlug: string | null = null;
@@ -1224,7 +1243,7 @@ export default function ProgramStorePage() {
         sourceSlug = manualPublicTemplate?.slug ?? null;
       }
       if (!sourceSlug) {
-        errors.push("기반 프로그램을 찾지 못했습니다.");
+        errors.push(locale === "ko" ? "기반 프로그램을 찾지 못했습니다." : "Could not find the base program.");
       }
       if (errors.length > 0) {
         setError(errors[0]);
@@ -1245,16 +1264,20 @@ export default function ProgramStorePage() {
         // Optimistic UI: 생성된 템플릿 최상단 즉각 반영
         setTemplates((prev) => [fork.template, ...prev]);
 
-        setNotice(`커스텀 프로그램 생성 완료: ${formatProgramDisplayName(fork.template.name)}`);
+        setNotice(
+          locale === "ko"
+            ? `커스텀 프로그램을 만들었습니다: ${formatProgramDisplayName(fork.template.name)}`
+            : `Created custom program: ${formatProgramDisplayName(fork.template.name)}`,
+        );
         setCreateDraft(null);
         void loadStore({ isRefresh: true });
       } catch (e: any) {
-        setError(e?.message ?? "커스텀 프로그램 생성에 실패했습니다.");
+        setError(e?.message ?? (locale === "ko" ? "커스텀 프로그램을 만들지 못했습니다." : "Could not create the custom program."));
       } finally {
         setSaving(false);
       }
     },
-    [loadStore, manualPublicTemplate?.slug],
+    [loadStore, locale, manualPublicTemplate?.slug],
   );
 
   const applyDragReorder = useCallback(
@@ -1385,9 +1408,9 @@ export default function ProgramStorePage() {
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
       <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-        <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Program Store</div>
-        <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>프로그램 스토어</h1>
-        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>공식 및 커스텀 프로그램을 탐색하고 시작하세요.</p>
+        <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>{copy.programStore.eyebrow}</div>
+        <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>{copy.programStore.title}</h1>
+        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>{copy.programStore.description}</p>
       </div>
 
       {loading && (
@@ -1443,19 +1466,19 @@ export default function ProgramStorePage() {
       )}
       <ErrorStateRows
         message={error}
-        title="프로그램 화면을 불러오지 못했습니다"
+        title={copy.programStore.loadError}
         onRetry={() => {
           void loadStore();
         }}
       />
-      <NoticeStateRows message={notice} label="프로그램 안내" />
+      <NoticeStateRows message={notice} label={copy.programStore.notice} />
 
       {listItems.length > 0 || hasStoreQuery ? (
         <SearchInput
           value={storeQuery}
           onChange={setStoreQuery}
-          placeholder="프로그램명, 설명, 태그 검색"
-          ariaLabel="스토어 검색"
+          placeholder={copy.programStore.searchPlaceholder}
+          ariaLabel={copy.programStore.searchAriaLabel}
         />
       ) : null}
 
@@ -1472,7 +1495,7 @@ export default function ProgramStorePage() {
             msOverflowStyle: "none",
           } as React.CSSProperties}
         >
-          {STORE_CATEGORIES.map((cat) => (
+          {categoryOptions.map((cat) => (
             <button
               key={cat.key}
               type="button"
@@ -1501,24 +1524,26 @@ export default function ProgramStorePage() {
 
       <EmptyStateRows
         when={isStoreSettled && !error && listItems.length > 0 && filteredListItems.length === 0}
-        label="검색 결과가 없습니다"
-        description="프로그램명, 태그, 설명으로 다시 검색해 보세요."
+        label={copy.programStore.emptySearch}
+        description={copy.programStore.emptySearchDescription}
       />
 
       <EmptyStateRows
         when={isStoreSettled && !error && filteredListItems.length > 0 && categoryFilteredItems.length === 0}
-        label="해당 카테고리의 프로그램이 없습니다"
-        description="다른 카테고리를 선택하거나 전체를 확인해 보세요."
+        label={locale === "ko" ? "해당 카테고리의 프로그램이 없습니다" : "No programs in this category"}
+        description={locale === "ko" ? "다른 카테고리를 선택하거나 전체를 확인해 보세요." : "Try a different category or browse all programs."}
       />
 
       {(!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0)) && (
         <section style={{ marginBottom: "var(--space-lg)" }}>
           <div style={{ marginBottom: "var(--space-sm)" }}>
-            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>공식 프로그램</h2>
+            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>
+              {locale === "ko" ? "공식 프로그램" : "Official Programs"}
+            </h2>
           </div>
           <EmptyStateRows
             when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
-            label="표시할 프로그램이 없습니다"
+            label={locale === "ko" ? "표시할 프로그램이 없습니다" : "No programs to show"}
           />
           {marketListItems.length > 0 && (
             <div>
@@ -1539,7 +1564,9 @@ export default function ProgramStorePage() {
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
         <section style={{ marginBottom: "var(--space-lg)" }}>
           <div style={{ marginBottom: "var(--space-sm)" }}>
-            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>내 프로그램</h2>
+            <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>
+              {locale === "ko" ? "내 프로그램" : "My Programs"}
+            </h2>
           </div>
           <div>
             {customListItems.map((item) => (
@@ -1557,15 +1584,21 @@ export default function ProgramStorePage() {
 
       <section style={{ marginBottom: "var(--space-lg)" }}>
         <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>프로그램 만들기</h2>
+          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>
+            {locale === "ko" ? "프로그램 만들기" : "Create Program"}
+          </h2>
         </div>
         <button
           type="button"
           onClick={openCreateSheet}
           style={{ width: "100%", background: "var(--color-action)", color: "#fff", border: "none", borderRadius: 14, padding: "var(--space-md)", cursor: "pointer", textAlign: "left", display: "flex", flexDirection: "column", gap: "4px" }}
         >
-          <span style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px" }}>새 프로그램 만들기</span>
-          <span style={{ fontSize: "12px", opacity: 0.82 }}>기존 프로그램 복사 또는 빈 템플릿에서 시작</span>
+          <span style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px" }}>
+            {locale === "ko" ? "새 프로그램 만들기" : "Create a New Program"}
+          </span>
+          <span style={{ fontSize: "12px", opacity: 0.82 }}>
+            {locale === "ko" ? "기존 프로그램을 바탕으로 시작하거나 직접 새 구조를 만드세요." : "Start from an existing program or build a fresh structure from scratch."}
+          </span>
         </button>
       </section>
 
@@ -1580,7 +1613,9 @@ export default function ProgramStorePage() {
         onCustomize={() => {
           if (detailTarget) {
             setCustomizeDraft({
-              name: `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
+              name: locale === "ko"
+                ? `${formatProgramDisplayName(detailTarget.template.name)} 커스텀`
+                : `${formatProgramDisplayName(detailTarget.template.name)} Custom`,
               baseTemplate: detailTarget.template,
               sessions: inferSessionDraftsFromTemplate(detailTarget.template),
             });
@@ -1595,14 +1630,14 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(startProgramDraft)}
-        title="시작 전 1RM 입력"
-        description="모든 종목의 1RM 입력이 필수입니다."
+        title={locale === "ko" ? "시작 전 1RM 입력" : "Enter 1RM Before Starting"}
+        description={locale === "ko" ? "모든 종목의 1RM 입력이 필수입니다." : "A 1RM entry is required for each lift."}
         onClose={() => setStartProgramDraft(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         primaryAction={
           startProgramDraft
             ? {
-                ariaLabel: saving ? "1RM 저장 후 시작 중" : "1RM 저장 후 시작",
+                ariaLabel: saving ? (locale === "ko" ? "1RM 저장 후 시작 중" : "Saving 1RM and starting") : (locale === "ko" ? "1RM 저장 후 시작" : "Save 1RM and Start"),
                 onPress: () => {
                   void submitStartProgram();
                 },
@@ -1625,7 +1660,9 @@ export default function ProgramStorePage() {
               </div>
             </Card>
             {startProgramDraft.recommendationStatus === "loading" ? (
-              <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>운동 종목별 1RM 통계 기반 추천값 계산 중...</p>
+              <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>
+                {locale === "ko" ? "운동 종목별 1RM 통계 기반 추천값 계산 중..." : "Calculating recommendations from your 1RM history..."}
+              </p>
             ) : null}
             {startProgramDraft.recommendationMessage ? (
               <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0 }}>{startProgramDraft.recommendationMessage}</p>
@@ -1660,9 +1697,9 @@ export default function ProgramStorePage() {
                 {startProgramDraft.recommendations[target.key] ? (
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", marginTop: "6px" }}>
                     <span style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
-                      추천 {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
+                      {locale === "ko" ? "추천" : "Recommended"} {formatKg(startProgramDraft.recommendations[target.key].recommendedKg)}kg
                       {" · "}
-                      최근 e1RM {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
+                      {locale === "ko" ? "최근 e1RM" : "Latest e1RM"} {formatKg(startProgramDraft.recommendations[target.key].latestE1rmKg)}kg
                     </span>
                     <button
                       type="button"
@@ -1682,7 +1719,7 @@ export default function ProgramStorePage() {
                         })
                       }
                     >
-                      추천값 적용
+                      {locale === "ko" ? "추천값 적용" : "Apply Recommendation"}
                     </button>
                   </div>
                 ) : null}
@@ -1694,18 +1731,18 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(customizeDraft)}
-        title="커스터마이징"
+        title={locale === "ko" ? "커스터마이징" : "Customize"}
         description={
           customizeDraft
-            ? `기본 구성 편집 · ${customizeDraft.baseTemplate.name}`
+            ? (locale === "ko" ? `기본 구성 편집 · ${customizeDraft.baseTemplate.name}` : `Customize base setup · ${customizeDraft.baseTemplate.name}`)
             : ""
         }
         onClose={() => setCustomizeDraft(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         primaryAction={
           customizeDraft
             ? {
-                ariaLabel: saving ? "커스터마이징 프로그램 저장 중" : "커스터마이징 프로그램 저장",
+                ariaLabel: saving ? (locale === "ko" ? "커스터마이징 프로그램 저장 중" : "Saving customized program") : (locale === "ko" ? "커스터마이징 프로그램 저장" : "Save Customized Program"),
                 onPress: () => {
                   void saveCustomizationDraft(customizeDraft);
                 },
@@ -1718,7 +1755,9 @@ export default function ProgramStorePage() {
         {customizeDraft && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-lg)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>프로그램 이름</span>
+              <span style={{ color: "var(--text-session-context)", font: "var(--font-secondary)" }}>
+                {locale === "ko" ? "프로그램 이름" : "Program Name"}
+              </span>
               <AppTextInput
                 variant="workout"
                 value={customizeDraft.name}
@@ -1729,22 +1768,32 @@ export default function ProgramStorePage() {
             </label>
 
             <Card tone="subtle" padding="md" elevated={false}>
-              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-xs)" }}>기본 구성</h2>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-xs)" }}>
+                {locale === "ko" ? "기본 구성" : "Base Setup"}
+              </h2>
               {isOperatorCustomization ? (
                 <>
-                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 4px", lineHeight: 1.5 }}>D1/D2는 Squat + Bench + Pull-Up, D3는 Squat + Bench + Deadlift 기준으로 시작합니다.</p>
-                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>세션 순서는 고정하고, 각 day의 종목만 교체/추가/삭제할 수 있습니다.</p>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 4px", lineHeight: 1.5 }}>
+                    {locale === "ko" ? "D1/D2는 스쿼트 + 벤치프레스 + 풀업, D3는 스쿼트 + 벤치프레스 + 데드리프트 구성을 기준으로 시작합니다." : "D1/D2 start from Squat + Bench + Pull-Up, and D3 starts from Squat + Bench + Deadlift."}
+                  </p>
+                  <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                    {locale === "ko" ? "세션 순서는 유지되고, 각 day 안에서 종목만 교체·추가·삭제할 수 있습니다." : "Session order stays fixed, and you can swap, add, or remove exercises inside each day."}
+                  </p>
                 </>
               ) : (
-                <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다.</p>
+                <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
+                  {locale === "ko" ? "기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다." : "Start from the current session structure. You can swap, add, or remove exercises in each session."}
+                </p>
               )}
             </Card>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>Day별 종목 변경</h2>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>
+                {locale === "ko" ? "Day별 종목 변경" : "Adjust Exercises by Day"}
+              </h2>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
               {customizeDraft.sessions.map((session) => {
-                const meta = operatorSessionMeta(session.key);
+                const meta = operatorSessionMeta(session.key, locale);
                 const summary = session.exercises
                   .map((exercise) => exercise.exerciseName.trim())
                   .filter(Boolean)
@@ -1789,7 +1838,9 @@ export default function ProgramStorePage() {
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>운동이 없습니다.</p>
+                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>
+                      {locale === "ko" ? "아직 추가된 운동이 없습니다." : "No exercises added yet."}
+                    </p>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -1846,7 +1897,7 @@ export default function ProgramStorePage() {
                     }}
                   >
                     <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>add</span>
-                    <span>운동 추가</span>
+                    <span>{locale === "ko" ? "운동 추가" : "Add Exercise"}</span>
                   </button>
                 </Card>
               );
@@ -1859,14 +1910,14 @@ export default function ProgramStorePage() {
 
       <BottomSheet
         open={Boolean(createDraft)}
-        title="새 프로그램 만들기"
-        description="직접 구성하거나 공식 프로그램 기반으로 시작"
+        title={locale === "ko" ? "새 프로그램 만들기" : "Create New Program"}
+        description={locale === "ko" ? "공식 프로그램을 바탕으로 시작하거나 직접 새 구조를 만드세요." : "Start from an official program or build a fresh structure yourself."}
         onClose={() => setCreateDraft(null)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         primaryAction={
           createDraft
             ? {
-                ariaLabel: saving ? "프로그램 생성 중" : "프로그램 생성",
+                ariaLabel: saving ? (locale === "ko" ? "프로그램 생성 중" : "Creating program") : (locale === "ko" ? "프로그램 생성" : "Create Program"),
                 onPress: () => {
                   void saveCreateDraft(createDraft);
                 },
@@ -1879,14 +1930,16 @@ export default function ProgramStorePage() {
         {createDraft && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>프로그램 이름</span>
+              <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>
+                {locale === "ko" ? "프로그램 이름" : "Program Name"}
+              </span>
               <AppTextInput
                 variant="workout"
                 value={createDraft.name}
                 onChange={(event) =>
                   setCreateDraft((prev) => (prev ? { ...prev, name: event.target.value } : prev))
                 }
-                placeholder="예: My Upper/Lower Custom"
+                placeholder={locale === "ko" ? "예: 나만의 Upper/Lower" : "e.g. My Upper/Lower Custom"}
               />
             </label>
 
@@ -1900,7 +1953,7 @@ export default function ProgramStorePage() {
                   )
                 }
               >
-                공식 기반
+                {locale === "ko" ? "공식 기반" : "Start from Official"}
               </button>
               <button
                 type="button"
@@ -1911,13 +1964,13 @@ export default function ProgramStorePage() {
                   )
                 }
               >
-                직접 구성
+                {locale === "ko" ? "직접 구성" : "Build from Scratch"}
               </button>
             </div>
 
             {createDraft.mode === "MARKET_BASED" && (
               <AppSelect
-                label="기반 시중 프로그램"
+                label={locale === "ko" ? "기반 공식 프로그램" : "Base Program"}
                 value={createDraft.sourceTemplateSlug ?? ""}
                 onChange={(event) =>
                   setCreateDraft((prev) => {
@@ -1932,7 +1985,7 @@ export default function ProgramStorePage() {
                   })
                 }
               >
-                <option value="">선택</option>
+                <option value="">{locale === "ko" ? "선택" : "Select"}</option>
                 {publicTemplates.map((template) => (
                   <option key={template.id} value={template.slug}>
                     {formatProgramDisplayName(template.name)}
@@ -1942,7 +1995,9 @@ export default function ProgramStorePage() {
             )}
 
             <Card padding="md" elevated={false} tone="subtle">
-              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>세션 규칙</h2>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: "0 0 var(--space-sm)" }}>
+                {locale === "ko" ? "세션 규칙" : "Session Rules"}
+              </h2>
               <div style={{ display: "flex", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
                 <button
                   type="button"
@@ -1955,7 +2010,7 @@ export default function ProgramStorePage() {
                     })
                   }
                 >
-                  A/B 분할
+                  {locale === "ko" ? "A/B 분할" : "A/B Split"}
                 </button>
                 <button
                   type="button"
@@ -1968,14 +2023,16 @@ export default function ProgramStorePage() {
                     })
                   }
                 >
-                  숫자 분할
+                  {locale === "ko" ? "숫자 분할" : "Numeric Split"}
                 </button>
               </div>
               {createDraft.rule.type === "NUMERIC" && (
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-                  <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>세션 개수 (1~4)</span>
+                  <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>
+                    {locale === "ko" ? "세션 개수 (1~4)" : "Session Count (1-4)"}
+                  </span>
                   <NumberPickerField
-                    label="세션 개수"
+                    label={locale === "ko" ? "세션 개수" : "Session Count"}
                     value={createDraft.rule.count}
                     min={1}
                     max={4}
@@ -1994,7 +2051,9 @@ export default function ProgramStorePage() {
             </Card>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>세션별 운동 배치</h2>
+              <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>
+                {locale === "ko" ? "세션별 운동 배치" : "Exercise Layout by Session"}
+              </h2>
               {createDraft.sessions.map((session) => (
                 <Card
                   key={session.id}
@@ -2022,11 +2081,13 @@ export default function ProgramStorePage() {
                   }}
                 >
                   <header style={{ marginBottom: "var(--space-sm)" }}>
-                    <span className="label label-program label-sm">세션 {session.key}</span>
+                    <span className="label label-program label-sm">{locale === "ko" ? `세션 ${session.key}` : `Session ${session.key}`}</span>
                   </header>
 
                   {session.exercises.length === 0 && (
-                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>운동이 없습니다.</p>
+                    <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "var(--space-xs) 0" }}>
+                      {locale === "ko" ? "아직 추가된 운동이 없습니다." : "No exercises added yet."}
+                    </p>
                   )}
 
                   {session.exercises.map((exercise, exerciseIndex) => (
@@ -2071,7 +2132,7 @@ export default function ProgramStorePage() {
                     }
                   >
                     <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>add</span>
-                    <span>운동 추가</span>
+                    <span>{locale === "ko" ? "운동 추가" : "Add Exercise"}</span>
                   </button>
                 </Card>
               ))}

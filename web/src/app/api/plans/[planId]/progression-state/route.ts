@@ -9,11 +9,14 @@ import {
 } from "@/server/db/schema";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { resolveAutoProgressionProgram } from "@/server/progression/reducer";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
 export async function GET(_req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
     const userId = getAuthenticatedUserId();
 
@@ -29,8 +32,8 @@ export async function GET(_req: Request, ctx: Ctx) {
       .limit(1);
 
     const plan = planRows[0];
-    if (!plan) return NextResponse.json({ error: "not found" }, { status: 404 });
-    if (plan.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!plan) return NextResponse.json({ error: locale === "ko" ? "대상을 찾을 수 없습니다." : "Not found." }, { status: 404 });
+    if (plan.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const params = (plan.params ?? {}) as Record<string, unknown>;
     if (params.autoProgression !== true || !plan.rootProgramVersionId) {
@@ -70,6 +73,6 @@ export async function GET(_req: Request, ctx: Ctx) {
     return NextResponse.json({ program, state });
   } catch (e) {
     console.error("[progression-state] error", e);
-    return NextResponse.json({ error: "internal" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }

@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useLocale } from "@/components/locale-provider";
 import { ErrorStateRows } from "@/components/ui/settings-state";
 import { PickerSelectionScreen } from "@/components/ui/selection-screen-template";
 import { normalizeReturnTo, readParamFromHref, withPatchedQuery } from "@/lib/selection-navigation";
@@ -58,6 +59,7 @@ const configs: Record<PickerField, PickerConfig> = {
 };
 
 export default function PlansContextPickerFieldPage() {
+  const { locale } = useLocale();
   const params = useParams<{ field: string }>();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,9 +74,9 @@ export default function PlansContextPickerFieldPage() {
     return (
       <div>
         <ErrorStateRows
-          message={`Unknown picker field: ${rawField}`}
+          message={locale === "ko" ? `알 수 없는 입력 필드입니다: ${rawField}` : `Unknown picker field: ${rawField}`}
           onRetry={() => router.push("/plans/context")}
-          retryLabel="컨텍스트로 돌아가기"
+          retryLabel={locale === "ko" ? "컨텍스트로 돌아가기" : "Back to Context"}
         />
       </div>
     );

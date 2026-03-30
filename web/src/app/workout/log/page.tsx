@@ -13,6 +13,7 @@ import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchSelectCombobox, SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { useLocale } from "@/components/locale-provider";
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { parseSessionKey } from "@/lib/session-key";
@@ -227,10 +228,10 @@ function extractBodyweightKg(log: RecentLogItem, fallbackBodyweightKg: number | 
   return fallbackBodyweightKg;
 }
 
-function formatDateFriendly(isoOrDateKey: string) {
+function formatDateFriendly(isoOrDateKey: string, locale: "ko" | "en") {
   const date = new Date(`${isoOrDateKey.slice(0, 10)}T00:00:00`);
   if (Number.isNaN(date.getTime())) return isoOrDateKey;
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
     month: "numeric",
     day: "numeric",
     weekday: "short",
@@ -278,6 +279,7 @@ function buildLastSessionSummary(
   todayKey: string,
   planParams: Record<string, unknown> | null | undefined,
   fallbackBodyweightKg: number | null,
+  locale: "ko" | "en",
 ) {
   const selected = logs.find((entry) => toDateKey(new Date(entry.performedAt)) !== todayKey) ?? logs[0] ?? null;
   if (!selected) {
@@ -323,7 +325,7 @@ function buildLastSessionSummary(
   }));
 
   return {
-    dateLabel: formatDateFriendly(toDateKey(new Date(selected.performedAt))),
+    dateLabel: formatDateFriendly(toDateKey(new Date(selected.performedAt)), locale),
     weekLabel,
     sessionLabel,
     bodyweightKg: extractBodyweightKg(selected, fallbackBodyweightKg),
@@ -333,10 +335,13 @@ function buildLastSessionSummary(
   };
 }
 
-function workoutExerciseBadgeMeta(badge: WorkoutExerciseViewModel["badge"]) {
-  if (badge === "AUTO") return { label: "계획", className: "label label-program label-sm" };
-  if (badge === "CUSTOM") return { label: "사용자", className: "label label-note label-sm" };
-  if (badge === "ADDED") return { label: "추가", className: "label label-exercise label-sm" };
+function workoutExerciseBadgeMeta(
+  badge: WorkoutExerciseViewModel["badge"],
+  copy: ReturnType<typeof useLocale>["copy"],
+) {
+  if (badge === "AUTO") return { label: copy.workoutLog.badgePlanned, className: "label label-program label-sm" };
+  if (badge === "CUSTOM") return { label: copy.workoutLog.badgeCustom, className: "label label-note label-sm" };
+  if (badge === "ADDED") return { label: copy.workoutLog.badgeAdded, className: "label label-exercise label-sm" };
   return null;
 }
 
@@ -498,10 +503,12 @@ function WorkoutRecordInlinePicker({
 function SwipeableSetRow({
   children,
   onDelete,
+  deleteLabel,
   disabled
 }: {
   children: React.ReactNode;
   onDelete: () => void;
+  deleteLabel: string;
   disabled?: boolean;
 }) {
   const [offsetX, setOffsetX] = useState(0);
@@ -562,7 +569,7 @@ function SwipeableSetRow({
             onDelete();
           }}
           style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-danger)", backgroundColor: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
-          aria-label="세트 삭제"
+          aria-label={deleteLabel}
         >
           <span className="material-symbols-outlined" style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}>delete</span>
         </button>
@@ -616,11 +623,12 @@ function ExerciseRow({
   onChangeMemo: (value: string) => void;
   onDelete: () => void;
 }) {
+  const { copy, locale } = useLocale();
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
   const isBodyweightExercise = isBodyweightExerciseName(exercise.exerciseName);
-  const badgeMeta = workoutExerciseBadgeMeta(exercise.badge);
+  const badgeMeta = workoutExerciseBadgeMeta(exercise.badge, copy);
   const usesProgramPlaceholders = Boolean(programEntryState);
-  const weightStepMeta = `${formatKgValue(minimumPlateIncrementKg)} 단위`;
+  const weightStepMeta = locale === "ko" ? `${formatKgValue(minimumPlateIncrementKg)} 단위` : `${formatKgValue(minimumPlateIncrementKg)} increments`;
   const plannedWeightKgPerSet = exercise.plannedSetMeta?.targetWeightKgPerSet ?? [];
   const firstPlannedWeightKg =
     plannedWeightKgPerSet.find((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) ?? null;
@@ -648,7 +656,7 @@ function ExerciseRow({
   });
 
   return (
-    <article className="exercise-card" aria-label={`운동종목 ${exercise.exerciseName}`}>
+    <article className="exercise-card" aria-label={locale === "ko" ? `운동종목 ${exercise.exerciseName}` : `Exercise ${exercise.exerciseName}`}>
       {/* ── Exercise Header ── */}
       <div className="exercise-card__header">
         <div className="exercise-card__name-row">
@@ -659,7 +667,7 @@ function ExerciseRow({
         </div>
         <div className="exercise-card__header-actions">
           {prevPerformance ? (
-            <span className="exercise-card__prev-ref" title="이전 최고 기록">
+            <span className="exercise-card__prev-ref" title={locale === "ko" ? "이전 최고 기록" : "Previous best"}>
               <span className="material-symbols-outlined" style={{ fontSize: 12, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>history</span>
               {prevPerformance}
             </span>
@@ -668,8 +676,8 @@ function ExerciseRow({
             <button
               type="button"
               className="btn btn-icon btn-icon-danger"
-              aria-label="운동 삭제"
-              title="운동 삭제"
+              aria-label={locale === "ko" ? "운동 삭제" : "Remove exercise"}
+              title={locale === "ko" ? "운동 삭제" : "Remove exercise"}
               onClick={onDelete}
             >
               <AppPlusMinusIcon kind="minus" />
@@ -687,7 +695,7 @@ function ExerciseRow({
           <span className="set-table__h-done">✓</span>
         </div>
 
-        <div role="list" aria-label={`${exercise.exerciseName} 세트 편집`}>
+        <div role="list" aria-label={locale === "ko" ? `${exercise.exerciseName} 세트 편집` : `Edit sets for ${exercise.exerciseName}`}>
           {exercise.set.repsPerSet.map((setReps, index) => {
             const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
             const parsedSetValue = Number(rawSetValue);
@@ -736,6 +744,7 @@ function ExerciseRow({
             return (
               <SwipeableSetRow
                 key={`${exercise.id}-set-${index}`}
+                deleteLabel={locale === "ko" ? "세트 삭제" : "Delete set"}
                 disabled={usesProgramPlaceholders
                   ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
                   : exercise.set.repsPerSet.length <= 1}
@@ -744,7 +753,7 @@ function ExerciseRow({
                 <div role="listitem" className={rowClass}>
                   <span className="set-row__number">{index + 1}</span>
                   <WorkoutRecordInlinePicker
-                    label={`${index + 1}세트 무게`}
+                    label={locale === "ko" ? `${index + 1}세트 무게` : `Set ${index + 1} Weight`}
                     value={resolvedRowWeightKg}
                     min={0}
                     max={1000}
@@ -756,7 +765,7 @@ function ExerciseRow({
                     onChange={onChangeWeight}
                   />
                   <WorkoutRecordInlinePicker
-                    label={`${index + 1}세트 횟수`}
+                    label={locale === "ko" ? `${index + 1}세트 횟수` : `Set ${index + 1} Reps`}
                     value={setReps}
                     min={0}
                     max={100}
@@ -784,7 +793,7 @@ function ExerciseRow({
         onClick={onAddSet}
       >
         <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>add</span>
-        세트 추가
+        {copy.workoutLog.addSet}
       </button>
 
       {/* ── Hint Footer ── */}
@@ -793,13 +802,13 @@ function ExerciseRow({
           {showMinimumPlateInfo ? (
             <span className="set-hint__item">
               <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>info</span>
-              {weightStepMeta}로 입력됩니다.
+              {locale === "ko" ? `${weightStepMeta}로 입력됩니다.` : `Entered in ${weightStepMeta}.`}
             </span>
           ) : null}
           {isBodyweightExercise && bodyweightKg ? (
             <span className="set-hint__item">
               <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>info</span>
-              총하중 기준: {formatKgValue(totalLoadKg)}
+              {locale === "ko" ? `총하중 기준: ${formatKgValue(totalLoadKg)}` : `Total load basis: ${formatKgValue(totalLoadKg)}`}
             </span>
           ) : null}
         </div>
@@ -812,7 +821,7 @@ function ExerciseRow({
             variant="workout"
             value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
             onChange={(event) => onChangeMemo(event.target.value)}
-            placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || "메모" : "메모"}
+            placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || (locale === "ko" ? "메모" : "Memo") : (locale === "ko" ? "메모" : "Memo")}
             style={{
               border: "none",
               borderRadius: "14px",
@@ -881,50 +890,72 @@ function detectFailedProgressionExercises(
   return failed;
 }
 
+function progressionTargetLabel(target: string, locale: "ko" | "en"): string {
+  const labels =
+    locale === "ko"
+      ? { SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스", PULL: "풀" }
+      : { SQUAT: "Squat", BENCH: "Bench Press", DEADLIFT: "Deadlift", OHP: "Overhead Press", PULL: "Pull" };
+  return labels[target as keyof typeof labels] ?? target;
+}
+
 // Operator 블록 완료 모달 메시지 (6주 사이클)
-function buildOperatorBlockCompletionMessage(state: ProgressionRuntimeStateSnapshot | null): string {
-  const lines: string[] = ["6주 블록을 완료했습니다.", "다음 사이클에 적용할 무게를 선택하세요.", ""];
+function buildOperatorBlockCompletionMessage(
+  state: ProgressionRuntimeStateSnapshot | null,
+  locale: "ko" | "en",
+): string {
+  const lines: string[] =
+    locale === "ko"
+      ? ["6주 블록을 완료했습니다.", "다음 사이클에 적용할 무게를 선택하세요.", ""]
+      : ["You completed the 6-week block.", "Choose the working weights to apply to the next cycle.", ""];
   if (state) {
     const hadFailure = Object.values(state.targets).some((t) => t.failureStreak > 0);
     if (hadFailure) {
-      lines.push("이번 블록에서 실패가 있었습니다.");
+      lines.push(locale === "ko" ? "이번 블록에서 실패가 있었습니다." : "There were failed sets in this block.");
       lines.push("");
     }
-    const targetLabels: Record<string, string> = {
-      SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스", PULL: "풀",
-    };
     for (const [key, t] of Object.entries(state.targets)) {
       if (t.workKg <= 0) continue;
-      const label = targetLabels[key] ?? key;
+      const label = progressionTargetLabel(key, locale);
       const increaseKg = key === "DEADLIFT" ? 5 : 2.5;
       const resetKg = Math.round((t.workKg * 0.95) / 2.5) * 2.5;
       lines.push(`• ${label}: ${t.workKg}kg`);
-      lines.push(`  증량 → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소 → ${resetKg}kg`);
+      lines.push(
+        locale === "ko"
+          ? `  증량 → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소 → ${resetKg}kg`
+          : `  Increase -> ${t.workKg + increaseKg}kg / Keep -> ${t.workKg}kg / Reduce -> ${resetKg}kg`,
+      );
     }
   }
   return lines.join("\n");
 }
 
 // 5/3/1 블록 완료 모달 메시지 (4주 사이클)
-function build531BlockCompletionMessage(state: ProgressionRuntimeStateSnapshot | null): string {
-  const lines: string[] = ["4주 사이클을 완료했습니다.", "다음 사이클에 적용할 트레이닝 맥스를 선택하세요.", ""];
+function build531BlockCompletionMessage(
+  state: ProgressionRuntimeStateSnapshot | null,
+  locale: "ko" | "en",
+): string {
+  const lines: string[] =
+    locale === "ko"
+      ? ["4주 사이클을 완료했습니다.", "다음 사이클에 적용할 트레이닝 맥스를 선택하세요.", ""]
+      : ["You completed the 4-week cycle.", "Choose the training max to apply to the next cycle.", ""];
   if (state) {
     const hadFailure = Object.values(state.targets).some((t) => t.failureStreak > 0);
     if (hadFailure) {
-      lines.push("이번 사이클에서 실패한 세트가 있었습니다.");
+      lines.push(locale === "ko" ? "이번 사이클에서 실패한 세트가 있었습니다." : "There were failed sets in this cycle.");
       lines.push("");
     }
-    const targetLabels: Record<string, string> = {
-      SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스",
-    };
     for (const [key, t] of Object.entries(state.targets)) {
       if (t.workKg <= 0) continue;
-      const label = targetLabels[key] ?? key;
+      const label = progressionTargetLabel(key, locale);
       // 5/3/1: 하체(스쿼트·데드리프트) +5kg, 상체(벤치·오버헤드) +2.5kg
       const increaseKg = key === "DEADLIFT" || key === "SQUAT" ? 5 : 2.5;
       const resetKg = Math.round((t.workKg * 0.9) / 2.5) * 2.5;
       lines.push(`• ${label}: ${t.workKg}kg`);
-      lines.push(`  증량(+${increaseKg}kg) → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소(10%) → ${resetKg}kg`);
+      lines.push(
+        locale === "ko"
+          ? `  증량(+${increaseKg}kg) → ${t.workKg + increaseKg}kg / 유지 → ${t.workKg}kg / 감소(10%) → ${resetKg}kg`
+          : `  Increase (+${increaseKg}kg) -> ${t.workKg + increaseKg}kg / Keep -> ${t.workKg}kg / Reduce (10%) -> ${resetKg}kg`,
+      );
     }
   }
   return lines.join("\n");
@@ -935,16 +966,21 @@ function buildResetProtocolMessage(
   failures: FailedProgressionExercise[],
   state: ProgressionRuntimeStateSnapshot | null,
   resetFactor: number,
+  locale: "ko" | "en",
 ): string {
   const pct = Math.round((1 - resetFactor) * 100);
-  const lines: string[] = [`3회 연속 실패 기준에 도달했습니다.`, ""];
+  const lines: string[] = [locale === "ko" ? "3회 연속 실패 기준에 도달했습니다." : "Three consecutive failures were reached.", ""];
   for (const f of failures) {
     const workKg = state?.targets[f.target]?.workKg ?? null;
     if (workKg !== null) {
       const resetKg = Math.round((workKg * resetFactor) / 2.5) * 2.5;
       const increaseKg = f.target === "DEADLIFT" ? 5 : 2.5;
       lines.push(`• ${f.exerciseName}: ${workKg}kg`);
-      lines.push(`  감소(${pct}%) → ${resetKg}kg / 유지 → ${workKg}kg / 증량 → ${workKg + increaseKg}kg`);
+      lines.push(
+        locale === "ko"
+          ? `  감소(${pct}%) → ${resetKg}kg / 유지 → ${workKg}kg / 증량 → ${workKg + increaseKg}kg`
+          : `  Reduce (${pct}%) -> ${resetKg}kg / Keep -> ${workKg}kg / Increase -> ${workKg + increaseKg}kg`,
+      );
     } else {
       lines.push(`• ${f.exerciseName}`);
     }
@@ -954,6 +990,7 @@ function buildResetProtocolMessage(
 
 export default function WorkoutRecordPage() {
   const router = useRouter();
+  const { copy, locale } = useLocale();
   const { alert, confirm } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
@@ -1029,10 +1066,10 @@ export default function WorkoutRecordPage() {
         await new Promise((resolve) => setTimeout(resolve, 150));
         console.log("[WorkoutRecordPage] Showing restore confirm");
         const shouldKeep = await confirm({
-          title: "기록 복구",
-          message: "이전에 입력 중이던 기록을 불러왔습니다.",
-          confirmText: "복구",
-          cancelText: "삭제",
+          title: copy.workoutLog.restoreDraftTitle,
+          message: copy.workoutLog.restoreDraftMessage,
+          confirmText: copy.workoutLog.restoreDraftConfirm,
+          cancelText: copy.workoutLog.restoreDraftDiscard,
           closeAsConfirm: true,
         });
 
@@ -1050,7 +1087,7 @@ export default function WorkoutRecordPage() {
       } finally {
         isRestoringRef.current = false;
       }
-    }, [confirm]),
+    }, [confirm, copy.workoutLog.restoreDraftConfirm, copy.workoutLog.restoreDraftDiscard, copy.workoutLog.restoreDraftMessage, copy.workoutLog.restoreDraftTitle]),
     { enabled: true } // 즉시 복구 시도
   );
 
@@ -1154,12 +1191,12 @@ export default function WorkoutRecordPage() {
         if (!map[name]) {
           map[name] = data.weight > 0
             ? `${formatKgValue(data.weight)} × ${data.reps}`
-            : `${data.reps}회`;
+            : locale === "ko" ? `${data.reps}회` : `${data.reps} reps`;
         }
       }
     }
     return map;
-  }, [recentLogItems]);
+  }, [locale, recentLogItems]);
 
   // Count exercises with at least one completed set for the progress chip
   const completedExercisesCount = useMemo(() => {
@@ -1236,11 +1273,11 @@ export default function WorkoutRecordPage() {
       const res = await apiGet<ExerciseResponse>(`/api/exercises?${params.toString()}`);
       setExerciseOptions(res.items ?? []);
     } catch (e: any) {
-      setExerciseOptionsError(e?.message ?? "운동종목 목록을 불러오지 못했습니다.");
+      setExerciseOptionsError(e?.message ?? (locale === "ko" ? "운동종목 목록을 불러오지 못했습니다." : "Could not load the exercise list."));
     } finally {
       setExerciseOptionsLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   type LoadWorkoutContextInput = {
     planId: string;
@@ -1286,6 +1323,7 @@ export default function WorkoutRecordPage() {
               sessionDate: input.dateKey || undefined,
               timezone: browserTimezone,
               planSchedule: input.planSchedule,
+              locale,
             }),
             input.preferences,
           );
@@ -1307,6 +1345,7 @@ export default function WorkoutRecordPage() {
               summaryDateKey,
               input.planParams,
               input.preferences.bodyweightKg,
+              locale,
             ),
           );
           setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
@@ -1336,7 +1375,11 @@ export default function WorkoutRecordPage() {
           setDraft(null);
           setProgramEntryState({});
           setLastSession(null);
-          setError("자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록만 수정할 수 있습니다.");
+          setError(
+            locale === "ko"
+              ? "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록만 수정할 수 있습니다."
+              : "Auto-progression plans cannot create new workout logs before today. You can only edit existing logs.",
+          );
           setWorkflowState("idle");
           return;
         }
@@ -1356,6 +1399,7 @@ export default function WorkoutRecordPage() {
                 sessionDate: input.dateKey,
                 timezone: browserTimezone,
                 planSchedule: input.planSchedule,
+                locale,
               }),
               input.preferences,
             ),
@@ -1379,6 +1423,7 @@ export default function WorkoutRecordPage() {
             input.dateKey,
             input.planParams,
             input.preferences.bodyweightKg,
+            locale,
           ),
         );
         setWorkflowState((prev) => (isRestoredRef.current ? prev : "idle"));
@@ -1387,12 +1432,12 @@ export default function WorkoutRecordPage() {
         setDraft(null);
         setProgramEntryState({});
         setLastSession(null);
-        setError(e?.message ?? "운동기록 화면 데이터를 불러오지 못했습니다.");
+        setError(e?.message ?? (locale === "ko" ? "운동기록 화면 데이터를 불러오지 못했습니다." : "Could not load the workout log screen."));
       } finally {
         setLoading(false);
       }
     },
-    [applyWeightRulesToDraft, browserTimezone],
+    [applyWeightRulesToDraft, browserTimezone, locale],
   );
 
   useEffect(() => {
@@ -1401,7 +1446,7 @@ export default function WorkoutRecordPage() {
       const prefs = workoutPreferences;
       const currentQuery = query;
       const resolvedPlanId = plan?.id ?? currentQuery.planId ?? "";
-      const resolvedPlanName = plan?.name ?? "프로그램 미선택";
+      const resolvedPlanName = plan?.name ?? (locale === "ko" ? "프로그램 미선택" : "No Program Selected");
       if (!resolvedPlanId) return;
       await loadWorkoutContext({
         planId: resolvedPlanId,
@@ -1413,7 +1458,7 @@ export default function WorkoutRecordPage() {
         planParams: plan?.params ?? null,
       });
     };
-  }, [selectedPlan, workoutPreferences, query, loadWorkoutContext]);
+  }, [selectedPlan, workoutPreferences, query, loadWorkoutContext, locale]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1455,7 +1500,7 @@ export default function WorkoutRecordPage() {
           const resolvedPlanId =
             matchedPlan?.id ??
             (typeof logRes.item.planId === "string" ? logRes.item.planId : "");
-          const resolvedPlanName = matchedPlan?.name ?? "프로그램 미선택";
+          const resolvedPlanName = matchedPlan?.name ?? (locale === "ko" ? "프로그램 미선택" : "No Program Selected");
 
           setSelectedPlanId(resolvedPlanId);
           await loadWorkoutContext({
@@ -1488,9 +1533,9 @@ export default function WorkoutRecordPage() {
           setSaveError(null);
           setLoading(false);
           await alert({
-            title: "프로그램 선택 필요",
-            message: "선택된 플랜이 없습니다.\n프로그램 스토어로 이동합니다.",
-            buttonText: "이동",
+            title: locale === "ko" ? "프로그램 선택 필요" : "Program Selection Required",
+            message: locale === "ko" ? "선택된 플랜이 없습니다.\n프로그램 스토어로 이동합니다." : "No plan is selected.\nYou will be moved to the program store.",
+            buttonText: locale === "ko" ? "이동" : "Go",
           });
           if (cancelled) return;
           router.replace("/program-store");
@@ -1517,7 +1562,7 @@ export default function WorkoutRecordPage() {
         if (!cancelled) {
           setDraft(null);
           setProgramEntryState({});
-          setError(e?.message ?? "플랜 목록을 불러오지 못했습니다.");
+          setError(e?.message ?? (locale === "ko" ? "플랜 목록을 불러오지 못했습니다." : "Could not load the plans list."));
           setLoading(false);
         }
       }
@@ -1526,7 +1571,7 @@ export default function WorkoutRecordPage() {
     return () => {
       cancelled = true;
     };
-  }, [alert, loadWorkoutContext, router]);
+  }, [alert, loadWorkoutContext, locale, router]);
 
   useEffect(() => {
     if (!addSheetOpen) return;
@@ -1678,12 +1723,12 @@ export default function WorkoutRecordPage() {
   const handleAddExercise = useCallback(() => {
     if (!draft) return;
     if (!addDraft.exerciseId) {
-      setExerciseOptionsError("드롭다운에서 운동종목을 선택하세요.");
+      setExerciseOptionsError(locale === "ko" ? "드롭다운에서 운동종목을 선택하세요." : "Select an exercise from the dropdown.");
       return;
     }
     const exerciseName = addDraft.exerciseName.trim();
     if (!exerciseName) {
-      setExerciseOptionsError("선택한 운동종목 이름을 확인하세요.");
+      setExerciseOptionsError(locale === "ko" ? "선택한 운동종목 이름을 확인하세요." : "Check the selected exercise name.");
       return;
     }
     const snappedWeightKg = resolveWeightWithCurrentPreferences(
@@ -1704,19 +1749,19 @@ export default function WorkoutRecordPage() {
     });
     setWorkflowState("editing");
     closeAddExerciseSheet();
-  }, [addDraft, closeAddExerciseSheet, draft, resolveWeightWithCurrentPreferences]);
+  }, [addDraft, closeAddExerciseSheet, draft, locale, resolveWeightWithCurrentPreferences]);
 
   const handleSave = useCallback(async () => {
     if (!draft) return;
-    const entryErrors = validateWorkoutRecordEntryState(visibleExercises, programEntryState);
+    const entryErrors = validateWorkoutRecordEntryState(visibleExercises, programEntryState, locale);
     if (entryErrors.length > 0) {
-      setSaveError(entryErrors[0] ?? "입력값을 확인해 주세요.");
+      setSaveError(entryErrors[0] ?? (locale === "ko" ? "입력값을 확인해 주세요." : "Check your inputs."));
       setWorkflowState("editing");
       return;
     }
-    const validation = validateWorkoutDraft(draft);
+    const validation = validateWorkoutDraft(draft, locale);
     if (!validation.valid) {
-      setSaveError(validation.errors[0] ?? "입력값을 확인해 주세요.");
+      setSaveError(validation.errors[0] ?? (locale === "ko" ? "입력값을 확인해 주세요." : "Check your inputs."));
       setWorkflowState("editing");
       return;
     }
@@ -1744,8 +1789,8 @@ export default function WorkoutRecordPage() {
 
           if (progressionData.program === "operator" && isOperatorBlockEnd) {
             // Operator: 6주 블록 완료 → 다음 사이클 무게 사용자가 결정
-            const message = buildOperatorBlockCompletionMessage(progressionData.state);
-            const choice = await showSheet("블록 완료 — 무게 설정", message, "block-completion");
+            const message = buildOperatorBlockCompletionMessage(progressionData.state, locale);
+            const choice = await showSheet(locale === "ko" ? "블록 완료 - 무게 설정" : "Block Complete - Set Weights", message, "block-completion");
             setFailureProtocolSheet(null);
             failureProtocolResolveRef.current = null;
             if (choice === "cancel") return;
@@ -1753,8 +1798,8 @@ export default function WorkoutRecordPage() {
 
           } else if (progressionData.program === "wendler-531" && is531BlockEnd) {
             // 5/3/1: 4주 사이클 완료 → 다음 사이클 TM 사용자가 결정
-            const message = build531BlockCompletionMessage(progressionData.state);
-            const choice = await showSheet("4주 사이클 완료 — TM 설정", message, "block-completion");
+            const message = build531BlockCompletionMessage(progressionData.state, locale);
+            const choice = await showSheet(locale === "ko" ? "4주 사이클 완료 - TM 설정" : "4-Week Cycle Complete - Set TMs", message, "block-completion");
             setFailureProtocolSheet(null);
             failureProtocolResolveRef.current = null;
             if (choice === "cancel") return;
@@ -1771,8 +1816,8 @@ export default function WorkoutRecordPage() {
               (f) => (progressionData.state?.targets[f.target]?.failureStreak ?? 0) >= 2,
             );
             if (resetFailures.length > 0) {
-              const message = buildResetProtocolMessage(resetFailures, progressionData.state, resetFactor);
-              const choice = await showSheet("연속 실패 기준 도달", message, "greyskull-reset");
+              const message = buildResetProtocolMessage(resetFailures, progressionData.state, resetFactor, locale);
+              const choice = await showSheet(locale === "ko" ? "연속 실패 기준 도달" : "Consecutive Failure Threshold Reached", message, "greyskull-reset");
               setFailureProtocolSheet(null);
               failureProtocolResolveRef.current = null;
               if (choice === "cancel") return;
@@ -1808,10 +1853,10 @@ export default function WorkoutRecordPage() {
       setWorkflowState("done");
       router.push("/");
     } catch (e: any) {
-      setSaveError(e?.message ?? "운동기록 저장에 실패했습니다.");
+      setSaveError(e?.message ?? (locale === "ko" ? "운동기록 저장에 실패했습니다." : "Failed to save the workout log."));
       setWorkflowState("editing");
     }
-  }, [draft, persistenceKey, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
+  }, [draft, locale, persistenceKey, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
 
   const refreshRecordPage = useCallback(async () => {
     if (workflowState === "saving") return;
@@ -1820,10 +1865,10 @@ export default function WorkoutRecordPage() {
 
     if (workflowState === "editing") {
       const result = await confirm({
-        title: "화면 새로고침",
-        message: "저장하지 않은 변경사항이 사라지고 다시 불러옵니다.\n계속할까요?",
-        confirmText: "새로고침",
-        cancelText: "취소",
+        title: locale === "ko" ? "화면 새로고침" : "Refresh Screen",
+        message: locale === "ko" ? "저장하지 않은 변경사항이 사라지고 다시 불러옵니다.\n계속할까요?" : "Unsaved changes will be discarded and the screen will reload.\nContinue?",
+        confirmText: locale === "ko" ? "새로고침" : "Refresh",
+        cancelText: locale === "ko" ? "취소" : "Cancel",
         closeAsNull: true, // X 버튼은 아무 동작 없이 닫기
       });
       if (result === null) return; // X 닫기 — 아무것도 하지 않음
@@ -1843,7 +1888,7 @@ export default function WorkoutRecordPage() {
     isRestoredRef.current = false;
 
     const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
-    const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
+    const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? (locale === "ko" ? "프로그램 미선택" : "No Program Selected");
     if (query.logId) {
       await loadWorkoutContext({
         planId: resolvedPlanId,
@@ -1870,7 +1915,7 @@ export default function WorkoutRecordPage() {
       planParams: selectedPlan?.params ?? null,
       isRefresh: true,
     });
-  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
+  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, locale, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: refreshRecordPage,
@@ -1931,10 +1976,10 @@ export default function WorkoutRecordPage() {
       )}
       <ErrorStateRows
         message={error}
-        title="기록 화면 데이터를 불러오지 못했습니다"
+        title={locale === "ko" ? "기록 화면 데이터를 불러오지 못했습니다" : "Could not load workout log data"}
         onRetry={() => {
           const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
-          const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? "프로그램 미선택";
+          const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? (locale === "ko" ? "프로그램 미선택" : "No Program Selected");
           if (query.logId) {
             void loadWorkoutContext({
               planId: resolvedPlanId,
@@ -1964,19 +2009,19 @@ export default function WorkoutRecordPage() {
       <NoticeStateRows
         message={saveError}
         tone="warning"
-        label="입력 확인 필요"
-        ariaLabel="Save validation error"
+        label={copy.workoutLog.validationLabel}
+        ariaLabel={copy.workoutLog.validationAriaLabel}
       />
       <EmptyStateRows
         when={noPlan}
-        label="선택 가능한 플랜이 없습니다"
+        label={copy.workoutLog.noPlans}
       />
 
       {!noPlan && draft && (
         <>
           {/* ── Plan Selector ── */}
           <section className="plan-selector-strip" data-pull-refresh-trigger="true">
-            <div className="plan-selector-strip__label">선택 플랜</div>
+            <div className="plan-selector-strip__label">{copy.workoutLog.activePlanLabel}</div>
             <PlanSelectorButton
               planName={selectedPlan?.name ?? draft.session.planName}
               aria-expanded={isEditingExistingLog ? false : planSheetOpen}
@@ -1984,7 +2029,7 @@ export default function WorkoutRecordPage() {
               disabled={isEditingExistingLog}
             />
             {isEditingExistingLog ? (
-              <p style={{ marginTop: "var(--space-xs)", fontSize: "12px", color: "var(--text-hint)" }}>기존 기록 수정 중에는 플랜을 변경할 수 없습니다.</p>
+              <p style={{ marginTop: "var(--space-xs)", fontSize: "12px", color: "var(--text-hint)" }}>{copy.workoutLog.planLockedWhileEditing}</p>
             ) : null}
           </section>
 
@@ -1995,7 +2040,7 @@ export default function WorkoutRecordPage() {
               <div className="session-progress-header__top-row">
                 <div className="session-progress-header__title-group">
                   <div className="session-progress-header__eyebrow">
-                    {isEditingExistingLog ? "기록 수정" : "Active Session"}
+                    {isEditingExistingLog ? copy.workoutLog.editingLog : copy.workoutLog.activeSession}
                   </div>
                   <h2 className="session-progress-header__title">
                     Week {draft.session.week} · {draft.session.sessionType}
@@ -2004,13 +2049,13 @@ export default function WorkoutRecordPage() {
               </div>
               <div className="session-progress-header__chips">
                 <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
-                  {completedExercisesCount}/{visibleExercises.length} 운동
+                  {completedExercisesCount}/{visibleExercises.length} {copy.workoutLog.exercisesCount}
                 </span>
                 <span className="session-chip session-chip--date">
-                  {formatDateFriendly(draft.session.sessionDate)}
+                  {formatDateFriendly(draft.session.sessionDate, locale)}
                 </span>
                 {workoutPreferences.bodyweightKg ? (
-                  <span className="session-chip">BW {workoutPreferences.bodyweightKg.toFixed(1)}kg</span>
+                  <span className="session-chip">{copy.workoutLog.bodyweightShort} {workoutPreferences.bodyweightKg.toFixed(1)}kg</span>
                 ) : null}
               </div>
             </div>
@@ -2022,7 +2067,7 @@ export default function WorkoutRecordPage() {
                   <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>history</span>
                 </div>
                 <div className="last-session-banner__body">
-                  <div className="last-session-banner__label">지난 세션</div>
+                  <div className="last-session-banner__label">{copy.workoutLog.lastSession}</div>
                   <div className="last-session-banner__title">
                     {lastSession.weekLabel} · {lastSession.sessionLabel}
                   </div>
@@ -2031,7 +2076,7 @@ export default function WorkoutRecordPage() {
                 {lastSession.totalSets != null && (
                   <div className="last-session-banner__stat">
                     <div className="last-session-banner__stat-value">{lastSession.totalSets}</div>
-                    <div className="last-session-banner__stat-label">세트</div>
+                    <div className="last-session-banner__stat-label">{copy.workoutLog.sets}</div>
                   </div>
                 )}
               </div>
@@ -2181,7 +2226,7 @@ export default function WorkoutRecordPage() {
                   }}
                 >
                   <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 28, fontVariationSettings: "'wght' 300" }}>add</span>
-                  <span>운동 추가</span>
+                  <span>{copy.workoutLog.addExerciseButton}</span>
                 </button>
               </div>
 
@@ -2214,7 +2259,7 @@ export default function WorkoutRecordPage() {
                         },
                       }));
                     }}
-                    placeholder="오늘 세션 전체 메모"
+                    placeholder={copy.workoutLog.sessionMemoPlaceholder}
                     style={{
                       border: "none",
                       borderRadius: "16px",
@@ -2237,10 +2282,10 @@ export default function WorkoutRecordPage() {
                   disabled={workflowState === "saving"}
                 >
                   {workflowState === "saving"
-                    ? "저장 중..."
+                    ? copy.workoutLog.saveInProgress
                     : isEditingExistingLog
-                      ? "운동기록 수정 완료"
-                      : "운동기록 완료 및 저장"}
+                      ? copy.workoutLog.saveEdited
+                      : copy.workoutLog.saveCreate}
                 </PrimaryButton>
               </div>
           </section>
@@ -2249,32 +2294,32 @@ export default function WorkoutRecordPage() {
 
       <SearchSelectSheet
         open={planSheetOpen}
-        title="플랜 선택"
-        description="보유 플랜을 검색해 오늘 기록에 사용할 플랜으로 전환합니다."
+        title={copy.workoutLog.planSheetTitle}
+        description={copy.workoutLog.planSheetDescription}
         onClose={closePlanSheet}
-        closeLabel="닫기"
+        closeLabel={copy.workoutLog.close}
         query={planQuery}
-        placeholder="플랜 검색"
+        placeholder={copy.workoutLog.planSearchPlaceholder}
         onQueryChange={setPlanQuery}
         onQuerySubmit={() => {
           const first = filteredPlans[0] ?? null;
           if (!first) return;
           handlePlanSheetSelect(first.id);
         }}
-        resultsAriaLabel="플랜 검색 결과"
-        emptyText="검색 조건에 맞는 플랜이 없습니다."
+        resultsAriaLabel={copy.workoutLog.planSearchResults}
+        emptyText={copy.workoutLog.noMatchingPlans}
         options={planSheetOptions}
       >
       </SearchSelectSheet>
 
       <BottomSheet
         open={addSheetOpen}
-        title="운동 추가"
-        description="기존 DB 종목 선택 또는 검색 후 기록 영역에 추가합니다."
+        title={copy.workoutLog.addExerciseTitle}
+        description={copy.workoutLog.addExerciseDescription}
         onClose={closeAddExerciseSheet}
-        closeLabel="닫기"
+        closeLabel={copy.workoutLog.close}
         primaryAction={{
-          ariaLabel: "기록 영역에 추가",
+          ariaLabel: copy.workoutLog.addExerciseAction,
           onPress: handleAddExercise,
           disabled: !addDraft.exerciseId,
         }}
@@ -2286,7 +2331,7 @@ export default function WorkoutRecordPage() {
           <div>
             <SearchSelectCombobox
               query={exerciseQuery}
-              placeholder="예: Squat"
+              placeholder={locale === "ko" ? "예: Squat" : "e.g. Squat"}
               onQueryChange={(nextQuery) => {
                 setExerciseQuery(nextQuery);
                 setExerciseOptionsError(null);
@@ -2305,11 +2350,11 @@ export default function WorkoutRecordPage() {
                 setExerciseQuery("");
                 setExerciseOptionsError(null);
               }}
-              resultsAriaLabel="운동종목 검색 결과"
+              resultsAriaLabel={copy.workoutLog.exerciseSearchResults}
               options={exerciseSearchOptions}
-              emptyText="검색 조건에 맞는 운동종목이 없습니다."
+              emptyText={copy.workoutLog.noMatchingExercises}
               loading={exerciseOptionsLoading}
-              loadingText="검색 중..."
+              loadingText={copy.workoutLog.exerciseSearchLoading}
               selectionSummary={
                 selectedExerciseOption ? (
                   <div
@@ -2341,7 +2386,7 @@ export default function WorkoutRecordPage() {
                         borderRadius: "8px", flexShrink: 0,
                       }}
                     >
-                      변경
+                      {copy.workoutLog.change}
                     </button>
                   </div>
                 ) : null
@@ -2373,10 +2418,11 @@ export default function WorkoutRecordPage() {
               <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--text-metric-reps)" }}>Reps</span>
             </div>
 
-            <div role="list" aria-label="세트 편집">
+            <div role="list" aria-label={locale === "ko" ? "세트 편집" : "Edit sets"}>
               {addDraft.repsPerSet.map((setReps, index) => (
                 <SwipeableSetRow
                   key={`add-set-${index}`}
+                  deleteLabel={locale === "ko" ? "세트 삭제" : "Delete set"}
                   disabled={addDraft.repsPerSet.length <= 1}
                   onDelete={() =>
                     setAddDraft((prev) => ({
@@ -2388,7 +2434,7 @@ export default function WorkoutRecordPage() {
                   <div role="listitem" style={{ display: "grid", gridTemplateColumns: "0.7fr 1.8fr 1.2fr", gap: "var(--space-xs)", alignItems: "center", textAlign: "center" }}>
                     <span style={{ color: "var(--text-metric-sets)", font: "var(--font-secondary)", fontWeight: 600 }}>{index + 1}</span>
                     <WorkoutRecordInlinePicker
-                      label={`${index + 1}세트 무게`}
+                      label={locale === "ko" ? `${index + 1}세트 무게` : `Set ${index + 1} Weight`}
                       value={addDraft.weightKg}
                       min={0}
                       max={1000}
@@ -2403,7 +2449,7 @@ export default function WorkoutRecordPage() {
                       }
                     />
                     <WorkoutRecordInlinePicker
-                      label={`${index + 1}세트 횟수`}
+                      label={locale === "ko" ? `${index + 1}세트 횟수` : `Set ${index + 1} Reps`}
                       value={setReps}
                       min={1}
                       max={100}
@@ -2449,7 +2495,7 @@ export default function WorkoutRecordPage() {
               }
             >
               <AppPlusMinusIcon kind="plus" size={14} />
-              <span>세트 추가</span>
+              <span>{copy.workoutLog.addSet}</span>
             </button>
           </div>
 
@@ -2465,12 +2511,12 @@ export default function WorkoutRecordPage() {
             }}>
               {addDraftIncrementInfo.source === "RULE" && (
                 <span style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)" }}>
-                  적용 Increment: {addDraftIncrementKg.toFixed(2)}kg
+                  {locale === "ko" ? `적용 Increment: ${addDraftIncrementKg.toFixed(2)}kg` : `Applied increment: ${addDraftIncrementKg.toFixed(2)}kg`}
                 </span>
               )}
               {isBodyweightExerciseName(addDraft.exerciseName) && workoutPreferences.bodyweightKg && (
                 <span style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)" }}>
-                  총 부하(외부중량 + 체중): {addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg
+                  {locale === "ko" ? `총 부하(외부중량 + 체중): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg` : `Total load (external + bodyweight): ${addDraftTotalLoadKg?.toFixed(2) ?? "-"}kg`}
                 </span>
               )}
             </div>
@@ -2482,7 +2528,7 @@ export default function WorkoutRecordPage() {
               fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700,
               letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)",
             }}>
-              메모
+              {locale === "ko" ? "메모" : "Memo"}
             </span>
             <AppTextarea
               variant="workout"
@@ -2512,7 +2558,7 @@ export default function WorkoutRecordPage() {
             }}
           >
             <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>tune</span>
-            운동종목 관리
+            {locale === "ko" ? "운동종목 관리" : "Manage Exercises"}
           </Link>
         </div>
       </BottomSheet>

@@ -7,6 +7,7 @@ import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type UxEventSummary = {
   opens: number;
@@ -197,10 +198,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

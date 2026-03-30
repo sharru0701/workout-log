@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { memo } from "react";
 import type { ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { Card } from "./card";
 import { PrimaryButton } from "./primary-button";
 
@@ -26,6 +27,7 @@ function formatVolume(kg: number): string {
 // ─── Shared exercise list sub-components ──────────────────────────────────────
 
 const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { exercises: SessionCardExercise[] }) {
+  const { locale } = useLocale();
   if (exercises.length === 0) return null;
   const main = exercises.filter((e) => e.role === "MAIN");
   const assist = exercises.filter((e) => e.role !== "MAIN");
@@ -53,7 +55,7 @@ const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { e
           ))}
           {assist.length > 3 && (
             <div style={{ font: "var(--font-secondary)", color: "var(--text-hint)", textAlign: "right", marginTop: "var(--space-xs)" }}>
-              +{assist.length - 3} more assist
+              {locale === "ko" ? `+보조 ${assist.length - 3}개 더` : `+${assist.length - 3} more assist`}
             </div>
           )}
         </div>
@@ -117,7 +119,6 @@ function TodayCard({
   children,
 }: Omit<TodaySessionCardProps, "variant">) {
   const hasGrouped = exercises.some((e) => e.role != null);
-  const cls = ["hd-today-card", className].filter(Boolean).join(" ");
 
   const inner = (
     <>
@@ -156,8 +157,8 @@ function TodayCard({
     </>
   );
 
-  if (href) return <Card as={Link} href={href} padding="md">{inner}</Card>;
-  return <Card padding="md">{inner}</Card>;
+  if (href) return <Card as={Link} href={href} padding="md" className={className}>{inner}</Card>;
+  return <Card padding="md" className={className}>{inner}</Card>;
 }
 
 // ─── "last" variant ────────────────────────────────────────────────────────────
@@ -183,9 +184,11 @@ function LastCard({
   totalVolume,
   bodyweightKg,
   exercises = [],
-  emptyMessage = "지난 세션 없음",
+  emptyMessage,
 }: Omit<LastSessionCardProps, "variant">) {
+  const { locale } = useLocale();
   const hasData = !!date;
+  const resolvedEmptyMessage = emptyMessage ?? (locale === "ko" ? "지난 세션 없음" : "No previous session");
 
   const inner = hasData ? (
     <>
@@ -199,7 +202,7 @@ function LastCard({
         {/* INFO COLOR: meta-muted — 총 세트/볼륨은 참고 통계로 muted */}
         <div style={{ font: "var(--font-secondary)", color: "var(--text-meta)", display: "flex", gap: "var(--space-xs)", fontVariantNumeric: "tabular-nums" }}>
           {totalSets !== undefined && (
-            <span>{totalSets} sets</span>
+            <span>{locale === "ko" ? `${totalSets}세트` : `${totalSets} sets`}</span>
           )}
           {totalVolume !== undefined && totalVolume > 0 && (
             <>
@@ -210,7 +213,7 @@ function LastCard({
           {bodyweightKg != null && (
             <>
               <span>·</span>
-              <span style={{ color: "var(--text-session-context)" }}>BW {bodyweightKg.toFixed(1)}kg</span>
+              <span style={{ color: "var(--text-session-context)" }}>{locale === "ko" ? `체중 ${bodyweightKg.toFixed(1)}kg` : `BW ${bodyweightKg.toFixed(1)}kg`}</span>
             </>
           )}
         </div>
@@ -218,7 +221,7 @@ function LastCard({
       <ExerciseFlatList exercises={exercises} />
     </>
   ) : (
-    <div>{emptyMessage}</div>
+    <div>{resolvedEmptyMessage}</div>
   );
 
   if (href) return <Card as={Link} href={href} padding="md">{inner}</Card>;
@@ -231,9 +234,9 @@ export type SessionCardProps = TodaySessionCardProps | LastSessionCardProps;
 
 export function SessionCard(props: SessionCardProps) {
   if (props.variant === "today") {
-    const { variant: _v, ...rest } = props;
+    const rest = props as Omit<TodaySessionCardProps, "variant">;
     return <TodayCard {...rest} />;
   }
-  const { variant: _v, ...rest } = props;
+  const rest = props as Omit<LastSessionCardProps, "variant">;
   return <LastCard {...rest} />;
 }

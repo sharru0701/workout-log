@@ -7,6 +7,7 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
+import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -24,11 +25,15 @@ function buildFileName(format: ExportFormat) {
   return format === "csv" ? `workout-log-workout_set-${stamp}.csv` : `workout-log-export-${stamp}.json`;
 }
 
-async function shareOrDownloadExport(path: string, format: ExportFormat) {
+async function shareOrDownloadExport(
+  path: string,
+  format: ExportFormat,
+  copy: ReturnType<typeof useLocale>["copy"],
+) {
   const response = await fetch(path, { method: "GET", cache: "no-store" });
   if (!response.ok) {
     const body = await response.json().catch(() => ({}));
-    throw new Error(body?.error ?? `Export 실패 (${response.status})`);
+    throw new Error(body?.error ?? copy.settings.dataExportPage.exportFailed(response.status));
   }
 
   const blob = await response.blob();
@@ -38,8 +43,8 @@ async function shareOrDownloadExport(path: string, format: ExportFormat) {
 
   if (typeof navigator !== "undefined" && "share" in navigator && "canShare" in navigator) {
     const sharePayload = {
-      title: "Workout Log Export",
-      text: "운동 데이터 백업 파일",
+      title: copy.settings.dataExportPage.shareTitle,
+      text: copy.settings.dataExportPage.shareText,
       files: [file],
     };
     try {
@@ -65,28 +70,31 @@ async function shareOrDownloadExport(path: string, format: ExportFormat) {
 }
 
 export default function SettingsDataExportPage() {
+  const { copy } = useLocale();
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const exportingLabel = useMemo(() => {
     if (!exporting) return null;
-    return exporting === "json" ? "JSON 내보내기 중..." : "CSV 내보내기 중...";
-  }, [exporting]);
+    return exporting === "json"
+      ? copy.settings.dataExportPage.json.exporting
+      : copy.settings.dataExportPage.csv.exporting;
+  }, [copy.settings.dataExportPage.csv.exporting, copy.settings.dataExportPage.json.exporting, exporting]);
 
   const runExport = async (format: ExportFormat) => {
     try {
       setExporting(format);
       setError(null);
       setNotice(null);
-      const result = await shareOrDownloadExport(buildExportPath(format), format);
+      const result = await shareOrDownloadExport(buildExportPath(format), format, copy);
       if (result === "shared") {
-        setNotice(format === "json" ? "JSON 파일을 ShareSheet로 공유했습니다." : "CSV 파일을 ShareSheet로 공유했습니다.");
+        setNotice(format === "json" ? copy.settings.dataExportPage.json.shared : copy.settings.dataExportPage.csv.shared);
       } else {
-        setNotice(format === "json" ? "JSON 파일 다운로드를 시작했습니다." : "CSV 파일 다운로드를 시작했습니다.");
+        setNotice(format === "json" ? copy.settings.dataExportPage.json.downloaded : copy.settings.dataExportPage.csv.downloaded);
       }
     } catch (e: any) {
-      setError(e?.message ?? "데이터 내보내기에 실패했습니다.");
+      setError(e?.message ?? copy.settings.dataExportPage.genericError);
     } finally {
       setExporting(null);
     }
@@ -94,27 +102,27 @@ export default function SettingsDataExportPage() {
 
   return (
     <div>
-      <NoticeStateRows message={notice} tone="success" label="Export 완료" />
-      <NoticeStateRows message={error} tone="warning" label="Export 실패" />
+      <NoticeStateRows message={notice} tone="success" label={copy.settings.dataExportPage.noticeSuccess} />
+      <NoticeStateRows message={error} tone="warning" label={copy.settings.dataExportPage.noticeError} />
 
       <section>
-        <SectionHeader title="데이터 Export" description="Export는 iOS 표준 ShareSheet를 우선 사용합니다." />
-        <BaseGroupedList ariaLabel="Data export actions">
+        <SectionHeader title={copy.settings.dataExportPage.title} description={copy.settings.dataExportPage.description} />
+        <BaseGroupedList ariaLabel={copy.settings.dataExportPage.ariaLabel}>
           <NavigationRow
-            label="JSON Export"
-            subtitle="전체 백업"
-            description="운동/플랜/세션 데이터를 구조형 JSON으로 내보냅니다."
-            value={exporting === "json" ? "진행 중" : "공유"}
+            label={copy.settings.dataExportPage.json.label}
+            subtitle={copy.settings.dataExportPage.json.subtitle}
+            description={copy.settings.dataExportPage.json.description}
+            value={exporting === "json" ? copy.settings.dataExportPage.actionInProgress : copy.settings.dataExportPage.actionShare}
             onPress={() => {
               void runExport("json");
             }}
             disabled={Boolean(exporting)}
           />
           <NavigationRow
-            label="CSV Export"
-            subtitle="workout_set"
-            description="분석용 테이블 CSV를 내보냅니다."
-            value={exporting === "csv" ? "진행 중" : "공유"}
+            label={copy.settings.dataExportPage.csv.label}
+            subtitle={copy.settings.dataExportPage.csv.subtitle}
+            description={copy.settings.dataExportPage.csv.description}
+            value={exporting === "csv" ? copy.settings.dataExportPage.actionInProgress : copy.settings.dataExportPage.actionShare}
             onPress={() => {
               void runExport("csv");
             }}
@@ -122,7 +130,7 @@ export default function SettingsDataExportPage() {
           />
         </BaseGroupedList>
         <SectionFootnote>
-          ShareSheet를 지원하지 않는 브라우저에서는 자동으로 파일 다운로드로 대체됩니다.
+          {copy.settings.dataExportPage.footnote}
         </SectionFootnote>
       </section>
 

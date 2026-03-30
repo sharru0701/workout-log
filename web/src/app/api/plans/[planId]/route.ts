@@ -6,6 +6,8 @@ import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
@@ -16,6 +18,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 
 async function PATCHImpl(req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
     const userId = getAuthenticatedUserId();
     const body = (await req.json().catch(() => ({}))) as {
@@ -30,19 +33,19 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
       .where(eq(planTable.id, planId))
       .limit(1);
     const found = rows[0];
-    if (!found) return NextResponse.json({ error: "plan not found" }, { status: 404 });
-    if (found.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!found) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+    if (found.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const hasNamePatch = typeof body.name === "string";
     const nextName = hasNamePatch ? String(body.name).trim() : "";
     if (hasNamePatch && !nextName) {
-      return NextResponse.json({ error: "name must not be empty" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "플랜 이름은 비워둘 수 없습니다." : "Plan name must not be empty." }, { status: 400 });
     }
     const hasParamsPatch =
       (body.params !== undefined && body.params !== null && typeof body.params === "object" && !Array.isArray(body.params)) ||
       typeof body.autoProgression === "boolean";
     if (!hasNamePatch && !hasParamsPatch) {
-      return NextResponse.json({ error: "no patch payload" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "수정할 내용이 없습니다." : "No patch payload." }, { status: 400 });
     }
 
     const currentParams = asRecord(found.params);
@@ -68,7 +71,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
     return NextResponse.json({ plan: updated }, { status: 200 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
@@ -76,6 +79,7 @@ export const PATCH = withApiLogging(PATCHImpl);
 
 async function DELETEImpl(_: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
     const userId = getAuthenticatedUserId();
 
@@ -85,8 +89,8 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
       .where(eq(planTable.id, planId))
       .limit(1);
     const found = rows[0];
-    if (!found) return NextResponse.json({ error: "plan not found" }, { status: 404 });
-    if (found.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!found) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+    if (found.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const result = await db.transaction(async (tx) => {
       const sessionRows = await tx
@@ -124,7 +128,7 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
     );
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

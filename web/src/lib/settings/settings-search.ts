@@ -17,11 +17,11 @@ export function splitSearchTokens(query: string) {
 }
 
 function scoreToken(token: string, entry: SettingsSearchEntry) {
-  const title = normalize(entry.title);
+  const title = normalize(`${entry.title} ${entry.titleEn ?? ""}`);
   const section = normalize(entry.section);
   const path = normalize(entry.path);
   const key = normalize(entry.key);
-  const description = normalize(entry.description ?? "");
+  const description = normalize(`${entry.description ?? ""} ${entry.descriptionEn ?? ""}`);
   const keywords = entry.keywords.map(normalize);
 
   let score = 0;

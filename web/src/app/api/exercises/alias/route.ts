@@ -4,15 +4,18 @@ import { db } from "@/server/db/client";
 import { exercise, exerciseAlias } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 async function POSTImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const body = await req.json();
     const exerciseId = String(body.exerciseId ?? "").trim();
     const alias = String(body.alias ?? "").trim();
 
     if (!exerciseId || !alias) {
-      return NextResponse.json({ error: "exerciseId and alias are required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "exerciseId와 alias가 필요합니다." : "exerciseId and alias are required." }, { status: 400 });
     }
 
     const exerciseRows = await db
@@ -21,7 +24,7 @@ async function POSTImpl(req: Request) {
       .where(eq(exercise.id, exerciseId))
       .limit(1);
     if (!exerciseRows[0]) {
-      return NextResponse.json({ error: "exercise not found" }, { status: 404 });
+      return NextResponse.json({ error: locale === "ko" ? "운동을 찾을 수 없습니다." : "Exercise not found." }, { status: 404 });
     }
 
     const existingAlias = await db
@@ -35,7 +38,7 @@ async function POSTImpl(req: Request) {
       .limit(1);
 
     if (existingAlias[0] && existingAlias[0].exerciseId !== exerciseId) {
-      return NextResponse.json({ error: "alias already mapped to another exercise" }, { status: 409 });
+      return NextResponse.json({ error: locale === "ko" ? "이미 다른 운동에 매핑된 별칭입니다." : "That alias is already mapped to another exercise." }, { status: 409 });
     }
     if (existingAlias[0] && existingAlias[0].exerciseId === exerciseId) {
       return NextResponse.json({ alias: existingAlias[0], created: false });
@@ -71,7 +74,7 @@ async function POSTImpl(req: Request) {
     return NextResponse.json({ alias: aliasRows[0] ?? null, created: false });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

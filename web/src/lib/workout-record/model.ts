@@ -1,3 +1,5 @@
+import type { AppLocale } from "@/lib/i18n/messages";
+
 export type WorkoutWorkflowState = "idle" | "editing" | "saving" | "done";
 
 export type WorkoutSetModel = {
@@ -142,6 +144,31 @@ type SnapshotExercise = {
   progressionKey?: string | null;
   sets?: SnapshotSet[];
 };
+
+type WorkoutRecordLocale = AppLocale;
+
+const WORKOUT_RECORD_TEXT = {
+  ko: {
+    noExerciseInfo: "운동 정보 없음",
+    noProgramSelected: "프로그램 미선택",
+    atLeastOneExercise: "최소 1개 이상의 운동이 필요합니다.",
+    emptyExerciseName: (row: number) => `${row}번째 운동의 종목명이 비어 있습니다.`,
+    invalidSetCount: (row: number) => `${row}번째 운동의 세트 수는 1~50 범위여야 합니다.`,
+    invalidSetShape: (row: number) => `${row}번째 운동의 세트별 횟수 정보가 올바르지 않습니다.`,
+    invalidReps: (row: number, setIndex: number) => `${row}번째 운동의 ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`,
+    invalidWeight: (row: number) => `${row}번째 운동의 무게는 0~1000kg 범위여야 합니다.`,
+  },
+  en: {
+    noExerciseInfo: "No Exercise Info",
+    noProgramSelected: "No Program Selected",
+    atLeastOneExercise: "At least one exercise is required.",
+    emptyExerciseName: (row: number) => `Exercise ${row} is missing a name.`,
+    invalidSetCount: (row: number) => `Exercise ${row} must have between 1 and 50 sets.`,
+    invalidSetShape: (row: number) => `Exercise ${row} has invalid per-set rep data.`,
+    invalidReps: (row: number, setIndex: number) => `Exercise ${row} set ${setIndex + 1} reps must be between 1 and 100.`,
+    invalidWeight: (row: number) => `Exercise ${row} weight must be between 0 and 1000kg.`,
+  },
+} as const;
 
 function normalizeExerciseLookupKey(exerciseId: string | null | undefined, exerciseName: string) {
   const idPart = typeof exerciseId === "string" && exerciseId.trim() ? exerciseId.trim() : "";
@@ -498,7 +525,9 @@ function mergeSeedExercise(base: WorkoutExerciseModel, patch: SeedExerciseEditPa
 function groupLoggedExercises(
   sets: ExistingWorkoutLogLike["sets"],
   snapshotExercises: SnapshotExercise[] = [],
+  locale: WorkoutRecordLocale = "ko",
 ): WorkoutExerciseModel[] {
+  const copy = WORKOUT_RECORD_TEXT[locale];
   const plannedSetMetaLookup = createPlannedSetMetaLookup(snapshotExercises);
   const grouped: Array<{
     exerciseId: string | null;
@@ -512,7 +541,7 @@ function groupLoggedExercises(
   }> = [];
 
   for (const rawSet of sets ?? []) {
-    const exerciseName = nonEmpty(String(rawSet?.exerciseName ?? ""), "운동 정보 없음");
+    const exerciseName = nonEmpty(String(rawSet?.exerciseName ?? ""), copy.noExerciseInfo);
     const exerciseId =
       typeof rawSet?.exerciseId === "string" && rawSet.exerciseId.trim() ? rawSet.exerciseId.trim() : null;
     const setNumber = Math.max(1, Math.round(toNumber(rawSet?.setNumber, 1)));
@@ -579,8 +608,10 @@ export function createWorkoutRecordDraft(
     sessionDate?: string;
     timezone?: string;
     planSchedule?: unknown;
+    locale?: WorkoutRecordLocale;
   } = {},
 ): WorkoutRecordDraft {
+  const copy = WORKOUT_RECORD_TEXT[options.locale ?? "ko"];
   const snapshot = session.snapshot ?? {};
   const week = Math.max(1, Math.round(toNumber(snapshot.week, 1)));
   const day = Math.max(1, Math.round(toNumber(snapshot.day, 1)));
@@ -601,7 +632,7 @@ export function createWorkoutRecordDraft(
       sessionDate,
       timezone,
       planId: session.planId,
-      planName: nonEmpty(planName, "프로그램 미선택"),
+      planName: nonEmpty(planName, copy.noProgramSelected),
       sessionKey: resolvedSessionKey,
       week,
       day,
@@ -623,13 +654,15 @@ export function createWorkoutRecordDraftFromLog(
     sessionDate?: string;
     timezone?: string;
     planSchedule?: unknown;
+    locale?: WorkoutRecordLocale;
   } = {},
 ): WorkoutRecordDraft {
+  const copy = WORKOUT_RECORD_TEXT[options.locale ?? "ko"];
   const snapshot = log.generatedSession?.snapshot ?? {};
   const week = Math.max(1, Math.round(toNumber(snapshot.week, 1)));
   const day = Math.max(1, Math.round(toNumber(snapshot.day, 1)));
   const snapshotExercises = (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[];
-  const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : [], snapshotExercises);
+  const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : [], snapshotExercises, options.locale);
   const estimateFromSnapshot = deriveEstimateFromSnapshot(
     snapshotExercises,
   );
@@ -655,7 +688,7 @@ export function createWorkoutRecordDraftFromLog(
       sessionDate,
       timezone,
       planId: typeof log.planId === "string" ? log.planId : "",
-      planName: nonEmpty(planName, "프로그램 미선택"),
+      planName: nonEmpty(planName, copy.noProgramSelected),
       sessionKey: resolvedSessionKey,
       week,
       day,
@@ -800,33 +833,37 @@ export function removeUserExercise(draft: WorkoutRecordDraft, userId: string): W
   };
 }
 
-export function validateWorkoutDraft(draft: WorkoutRecordDraft): WorkoutRecordValidation {
+export function validateWorkoutDraft(
+  draft: WorkoutRecordDraft,
+  locale: WorkoutRecordLocale = "ko",
+): WorkoutRecordValidation {
+  const copy = WORKOUT_RECORD_TEXT[locale];
   const exercises = materializeWorkoutExercises(draft);
   const errors: string[] = [];
 
   if (exercises.length === 0) {
-    errors.push("최소 1개 이상의 운동이 필요합니다.");
+    errors.push(copy.atLeastOneExercise);
   }
 
   exercises.forEach((exercise, index) => {
     const row = index + 1;
     if (!exercise.exerciseName.trim()) {
-      errors.push(`${row}번째 운동의 종목명이 비어 있습니다.`);
+      errors.push(copy.emptyExerciseName(row));
     }
     if (!Number.isFinite(exercise.set.count) || exercise.set.count < 1 || exercise.set.count > 50) {
-      errors.push(`${row}번째 운동의 세트 수는 1~50 범위여야 합니다.`);
+      errors.push(copy.invalidSetCount(row));
     }
     const repsPerSet = normalizeRepsPerSetArray(exercise.set.repsPerSet, exercise.set.reps, exercise.set.count);
     if (repsPerSet.length !== exercise.set.count) {
-      errors.push(`${row}번째 운동의 세트별 횟수 정보가 올바르지 않습니다.`);
+      errors.push(copy.invalidSetShape(row));
     }
     repsPerSet.forEach((reps, setIndex) => {
       if (!Number.isFinite(reps) || reps < 1 || reps > 100) {
-        errors.push(`${row}번째 운동의 ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`);
+        errors.push(copy.invalidReps(row, setIndex));
       }
     });
     if (!Number.isFinite(exercise.set.weightKg) || exercise.set.weightKg < 0 || exercise.set.weightKg > 1000) {
-      errors.push(`${row}번째 운동의 무게는 0~1000kg 범위여야 합니다.`);
+      errors.push(copy.invalidWeight(row));
     }
   });
 

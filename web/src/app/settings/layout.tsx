@@ -7,36 +7,49 @@ import {
   SettingsModalHeaderActionProvider,
   useSettingsModalHeaderActionState,
 } from "@/components/settings/settings-modal-header-action";
+import { useLocale } from "@/components/locale-provider";
 import { SettingsHomeContent } from "@/components/settings/settings-home-content";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 
-function modalTitleFromPathname(pathname: string) {
-  if (pathname.startsWith("/settings/theme")) return "테마 설정";
-  if (pathname.startsWith("/settings/minimum-plate")) return "최소 원판 무게";
-  if (pathname.startsWith("/settings/bodyweight")) return "몸무게 입력";
-  if (pathname.startsWith("/settings/exercise-management")) return "운동종목 관리";
-  if (pathname.startsWith("/settings/data-export")) return "데이터 Export";
-  if (pathname.startsWith("/settings/data")) return "데이터 관리";
-  if (pathname.startsWith("/settings/about")) return "앱 정보";
-  if (pathname.startsWith("/settings/save-policy")) return "저장 정책";
-  if (pathname.startsWith("/settings/selection-template")) return "선택 템플릿";
-  if (pathname.startsWith("/settings/ux-thresholds")) return "UX 기준치";
-  return "설정 상세";
+function modalTitleFromPathname(
+  pathname: string,
+  titles: ReturnType<typeof useLocale>["copy"]["settings"]["modalTitles"],
+  detailTitle: string,
+) {
+  if (pathname.startsWith("/settings/language")) return titles.language;
+  if (pathname.startsWith("/settings/theme")) return titles.theme;
+  if (pathname.startsWith("/settings/minimum-plate")) return titles.minimumPlate;
+  if (pathname.startsWith("/settings/bodyweight")) return titles.bodyweight;
+  if (pathname.startsWith("/settings/exercise-management")) return titles.exerciseManagement;
+  if (pathname.startsWith("/settings/data-export")) return titles.dataExport;
+  if (pathname.startsWith("/settings/data")) return titles.data;
+  if (pathname.startsWith("/settings/about")) return titles.about;
+  if (pathname.startsWith("/settings/save-policy")) return titles.savePolicy;
+  if (pathname.startsWith("/settings/selection-template")) return titles.selectionTemplate;
+  if (pathname.startsWith("/settings/ux-thresholds")) return titles.uxThresholds;
+  return detailTitle;
 }
 
-function modalDescriptionFromPathname(pathname: string) {
+function modalDescriptionFromPathname(
+  pathname: string,
+  descriptions: ReturnType<typeof useLocale>["copy"]["settings"]["modalDescriptions"],
+) {
+  if (pathname.startsWith("/settings/language")) {
+    return descriptions.language;
+  }
   if (pathname.startsWith("/settings/data")) {
-    return "데이터 Export와 앱 전체 초기화 작업을 관리합니다.";
+    return descriptions.data;
   }
   if (pathname.startsWith("/settings/exercise-management")) {
-    return "운동종목 카탈로그를 관리하고 운동 추가 화면에 즉시 반영합니다.";
+    return descriptions.exerciseManagement;
   }
-  return "설정 변경사항은 저장 즉시 반영됩니다.";
+  return descriptions.default;
 }
 
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/settings";
   const router = useRouter();
+  const { copy } = useLocale();
   const isRoot = pathname === "/settings";
   const closeTimerRef = useRef<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(true);
@@ -100,7 +113,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
                 margin: 0,
               }}
             >
-              Settings
+              {copy.settings.title}
             </h1>
           </div>
         </header>
@@ -142,6 +155,7 @@ function SettingsChildModal({
   children: ReactNode;
 }) {
   const headerAction = useSettingsModalHeaderActionState();
+  const { copy } = useLocale();
   const isExerciseManagement = pathname.startsWith("/settings/exercise-management");
   const panelClassName = `settings-child-modal-panel${isExerciseManagement ? " settings-child-modal-panel--fixed-height" : ""}`;
 
@@ -178,7 +192,7 @@ function SettingsChildModal({
                 margin: 0,
               }}
             >
-              Settings
+              {copy.settings.title}
             </h1>
           </div>
         </header>
@@ -198,9 +212,9 @@ function SettingsChildModal({
       <BottomSheet
         open={sheetOpen}
         onClose={onClose}
-        title={modalTitleFromPathname(pathname)}
-        description={modalDescriptionFromPathname(pathname)}
-        closeLabel="닫기"
+        title={modalTitleFromPathname(pathname, copy.settings.modalTitles, copy.settings.detailTitle)}
+        description={modalDescriptionFromPathname(pathname, copy.settings.modalDescriptions)}
+        closeLabel={copy.settings.close}
         panelClassName={panelClassName}
         primaryAction={headerAction}
       >

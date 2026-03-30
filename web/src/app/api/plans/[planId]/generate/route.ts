@@ -3,12 +3,15 @@ import { generateAndSaveSession } from "@/server/program-engine/generateSession"
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ planId: string }> };
 
 async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const { planId } = await ctx.params;
+    const locale = resolveRequestLocale();
 
     const body = await req.json();
     const userId = getAuthenticatedUserId();
@@ -30,7 +33,12 @@ async function POSTImpl(req: Request, ctx: Ctx) {
       (day !== undefined && !Number.isFinite(day))
     ) {
       return NextResponse.json(
-        { error: "week/day must be numeric when provided" },
+        {
+          error:
+            locale === "ko"
+              ? "week/day 값이 주어지면 숫자여야 합니다."
+              : "week/day must be numeric when provided",
+        },
         { status: 400 },
       );
     }
@@ -47,10 +55,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     return NextResponse.json({ session }, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json(
-      { error: e?.message ?? "Unknown error", detail: String(e) },
-      { status: 500 },
-    );
+    return apiErrorResponse(e, { extra: { detail: String(e) } });
   }
 }
 

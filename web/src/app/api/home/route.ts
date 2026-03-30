@@ -18,6 +18,8 @@ import { logError } from "@/server/observability/logger";
 import { generateAndSaveSession } from "@/server/program-engine/generateSession";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -52,6 +54,7 @@ function epley1RM(weightKg: number, reps: number) {
 // ─── Plans ───────────────────────────────────────────────────────────────────
 
 async function fetchPlans(userId: string) {
+  const locale = await resolveRequestLocale();
   const baseItems = await db
     .select()
     .from(plan)
@@ -105,7 +108,9 @@ async function fetchPlans(userId: string) {
   const items = baseItems.map((item) => {
     const baseProgramName =
       (item.rootProgramVersionId && versionNameById.get(item.rootProgramVersionId)) ??
-      (item.type === "COMPOSITE" ? "복합 플랜" : "프로그램 정보 없음");
+      (item.type === "COMPOSITE"
+        ? (locale === "ko" ? "복합 플랜" : "Composite Plan")
+        : (locale === "ko" ? "프로그램 정보 없음" : "No Program Info"));
     return {
       ...item,
       baseProgramName,
@@ -163,7 +168,7 @@ async function fetchLogs(userId: string, limit: number) {
 
 // ─── PRs ─────────────────────────────────────────────────────────────────────
 
-async function fetchPrs(userId: string, from: Date, to: Date, limit: number) {
+async function fetchPrs(userId: string, from: Date, to: Date, limit: number, locale: "ko" | "en") {
   // PERF: 날짜를 일 단위로 잘라 동일 날짜 내 반복 요청에서 캐시 히트율 향상
   const cacheParams = {
     from: from.toISOString().slice(0, 10),
@@ -225,7 +230,13 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number) {
     if (!key) continue;
 
     if (!byExercise.has(key)) {
-      byExercise.set(key, { exerciseId: r.exerciseId ?? null, exerciseName: String(r.exerciseName ?? "Unknown"), first: point, best: point, latest: point });
+      byExercise.set(key, {
+        exerciseId: r.exerciseId ?? null,
+        exerciseName: String(r.exerciseName ?? (locale === "ko" ? "알 수 없는 운동" : "Unknown Exercise")),
+        first: point,
+        best: point,
+        latest: point,
+      });
       continue;
     }
 
@@ -358,6 +369,7 @@ async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
+    const locale = await resolveRequestLocale();
     const timezone = normalizeTimezone(searchParams.get("timezone"));
     const nowKey = dateOnlyInTimezone(new Date(), timezone);
 
@@ -370,7 +382,7 @@ async function GETImpl(req: Request) {
     const [plansResult, logsResult, prsResult, volResult] = await Promise.all([
       fetchPlans(userId),
       fetchLogs(userId, 40),
-      fetchPrs(userId, prFrom, to, 4),
+      fetchPrs(userId, prFrom, to, 4, locale),
       fetchVolumeSeries(userId),
     ]);
 
@@ -392,7 +404,7 @@ async function GETImpl(req: Request) {
     });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

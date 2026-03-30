@@ -19,13 +19,30 @@ type ApiMutationOptions = {
   queueIfOffline?: boolean;
 };
 
+function resolveBrowserLocale(): "ko" | "en" {
+  if (typeof document !== "undefined") {
+    const lang = document.documentElement.lang.trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+    if (lang.startsWith("en")) return "en";
+  }
+  if (typeof navigator !== "undefined") {
+    const lang = String(navigator.language ?? "").trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+  }
+  return "en";
+}
+
 /**
  * 뮤테이션이 오프라인 큐에 저장되었을 때 throw되는 에러.
  * 호출 측에서 isOfflineQueuedError()로 구분하여 UX 처리 가능.
  */
 export class OfflineQueuedError extends Error {
-  constructor() {
-    super("요청이 오프라인 큐에 저장되었어요. 연결되면 자동으로 전송됩니다.");
+  constructor(locale: "ko" | "en" = resolveBrowserLocale()) {
+    super(
+      locale === "ko"
+        ? "요청이 오프라인 큐에 저장되었어요. 연결되면 자동으로 전송됩니다."
+        : "The request was queued offline and will be sent automatically when you're back online.",
+    );
     this.name = "OfflineQueuedError";
   }
 }

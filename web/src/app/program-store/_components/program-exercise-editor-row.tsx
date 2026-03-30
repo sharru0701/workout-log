@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import {
   inferProgressionTargetFromExerciseName,
@@ -55,16 +56,24 @@ function progressionTargetLabel(target: ProgramProgressionTarget | null | undefi
   return "Target";
 }
 
-function operatorRowTypeLabel(rowType: ProgramRowType | null | undefined) {
-  if (rowType === "AUTO") return "Auto";
-  if (rowType === "CUSTOM") return "Custom";
-  return "Custom";
+function operatorRowTypeLabel(rowType: ProgramRowType | null | undefined, locale: "ko" | "en") {
+  if (rowType === "AUTO") return locale === "ko" ? "자동" : "Auto";
+  if (rowType === "CUSTOM") return locale === "ko" ? "수동" : "Custom";
+  return locale === "ko" ? "수동" : "Custom";
 }
 
-function operatorRowTypeHelp(rowType: ProgramRowType | null | undefined) {
-  if (rowType === "AUTO") return "Operator 자동 행입니다. 선택한 운동과 진행 타겟 기준으로 중량/반복수/세트가 자동 적용됩니다.";
-  if (rowType === "CUSTOM") return "Operator 자동 로직을 따르지 않는 자유 행입니다. 이 경우만 세트/횟수를 직접 입력합니다.";
-  return "행 타입을 선택하세요.";
+function operatorRowTypeHelp(rowType: ProgramRowType | null | undefined, locale: "ko" | "en") {
+  if (rowType === "AUTO") {
+    return locale === "ko"
+      ? "Operator 자동 행입니다. 선택한 운동과 진행 타겟 기준으로 중량, 반복수, 세트가 자동 적용됩니다."
+      : "This is an Operator auto row. Weight, reps, and sets follow the selected exercise and progression target automatically.";
+  }
+  if (rowType === "CUSTOM") {
+    return locale === "ko"
+      ? "Operator 자동 로직을 따르지 않는 자유 행입니다. 이 경우만 세트와 반복수를 직접 입력합니다."
+      : "This row does not follow the Operator auto logic. Only custom rows require manual set and rep input.";
+  }
+  return locale === "ko" ? "행 타입을 선택하세요." : "Choose a row type.";
 }
 
 function operatorRowTypeTone(rowType: ProgramRowType | null | undefined) {
@@ -89,6 +98,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
   onDragStart,
   onDrop,
 }: ProgramExerciseEditorRowProps) {
+  const { copy, locale } = useLocale();
   const [exerciseQuery, setExerciseQuery] = useState(exercise.exerciseName);
   const deferredExerciseQuery = useDeferredValue(exerciseQuery);
   const [exercisePickerOpen, setExercisePickerOpen] = useState(() => exercise.exerciseName.trim().length === 0);
@@ -205,7 +215,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           {operatorStyle ? (
             <>
               <span className={operatorRowTypeTone(exercise.rowType)}>
-                {operatorRowTypeLabel(exercise.rowType)}
+                {operatorRowTypeLabel(exercise.rowType, locale)}
               </span>
               {operatorAutoRow && exercise.progressionTarget ? (
                 <span className="label label-program label-sm">{progressionTargetLabel(exercise.progressionTarget)}</span>
@@ -217,8 +227,8 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           <button
             type="button"
             className="btn btn-icon"
-            aria-label="운동 위로 이동"
-            title="운동 위로 이동"
+            aria-label={locale === "ko" ? "운동 위로 이동" : "Move exercise up"}
+            title={locale === "ko" ? "운동 위로 이동" : "Move exercise up"}
             onClick={() => onMove(sessionId, exercise.id, "up")}
             disabled={!canMoveUp}
           >
@@ -227,8 +237,8 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           <button
             type="button"
             className="btn btn-icon"
-            aria-label="운동 아래로 이동"
-            title="운동 아래로 이동"
+            aria-label={locale === "ko" ? "운동 아래로 이동" : "Move exercise down"}
+            title={locale === "ko" ? "운동 아래로 이동" : "Move exercise down"}
             onClick={() => onMove(sessionId, exercise.id, "down")}
             disabled={!canMoveDown}
           >
@@ -237,8 +247,8 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           <button
             type="button"
             className="btn btn-icon btn-icon-danger"
-            aria-label="운동 삭제"
-            title="운동 삭제"
+            aria-label={locale === "ko" ? "운동 삭제" : "Delete exercise"}
+            title={locale === "ko" ? "운동 삭제" : "Delete exercise"}
             onClick={() => onDelete(sessionId, exercise.id)}
           >
             <AppPlusMinusIcon kind="minus" />
@@ -247,7 +257,9 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       </div>
 
       <div>
-        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동종목</span>
+        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+          {locale === "ko" ? "운동종목" : "Exercise"}
+        </span>
         <div data-no-swipe="true">
           {selectedExerciseOption && !exercisePickerOpen ? (
             <button
@@ -263,7 +275,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 {formatExerciseOptionLabel(selectedExerciseOption)}
               </strong>
               <span>
-                변경
+                {copy.programExerciseEditor.change}
               </span>
             </button>
           ) : (
@@ -301,7 +313,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                   autoComplete="off"
                   value={exerciseQuery}
                   style={{ paddingInlineStart: "2.15rem", paddingInlineEnd: exerciseQuery.trim().length > 0 ? "2.25rem" : "var(--space-md)" }}
-                  placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? "운동종목 로딩 중..." : "운동종목 검색"}
+                  placeholder={exerciseOptionsLoading && exerciseOptions.length === 0 ? copy.programExerciseEditor.loadingExercises : copy.programExerciseEditor.searchExercises}
                   onChange={(event) => {
                     const nextQuery = event.target.value;
                     setExerciseQuery(nextQuery);
@@ -322,7 +334,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 {exerciseQuery.trim().length > 0 ? (
                   <button
                     type="button"
-                    aria-label="검색어 지우기"
+                    aria-label={copy.programExerciseEditor.clearQuery}
                     style={{
                       position: "absolute",
                       insetInlineEnd: "0.55rem",
@@ -354,7 +366,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
 
               <div
                 role="listbox"
-                aria-label="운동종목 검색 결과"
+                aria-label={copy.programExerciseEditor.searchResults}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -365,9 +377,9 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 }}
               >
                 {exerciseOptionsLoading ? (
-                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 중...</span>
+                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{copy.programExerciseEditor.searching}</span>
                 ) : filteredExerciseOptions.length === 0 ? (
-                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 조건에 맞는 운동종목이 없습니다.</span>
+                  <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{copy.programExerciseEditor.noMatchingExercises}</span>
                 ) : (
                   filteredExerciseOptions.map((option) => (
                     <button
@@ -395,7 +407,9 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       {!operatorStyle ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>수행 방식</span>
+            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+              {locale === "ko" ? "수행 방식" : "Execution Mode"}
+            </span>
             <AppSelect
               value={exercise.mode}
               onChange={(event) =>
@@ -405,19 +419,21 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                 })
               }
             >
-              <option value="MARKET">시중 프로그램 기반</option>
-              <option value="MANUAL">완전 수동</option>
+              <option value="MARKET">{locale === "ko" ? "시중 프로그램 기반" : "Based on Market Program"}</option>
+              <option value="MANUAL">{locale === "ko" ? "완전 수동" : "Fully Manual"}</option>
             </AppSelect>
           </label>
 
           {exercise.mode === "MARKET" && (
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>기반 프로그램</span>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                {locale === "ko" ? "기반 프로그램" : "Base Program"}
+              </span>
               <AppSelect
                 value={exercise.marketTemplateSlug ?? ""}
                 onChange={(event) => onPatch(sessionId, exercise.id, { marketTemplateSlug: event.target.value || null })}
               >
-                <option value="">선택</option>
+                <option value="">{locale === "ko" ? "선택" : "Select"}</option>
                 {publicTemplates.map((template) => (
                   <option key={template.id} value={template.slug}>
                     {formatProgramDisplayName(template.name)}
@@ -430,7 +446,9 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
           <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>행 타입</span>
+            <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+              {locale === "ko" ? "행 타입" : "Row Type"}
+            </span>
             <AppSelect
               value={exercise.rowType ?? "CUSTOM"}
               onChange={(event) => {
@@ -457,7 +475,9 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           </label>
           {operatorAutoRow ? (
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>진행 타겟</span>
+              <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+                {locale === "ko" ? "진행 타겟" : "Progression Target"}
+              </span>
               <AppSelect
                 value={exercise.progressionTarget ?? ""}
                 onChange={(event) =>
@@ -466,7 +486,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                   })
                 }
               >
-                <option value="">선택</option>
+                <option value="">{locale === "ko" ? "선택" : "Select"}</option>
                 <option value="SQUAT">Squat</option>
                 <option value="BENCH">Bench</option>
                 <option value="DEADLIFT">Deadlift</option>
@@ -476,11 +496,17 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
             </label>
           ) : null}
           <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-            {operatorRowTypeHelp(exercise.rowType)}
+            {operatorRowTypeHelp(exercise.rowType, locale)}
           </div>
           {operatorAutoDefaults ? (
             <div style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
-              Operator 자동 설정: <strong>{operatorAutoDefaults.sets}세트 x {operatorAutoDefaults.reps}회</strong>
+              {locale === "ko" ? "Operator 자동 설정:" : "Operator defaults:"}{" "}
+              <strong>
+                {operatorAutoDefaults.sets}
+                {locale === "ko" ? "세트 x " : " sets x "}
+                {operatorAutoDefaults.reps}
+                {locale === "ko" ? "회" : " reps"}
+              </strong>
             </div>
           ) : null}
         </div>
@@ -488,14 +514,21 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
 
       {!operatorAutoRow ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-          <AppNumberStepper label="세트" value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
-          <AppNumberStepper label="횟수" value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
+          <AppNumberStepper label={locale === "ko" ? "세트" : "Sets"} value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
+          <AppNumberStepper label={locale === "ko" ? "횟수" : "Reps"} value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
         </div>
       ) : null}
 
       <label>
-        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>메모</span>
-        <AppTextInput variant="workout" value={exercise.note} onChange={(event) => onPatch(sessionId, exercise.id, { note: event.target.value })} placeholder="세션 메모" />
+        <span style={{ display: "block", marginBottom: "var(--space-sm)", color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>
+          {locale === "ko" ? "메모" : "Note"}
+        </span>
+        <AppTextInput
+          variant="workout"
+          value={exercise.note}
+          onChange={(event) => onPatch(sessionId, exercise.id, { note: event.target.value })}
+          placeholder={locale === "ko" ? "세션 메모" : "Session note"}
+        />
       </label>
     </article>
   );

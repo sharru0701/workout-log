@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { useApiNetworkBusy } from "@/lib/ui/use-api-network-busy";
 import { BaseGroupedList, InfoRow, NavigationRow, RowIcon } from "./settings-list";
 import { useMaybeAppDialog } from "./app-dialog-provider";
@@ -102,10 +103,13 @@ export function useDelayedVisibility(active: boolean, delayMs = 420) {
 export function LoadingStateRows({
   active,
   delayMs = 420,
-  label = "불러오는 중",
-  ariaLabel = "Loading state",
+  label,
+  ariaLabel,
   className,
 }: LoadingStateRowsProps) {
+  const { locale } = useLocale();
+  const resolvedLabel = label ?? (locale === "ko" ? "불러오는 중" : "Loading");
+  const resolvedAriaLabel = ariaLabel ?? (locale === "ko" ? "로딩 상태" : "Loading state");
   const [effectiveDelayMs, setEffectiveDelayMs] = useState(delayMs);
 
   useEffect(() => {
@@ -127,21 +131,24 @@ export function LoadingStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow label={label} leading={<RowIcon symbol="LD" tone="info" />} />
+    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+      <InfoRow label={resolvedLabel} leading={<RowIcon symbol="LD" tone="info" />} />
     </BaseGroupedList>
   );
 }
 
 export function EmptyStateRows({
   when,
-  label = "설정 값 없음",
-  ariaLabel = "Empty state",
+  label,
+  ariaLabel,
   className,
   deferWhileNetworkBusy = true,
   maxDeferMs = 540,
   revealDelayMs = 120,
 }: EmptyStateRowsProps) {
+  const { locale } = useLocale();
+  const resolvedLabel = label ?? (locale === "ko" ? "설정 값 없음" : "No items available");
+  const resolvedAriaLabel = ariaLabel ?? (locale === "ko" ? "빈 상태" : "Empty state");
   const networkBusy = useApiNetworkBusy();
   const [networkGateOpen, setNetworkGateOpen] = useState(false);
 
@@ -167,8 +174,8 @@ export function EmptyStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow label={label} />
+    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+      <InfoRow label={resolvedLabel} />
     </BaseGroupedList>
   );
 }
@@ -177,16 +184,20 @@ export function ErrorStateRows({
   message,
   onRetry,
   retryDisabled = false,
-  retryLabel = "다시 시도",
-  title = "오류",
-  ariaLabel = "Error state",
+  retryLabel,
+  title,
+  ariaLabel,
   className,
 }: ErrorStateRowsProps) {
+  const { locale } = useLocale();
+  const resolvedRetryLabel = retryLabel ?? (locale === "ko" ? "다시 시도" : "Retry");
+  const resolvedTitle = title ?? (locale === "ko" ? "오류" : "Error");
+  const resolvedAriaLabel = ariaLabel ?? (locale === "ko" ? "오류 상태" : "Error state");
   const dialog = useMaybeAppDialog();
   const lastShownMessageRef = useRef<string | null>(null);
   const hasMessage = hasDialogMessage(message);
   const messageText = hasMessage ? toDialogText(message) : "";
-  const titleText = toDialogText(title, "오류");
+  const titleText = toDialogText(resolvedTitle, locale === "ko" ? "오류" : "Error");
   const shouldUseDialog = Boolean(dialog && !onRetry && hasMessage && messageText);
   const dialogKey = messageText ? `${titleText}::${messageText}` : "";
 
@@ -199,11 +210,11 @@ export function ErrorStateRows({
       await dialog.alert({
         title: titleText,
         message: messageText,
-        buttonText: "확인",
+        buttonText: locale === "ko" ? "확인" : "OK",
         tone: "danger",
       });
     })();
-  }, [dialog, dialogKey, messageText, shouldUseDialog, titleText]);
+  }, [dialog, dialogKey, locale, messageText, shouldUseDialog, titleText]);
 
   useEffect(() => {
     if (dialogKey) return;
@@ -215,10 +226,10 @@ export function ErrorStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel}>
+    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
       <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="warning" />} />
       <NavigationRow
-        label={retryLabel}
+        label={resolvedRetryLabel}
         onPress={onRetry}
         disabled={retryDisabled || !onRetry}
         showChevron={Boolean(onRetry && !retryDisabled)}
@@ -230,15 +241,18 @@ export function ErrorStateRows({
 
 export function DisabledStateRows({
   when,
-  label = "현재 사용할 수 없음",
-  ariaLabel = "Disabled state",
+  label,
+  ariaLabel,
   className,
 }: DisabledStateRowsProps) {
+  const { locale } = useLocale();
+  const resolvedLabel = label ?? (locale === "ko" ? "현재 사용할 수 없음" : "Currently unavailable");
+  const resolvedAriaLabel = ariaLabel ?? (locale === "ko" ? "비활성 상태" : "Disabled state");
   if (!when) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel}>
-      <InfoRow tone="disabled" label={label} leading={<RowIcon symbol="DS" tone="neutral" />} />
+    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+      <InfoRow tone="disabled" label={resolvedLabel} leading={<RowIcon symbol="DS" tone="neutral" />} />
     </BaseGroupedList>
   );
 }
@@ -246,16 +260,19 @@ export function DisabledStateRows({
 export function NoticeStateRows({
   message,
   tone = "neutral",
-  label = "안내",
+  label,
   preferInline = false,
-  ariaLabel = "Notice state",
+  ariaLabel,
   className,
 }: NoticeStateRowsProps) {
+  const { locale } = useLocale();
+  const resolvedLabel = label ?? (locale === "ko" ? "안내" : "Notice");
+  const resolvedAriaLabel = ariaLabel ?? (locale === "ko" ? "안내 상태" : "Notice state");
   const dialog = useMaybeAppDialog();
   const lastShownMessageRef = useRef<string | null>(null);
   const hasMessage = hasDialogMessage(message);
   const messageText = hasMessage ? toDialogText(message) : "";
-  const titleText = toDialogText(label, "안내");
+  const titleText = toDialogText(resolvedLabel, locale === "ko" ? "안내" : "Notice");
   const dialogKey = messageText ? `${titleText}::${messageText}` : "";
   const shouldUseDialog = Boolean(dialog && dialogKey && !preferInline);
 
@@ -267,10 +284,10 @@ export function NoticeStateRows({
     void dialog.alert({
       title: titleText,
       message: messageText,
-      buttonText: "확인",
+      buttonText: locale === "ko" ? "확인" : "OK",
       tone: tone === "warning" || tone === "critical" ? "danger" : "default",
     });
-  }, [dialog, dialogKey, messageText, shouldUseDialog, titleText, tone]);
+  }, [dialog, dialogKey, locale, messageText, shouldUseDialog, titleText, tone]);
 
   useEffect(() => {
     if (dialogKey) return;
@@ -282,7 +299,7 @@ export function NoticeStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={ariaLabel}>
+    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
       <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="surface" />} />
     </BaseGroupedList>
   );

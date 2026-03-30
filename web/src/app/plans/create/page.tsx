@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { APP_ROUTES } from "@/lib/app-routes";
 
 type NavItem = {
@@ -8,37 +9,6 @@ type NavItem = {
   description: string;
   iconSymbol: string;
 };
-
-const creationItems: NavItem[] = [
-  {
-    href: APP_ROUTES.programStore,
-    label: "프로그램 고르고 시작",
-    subtitle: "Recommended",
-    description: "프로그램 스토어에서 프로그램을 선택하면 플랜이 생성되고 바로 시작 흐름으로 이어집니다.",
-    iconSymbol: "library_books",
-  },
-  {
-    href: APP_ROUTES.programCreate,
-    label: "커스텀 프로그램 만들기",
-    subtitle: "Custom",
-    description: "내 루틴을 직접 만들고 플랜으로 바로 연결합니다.",
-    iconSymbol: "add_circle",
-  },
-  {
-    href: APP_ROUTES.plansContext,
-    label: "생성 기준 점검",
-    subtitle: "Advanced",
-    description: "날짜, 시간대, 세션 키 기준을 먼저 확인해야 할 때 사용합니다.",
-    iconSymbol: "tune",
-  },
-  {
-    href: APP_ROUTES.plansManage,
-    label: "기존 플랜 관리",
-    subtitle: "Manage",
-    description: "이미 있는 플랜은 생성이 아니라 관리 화면에서 다룹니다.",
-    iconSymbol: "assignment",
-  },
-];
 
 function NavRow({ item }: { item: NavItem }) {
   return (
@@ -116,7 +86,38 @@ function NavRow({ item }: { item: NavItem }) {
   );
 }
 
-export default function PlanCreatePage() {
+export default async function PlanCreatePage() {
+  const locale = await resolveRequestLocale();
+  const creationItems: NavItem[] = [
+    {
+      href: APP_ROUTES.programStore,
+      label: locale === "ko" ? "프로그램 고르고 시작" : "Choose a Program",
+      subtitle: "Recommended",
+      description: locale === "ko" ? "프로그램 스토어에서 프로그램을 선택하면 플랜이 생성되고 바로 시작 흐름으로 이어집니다." : "Pick a program from the store and continue directly into plan setup.",
+      iconSymbol: "library_books",
+    },
+    {
+      href: APP_ROUTES.programCreate,
+      label: locale === "ko" ? "커스텀 프로그램 만들기" : "Create a Custom Program",
+      subtitle: "Custom",
+      description: locale === "ko" ? "내 루틴을 직접 만들고 플랜으로 바로 연결합니다." : "Build your own routine and turn it into a plan.",
+      iconSymbol: "add_circle",
+    },
+    {
+      href: APP_ROUTES.plansContext,
+      label: locale === "ko" ? "생성 기준 점검" : "Review Generation Rules",
+      subtitle: "Advanced",
+      description: locale === "ko" ? "날짜, 시간대, 세션 키 기준을 먼저 확인해야 할 때 사용합니다." : "Use this when you need to review dates, time zones, and session-key rules first.",
+      iconSymbol: "tune",
+    },
+    {
+      href: APP_ROUTES.plansManage,
+      label: locale === "ko" ? "기존 플랜 관리" : "Manage Existing Plans",
+      subtitle: "Manage",
+      description: locale === "ko" ? "이미 있는 플랜은 생성이 아니라 관리 화면에서 다룹니다." : "Use the management screen for plans you already have.",
+      iconSymbol: "assignment",
+    },
+  ];
   return (
     <div>
       {/* Header */}
@@ -150,10 +151,10 @@ export default function PlanCreatePage() {
             margin: "0 0 var(--space-sm)",
           }}
         >
-          새 플랜 시작하기
+          {locale === "ko" ? "새 플랜 시작하기" : "Start a New Plan"}
         </h1>
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
-          실제 시작은 프로그램 스토어에서 고르거나 커스텀 프로그램을 만드는 흐름으로 진행됩니다.
+          {locale === "ko" ? "실제 시작은 프로그램 스토어에서 고르거나 커스텀 프로그램을 만드는 흐름으로 진행됩니다." : "Start by choosing a program from the store or creating a custom one."}
         </p>
       </div>
 
@@ -170,7 +171,7 @@ export default function PlanCreatePage() {
             margin: "0 0 var(--space-sm)",
           }}
         >
-          시작 경로
+          {locale === "ko" ? "시작 경로" : "Start Paths"}
         </h2>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>

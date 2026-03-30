@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { getPendingCount, getPendingMutations, removeMutation } from "@/lib/offline-queue";
 import { apiInvalidateCache } from "@/lib/api";
 
@@ -13,6 +14,7 @@ import { apiInvalidateCache } from "@/lib/api";
  * - 동기화 상태는 offline-indicator와 공유하는 DOM 이벤트로 전파.
  */
 export function OfflineQueueFlush() {
+  const { locale } = useLocale();
   const [pendingCount, setPendingCount] = useState(0);
   const [isFlushing, setIsFlushing] = useState(false);
   const [justFlushed, setJustFlushed] = useState(false);
@@ -107,10 +109,10 @@ export function OfflineQueueFlush() {
       aria-atomic="true"
       className={`offline-sync-bar ${justFlushed && !isFlushing ? "offline-sync-bar--done" : ""}`}
     >
-      {isFlushing && `저장된 요청 ${pendingCount}개 전송 중...`}
-      {!isFlushing && justFlushed && "동기화 완료"}
+      {isFlushing && (locale === "ko" ? `저장된 요청 ${pendingCount}개 전송 중...` : `Sending ${pendingCount} queued request(s)...`)}
+      {!isFlushing && justFlushed && (locale === "ko" ? "동기화 완료" : "Sync complete")}
       {!isFlushing && !justFlushed && pendingCount > 0 &&
-        `오프라인 저장된 요청 ${pendingCount}개`}
+        (locale === "ko" ? `오프라인 저장된 요청 ${pendingCount}개` : `${pendingCount} request(s) saved offline`)}
     </div>
   );
 }

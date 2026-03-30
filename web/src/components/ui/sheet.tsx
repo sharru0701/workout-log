@@ -11,6 +11,7 @@ import {
 } from "react";
 import type { SheetPrimaryAction } from "./sheet-header";
 import { SheetHeader, SheetActionHeader } from "./sheet-header";
+import { normalizeLocalePreference } from "@/lib/settings/workout-preferences";
 
 const CLOSE_DURATION = 320;
 
@@ -36,7 +37,7 @@ export function Sheet({
   description,
   className = "",
   panelClassName = "",
-  closeLabel = "닫기",
+  closeLabel,
   header,
   primaryAction = null,
   footer,
@@ -48,10 +49,32 @@ export function Sheet({
   const closeTimerRef = useRef<number | null>(null);
   const isClosingRef = useRef(false);
   const [mounted, setMounted] = useState(false);
+  const resolvedCloseLabel =
+    closeLabel ??
+    (typeof document !== "undefined" && normalizeLocalePreference(document.documentElement.lang) === "en"
+      ? "Close"
+      : "닫기");
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const animateClose = useCallback(
+    (dialog: HTMLDialogElement) => {
+      if (isClosingRef.current) return;
+      isClosingRef.current = true;
+      dialog.removeAttribute("data-open");
+      dialog.setAttribute("data-closing", "");
+
+      closeTimerRef.current = window.setTimeout(() => {
+        dialog.close();
+        dialog.removeAttribute("data-closing");
+        isClosingRef.current = false;
+        closeTimerRef.current = null;
+      }, CLOSE_DURATION);
+    },
+    [],
+  );
 
   // Open/close the <dialog>
   // `mounted` is in deps so the effect re-runs once the <dialog> element exists.
@@ -81,24 +104,7 @@ export function Sheet({
         animateClose(dialog);
       }
     }
-  }, [open, mounted]);
-
-  const animateClose = useCallback(
-    (dialog: HTMLDialogElement) => {
-      if (isClosingRef.current) return;
-      isClosingRef.current = true;
-      dialog.removeAttribute("data-open");
-      dialog.setAttribute("data-closing", "");
-
-      closeTimerRef.current = window.setTimeout(() => {
-        dialog.close();
-        dialog.removeAttribute("data-closing");
-        isClosingRef.current = false;
-        closeTimerRef.current = null;
-      }, CLOSE_DURATION);
-    },
-    [],
-  );
+  }, [animateClose, open, mounted]);
 
   const handleClose = useCallback(() => {
     const dialog = dialogRef.current;
@@ -303,7 +309,7 @@ export function Sheet({
             <SheetActionHeader
               title={title}
               description={hasDescription ? description : undefined}
-              closeLabel={closeLabel}
+              closeLabel={resolvedCloseLabel}
               onClose={handleClose}
               action={primaryAction}
               onPointerDown={onHandlePointerDown}
@@ -312,7 +318,7 @@ export function Sheet({
             <SheetHeader
               title={title}
               description={hasDescription ? description : undefined}
-              closeLabel={closeLabel}
+              closeLabel={resolvedCloseLabel}
               onClose={handleClose}
               onPointerDown={onHandlePointerDown}
             />

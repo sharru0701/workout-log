@@ -4,6 +4,8 @@ import { db } from "@/server/db/client";
 import { exercise, exerciseAlias } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 async function GETImpl(req: Request) {
   try {
@@ -70,18 +72,19 @@ async function GETImpl(req: Request) {
     return NextResponse.json({ items });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
 async function POSTImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const body = await req.json();
     const name = String(body.name ?? "").trim();
     const category = body.category ? String(body.category).trim() : null;
 
     if (!name) {
-      return NextResponse.json({ error: "name required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "운동 이름이 필요합니다." : "Exercise name is required." }, { status: 400 });
     }
 
     const inserted = await db
@@ -107,7 +110,7 @@ async function POSTImpl(req: Request) {
     return NextResponse.json({ exercise: existing[0] ?? null, created: false });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

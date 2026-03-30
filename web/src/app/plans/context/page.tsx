@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -113,6 +114,8 @@ export default async function PlanContextPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
+  const locale = await resolveRequestLocale();
+  const copy = getAppCopy(locale);
   const params = searchParams ? await searchParams : {};
   const userId = readString(params, "userId", "dev");
   const startDate = readString(params, "startDate", new Date().toISOString().slice(0, 10));
@@ -133,43 +136,43 @@ export default async function PlanContextPage({
   const contextItems: SettingItem[] = [
     {
       href: toSelectionHref("/plans/context/select/user-id", returnTo),
-      label: "사용자 ID",
-      description: "생성 대상 사용자 범위를 선택합니다.",
+      label: copy.plansContext.fields.userId.label,
+      description: copy.plansContext.fields.userId.description,
       currentValue: userId,
       iconSymbol: "person",
     },
     {
       href: toSelectionHref("/plans/context/picker/start-date", returnTo),
-      label: "시작 날짜",
-      description: "생성 기준 날짜를 설정합니다.",
+      label: copy.plansContext.fields.startDate.label,
+      description: copy.plansContext.fields.startDate.description,
       currentValue: startDate,
       iconSymbol: "calendar_today",
     },
     {
       href: toSelectionHref("/plans/context/select/timezone", returnTo),
-      label: "시간대",
-      description: "날짜 경계 계산 시간대를 설정합니다.",
+      label: copy.plansContext.fields.timezone.label,
+      description: copy.plansContext.fields.timezone.description,
       currentValue: timezone,
       iconSymbol: "schedule",
     },
     {
       href: toSelectionHref("/plans/context/select/session-key-mode", returnTo),
-      label: "세션 키 방식",
-      description: "세션 키 포맷을 선택합니다.",
+      label: copy.plansContext.fields.sessionKeyMode.label,
+      description: copy.plansContext.fields.sessionKeyMode.description,
       currentValue: sessionKeyMode,
       iconSymbol: "key",
     },
     {
       href: toSelectionHref("/plans/context/picker/week", returnTo),
-      label: "주차",
-      description: "주차 인덱스를 설정합니다.",
+      label: copy.plansContext.fields.week.label,
+      description: copy.plansContext.fields.week.description,
       currentValue: String(week),
       iconSymbol: "view_week",
     },
     {
       href: toSelectionHref("/plans/context/picker/day", returnTo),
-      label: "일차",
-      description: "일차 인덱스를 설정합니다.",
+      label: copy.plansContext.fields.day.label,
+      description: copy.plansContext.fields.day.description,
       currentValue: String(day),
       iconSymbol: "today",
     },
@@ -196,7 +199,7 @@ export default async function PlanContextPage({
             marginBottom: "4px",
           }}
         >
-          Advanced
+          {copy.plansContext.eyebrow}
         </div>
         <h1
           style={{
@@ -208,10 +211,10 @@ export default async function PlanContextPage({
             margin: "0 0 var(--space-sm)",
           }}
         >
-          생성 기준 확인
+          {copy.plansContext.title}
         </h1>
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.5 }}>
-          날짜, 시간대, 세션 키 기준을 점검하는 화면입니다.
+          {copy.plansContext.description}
         </p>
         <div style={{ display: "flex", gap: "var(--space-sm)" }}>
           <Link
@@ -231,7 +234,7 @@ export default async function PlanContextPage({
               textDecoration: "none",
             }}
           >
-            프로그램 고르기
+            {copy.plansContext.pickProgram}
           </Link>
           <Link
             href={APP_ROUTES.programCreate}
@@ -250,7 +253,7 @@ export default async function PlanContextPage({
               textDecoration: "none",
             }}
           >
-            커스텀 만들기
+            {copy.plansContext.createCustom}
           </Link>
         </div>
       </div>
@@ -267,7 +270,7 @@ export default async function PlanContextPage({
           margin: "0 0 var(--space-sm)",
         }}
       >
-        기준 항목
+        {copy.plansContext.sectionTitle}
       </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
         {contextItems.map((item) => (

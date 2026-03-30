@@ -1,11 +1,14 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import {
+  getProgramDescription,
   getProgramDetailInfo,
   type ProgramListItem,
+  type ProgramStoreLocale,
   type ProgramSessionDraft,
   type ProgramTemplate,
 } from "@/lib/program-store/model";
@@ -40,19 +43,24 @@ function tagLabelClass(tag: string): string {
 }
 
 const INTENSITY_MAP: Record<string, number> = {
+  Beginner: 2,
+  Intermediate: 3,
+  Advanced: 4,
+  Standard: 3,
   초급: 2,
   중급: 3,
   고급: 4,
   일반: 3,
 };
 
-const MODULE_NAMES: Record<string, string> = {
-  SQUAT: "스쿼트",
-  BENCH: "벤치프레스",
-  DEADLIFT: "데드리프트",
-  OHP: "오버헤드 프레스",
-  PULL: "풀업 / 로우",
-};
+function moduleName(module: string, locale: ProgramStoreLocale) {
+  if (module === "SQUAT") return locale === "ko" ? "스쿼트" : "Squat";
+  if (module === "BENCH") return locale === "ko" ? "벤치프레스" : "Bench Press";
+  if (module === "DEADLIFT") return locale === "ko" ? "데드리프트" : "Deadlift";
+  if (module === "OHP") return locale === "ko" ? "오버헤드 프레스" : "Overhead Press";
+  if (module === "PULL") return locale === "ko" ? "풀업 / 로우" : "Pull-Up / Row";
+  return module;
+}
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
@@ -203,64 +211,68 @@ function ArchitectureGrid({ items }: { items: ArchItem[] }) {
 
 // ─── Architecture items builder ───────────────────────────────────────────────
 
-function buildArchItems(item: ProgramListItem): ArchItem[] {
-  const info = getProgramDetailInfo(item.template);
-  const def = item.template.latestVersion?.definition as Record<string, unknown> | undefined;
-  const kind = def?.kind as string | undefined;
-
+function buildArchItems(item: ProgramListItem, locale: ProgramStoreLocale): ArchItem[] {
+  const info = getProgramDetailInfo(item.template, locale);
   const items: ArchItem[] = [];
 
-  // 1. 방식 (progression method)
-  const typeStat = info.stats.find((s) => s.label === "방식");
+  const typeStat = info.stats.find((s) => s.key === "type");
   items.push({
     icon: "equalizer",
-    title: "진행 방식",
+    title: locale === "ko" ? "진행 방식" : "Progression Mode",
     desc:
-      typeStat?.value === "자동 진행"
-        ? "알고리즘 기반 자동 중량 산출 및 세트 진행"
-        : "고정 세션 기반 자유로운 중량 설정",
+      typeStat?.value === (locale === "ko" ? "자동 진행" : "Auto Progression")
+        ? locale === "ko"
+          ? "알고리즘 기반 자동 중량 산출과 세트 흐름을 따릅니다."
+          : "Uses algorithm-driven load targets and progression across the cycle."
+        : locale === "ko"
+          ? "고정 세션 구조를 바탕으로 중량과 볼륨을 직접 조절합니다."
+          : "Keeps sessions fixed so you can control load and volume directly.",
   });
 
-  // 2. 빈도/주기
-  const freqStat = info.stats.find((s) => s.label === "주간 빈도");
-  const cycleStat = info.stats.find((s) => s.label === "사이클");
+  const freqStat = info.stats.find((s) => s.key === "frequency");
+  const cycleStat = info.stats.find((s) => s.key === "cycle");
   items.push({
     icon: "event_repeat",
-    title: "훈련 일정",
-    desc: [freqStat?.value, cycleStat?.value].filter(Boolean).join(" · ") || "주간 훈련 일정 기반",
+    title: locale === "ko" ? "훈련 일정" : "Training Rhythm",
+    desc:
+      [freqStat?.value, cycleStat?.value].filter((value) => value && value !== "-").join(" · ") ||
+      (locale === "ko" ? "반복 가능한 주간 훈련 리듬을 중심으로 설계되었습니다." : "Built around a repeatable weekly training rhythm."),
   });
 
-  // 3. 훈련 구성 (modules or sessions)
   if (info.modules && info.modules.length > 0) {
-    const moduleNames = info.modules.map((m) => MODULE_NAMES[m] ?? m).join(", ");
+    const moduleNames = info.modules.map((m) => moduleName(m, locale)).join(", ");
     items.push({
       icon: "fitness_center",
-      title: "훈련 모듈",
+      title: locale === "ko" ? "훈련 모듈" : "Lift Modules",
       desc: moduleNames,
     });
   } else if (info.sessions && info.sessions.length > 0) {
     items.push({
       icon: "view_agenda",
-      title: "세션 구성",
-      desc: `${info.sessions.length}개 세션 · ${info.sessions.reduce((acc, s) => acc + s.exercises.length, 0)}개 종목`,
+      title: locale === "ko" ? "세션 구성" : "Session Structure",
+      desc:
+        locale === "ko"
+          ? `${info.sessions.length}개 세션 · ${info.sessions.reduce((acc, s) => acc + s.exercises.length, 0)}개 종목`
+          : `${info.sessions.length} sessions · ${info.sessions.reduce((acc, s) => acc + s.exercises.length, 0)} exercises`,
     });
   } else {
     items.push({
       icon: "swap_horiz",
-      title: "종목 구성",
-      desc: "목적에 맞는 종목으로 구성된 세션",
+      title: locale === "ko" ? "종목 구성" : "Exercise Mix",
+      desc: locale === "ko" ? "목적에 맞는 종목 흐름으로 구성되었습니다." : "Built as a balanced exercise mix around the program goal.",
     });
   }
 
-  // 4. 강도 기준
-  const diffStat = info.stats.find((s) => s.label === "난이도");
+  const diffStat = info.stats.find((s) => s.key === "difficulty");
   const hasProgression = Boolean(info.progressionNote);
   items.push({
     icon: "speed",
-    title: "강도 기준",
+    title: locale === "ko" ? "강도 기준" : "Intensity Profile",
     desc: hasProgression
-      ? `${diffStat?.value ?? "표준"} 수준 · ${info.progressionNote}`
-      : `${diffStat?.value ?? "표준"} 수준 난이도의 프로그램`,
+      ? `${diffStat?.value ?? (locale === "ko" ? "일반" : "Standard")} · ${info.progressionNote}`
+      : locale === "ko"
+        ? `${diffStat?.value ?? "일반"} 수준 난이도로 설계된 프로그램입니다.`
+        : `Built around a ${diffStat?.value ?? "Standard"} training profile.`,
   });
 
   return items;
@@ -293,33 +305,33 @@ export function ProgramDetailSheet({
   onCustomize,
   onDelete,
 }: Props) {
+  const { locale } = useLocale();
   if (!item) return null;
 
-  const info = getProgramDetailInfo(item.template);
+  const info = getProgramDetailInfo(item.template, locale);
+  const programDescription = getProgramDescription(item.template, locale);
   const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
   const isCustom = item.source === "CUSTOM";
   const programName = formatName(item.template.name);
 
-  // ── Bento stats ──
-  const cycleStat = info.stats.find((s) => s.label === "사이클");
-  const frequencyStat = info.stats.find((s) => s.label === "주간 빈도");
-  const difficultyStat = info.stats.find((s) => s.label === "난이도");
-  const difficultyLevel = difficultyStat?.value ?? "일반";
+  const cycleStat = info.stats.find((s) => s.key === "cycle");
+  const frequencyStat = info.stats.find((s) => s.key === "frequency");
+  const difficultyStat = info.stats.find((s) => s.key === "difficulty");
+  const difficultyLevel = difficultyStat?.value ?? (locale === "ko" ? "일반" : "Standard");
 
   // ── Level badge metadata ──
   const levelBadge = (() => {
-    if (difficultyLevel === "초급") return { label: "BEGINNER", color: "var(--color-info)" };
-    if (difficultyLevel === "중급") return { label: "INTERMEDIATE", color: "var(--color-primary)" };
-    if (difficultyLevel === "고급") return { label: "ADVANCED", color: "var(--color-warning)" };
+    if (difficultyLevel === "초급" || difficultyLevel === "Beginner") return { label: "BEGINNER", color: "var(--color-info)" };
+    if (difficultyLevel === "중급" || difficultyLevel === "Intermediate") return { label: "INTERMEDIATE", color: "var(--color-primary)" };
+    if (difficultyLevel === "고급" || difficultyLevel === "Advanced") return { label: "ADVANCED", color: "var(--color-warning)" };
     if (isCustom) return { label: "CUSTOM", color: "var(--color-info)" };
     return { label: "STANDARD", color: "var(--color-primary)" };
   })();
 
   // ── Architecture items ──
-  const archItems = buildArchItems(item);
+  const archItems = buildArchItems(item, locale);
 
-  // ── Technical logbook rows (remaining stats) ──
-  const logbookStats = info.stats.filter((s) => !["난이도"].includes(s.label));
+  const logbookStats = info.stats.filter((s) => s.key !== "difficulty");
 
   // ── Session breakdown ──
   const hasSessions = Boolean(info.sessions && info.sessions.length > 0);
@@ -430,14 +442,14 @@ export function ProgramDetailSheet({
         disabled={saving || !item.template.latestVersion}
         onClick={onStart}
       >
-        이 프로그램으로 시작하기
+        {locale === "ko" ? "이 프로그램으로 시작하기" : "Start This Program"}
       </PrimaryButton>
       <PrimaryButton type="button" variant="secondary" fullWidth onClick={onCustomize}>
-        커스터마이징해서 사용하기
+        {locale === "ko" ? "커스터마이징해서 사용하기" : "Customize Before Starting"}
       </PrimaryButton>
       {isCustom && onDelete && (
         <PrimaryButton type="button" variant="danger" fullWidth disabled={saving} onClick={onDelete}>
-          커스텀 프로그램 삭제
+          {locale === "ko" ? "커스텀 프로그램 삭제" : "Delete Custom Program"}
         </PrimaryButton>
       )}
     </div>
@@ -446,9 +458,9 @@ export function ProgramDetailSheet({
   return (
     <BottomSheet
       open={open}
-      title="프로그램 상세"
+      title={locale === "ko" ? "프로그램 상세" : "Program Details"}
       onClose={onClose}
-      closeLabel="닫기"
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
       header={header}
       footer={footer}
     >
@@ -459,18 +471,20 @@ export function ProgramDetailSheet({
           <StatBentoCell
             icon="calendar_today"
             value={cycleStat?.value ?? "-"}
-            label="사이클"
+            label={locale === "ko" ? "사이클" : "Cycle"}
           />
           <StatBentoCell
             icon="event_repeat"
             value={
               frequencyStat
-                ? frequencyStat.value.replace("주 ", "").replace("회", "")
+                ? locale === "ko"
+                  ? frequencyStat.value.replace("주 ", "").replace("회", "")
+                  : frequencyStat.value.replace(" days/wk", "")
                 : "-"
             }
-            label="Days/Wk"
+            label={locale === "ko" ? "주당 빈도" : "Days/Wk"}
           />
-          <StatBentoCell label="강도">
+          <StatBentoCell label={locale === "ko" ? "강도" : "Intensity"}>
             <IntensityBars level={difficultyLevel} />
             <span
               style={{
@@ -488,9 +502,9 @@ export function ProgramDetailSheet({
         </div>
 
         {/* ── Program Overview ── */}
-        {item.template.description && (
+        {programDescription && (
           <div>
-            <span style={sectionEyebrow}>프로그램 소개</span>
+            <span style={sectionEyebrow}>{locale === "ko" ? "프로그램 소개" : "Program Overview"}</span>
             <p
               style={{
                 fontSize: 14,
@@ -499,21 +513,21 @@ export function ProgramDetailSheet({
                 margin: 0,
               }}
             >
-              {item.template.description}
+              {programDescription}
             </p>
           </div>
         )}
 
         {/* ── Program Architecture ── */}
         <div>
-          <span style={sectionEyebrow}>프로그램 구성</span>
+          <span style={sectionEyebrow}>{locale === "ko" ? "프로그램 구성" : "Program Architecture"}</span>
           <ArchitectureGrid items={archItems} />
         </div>
 
         {/* ── Session Breakdown (when available) ── */}
         {hasSessions && info.sessions && (
           <div>
-            <span style={sectionEyebrow}>세션 구성</span>
+            <span style={sectionEyebrow}>{locale === "ko" ? "세션 구성" : "Session Breakdown"}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               {info.sessions.map((session) => (
                 <div
@@ -543,7 +557,7 @@ export function ProgramDetailSheet({
                         color: "var(--color-text-muted)",
                       }}
                     >
-                      세션 {session.key}
+                      {locale === "ko" ? `세션 ${session.key}` : `Session ${session.key}`}
                     </span>
                   </div>
                   <div style={{ padding: "var(--space-sm)" }}>
@@ -612,7 +626,7 @@ export function ProgramDetailSheet({
                 color: "var(--color-text-muted)",
               }}
             >
-              Technical Logbook
+              {locale === "ko" ? "프로그램 메타" : "Technical Logbook"}
             </span>
             <span
               className="material-symbols-outlined"
@@ -665,7 +679,9 @@ export function ProgramDetailSheet({
                   paddingTop: 8,
                 }}
               >
-                <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>진행 설정</span>
+                <span style={{ fontSize: 13, color: "var(--color-text-muted)" }}>
+                  {locale === "ko" ? "진행 설정" : "Progression"}
+                </span>
                 <span
                   style={{
                     fontFamily: "var(--font-label-family)",

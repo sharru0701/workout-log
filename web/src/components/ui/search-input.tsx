@@ -1,4 +1,5 @@
 import type { ChangeEvent } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { Card } from "@/components/ui/card";
 
 type SearchInputRowProps = {
@@ -19,11 +20,14 @@ export function SearchInputRow({
   value,
   onChange,
   onClear,
-  placeholder = "검색",
+  placeholder,
   ariaLabel,
-  clearAriaLabel = "검색어 지우기",
+  clearAriaLabel,
   onKeyDown,
 }: SearchInputRowProps) {
+  const { locale } = useLocale();
+  const resolvedPlaceholder = placeholder ?? (locale === "ko" ? "검색" : "Search");
+  const resolvedClearAriaLabel = clearAriaLabel ?? (locale === "ko" ? "검색어 지우기" : "Clear search");
   const hasQuery = value.trim().length > 0;
 
   return (
@@ -51,7 +55,7 @@ export function SearchInputRow({
         inputMode="search"
         value={value}
         onChange={onChange}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         aria-label={ariaLabel}
         className="search-card-input"
         onKeyDown={onKeyDown}
@@ -70,7 +74,7 @@ export function SearchInputRow({
       {hasQuery ? (
         <button
           type="button"
-          aria-label={clearAriaLabel}
+          aria-label={resolvedClearAriaLabel}
           onClick={onClear}
           style={{
             display: "flex",
@@ -116,9 +120,9 @@ export function SearchInput({
   value,
   onChange,
   onClear,
-  placeholder = "검색",
+  placeholder,
   ariaLabel,
-  clearAriaLabel = "검색어 지우기",
+  clearAriaLabel,
   onKeyDown,
   bare = false,
 }: SearchInputProps) {

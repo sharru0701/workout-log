@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
@@ -32,10 +33,12 @@ type EditingState = { id: string; name: string; category: string };
 function SwipeableExerciseRow({
   children,
   onDelete,
+  deleteLabel,
   disabled,
 }: {
   children: ReactNode;
   onDelete: () => void;
+  deleteLabel: string;
   disabled?: boolean;
 }) {
   const [offsetX, setOffsetX] = useState(0);
@@ -80,7 +83,7 @@ function SwipeableExerciseRow({
           type="button"
           className="btn btn-icon btn-icon-danger"
           onClick={() => { setOffsetX(0); onDelete(); }}
-          aria-label="운동종목 삭제"
+          aria-label={deleteLabel}
         >
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>delete</span>
         </button>
@@ -138,11 +141,13 @@ function CategoryField({
   value,
   onChange,
   categories,
+  locale,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
   categories: string[];
+  locale: "ko" | "en";
 }) {
   const isInitiallyCustom = value !== "" && !categories.includes(value);
   const [customMode, setCustomMode] = useState(isInitiallyCustom);
@@ -159,18 +164,18 @@ function CategoryField({
           else { setCustomMode(false); onChange(v); }
         }}
       >
-        <option value="">미지정</option>
+        <option value="">{locale === "ko" ? "미지정" : "Unassigned"}</option>
         {categories.map((cat) => (
           <option key={cat} value={cat}>{cat}</option>
         ))}
-        <option value="__custom__">직접 입력...</option>
+        <option value="__custom__">{locale === "ko" ? "직접 입력..." : "Custom..."}</option>
       </AppSelect>
       {customMode && (
         <AppTextInput
           variant="compact"
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          placeholder="카테고리 직접 입력"
+          placeholder={locale === "ko" ? "카테고리 직접 입력" : "Enter a custom category"}
         />
       )}
     </div>
@@ -208,6 +213,7 @@ function InlineExerciseForm({
   onCancel,
   saving,
   submitLabel,
+  locale,
 }: {
   name: string;
   onNameChange: (v: string) => void;
@@ -220,6 +226,7 @@ function InlineExerciseForm({
   onCancel: () => void;
   saving: boolean;
   submitLabel: string;
+  locale: "ko" | "en";
 }) {
   return (
     <Card padding="md" tone="default" elevated={false}>
@@ -227,11 +234,11 @@ function InlineExerciseForm({
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
           {/* Name */}
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-            <FieldLabel>운동종목명</FieldLabel>
+            <FieldLabel>{locale === "ko" ? "운동종목명" : "Exercise Name"}</FieldLabel>
             <AppTextInput
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              placeholder="예: Incline Bench Press"
+              placeholder={locale === "ko" ? "예: Incline Bench Press" : "e.g. Incline Bench Press"}
               autoFocus
             />
           </div>
@@ -243,19 +250,20 @@ function InlineExerciseForm({
             gap: "var(--space-md)",
           }}>
             <CategoryField
-              label="카테고리"
+              label={locale === "ko" ? "카테고리" : "Category"}
               value={category}
               onChange={onCategoryChange}
               categories={categories}
+              locale={locale}
             />
             {aliases !== undefined && onAliasesChange && (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-                <FieldLabel>별칭 (쉼표 구분)</FieldLabel>
+                <FieldLabel>{locale === "ko" ? "별칭 (쉼표 구분)" : "Aliases (comma-separated)"}</FieldLabel>
                 <AppTextInput
                   variant="compact"
                   value={aliases}
                   onChange={(e) => onAliasesChange(e.target.value)}
-                  placeholder="예: 인클라인, Incline"
+                  placeholder={locale === "ko" ? "예: 인클라인, Incline" : "e.g. incline, upper chest"}
                 />
               </div>
             )}
@@ -270,7 +278,7 @@ function InlineExerciseForm({
               onClick={onCancel}
               disabled={saving}
             >
-              취소
+              {locale === "ko" ? "취소" : "Cancel"}
             </button>
             <button
               type="button"
@@ -279,7 +287,7 @@ function InlineExerciseForm({
               onClick={onSubmit}
               disabled={saving || !name.trim()}
             >
-              {saving ? `${submitLabel} 중...` : submitLabel}
+              {saving ? (locale === "ko" ? `${submitLabel} 중...` : `${submitLabel}...`) : submitLabel}
             </button>
           </div>
         </div>
@@ -295,11 +303,13 @@ function ExerciseRowView({
   onEdit,
   onDelete,
   disabled,
+  locale,
 }: {
   item: ExerciseItem;
   onEdit: () => void;
   onDelete: () => void;
   disabled?: boolean;
+  locale: "ko" | "en";
 }) {
   return (
     <div style={{
@@ -322,7 +332,7 @@ function ExerciseRowView({
         </div>
         {item.aliases.length > 0 && (
           <span style={{ font: "var(--font-secondary)", color: "var(--color-text-muted)" }}>
-            별칭: {item.aliases.join(", ")}
+            {locale === "ko" ? "별칭" : "Aliases"}: {item.aliases.join(", ")}
           </span>
         )}
       </div>
@@ -332,7 +342,7 @@ function ExerciseRowView({
         <button
           type="button"
           className="btn btn-icon"
-          aria-label={`${item.name} 수정`}
+          aria-label={locale === "ko" ? `${item.name} 수정` : `Edit ${item.name}`}
           disabled={disabled}
           onClick={onEdit}
         >
@@ -341,7 +351,7 @@ function ExerciseRowView({
         <button
           type="button"
           className="btn btn-icon btn-icon-danger"
-          aria-label={`${item.name} 삭제`}
+          aria-label={locale === "ko" ? `${item.name} 삭제` : `Delete ${item.name}`}
           disabled={disabled}
           onClick={onDelete}
         >
@@ -354,7 +364,7 @@ function ExerciseRowView({
 
 // ─── Stats bento grid ─────────────────────────────────────────────────────────
 
-function StatsGrid({ total, items }: { total: number; items: ExerciseItem[] }) {
+function StatsGrid({ total, items, locale }: { total: number; items: ExerciseItem[]; locale: "ko" | "en" }) {
   const avatars = useMemo(() =>
     items.slice(0, 3).map((it) => {
       const words = it.name.trim().split(/\s+/);
@@ -387,7 +397,7 @@ function StatsGrid({ total, items }: { total: number; items: ExerciseItem[] }) {
           letterSpacing: "0.15em", textTransform: "uppercase" as const,
           color: "var(--color-text-subtle)",
         }}>
-          전체 종목
+          {locale === "ko" ? "전체 종목" : "Total Exercises"}
         </span>
         <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
           <span style={{
@@ -402,7 +412,7 @@ function StatsGrid({ total, items }: { total: number; items: ExerciseItem[] }) {
             fontSize: "11px",
             color: "var(--color-text-subtle)",
           }}>
-            종목
+            {locale === "ko" ? "종목" : "items"}
           </span>
         </div>
       </div>
@@ -422,7 +432,7 @@ function StatsGrid({ total, items }: { total: number; items: ExerciseItem[] }) {
           letterSpacing: "0.15em", textTransform: "uppercase" as const,
           color: "var(--color-text-muted)",
         }}>
-          최근 종목
+          {locale === "ko" ? "최근 종목" : "Recent Exercises"}
         </span>
         {avatars.length > 0 ? (
           <div style={{ display: "flex" }}>
@@ -454,6 +464,7 @@ function StatsGrid({ total, items }: { total: number; items: ExerciseItem[] }) {
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export function ExerciseCatalogContent() {
+  const { locale } = useLocale();
   const { confirm } = useAppDialog();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -496,12 +507,12 @@ export function ExerciseCatalogContent() {
       setItems(res.items ?? []);
     } catch (e: any) {
       if (requestId !== loadRequestIdRef.current) return;
-      setError(e?.message ?? "운동종목 목록을 불러오지 못했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "운동종목 목록을 불러오지 못했습니다." : "Could not load the exercise list."));
     } finally {
       if (requestId !== loadRequestIdRef.current) return;
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     const id = window.setTimeout(() => void loadExercises(query), 220);
@@ -540,10 +551,10 @@ export function ExerciseCatalogContent() {
           await apiPost("/api/exercises/alias", { exerciseId: res.exercise.id, alias });
         }
       }
-      setNotice(res.created ? "운동종목이 추가되었습니다." : "이미 존재하는 운동종목입니다.");
+      setNotice(res.created ? (locale === "ko" ? "운동종목이 추가되었습니다." : "Exercise added.") : (locale === "ko" ? "이미 존재하는 운동종목입니다." : "That exercise already exists."));
       await loadExercises(query, true);
     } catch (e: any) {
-      setError(e?.message ?? "운동종목 추가에 실패했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "운동종목 추가에 실패했습니다." : "Failed to add the exercise."));
       void loadExercises(query, true);
     } finally {
       setSavingCreate(false);
@@ -566,10 +577,10 @@ export function ExerciseCatalogContent() {
       setEditing(null);
 
       await apiPatch(`/api/exercises/${encodeURIComponent(targetId)}`, { name: newName, category: newCategory });
-      setNotice("운동종목이 수정되었습니다.");
+      setNotice(locale === "ko" ? "운동종목이 수정되었습니다." : "Exercise updated.");
       await loadExercises(query, true);
     } catch (e: any) {
-      setError(e?.message ?? "운동종목 수정에 실패했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "운동종목 수정에 실패했습니다." : "Failed to update the exercise."));
       void loadExercises(query, true);
     } finally {
       setSavingEdit(false);
@@ -580,10 +591,10 @@ export function ExerciseCatalogContent() {
 
   const makeDeleteHandler = (item: ExerciseItem) => async () => {
     const ok = await confirm({
-      title: "운동종목 삭제",
-      message: `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.`,
-      confirmText: "삭제",
-      cancelText: "취소",
+      title: locale === "ko" ? "운동종목 삭제" : "Delete Exercise",
+      message: locale === "ko" ? `'${item.name}' 종목을 삭제하시겠습니까?\n기록에 연결된 exerciseId는 자동 해제됩니다.` : `Delete '${item.name}'?\nLinked exerciseIds in logs will be cleared automatically.`,
+      confirmText: locale === "ko" ? "삭제" : "Delete",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
       tone: "danger",
     });
     if (!ok) return;
@@ -592,10 +603,10 @@ export function ExerciseCatalogContent() {
       setNotice(null);
       setItems((prev) => prev.filter((it) => it.id !== item.id));
       await apiDelete(`/api/exercises/${encodeURIComponent(item.id)}`);
-      setNotice("운동종목이 삭제되었습니다.");
+      setNotice(locale === "ko" ? "운동종목이 삭제되었습니다." : "Exercise deleted.");
       await loadExercises(query, true);
     } catch (e: any) {
-      setError(e?.message ?? "운동종목 삭제에 실패했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "운동종목 삭제에 실패했습니다." : "Failed to delete the exercise."));
       void loadExercises(query, true);
     } finally {
       setDeletingId(null);
@@ -627,17 +638,17 @@ export function ExerciseCatalogContent() {
           color: "var(--color-text)",
           margin: "0 0 var(--space-sm)",
         }}>
-          운동 종목 관리
+          {locale === "ko" ? "운동 종목 관리" : "Exercise Management"}
         </h1>
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>
-          종목을 추가·수정하거나 카테고리와 별칭을 관리합니다.
+          {locale === "ko" ? "종목을 추가·수정하거나 카테고리와 별칭을 관리합니다." : "Add and edit exercises, categories, and aliases."}
         </p>
       </div>
 
       {/* Status */}
-      <LoadingStateRows active={loading} delayMs={120} label="운동종목 목록 로딩 중" description="DB 저장 종목을 조회하고 있습니다." />
-      <ErrorStateRows message={error} title="운동종목 목록 조회 실패" onRetry={() => void loadExercises(query)} />
-      <NoticeStateRows message={notice} label="안내" />
+      <LoadingStateRows active={loading} delayMs={120} label={locale === "ko" ? "운동종목 목록 로딩 중" : "Loading exercises"} description={locale === "ko" ? "DB 저장 종목을 조회하고 있습니다." : "Fetching saved exercises from the database."} />
+      <ErrorStateRows message={error} title={locale === "ko" ? "운동종목 목록 조회 실패" : "Could not load exercises"} onRetry={() => void loadExercises(query)} />
+      <NoticeStateRows message={notice} label={locale === "ko" ? "안내" : "Notice"} />
 
       {/* Search */}
       <div style={{ marginBottom: "var(--space-md)" }}>
@@ -645,13 +656,13 @@ export function ExerciseCatalogContent() {
           bare
           value={query}
           onChange={setQuery}
-          placeholder="운동종목 검색"
-          ariaLabel="운동종목 검색"
+          placeholder={locale === "ko" ? "운동종목 검색" : "Search exercises"}
+          ariaLabel={locale === "ko" ? "운동종목 검색" : "Search exercises"}
         />
       </div>
 
       {/* Stats bento */}
-      <StatsGrid total={visibleItems.length} items={visibleItems} />
+      <StatsGrid total={visibleItems.length} items={visibleItems} locale={locale} />
 
       {/* Inline create form */}
       {createOpen && (
@@ -667,7 +678,8 @@ export function ExerciseCatalogContent() {
             onSubmit={handleCreate}
             onCancel={() => { setCreateOpen(false); setCreateName(""); setCreateCategory(""); setCreateAliases(""); }}
             saving={savingCreate}
-            submitLabel="저장"
+            submitLabel={locale === "ko" ? "저장" : "Save"}
+            locale={locale}
           />
         </div>
       )}
@@ -681,7 +693,7 @@ export function ExerciseCatalogContent() {
           onClick={() => setCreateOpen(true)}
         >
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>add</span>
-          운동종목 추가
+          {locale === "ko" ? "운동종목 추가" : "Add Exercise"}
         </button>
       )}
 
@@ -693,15 +705,15 @@ export function ExerciseCatalogContent() {
         color: "var(--color-text-muted)",
         margin: "0 0 var(--space-sm)",
       }}>
-        Active Catalog
+        {locale === "ko" ? "활성 카탈로그" : "Active Catalog"}
       </h2>
 
       {/* Exercise list */}
       <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
         <EmptyStateRows
           when={isListSettled && !error && visibleItems.length === 0}
-          label="운동종목이 없습니다"
-          description="상단 버튼으로 운동종목을 추가하세요."
+          label={locale === "ko" ? "운동종목이 없습니다" : "No exercises"}
+          description={locale === "ko" ? "상단 버튼으로 운동종목을 추가하세요." : "Add an exercise using the button above."}
         />
 
         {visibleItems.map((item) => {
@@ -720,7 +732,8 @@ export function ExerciseCatalogContent() {
                 onSubmit={handleEdit}
                 onCancel={() => setEditing(null)}
                 saving={savingEdit}
-                submitLabel="수정 저장"
+                submitLabel={locale === "ko" ? "수정 저장" : "Save Changes"}
+                locale={locale}
               />
             );
           }
@@ -729,10 +742,12 @@ export function ExerciseCatalogContent() {
             <SwipeableExerciseRow
               key={item.id}
               onDelete={makeDeleteHandler(item)}
+              deleteLabel={locale === "ko" ? "운동종목 삭제" : "Delete exercise"}
               disabled={deletingThis}
             >
               <ExerciseRowView
                 item={item}
+                locale={locale}
                 disabled={deletingThis}
                 onEdit={() => setEditing({ id: item.id, name: item.name, category: item.category ?? "" })}
                 onDelete={makeDeleteHandler(item)}

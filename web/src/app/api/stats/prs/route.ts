@@ -9,6 +9,8 @@ import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 function epley1RM(weightKg: number, reps: number) {
   return weightKg * (1 + reps / 30);
@@ -41,6 +43,7 @@ async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
+    const locale = await resolveRequestLocale();
     const exerciseId = searchParams.get("exerciseId")?.trim() ?? "";
     const exerciseName = searchParams.get("exercise") ?? searchParams.get("exerciseName");
     const limitRaw = Number(searchParams.get("limit") ?? "20");
@@ -148,7 +151,7 @@ async function GETImpl(req: Request) {
       if (!byExercise.has(key)) {
         byExercise.set(key, {
           exerciseId: r.exerciseId ?? null,
-          exerciseName: String(r.exerciseName ?? "Unknown"),
+          exerciseName: String(r.exerciseName ?? (locale === "ko" ? "알 수 없는 운동" : "Unknown Exercise")),
           first: point,
           best: point,
           latest: point,
@@ -196,7 +199,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

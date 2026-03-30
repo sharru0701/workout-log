@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useLocale } from "@/components/locale-provider";
 
 const MIN_VISIBLE_MS = 560;
 const EXIT_ANIMATION_MS = 220;
@@ -14,6 +15,7 @@ function nowMs() {
 }
 
 export function AppLaunchSplash() {
+  const { locale } = useLocale();
   const [phase, setPhase] = useState<SplashPhase>("visible");
   const startedAtRef = useRef<number>(nowMs());
 
@@ -50,7 +52,7 @@ export function AppLaunchSplash() {
     <div
       role="status"
       aria-live="polite"
-      aria-label="앱을 불러오는 중"
+      aria-label={locale === "ko" ? "앱을 불러오는 중" : "Loading app"}
       style={{
         position: "fixed",
         inset: 0,
@@ -76,7 +78,7 @@ export function AppLaunchSplash() {
           Workout Log
         </p>
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", color: "var(--color-text-muted)" }}>
-          <span style={{ font: "var(--font-secondary)" }}>로딩 중...</span>
+          <span style={{ font: "var(--font-secondary)" }}>{locale === "ko" ? "로딩 중..." : "Loading..."}</span>
         </div>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -37,6 +38,7 @@ function isIOSSafari(): boolean {
  * Neither appears when the app is already running in standalone mode.
  */
 export function PwaInstallPrompt() {
+  const { locale } = useLocale();
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIOSHint, setShowIOSHint] = useState(false);
 
@@ -87,19 +89,19 @@ export function PwaInstallPrompt() {
 
   if (deferredPrompt) {
     return (
-      <div className="pwa-install-banner" role="complementary" aria-label="앱 설치 안내">
+      <div className="pwa-install-banner" role="complementary" aria-label={locale === "ko" ? "앱 설치 안내" : "App install prompt"}>
         <div className="pwa-install-banner__content">
           <span className="pwa-install-banner__text">
-            홈 화면에 추가하면 더 빠르게 실행돼요
+            {locale === "ko" ? "홈 화면에 추가하면 더 빠르게 실행돼요" : "Add it to your home screen for faster access"}
           </span>
           <div className="pwa-install-banner__actions">
             <button className="pwa-install-banner__install" onClick={handleAndroidInstall}>
-              설치
+              {locale === "ko" ? "설치" : "Install"}
             </button>
             <button
               className="pwa-install-banner__dismiss"
               onClick={dismissAndroid}
-              aria-label="닫기"
+              aria-label={locale === "ko" ? "닫기" : "Close"}
             >
               ✕
             </button>
@@ -111,17 +113,23 @@ export function PwaInstallPrompt() {
 
   if (showIOSHint) {
     return (
-      <div className="pwa-install-banner" role="complementary" aria-label="iOS 홈 화면 추가 안내">
+      <div className="pwa-install-banner" role="complementary" aria-label={locale === "ko" ? "iOS 홈 화면 추가 안내" : "iOS add to home screen prompt"}>
         <div className="pwa-install-banner__content">
           <span className="pwa-install-banner__text">
-            Safari 하단의 공유 버튼{" "}
-            <ShareIcon />{" "}
-            을 탭한 후 &ldquo;홈 화면에 추가&rdquo;를 선택하면 앱처럼 사용할 수 있어요
+            {locale === "ko" ? (
+              <>
+                Safari 하단의 공유 버튼 <ShareIcon /> 을 탭한 후 &ldquo;홈 화면에 추가&rdquo;를 선택하면 앱처럼 사용할 수 있어요
+              </>
+            ) : (
+              <>
+                Tap Safari&apos;s Share button <ShareIcon /> and choose &ldquo;Add to Home Screen&rdquo; to launch this like an app
+              </>
+            )}
           </span>
           <button
             className="pwa-install-banner__dismiss"
             onClick={dismissIOS}
-            aria-label="닫기"
+            aria-label={locale === "ko" ? "닫기" : "Close"}
           >
             ✕
           </button>

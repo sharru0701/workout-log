@@ -1,3 +1,4 @@
+import type { AppLocale } from "@/lib/i18n/messages";
 import type { WorkoutExerciseModel, WorkoutExerciseViewModel, WorkoutRecordDraft } from "./model";
 
 export type WorkoutProgramExerciseEntryState = {
@@ -46,7 +47,17 @@ export function prepareWorkoutRecordDraftForEntry(draft: WorkoutRecordDraft): {
 export function validateWorkoutRecordEntryState(
   exercises: WorkoutExerciseViewModel[],
   programEntryState: WorkoutProgramExerciseEntryStateMap,
+  locale: AppLocale = "ko",
 ): string[] {
+  const copy = locale === "ko"
+    ? {
+        missingReps: (name: string, setIndex: number) => `${name} ${setIndex + 1}세트 횟수를 입력하세요.`,
+        invalidReps: (name: string, setIndex: number) => `${name} ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`,
+      }
+    : {
+        missingReps: (name: string, setIndex: number) => `Enter reps for ${name} set ${setIndex + 1}.`,
+        invalidReps: (name: string, setIndex: number) => `${name} set ${setIndex + 1} reps must be between 1 and 100.`,
+      };
   const errors: string[] = [];
 
   exercises.forEach((exercise) => {
@@ -57,13 +68,13 @@ export function validateWorkoutRecordEntryState(
     exercise.set.repsPerSet.forEach((_, setIndex) => {
       const rawValue = entryState?.repsInputs[setIndex]?.trim() ?? "";
       if (!rawValue) {
-        errors.push(`${exercise.exerciseName} ${setIndex + 1}세트 횟수를 입력하세요.`);
+        errors.push(copy.missingReps(exercise.exerciseName, setIndex));
         return;
       }
 
       const parsedValue = Number(rawValue);
       if (!Number.isFinite(parsedValue) || parsedValue < 1 || parsedValue > 100) {
-        errors.push(`${exercise.exerciseName} ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`);
+        errors.push(copy.invalidReps(exercise.exerciseName, setIndex));
       }
     });
   });

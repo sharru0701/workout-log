@@ -8,6 +8,7 @@ import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");
 const MIGRATION_FILE_PATTERN = /^\d+_.+\.sql$/;
@@ -367,10 +368,7 @@ async function GETImpl(req: Request) {
     });
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

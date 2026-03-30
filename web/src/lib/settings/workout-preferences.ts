@@ -7,6 +7,7 @@ export type SettingValue = string | number | boolean | null;
 export type SettingsSnapshot = Record<string, SettingValue>;
 
 export type ThemePreference = "SYSTEM" | "LIGHT" | "DARK";
+export type LocalePreference = "ko" | "en";
 
 export type MinimumPlateRule = {
   exerciseId: string | null;
@@ -15,6 +16,7 @@ export type MinimumPlateRule = {
 };
 
 export type WorkoutPreferences = {
+  locale: LocalePreference;
   theme: ThemePreference;
   minimumPlateDefaultKg: number;
   minimumPlateRules: MinimumPlateRule[];
@@ -27,12 +29,14 @@ export type ResolvedMinimumPlateIncrement = {
 };
 
 export const SETTINGS_KEYS = {
+  locale: "prefs.locale",
   theme: "prefs.theme.mode",
   minimumPlateDefaultKg: "prefs.minimumPlate.defaultKg",
   minimumPlateRulesJson: "prefs.minimumPlate.rulesJson",
   bodyweightKg: "prefs.bodyweight.kg",
 } as const;
 
+export const DEFAULT_LOCALE_PREFERENCE: LocalePreference = "ko";
 export const DEFAULT_THEME_PREFERENCE: ThemePreference = "SYSTEM";
 export const DEFAULT_MINIMUM_PLATE_KG = 2.5;
 export const DEFAULT_BODYWEIGHT_KG: number | null = null;
@@ -66,6 +70,14 @@ export function normalizeThemePreference(value: unknown): ThemePreference {
   if (normalized === "LIGHT") return "LIGHT";
   if (normalized === "DARK") return "DARK";
   return "SYSTEM";
+}
+
+export function normalizeLocalePreference(value: unknown): LocalePreference {
+  const normalized = String(value ?? "")
+    .trim()
+    .toLowerCase();
+  if (normalized.startsWith("en")) return "en";
+  return "ko";
 }
 
 export function normalizeIncrementKg(value: unknown, fallback = DEFAULT_MINIMUM_PLATE_KG): number {
@@ -127,6 +139,7 @@ export function serializeMinimumPlateRules(rules: MinimumPlateRule[]): string {
 }
 
 export function readWorkoutPreferences(snapshot: SettingsSnapshot): WorkoutPreferences {
+  const locale = normalizeLocalePreference(snapshot[SETTINGS_KEYS.locale]);
   const theme = normalizeThemePreference(snapshot[SETTINGS_KEYS.theme]);
   const minimumPlateDefaultKg = normalizeIncrementKg(
     snapshot[SETTINGS_KEYS.minimumPlateDefaultKg],
@@ -138,6 +151,7 @@ export function readWorkoutPreferences(snapshot: SettingsSnapshot): WorkoutPrefe
     bodyweightRaw === null || bodyweightRaw <= 0 ? DEFAULT_BODYWEIGHT_KG : toRounded2(bodyweightRaw);
 
   return {
+    locale,
     theme,
     minimumPlateDefaultKg,
     minimumPlateRules,
@@ -147,6 +161,7 @@ export function readWorkoutPreferences(snapshot: SettingsSnapshot): WorkoutPrefe
 
 export function toDefaultWorkoutPreferences(): WorkoutPreferences {
   return {
+    locale: DEFAULT_LOCALE_PREFERENCE,
     theme: DEFAULT_THEME_PREFERENCE,
     minimumPlateDefaultKg: DEFAULT_MINIMUM_PLATE_KG,
     minimumPlateRules: [],
@@ -238,5 +253,17 @@ export function readThemePreferenceFromLocalCache(): ThemePreference {
     return normalizeThemePreference(parsed.value);
   } catch {
     return DEFAULT_THEME_PREFERENCE;
+  }
+}
+
+export function readLocalePreferenceFromLocalCache(): LocalePreference {
+  if (typeof window === "undefined") return DEFAULT_LOCALE_PREFERENCE;
+  const raw = window.localStorage.getItem(`${LOCAL_STORAGE_SETTING_PREFIX}${SETTINGS_KEYS.locale}`);
+  if (!raw) return DEFAULT_LOCALE_PREFERENCE;
+  try {
+    const parsed = JSON.parse(raw) as { value?: unknown };
+    return normalizeLocalePreference(parsed.value);
+  } catch {
+    return DEFAULT_LOCALE_PREFERENCE;
   }
 }

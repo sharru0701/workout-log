@@ -5,6 +5,8 @@ import { desc, eq } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
@@ -15,13 +17,14 @@ function canReadTemplate(t: any, userId?: string | null) {
 
 async function GETImpl(_req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { slug } = await ctx.params;
     const userId = getAuthenticatedUserId();
 
     const tRows = await db.select().from(programTemplate).where(eq(programTemplate.slug, slug)).limit(1);
     const t = tRows[0];
-    if (!t) return NextResponse.json({ error: "template not found" }, { status: 404 });
-    if (!canReadTemplate(t, userId)) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!t) return NextResponse.json({ error: locale === "ko" ? "템플릿을 찾을 수 없습니다." : "Template not found." }, { status: 404 });
+    if (!canReadTemplate(t, userId)) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const versions = await db
       .select()
@@ -32,7 +35,7 @@ async function GETImpl(_req: Request, ctx: Ctx) {
     return NextResponse.json({ template: t, versions });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
@@ -48,6 +51,7 @@ async function GETImpl(_req: Request, ctx: Ctx) {
  */
 async function POSTImpl(req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { slug } = await ctx.params;
     const body = await req.json();
 
@@ -55,14 +59,14 @@ async function POSTImpl(req: Request, ctx: Ctx) {
 
     const tRows = await db.select().from(programTemplate).where(eq(programTemplate.slug, slug)).limit(1);
     const t = tRows[0];
-    if (!t) return NextResponse.json({ error: "template not found" }, { status: 404 });
+    if (!t) return NextResponse.json({ error: locale === "ko" ? "템플릿을 찾을 수 없습니다." : "Template not found." }, { status: 404 });
 
     if (t.visibility === "PRIVATE" && t.ownerUserId !== userId) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
     }
     if (t.visibility === "PUBLIC" && !t.ownerUserId) {
       return NextResponse.json(
-        { error: "Public base templates are read-only. Fork first." },
+        { error: locale === "ko" ? "공개 기본 템플릿은 읽기 전용입니다. 먼저 포크해 주세요." : "Public base templates are read-only. Fork first." },
         { status: 403 },
       );
     }
@@ -72,8 +76,8 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     if (body.baseVersionId) {
       const b = await db.select().from(programVersion).where(eq(programVersion.id, body.baseVersionId)).limit(1);
       base = b[0] ?? null;
-      if (!base) return NextResponse.json({ error: "baseVersion not found" }, { status: 404 });
-      if (base.templateId !== t.id) return NextResponse.json({ error: "baseVersion mismatch" }, { status: 400 });
+      if (!base) return NextResponse.json({ error: locale === "ko" ? "baseVersion을 찾을 수 없습니다." : "baseVersion not found." }, { status: 404 });
+      if (base.templateId !== t.id) return NextResponse.json({ error: locale === "ko" ? "baseVersion이 이 템플릿과 일치하지 않습니다." : "baseVersion mismatch." }, { status: 400 });
     } else {
       const b = await db
         .select()
@@ -82,7 +86,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
         .orderBy(desc(programVersion.version))
         .limit(1);
       base = b[0] ?? null;
-      if (!base) return NextResponse.json({ error: "no versions for template" }, { status: 400 });
+      if (!base) return NextResponse.json({ error: locale === "ko" ? "템플릿에 버전이 없습니다." : "No versions for template." }, { status: 400 });
     }
 
     // next version number
@@ -110,7 +114,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     return NextResponse.json({ programVersion: created }, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

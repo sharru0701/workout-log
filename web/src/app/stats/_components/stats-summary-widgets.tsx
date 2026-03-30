@@ -1,7 +1,8 @@
 "use client";
 
-import { memo, useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { memo, useCallback, useEffect, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
+import { Card } from "@/components/ui/card";
 import { apiGet } from "@/lib/api";
 import { ErrorStateRows, EmptyStateRows } from "@/components/ui/settings-state";
 
@@ -27,26 +28,27 @@ type StrengthSummaryResponse = {
 };
 
 export const StrengthSummaryGrid = memo(function StrengthSummaryGrid({ onExerciseSelect }: { onExerciseSelect?: (id: string, name: string) => void }) {
+  const { locale } = useLocale();
   const [data, setData] = useState<StrengthSummaryItem[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       const res = await apiGet<StrengthSummaryResponse>("/api/stats/strength-summary?days=60&limit=4");
       setData(res.items);
     } catch (e: any) {
-      setError(e?.message ?? "데이터를 불러오지 못했습니다.");
+      setError(e?.message ?? (locale === "ko" ? "데이터를 불러오지 못했습니다." : "Could not load the data."));
     } finally {
       setLoading(false);
     }
-  };
+  }, [locale]);
 
   useEffect(() => {
     void loadData();
-  }, []);
+  }, [loadData]);
 
   if (loading) return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "var(--space-md)" }}>
@@ -60,18 +62,18 @@ export const StrengthSummaryGrid = memo(function StrengthSummaryGrid({ onExercis
     </div>
   );
   if (error) return <ErrorStateRows message={error} onRetry={loadData} />;
-  if (!data || data.length === 0) return <EmptyStateRows when={true} label="기록된 운동이 없습니다." description="무거운 중량으로 운동을 기록하면 여기에 나타납니다." />;
+  if (!data || data.length === 0) return <EmptyStateRows when={true} label={locale === "ko" ? "기록된 운동이 없습니다." : "No recorded exercises."} description={locale === "ko" ? "무거운 중량으로 운동을 기록하면 여기에 나타납니다." : "Heavy logged lifts will appear here."} />;
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "var(--space-md)" }}>
       {data.map((item) => (
-        <StrengthCard key={item.exerciseName} item={item} onClick={() => item.exerciseId && onExerciseSelect?.(item.exerciseId, item.exerciseName)} />
+        <StrengthCard key={item.exerciseName} item={item} locale={locale} onClick={() => item.exerciseId && onExerciseSelect?.(item.exerciseId, item.exerciseName)} />
       ))}
     </div>
   );
 });
 
-function StrengthCard({ item, onClick }: { item: StrengthSummaryItem; onClick?: () => void }) {
+function StrengthCard({ item, locale, onClick }: { item: StrengthSummaryItem; locale: "ko" | "en"; onClick?: () => void }) {
   const isPr = item.current.e1rm >= item.best.e1rm;
   
   return (
@@ -107,7 +109,7 @@ function StrengthCard({ item, onClick }: { item: StrengthSummaryItem; onClick?: 
 
       <footer style={{ marginTop: "auto" }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
-          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>Best: {item.best.e1rm.toFixed(1)}kg</span>
+          <span style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>{locale === "ko" ? "최고" : "Best"}: {item.best.e1rm.toFixed(1)}kg</span>
           {item.improvement !== 0 && (
             <span className={`metric-trend ${item.improvement > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginTop: 0, fontSize: "11px" }}>
               {item.improvement > 0 ? "+" : ""}{item.improvement.toFixed(1)}%
@@ -128,8 +130,6 @@ function MiniSparkline({ points }: { points: number[] }) {
   const min = Math.min(...points);
   const max = Math.max(...points);
   const range = max - min || 1;
-  const padding = range * 0.1;
-  
   const width = 100;
   const height = 16;
   

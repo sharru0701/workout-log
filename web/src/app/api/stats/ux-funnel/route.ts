@@ -7,6 +7,8 @@ import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type FunnelStep = {
   id: "generated_sessions" | "saved_logs" | "saved_logs_with_extra";
@@ -65,23 +67,23 @@ function toRatio(numerator: number, denominator: number) {
   return Math.round((numerator / denominator) * 1000) / 1000;
 }
 
-function buildSteps(totals: FunnelTotals): FunnelStep[] {
+function buildSteps(totals: FunnelTotals, locale: "ko" | "en"): FunnelStep[] {
   return [
     {
       id: "generated_sessions",
-      label: "세션 생성",
+      label: locale === "ko" ? "세션 생성" : "Session Generated",
       count: totals.generatedSessions,
       conversionFromPrevious: null,
     },
     {
       id: "saved_logs",
-      label: "기록 저장",
+      label: locale === "ko" ? "기록 저장" : "Workout Saved",
       count: totals.savedLogs,
       conversionFromPrevious: toRatio(totals.savedLogs, Math.max(1, totals.generatedSessions)),
     },
     {
       id: "saved_logs_with_extra",
-      label: "추가 운동 포함 저장",
+      label: locale === "ko" ? "추가 운동 포함 저장" : "Saved With Extra Exercise",
       count: totals.savedLogsWithExtraExercise,
       conversionFromPrevious: toRatio(totals.savedLogsWithExtraExercise, Math.max(1, totals.savedLogs)),
     },
@@ -213,6 +215,7 @@ async function computeTotals(input: {
 
 async function GETImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
     const planId = searchParams.get("planId")?.trim() || null;
@@ -240,7 +243,7 @@ async function GETImpl(req: Request) {
     }
 
     const totals = await computeTotals({ userId, from, to, planId });
-    const steps = buildSteps(totals);
+    const steps = buildSteps(totals, locale);
     const rates = buildRates(totals, rangeDays);
     const dropoff = buildDropoff(steps);
 
@@ -311,16 +314,16 @@ async function GETImpl(req: Request) {
     }
 
     if (format !== "json") {
-      return NextResponse.json({ error: "format must be json or csv" }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "format은 json 또는 csv여야 합니다." : "format must be json or csv." },
+        { status: 400 },
+      );
     }
 
     return NextResponse.json(payload);
   } catch (error: unknown) {
     logError("api.handler_error", { error });
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Unknown error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

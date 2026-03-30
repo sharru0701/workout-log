@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
@@ -70,12 +71,8 @@ type WorkoutLogForDate = {
   }>;
 };
 
-const WEEKDAY_SHORT = ["일", "월", "화", "수", "목", "금", "토"] as const;
-const MONTH_NAMES = [
-  "1월", "2월", "3월", "4월", "5월", "6월",
-  "7월", "8월", "9월", "10월", "11월", "12월",
-] as const;
-const WEEKDAY_KOREAN = ["일", "월", "화", "수", "목", "금", "토"] as const;
+const WEEKDAY_SHORT_KO = ["일", "월", "화", "수", "목", "금", "토"] as const;
+const WEEKDAY_SHORT_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"] as const;
 
 type CalendarExercisePreviewItem = {
   name: string;
@@ -98,10 +95,20 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
 }
 
 
-function formatKoreanDay(dateOnly: string) {
+function formatCalendarDay(dateOnly: string, locale: "ko" | "en") {
   const d = dayOfMonth(dateOnly);
   const dow = getDayOfWeek(dateOnly);
-  return `${d}일 ${WEEKDAY_KOREAN[dow]}요일`;
+  return locale === "ko" ? `${d}일 ${WEEKDAY_SHORT_KO[dow]}요일` : `${WEEKDAY_SHORT_EN[dow]}, ${d}`;
+}
+
+function formatCalendarDateAria(dateOnly: string, locale: "ko" | "en") {
+  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    weekday: "long",
+    timeZone: "UTC",
+  }).format(dateOnlyToUtcDate(dateOnly));
 }
 
 function daysBetween(aDateOnly: string, bDateOnly: string) {
@@ -266,6 +273,7 @@ function getNextSessionLabel(sessionKey: string, sessionsPerWeek: number): strin
 }
 
 export default function CalendarPage() {
+  const { copy, locale } = useLocale();
   const timezone = useMemo(() => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC", []);
   const today = useMemo(() => dateOnlyInTimezone(new Date(), timezone), [timezone]);
 
@@ -332,7 +340,7 @@ export default function CalendarPage() {
           return res.items[0]?.id ?? "";
         });
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "플랜을 불러오지 못했습니다.");
+        if (!cancelled) setError(e?.message ?? (locale === "ko" ? "플랜을 불러오지 못했습니다." : "Could not load plans."));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -340,7 +348,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [refreshTick]);
+  }, [locale, refreshTick]);
 
   // Load sessions for selected plan
   useEffect(() => {
@@ -359,13 +367,13 @@ export default function CalendarPage() {
         );
         if (!cancelled) setRecentSessions(res.items);
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "세션을 불러오지 못했습니다.");
+        if (!cancelled) setError(e?.message ?? (locale === "ko" ? "세션을 불러오지 못했습니다." : "Could not load sessions."));
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [planId, refreshTick]);
+  }, [locale, planId, refreshTick]);
 
   useEffect(() => {
     if (!planId) {
@@ -396,7 +404,7 @@ export default function CalendarPage() {
         if (!cancelled) {
           setSelectedLog(null);
           setCompletedLogKey(fetchKey);
-          setError(e?.message ?? "운동기록을 불러오지 못했습니다.");
+          setError(e?.message ?? (locale === "ko" ? "운동기록을 불러오지 못했습니다." : "Could not load workout logs."));
         }
       } finally {
         if (!cancelled) setSelectedLogLoading(false);
@@ -406,7 +414,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [planId, refreshTick, selectedDate, timezone]);
+  }, [locale, planId, refreshTick, selectedDate, timezone]);
 
   // Load all logs for selected plan (used for dot indicators and next session label)
   useEffect(() => {
@@ -622,7 +630,7 @@ export default function CalendarPage() {
       } catch (e: any) {
         if (!cancelled) {
           setSelectedSessionDetail(null);
-          setError(e?.message ?? "세션 상세를 불러오지 못했습니다.");
+          setError(e?.message ?? (locale === "ko" ? "세션 상세를 불러오지 못했습니다." : "Could not load session details."));
         }
       } finally {
         if (!cancelled) setSelectedSessionLoading(false);
@@ -632,7 +640,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [planId, selectedLog, selectedSession?.id]);
+  }, [locale, planId, selectedLog, selectedSession?.id]);
 
   useEffect(
     () => () => {
@@ -687,7 +695,7 @@ export default function CalendarPage() {
               key={dateOnly}
               role="gridcell"
               onClick={() => setSelectedDate(dateOnly)}
-              aria-label={`${getYear(dateOnly)}년 ${getMonth(dateOnly)}월 ${dayOfMonth(dateOnly)}일`}
+              aria-label={formatCalendarDateAria(dateOnly, locale)}
               aria-selected={isSelected}
               style={{
                 display: "flex",
@@ -762,11 +770,11 @@ export default function CalendarPage() {
           color: "var(--color-text)",
           margin: 0,
         }}>
-          캘린더
+          {copy.calendar.title}
         </h1>
         <button
           type="button"
-          aria-label="플랜 필터"
+          aria-label={copy.calendar.planFilter}
           onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
           style={{
             display: "flex",
@@ -798,7 +806,7 @@ export default function CalendarPage() {
         <button
           type="button"
           onClick={() => setMonthPickerOpen(true)}
-          aria-label="연도와 월 선택 열기"
+          aria-label={copy.calendar.openYearMonth}
           aria-haspopup="dialog"
           aria-expanded={monthPickerOpen}
           style={{
@@ -818,7 +826,13 @@ export default function CalendarPage() {
             color: "var(--color-text-muted)",
           }}
         >
-          <span>{getYear(anchorDate)}년 {MONTH_NAMES[getMonth(anchorDate) - 1]}</span>
+          <span>
+            {new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
+              year: "numeric",
+              month: "long",
+              timeZone: "UTC",
+            }).format(dateOnlyToUtcDate(anchorDate))}
+          </span>
           <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>expand_more</span>
         </button>
 
@@ -827,7 +841,7 @@ export default function CalendarPage() {
           <button
             type="button"
             onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
-            aria-label="플랜 변경"
+            aria-label={locale === "ko" ? "플랜 변경" : "Change plan"}
             style={{
               display: "flex",
               alignItems: "center",
@@ -872,7 +886,7 @@ export default function CalendarPage() {
             marginBottom: "4px",
           }}
         >
-          {WEEKDAY_SHORT.map((name) => (
+          {(locale === "ko" ? WEEKDAY_SHORT_KO : WEEKDAY_SHORT_EN).map((name) => (
             <div
               key={name}
               style={{
@@ -893,7 +907,7 @@ export default function CalendarPage() {
         {/* Date grid */}
         <div
           role="grid"
-          aria-label="날짜 선택"
+          aria-label={locale === "ko" ? "날짜 선택" : "Select date"}
           className={monthNavFeedback ? `calendar-month-feedback-${monthNavFeedback}` : undefined}
         >
           {renderMonthRows(anchorDate, selectedDate)}
@@ -911,7 +925,7 @@ export default function CalendarPage() {
         >
           <button
             onClick={() => shiftMonthWithFeedback(-1)}
-            aria-label="이전 달"
+            aria-label={locale === "ko" ? "이전 달" : "Previous month"}
             style={{
               display: "flex",
               alignItems: "center",
@@ -929,7 +943,7 @@ export default function CalendarPage() {
           </button>
           <button
             onClick={() => shiftMonthWithFeedback(1)}
-            aria-label="다음 달"
+            aria-label={locale === "ko" ? "다음 달" : "Next month"}
             style={{
               display: "flex",
               alignItems: "center",
@@ -964,7 +978,7 @@ export default function CalendarPage() {
             color: "var(--color-text)",
             margin: 0,
           }}>
-            {selectedDate === today ? "오늘" : formatKoreanDay(selectedDate)}
+            {selectedDate === today ? (locale === "ko" ? "오늘" : "Today") : formatCalendarDay(selectedDate, locale)}
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             {selectedPlan && selectedDate !== today && (
@@ -991,7 +1005,7 @@ export default function CalendarPage() {
                 borderRadius: "20px",
                 letterSpacing: "0.04em",
               }}>
-                오늘
+                {locale === "ko" ? "오늘" : "Today"}
               </span>
             )}
           </div>
@@ -1033,7 +1047,7 @@ export default function CalendarPage() {
               color: "var(--color-text-muted)",
               margin: 0,
             }}>
-              플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.
+              {copy.calendarMain.noPlanSelected}
             </p>
           </div>
         ) : selectedLog ? (
@@ -1054,7 +1068,7 @@ export default function CalendarPage() {
                     {selectedPlan.name}
                   </div>
                   <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginTop: "2px" }}>
-                    기록 완료
+                    {copy.calendarMain.completed}
                   </div>
                 </div>
               </div>
@@ -1085,11 +1099,11 @@ export default function CalendarPage() {
             {/* Stats row */}
             <div style={{ display: "flex", gap: "32px", borderTop: "1px solid var(--color-outline-variant)", paddingTop: "16px", marginBottom: "16px" }}>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>세트</span>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>{copy.calendarMain.sets}</span>
                 <span style={{ fontFamily: "var(--font-label-family)", fontSize: "18px", fontWeight: 700, color: "var(--color-text)" }}>{loggedSummary.totalSets}</span>
               </div>
               <div style={{ display: "flex", flexDirection: "column" }}>
-                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>볼륨</span>
+                <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "4px" }}>{copy.calendarMain.volume}</span>
                 <span style={{ fontFamily: "var(--font-label-family)", fontSize: "18px", fontWeight: 700, color: "var(--color-text)" }}>{formatVolume(loggedSummary.totalVolume)}</span>
               </div>
             </div>
@@ -1105,7 +1119,7 @@ export default function CalendarPage() {
                 fontSize: "15px", fontWeight: 700,
               }}
             >
-              기록수정
+              {copy.calendarMain.editLog}
               <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>chevron_right</span>
             </a>
           </div>
@@ -1114,9 +1128,9 @@ export default function CalendarPage() {
           isPastDateCreationBlocked ? (
             <div style={{ padding: "24px 20px", borderRadius: "20px", background: "var(--color-surface-container-low)", textAlign: "center" }}>
               <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "10px" }}>block</span>
-              <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)", marginBottom: "6px" }}>기록 불가</div>
+              <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)", marginBottom: "6px" }}>{copy.calendarMain.blockedTitle}</div>
               <div style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
-                자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
+                {copy.calendarMain.blockedDescription}
               </div>
             </div>
           ) : (
@@ -1136,7 +1150,7 @@ export default function CalendarPage() {
                       {selectedPlan.name}
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "2px" }}>
-                      <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>시작 전</span>
+                      <span style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{copy.calendarMain.beforeStart}</span>
                       {selectedSessionWDLabel && (
                         <span style={{ fontFamily: "var(--font-label-family)", fontSize: "11px", fontWeight: 700, color: "var(--color-primary)", background: "var(--color-primary-weak)", padding: "2px 8px", borderRadius: "20px" }}>
                           {selectedSessionWDLabel}
@@ -1155,7 +1169,7 @@ export default function CalendarPage() {
                     fontSize: "14px", fontWeight: 700,
                   }}
                 >
-                  기록하기
+                  {copy.calendarMain.startLogging}
                 </a>
               </div>
 
@@ -1199,7 +1213,7 @@ export default function CalendarPage() {
                   color: "var(--color-text)",
                   marginBottom: "6px",
                 }}>
-                  기록 불가
+                  {copy.calendarMain.blockedTitle}
                 </div>
                 <div style={{
                   fontFamily: "var(--font-label-family)",
@@ -1207,7 +1221,7 @@ export default function CalendarPage() {
                   color: "var(--color-text-muted)",
                   lineHeight: 1.5,
                 }}>
-                  자동 진행 플랜은 오늘 이전 날짜에 새 기록을 추가할 수 없습니다.
+                  {copy.calendarMain.blockedDescription}
                 </div>
               </>
             ) : (
@@ -1220,7 +1234,7 @@ export default function CalendarPage() {
                   color: "var(--color-text)",
                   marginBottom: "6px",
                 }}>
-                  {selectedCtx?.planned ? (nextSessionLabel ?? "세션 없음") : "즉시 기록 가능"}
+                  {selectedCtx?.planned ? (nextSessionLabel ?? copy.calendarMain.noSession) : copy.calendarMain.canLogImmediately}
                 </div>
                 <div style={{
                   fontFamily: "var(--font-label-family)",
@@ -1230,8 +1244,8 @@ export default function CalendarPage() {
                   lineHeight: 1.5,
                 }}>
                   {selectedCtx?.planned
-                    ? "기록하기를 누르면 이 날짜 세션을 준비하고 바로 기록을 시작합니다."
-                    : "기록하기를 누르면 이 날짜 기록 화면으로 바로 이동합니다."}
+                    ? copy.calendarMain.plannedDescription
+                    : copy.calendarMain.immediateDescription}
                 </div>
                 <a
                   href={workoutHref}
@@ -1251,7 +1265,7 @@ export default function CalendarPage() {
                   }}
                 >
                   <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>add</span>
-                  기록하기
+                  {copy.calendarMain.startLogging}
                 </a>
               </>
             )}
@@ -1270,7 +1284,7 @@ export default function CalendarPage() {
             margin: 0,
             marginBottom: "var(--space-md)",
           }}>
-            최근 기록
+            {copy.calendarMain.recentLogs}
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             {recentPastLogs.map((log) => {
@@ -1327,7 +1341,7 @@ export default function CalendarPage() {
                         alignItems: "center",
                         gap: "6px",
                       }}>
-                        {selectedPlan?.name ?? "기록"}
+                        {selectedPlan?.name ?? (locale === "ko" ? "기록" : "Log")}
                         {sessionLabel && (
                           <span style={{
                             fontFamily: "var(--font-label-family)",
@@ -1351,7 +1365,7 @@ export default function CalendarPage() {
                         color: "var(--color-text-muted)",
                         marginTop: "2px",
                       }}>
-                        {formatKoreanDay(logDate)}
+                        {formatCalendarDay(logDate, locale)}
                       </div>
                     </div>
                   </div>
@@ -1367,15 +1381,15 @@ export default function CalendarPage() {
 
       <SearchSelectSheet
         open={planSheetOpen}
-        title="플랜 선택"
-        description="캘린더에 표시할 플랜을 검색해 전환합니다."
+        title={copy.calendar.planSheetTitle}
+        description={copy.calendar.planSheetDescription}
         onClose={() => {
           setPlanSheetOpen(false);
           setPlanQuery("");
         }}
-        closeLabel="닫기"
+        closeLabel={copy.calendar.close}
         query={planQuery}
-        placeholder="플랜 검색"
+        placeholder={copy.calendar.planSearchPlaceholder}
         onQueryChange={setPlanQuery}
         onQuerySubmit={() => {
           const first = filteredPlans[0] ?? null;
@@ -1384,8 +1398,8 @@ export default function CalendarPage() {
           setPlanSheetOpen(false);
           setPlanQuery("");
         }}
-        resultsAriaLabel="플랜 검색 결과"
-        emptyText="검색 조건에 맞는 플랜이 없습니다."
+        resultsAriaLabel={copy.calendar.planSearchResults}
+        emptyText={copy.calendar.noMatchingPlans}
         options={filteredPlans.map((plan) => ({
           key: plan.id,
           label: plan.name,
@@ -1401,7 +1415,7 @@ export default function CalendarPage() {
       <MonthYearPickerSheet
         open={monthPickerOpen}
         onClose={() => setMonthPickerOpen(false)}
-        title="연도와 월 선택"
+        title={copy.calendar.monthPickerTitle}
         year={getYear(anchorDate)}
         month={getMonth(anchorDate)}
         minYear={getYear(today) - 10}

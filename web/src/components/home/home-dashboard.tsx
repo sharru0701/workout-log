@@ -2,6 +2,7 @@
 
 import { memo } from "react";
 import Link from "next/link";
+import { useLocale } from "@/components/locale-provider";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   HomeData,
@@ -24,26 +25,22 @@ function formatDurationMin(sets: number): number {
   return Math.max(20, Math.round(sets * 2));
 }
 
-function todayDateString(): string {
+function todayDateString(locale: string, options: Intl.DateTimeFormatOptions): string {
   const now = new Date();
-  return now.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
-}
-
-function computeProgramProgress(planOverview: HomePlanOverview): number | null {
-  // We don't have direct session/total data on the overview; return null to hide when unavailable
-  return null;
+  return now.toLocaleDateString(locale, options);
 }
 
 // ─── Section 1: Welcome Header ────────────────────────────────────────
 
 const WelcomeSection = memo(function WelcomeSection({ today }: { today: HomeTodaySummary }) {
-  const hasPlan = !!today.programName && today.programName !== "플랜 준비 필요";
-  const statusLabel = hasPlan ? "Status: Active" : "Status: No Plan";
+  const { locale, copy } = useLocale();
+  const hasPlan = today.hasPlan;
+  const statusLabel = hasPlan ? copy.home.welcome.active : copy.home.welcome.noPlan;
 
   return (
     <section className="hd-welcome">
       <p className="hd-welcome__status">{statusLabel}</p>
-      <h1 className="hd-welcome__title">{todayDateString()}</h1>
+      <h1 className="hd-welcome__title">{todayDateString(locale, copy.home.todayDate)}</h1>
     </section>
   );
 });
@@ -57,6 +54,7 @@ const MomentumBanner = memo(function MomentumBanner({
   quickStats: HomeQuickStats;
   today: HomeTodaySummary;
 }) {
+  const { copy } = useLocale();
   const streak = quickStats.currentStreak;
   const hasStreak = streak > 0;
 
@@ -66,13 +64,11 @@ const MomentumBanner = memo(function MomentumBanner({
   return (
     <section className="hd-banner">
       <div className="hd-banner__content">
-        <p className="hd-banner__eyebrow">Current Momentum</p>
-        <h3 className="hd-banner__title">
-          {hasStreak ? `${streak}일 연속 진행 중.` : "운동을 시작하세요."}
-        </h3>
+        <p className="hd-banner__eyebrow">{copy.home.momentum.eyebrow}</p>
+        <h3 className="hd-banner__title">{hasStreak ? copy.home.momentum.streak(streak) : copy.home.momentum.empty}</h3>
         {nextTarget && (
           <p className="hd-banner__subtitle">
-            다음 목표:{" "}
+            {copy.home.momentum.nextTarget}:{" "}
             <span className="hd-banner__subtitle-highlight">{nextTarget}</span>
           </p>
         )}
@@ -101,6 +97,7 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
   planOverview: HomePlanOverview;
   weeklySummary: HomeWeeklySummary;
 }) {
+  const { copy } = useLocale();
   const hasPlan = planOverview.totalPlans > 0;
   const programName = planOverview.highlightedProgramName ?? planOverview.highlightedPlanName ?? null;
   const planName = planOverview.highlightedPlanName ?? today.programName;
@@ -110,21 +107,25 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
   const totalDays = weeklySummary.days.length;
   const weekProgressPct = totalDays > 0 ? Math.round((completedDays / totalDays) * 100) : 0;
 
-  const ctaLabel = hasTodayActivity ? "이어서 하기" : hasPlan ? "운동 시작" : "프로그램 선택";
+  const ctaLabel = hasTodayActivity
+    ? copy.home.protocol.continue
+    : hasPlan
+      ? copy.home.protocol.start
+      : copy.home.protocol.chooseProgram;
   const ctaHref = today.href;
 
   if (!hasPlan) {
     return (
       <section className="hd-section">
         <div className="hd-section__header">
-          <h3 className="hd-section__title">오늘의 프로토콜</h3>
+          <h3 className="hd-section__title">{copy.home.protocol.title}</h3>
         </div>
         <div className="hd-protocol hd-protocol--empty">
           <div className="hd-protocol__inner">
-            <span className="hd-protocol__eyebrow">No Active Program</span>
-            <h4 className="hd-protocol__name">프로그램을 선택하세요</h4>
+            <span className="hd-protocol__eyebrow">{copy.home.protocol.noProgram}</span>
+            <h4 className="hd-protocol__name">{copy.home.protocol.selectProgram}</h4>
             <p className="hd-protocol__empty-desc">
-              프로그램 스토어에서 루틴을 선택하면 오늘 운동이 자동으로 구성됩니다.
+              {copy.home.protocol.emptyDescription}
             </p>
             <Link href={APP_ROUTES.programStore} className="hd-cta-btn">
               <span
@@ -133,7 +134,7 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
               >
                 library_books
               </span>
-              <span>프로그램 둘러보기</span>
+              <span>{copy.home.protocol.browsePrograms}</span>
             </Link>
           </div>
         </div>
@@ -144,9 +145,9 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
   return (
     <section className="hd-section">
       <div className="hd-section__header">
-        <h3 className="hd-section__title">오늘의 프로토콜</h3>
+        <h3 className="hd-section__title">{copy.home.protocol.title}</h3>
         {planOverview.lastPerformedAtLabel && (
-          <span className="hd-section__meta">마지막 {planOverview.lastPerformedAtLabel}</span>
+          <span className="hd-section__meta">{copy.home.protocol.lastPerformed} {planOverview.lastPerformedAtLabel}</span>
         )}
       </div>
 
@@ -161,7 +162,7 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
           {/* Weekly progress bar */}
           <div className="hd-protocol__progress">
             <div className="hd-protocol__progress-labels">
-              <span className="hd-protocol__progress-label">이번 주 활동</span>
+              <span className="hd-protocol__progress-label">{copy.home.protocol.weeklyActivity}</span>
               <span className="hd-protocol__progress-pct">{weekProgressPct}%</span>
             </div>
             <div className="hd-protocol__progress-track" role="progressbar" aria-valuenow={weekProgressPct} aria-valuemin={0} aria-valuemax={100}>
@@ -172,13 +173,13 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
           {/* Weekly activity dots */}
           <div
             className="hd-protocol__week-dots"
-            aria-label="최근 7일 운동 활동"
+            aria-label={copy.home.protocol.recent7Days}
           >
             {weeklySummary.days.map((day) => (
               <div
                 key={day.key}
                 className="hd-protocol__week-day"
-                aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? "운동함" : "휴식"}`}
+                aria-label={`${day.dateLabel} ${day.shortLabel} ${day.hasWorkout ? copy.home.protocol.workedOut : copy.home.protocol.rest}`}
               >
                 <span className="hd-protocol__day-label">{day.shortLabel}</span>
                 <span
@@ -207,6 +208,7 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
 // ─── Section 4: Last Entry Bento ─────────────────────────────────────
 
 const LastEntryBento = memo(function LastEntryBento({ session }: { session: HomeLastSession }) {
+  const { copy } = useLocale();
   const totalVolumeTons = formatVolumeTons(session.totalVolume);
   const durationMin = formatDurationMin(session.totalSets);
 
@@ -218,18 +220,18 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
   return (
     <section className="hd-section">
       <div className="hd-section__header">
-        <h3 className="hd-section__title">지난 세션</h3>
+        <h3 className="hd-section__title">{copy.home.lastSession.title}</h3>
         <span className="hd-section__meta">{session.date}</span>
       </div>
 
-      <Link href={session.href} className="hd-bento-grid" aria-label={`지난 세션: ${session.planName}`}>
+      <Link href={session.href} className="hd-bento-grid" aria-label={copy.home.lastSession.ariaLabel(session.planName)}>
         {/* Full-width workload tile */}
         <div className="hd-bento-tile hd-bento-tile--wide">
           <div>
-            <p className="hd-bento-tile__label">Total Workload</p>
+            <p className="hd-bento-tile__label">{copy.home.lastSession.totalWorkload}</p>
             <div className="hd-bento-tile__value-row">
               <span className="hd-bento-tile__number">{totalVolumeTons}</span>
-              <span className="hd-bento-tile__unit">tons</span>
+              <span className="hd-bento-tile__unit">{copy.home.lastSession.tons}</span>
             </div>
             <p className="hd-bento-tile__sub">{session.planName}</p>
           </div>
@@ -240,17 +242,17 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
 
         {/* Duration tile */}
         <div className="hd-bento-tile">
-          <p className="hd-bento-tile__label">Duration</p>
+          <p className="hd-bento-tile__label">{copy.home.lastSession.duration}</p>
           <div className="hd-bento-tile__value-row">
             <span className="hd-bento-tile__number">{durationMin}</span>
-            <span className="hd-bento-tile__unit">Min</span>
+            <span className="hd-bento-tile__unit">{copy.home.lastSession.min}</span>
           </div>
-          <p className="hd-bento-tile__sub">{session.totalSets} sets</p>
+          <p className="hd-bento-tile__sub">{session.totalSets} {copy.home.lastSession.sets}</p>
         </div>
 
         {/* PRs tile */}
         <div className="hd-bento-tile hd-bento-tile--pr">
-          <p className="hd-bento-tile__label">목표 달성</p>
+          <p className="hd-bento-tile__label">{copy.home.lastSession.goalHits}</p>
           <div className="hd-bento-tile__value-row hd-bento-tile__value-row--tertiary">
             <span className="hd-bento-tile__number">{prCount}</span>
             <span
@@ -260,7 +262,7 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
               stars
             </span>
           </div>
-          <p className="hd-bento-tile__sub">{session.exercises.length} exercises</p>
+          <p className="hd-bento-tile__sub">{session.exercises.length} {copy.home.lastSession.exercises}</p>
         </div>
       </Link>
     </section>
@@ -270,37 +272,38 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
 // ─── Section 5: Logistics Quick Links ────────────────────────────────
 
 const LogisticsSection = memo(function LogisticsSection() {
+  const { copy } = useLocale();
   const links = [
     {
       href: APP_ROUTES.programStore,
       icon: "library_books",
-      title: "Program Store",
-      subtitle: "Browse Protocols",
+      title: copy.home.logistics.links.programStore.title,
+      subtitle: copy.home.logistics.links.programStore.subtitle,
     },
     {
       href: APP_ROUTES.templatesHome,
       icon: "content_copy",
-      title: "Templates",
-      subtitle: "Custom Routines",
+      title: copy.home.logistics.links.templates.title,
+      subtitle: copy.home.logistics.links.templates.subtitle,
     },
     {
       href: APP_ROUTES.plansHome,
       icon: "calendar_month",
-      title: "My Plans",
-      subtitle: "Manage & Schedule",
+      title: copy.home.logistics.links.plans.title,
+      subtitle: copy.home.logistics.links.plans.subtitle,
     },
     {
       href: APP_ROUTES.statsHome,
       icon: "show_chart",
-      title: "Stats",
-      subtitle: "Progress Tracking",
+      title: copy.home.logistics.links.stats.title,
+      subtitle: copy.home.logistics.links.stats.subtitle,
     },
   ];
 
   return (
     <section className="hd-section">
       <div className="hd-section__header">
-        <h3 className="hd-section__title">Logistics</h3>
+        <h3 className="hd-section__title">{copy.home.logistics.title}</h3>
       </div>
       <div className="hd-logistics">
         {links.map((link) => (

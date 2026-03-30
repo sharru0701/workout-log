@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useLocale } from "@/components/locale-provider";
 import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { SearchInput } from "@/components/ui/search-input";
@@ -52,10 +53,12 @@ export function SearchSelectCombobox({
   options,
   emptyText,
   loading = false,
-  loadingText = "검색 중...",
+  loadingText,
   selectionSummary,
   hideOptions = false,
 }: SearchSelectComboboxProps) {
+  const { locale } = useLocale();
+  const resolvedLoadingText = loadingText ?? (locale === "ko" ? "검색 중..." : "Searching...");
   return (
     <label>
       {label ? <span>{label}</span> : null}
@@ -82,7 +85,7 @@ export function SearchSelectCombobox({
             style={{ display: "flex", flexDirection: "column", gap: "2px", height: "300px", overflowY: "auto", marginTop: "var(--space-sm)" }}
           >
             {loading ? (
-              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{loadingText}</span>
+              <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{resolvedLoadingText}</span>
             ) : options.length === 0 ? (
               <span style={{ padding: "var(--space-md)", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{emptyText}</span>
             ) : (
@@ -128,20 +131,22 @@ export function SearchSelectSheet({
   title,
   onClose,
   description,
-  closeLabel = "닫기",
+  closeLabel,
   header,
   primaryAction,
   footer,
   children,
   ...comboboxProps
 }: SearchSelectSheetProps) {
+  const { locale } = useLocale();
+  const resolvedCloseLabel = closeLabel ?? (locale === "ko" ? "닫기" : "Close");
   return (
     <BottomSheet
       open={open}
       title={title}
       description={description}
       onClose={onClose}
-      closeLabel={closeLabel}
+      closeLabel={resolvedCloseLabel}
       header={header}
       primaryAction={primaryAction}
       footer={footer}

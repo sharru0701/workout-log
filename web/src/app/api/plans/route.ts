@@ -4,6 +4,7 @@ import { plan, planModule, programTemplate, programVersion, workoutLog } from "@
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 function toRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
@@ -28,6 +29,7 @@ function withAutoProgressionDefaults(value: unknown) {
  *   { name, type:"COMPOSITE", params?, modules: [{target, programVersionId, priority?, params?}, ...] }
  */
 async function POSTImpl(req: Request) {
+  const locale = await resolveRequestLocale();
   const body = await req.json();
 
   const userId = getAuthenticatedUserId();
@@ -35,13 +37,13 @@ async function POSTImpl(req: Request) {
   const type = body.type;
 
   if (!name || !type) {
-    return NextResponse.json({ error: "name and type are required" }, { status: 400 });
+    return NextResponse.json({ error: locale === "ko" ? "name과 type이 필요합니다." : "name and type are required." }, { status: 400 });
   }
 
   if (type === "COMPOSITE") {
     const modules = Array.isArray(body.modules) ? body.modules : [];
     if (modules.length === 0) {
-      return NextResponse.json({ error: "modules are required for COMPOSITE" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "COMPOSITE 플랜에는 modules가 필요합니다." : "modules are required for COMPOSITE." }, { status: 400 });
     }
 
     const created = await db.transaction(async (tx) => {
@@ -74,7 +76,7 @@ async function POSTImpl(req: Request) {
   // SINGLE or MANUAL
   const rootProgramVersionId = body.rootProgramVersionId;
   if (!rootProgramVersionId) {
-    return NextResponse.json({ error: "rootProgramVersionId is required" }, { status: 400 });
+    return NextResponse.json({ error: locale === "ko" ? "rootProgramVersionId가 필요합니다." : "rootProgramVersionId is required." }, { status: 400 });
   }
 
   const [p] = await db
@@ -92,6 +94,7 @@ async function POSTImpl(req: Request) {
 }
 
 async function GETImpl() {
+  const locale = await resolveRequestLocale();
   const userId = getAuthenticatedUserId();
 
   const baseItems = await db
@@ -157,7 +160,9 @@ async function GETImpl() {
   const items = baseItems.map((item) => {
     const baseProgramName =
       (item.rootProgramVersionId && versionNameById.get(item.rootProgramVersionId)) ??
-      (item.type === "COMPOSITE" ? "복합 플랜" : "프로그램 정보 없음");
+      (item.type === "COMPOSITE"
+        ? (locale === "ko" ? "복합 플랜" : "Composite Plan")
+        : (locale === "ko" ? "프로그램 정보 없음" : "No Program Info"));
     return {
       ...item,
       baseProgramName,

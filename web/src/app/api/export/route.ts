@@ -3,9 +3,12 @@ import { buildUserDataExport, buildWorkoutSetCsv } from "@/server/export/userExp
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 async function GETImpl(req: Request) {
   try {
+    const locale = await resolveRequestLocale();
     const { searchParams } = new URL(req.url);
     const userId = getAuthenticatedUserId();
     const format = (searchParams.get("format") ?? "json").toLowerCase();
@@ -16,7 +19,7 @@ async function GETImpl(req: Request) {
     if (format === "csv") {
       if (type !== "workout_set") {
         return NextResponse.json(
-          { error: "CSV export requires type=workout_set" },
+          { error: locale === "ko" ? "CSV 내보내기는 type=workout_set 이 필요합니다." : "CSV export requires type=workout_set." },
           { status: 400 },
         );
       }
@@ -33,7 +36,10 @@ async function GETImpl(req: Request) {
     }
 
     if (format !== "json") {
-      return NextResponse.json({ error: "format must be json or csv" }, { status: 400 });
+      return NextResponse.json(
+        { error: locale === "ko" ? "format은 json 또는 csv여야 합니다." : "format must be json or csv." },
+        { status: 400 },
+      );
     }
 
     const data = await buildUserDataExport(userId);
@@ -47,7 +53,7 @@ async function GETImpl(req: Request) {
     });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

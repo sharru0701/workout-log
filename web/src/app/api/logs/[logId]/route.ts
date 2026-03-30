@@ -9,11 +9,14 @@ import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ logId: string }> };
 
 async function GETImpl(_req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
     const userId = getAuthenticatedUserId();
 
@@ -34,8 +37,8 @@ async function GETImpl(_req: Request, ctx: Ctx) {
       .limit(1);
 
     const log = logRows[0];
-    if (!log) return NextResponse.json({ error: "log not found" }, { status: 404 });
-    if (log.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!log) return NextResponse.json({ error: locale === "ko" ? "기록을 찾을 수 없습니다." : "Log not found." }, { status: 404 });
+    if (log.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const sets = await db
       .select({
@@ -91,19 +94,20 @@ async function GETImpl(_req: Request, ctx: Ctx) {
     });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
 async function PATCHImpl(req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
     const userId = getAuthenticatedUserId();
     const body = await req.json();
 
     const sets = Array.isArray(body.sets) ? body.sets : [];
     if (sets.length === 0) {
-      return NextResponse.json({ error: "sets required" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "세트 정보가 필요합니다." : "Sets are required." }, { status: 400 });
     }
 
     const existingRows = await db
@@ -118,8 +122,8 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
       .limit(1);
 
     const existing = existingRows[0];
-    if (!existing) return NextResponse.json({ error: "log not found" }, { status: 404 });
-    if (existing.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!existing) return NextResponse.json({ error: locale === "ko" ? "기록을 찾을 수 없습니다." : "Log not found." }, { status: 404 });
+    if (existing.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const submittedPlanId =
       typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : existing.planId;
@@ -129,10 +133,10 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
         : existing.generatedSessionId;
 
     if (submittedPlanId !== existing.planId) {
-      return NextResponse.json({ error: "planId change is not allowed on log update" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "기록 수정 시 planId는 변경할 수 없습니다." : "planId change is not allowed on log update." }, { status: 400 });
     }
     if (submittedGeneratedSessionId !== existing.generatedSessionId) {
-      return NextResponse.json({ error: "generatedSessionId change is not allowed on log update" }, { status: 400 });
+      return NextResponse.json({ error: locale === "ko" ? "기록 수정 시 generatedSessionId는 변경할 수 없습니다." : "generatedSessionId change is not allowed on log update." }, { status: 400 });
     }
 
     if (submittedGeneratedSessionId) {
@@ -141,11 +145,11 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
         .from(generatedSession)
         .where(eq(generatedSession.id, submittedGeneratedSessionId))
         .limit(1);
-      if (!s[0]) return NextResponse.json({ error: "generatedSession not found" }, { status: 404 });
-      if (s[0].userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      if (!s[0]) return NextResponse.json({ error: locale === "ko" ? "생성된 세션을 찾을 수 없습니다." : "Generated session not found." }, { status: 404 });
+      if (s[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
       if (submittedPlanId && s[0].planId !== submittedPlanId) {
         return NextResponse.json(
-          { error: "generatedSession does not belong to provided planId" },
+          { error: locale === "ko" ? "generatedSession이 전달된 planId에 속하지 않습니다." : "generatedSession does not belong to the provided planId." },
           { status: 400 },
         );
       }
@@ -252,7 +256,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
     return NextResponse.json(updated, { status: 200 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 
@@ -272,8 +276,8 @@ async function DELETEImpl(_req: Request, ctx: Ctx) {
       .limit(1);
 
     const existing = existingRows[0];
-    if (!existing) return NextResponse.json({ error: "log not found" }, { status: 404 });
-    if (existing.userId !== userId) return NextResponse.json({ error: "forbidden" }, { status: 403 });
+    if (!existing) return NextResponse.json({ error: locale === "ko" ? "기록을 찾을 수 없습니다." : "Log not found." }, { status: 404 });
+    if (existing.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
 
     const deleted = await db.transaction(async (tx) => {
       await tx.delete(workoutLog).where(eq(workoutLog.id, logId));
@@ -302,7 +306,7 @@ async function DELETEImpl(_req: Request, ctx: Ctx) {
     );
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

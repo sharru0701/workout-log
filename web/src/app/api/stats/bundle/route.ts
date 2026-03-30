@@ -10,6 +10,8 @@ import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 function epley1RM(weightKg: number, reps: number) {
   return weightKg * (1 + reps / 30);
@@ -58,6 +60,7 @@ async function fetchVolumeTonnage(userId: string, from: Date, to: Date): Promise
 }
 
 async function fetchCompliance(userId: string, from: Date, to: Date): Promise<ComplianceResult> {
+  const locale = await resolveRequestLocale();
   const plannedAtExpr = sql<Date>`coalesce(${generatedSession.scheduledAt}, ${generatedSession.updatedAt})`;
   const plannedRows = await db
     .select({ id: generatedSession.id, planId: generatedSession.planId, sessionKey: generatedSession.sessionKey })
@@ -107,7 +110,7 @@ async function fetchCompliance(userId: string, from: Date, to: Date): Promise<Co
   const byPlan: PlanCompliance[] = Array.from(byPlanMap.entries())
     .map(([pId, bucket]) => ({
       planId: pId,
-      planName: planNameById.get(pId) ?? "Unknown plan",
+      planName: planNameById.get(pId) ?? (locale === "ko" ? "알 수 없는 플랜" : "Unknown plan"),
       planned: bucket.plannedKeys.size,
       done: bucket.done,
       compliance: bucket.plannedKeys.size > 0 ? Math.round((bucket.done / bucket.plannedKeys.size) * 1000) / 1000 : 0,
@@ -123,6 +126,7 @@ async function fetchCompliance(userId: string, from: Date, to: Date): Promise<Co
 }
 
 async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Promise<PrItem[]> {
+  const locale = await resolveRequestLocale();
   const rows = await db
     .select({
       performedAt: workoutLog.performedAt,
@@ -173,7 +177,7 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Pr
     if (!byExercise.has(key)) {
       byExercise.set(key, {
         exerciseId: r.exerciseId ?? null,
-        exerciseName: String(r.exerciseName ?? "Unknown"),
+        exerciseName: String(r.exerciseName ?? (locale === "ko" ? "알 수 없는 운동" : "Unknown Exercise")),
         first: point,
         best: point,
         latest: point,
@@ -240,7 +244,7 @@ async function GETImpl(req: Request) {
     return NextResponse.json(payload);
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

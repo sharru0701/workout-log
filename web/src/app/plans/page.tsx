@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
 
 type NavItem = {
   href: string;
@@ -8,47 +9,6 @@ type NavItem = {
   description: string;
   iconSymbol: string;
 };
-
-const managementItems: NavItem[] = [
-  {
-    href: APP_ROUTES.plansManage,
-    label: "보유 플랜 관리",
-    subtitle: "Active Plans",
-    description: "운영 중인 플랜 목록 · 오늘 운동 연결 · 삭제",
-    iconSymbol: "assignment",
-  },
-  {
-    href: APP_ROUTES.plansHistory,
-    label: "수행 히스토리",
-    subtitle: "History",
-    description: "플랜별 수행 로그와 진행 흐름",
-    iconSymbol: "history",
-  },
-];
-
-const setupItems: NavItem[] = [
-  {
-    href: APP_ROUTES.programStore,
-    label: "프로그램에서 새 플랜 시작",
-    subtitle: "Program Store",
-    description: "프로그램을 고르고 바로 플랜으로 연결",
-    iconSymbol: "library_books",
-  },
-  {
-    href: APP_ROUTES.programCreate,
-    label: "커스텀 프로그램 만들기",
-    subtitle: "Custom",
-    description: "내 루틴을 직접 만들고 플랜으로 시작",
-    iconSymbol: "add_circle",
-  },
-  {
-    href: APP_ROUTES.plansContext,
-    label: "생성 기준 확인",
-    subtitle: "Advanced",
-    description: "날짜, 세션 키 규칙 등 고급 생성 기준 점검",
-    iconSymbol: "tune",
-  },
-];
 
 function NavRow({ item }: { item: NavItem }) {
   return (
@@ -127,7 +87,49 @@ function NavRow({ item }: { item: NavItem }) {
   );
 }
 
-export default function PlansIndexPage() {
+export default async function PlansIndexPage() {
+  const locale = await resolveRequestLocale();
+  const copy = getAppCopy(locale);
+  const managementItems: NavItem[] = [
+    {
+      href: APP_ROUTES.plansManage,
+      label: copy.plans.managementItems.active.label,
+      subtitle: copy.plans.managementItems.active.subtitle,
+      description: copy.plans.managementItems.active.description,
+      iconSymbol: "assignment",
+    },
+    {
+      href: APP_ROUTES.plansHistory,
+      label: copy.plans.managementItems.history.label,
+      subtitle: copy.plans.managementItems.history.subtitle,
+      description: copy.plans.managementItems.history.description,
+      iconSymbol: "history",
+    },
+  ];
+  const setupItems: NavItem[] = [
+    {
+      href: APP_ROUTES.programStore,
+      label: copy.plans.setupItems.store.label,
+      subtitle: copy.plans.setupItems.store.subtitle,
+      description: copy.plans.setupItems.store.description,
+      iconSymbol: "library_books",
+    },
+    {
+      href: APP_ROUTES.programCreate,
+      label: copy.plans.setupItems.custom.label,
+      subtitle: copy.plans.setupItems.custom.subtitle,
+      description: copy.plans.setupItems.custom.description,
+      iconSymbol: "add_circle",
+    },
+    {
+      href: APP_ROUTES.plansContext,
+      label: copy.plans.setupItems.advanced.label,
+      subtitle: copy.plans.setupItems.advanced.subtitle,
+      description: copy.plans.setupItems.advanced.description,
+      iconSymbol: "tune",
+    },
+  ];
+
   return (
     <div>
       {/* Header */}
@@ -153,7 +155,7 @@ export default function PlansIndexPage() {
               marginBottom: "4px",
             }}
           >
-            Training Plans
+            {copy.plans.headerEyebrow}
           </div>
           <h1
             style={{
@@ -165,7 +167,7 @@ export default function PlansIndexPage() {
               margin: 0,
             }}
           >
-            플랜 관리
+            {copy.plans.title}
           </h1>
         </div>
         <Link
@@ -189,7 +191,7 @@ export default function PlansIndexPage() {
           >
             assignment
           </span>
-          관리
+          {copy.plans.manage}
         </Link>
       </div>
 
@@ -207,7 +209,7 @@ export default function PlansIndexPage() {
               margin: 0,
             }}
           >
-            플랜 운영
+            {copy.plans.managementSection}
           </h2>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
@@ -231,7 +233,7 @@ export default function PlansIndexPage() {
               margin: 0,
             }}
           >
-            새 플랜 시작
+            {copy.plans.setupSection}
           </h2>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
 
 type NavItem = {
   href: string;
@@ -8,40 +9,6 @@ type NavItem = {
   description: string;
   iconSymbol: string;
 };
-
-const libraryItems: NavItem[] = [
-  {
-    href: APP_ROUTES.templatesManage,
-    label: "템플릿 둘러보기",
-    subtitle: "Library",
-    description: "공개 템플릿과 개인 템플릿을 한곳에서 확인합니다.",
-    iconSymbol: "style",
-  },
-  {
-    href: APP_ROUTES.templatesManage,
-    label: "포크 후 수정",
-    subtitle: "Fork & Edit",
-    description: "공개 템플릿을 복사해 내 작업공간에서 수정합니다.",
-    iconSymbol: "fork_right",
-  },
-];
-
-const integrationItems: NavItem[] = [
-  {
-    href: APP_ROUTES.programStore,
-    label: "프로그램 스토어로 연결",
-    subtitle: "Program Store",
-    description: "템플릿 기반 프로그램을 고르고 플랜 시작 흐름으로 이어갑니다.",
-    iconSymbol: "library_books",
-  },
-  {
-    href: APP_ROUTES.programCreate,
-    label: "커스텀 프로그램 만들기",
-    subtitle: "Custom",
-    description: "템플릿 대신 내 루틴을 직접 정의하고 싶을 때 같은 시작 흐름으로 이동합니다.",
-    iconSymbol: "add_circle",
-  },
-];
 
 function NavRow({ item }: { item: NavItem }) {
   return (
@@ -119,7 +86,42 @@ function NavRow({ item }: { item: NavItem }) {
   );
 }
 
-export default function TemplatesIndexPage() {
+export default async function TemplatesIndexPage() {
+  const locale = await resolveRequestLocale();
+  const copy = getAppCopy(locale);
+  const libraryItems: NavItem[] = [
+    {
+      href: APP_ROUTES.templatesManage,
+      label: copy.templates.libraryItems.browse.label,
+      subtitle: copy.templates.libraryItems.browse.subtitle,
+      description: copy.templates.libraryItems.browse.description,
+      iconSymbol: "style",
+    },
+    {
+      href: APP_ROUTES.templatesManage,
+      label: copy.templates.libraryItems.forkEdit.label,
+      subtitle: copy.templates.libraryItems.forkEdit.subtitle,
+      description: copy.templates.libraryItems.forkEdit.description,
+      iconSymbol: "fork_right",
+    },
+  ];
+  const integrationItems: NavItem[] = [
+    {
+      href: APP_ROUTES.programStore,
+      label: copy.templates.integrationItems.store.label,
+      subtitle: copy.templates.integrationItems.store.subtitle,
+      description: copy.templates.integrationItems.store.description,
+      iconSymbol: "library_books",
+    },
+    {
+      href: APP_ROUTES.programCreate,
+      label: copy.templates.integrationItems.custom.label,
+      subtitle: copy.templates.integrationItems.custom.subtitle,
+      description: copy.templates.integrationItems.custom.description,
+      iconSymbol: "add_circle",
+    },
+  ];
+
   return (
     <div>
       {/* Header */}
@@ -145,7 +147,7 @@ export default function TemplatesIndexPage() {
               marginBottom: "4px",
             }}
           >
-            Templates
+            {copy.templates.headerEyebrow}
           </div>
           <h1
             style={{
@@ -157,7 +159,7 @@ export default function TemplatesIndexPage() {
               margin: 0,
             }}
           >
-            프로그램 템플릿
+            {copy.templates.title}
           </h1>
         </div>
         <Link
@@ -181,7 +183,7 @@ export default function TemplatesIndexPage() {
           >
             style
           </span>
-          관리
+          {copy.templates.manage}
         </Link>
       </div>
 
@@ -198,7 +200,7 @@ export default function TemplatesIndexPage() {
             margin: "0 0 var(--space-sm)",
           }}
         >
-          템플릿 작업
+          {copy.templates.workSection}
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {libraryItems.map((item) => (
@@ -220,7 +222,7 @@ export default function TemplatesIndexPage() {
             margin: "0 0 var(--space-sm)",
           }}
         >
-          연결 흐름
+          {copy.templates.flowSection}
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {integrationItems.map((item) => (

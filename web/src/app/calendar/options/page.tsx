@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -107,6 +108,8 @@ export default async function CalendarOptionsPage({
 }: {
   searchParams?: Promise<SearchParams>;
 }) {
+  const locale = await resolveRequestLocale();
+  const copy = getAppCopy(locale);
   const params = searchParams ? await searchParams : {};
   const viewMode = readString(params, "viewMode", "month");
   const timezone = readString(params, "timezone", "UTC");
@@ -123,29 +126,29 @@ export default async function CalendarOptionsPage({
   const optionItems: SettingItem[] = [
     {
       href: toSelectionHref("/calendar/options/select/view-mode", returnTo),
-      label: "보기 방식",
-      description: "기본 그리드 보기를 설정합니다.",
+      label: copy.calendarOptions.fields.viewMode.label,
+      description: copy.calendarOptions.fields.viewMode.description,
       currentValue: viewMode,
       iconSymbol: "grid_view",
     },
     {
       href: toSelectionHref("/calendar/options/select/timezone", returnTo),
-      label: "시간대",
-      description: "날짜 경계 계산 시간대를 설정합니다.",
+      label: copy.calendarOptions.fields.timezone.label,
+      description: copy.calendarOptions.fields.timezone.description,
       currentValue: timezone,
       iconSymbol: "schedule",
     },
     {
       href: toSelectionHref("/calendar/options/select/auto-open", returnTo),
-      label: "열기 동작",
-      description: "날짜 열기 시 동작을 선택합니다.",
-      currentValue: autoOpenMode === "AUTO_GENERATE" ? "자동 생성" : "열기만",
+      label: copy.calendarOptions.fields.autoOpen.label,
+      description: copy.calendarOptions.fields.autoOpen.description,
+      currentValue: autoOpenMode === "AUTO_GENERATE" ? copy.calendarOptions.fields.autoOpen.autoGenerate : copy.calendarOptions.fields.autoOpen.openOnly,
       iconSymbol: "touch_app",
     },
     {
       href: toSelectionHref("/calendar/options/picker/open-time", returnTo),
-      label: "기본 열기 시간",
-      description: "날짜 열기 기본 시간을 설정합니다.",
+      label: copy.calendarOptions.fields.openTime.label,
+      description: copy.calendarOptions.fields.openTime.description,
       currentValue: openTime,
       iconSymbol: "access_time",
     },
@@ -172,7 +175,7 @@ export default async function CalendarOptionsPage({
             marginBottom: "4px",
           }}
         >
-          Calendar Settings
+          {copy.calendarOptions.eyebrow}
         </div>
         <h1
           style={{
@@ -184,10 +187,10 @@ export default async function CalendarOptionsPage({
             margin: "0 0 var(--space-sm)",
           }}
         >
-          캘린더 옵션
+          {copy.calendarOptions.title}
         </h1>
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.5 }}>
-          날짜를 눌렀을 때 열기만 할지, 세션 생성까지 이어질지 정하는 화면입니다.
+          {copy.calendarOptions.description}
         </p>
         <Link
           href={APP_ROUTES.calendarHome}
@@ -212,7 +215,7 @@ export default async function CalendarOptionsPage({
           >
             arrow_back
           </span>
-          캘린더로 돌아가기
+          {copy.calendarOptions.backToCalendar}
         </Link>
       </div>
 
@@ -228,7 +231,7 @@ export default async function CalendarOptionsPage({
           margin: "0 0 var(--space-sm)",
         }}
       >
-        옵션 항목
+        {copy.calendarOptions.sectionTitle}
       </h2>
       <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
         {optionItems.map((item) => (

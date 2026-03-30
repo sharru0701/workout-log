@@ -5,11 +5,14 @@ import { desc, eq } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 type Ctx = { params: Promise<{ slug: string }> };
 
 async function POSTImpl(req: Request, ctx: Ctx) {
   try {
+    const locale = await resolveRequestLocale();
     const { slug } = await ctx.params;
     const body = await req.json();
 
@@ -24,9 +27,9 @@ async function POSTImpl(req: Request, ctx: Ctx) {
       .limit(1);
 
     const sourceTemplate = srcT[0];
-    if (!sourceTemplate) return NextResponse.json({ error: "source template not found" }, { status: 404 });
+    if (!sourceTemplate) return NextResponse.json({ error: locale === "ko" ? "원본 템플릿을 찾을 수 없습니다." : "Source template not found." }, { status: 404 });
     if (sourceTemplate.visibility === "PRIVATE" && sourceTemplate.ownerUserId !== userId) {
-      return NextResponse.json({ error: "forbidden" }, { status: 403 });
+      return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
     }
 
     const srcV = await db
@@ -37,7 +40,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
       .limit(1);
 
     const sourceVersion = srcV[0];
-    if (!sourceVersion) return NextResponse.json({ error: "source version not found" }, { status: 404 });
+    if (!sourceVersion) return NextResponse.json({ error: locale === "ko" ? "원본 버전을 찾을 수 없습니다." : "Source version not found." }, { status: 404 });
 
     const forkSlug = newSlug ?? `${slug}-${userId}-${Date.now()}`;
     const forkName = newName ?? `${sourceTemplate.name} (Fork)`;
@@ -75,7 +78,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     return NextResponse.json(created, { status: 201 });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

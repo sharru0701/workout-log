@@ -1,13 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import {
   ApiHomeDataSource,
-  HOME_PREVIEW_DATA,
   PreviewHomeDataSource,
+  getHomePreviewData,
   type HomeData,
   type HomeDataSource,
 } from "@/lib/home/home-data-source";
@@ -22,18 +23,20 @@ const skeletonStyle: CSSProperties = {
   borderRadius: 8,
 };
 
-function useHomeDataSource(): HomeDataSource {
+function useHomeDataSource(locale: "ko" | "en"): HomeDataSource {
   return useMemo(() => {
     if (HOME_PREVIEW_MODE) {
-      return new PreviewHomeDataSource();
+      return new PreviewHomeDataSource(getHomePreviewData(locale));
     }
-    return new ApiHomeDataSource(3);
-  }, []);
+    return new ApiHomeDataSource(3, locale);
+  }, [locale]);
 }
 
 export default function HomePage() {
-  const dataSource = useHomeDataSource();
-  const [homeData, setHomeData] = useState<HomeData | null>(HOME_PREVIEW_MODE ? HOME_PREVIEW_DATA : null);
+  const { copy, locale } = useLocale();
+  const dataSource = useHomeDataSource(locale);
+  const previewData = useMemo(() => getHomePreviewData(locale), [locale]);
+  const [homeData, setHomeData] = useState<HomeData | null>(HOME_PREVIEW_MODE ? previewData : null);
   const [loading, setLoading] = useState(!HOME_PREVIEW_MODE);
   const [error, setError] = useState<string | null>(null);
   const hasLoadedRef = useRef(false);
@@ -46,15 +49,20 @@ export default function HomePage() {
       hasLoadedRef.current = true;
       setHomeData(nextData);
     } catch (e: any) {
-      setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
+      setError(e?.message ?? copy.home.loadError);
     } finally {
       setLoading(false);
     }
-  }, [dataSource]);
+  }, [copy.home.loadError, dataSource]);
 
   const pullToRefresh = usePullToRefresh({
     onRefresh: async () => loadHomeData({ isRefresh: true }),
   });
+
+  useEffect(() => {
+    if (!HOME_PREVIEW_MODE) return;
+    setHomeData(previewData);
+  }, [previewData]);
 
   useEffect(() => {
     if (HOME_PREVIEW_MODE) return;
@@ -70,7 +78,7 @@ export default function HomePage() {
           setHomeData(nextData);
         }
       } catch (e: any) {
-        if (!cancelled) setError(e?.message ?? "홈 데이터를 불러오지 못했습니다.");
+        if (!cancelled) setError(e?.message ?? copy.home.loadError);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -79,7 +87,7 @@ export default function HomePage() {
     return () => {
       cancelled = true;
     };
-  }, [dataSource]);
+  }, [copy.home.loadError, dataSource]);
 
   const hasResolvedHomeData = HOME_PREVIEW_MODE || homeData !== null;
   const viewData = homeData;
@@ -171,8 +179,8 @@ export default function HomePage() {
             onRetry={() => {
               void loadHomeData();
             }}
-            retryLabel="다시 불러오기"
-            ariaLabel="홈 오류 상태"
+            retryLabel={copy.home.retry}
+            ariaLabel={copy.home.loadError}
           />
         </>
       ) : (
@@ -180,20 +188,20 @@ export default function HomePage() {
           <LoadingStateRows
             active={loading}
             delayMs={180}
-            label="홈 데이터 불러오는 중"
-            description="오늘 요약과 최근 운동 요약을 조회하고 있습니다."
-            ariaLabel="홈 로딩 상태"
+            label={copy.home.loadingLabel}
+            description={copy.home.loadingDescription}
+            ariaLabel={copy.home.loadingLabel}
           />
           <ErrorStateRows
             message={error}
             onRetry={() => {
               void loadHomeData();
             }}
-            title="홈 데이터를 불러오지 못했습니다"
-            retryLabel="다시 불러오기"
-            ariaLabel="홈 오류 상태"
+            title={copy.home.loadError}
+            retryLabel={copy.home.retry}
+            ariaLabel={copy.home.loadError}
           />
-          {!error && <HomeDashboard data={viewData ?? HOME_PREVIEW_DATA} />}
+          {!error && <HomeDashboard data={viewData ?? previewData} />}
         </>
       )}
     </PullToRefreshShell>

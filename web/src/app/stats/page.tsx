@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useLocale } from "@/components/locale-provider";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { apiGet } from "@/lib/api";
 import dynamic from "next/dynamic";
@@ -49,6 +50,7 @@ function compliancePct(c: any): number {
 // ─── Sub-components ───────────────────────────────────────────────
 
 function PeriodChips({ value, onChange }: { value: number; onChange: (days: number) => void }) {
+  const { locale } = useLocale();
   return (
     <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "var(--space-lg)" }}>
       {PERIODS.map((p) => {
@@ -71,7 +73,7 @@ function PeriodChips({ value, onChange }: { value: number; onChange: (days: numb
               transition: "background 0.12s ease, color 0.12s ease, border-color 0.12s ease",
             }}
           >
-            {p.label}
+            {p.days === 0 ? (locale === "ko" ? "전체" : "All") : p.label}
           </button>
         );
       })}
@@ -85,6 +87,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
   complianceData: any;
   topPr: any;
 }) {
+  const { locale } = useLocale();
   const vol = volume !== null ? formatVolume(volume) : null;
   const pct = compliancePct(complianceData);
 
@@ -109,7 +112,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         <div style={{ fontSize: "40px", fontWeight: 800, letterSpacing: "-1.5px", color: "var(--color-text)", lineHeight: 1 }}>
           {sessions ?? "—"}
         </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>운동 기록</div>
+        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "운동 기록" : "Logged sessions"}</div>
       </div>
 
       {/* Volume — top right */}
@@ -127,7 +130,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
           </span>
           {vol && <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--color-text-muted)" }}>{vol.unit}</span>}
         </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>누적 볼륨</div>
+        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "누적 볼륨" : "Total volume"}</div>
       </div>
 
       {/* Compliance — bottom left */}
@@ -142,7 +145,7 @@ function BentoMetrics({ sessions, volume, complianceData, topPr }: {
         <div style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1px", lineHeight: 1, color: pct >= 80 ? "var(--color-success)" : pct >= 50 ? "var(--color-action)" : "var(--color-text)" }}>
           {complianceData !== null ? `${pct}%` : "—"}
         </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>플랜 준수율</div>
+        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "플랜 준수율" : "Plan compliance"}</div>
       </div>
 
       {/* Top PR — bottom right */}
@@ -187,6 +190,7 @@ function SectionHeading({ label, title, description }: { label: string; title: s
 }
 
 function ComplianceRow({ r }: { r: any }) {
+  const { locale } = useLocale();
   const pct = Math.round(r.compliance * 100);
   return (
     <div style={{
@@ -203,7 +207,7 @@ function ComplianceRow({ r }: { r: any }) {
           {r.planName}
         </div>
         <div style={{ fontSize: "11px", color: "var(--color-text-muted)" }}>
-          {r.done} / {r.planned} 세션 완료
+          {locale === "ko" ? `${r.done} / ${r.planned} 세션 완료` : `${r.done} / ${r.planned} sessions completed`}
         </div>
         {/* Progress bar */}
         <div style={{ marginTop: "6px", height: "4px", borderRadius: "2px", background: "var(--color-surface-container)", overflow: "hidden" }}>
@@ -231,6 +235,7 @@ function ComplianceRow({ r }: { r: any }) {
 }
 
 function PrRow({ r }: { r: any }) {
+  const { locale } = useLocale();
   const imp = r.improvement;
   const impColor = imp > 0 ? "var(--color-success)" : "var(--color-text-muted)";
   return (
@@ -253,8 +258,8 @@ function PrRow({ r }: { r: any }) {
           {r.exerciseName}
         </div>
         <div style={{ display: "flex", gap: "10px", fontSize: "11px", color: "var(--color-text-muted)" }}>
-          <span>최신 <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{r.latest?.e1rm ?? "—"}kg</span></span>
-          <span>최고 <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{r.best?.e1rm ?? "—"}kg</span></span>
+          <span>{locale === "ko" ? "최신" : "Latest"} <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{r.latest?.e1rm ?? "—"}kg</span></span>
+          <span>{locale === "ko" ? "최고" : "Best"} <span style={{ color: "var(--color-text)", fontWeight: 600 }}>{r.best?.e1rm ?? "—"}kg</span></span>
         </div>
       </div>
       <div style={{ textAlign: "right", flexShrink: 0 }}>
@@ -347,7 +352,7 @@ function StatsPageContent() {
             color: "var(--color-action)",
             marginBottom: "4px",
           }}>
-            Performance
+            {locale === "ko" ? "퍼포먼스" : "Performance"}
           </div>
           <h1 style={{
             fontSize: "28px",
@@ -356,7 +361,7 @@ function StatsPageContent() {
             color: "var(--color-text)",
             margin: 0,
           }}>
-            Stats
+            {locale === "ko" ? "통계" : "Stats"}
           </h1>
           <p style={{
             fontSize: "13px",
@@ -364,7 +369,7 @@ function StatsPageContent() {
             marginTop: "4px",
             lineHeight: 1.5,
           }}>
-            훈련 성과, 볼륨 추이, 종목별 최고 기록을 분석합니다.
+            {locale === "ko" ? "훈련 성과, 볼륨 추이, 종목별 최고 기록을 분석합니다." : "Analyze training performance, volume trends, and exercise-specific records."}
           </p>
         </div>
 
@@ -382,9 +387,9 @@ function StatsPageContent() {
         {/* ── Detailed 1RM Chart ── */}
         <div style={{ marginBottom: "var(--space-xl)" }} ref={detailedSectionRef}>
           <SectionHeading
-            label="Trend Analysis"
-            title="상세 추이 분석"
-            description="운동별 e1RM 변화와 전체 기간 최고 기록"
+            label={locale === "ko" ? "추이 분석" : "Trend Analysis"}
+            title={locale === "ko" ? "상세 추이 분석" : "Detailed Trend Analysis"}
+            description={locale === "ko" ? "운동별 e1RM 변화와 전체 기간 최고 기록" : "Track e1RM changes by exercise and best results across the selected range."}
           />
           <div style={{ marginTop: "var(--space-sm)" }}>
             <Stats1RMDetailed ref={detailedRef} refreshTick={refreshTick} />
@@ -394,17 +399,17 @@ function StatsPageContent() {
         {/* ── PR Records ── */}
         <div style={{ marginBottom: "var(--space-xl)" }}>
           <SectionHeading
-            label="Personal Records"
-            title="PR 기록 추적"
-            description="종목별 최고 기록과 기간 내 향상도"
+            label={locale === "ko" ? "개인 최고 기록" : "Personal Records"}
+            title={locale === "ko" ? "PR 기록 추적" : "PR Tracking"}
+            description={locale === "ko" ? "종목별 최고 기록과 기간 내 향상도" : "Review best lifts by exercise and improvement across the selected period."}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
             {loading ? (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>로딩 중…</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{locale === "ko" ? "로딩 중…" : "Loading..."}</div>
             ) : prs?.items?.length ? (
               prs.items.map((r: any) => <PrRow key={r.exerciseId ?? r.exerciseName} r={r} />)
             ) : (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>데이터가 없습니다.</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{locale === "ko" ? "데이터가 없습니다." : "No data available."}</div>
             )}
           </div>
         </div>
@@ -412,17 +417,17 @@ function StatsPageContent() {
         {/* ── Compliance ── */}
         <div style={{ marginBottom: "var(--space-xl)" }}>
           <SectionHeading
-            label="Plan Adherence"
-            title="플랜별 준수율"
-            description="기간 내 계획 대비 완료 세션 비율"
+            label={locale === "ko" ? "플랜 준수율" : "Plan Adherence"}
+            title={locale === "ko" ? "플랜별 준수율" : "Plan Compliance"}
+            description={locale === "ko" ? "기간 내 계획 대비 완료 세션 비율" : "See how many planned sessions were completed during the selected period."}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
             {loading ? (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>로딩 중…</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{locale === "ko" ? "로딩 중…" : "Loading..."}</div>
             ) : compliance?.byPlan?.length ? (
               compliance.byPlan.map((r: any) => <ComplianceRow key={r.planId} r={r} />)
             ) : (
-              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>데이터가 없습니다.</div>
+              <div style={{ padding: "20px", textAlign: "center", color: "var(--color-text-muted)", fontSize: "13px" }}>{locale === "ko" ? "데이터가 없습니다." : "No data available."}</div>
             )}
           </div>
         </div>

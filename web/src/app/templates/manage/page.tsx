@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { apiGet, apiPost } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -117,6 +118,8 @@ function buildManualDefinition(sessions: ManualSession[]) {
 }
 
 export default function TemplatesPage() {
+  const { locale, copy } = useLocale();
+  const emptyLabel = locale === "ko" ? "설정 값 없음" : "No items available";
   const [userId, setUserId] = useState("dev");
   const [templates, setTemplates] = useState<TemplateItem[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(true);
@@ -229,8 +232,8 @@ export default function TemplatesPage() {
   }
 
   useEffect(() => {
-    loadTemplates().catch((e: any) => setError(e?.message ?? "템플릿을 불러오지 못했습니다."));
-  }, [userId]);
+    loadTemplates().catch((e: any) => setError(e?.message ?? copy.templatesManage.loadTemplatesError));
+  }, [copy.templatesManage.loadTemplatesError, userId]);
 
   useEffect(() => {
     if (!selectedSlug) {
@@ -239,8 +242,8 @@ export default function TemplatesPage() {
       setVersionsLoadKey(null);
       return;
     }
-    loadVersions(selectedSlug).catch((e: any) => setError(e?.message ?? "버전 목록을 불러오지 못했습니다."));
-  }, [selectedSlug, userId]);
+    loadVersions(selectedSlug).catch((e: any) => setError(e?.message ?? copy.templatesManage.loadVersionsError));
+  }, [copy.templatesManage.loadVersionsError, selectedSlug, userId]);
 
   useEffect(() => {
     if (!selectedTemplate || !selectedBaseVersion) return;
@@ -272,7 +275,7 @@ export default function TemplatesPage() {
     const res = await apiPost<{ template: TemplateItem }>(`/api/templates/${encodeURIComponent(slug)}/fork`, {});
     await loadTemplates();
     setSelectedSlug(res.template.slug);
-    setSuccess(`템플릿을 포크했습니다: ${res.template.slug}`);
+    setSuccess(copy.templatesManage.forkSuccess(res.template.slug));
   }
 
   function addManualSession() {
@@ -286,8 +289,8 @@ export default function TemplatesPage() {
   }
 
   async function createNewVersion() {
-    if (!selectedTemplate) throw new Error("템플릿을 먼저 선택하세요.");
-    if (!selectedBaseVersion) throw new Error("기준 버전을 선택하세요.");
+    if (!selectedTemplate) throw new Error(copy.templatesManage.selectTemplateFirst);
+    if (!selectedBaseVersion) throw new Error(copy.templatesManage.selectBaseVersionFirst);
 
     const nextDefinition = cloneValue(selectedBaseVersion.definition ?? {});
     const nextDefaults = cloneValue(selectedBaseVersion.defaults ?? {});
@@ -315,14 +318,14 @@ export default function TemplatesPage() {
         baseVersionId: selectedBaseVersion.id,
         definition: nextDefinition,
         defaults: nextDefaults,
-        changelog: changelog.trim() || `v${selectedBaseVersion.version} 기반 생성`,
+        changelog: changelog.trim() || copy.templatesManage.basedOnVersion(selectedBaseVersion.version),
       },
     );
 
     await loadVersions(selectedTemplate.slug);
     await loadTemplates();
     setSelectedBaseVersionId(res.programVersion.id);
-    setSuccess(`${selectedTemplate.slug} v${res.programVersion.version} 버전을 생성했습니다.`);
+    setSuccess(copy.templatesManage.createVersionSuccess(selectedTemplate.slug, res.programVersion.version));
   }
 
   return (
@@ -338,7 +341,7 @@ export default function TemplatesPage() {
           />
         </label>
         <label>
-          <span>템플릿/프로그램 검색</span>
+          <span>{copy.templatesManage.searchLabel}</span>
           <div>
             <span aria-hidden="true">
               <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
@@ -347,13 +350,13 @@ export default function TemplatesPage() {
               type="search"
               inputMode="search"
               value={searchQuery}
-              placeholder="이름, slug, 타입, 태그..."
+              placeholder={copy.templatesManage.searchPlaceholder}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
             {searchQuery.trim().length > 0 ? (
               <button
                 type="button"
-                aria-label="검색어 지우기"
+                aria-label={copy.templatesManage.clearSearch}
                 onClick={() => setSearchQuery("")}
               >
                 ×
@@ -362,31 +365,31 @@ export default function TemplatesPage() {
           </div>
         </label>
         <AppSelect
-          label="태그 필터"
+          label={copy.templatesManage.tagFilter}
           wrapperClassName="md:col-span-3"
           value={selectedTag}
           onChange={(e) => setSelectedTag(e.target.value)}
         >
-          <option value="">전체 태그</option>
+          <option value="">{copy.templatesManage.allTags}</option>
           {allTags.map((tag) => (
             <option key={tag} value={tag}>
               {tag}
             </option>
           ))}
         </AppSelect>
-        <div>{`${filteredTemplates.length}/${templates.length}개 표시 중`}</div>
+        <div>{copy.templatesManage.visibleCount(filteredTemplates.length, templates.length)}</div>
         <div>
           <button
             onClick={() => {
               setError(null);
               setSuccess(null);
-              loadTemplates().catch((e: any) => setError(e?.message ?? "템플릿을 다시 불러오지 못했습니다."));
+              loadTemplates().catch((e: any) => setError(e?.message ?? copy.templatesManage.reloadError));
             }}
           >
-            다시 불러오기
+            {copy.templatesManage.reload}
           </button>
           <a href={APP_ROUTES.plansHome}>
-            플랜 화면
+            {copy.templatesManage.plansScreen}
           </a>
         </div>
         <div>
@@ -406,27 +409,27 @@ export default function TemplatesPage() {
               setSuccess(null);
               loadTemplates()
                 .then(() => (selectedSlug ? loadVersions(selectedSlug) : Promise.resolve()))
-                .catch((e: any) => setError(e?.message ?? "템플릿을 다시 불러오지 못했습니다."));
+                .catch((e: any) => setError(e?.message ?? copy.templatesManage.reloadError));
             }}
           />
         </div>
         <div>
-          <NoticeStateRows message={success} tone="success" label="완료" />
+          <NoticeStateRows message={success} tone="success" label={copy.templatesManage.done} />
         </div>
       </Card>
 
       <div>
         <Card>
           <AccordionSection
-            title="공개 템플릿"
-            description="공식 템플릿을 확인하고 포크합니다."
+            title={copy.templatesManage.publicTemplates}
+            description={copy.templatesManage.publicTemplatesDescription}
             defaultOpen
             summarySlot={<span>{publicTemplates.length}</span>}
           >
             <EmptyStateRows
               when={showPublicTemplatesEmpty}
-              label="설정 값 없음"
-              description="표시할 공개 템플릿이 없습니다."
+              label={emptyLabel}
+              description={copy.templatesManage.noPublicTemplates}
             />
             {publicTemplates.length > 0 ? (
               <ul>
@@ -436,7 +439,7 @@ export default function TemplatesPage() {
                       <button onClick={() => setSelectedSlug(t.slug)}>
                         <div>{t.name}</div>
                         <div>
-                          {t.slug} · {t.type} · 최신 v{t.latestVersion?.version ?? "-"}
+                          {t.slug} · {t.type} · {copy.templatesManage.latestVersionPrefix} v{t.latestVersion?.version ?? "-"}
                         </div>
                         {Array.isArray(t.tags) && t.tags.length > 0 && (
                           <div>tags: {t.tags.join(", ")}</div>
@@ -446,10 +449,10 @@ export default function TemplatesPage() {
                         onClick={() => {
                           setError(null);
                           setSuccess(null);
-                          forkTemplate(t.slug).catch((e: any) => setError(e?.message ?? "Fork failed"));
+                          forkTemplate(t.slug).catch((e: any) => setError(e?.message ?? copy.templatesManage.forkFailed));
                         }}
                       >
-                        Fork
+                        {copy.templatesManage.fork}
                       </button>
                     </div>
                   </Card>
@@ -461,14 +464,14 @@ export default function TemplatesPage() {
 
         <Card>
           <AccordionSection
-            title="내 개인 템플릿"
-            description="현재 사용자가 편집할 수 있는 템플릿입니다."
+            title={copy.templatesManage.privateTemplates}
+            description={copy.templatesManage.privateTemplatesDescription}
             summarySlot={<span>{myPrivateTemplates.length}</span>}
           >
             <EmptyStateRows
               when={showPrivateTemplatesEmpty}
-              label="설정 값 없음"
-              description="개인 템플릿이 없습니다. 공개 템플릿을 포크해 편집을 시작하세요."
+              label={emptyLabel}
+              description={`${copy.templatesManage.noPrivateTemplates} ${copy.templatesManage.privateTemplatesHelp}`}
             />
             {myPrivateTemplates.length > 0 ? (
               <ul>
@@ -477,7 +480,7 @@ export default function TemplatesPage() {
                     <button onClick={() => setSelectedSlug(t.slug)}>
                       <div>{t.name}</div>
                       <div>
-                        {t.slug} · {t.type} · 최신 v{t.latestVersion?.version ?? "-"}
+                        {t.slug} · {t.type} · {copy.templatesManage.latestVersionPrefix} v{t.latestVersion?.version ?? "-"}
                       </div>
                       {Array.isArray(t.tags) && t.tags.length > 0 && (
                         <div>tags: {t.tags.join(", ")}</div>
@@ -493,13 +496,13 @@ export default function TemplatesPage() {
 
       <Card padding="lg">
         <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>Templates</div>
-          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", margin: 0 }}>템플릿 편집기</h1>
+          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>{copy.templatesManage.editorEyebrow}</div>
+          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", margin: 0 }}>{copy.templatesManage.editorTitle}</h1>
         </div>
         <EmptyStateRows
           when={showTemplateEditorEmpty}
-          label="설정 값 없음"
-          description="좌측 목록에서 템플릿을 선택하면 버전/편집 설정이 표시됩니다."
+          label={emptyLabel}
+          description={copy.templatesManage.editorEmpty}
         />
         {selectedTemplate ? (
           <>
@@ -512,14 +515,14 @@ export default function TemplatesPage() {
               </div>
 
               <AppSelect
-                label="기준 버전"
+                label={copy.templatesManage.baseVersion}
                 wrapperClassName="md:col-span-2"
                 value={selectedBaseVersionId}
                 onChange={(e) => setSelectedBaseVersionId(e.target.value)}
               >
                 {versions.map((v) => (
                   <option key={v.id} value={v.id}>
-                    v{v.version} - {new Date(v.createdAt).toLocaleString()}
+                    v{v.version} - {new Date(v.createdAt).toLocaleString(locale === "ko" ? "ko-KR" : "en-US")}
                   </option>
                 ))}
               </AppSelect>
@@ -535,21 +538,21 @@ export default function TemplatesPage() {
 
             {selectedTemplate.type === "MANUAL" ? (
               <AccordionSection
-                title="수동 세션 편집"
-                description="세션, 아이템, 세트 단위로 편집합니다."
-                summarySlot={<span>{manualSessions.length} sessions</span>}
+                title={copy.templatesManage.manualEditorTitle}
+                description={copy.templatesManage.manualEditorDescription}
+                summarySlot={<span>{manualSessions.length} {copy.templatesManage.sessions}</span>}
               >
                 <div>
-                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>MANUAL session editor</h2>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{copy.templatesManage.manualEditorTitle}</h2>
                   <button onClick={addManualSession}>
-                    + Session
+                    {copy.templatesManage.addSession}
                   </button>
                 </div>
 
                 {manualSessions.map((session, sessionIdx) => (
                   <div key={sessionIdx}>
                     <div>
-                      <span>Session key</span>
+                      <span>{copy.templatesManage.sessionKey}</span>
                       <AppTextInput
                         variant="dense"
                         value={session.key}
@@ -571,7 +574,7 @@ export default function TemplatesPage() {
                           setManualSessions((prev) => prev.filter((_, i) => i !== sessionIdx))
                         }
                       >
-                        Remove session
+                        {copy.templatesManage.removeSession}
                       </button>
                     </div>
 
@@ -580,7 +583,7 @@ export default function TemplatesPage() {
                         <div>
                           <AppTextInput
                             variant="dense"
-                            placeholder="exerciseName"
+                            placeholder={copy.templatesManage.exerciseName}
                             value={item.exerciseName}
                             onChange={(e) =>
                               setManualSessions((prev) =>
@@ -616,16 +619,16 @@ export default function TemplatesPage() {
                               )
                             }
                           >
-                            Remove item
+                            {copy.templatesManage.removeItem}
                           </button>
                         </div>
 
                         {item.sets.map((setRow, setIdx) => (
                           <div key={setIdx}>
                             <div>
-                              <span>reps</span>
+                              <span>{copy.templatesManage.reps}</span>
                               <NumberPickerField
-                                label="Reps"
+                                label={copy.templatesManage.reps}
                                 value={setRow.reps}
                                 min={0}
                                 max={100}
@@ -655,9 +658,9 @@ export default function TemplatesPage() {
                               />
                             </div>
                             <div>
-                              <span>weightKg</span>
+                              <span>{copy.templatesManage.weightKg}</span>
                               <NumberPickerField
-                                label="Weight (kg)"
+                                label={copy.templatesManage.weightKg}
                                 value={setRow.targetWeightKg}
                                 min={0}
                                 max={500}
@@ -689,9 +692,9 @@ export default function TemplatesPage() {
                               />
                             </div>
                             <div>
-                              <span>rpe</span>
+                              <span>{copy.templatesManage.rpe}</span>
                               <NumberPickerField
-                                label="RPE"
+                                label={copy.templatesManage.rpe}
                                 value={setRow.rpe}
                                 min={0}
                                 max={10}
@@ -742,7 +745,7 @@ export default function TemplatesPage() {
                                 )
                               }
                             >
-                              Remove set
+                              {copy.templatesManage.removeSet}
                             </button>
                           </div>
                         ))}
@@ -768,7 +771,7 @@ export default function TemplatesPage() {
                             )
                           }
                         >
-                          + Set
+                          {copy.templatesManage.addSet}
                         </button>
                       </div>
                     ))}
@@ -787,23 +790,23 @@ export default function TemplatesPage() {
                         )
                       }
                     >
-                      + Item
+                      {copy.templatesManage.addItem}
                     </button>
                   </div>
                 ))}
               </AccordionSection>
             ) : (
               <AccordionSection
-                title="로직 안전 파라미터"
-                description="스케줄과 대체 규칙을 설정합니다."
-                summarySlot={<span>{logicFrequency}/week</span>}
+                title={copy.templatesManage.logicSafeParams}
+                description={copy.templatesManage.logicSafeDescription}
+                summarySlot={<span>{logicFrequency}{copy.templatesManage.perWeek}</span>}
               >
-                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>로직 안전 파라미터</h2>
+                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{copy.templatesManage.logicSafeParams}</h2>
                 <div>
                   <div>
-                    <span>TM % (defaults.tmPercent)</span>
+                    <span>{copy.templatesManage.tmPercent} (defaults.tmPercent)</span>
                     <NumberPickerField
-                      label="TM %"
+                      label={copy.templatesManage.tmPercent}
                       value={logicTmPercent}
                       min={0}
                       max={1}
@@ -814,9 +817,9 @@ export default function TemplatesPage() {
                     />
                   </div>
                   <div>
-                    <span>Frequency (sessions/week)</span>
+                    <span>{copy.templatesManage.frequency} (sessions/week)</span>
                     <NumberPickerField
-                      label="Frequency"
+                      label={copy.templatesManage.frequency}
                       value={logicFrequency}
                       min={1}
                       max={7}
@@ -827,9 +830,9 @@ export default function TemplatesPage() {
                     />
                   </div>
                   <div>
-                    <span>Cycle weeks</span>
+                    <span>{copy.templatesManage.cycleWeeks}</span>
                     <NumberPickerField
-                      label="Cycle weeks"
+                      label={copy.templatesManage.cycleWeeks}
                       value={logicWeeks}
                       min={1}
                       max={52}
@@ -842,11 +845,11 @@ export default function TemplatesPage() {
                 </div>
 
                 <div>
-                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>Exercise substitutions</h2>
+                  <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{copy.templatesManage.exerciseSubstitutions}</h2>
                   {logicSubstitutions.map((row, idx) => (
                     <div key={idx}>
                       <label>
-                        <span>target</span>
+                        <span>{copy.templatesManage.target}</span>
                         <AppTextInput
                           variant="dense"
                           value={row.target}
@@ -858,7 +861,7 @@ export default function TemplatesPage() {
                         />
                       </label>
                       <label>
-                        <span>exerciseName</span>
+                        <span>{copy.templatesManage.exerciseName}</span>
                         <AppTextInput
                           variant="dense"
                           value={row.exerciseName}
@@ -872,7 +875,7 @@ export default function TemplatesPage() {
                       <button
                         onClick={() => setLogicSubstitutions((prev) => prev.filter((_, i) => i !== idx))}
                       >
-                        Remove
+                        {copy.templatesManage.remove}
                       </button>
                     </div>
                   ))}
@@ -881,19 +884,19 @@ export default function TemplatesPage() {
                       setLogicSubstitutions((prev) => [...prev, { target: "", exerciseName: "" }])
                     }
                   >
-                    + Substitution
+                    {copy.templatesManage.addSubstitution}
                   </button>
                 </div>
               </AccordionSection>
             )}
 
             <AccordionSection
-              title="새 버전 생성"
-              description="선택한 기준 버전에서 파생합니다."
+              title={copy.templatesManage.createVersion}
+              description={copy.templatesManage.createVersionDescription}
               summarySlot={<span>v{selectedBaseVersion?.version ?? "-"}</span>}
             >
               <Card padding="sm">
-                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>새 버전 생성</h2>
+                <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)" }}>{copy.templatesManage.createVersion}</h2>
                 <label>
                   <span>changelog</span>
                   <AppTextInput
@@ -907,46 +910,46 @@ export default function TemplatesPage() {
                   onClick={() => {
                     setError(null);
                     setSuccess(null);
-                    createNewVersion().catch((e: any) => setError(e?.message ?? "버전 생성에 실패했습니다."));
+                    createNewVersion().catch((e: any) => setError(e?.message ?? copy.templatesManage.createVersionError));
                   }}
                   disabled={!selectedBaseVersion || !canEditSelectedTemplate}
                 >
-                  버전 생성
+                  {copy.templatesManage.createVersion}
                 </PrimaryButton>
                 <DisabledStateRows
                   when={!canEditSelectedTemplate}
-                  label="편집 비활성"
-                  description="이 템플릿은 읽기 전용입니다. 포크 후 개인 템플릿에서 버전을 생성하세요."
+                  label={copy.templatesManage.readonly}
+                  description={copy.templatesManage.readonlyDescription}
                 />
               </Card>
             </AccordionSection>
 
             <AccordionSection
-              title="버전 기록"
-              description="시간순 변경 이력을 확인합니다."
+              title={copy.templatesManage.versionHistory}
+              description={copy.templatesManage.versionHistoryDescription}
               summarySlot={<span>{versions.length} versions</span>}
             >
               <Card padding="sm">
                 <EmptyStateRows
                   when={showVersionsEmpty}
-                  label="설정 값 없음"
-                  description="선택한 템플릿의 버전 이력이 아직 없습니다."
+                  label={emptyLabel}
+                  description={copy.templatesManage.noVersions}
                 />
                 {versions.length > 0 ? (
                   <div>
                     <table>
                       <thead>
                         <tr>
-                          <th>버전</th>
-                          <th>생성일</th>
-                          <th>변경 내역</th>
+                          <th>{copy.templatesManage.version}</th>
+                          <th>{copy.templatesManage.createdAt}</th>
+                          <th>{copy.templatesManage.changelog}</th>
                         </tr>
                       </thead>
                       <tbody>
                         {versions.map((v) => (
                           <tr key={v.id}>
                             <td>v{v.version}</td>
-                            <td>{new Date(v.createdAt).toLocaleString()}</td>
+                            <td>{new Date(v.createdAt).toLocaleString(locale === "ko" ? "ko-KR" : "en-US")}</td>
                             <td>{v.changelog ?? "-"}</td>
                           </tr>
                         ))}

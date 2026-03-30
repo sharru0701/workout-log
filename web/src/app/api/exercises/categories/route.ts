@@ -4,6 +4,7 @@ import { db } from "@/server/db/client";
 import { exercise } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
+import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 async function GETImpl() {
   try {
@@ -17,7 +18,7 @@ async function GETImpl() {
     return NextResponse.json({ categories });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
-    return NextResponse.json({ error: e?.message ?? "Unknown error" }, { status: 500 });
+    return apiErrorResponse(e);
   }
 }
 

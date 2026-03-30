@@ -7,6 +7,7 @@ import {
   NavigationRow,
   SectionFootnote,
 } from "@/components/ui/settings-list";
+import { useLocale } from "@/components/locale-provider";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 // ─── Row icon — 40×40 rounded-lg box with a Material Symbol ──
@@ -79,95 +80,11 @@ function SettingsSection({ title, rows }: { title: string; rows: RowDef[] }) {
   );
 }
 
-// ─── Section definitions ──────────────────────────────────────
-
-const appPreferenceRows: RowDef[] = [
-  {
-    href: "/settings/theme",
-    label: "Appearance",
-    description: "Dark Mode / Solarized Light",
-    icon: "dark_mode",
-    iconColor: "text-primary",
-  },
-  {
-    href: "/settings/ux-thresholds",
-    label: "UX Thresholds",
-    description: "Animation and interaction thresholds",
-    icon: "tune",
-    iconColor: "text-primary",
-  },
-];
-
-const dataTrainingRows: RowDef[] = [
-  {
-    href: "/settings/exercise-management",
-    label: "Exercise Management",
-    description: "Browse, add, edit and delete exercises",
-    icon: "fitness_center",
-    iconColor: "text-primary",
-  },
-  {
-    href: "/settings/minimum-plate",
-    label: "Minimum Plate",
-    description: "Minimum plate unit per exercise type",
-    icon: "hardware",
-  },
-  {
-    href: "/settings/bodyweight",
-    label: "Bodyweight",
-    description: "Used for bodyweight exercise load calculation",
-    icon: "monitor_weight",
-  },
-  {
-    href: "/settings/save-policy",
-    label: "Save Policy",
-    description: "Auto-save and confirmation behaviour",
-    icon: "save",
-  },
-  {
-    href: "/settings/selection-template",
-    label: "Selection Template",
-    description: "Default set selection pattern",
-    icon: "playlist_add_check",
-  },
-  {
-    href: "/settings/data-export",
-    label: "Data Export",
-    description: "Export all training data",
-    icon: "cloud_upload",
-  },
-  {
-    href: "/settings/data",
-    label: "Data Management",
-    description: "Export · Reset app data",
-    icon: "storage",
-  },
-];
-
-const systemRows: RowDef[] = [
-  {
-    href: "/settings/system-stats",
-    label: "System Stats",
-    description: "Migration and UX analytics (admin)",
-    icon: "developer_board",
-  },
-  {
-    href: "/settings/link",
-    label: "Deep Links",
-    description: "Internal deep link tools",
-    icon: "link",
-  },
-  {
-    href: "/settings/about",
-    label: "About",
-    description: `v${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}`,
-    icon: "info",
-  },
-];
-
 // ─── Profile card ─────────────────────────────────────────────
 
 function ProfileCard() {
+  const { copy } = useLocale();
+
   return (
     <section
       style={{
@@ -207,7 +124,7 @@ function ProfileCard() {
             margin: 0,
           }}
         >
-          Athlete
+          {copy.settings.profile.title}
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
           <span
@@ -220,7 +137,7 @@ function ProfileCard() {
               color: "var(--color-primary)",
             }}
           >
-            Active
+            {copy.settings.profile.active}
           </span>
           <span
             style={{
@@ -238,7 +155,7 @@ function ProfileCard() {
               color: "var(--color-text-muted)",
             }}
           >
-            Workout Tracker
+            {copy.settings.profile.subtitle}
           </span>
         </div>
       </div>
@@ -250,11 +167,103 @@ function ProfileCard() {
 
 export function SettingsHomeContent({ className = "" }: { className?: string }) {
   const router = useRouter();
+  const { copy } = useLocale();
   const pullToRefresh = usePullToRefresh({
     onRefresh: () => {
       router.refresh();
     },
   });
+
+  const appPreferenceRows: RowDef[] = [
+    {
+      href: "/settings/language",
+      label: copy.settings.rows.language.label,
+      description: copy.settings.rows.language.description,
+      icon: "translate",
+      iconColor: "text-primary",
+    },
+    {
+      href: "/settings/theme",
+      label: copy.settings.rows.theme.label,
+      description: copy.settings.rows.theme.description,
+      icon: "dark_mode",
+      iconColor: "text-primary",
+    },
+    {
+      href: "/settings/ux-thresholds",
+      label: copy.settings.rows.uxThresholds.label,
+      description: copy.settings.rows.uxThresholds.description,
+      icon: "tune",
+      iconColor: "text-primary",
+    },
+  ];
+
+  const dataTrainingRows: RowDef[] = [
+    {
+      href: "/settings/exercise-management",
+      label: copy.settings.rows.exerciseManagement.label,
+      description: copy.settings.rows.exerciseManagement.description,
+      icon: "fitness_center",
+      iconColor: "text-primary",
+    },
+    {
+      href: "/settings/minimum-plate",
+      label: copy.settings.rows.minimumPlate.label,
+      description: copy.settings.rows.minimumPlate.description,
+      icon: "hardware",
+    },
+    {
+      href: "/settings/bodyweight",
+      label: copy.settings.rows.bodyweight.label,
+      description: copy.settings.rows.bodyweight.description,
+      icon: "monitor_weight",
+    },
+    {
+      href: "/settings/save-policy",
+      label: copy.settings.rows.savePolicy.label,
+      description: copy.settings.rows.savePolicy.description,
+      icon: "save",
+    },
+    {
+      href: "/settings/selection-template",
+      label: copy.settings.rows.selectionTemplate.label,
+      description: copy.settings.rows.selectionTemplate.description,
+      icon: "playlist_add_check",
+    },
+    {
+      href: "/settings/data-export",
+      label: copy.settings.rows.dataExport.label,
+      description: copy.settings.rows.dataExport.description,
+      icon: "cloud_upload",
+    },
+    {
+      href: "/settings/data",
+      label: copy.settings.rows.dataManagement.label,
+      description: copy.settings.rows.dataManagement.description,
+      icon: "storage",
+    },
+  ];
+
+  const systemRows: RowDef[] = [
+    {
+      href: "/settings/system-stats",
+      label: copy.settings.rows.systemStats.label,
+      description: copy.settings.rows.systemStats.description,
+      icon: "developer_board",
+    },
+    {
+      href: "/settings/link",
+      label: copy.settings.rows.deepLinks.label,
+      description: copy.settings.rows.deepLinks.description,
+      icon: "link",
+    },
+    {
+      href: "/settings/about",
+      label: copy.settings.rows.about.label,
+      description: `v${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}`,
+      icon: "info",
+    },
+  ];
 
   return (
     <PullToRefreshShell
@@ -266,16 +275,16 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
         <ProfileCard />
 
         {/* ── App Preferences ── */}
-        <SettingsSection title="App Preferences" rows={appPreferenceRows} />
+        <SettingsSection title={copy.settings.sections.preferences} rows={appPreferenceRows} />
 
         {/* ── Data & Training ── */}
-        <SettingsSection title="Data & Training" rows={dataTrainingRows} />
+        <SettingsSection title={copy.settings.sections.training} rows={dataTrainingRows} />
 
         {/* ── System ── */}
-        <SettingsSection title="System" rows={systemRows} />
+        <SettingsSection title={copy.settings.sections.system} rows={systemRows} />
 
         <SectionFootnote>
-          All settings take effect immediately. On failure the previous value is restored.
+          {copy.settings.detailDescription}
         </SectionFootnote>
       </div>
     </PullToRefreshShell>

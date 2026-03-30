@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useLocale } from "@/components/locale-provider";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
@@ -54,9 +55,11 @@ function normalizeSearchText(...values: Array<string | null | undefined>) {
 function PlanListCard({
   plan,
   onManage,
+  copy,
 }: {
   plan: Plan;
   onManage: () => void;
+  copy: ReturnType<typeof useLocale>["copy"];
 }) {
   const relativeDate = formatRelativeDate(plan.lastPerformedAt);
 
@@ -116,8 +119,8 @@ function PlanListCard({
               color: "var(--color-text-muted)",
               display: "block",
             }}
-          >
-            {relativeDate ? `최근 수행 · ${relativeDate}` : "수행 기록 없음"}
+            >
+            {relativeDate ? `${copy.plansManage.recentPerformedPrefix} · ${relativeDate}` : copy.plansManage.noPerformedHistory}
           </span>
         </div>
 
@@ -139,7 +142,7 @@ function PlanListCard({
             color: "var(--color-text)",
             cursor: "pointer",
           }}
-          aria-label={`${plan.name} 관리`}
+          aria-label={`${plan.name} ${copy.plansManage.manage}`}
         >
           <span
             className="material-symbols-outlined"
@@ -148,7 +151,7 @@ function PlanListCard({
           >
             edit
           </span>
-          관리
+          {copy.plansManage.manage}
         </button>
       </div>
 
@@ -179,13 +182,14 @@ function PlanListCard({
         >
           history
         </span>
-        수행 히스토리
+        {copy.plansManage.history}
       </a>
     </div>
   );
 }
 
 function PlansManagePageContent() {
+  const { copy } = useLocale();
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
@@ -384,7 +388,7 @@ function PlansManagePageContent() {
                   marginBottom: "4px",
                 }}
               >
-                Plan Management
+                {copy.plansManage.headerEyebrow}
               </div>
               <h1
                 style={{
@@ -396,7 +400,7 @@ function PlansManagePageContent() {
                   margin: 0,
                 }}
               >
-                플랜 목록
+                {copy.plansManage.title}
               </h1>
             </div>
           </div>
@@ -406,8 +410,8 @@ function PlansManagePageContent() {
               <SearchInput
                 value={searchQuery}
                 onChange={setSearchQuery}
-                placeholder="플랜명 또는 기반 프로그램 검색"
-                ariaLabel="플랜 검색"
+                placeholder={copy.plansManage.searchPlaceholder}
+                ariaLabel={copy.plansManage.searchAriaLabel}
               />
             </div>
           ) : null}
@@ -439,20 +443,20 @@ function PlansManagePageContent() {
 
           <ErrorStateRows
             message={error}
-            title="플랜 목록 조회 실패"
+            title={copy.plansManage.loadError}
             onRetry={() => {
               void loadPlans();
             }}
           />
           <EmptyStateRows
             when={isSettled && !error && plans.length === 0}
-            label="플랜이 없습니다"
-            description="프로그램 스토어에서 먼저 플랜을 생성하세요."
+            label={copy.plansManage.noPlans}
+            description={copy.plansManage.noPlansDescription}
           />
           <EmptyStateRows
             when={isSettled && !error && plans.length > 0 && filteredPlans.length === 0}
-            label="검색 결과가 없습니다"
-            description="플랜명 또는 기반 프로그램명으로 다시 검색하세요."
+            label={copy.plansManage.noResults}
+            description={copy.plansManage.noResultsDescription}
           />
 
           {filteredPlans.length > 0 ? (
@@ -461,6 +465,7 @@ function PlansManagePageContent() {
                 <PlanListCard
                   key={plan.id}
                   plan={plan}
+                  copy={copy}
                   onManage={() => openManageSheet(plan)}
                 />
               ))}
@@ -475,9 +480,9 @@ function PlansManagePageContent() {
           if (saving || deleting) return;
           setManagePlanId("");
         }}
-        title="플랜 상세정보"
-        description="상세 조회 / 이름 수정 / 삭제"
-        closeLabel="닫기"
+        title={copy.plansManage.detailTitle}
+        description={copy.plansManage.detailDescription}
+        closeLabel={copy.plansManage.close}
       >
         {managedPlan ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
@@ -504,7 +509,7 @@ function PlansManagePageContent() {
                     marginBottom: "4px",
                   }}
                 >
-                  기반 프로그램
+                  {copy.plansManage.baseProgram}
                 </div>
                 <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>
                   {managedPlan.baseProgramName ?? "-"}
@@ -522,7 +527,7 @@ function PlansManagePageContent() {
                     marginBottom: "4px",
                   }}
                 >
-                  생성일
+                  {copy.plansManage.createdAt}
                 </div>
                 <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>
                   {formatDateTime(managedPlan.createdAt)}
@@ -540,10 +545,10 @@ function PlansManagePageContent() {
                     marginBottom: "4px",
                   }}
                 >
-                  마지막 수행일
+                  {copy.plansManage.lastPerformedAt}
                 </div>
                 <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>
-                  {managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : "기록 없음"}
+                  {managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : copy.plansManage.noRecord}
                 </div>
               </div>
             </div>
@@ -560,12 +565,12 @@ function PlansManagePageContent() {
                   color: "var(--color-text-muted)",
                 }}
               >
-                플랜 이름
+                {copy.plansManage.planName}
               </span>
               <AppTextInput
                 value={nameDraft}
                 onChange={(e) => setNameDraft(e.target.value)}
-                placeholder="플랜 이름"
+                placeholder={copy.plansManage.planNamePlaceholder}
               />
             </label>
 
@@ -578,7 +583,7 @@ function PlansManagePageContent() {
                 fullWidth
                 href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
               >
-                수행 히스토리 보기
+                {copy.plansManage.viewHistory}
               </PrimaryButton>
               <PrimaryButton
                 type="button"
@@ -590,7 +595,7 @@ function PlansManagePageContent() {
                   void savePlanName();
                 }}
               >
-                {saving ? "저장 중..." : "이름 저장"}
+                {saving ? copy.plansManage.saveInProgress : copy.plansManage.saveName}
               </PrimaryButton>
               <PrimaryButton
                 type="button"
@@ -610,7 +615,7 @@ function PlansManagePageContent() {
                 >
                   delete
                 </span>
-                {deleting ? "삭제 중..." : "플랜 삭제"}
+                {deleting ? copy.plansManage.deleteInProgress : copy.plansManage.deletePlan}
               </PrimaryButton>
             </div>
           </div>
@@ -624,7 +629,7 @@ function PlansManagePageContent() {
               fontSize: "14px",
             }}
           >
-            관리할 플랜을 찾을 수 없습니다.
+            {copy.plansManage.notFound}
           </div>
         )}
       </BottomSheet>

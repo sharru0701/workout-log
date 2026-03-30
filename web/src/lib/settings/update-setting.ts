@@ -62,9 +62,22 @@ function isBrowser() {
   return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
 }
 
+function resolveBrowserLocale(): "ko" | "en" {
+  if (typeof document !== "undefined") {
+    const lang = document.documentElement.lang.trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+    if (lang.startsWith("en")) return "en";
+  }
+  if (typeof navigator !== "undefined") {
+    const lang = String(navigator.language ?? "").trim().toLowerCase();
+    if (lang.startsWith("ko")) return "ko";
+  }
+  return "en";
+}
+
 function defaultErrorToMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message;
-  return "저장에 실패했습니다.";
+  return resolveBrowserLocale() === "ko" ? "저장에 실패했습니다." : "Failed to save the setting.";
 }
 
 function serializeSettingValue(value: SettingValue) {
@@ -225,4 +238,3 @@ export function createSettingUpdateGate(): SettingUpdateGate {
     },
   };
 }
-

@@ -29,6 +29,8 @@ type WorkoutUxGuidedHint = {
   actionLabel: string;
 };
 
+type WorkoutUxLocale = "ko" | "en";
+
 const STORAGE_KEY = "workoutlog:ux-events";
 const STORAGE_LIMIT = 300;
 const SYNCED_IDS_STORAGE_KEY = "workoutlog:ux-events-synced-ids";
@@ -170,56 +172,56 @@ export function summarizeUnsyncedWorkoutUxEvents(input?: { withinDays?: number }
   return summarizeWorkoutUxEvents(getUnsyncedWorkoutUxEvents(0), input?.withinDays ?? 14);
 }
 
-export function pickWorkoutUxGuidedHint(summary: WorkoutUxSummary): WorkoutUxGuidedHint | null {
+export function pickWorkoutUxGuidedHint(summary: WorkoutUxSummary, locale: WorkoutUxLocale = "ko"): WorkoutUxGuidedHint | null {
   if (summary.opens === 0) return null;
 
   if (summary.generateClicks === 0) {
     return {
       id: "generate_first",
-      title: "1단계부터 시작하세요",
-      description: "먼저 ‘세션 생성/적용’을 눌러 계획 세트를 불러오면 기록이 쉬워집니다.",
+      title: locale === "ko" ? "1단계부터 시작하세요" : "Start with Step 1",
+      description: locale === "ko" ? "먼저 ‘세션 생성/적용’을 눌러 계획 세트를 불러오면 기록이 쉬워집니다." : "Start by generating and applying the session so the planned sets are loaded first.",
       action: "generate_apply",
-      actionLabel: "세션 생성/적용",
+      actionLabel: locale === "ko" ? "세션 생성/적용" : "Generate / Apply Session",
     };
   }
 
   if (summary.generateSuccesses > 0 && summary.addExerciseAdds === 0 && summary.saveSuccesses === 0) {
     return {
       id: "add_exercise",
-      title: "2단계가 비어 있습니다",
-      description: "추가 운동이 필요하면 ‘+ 운동 추가’에서 바로 세트를 넣을 수 있습니다.",
+      title: locale === "ko" ? "2단계가 비어 있습니다" : "Step 2 is still empty",
+      description: locale === "ko" ? "추가 운동이 필요하면 ‘+ 운동 추가’에서 바로 세트를 넣을 수 있습니다." : "If you need more work, add an exercise and sets directly from + Add Exercise.",
       action: "add_exercise",
-      actionLabel: "운동 추가 열기",
+      actionLabel: locale === "ko" ? "운동 추가 열기" : "Open Add Exercise",
     };
   }
 
   if (summary.saveClicks > 0 && summary.saveSuccesses === 0) {
     return {
       id: "stability",
-      title: "저장이 완료되지 않았습니다",
-      description: "플랜 선택과 세트 입력을 확인한 뒤 다시 저장해 주세요.",
+      title: locale === "ko" ? "저장이 완료되지 않았습니다" : "The save did not complete",
+      description: locale === "ko" ? "플랜 선택과 세트 입력을 확인한 뒤 다시 저장해 주세요." : "Check the selected plan and set inputs, then save again.",
       action: "save_log",
-      actionLabel: "지금 저장",
+      actionLabel: locale === "ko" ? "지금 저장" : "Save Now",
     };
   }
 
   if (summary.generateSuccesses > 0 && summary.saveSuccesses === 0) {
     return {
       id: "save_log",
-      title: "마지막 단계만 남았습니다",
-      description: "세트를 확인하고 ‘운동 기록 저장’을 누르면 오늘 기록이 완료됩니다.",
+      title: locale === "ko" ? "마지막 단계만 남았습니다" : "Only the last step remains",
+      description: locale === "ko" ? "세트를 확인하고 ‘운동 기록 저장’을 누르면 오늘 기록이 완료됩니다." : "Review the sets and tap Save Workout Log to finish today's workout.",
       action: "save_log",
-      actionLabel: "운동 기록 저장",
+      actionLabel: locale === "ko" ? "운동 기록 저장" : "Save Workout Log",
     };
   }
 
   if (summary.saveSuccesses >= 3 && summary.modeChanges === 0) {
     return {
       id: "power_mode",
-      title: "고급 모드를 써보세요",
-      description: "고급 모드에서 오버라이드/세션 비교 같은 상세 제어를 바로 사용할 수 있습니다.",
+      title: locale === "ko" ? "고급 모드를 써보세요" : "Try advanced mode",
+      description: locale === "ko" ? "고급 모드에서 오버라이드/세션 비교 같은 상세 제어를 바로 사용할 수 있습니다." : "Advanced mode gives you detailed controls like overrides and session comparison.",
       action: "power_mode",
-      actionLabel: "고급 모드 켜기",
+      actionLabel: locale === "ko" ? "고급 모드 켜기" : "Turn On Advanced Mode",
     };
   }
 
