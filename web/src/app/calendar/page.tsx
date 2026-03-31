@@ -785,6 +785,7 @@ export default function CalendarPage() {
             display: "flex",
             alignItems: "center",
             gap: "6px",
+            flexShrink: 0,
             background: "var(--color-surface-container-low)",
             border: "none",
             borderRadius: "12px",
@@ -817,7 +818,10 @@ export default function CalendarPage() {
             style={{
               display: "flex",
               alignItems: "center",
+              justifyContent: "space-between",
               gap: "6px",
+              flex: 1,
+              minWidth: 0,
               background: "var(--color-surface-container-low)",
               border: "none",
               borderRadius: "12px",
@@ -829,7 +833,6 @@ export default function CalendarPage() {
               letterSpacing: "0.06em",
               textTransform: "uppercase",
               color: "var(--color-text-muted)",
-              maxWidth: "160px",
               overflow: "hidden",
             }}
           >
