@@ -4,7 +4,6 @@ import React, { useEffect, useState } from "react";
 import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { apiGet, isAbortError } from "@/lib/api";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
-import { Card } from "@/components/ui/card";
 import { useLocale } from "@/components/locale-provider";
 
 type UxFunnelResp = {
@@ -245,11 +244,11 @@ export default function SystemStatsPage() {
         </div>
 
         {loading ? (
-          <Card padding="md" tone="inset" elevated={false} style={{ marginBottom: "var(--space-lg)" }}>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", marginBottom: "var(--space-lg)" }}>
             <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
               {locale === "ko" ? "시스템 통계를 불러오는 중..." : "Loading system stats..."}
             </div>
-          </Card>
+          </div>
         ) : null}
 
         <section style={{ marginBottom: "var(--space-lg)" }}>
@@ -258,7 +257,7 @@ export default function SystemStatsPage() {
               {locale === "ko" ? "마이그레이션" : "Migrations"}
             </h2>
           </div>
-          <Card padding="md">
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
             <div style={{ display: "flex", gap: "var(--space-sm)", marginBottom: "var(--space-md)" }}>
               {MIGRATION_LOOKBACK_PRESETS.map(p => (
                 <button key={p} onClick={() => setLookback(p)} className={`label ${lookback === p ? "label-primary" : "label-neutral"}`}>
@@ -278,7 +277,7 @@ export default function SystemStatsPage() {
                 {locale === "ko" ? "마이그레이션 텔레메트리가 아직 없습니다." : "No migration telemetry is available yet."}
               </div>
             ) : null}
-          </Card>
+          </div>
         </section>
 
         <section style={{ marginBottom: "var(--space-lg)" }}>
@@ -290,7 +289,7 @@ export default function SystemStatsPage() {
           {uxSnapshot?.funnel && (
             <div style={{ display: "grid", gap: "var(--space-md)" }}>
               {uxSnapshot.funnel.steps.map(step => (
-                <Card key={step.id} padding="md">
+                <div key={step.id} style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between" }}>
                     <span>{step.label}</span>
                     <span className="metric-value">{formatIntegerByLocale(step.count, locale)}</span>
@@ -300,16 +299,16 @@ export default function SystemStatsPage() {
                       {locale === "ko" ? "전 단계 대비" : "From previous step"} {Math.round(step.conversionFromPrevious * 100)}%
                     </div>
                   )}
-                </Card>
+                </div>
               ))}
             </div>
           )}
           {!uxSnapshot?.funnel && !loading ? (
-            <Card padding="md" tone="inset" elevated={false}>
+            <div style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-md)" }}>
               <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
                 {locale === "ko" ? "UX 퍼널 데이터가 아직 없습니다." : "No UX funnel data is available yet."}
               </div>
-            </Card>
+            </div>
           ) : null}
         </section>
 
@@ -321,21 +320,21 @@ export default function SystemStatsPage() {
           </div>
           <div style={{ display: "grid", gap: "var(--space-sm)" }}>
             {uxSnapshot?.thresholds.map(t => (
-              <Card key={t.id} padding="sm">
+              <div key={t.id} style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-sm) var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <span style={{ fontSize: "14px" }}>{t.label}</span>
                   <span className={`label ${t.status === "ok" ? "label-complete" : "label-warning"}`}>
                     {Math.round(t.value * 100)}% / {locale === "ko" ? "목표" : "Target"} {Math.round(t.target * 100)}%
                   </span>
                 </div>
-              </Card>
+              </div>
             ))}
             {!uxSnapshot?.thresholds?.length && !loading ? (
-              <Card padding="md" tone="inset" elevated={false}>
+              <div style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-md)" }}>
                 <div style={{ fontSize: "13px", color: "var(--color-text-muted)" }}>
                   {locale === "ko" ? "기준치 데이터가 아직 없습니다." : "No threshold data is available yet."}
                 </div>
-              </Card>
+              </div>
             ) : null}
           </div>
         </section>

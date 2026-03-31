@@ -2,9 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { MultiSelectionScreen, PickerSelectionScreen, SingleSelectionScreen } from "@/components/ui/selection-screen-template";
+import { useLocale } from "@/components/locale-provider";
 import { commonExerciseOptions, statsMetricOptions } from "@/lib/selection-options";
 
 export default function SelectionTemplatePage() {
+  const { locale } = useLocale();
   const [singleValue, setSingleValue] = useState("DATE");
   const [multiValues, setMultiValues] = useState<string[]>(["e1rm", "volume"]);
   const [searchValue, setSearchValue] = useState("Back Squat");
@@ -17,21 +19,21 @@ export default function SelectionTemplatePage() {
   return (
     <div>
       <SingleSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="세션 키 방식"
-        sectionFootnote="하나를 선택하면 현재 값이 즉시 반영됩니다."
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "세션 키 방식" : "Session Key Mode"}
+        sectionFootnote={locale === "ko" ? "하나를 선택하면 현재 값이 즉시 반영됩니다." : "Selecting one option applies it immediately."}
         selectedValue={singleValue}
         options={[
-          { value: "DATE", label: "DATE", description: "YYYY-MM-DD 키를 사용합니다." },
-          { value: "LEGACY", label: "LEGACY", description: "WnDn 키를 사용합니다." },
+          { value: "DATE", label: "DATE", description: locale === "ko" ? "YYYY-MM-DD 키를 사용합니다." : "Use YYYY-MM-DD keys." },
+          { value: "LEGACY", label: "LEGACY", description: locale === "ko" ? "WnDn 키를 사용합니다." : "Use WnDn keys." },
         ]}
         onSelect={setSingleValue}
       />
 
       <MultiSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="지표 섹션"
-        sectionFootnote="여러 항목을 선택한 뒤 적용하세요."
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "지표 섹션" : "Metric Sections"}
+        sectionFootnote={locale === "ko" ? "여러 항목을 선택한 뒤 적용하세요." : "Choose multiple items, then apply them."}
         selectedValues={multiValues}
         options={statsMetricOptions.map((option) => ({
           value: option.value,
@@ -51,9 +53,9 @@ export default function SelectionTemplatePage() {
       />
 
       <SingleSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="운동"
-        sectionFootnote="검색 후 원하는 운동을 선택하세요."
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "운동" : "Exercise"}
+        sectionFootnote={locale === "ko" ? "검색 후 원하는 운동을 선택하세요." : "Search and select the exercise you want."}
         searchable
         selectedValue={searchValue}
         options={commonExerciseOptions.map((option) => ({
@@ -65,10 +67,10 @@ export default function SelectionTemplatePage() {
       />
 
       <PickerSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="날짜"
-        sectionFootnote="시스템 날짜 입력을 사용합니다."
-        inputLabel="날짜"
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "날짜" : "Date"}
+        sectionFootnote={locale === "ko" ? "시스템 날짜 입력을 사용합니다." : "Uses the system date input."}
+        inputLabel={locale === "ko" ? "날짜" : "Date"}
         inputType="date"
         value={dateValue}
         onValueChange={setDateValue}
@@ -76,10 +78,10 @@ export default function SelectionTemplatePage() {
       />
 
       <PickerSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="시간"
-        sectionFootnote="시스템 시간 입력을 사용합니다."
-        inputLabel="시간"
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "시간" : "Time"}
+        sectionFootnote={locale === "ko" ? "시스템 시간 입력을 사용합니다." : "Uses the system time input."}
+        inputLabel={locale === "ko" ? "시간" : "Time"}
         inputType="time"
         value={timeValue}
         onValueChange={setTimeValue}
@@ -87,10 +89,10 @@ export default function SelectionTemplatePage() {
       />
 
       <PickerSelectionScreen
-        title="선택 템플릿"
-        sectionTitle="숫자"
-        sectionFootnote="정수 범위를 지정해 입력합니다."
-        inputLabel="일수"
+        title={locale === "ko" ? "선택 템플릿" : "Selection Template"}
+        sectionTitle={locale === "ko" ? "숫자" : "Number"}
+        sectionFootnote={locale === "ko" ? "정수 범위를 지정해 입력합니다." : "Enter a value within the integer range."}
+        inputLabel={locale === "ko" ? "일수" : "Days"}
         inputType="number"
         min={1}
         max={365}

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent } from "@/components/ui/card";
 import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
 import {
   BaseGroupedList,
@@ -12,6 +11,7 @@ import {
   ValueRow,
 } from "@/components/ui/settings-list";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { useLocale } from "@/components/locale-provider";
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -58,6 +58,7 @@ function dedupeRules(rules: MinimumPlateRule[]) {
 }
 
 export default function SettingsMinimumPlatePage() {
+  const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [settingsLoadKey, setSettingsLoadKey] = useState("minimum-plate:init");
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -81,8 +82,8 @@ export default function SettingsMinimumPlatePage() {
     fallbackValue: DEFAULT_MINIMUM_PLATE_KG,
     serverValue: serverDefaultKg,
     persistServer: createPersistServerSetting<number>(),
-    successMessage: "기본 최소 원판 무게를 저장했습니다.",
-    rollbackNotice: "기본 최소 원판 저장 실패로 이전 값으로 되돌렸습니다.",
+    successMessage: locale === "ko" ? "기본 최소 원판 무게를 저장했습니다." : "Saved the default minimum plate increment.",
+    rollbackNotice: locale === "ko" ? "기본 최소 원판 저장 실패로 이전 값으로 되돌렸습니다." : "Failed to save the default minimum plate increment, so the previous value was restored.",
   });
 
   const rulesSetting = useSettingRowMutation<string>({
@@ -90,8 +91,8 @@ export default function SettingsMinimumPlatePage() {
     fallbackValue: "[]",
     serverValue: serverRulesJson,
     persistServer: createPersistServerSetting<string>(),
-    successMessage: "종목별 최소 원판 규칙을 저장했습니다.",
-    rollbackNotice: "규칙 저장 실패로 이전 값으로 되돌렸습니다.",
+    successMessage: locale === "ko" ? "종목별 최소 원판 규칙을 저장했습니다." : "Saved the per-exercise minimum plate rules.",
+    rollbackNotice: locale === "ko" ? "규칙 저장 실패로 이전 값으로 되돌렸습니다." : "Failed to save the rule, so the previous value was restored.",
   });
 
   const rules = useMemo(() => parseMinimumPlateRules(rulesSetting.value), [rulesSetting.value]);
@@ -137,11 +138,11 @@ export default function SettingsMinimumPlatePage() {
       setServerRulesJson(nextRulesJson);
       setExercises(exerciseRes.items ?? []);
     } catch (e: any) {
-      setLoadError(e?.message ?? "최소 원판 설정을 불러오지 못했습니다.");
+      setLoadError(e?.message ?? (locale === "ko" ? "최소 원판 설정을 불러오지 못했습니다." : "Could not load minimum plate settings."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void loadSettingsAndExercises();
@@ -198,13 +199,13 @@ export default function SettingsMinimumPlatePage() {
 
   const saveRule = async () => {
     if (!ruleDraft.exerciseId) {
-      setSheetError("드롭다운에서 운동종목을 선택하세요.");
+      setSheetError(locale === "ko" ? "드롭다운에서 운동종목을 선택하세요." : "Select an exercise from the dropdown.");
       return;
     }
     const selectedExercise = exercises.find((exercise) => exercise.id === ruleDraft.exerciseId) ?? null;
     const exerciseName = (selectedExercise?.name ?? ruleDraft.exerciseName).trim();
     if (!exerciseName) {
-      setSheetError("선택한 운동종목 정보를 확인하세요.");
+      setSheetError(locale === "ko" ? "선택한 운동종목 정보를 확인하세요." : "Check the selected exercise information.");
       return;
     }
 
@@ -252,10 +253,9 @@ export default function SettingsMinimumPlatePage() {
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
-          <div className="card" style={{ padding: "var(--space-md)" }}>
-
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
                 <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
                 <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
               </div>
@@ -265,19 +265,19 @@ export default function SettingsMinimumPlatePage() {
       )}
       <ErrorStateRows
         message={loadError}
-        title="최소 원판 설정 조회 실패"
+        title={locale === "ko" ? "최소 원판 설정 조회 실패" : "Could not load minimum plate settings"}
         onRetry={() => {
           void loadSettingsAndExercises();
         }}
       />
-      <NoticeStateRows message={latestNotice} tone={hasSaveError ? "warning" : "success"} label="최소 원판 안내" />
+      <NoticeStateRows message={latestNotice} tone={hasSaveError ? "warning" : "success"} label={locale === "ko" ? "최소 원판 안내" : "Minimum Plate Notice"} />
 
       <section>
-        <SectionHeader title="기본 최소 원판 무게" description="기본값은 규칙이 없는 모든 종목에 적용됩니다." />
-        <BaseGroupedList ariaLabel="Default minimum plate setting">
+        <SectionHeader title={locale === "ko" ? "기본 최소 원판 무게" : "Default Minimum Plate Increment"} description={locale === "ko" ? "기본값은 규칙이 없는 모든 종목에 적용됩니다." : "The default applies to any exercise without a specific rule."} />
+        <BaseGroupedList ariaLabel={locale === "ko" ? "기본 최소 원판 설정" : "Default minimum plate setting"}>
           <ValueRow
-            label="기본 Increment"
-            description="운동종목별 규칙이 없을 때 사용"
+            label={locale === "ko" ? "기본 Increment" : "Default Increment"}
+            description={locale === "ko" ? "운동종목별 규칙이 없을 때 사용" : "Used when no exercise-specific rule exists"}
             value={`${normalizeIncrementKg(defaultIncrement.value).toFixed(2)} kg`}
             showChevron={false}
           />
@@ -285,11 +285,10 @@ export default function SettingsMinimumPlatePage() {
       </section>
 
       <section>
-        <SectionHeader title="기본값 조절" description="스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." />
-        <Card padding="md" elevated={false}>
-          <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+        <SectionHeader title={locale === "ko" ? "기본값 조절" : "Adjust Default"} description={locale === "ko" ? "스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." : "Adjust it with the stepper, then save the change."} />
+        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             <AppNumberStepper
-              label="기본 최소 원판 (kg)"
+              label={locale === "ko" ? "기본 최소 원판 (kg)" : "Default Minimum Plate (kg)"}
               value={defaultDraftKg}
               min={0.25}
               max={25}
@@ -305,52 +304,51 @@ export default function SettingsMinimumPlatePage() {
               }}
               disabled={!canSaveDefault}
             >
-              {defaultIncrement.pending ? "저장 중..." : "기본값 저장"}
+              {defaultIncrement.pending ? (locale === "ko" ? "저장 중..." : "Saving...") : (locale === "ko" ? "기본값 저장" : "Save Default")}
             </button>
-          </CardContent>
-        </Card>
+        </div>
       </section>
 
       <section>
-        <SectionHeader title="종목별 최소 원판 규칙" description="예: Pull-up 1.25kg, 나머지 2.5kg" />
-        <BaseGroupedList ariaLabel="Per exercise minimum plate rules">
+        <SectionHeader title={locale === "ko" ? "종목별 최소 원판 규칙" : "Per-Exercise Minimum Plate Rules"} description={locale === "ko" ? "예: Pull-up 1.25kg, 나머지 2.5kg" : "Example: Pull-Up 1.25 kg, everything else 2.5 kg"} />
+        <BaseGroupedList ariaLabel={locale === "ko" ? "운동별 최소 원판 규칙" : "Per exercise minimum plate rules"}>
           {rules.map((rule) => (
             <NavigationRow
               key={toRuleKey(rule)}
               label={rule.exerciseName}
-              subtitle={rule.exerciseId ? "DB 종목 연결" : "이름 기반 규칙"}
-              description="탭해서 increment 수정/삭제"
+              subtitle={rule.exerciseId ? (locale === "ko" ? "DB 종목 연결" : "Linked to DB exercise") : (locale === "ko" ? "이름 기반 규칙" : "Name-based rule")}
+              description={locale === "ko" ? "탭해서 increment 수정/삭제" : "Tap to edit or delete the increment"}
               value={`${rule.incrementKg.toFixed(2)}kg`}
               onPress={() => openEditSheet(rule)}
             />
           ))}
           <NavigationRow
-            label="종목별 규칙 추가"
+            label={locale === "ko" ? "종목별 규칙 추가" : "Add Exercise Rule"}
             subtitle="Add Rule"
-            description="운동종목을 선택하고 최소 원판 무게를 지정합니다."
+            description={locale === "ko" ? "운동종목을 선택하고 최소 원판 무게를 지정합니다." : "Select an exercise and set its minimum plate increment."}
             onPress={openCreateSheet}
-            value="추가"
+            value={locale === "ko" ? "추가" : "Add"}
           />
         </BaseGroupedList>
         <EmptyStateRows
           when={isSettingsSettled && rules.length === 0}
-          label="종목별 규칙이 없습니다"
-          description="기본값만 사용 중입니다. 필요하면 규칙을 추가하세요."
-          ariaLabel="Minimum plate rule empty state"
+          label={locale === "ko" ? "종목별 규칙이 없습니다" : "No exercise-specific rules"}
+          description={locale === "ko" ? "기본값만 사용 중입니다. 필요하면 규칙을 추가하세요." : "Only the default increment is in use. Add a rule if needed."}
+          ariaLabel={locale === "ko" ? "최소 원판 규칙 빈 상태" : "Minimum plate rule empty state"}
         />
         <SectionFootnote>
-          저장된 규칙은 기록 화면의 무게 입력 시 자동으로 스냅되어 적용됩니다.
+          {locale === "ko" ? "저장된 규칙은 기록 화면의 무게 입력 시 자동으로 스냅되어 적용됩니다." : "Saved rules are applied automatically when weight inputs snap on the logging screen."}
         </SectionFootnote>
       </section>
 
       <BottomSheet
         open={sheetOpen}
-        title={editingRuleKey ? "종목별 최소 원판 규칙 편집" : "종목별 최소 원판 규칙 추가"}
-        description="운동종목을 선택하고 증가 단위를 설정하세요."
+        title={editingRuleKey ? (locale === "ko" ? "종목별 최소 원판 규칙 편집" : "Edit Exercise Rule") : (locale === "ko" ? "종목별 최소 원판 규칙 추가" : "Add Exercise Rule")}
+        description={locale === "ko" ? "운동종목을 선택하고 증가 단위를 설정하세요." : "Select an exercise and set the increment."}
         onClose={() => setSheetOpen(false)}
-        closeLabel="닫기"
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
         primaryAction={{
-          ariaLabel: rulesSetting.pending ? "규칙 저장 중" : "규칙 저장",
+          ariaLabel: rulesSetting.pending ? (locale === "ko" ? "규칙 저장 중" : "Saving rule") : (locale === "ko" ? "규칙 저장" : "Save Rule"),
           onPress: () => {
             void saveRule();
           },
@@ -365,17 +363,16 @@ export default function SettingsMinimumPlatePage() {
                 onClick={() => void deleteRule()}
                 disabled={rulesSetting.pending}
               >
-                규칙 삭제
+                {locale === "ko" ? "규칙 삭제" : "Delete Rule"}
               </button>
             </div>
           ) : null
         }
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-          <Card padding="md" elevated={false}>
-            <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-                <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>운동종목 드롭다운 검색/선택</span>
+                <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{locale === "ko" ? "운동종목 드롭다운 검색/선택" : "Search and select an exercise"}</span>
                 <div data-no-swipe="true">
                   <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                     <span
@@ -402,7 +399,7 @@ export default function SettingsMinimumPlatePage() {
                       autoComplete="off"
                       value={exerciseQuery}
                       style={{ paddingInlineStart: "2.15rem", paddingInlineEnd: exerciseQuery.trim().length > 0 ? "2.25rem" : "var(--space-md)" }}
-                      placeholder="예: Pull-up"
+                      placeholder={locale === "ko" ? "예: Pull-up" : "e.g. Pull-Up"}
                       onChange={(event) => {
                         const nextQuery = event.target.value;
                         setExerciseQuery(nextQuery);
@@ -424,7 +421,7 @@ export default function SettingsMinimumPlatePage() {
                     {exerciseQuery.trim().length > 0 ? (
                       <button
                         type="button"
-                        aria-label="검색어 지우기"
+                        aria-label={locale === "ko" ? "검색어 지우기" : "Clear search query"}
                         style={{
                           position: "absolute",
                           insetInlineEnd: "0.55rem",
@@ -479,7 +476,7 @@ export default function SettingsMinimumPlatePage() {
                         className="btn btn-inline-action"
                         onClick={() => selectExerciseOption(null)}
                       >
-                        선택 변경
+                        {locale === "ko" ? "선택 변경" : "Change Selection"}
                       </button>
                     </div>
                   ) : null}
@@ -487,7 +484,7 @@ export default function SettingsMinimumPlatePage() {
                   {!selectedExerciseOption ? (
                     <div
                       role="listbox"
-                      aria-label="운동종목 검색 결과"
+                      aria-label={locale === "ko" ? "운동종목 검색 결과" : "Exercise search results"}
                       style={{
                         display: "flex",
                         flexDirection: "column",
@@ -498,14 +495,28 @@ export default function SettingsMinimumPlatePage() {
                       }}
                     >
                       {visibleExercises.length === 0 ? (
-                        <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>검색 조건에 맞는 운동종목이 없습니다.</span>
+                        <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)" }}>{locale === "ko" ? "검색 조건에 맞는 운동종목이 없습니다." : "No exercises match the current search."}</span>
                       ) : (
                         visibleExercises.map((exercise) => (
                           <button
                             key={exercise.id}
                             type="button"
-                            className="btn btn-secondary btn-full"
-                            style={{ justifyContent: "flex-start", minHeight: "40px" }}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              width: "100%",
+                              minHeight: "44px",
+                              padding: "10px 14px",
+                              background: "var(--color-surface-container)",
+                              border: "none",
+                              borderRadius: 12,
+                              textAlign: "left",
+                              fontFamily: "var(--font-headline-family)",
+                              fontSize: 14,
+                              color: "var(--color-text)",
+                              cursor: "pointer",
+                              WebkitTapHighlightColor: "transparent",
+                            }}
                             onClick={() => {
                               selectExerciseOption(exercise);
                             }}
@@ -518,13 +529,11 @@ export default function SettingsMinimumPlatePage() {
                   ) : null}
                 </div>
               </label>
-            </CardContent>
-          </Card>
+          </div>
 
-          <Card padding="md" elevated={false}>
-            <CardContent>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
               <AppNumberStepper
-                label="최소 원판 Increment (kg)"
+                label={locale === "ko" ? "최소 원판 Increment (kg)" : "Minimum Plate Increment (kg)"}
                 value={ruleDraft.incrementKg}
                 min={0.25}
                 max={25}
@@ -537,8 +546,7 @@ export default function SettingsMinimumPlatePage() {
                   }))
                 }
               />
-            </CardContent>
-          </Card>
+          </div>
 
           {sheetError ? <p style={{ margin: 0, color: "var(--color-danger)", font: "var(--font-secondary)" }}>{sheetError}</p> : null}
         </div>

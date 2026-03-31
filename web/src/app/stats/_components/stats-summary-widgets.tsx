@@ -2,7 +2,6 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { Card } from "@/components/ui/card";
 import { apiGet } from "@/lib/api";
 import { ErrorStateRows, EmptyStateRows } from "@/components/ui/settings-state";
 
@@ -53,7 +52,7 @@ export const StrengthSummaryGrid = memo(function StrengthSummaryGrid({ onExercis
   if (loading) return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "var(--space-md)" }}>
       {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
+        <div key={i} style={{ padding: "var(--space-md)", background: "var(--color-surface-container-low)", borderRadius: 20, boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 12, width: "60%", marginBottom: 10 }} />
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: "80%", marginBottom: 6 }} />
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "50%" }} />
@@ -77,17 +76,19 @@ function StrengthCard({ item, locale, onClick }: { item: StrengthSummaryItem; lo
   const isPr = item.current.e1rm >= item.best.e1rm;
   
   return (
-    <Card 
-      padding="md" 
-      elevated={false} 
-      onClick={onClick} 
+    <div
+      onClick={onClick}
       className="metric-badge metric-1rm"
-      style={{ 
-        display: "flex", 
-        flexDirection: "column", 
-        gap: "var(--space-xs)", 
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "var(--space-xs)",
         cursor: onClick ? "pointer" : "default",
-        minHeight: "124px"
+        minHeight: "124px",
+        padding: "var(--space-md)",
+        background: "var(--color-surface-container-low)",
+        borderRadius: "20px",
+        boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}
     >
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -120,7 +121,7 @@ function StrengthCard({ item, locale, onClick }: { item: StrengthSummaryItem; lo
           <MiniSparkline points={item.recentSeries} />
         </div>
       </footer>
-    </Card>
+    </div>
   );
 }
 

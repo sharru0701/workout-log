@@ -10,7 +10,6 @@ import {
   SectionHeader,
   ValueRow,
 } from "@/components/ui/settings-list";
-import { Card } from "@/components/ui/card";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -335,19 +334,21 @@ export default function SettingsUxThresholdsPage() {
 
       <section>
         <SectionHeader title={locale === "ko" ? "플랜별 기준치 프로필(선택)" : "Plan-Specific Threshold Profile (Optional)"} />
-        <Card tone="subtle" padding="md" elevated={false}>
-          <AppSelect
-            label={locale === "ko" ? "플랜 선택" : "Select Plan"}
-            value={selectedPlanId}
-            onChange={(event) => setSelectedPlanId(event.target.value)}
-          >
-            {plans.length === 0 && <option value="">{locale === "ko" ? "(플랜 없음)" : "(No plans)"}</option>}
-            {plans.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name} [{plan.type}]
-              </option>
-            ))}
-          </AppSelect>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
+            <AppSelect
+              label={locale === "ko" ? "플랜 선택" : "Select Plan"}
+              value={selectedPlanId}
+              onChange={(event) => setSelectedPlanId(event.target.value)}
+            >
+              {plans.length === 0 && <option value="">{locale === "ko" ? "(플랜 없음)" : "(No plans)"}</option>}
+              {plans.map((plan) => (
+                <option key={plan.id} value={plan.id}>
+                  {plan.name} [{plan.type}]
+                </option>
+              ))}
+            </AppSelect>
+          </div>
 
           <BaseGroupedList ariaLabel={locale === "ko" ? "플랜별 기준치 설정" : "Plan threshold settings"}>
             <ValueRow
@@ -411,10 +412,17 @@ export default function SettingsUxThresholdsPage() {
             />
           </BaseGroupedList>
 
-          <div>
-            {locale === "ko" ? "현재 플랜" : "Current Plan"}: {selectedPlan ? `${selectedPlan.name} [${selectedPlan.type}]` : (locale === "ko" ? "선택되지 않음" : "Not selected")}
-          </div>
-        </Card>
+          {selectedPlan && (
+            <div style={{
+              padding: "10px 6px 2px",
+              fontFamily: "var(--font-label-family)",
+              fontSize: 11,
+              color: "var(--color-text-subtle)",
+            }}>
+              {locale === "ko" ? "현재 플랜" : "Current Plan"}: {selectedPlan.name} [{selectedPlan.type}]
+            </div>
+          )}
+        </div>
         <SectionFootnote>
           {locale === "ko" ? "플랜별 값을 저장하면 해당 플랜으로 통계 조회할 때만 임계치가 덮어써집니다." : "When you save a plan-specific value, it overrides the threshold only when viewing stats for that plan."}
         </SectionFootnote>

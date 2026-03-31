@@ -10,11 +10,15 @@ import {
 import { useLocale } from "@/components/locale-provider";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
-// ─── Row icon — 40×40 rounded-lg box with a Material Symbol ──
+// ─── Row icon — 40×40 rounded-xl box with a filled Material Symbol ──
 
 type IconColor = "text-primary" | "text-on-surface";
 
 function RowIcon({ icon, color = "text-on-surface" }: { icon: string; color?: IconColor }) {
+  const bg =
+    color === "text-primary"
+      ? "color-mix(in srgb, var(--color-primary) 14%, var(--color-surface-container-low))"
+      : "var(--color-surface-container)";
   const iconColor =
     color === "text-primary" ? "var(--color-primary)" : "var(--color-text-muted)";
 
@@ -23,8 +27,8 @@ function RowIcon({ icon, color = "text-on-surface" }: { icon: string; color?: Ic
       style={{
         width: 40,
         height: 40,
-        borderRadius: 10,
-        backgroundColor: "var(--color-surface-container-highest)",
+        borderRadius: 12,
+        backgroundColor: bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -32,7 +36,10 @@ function RowIcon({ icon, color = "text-on-surface" }: { icon: string; color?: Ic
         color: iconColor,
       }}
     >
-      <span className="material-symbols-outlined" style={{ fontSize: 22 }}>
+      <span
+        className="material-symbols-outlined"
+        style={{ fontSize: 20, fontVariationSettings: "'FILL' 1" }}
+      >
         {icon}
       </span>
     </div>
@@ -51,7 +58,7 @@ type RowDef = {
 
 function SettingsSection({ title, rows }: { title: string; rows: RowDef[] }) {
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       <div
         style={{
           fontFamily: "var(--font-label-family)",
@@ -88,75 +95,86 @@ function ProfileCard() {
   return (
     <section
       style={{
-        backgroundColor: "var(--color-surface-container-low)",
-        borderRadius: 12,
-        padding: "20px 24px",
-        display: "flex",
-        alignItems: "center",
-        gap: 20,
-        borderLeft: "4px solid var(--color-primary)",
+        background: "color-mix(in srgb, var(--color-primary) 7%, var(--color-surface-container-low))",
+        borderRadius: 24,
+        padding: "20px 20px 18px",
+        boxShadow: "0 1px 3px var(--shadow-color-soft)",
       }}
     >
-      <div
-        style={{
-          width: 64,
-          height: 64,
-          borderRadius: "50%",
-          backgroundColor: "var(--color-surface-container-highest)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          flexShrink: 0,
-        }}
-      >
-        <span className="material-symbols-outlined" style={{ fontSize: 32, color: "var(--color-text-muted)" }}>
-          person
-        </span>
-      </div>
-      <div>
-        <h2
+      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        {/* Avatar */}
+        <div
           style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: 20,
-            fontWeight: 700,
-            letterSpacing: "-0.3px",
-            color: "var(--color-text)",
-            margin: 0,
+            width: 60,
+            height: 60,
+            borderRadius: "50%",
+            background: "var(--color-primary-weak)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            flexShrink: 0,
           }}
         >
-          {copy.settings.profile.title}
-        </h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
           <span
+            className="material-symbols-outlined"
             style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: 11,
-              fontWeight: 700,
-              letterSpacing: "0.14em",
-              textTransform: "uppercase",
+              fontSize: 30,
               color: "var(--color-primary)",
+              fontVariationSettings: "'FILL' 1",
             }}
           >
-            {copy.settings.profile.active}
+            person
           </span>
-          <span
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <h2
             style={{
-              width: 4,
-              height: 4,
-              borderRadius: "50%",
-              backgroundColor: "var(--color-outline-variant)",
-              flexShrink: 0,
-            }}
-          />
-          <span
-            style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: 12,
-              color: "var(--color-text-muted)",
+              fontFamily: "var(--font-headline-family)",
+              fontSize: 20,
+              fontWeight: 700,
+              letterSpacing: "-0.3px",
+              color: "var(--color-text)",
+              margin: 0,
+              lineHeight: 1.2,
             }}
           >
-            {copy.settings.profile.subtitle}
-          </span>
+            {copy.settings.profile.title}
+          </h2>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 7 }}>
+            {/* Active badge chip */}
+            <span
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                padding: "2px 8px",
+                borderRadius: 999,
+                fontFamily: "var(--font-label-family)",
+                fontSize: 10,
+                fontWeight: 700,
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                background: "var(--color-primary-weak)",
+                color: "var(--color-primary)",
+                flexShrink: 0,
+              }}
+            >
+              {copy.settings.profile.active}
+            </span>
+            <span
+              style={{
+                fontFamily: "var(--font-label-family)",
+                fontSize: 12,
+                color: "var(--color-text-muted)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {copy.settings.profile.subtitle}
+            </span>
+          </div>
         </div>
       </div>
     </section>

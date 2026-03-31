@@ -3,7 +3,6 @@
 import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle, useRef } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card } from "@/components/ui/card";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
@@ -477,17 +476,17 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           type="button"
           onClick={() => setActiveSheet("exercise")}
           className="btn"
-          style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            padding: "12px var(--space-md)", 
-            border: "1px solid var(--color-border)", 
-            borderRadius: "14px", 
-            backgroundColor: "var(--color-surface-secondary)", 
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px var(--space-md)",
+            border: "none",
+            borderRadius: "14px",
+            backgroundColor: "var(--color-surface-container-low)",
             cursor: "pointer",
             textAlign: "left",
-            boxShadow: "var(--shadow-sm)"
+            boxShadow: "0 1px 3px var(--shadow-color-soft)"
           }}
         >
           <div style={{ overflow: "hidden" }}>
@@ -506,17 +505,17 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         <button
           type="button"
           onClick={() => setActiveSheet("program")}
-          style={{ 
-            display: "flex", 
-            justifyContent: "space-between", 
-            alignItems: "center", 
-            padding: "12px var(--space-md)", 
-            border: "1px solid var(--color-border)", 
-            borderRadius: "14px", 
-            backgroundColor: "var(--color-surface-secondary)", 
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            padding: "12px var(--space-md)",
+            border: "none",
+            borderRadius: "14px",
+            backgroundColor: "var(--color-surface-container-low)",
             cursor: "pointer",
             textAlign: "left",
-            boxShadow: "var(--shadow-sm)"
+            boxShadow: "0 1px 3px var(--shadow-color-soft)"
           }}
         >
           <div style={{ overflow: "hidden" }}>
@@ -534,8 +533,8 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       </div>
 
       <div style={{ marginTop: "2px" }}>
-        <Card tone="inset" padding="none" style={{ background: "var(--color-surface-2)", borderRadius: "12px", border: "1px solid var(--color-border)", overflow: "hidden" }}>
-          <div style={{ display: "flex", padding: "3px", gap: "2px" }}>
+        <div style={{ background: "var(--color-surface-container)", borderRadius: "12px", overflow: "hidden", padding: "3px" }}>
+          <div style={{ display: "flex", gap: "2px" }}>
             {[
               { label: "7D", value: 7 },
               { label: "1M", value: 30 },
@@ -592,7 +591,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
               <CalendarIcon />
             </button>
           </div>
-        </Card>
+        </div>
       </div>
 
       <div>
@@ -643,8 +642,8 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
         {showChartSection && (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            <Card padding="none">
-              <header style={{ padding: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
+            <div style={{ background: "var(--color-surface-container-low)", borderRadius: "20px", overflow: "hidden", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
+              <header style={{ padding: "var(--space-md)", borderBottom: "1px solid color-mix(in srgb, var(--color-outline-variant) 12%, transparent)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
                   <div>
                     <h2 style={{ fontSize: "18px", fontWeight: 700, letterSpacing: "-0.3px", color: "var(--color-text)", margin: "0 0 2px 0" }}>
@@ -684,9 +683,9 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                   </div>
                 </div>
               )}
-            </Card>
+            </div>
 
-            <Card tone="inset" padding="md" elevated={false} style={{ margin: 0 }}>
+            <div style={{ background: "var(--color-surface-container-low)", borderRadius: "20px", padding: "var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
               <div className="metric-1rm" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <div>
                   <span className="metric-label" style={{ display: "block", marginBottom: "2px" }}>{locale === "ko" ? "최고 e1RM" : "Best e1RM"}</span>
@@ -699,7 +698,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                   <span style={{ fontSize: "14px", marginLeft: "2px", fontWeight: 400 }}>kg</span>
                 </div>
               </div>
-            </Card>
+            </div>
           </div>
         )}
       </div>

@@ -7,6 +7,7 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
+import { useLocale } from "@/components/locale-provider";
 import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -16,32 +17,6 @@ import {
   SETTINGS_KEYS,
   type ThemePreference,
 } from "@/lib/settings/workout-preferences";
-
-const themeOptions: Array<{
-  value: ThemePreference;
-  label: string;
-  subtitle: string;
-  description: string;
-}> = [
-  {
-    value: "LIGHT",
-    label: "라이트",
-    subtitle: "Light",
-    description: "항상 밝은 테마로 표시합니다.",
-  },
-  {
-    value: "DARK",
-    label: "다크",
-    subtitle: "Dark",
-    description: "항상 어두운 테마로 표시합니다.",
-  },
-  {
-    value: "SYSTEM",
-    label: "시스템 설정 따름",
-    subtitle: "System",
-    description: "iOS 시스템 테마 설정을 따릅니다.",
-  },
-];
 
 function SelectedCheckIcon() {
   return (
@@ -67,6 +42,7 @@ function SelectedCheckIcon() {
 }
 
 export default function SettingsThemePage() {
+  const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverTheme, setServerTheme] = useState<ThemePreference>("SYSTEM");
@@ -77,8 +53,8 @@ export default function SettingsThemePage() {
     fallbackValue: "SYSTEM",
     serverValue: serverTheme,
     persistServer: createPersistServerSetting<string>(),
-    successMessage: "테마 설정을 저장했습니다.",
-    rollbackNotice: "테마 저장 실패로 이전 값으로 되돌렸습니다.",
+    successMessage: locale === "ko" ? "테마 설정을 저장했습니다." : "Saved the theme setting.",
+    rollbackNotice: locale === "ko" ? "테마 저장 실패로 이전 값으로 되돌렸습니다." : "Failed to save the theme, so the previous value was restored.",
   });
 
   const loadTheme = useCallback(async () => {
@@ -89,11 +65,11 @@ export default function SettingsThemePage() {
       hasLoadedRef.current = true;
       setServerTheme(normalizeThemePreference(snapshot[SETTINGS_KEYS.theme]));
     } catch (e: any) {
-      setLoadError(e?.message ?? "테마 설정을 불러오지 못했습니다.");
+      setLoadError(e?.message ?? (locale === "ko" ? "테마 설정을 불러오지 못했습니다." : "Could not load theme settings."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void loadTheme();
@@ -107,15 +83,43 @@ export default function SettingsThemePage() {
     () => normalizeThemePreference(themeSetting.value),
     [themeSetting.value],
   );
+  const themeOptions: Array<{
+    value: ThemePreference;
+    label: string;
+    subtitle: string;
+    description: string;
+  }> = useMemo(
+    () => [
+      {
+        value: "LIGHT",
+        label: locale === "ko" ? "라이트" : "Light",
+        subtitle: "Light",
+        description: locale === "ko" ? "항상 밝은 테마로 표시합니다." : "Always use the light theme.",
+      },
+      {
+        value: "DARK",
+        label: locale === "ko" ? "다크" : "Dark",
+        subtitle: "Dark",
+        description: locale === "ko" ? "항상 어두운 테마로 표시합니다." : "Always use the dark theme.",
+      },
+      {
+        value: "SYSTEM",
+        label: locale === "ko" ? "시스템 설정 따름" : "Follow System",
+        subtitle: "System",
+        description: locale === "ko" ? "iOS 시스템 테마 설정을 따릅니다." : "Follow the device theme setting.",
+      },
+    ],
+    [locale],
+  );
 
   return (
     <div>
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 4 }} />
-          <div className="card" style={{ padding: 0, overflow: "hidden" }}>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, overflow: "hidden" }}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "var(--space-md)", borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
                 <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
                 <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: "50%", height: 20, width: 20 }} />
               </div>
@@ -125,16 +129,16 @@ export default function SettingsThemePage() {
       )}
       <ErrorStateRows
         message={loadError}
-        title="테마 설정 조회 실패"
+        title={locale === "ko" ? "테마 설정 조회 실패" : "Could not load theme settings"}
         onRetry={() => {
           void loadTheme();
         }}
       />
-      <NoticeStateRows message={themeSetting.notice} tone={themeSetting.error ? "warning" : "success"} label="테마 안내" />
+      <NoticeStateRows message={themeSetting.notice} tone={themeSetting.error ? "warning" : "success"} label={locale === "ko" ? "테마 안내" : "Theme Notice"} />
 
       <section>
-        <SectionHeader title="테마 설정" description="라이트 / 다크 / 시스템 설정 따름" />
-        <BaseGroupedList ariaLabel="Theme selection">
+        <SectionHeader title={locale === "ko" ? "테마 설정" : "Theme"} description={locale === "ko" ? "라이트 / 다크 / 시스템 설정 따름" : "Light / Dark / Follow System"} />
+        <BaseGroupedList ariaLabel={locale === "ko" ? "테마 선택" : "Theme selection"}>
           {themeOptions.map((option) => {
             const active = selectedTheme === option.value;
             return (
@@ -153,7 +157,7 @@ export default function SettingsThemePage() {
             );
           })}
         </BaseGroupedList>
-        <SectionFootnote>저장 즉시 앱 전체 테마가 변경됩니다.</SectionFootnote>
+        <SectionFootnote>{locale === "ko" ? "저장 즉시 앱 전체 테마가 변경됩니다." : "The app theme changes immediately after saving."}</SectionFootnote>
       </section>
     </div>
   );

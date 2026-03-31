@@ -2,7 +2,6 @@ import type { CSSProperties, ReactNode } from "react";
 import { useId } from "react";
 import Link from "next/link";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
-import { Card } from "./card";
 import type { SettingsListTokenOverrides } from "./settings-list.tokens";
 
 type BaseGroupedListProps = {
@@ -138,21 +137,19 @@ function RowContent({
   );
 }
 
-export function BaseGroupedList({ children, className, ariaLabel, tokens }: BaseGroupedListProps) {
+export function BaseGroupedList({ children, ariaLabel, tokens }: BaseGroupedListProps) {
   return (
-    <Card
-      as="ul"
-      padding="none"
+    <ul
       aria-label={ariaLabel}
       style={tokensToStyle(tokens)}
       data-settings-grouped-list="true"
     >
       {children}
-    </Card>
+    </ul>
   );
 }
 
-export function SectionHeader({ title, description, className }: SectionHeaderProps) {
+export function SectionHeader({ title, description }: SectionHeaderProps) {
   return (
     <header data-settings-section-header="true">
       <h2>{title}</h2>
@@ -161,7 +158,7 @@ export function SectionHeader({ title, description, className }: SectionHeaderPr
   );
 }
 
-export function SectionFootnote({ children, className }: SectionFootnoteProps) {
+export function SectionFootnote({ children }: SectionFootnoteProps) {
   if (MINIMAL_COPY_MODE) return null;
   return (
     <p data-settings-footnote="true">
@@ -175,32 +172,26 @@ const ROW_ICON_TONE_STYLES: Record<RowIconTone, CSSProperties> = {
   primary: {
     backgroundColor: "var(--color-selected-weak)",
     color: "var(--color-action-strong)",
-    border: "1px solid var(--color-selected-border)",
   },
   info: {
     backgroundColor: "var(--color-info-weak)",
     color: "var(--color-info)",
-    border: "1px solid color-mix(in srgb, var(--color-info) 28%, var(--color-border))",
   },
   success: {
     backgroundColor: "var(--color-success-weak)",
     color: "var(--color-success)",
-    border: "1px solid color-mix(in srgb, var(--color-success) 32%, var(--color-border))",
   },
   warning: {
     backgroundColor: "var(--color-warning-weak)",
     color: "var(--color-warning)",
-    border: "1px solid color-mix(in srgb, var(--color-warning) 32%, var(--color-border))",
   },
   surface: {
-    backgroundColor: "var(--color-surface-2)",
+    backgroundColor: "var(--color-surface-container)",
     color: "var(--color-text)",
-    border: "1px solid var(--color-border)",
   },
   neutral: {
-    backgroundColor: "var(--color-surface-2)",
+    backgroundColor: "var(--color-surface-container-high)",
     color: "var(--color-text-muted)",
-    border: "1px solid var(--color-border)",
   },
 };
 
@@ -237,7 +228,6 @@ export function NavigationRow({
   badge,
   badgeTone,
   leading,
-  className,
   href,
   prefetch,
   onPress,
@@ -329,7 +319,6 @@ export function ToggleRow({
   badge,
   badgeTone,
   leading,
-  className,
   checked,
   onCheckedChange,
   disabled = false,
@@ -381,9 +370,7 @@ export function ValueRow({
   badge,
   badgeTone,
   leading,
-  className,
   value,
-  wrapValue = false,
   href,
   onPress,
   disabled = false,
@@ -469,9 +456,7 @@ export function InfoRow({
   badge,
   badgeTone,
   leading,
-  className,
   value,
-  tone = "neutral",
 }: InfoRowProps) {
   const hasLeading = Boolean(leading);
 

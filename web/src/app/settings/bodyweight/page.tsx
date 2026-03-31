@@ -5,8 +5,8 @@ import {
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
+import { useLocale } from "@/components/locale-provider";
 import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { Card, CardContent } from "@/components/ui/card";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { SETTINGS_KEYS } from "@/lib/settings/workout-preferences";
@@ -22,6 +22,7 @@ function normalizeBodyweightKg(value: number) {
 }
 
 export default function SettingsBodyweightPage() {
+  const { locale } = useLocale();
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverBodyweightKg, setServerBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
@@ -33,8 +34,8 @@ export default function SettingsBodyweightPage() {
     fallbackValue: DEFAULT_BODYWEIGHT_KG,
     serverValue: serverBodyweightKg,
     persistServer: createPersistServerSetting<number>(),
-    successMessage: "몸무게를 저장했습니다.",
-    rollbackNotice: "몸무게 저장 실패로 이전 값으로 되돌렸습니다.",
+    successMessage: locale === "ko" ? "몸무게를 저장했습니다." : "Saved bodyweight.",
+    rollbackNotice: locale === "ko" ? "몸무게 저장 실패로 이전 값으로 되돌렸습니다." : "Failed to save bodyweight, so the previous value was restored.",
   });
 
   const loadBodyweight = useCallback(async () => {
@@ -48,11 +49,11 @@ export default function SettingsBodyweightPage() {
       setServerBodyweightKg(resolved);
       setDraftBodyweightKg(resolved);
     } catch (e: any) {
-      setLoadError(e?.message ?? "몸무게 설정을 불러오지 못했습니다.");
+      setLoadError(e?.message ?? (locale === "ko" ? "몸무게 설정을 불러오지 못했습니다." : "Could not load bodyweight settings."));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [locale]);
 
   useEffect(() => {
     void loadBodyweight();
@@ -79,7 +80,7 @@ export default function SettingsBodyweightPage() {
       {loading && (
         <div style={{ display: "flex", flexDirection: "column" }}>
           <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
-          <div className="card" style={{ padding: "var(--space-md)" }}>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
               <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
               <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36, width: 120 }} />
@@ -90,17 +91,16 @@ export default function SettingsBodyweightPage() {
       )}
       <ErrorStateRows
         message={loadError}
-        title="몸무게 설정 조회 실패"
+        title={locale === "ko" ? "몸무게 설정 조회 실패" : "Could not load bodyweight settings"}
         onRetry={() => {
           void loadBodyweight();
         }}
       />
-      <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label="몸무게 안내" />
+      <NoticeStateRows message={bodyweight.notice} tone={bodyweight.error ? "warning" : "success"} label={locale === "ko" ? "몸무게 안내" : "Bodyweight Notice"} />
 
       <section>
-        <SectionHeader title="몸무게 입력" description="스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." />
-        <Card padding="md" elevated={false}>
-          <CardContent style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+        <SectionHeader title={locale === "ko" ? "몸무게 입력" : "Bodyweight"} description={locale === "ko" ? "스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." : "Adjust the value with the stepper, then save it."} />
+        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             <AppNumberStepper
               label="Bodyweight (kg)"
               value={draftBodyweightKg}
@@ -118,12 +118,13 @@ export default function SettingsBodyweightPage() {
               }}
               disabled={!canSaveBodyweight}
             >
-              {bodyweight.pending ? "저장 중..." : "몸무게 저장"}
+              {bodyweight.pending ? (locale === "ko" ? "저장 중..." : "Saving...") : (locale === "ko" ? "몸무게 저장" : "Save Bodyweight")}
             </button>
-          </CardContent>
-        </Card>
+        </div>
         <SectionFootnote>
-          저장된 몸무게는 기록 화면에서 중량 풀업 계열 종목의 총 부하(외부중량 + 몸무게) 계산에 사용됩니다.
+          {locale === "ko"
+            ? "저장된 몸무게는 기록 화면에서 중량 풀업 계열 종목의 총 부하(외부중량 + 몸무게) 계산에 사용됩니다."
+            : "Saved bodyweight is used to calculate total load (external load + bodyweight) for weighted pull-up style movements in the logging screen."}
         </SectionFootnote>
       </section>
     </div>

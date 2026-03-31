@@ -77,13 +77,13 @@
 .hd-banner {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: 20px;
   background: var(--color-surface-container-low);
   padding: 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border: 1px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px var(--shadow-color-soft);
 }
 
 .hd-banner__content {
@@ -160,7 +160,7 @@
   background: var(--color-surface-container-high);
   padding: var(--space-lg);
   overflow: hidden;
-  border: 1px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px var(--shadow-color-soft);
 }
 
 .hd-protocol--empty {
@@ -335,7 +335,7 @@
   background: var(--color-surface-container-low);
   border-radius: 18px;
   padding: 16px;
-  border: 1px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px var(--shadow-color-soft);
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -437,7 +437,7 @@
   padding: 14px 16px;
   background: var(--color-surface-container-lowest, var(--color-surface));
   border-radius: 18px;
-  border: 1px solid var(--color-outline-variant);
+  box-shadow: 0 1px 3px var(--shadow-color-soft);
   text-decoration: none;
   color: inherit;
   transition: background 0.15s;

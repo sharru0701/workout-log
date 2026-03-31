@@ -92,23 +92,22 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
             backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            borderBottom: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)",
-          }}
+                      }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 12,
-              padding: "14px 24px",
+              padding: "16px 20px 12px",
             }}
           >
             <h1
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: 22,
-                fontWeight: 700,
-                letterSpacing: "-0.4px",
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: "-0.6px",
                 color: "var(--color-text)",
                 margin: 0,
               }}
@@ -125,7 +124,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
             maxWidth: 576,
             width: "100%",
             margin: "0 auto",
-            padding: "16px 16px 128px",
+            padding: "8px 16px 128px",
           }}
         >
           {children}
@@ -171,23 +170,22 @@ function SettingsChildModal({
             backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            borderBottom: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)",
-          }}
+                      }}
         >
           <div
             style={{
               display: "flex",
               alignItems: "center",
               gap: 12,
-              padding: "14px 24px",
+              padding: "16px 20px 12px",
             }}
           >
             <h1
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: 22,
-                fontWeight: 700,
-                letterSpacing: "-0.4px",
+                fontSize: 28,
+                fontWeight: 800,
+                letterSpacing: "-0.6px",
                 color: "var(--color-text)",
                 margin: 0,
               }}

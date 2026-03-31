@@ -17,16 +17,6 @@ import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useSearchParams } from "next/navigation";
 import React from "react";
 
-// ─── Period filter ────────────────────────────────────────────────
-
-type Period = { label: string; days: number };
-const PERIODS: Period[] = [
-  { label: "7D",  days: 7 },
-  { label: "1M",  days: 30 },
-  { label: "3M",  days: 90 },
-  { label: "전체", days: 0 },
-];
-
 const CAPS_LABEL_STYLE: React.CSSProperties = {
   fontFamily: "var(--font-label-family)",
   fontSize: "10px",
@@ -35,145 +25,7 @@ const CAPS_LABEL_STYLE: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────
-
-function formatVolume(kg: number): { value: string; unit: string } {
-  if (kg >= 1000) return { value: (kg / 1000).toFixed(1), unit: "t" };
-  return { value: String(kg), unit: "kg" };
-}
-
-function compliancePct(c: any): number {
-  if (!c) return 0;
-  return Math.round((c.compliance ?? 0) * 100);
-}
-
 // ─── Sub-components ───────────────────────────────────────────────
-
-function PeriodChips({ value, onChange }: { value: number; onChange: (days: number) => void }) {
-  const { locale } = useLocale();
-  return (
-    <div style={{ display: "flex", gap: "6px", flexWrap: "wrap", marginBottom: "var(--space-lg)" }}>
-      {PERIODS.map((p) => {
-        const active = p.days === value;
-        return (
-          <button
-            key={p.days}
-            type="button"
-            onClick={() => onChange(p.days)}
-            style={{
-              padding: "6px 14px",
-              borderRadius: "20px",
-              border: `1px solid ${active ? "var(--color-selected-border)" : "var(--color-border)"}`,
-              background: active ? "var(--color-action-weak)" : "var(--color-surface-container)",
-              color: active ? "var(--color-action-strong)" : "var(--color-text-muted)",
-              fontSize: "12px",
-              fontWeight: active ? 700 : 600,
-              letterSpacing: "0.05em",
-              cursor: "pointer",
-              transition: "background 0.12s ease, color 0.12s ease, border-color 0.12s ease",
-            }}
-          >
-            {p.days === 0 ? (locale === "ko" ? "전체" : "All") : p.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function BentoMetrics({ sessions, volume, complianceData, topPr }: {
-  sessions: number | null;
-  volume: number | null;
-  complianceData: any;
-  topPr: any;
-}) {
-  const { locale } = useLocale();
-  const vol = volume !== null ? formatVolume(volume) : null;
-  const pct = compliancePct(complianceData);
-
-  return (
-    <div style={{
-      display: "grid",
-      gridTemplateColumns: "1fr 1fr",
-      gridTemplateRows: "auto auto",
-      gap: "var(--space-sm)",
-      marginBottom: "var(--space-xl)",
-    }}>
-      {/* Sessions — tall left */}
-      <div style={{
-        gridRow: "1 / 2",
-        padding: "16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
-        boxShadow: "0 1px 3px var(--shadow-color-soft)",
-      }}>
-        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-sets)", marginBottom: "8px" }}>Sessions</div>
-        <div style={{ fontSize: "40px", fontWeight: 800, letterSpacing: "-1.5px", color: "var(--color-text)", lineHeight: 1 }}>
-          {sessions ?? "—"}
-        </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "운동 기록" : "Logged sessions"}</div>
-      </div>
-
-      {/* Volume — top right */}
-      <div style={{
-        padding: "16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
-        boxShadow: "0 1px 3px var(--shadow-color-soft)",
-      }}>
-        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-weight)", marginBottom: "8px" }}>Volume</div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: "3px" }}>
-          <span style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1px", color: "var(--color-text)", lineHeight: 1 }}>
-            {vol?.value ?? "—"}
-          </span>
-          {vol && <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--color-text-muted)" }}>{vol.unit}</span>}
-        </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "누적 볼륨" : "Total volume"}</div>
-      </div>
-
-      {/* Compliance — bottom left */}
-      <div style={{
-        padding: "16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
-        boxShadow: "0 1px 3px var(--shadow-color-soft)",
-      }}>
-        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--text-metric-reps)", marginBottom: "8px" }}>Compliance</div>
-        <div style={{ fontSize: "36px", fontWeight: 800, letterSpacing: "-1px", lineHeight: 1, color: pct >= 80 ? "var(--color-success)" : pct >= 50 ? "var(--color-action)" : "var(--color-text)" }}>
-          {complianceData !== null ? `${pct}%` : "—"}
-        </div>
-        <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px" }}>{locale === "ko" ? "플랜 준수율" : "Plan compliance"}</div>
-      </div>
-
-      {/* Top PR — bottom right */}
-      <div style={{
-        padding: "16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 30%, transparent)",
-        boxShadow: "0 1px 3px var(--shadow-color-soft)",
-      }}>
-        <div style={{ ...CAPS_LABEL_STYLE, color: "var(--color-primary)", marginBottom: "8px" }}>Top e1RM</div>
-        {topPr ? (
-          <>
-            <div style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.8px", color: "var(--color-text)", lineHeight: 1 }}>
-              {topPr.best?.e1rm ?? "—"}
-              <span style={{ fontSize: "12px", fontWeight: 600, color: "var(--color-text-muted)" }}> kg</span>
-            </div>
-            <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginTop: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {topPr.exerciseName}
-            </div>
-          </>
-        ) : (
-          <div style={{ fontSize: "28px", fontWeight: 800, color: "var(--color-text)", lineHeight: 1 }}>—</div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 function SectionHeading({ label, title, description }: { label: string; title: string; description?: string }) {
   return (
@@ -200,7 +52,7 @@ function ComplianceRow({ r }: { r: any }) {
       padding: "12px 14px",
       borderRadius: "10px",
       background: "var(--color-surface-container-low)",
-      border: "1px solid color-mix(in srgb, var(--color-outline-variant) 25%, transparent)",
+      boxShadow: "0 1px 3px var(--shadow-color-soft)",
     }}>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: "13px", fontWeight: 700, color: "var(--color-text)", marginBottom: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
@@ -248,7 +100,7 @@ function PrRow({ r }: { r: any }) {
         padding: "12px 14px",
         borderRadius: "10px",
         background: "var(--color-surface-container-low)",
-        border: "1px solid color-mix(in srgb, var(--color-outline-variant) 25%, transparent)",
+        boxShadow: "0 1px 3px var(--shadow-color-soft)",
         textDecoration: "none",
         transition: "background 0.12s ease",
       }}
@@ -291,9 +143,6 @@ function StatsPageContent() {
   const detailedRef = useRef<Stats1RMDetailedRef>(null);
   const detailedSectionRef = useRef<HTMLDivElement>(null);
   const [refreshTick, setRefreshTick] = useState(0);
-  const [period, setPeriod] = useState<number>(30);
-
-  const [heroMetrics, setHeroMetrics] = useState<{ sessions: number; volume: number } | null>(null);
   const [compliance, setCompliance] = useState<any>(null);
   const [prs, setPrs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -323,9 +172,8 @@ function StatsPageContent() {
     setLoading(true);
     (async () => {
       try {
-        const bundle = await apiGet<any>(`/api/stats/bundle?days=${period}`);
+        const bundle = await apiGet<any>("/api/stats/bundle?days=90");
         if (cancelled) return;
-        setHeroMetrics({ sessions: bundle.sessions30d ?? 0, volume: bundle.tonnage30d ?? 0 });
         setCompliance(bundle.compliance90d ?? null);
         setPrs({ items: bundle.prs90d ?? [] });
       } catch (e) {
@@ -335,7 +183,7 @@ function StatsPageContent() {
       }
     })();
     return () => { cancelled = true; };
-  }, [refreshTick, period]);
+  }, [refreshTick]);
 
   return (
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
@@ -345,7 +193,6 @@ function StatsPageContent() {
         <div style={{
           marginBottom: "var(--space-xl)",
           paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
         }}>
           <div style={{
             ...CAPS_LABEL_STYLE,
@@ -373,17 +220,6 @@ function StatsPageContent() {
             {locale === "ko" ? "훈련 성과, 볼륨 추이, 종목별 최고 기록을 분석합니다." : "Analyze training performance, volume trends, and exercise-specific records."}
           </p>
         </div>
-
-        {/* ── Period Filter ── */}
-        <PeriodChips value={period} onChange={setPeriod} />
-
-        {/* ── Bento Metrics ── */}
-        <BentoMetrics
-          sessions={loading ? null : heroMetrics?.sessions ?? null}
-          volume={loading ? null : heroMetrics?.volume ?? null}
-          complianceData={loading ? null : compliance}
-          topPr={loading ? null : prs?.items?.[0] ?? null}
-        />
 
         {/* ── Detailed 1RM Chart ── */}
         <div style={{ marginBottom: "var(--space-xl)" }} ref={detailedSectionRef}>

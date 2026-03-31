@@ -9,7 +9,6 @@ import {
 } from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
-import { Card, CardContent } from "@/components/ui/card";
 
 type ExportFormat = "json" | "csv";
 
@@ -136,11 +135,9 @@ export default function SettingsDataExportPage() {
 
       {exportingLabel ? (
         <section>
-          <Card tone="subtle" padding="md" elevated={false}>
-            <CardContent>
-              <p>{exportingLabel}</p>
-            </CardContent>
-          </Card>
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
+            <p style={{ margin: 0, fontFamily: "var(--font-label-family)", fontSize: 13, color: "var(--color-text-muted)" }}>{exportingLabel}</p>
+          </div>
         </section>
       ) : null}
     </div>
