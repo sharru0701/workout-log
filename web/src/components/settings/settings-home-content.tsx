@@ -14,7 +14,7 @@ import { usePullToRefresh } from "@/lib/usePullToRefresh";
 
 type IconColor = "text-primary" | "text-on-surface";
 
-function RowIcon({ icon, color = "text-on-surface" }: { icon: string; color?: IconColor }) {
+function RowIcon({ icon, color = "text-primary" }: { icon: string; color?: IconColor }) {
   const bg =
     color === "text-primary"
       ? "color-mix(in srgb, var(--color-primary) 14%, var(--color-surface-container-low))"
