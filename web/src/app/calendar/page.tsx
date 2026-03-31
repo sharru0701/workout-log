@@ -748,20 +748,11 @@ export default function CalendarPage() {
         style={{
           display: "flex",
           alignItems: "center",
-          justifyContent: "space-between",
+          justifyContent: "center",
           paddingTop: "var(--space-sm)",
           marginBottom: "var(--space-lg)",
         }}
       >
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "36px",
-          height: "36px",
-        }}>
-          <span className="material-symbols-outlined" style={{ color: "var(--color-primary)", fontSize: "22px" }}>calendar_today</span>
-        </div>
         <h1 style={{
           fontFamily: "var(--font-headline-family)",
           fontSize: "20px",
@@ -772,25 +763,6 @@ export default function CalendarPage() {
         }}>
           {copy.calendar.title}
         </h1>
-        <button
-          type="button"
-          aria-label={copy.calendar.planFilter}
-          onClick={() => { setPlanQuery(""); setPlanSheetOpen(true); }}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: "36px",
-            height: "36px",
-            background: "var(--color-surface-container-high)",
-            border: "none",
-            borderRadius: "50%",
-            cursor: "pointer",
-            color: "var(--color-text-muted)",
-          }}
-        >
-          <span className="material-symbols-outlined" style={{ fontSize: "20px" }}>tune</span>
-        </button>
       </div>
 
       {/* ── Filter Bar ── */}
