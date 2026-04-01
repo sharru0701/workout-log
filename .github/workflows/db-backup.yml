@@ -70,7 +70,7 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
             -H "Content-Type: application/json" \
-            -d '{"limit": 1000, "sortBy": {"column": "created_at", "order": "asc"}}')
+            -d '{"prefix": "", "limit": 1000, "sortBy": {"column": "created_at", "order": "asc"}}')
             
           # Date cutoff (14 days ago) in UTC ISO format
           CUTOFF_DATE=$(date -d "14 days ago" -u +"%Y-%m-%dT%H:%M:%SZ")
