@@ -10,22 +10,21 @@ import {
 import { useLocale } from "@/components/locale-provider";
 
 export function LocalePreferenceSync() {
-  const { locale, setLocale } = useLocale();
+  const { setLocale } = useLocale();
 
   useEffect(() => {
+    // 1. Apply local cache immediately
     setLocale(readLocalePreferenceFromLocalCache());
-  }, [setLocale]);
 
-  useEffect(() => {
     let cancelled = false;
-
+    
+    // 2. Fetch remote source of truth
     (async () => {
       try {
         const snapshot = await fetchSettingsSnapshot();
+        if (cancelled) return;
         const nextLocale = normalizeLocalePreference(snapshot[SETTINGS_KEYS.locale]);
-        if (!cancelled && nextLocale !== locale) {
-          setLocale(nextLocale);
-        }
+        setLocale(nextLocale);
       } catch {
         // Keep local/cookie locale on network failure.
       }
@@ -34,7 +33,7 @@ export function LocalePreferenceSync() {
     return () => {
       cancelled = true;
     };
-  }, [locale, setLocale]);
+  }, [setLocale]);
 
   return null;
 }

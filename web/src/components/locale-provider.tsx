@@ -7,6 +7,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import {
@@ -48,15 +49,20 @@ export function LocaleProvider({
     writeLocaleCookie(locale);
   }, [locale]);
 
-  const value = useMemo<LocaleContextValue>(() => ({
-    locale,
-    copy: getAppCopy(locale),
-    setLocale(nextLocale) {
+  const setLocale = useCallback(
+    (nextLocale: AppLocale) => {
       startTransition(() => {
         setLocaleState(nextLocale);
       });
     },
-  }), [locale]);
+    []
+  );
+
+  const value = useMemo<LocaleContextValue>(() => ({
+    locale,
+    copy: getAppCopy(locale),
+    setLocale,
+  }), [locale, setLocale]);
 
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
