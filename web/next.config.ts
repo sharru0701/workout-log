@@ -2,11 +2,11 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   env: {
-    // CI: Dockerfile builder stage에서 NEXT_PUBLIC_APP_VERSION 주입 (예: 20260324-ab3f19c)
-    // 로컬 dev: "dev" fallback
-    NEXT_PUBLIC_APP_VERSION: process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
+    // Vercel deployment: use VERCEL_GIT_COMMIT_SHA, fallback to NEXT_PUBLIC_APP_VERSION or dev
+    NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
   },
-  output: "standalone",
+  // Vercel 환경에서는 output: "standalone"을 사용하지 않으므로 제거 또는 주석 처리
+  // output: "standalone",
   outputFileTracingIncludes: {
     "/api/health": [
       "./scripts/migrate.mjs",
