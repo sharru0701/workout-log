@@ -1,0 +1,71 @@
+name: "Daily Supabase DB Backup to Google Drive"
+
+on:
+  schedule:
+    # 매일 새벽 4시 (KST = UTC 19시)에 자동 실행
+    - cron: "0 19 * * *"
+  workflow_dispatch: # Github Actions 탭에서 수동으로도 실행할 수 있게 허용
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Install PostgreSQL Tools & Rclone
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client rclone
+
+      - name: Configure Rclone for Google Drive
+        run: |
+          mkdir -p ~/.config/rclone
+          # Github Secrets에 저장된 JSON 키파일 내용을 안전하게 임시파일로 생성
+          echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_CREDENTIALS }}' > /tmp/sa.json
+          
+          # rclone 설정 파일 생성 (gdrive 프로필)
+          cat <<EOF > ~/.config/rclone/rclone.conf
+          [gdrive]
+          type = drive
+          scope = drive
+          service_account_file = /tmp/sa.json
+          EOF
+
+      - name: Run pg_dump & Compress
+        run: |
+          # 백업 파일명 생성 (예: workoutlog_backup_20260401_040000.sql.gz)
+          BACKUP_FILE="workoutlog_backup_$(date +'%Y%m%d_%H%M%S').sql.gz"
+          echo "BACKUP_FILE=${BACKUP_FILE}" >> $GITHUB_ENV
+          
+          # Supabase는 권한 문제로 내부 테이블 백업이 불가능할 수 있어 앱 데이터만 모인 public 스키마만 백업
+          pg_dump "${{ secrets.SUPABASE_DIRECT_URL }}" \
+            --clean \
+            --if-exists \
+            --no-owner \
+            --no-privileges \
+            --schema=public \
+            | gzip > "${BACKUP_FILE}"
+          
+          echo "✅ Backup created successfully: ${BACKUP_FILE}"
+
+      - name: Upload to Google Drive using Rclone
+        run: |
+          echo "Uploading ${BACKUP_FILE} to Google Drive folder..."
+          rclone copy "./${BACKUP_FILE}" "gdrive:" \
+            --drive-root-folder-id "${{ secrets.GDRIVE_FOLDER_ID }}" \
+            -v
+            
+      - name: Rotate Old Backups (Retain 14 days)
+        run: |
+          echo "🧹 Cleaning up backups older than 14 days in Google Drive..."
+          rclone delete "gdrive:" \
+            --drive-root-folder-id "${{ secrets.GDRIVE_FOLDER_ID }}" \
+            --min-age 14d \
+            -v || true
+          
+      - name: Security Cleanup
+        if: always()
+        run: |
+          # 남은 흔적(자격증명 및 백업본)을 안전하게 즉시 파기
+          rm -f /tmp/sa.json
+          rm -f *.sql.gz
