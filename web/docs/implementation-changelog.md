@@ -19,6 +19,7 @@
 10. [비동기 UX 연속성](#10-비동기-ux-연속성)
 11. [DevOps — 마이그레이션 · 운영 텔레메트리](#11-devops--마이그레이션--운영-텔레메트리)
 12. [검증 명령어 모음](#12-검증-명령어-모음)
+13. [인프라 — Vercel & Supabase 이전](#13-인프라--vercel--supabase-이전)
 
 ---
 
@@ -850,3 +851,22 @@ UX_EVENTS_CLEANUP_DRY_RUN=1 pnpm --dir web run db:cleanup:ux-events
 # 마이그레이션 스킵 테스트
 DB_MIGRATE_ENABLED=0 DATABASE_URL=postgres://... node web/scripts/migrate.mjs
 ```
+
+---
+
+## 13. 인프라 — Vercel & Supabase 이전
+
+### 인프라 전환 배경
+- 기존: GCP Compute Engine 내 단일 Docker Compose 환경에서 앱, DB, Github Actions 배포 쉘 스크립트를 관리.
+- 변경: 유지보수 부담을 줄이고 앱 성능(Edge 네트워크) 및 배포 파이프라인(Vercel CI)을 극대화하기 위해 Vercel(웹앱) + Supabase(Postgres DB) 조합으로 완전 이전.
+
+### 변경 사항 관리
+1. **GitHub Actions 제거**:
+   - `deploy.yml` (GCP 서버로 `rsync` 및 `docker pull` 전송하던 레거시 CI/CD 파이프라인) 폐기. Vercel이 Git push 즉시 자체 Edge 배포를 대행.
+2. **풀러(Connection Pooler) 분리**:
+   - Supabase의 서버리스 커넥션 환경을 지원하기 위해 `.env` 환경 변수가 두 개로 세분화됨.
+   - `DATABASE_URL` (포트 6543): 앱의 런타임 쿼리를 처리하는 Transaction 모드 연결 주소 (서버리스 환경 풀러).
+   - `DIRECT_URL` (포트 5432): DB 마이그레이션을 처리하는 Session 모드 직접 연결 주소.
+3. **빌드 및 배포 파이프라인**:
+   - `package.json`의 배포 스크립트에 `pnpm db:migrate && next build --turbopack`을 적용하여, Vercel 빌드 타임에 Drizzle 마이그레이션이 자동 수행되도록 파이프라인 일원화.
+   - `vercel.json`에 `icn1` 한국 리전을 등록하여 Supabase 서울서버와의 핑(latency)을 최소화.

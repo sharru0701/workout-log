@@ -40,10 +40,11 @@ RUN_DB_SEED=1 ./dev up
 - pnpm
 - Postgres 16+
 
-`.env.local` 예시:
+`.env.local` 예시 (Vercel 환경과 동일하게 풀러 분리):
 
 ```bash
-DATABASE_URL=postgres://app:app@127.0.0.1:5432/workoutlog
+DATABASE_URL="postgresql://postgres.[프로젝트ID]:[비밀번호]@aws-[리전].pooler.supabase.com:6543/postgres?pgbouncer=true"
+DIRECT_URL="postgresql://postgres.[프로젝트ID]:[비밀번호]@aws-[리전].pooler.supabase.com:5432/postgres"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 WORKOUT_AUTH_USER_ID=local-user
 NEXT_PUBLIC_DISABLE_SW=1
@@ -112,42 +113,22 @@ UX_EVENTS_CLEANUP_DRY_RUN=1    # dry-run 모드 (실제 삭제 없음)
 UX_EVENTS_CLEANUP_DRY_RUN=1 pnpm --dir web run db:cleanup:ux-events
 ```
 
-#### Option A: Linux Cron (self-hosted)
+#### Option A: Vercel Cron (현재 운영 환경)
 
-매일 `03:20` 에 실행:
-```cron
-20 3 * * * cd /home/dhshin/projects/workout-log && UX_EVENTS_RETENTION_DAYS=120 pnpm --dir web run db:cleanup:ux-events >> /var/log/workout-log-ux-cleanup.log 2>&1
+Vercel 루트 폴더의 `vercel.json` 파일에 Cron 항목을 정의하고, 대상 서버리스 함수(API Route)를 호출하여 처리합니다.
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/ops/cleanup",
+      "schedule": "20 3 * * *"
+    }
+  ]
+}
 ```
+*참고: 현재 Vercel 플랫폼 통합 이후, 위와 같은 방식으로 매일 자율 정리 작업을 위임하고 있습니다.*
 
-#### Option B: GitHub Actions
+#### Option B: 내장 API 엔드포인트 수동 호출
 
-`.github/workflows/ux-events-cleanup.yml` 생성 (현재 미생성 — 다음 태스크):
-```yaml
-name: ux-events-cleanup
-on:
-  schedule:
-    - cron: "20 18 * * *"  # UTC daily (한국 시간 03:20)
-  workflow_dispatch:
-jobs:
-  cleanup:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --dir web run db:cleanup:ux-events
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          UX_EVENTS_RETENTION_DAYS: "120"
-```
-
-**Rollout 체크리스트**:
-- `0008_lush_polaris` 마이그레이션이 프로덕션 DB에 적용됐는지 확인
-- `DATABASE_URL` 스케줄러 런타임에서 접근 가능한지 확인
-- dry-run 결과 `deletedRows` 수치 1~2일 모니터링 후 delete 모드 전환
+관리자 계정이나 스크립트에서 보안 토큰을 담아 `/api/ops/cleanup` 엔드포인트를 직접 POST 호출하여 정리할 수도 있습니다.
