@@ -1,12 +1,19 @@
-'use strict';
+import { NextResponse } from 'next/server';
+
+export const dynamic = 'force-static';
+
+export function GET() {
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || Date.now().toString();
+
+  const swCode = `'use strict';
 
 // ---------------------------------------------------------------------------
 // Cache names — bump CACHE_VERSION when deploying breaking asset changes.
 // Old caches are auto-deleted in the activate handler.
 // ---------------------------------------------------------------------------
-const CACHE_VERSION = 'v1';
-const STATIC_CACHE = `wl-static-${CACHE_VERSION}`;   // /_next/static/** (immutable)
-const ASSETS_CACHE = `wl-assets-${CACHE_VERSION}`;   // icons, fonts, offline page
+const CACHE_VERSION = 'v1-' + '${version}';
+const STATIC_CACHE = 'wl-static-' + CACHE_VERSION;   // /_next/static/** (immutable)
+const ASSETS_CACHE = 'wl-assets-' + CACHE_VERSION;   // icons, fonts, offline page
 const ALL_CACHES = [STATIC_CACHE, ASSETS_CACHE];
 
 // Precache these on install so the offline fallback is always available.
@@ -68,7 +75,7 @@ self.addEventListener('fetch', (event) => {
   // Public icons / images / fonts — stale-while-revalidate.
   if (
     url.pathname.startsWith('/icons/') ||
-    /\.(png|jpg|jpeg|svg|ico|webp|woff2?|ttf|otf)$/.test(url.pathname)
+    /\\.(png|jpg|jpeg|svg|ico|webp|woff2?|ttf|otf)$/.test(url.pathname)
   ) {
     event.respondWith(staleWhileRevalidate(request, ASSETS_CACHE));
     return;
@@ -150,4 +157,13 @@ async function networkFirst(request) {
     const cached = await caches.match(request);
     return cached ?? new Response('Network error', { status: 503 });
   }
+}
+`;
+
+  return new NextResponse(swCode, {
+    headers: {
+      'Content-Type': 'application/javascript; charset=utf-8',
+      'Cache-Control': 'public, max-age=0, must-revalidate',
+    },
+  });
 }
