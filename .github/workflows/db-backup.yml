@@ -1,4 +1,4 @@
-name: "Daily Supabase DB Backup to Google Drive"
+name: "Daily Supabase DB Backup to Supabase Storage"
 
 on:
   schedule:
@@ -12,32 +12,27 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - name: Install PostgreSQL Tools & Rclone
+      - name: Install PostgreSQL Tools & jq
         run: |
           sudo apt-get update
-          sudo apt-get install -y postgresql-client rclone
+          sudo apt-get install -y postgresql-client jq
 
-      - name: Configure Rclone for Google Drive
+      - name: Extract Supabase Details
+        id: supabase
         run: |
-          mkdir -p ~/.config/rclone
-          # Github Secrets에 저장된 JSON 키파일 내용을 안전하게 임시파일로 생성
-          echo '${{ secrets.GDRIVE_SERVICE_ACCOUNT_CREDENTIALS }}' > /tmp/sa.json
-          
-          # rclone 설정 파일 생성 (gdrive 프로필)
-          cat <<EOF > ~/.config/rclone/rclone.conf
-          [gdrive]
-          type = drive
-          scope = drive
-          service_account_file = /tmp/sa.json
-          EOF
+          # URL 파싱하여 프로젝트 고유 ID 알아내기
+          URL="${{ secrets.SUPABASE_DIRECT_URL }}"
+          # 정규식 패턴: postgres.[PROJECT_REF]:
+          PROJECT_REF=$(echo "$URL" | sed -n 's/.*postgres\.\(.*\)[:@].*/\1/p' | cut -d: -f1)
+          echo "PROJECT_REF=$PROJECT_REF" >> $GITHUB_ENV
+          echo "SUPABASE_REST_URL=https://${PROJECT_REF}.supabase.co" >> $GITHUB_ENV
 
       - name: Run pg_dump & Compress
         run: |
-          # 백업 파일명 생성 (예: workoutlog_backup_20260401_040000.sql.gz)
           BACKUP_FILE="workoutlog_backup_$(date +'%Y%m%d_%H%M%S').sql.gz"
           echo "BACKUP_FILE=${BACKUP_FILE}" >> $GITHUB_ENV
           
-          # Supabase는 권한 문제로 내부 테이블 백업이 불가능할 수 있어 앱 데이터만 모인 public 스키마만 백업
+          echo "Generating PostgreSQL public schema dump..."
           pg_dump "${{ secrets.SUPABASE_DIRECT_URL }}" \
             --clean \
             --if-exists \
@@ -48,24 +43,72 @@ jobs:
           
           echo "✅ Backup created successfully: ${BACKUP_FILE}"
 
-      - name: Upload to Google Drive using Rclone
+      - name: Upload to Supabase Storage
         run: |
-          echo "Uploading ${BACKUP_FILE} to Google Drive folder..."
-          rclone copy "./${BACKUP_FILE}" "gdrive:" \
-            --drive-root-folder-id "${{ secrets.GDRIVE_FOLDER_ID }}" \
-            -v
+          echo "Uploading ${BACKUP_FILE} to Supabase 'backups' bucket..."
+          # POST /storage/v1/object/bucket/file
+          HTTP_STATUS=$(curl -sS -o response.txt -w "%{http_code}" \
+            -X POST "${SUPABASE_REST_URL}/storage/v1/object/backups/${BACKUP_FILE}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/gzip" \
+            --data-binary "@${BACKUP_FILE}")
             
+          cat response.txt
+          
+          if [ "$HTTP_STATUS" -ne 200 ] && [ "$HTTP_STATUS" -ne 201 ]; then
+            echo "❌ Upload failed with HTTP status $HTTP_STATUS"
+            exit 1
+          fi
+          echo "✅ Upload completed."
+
       - name: Rotate Old Backups (Retain 14 days)
         run: |
-          echo "🧹 Cleaning up backups older than 14 days in Google Drive..."
-          rclone delete "gdrive:" \
-            --drive-root-folder-id "${{ secrets.GDRIVE_FOLDER_ID }}" \
-            --min-age 14d \
-            -v || true
+          echo "🧹 Fetching list of backups..."
+          # Fetch up to 1000 items from 'backups' bucket
+          FILES_JSON=$(curl -sS -X POST "${SUPABASE_REST_URL}/storage/v1/object/list/backups" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{"limit": 1000, "sortBy": {"column": "created_at", "order": "asc"}}')
+            
+          # Date cutoff (14 days ago) in UTC ISO format
+          CUTOFF_DATE=$(date -d "14 days ago" -u +"%Y-%m-%dT%H:%M:%SZ")
+          echo "Looking for files created before ${CUTOFF_DATE}..."
+          
+          # Extract items older than 14 days. Filter out .emptyFolderPlaceholder
+          # jq outputs each filename on a new line
+          FILES_TO_DELETE=$(echo "$FILES_JSON" | jq -r --arg CUTOFF "$CUTOFF_DATE" '.[] | select((.created_at < $CUTOFF) and (.name != ".emptyFolderPlaceholder")) | .name')
+          
+          if [ -z "$FILES_TO_DELETE" ] || [ "$FILES_TO_DELETE" == "null" ]; then
+            echo "No backups older than 14 days found."
+            exit 0
+          fi
+          
+          echo "The following files will be deleted:"
+          echo "$FILES_TO_DELETE"
+          
+          # Convert filenames into JSON array for DELETE payload
+          # format: {"prefixes": ["file1.sql.gz", "file2.sql.gz"]}
+          JSON_PAYLOAD=$(echo "$FILES_TO_DELETE" | jq -R . | jq -sc '{prefixes: .}')
+          
+          echo "Deleting old files from bucket..."
+          DELETE_STATUS=$(curl -sS -o del_response.txt -w "%{http_code}" \
+            -X DELETE "${SUPABASE_REST_URL}/storage/v1/object/backups" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD")
+            
+          cat del_response.txt
+          
+          if [ "$DELETE_STATUS" -ne 200 ]; then
+            echo "❌ Rotation deletion failed with HTTP $DELETE_STATUS"
+            exit 1
+          fi
+          echo "✅ Old backups cleaned up successfully."
           
       - name: Security Cleanup
         if: always()
         run: |
-          # 남은 흔적(자격증명 및 백업본)을 안전하게 즉시 파기
-          rm -f /tmp/sa.json
-          rm -f *.sql.gz
+          rm -f *.sql.gz response.txt del_response.txt
