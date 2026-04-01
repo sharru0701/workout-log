@@ -20,6 +20,7 @@ import { parseSessionKey } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useWorkoutRecordPersistence } from "@/lib/workout-record/useWorkoutRecordPersistence";
+import WorkoutRecordLoading from "./loading";
 import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
@@ -1928,52 +1929,7 @@ export default function WorkoutRecordPage() {
   return (
     <>
     <PullToRefreshShell pullToRefresh={pullToRefresh}>
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {/* 선택된 플랜 카드 */}
-          <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "40%", marginBottom: 12 }} />
-            <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "35%", marginBottom: 6 }} />
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 20, width: "60%" }} />
-            </div>
-          </div>
-          {/* 지난 세션 */}
-          <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "30%", marginBottom: 12 }} />
-            <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "50%", marginBottom: 8 }} />
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-sm)" }}>
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <div key={i}>
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "70%", marginBottom: 4 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "90%" }} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          {/* 오늘 세션 */}
-          <div>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
-            <div className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "40%", marginBottom: 12 }} />
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ paddingBlock: 10, borderBottom: i < 2 ? "1px solid var(--color-border)" : "none" }}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 14, width: "55%", marginBottom: 6 }} />
-                  <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 2 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
-                    <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 6, height: 32, flex: 1 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {/* 기록 저장 버튼 */}
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 48 }} />
-        </div>
-      )}
+      {loading && <WorkoutRecordLoading />}
       <ErrorStateRows
         message={error}
         title={locale === "ko" ? "기록 화면 데이터를 불러오지 못했습니다" : "Could not load workout log data"}
