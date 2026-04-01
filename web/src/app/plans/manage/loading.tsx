@@ -1,6 +1,6 @@
 // PERF: 플랜 관리 라우트 loading.tsx - 라우트 전환 시 즉각 피드백
 const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
+  background: "linear-gradient(90deg, var(--color-surface-container-low) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container-low) 100%)",
   backgroundSize: "200% 100%",
   animation: "skeleton-shimmer 1.4s ease infinite",
   borderRadius: 8,
@@ -16,30 +16,62 @@ export default function PlansManageLoading() {
         }
       `}</style>
 
-      {/* 섹션 헤더 */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ ...skeletonStyle, height: 22, width: "50%", marginBottom: "var(--space-sm)" }} />
-        <div style={{ ...skeletonStyle, height: 14, width: "80%", borderRadius: 4, marginBottom: "var(--space-md)" }} />
+      <section>
+        {/* ── Page header ── */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            justifyContent: "space-between",
+            marginBottom: "var(--space-lg)",
+          }}
+        >
+          <div style={{ width: "100%" }}>
+            <div style={{ ...skeletonStyle, height: 12, width: 80, marginBottom: "8px", borderRadius: 4 }} />
+            <div style={{ ...skeletonStyle, height: 32, width: 140, borderRadius: 6 }} />
+          </div>
+        </div>
 
-        {/* 검색 인풋 */}
-        <div style={{ ...skeletonStyle, height: 48, borderRadius: 12, marginBottom: "var(--space-md)" }} />
+        {/* ── Search Input ── */}
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 48, borderRadius: 12 }} />
+        </div>
 
-        {/* 플랜 카드 스켈레톤 2개 */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+        {/* ── Plan Cards ── */}
+        <div style={{ marginTop: "var(--space-sm)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} style={{ padding: "var(--space-md)", borderRadius: "14px", background: "var(--color-surface-container-low)", border: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div
+              key={i}
+              style={{
+                background: "var(--color-surface-container-low)",
+                borderRadius: "16px",
+                padding: "20px",
+                marginBottom: "var(--space-sm)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "var(--space-sm)",
+                  marginBottom: "12px",
+                }}
+              >
                 <div style={{ flex: 1 }}>
-                  <div style={{ ...skeletonStyle, height: 18, width: "55%", marginBottom: "var(--space-sm)" }} />
-                  <div style={{ ...skeletonStyle, height: 13, width: "70%", marginBottom: "var(--space-xs)", borderRadius: 4 }} />
-                  <div style={{ ...skeletonStyle, height: 13, width: "50%", borderRadius: 4 }} />
+                  <div style={{ ...skeletonStyle, height: 20, width: "60%", marginBottom: "6px" }} />
+                  <div style={{ ...skeletonStyle, height: 12, width: "30%", marginBottom: "4px", borderRadius: 4 }} />
+                  <div style={{ ...skeletonStyle, height: 14, width: "45%", borderRadius: 4 }} />
                 </div>
-                <div style={{ ...skeletonStyle, height: 32, width: 64, borderRadius: 8 }} />
+                <div style={{ ...skeletonStyle, height: 26, width: 64, borderRadius: 10, flexShrink: 0 }} />
               </div>
+
+              {/* History button skeleton */}
+              <div style={{ ...skeletonStyle, height: 36, width: "100%", borderRadius: 10 }} />
             </div>
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

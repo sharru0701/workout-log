@@ -16,73 +16,99 @@ export default function StatsLoading() {
         }
       `}</style>
 
-      {/* Page header */}
-      <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-        <div style={{ ...skeletonStyle, height: 10, width: "30%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
-        <div style={{ ...skeletonStyle, height: 32, width: "50%", marginBottom: "var(--space-sm)" }} />
-        <div style={{ ...skeletonStyle, height: 14, width: "75%", borderRadius: 4 }} />
+      {/* ── Page Header ── */}
+      <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)" }}>
+        <div style={{ ...skeletonStyle, height: 12, width: "30%", marginBottom: "8px", borderRadius: 4 }} />
+        <div style={{ ...skeletonStyle, height: 34, width: "50%", marginBottom: "8px", borderRadius: 6 }} />
+        <div style={{ ...skeletonStyle, height: 16, width: "85%", borderRadius: 4 }} />
       </div>
 
-      {/* Period chips */}
-      <div style={{ display: "flex", gap: "6px", marginBottom: "var(--space-lg)" }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ ...skeletonStyle, height: 32, width: 48, borderRadius: 20 }} />
-        ))}
-      </div>
-
-      {/* Bento metrics 2×2 */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)", marginBottom: "var(--space-xl)" }}>
-        {Array.from({ length: 4 }).map((_, i) => (
-          <div key={i} style={{ padding: "16px", borderRadius: "14px", background: "var(--color-surface-container-low)", border: "1px solid color-mix(in srgb, var(--color-outline-variant) 25%, transparent)" }}>
-            <div style={{ ...skeletonStyle, height: 10, width: "60%", marginBottom: "10px", borderRadius: 4 }} />
-            <div style={{ ...skeletonStyle, height: 38, width: "70%" }} />
-            <div style={{ ...skeletonStyle, height: 12, width: "50%", marginTop: "6px", borderRadius: 4 }} />
-          </div>
-        ))}
-      </div>
-
-      {/* Section: 상세 추이 */}
+      {/* ── Detailed Trend Analysis ── */}
       <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ ...skeletonStyle, height: 10, width: "25%", marginBottom: "6px", borderRadius: 4 }} />
-        <div style={{ ...skeletonStyle, height: 18, width: "45%", marginBottom: "var(--space-sm)" }} />
-        <div style={{ ...skeletonStyle, height: 200, width: "100%", borderRadius: 10 }} />
+        {/* Section Heading */}
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 12, width: "25%", marginBottom: 6, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 20, width: "45%", marginBottom: 6, borderRadius: 6 }} />
+          <div style={{ ...skeletonStyle, height: 14, width: "65%", borderRadius: 4 }} />
+        </div>
+        
+        {/* Chart Mock */}
+        <div style={{ marginTop: "var(--space-sm)" }}>
+          <div style={{ ...skeletonStyle, height: 240, width: "100%", borderRadius: 16 }} />
+        </div>
       </div>
 
-      {/* Section: PR 기록 */}
+      {/* ── PR Tracking ── */}
       <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ ...skeletonStyle, height: 10, width: "30%", marginBottom: "6px", borderRadius: 4 }} />
-        <div style={{ ...skeletonStyle, height: 18, width: "40%", marginBottom: "var(--space-sm)" }} />
+        {/* Section Heading */}
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 12, width: "30%", marginBottom: 6, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 20, width: "40%", marginBottom: 6, borderRadius: 6 }} />
+          <div style={{ ...skeletonStyle, height: 14, width: "70%", borderRadius: 4 }} />
+        </div>
+        
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: "var(--color-surface-container-low)", display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-sm)",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "var(--color-surface-container-low)",
+              }}
+            >
               <div style={{ flex: 1 }}>
-                <div style={{ ...skeletonStyle, height: 14, width: "55%", marginBottom: "6px" }} />
-                <div style={{ ...skeletonStyle, height: 12, width: "70%", borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 16, width: "55%", marginBottom: "6px" }} />
+                <div style={{ ...skeletonStyle, height: 14, width: "70%", borderRadius: 4 }} />
               </div>
-              <div style={{ ...skeletonStyle, height: 20, width: 40, borderRadius: 4 }} />
+              <div style={{ textAlign: "right" }}>
+                <div style={{ ...skeletonStyle, height: 18, width: 40, borderRadius: 4, marginBottom: "4px", marginLeft: "auto" }} />
+                <div style={{ ...skeletonStyle, height: 12, width: 60, borderRadius: 4, marginLeft: "auto" }} />
+              </div>
+              <div style={{ ...skeletonStyle, height: 24, width: 24, borderRadius: "50%", flexShrink: 0 }} />
             </div>
           ))}
         </div>
       </div>
 
-      {/* Section: 준수율 */}
+      {/* ── Plan Compliance ── */}
       <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ ...skeletonStyle, height: 10, width: "28%", marginBottom: "6px", borderRadius: 4 }} />
-        <div style={{ ...skeletonStyle, height: 18, width: "38%", marginBottom: "var(--space-sm)" }} />
+        {/* Section Heading */}
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <div style={{ ...skeletonStyle, height: 12, width: "28%", marginBottom: 6, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 20, width: "38%", marginBottom: 6, borderRadius: 6 }} />
+          <div style={{ ...skeletonStyle, height: 14, width: "60%", borderRadius: 4 }} />
+        </div>
+        
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} style={{ padding: "12px 14px", borderRadius: "10px", background: "var(--color-surface-container-low)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ ...skeletonStyle, height: 14, width: "50%", marginBottom: "6px" }} />
-                  <div style={{ ...skeletonStyle, height: 4, width: "100%", borderRadius: 2 }} />
-                </div>
-                <div style={{ ...skeletonStyle, height: 24, width: 40, marginLeft: "var(--space-sm)" }} />
+            <div
+              key={i}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "var(--space-sm)",
+                padding: "12px 14px",
+                borderRadius: "10px",
+                background: "var(--color-surface-container-low)",
+              }}
+            >
+              <div style={{ flex: 1 }}>
+                <div style={{ ...skeletonStyle, height: 16, width: "50%", marginBottom: "6px" }} />
+                <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: "8px", borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 4, width: "100%", borderRadius: 2 }} />
+              </div>
+              <div style={{ textAlign: "right", flexShrink: 0 }}>
+                <div style={{ ...skeletonStyle, height: 24, width: 44, borderRadius: 6 }} />
               </div>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }

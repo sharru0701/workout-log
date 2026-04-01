@@ -28,22 +28,58 @@ export default function ProgramStoreLoading() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ padding: "var(--space-md)", borderRadius: "14px", background: "var(--color-surface-container-low)", border: "1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)", marginBottom: "var(--space-sm)" }}>
-                    <div style={{ ...skeletonStyle, height: 18, width: "60%" }} />
-                    <div style={{ ...skeletonStyle, height: 14, width: "20%", borderRadius: 4 }} />
-                  </div>
+            <div
+              key={i}
+              style={{
+                background: "var(--color-surface-container-low)",
+                borderRadius: 16,
+                padding: "var(--space-lg)",
+                marginBottom: "var(--space-md)",
+              }}
+            >
+              {/* Header */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ ...skeletonStyle, height: 14, width: 44, borderRadius: 4, marginBottom: 8 }} />
+                  <div style={{ ...skeletonStyle, height: 24, width: "70%", borderRadius: 6, marginBottom: 8 }} />
+                  <div style={{ ...skeletonStyle, height: 14, width: "50%", borderRadius: 4 }} />
                 </div>
-                <div style={{ ...skeletonStyle, height: 22, width: 44, borderRadius: 12 }} />
+                <div style={{ display: "flex", gap: 4, marginLeft: "var(--space-sm)" }}>
+                  <div style={{ ...skeletonStyle, height: 20, width: 40, borderRadius: 10 }} />
+                  <div style={{ ...skeletonStyle, height: 20, width: 50, borderRadius: 10 }} />
+                </div>
               </div>
-              <div style={{ ...skeletonStyle, height: 14, width: "85%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
-              <div style={{ display: "flex", gap: "var(--space-xs)" }}>
+
+              {/* Description */}
+              <div style={{ ...skeletonStyle, height: 13, width: "85%", marginBottom: 6, borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 13, width: "40%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
+
+              {/* Meta items */}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-md)", marginBottom: "var(--space-md)", background: "var(--color-surface-container-lowest)", padding: "var(--space-sm) var(--space-md)", borderRadius: 10 }}>
                 {Array.from({ length: 3 }).map((_, j) => (
-                  <div key={j} style={{ ...skeletonStyle, height: 22, width: 56, borderRadius: 12 }} />
+                  <div key={j} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div style={{ ...skeletonStyle, height: 10, width: 30, borderRadius: 2 }} />
+                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                      <div style={{ ...skeletonStyle, height: 14, width: 14, borderRadius: "50%" }} />
+                      <div style={{ ...skeletonStyle, height: 14, width: 40, borderRadius: 4 }} />
+                    </div>
+                  </div>
                 ))}
               </div>
+
+              {/* Intensity bar + CTA */}
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--space-sm)" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ ...skeletonStyle, height: 10, width: 40, borderRadius: 2, marginBottom: 6 }} />
+                  <div style={{ display: "flex", gap: 3 }}>
+                    {[1, 2, 3, 4, 5].map((_, barIdx) => (
+                      <div key={barIdx} style={{ ...skeletonStyle, height: 6, flex: 1, borderRadius: 9999 }} />
+                    ))}
+                  </div>
+                </div>
+                <div style={{ ...skeletonStyle, height: 38, width: 80, borderRadius: 10, flexShrink: 0 }} />
+              </div>
+
             </div>
           ))}
         </div>
