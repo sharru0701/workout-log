@@ -130,83 +130,82 @@ async function GETImpl(req: Request) {
     const pageLogs = hasMore ? logs.slice(0, limit) : logs;
     const logIds = pageLogs.map((l) => l.id);
 
-    const setsByLogId = new Map<string, Array<any>>();
-
-    if (logIds.length > 0) {
-      const sets = await db
-        .select({
-          id: workoutSet.id,
-          logId: workoutSet.logId,
-          exerciseId: workoutSet.exerciseId,
-          exerciseName: workoutSet.exerciseName,
-          sortOrder: workoutSet.sortOrder,
-          setNumber: workoutSet.setNumber,
-          reps: workoutSet.reps,
-          weightKg: workoutSet.weightKg,
-          rpe: workoutSet.rpe,
-          isExtra: workoutSet.isExtra,
-          meta: workoutSet.meta,
-        })
-        .from(workoutSet)
-        .where(inArray(workoutSet.logId, logIds))
-        .orderBy(asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id));
-
-      for (const s of sets) {
-        const list = setsByLogId.get(s.logId) ?? [];
-        list.push(s);
-        setsByLogId.set(s.logId, list);
-      }
-    }
-
     const generatedSessionIds = Array.from(
       new Set(pageLogs.map((log) => log.generatedSessionId).filter((value): value is string => Boolean(value))),
     );
+
+    // PERF: 3개 독립 쿼리를 병렬 실행 → 순차 대비 ~2x 속도 향상
+    const [sets, sessions, events] = await Promise.all([
+      logIds.length > 0
+        ? db
+            .select({
+              id: workoutSet.id,
+              logId: workoutSet.logId,
+              exerciseId: workoutSet.exerciseId,
+              exerciseName: workoutSet.exerciseName,
+              sortOrder: workoutSet.sortOrder,
+              setNumber: workoutSet.setNumber,
+              reps: workoutSet.reps,
+              weightKg: workoutSet.weightKg,
+              rpe: workoutSet.rpe,
+              isExtra: workoutSet.isExtra,
+              meta: workoutSet.meta,
+            })
+            .from(workoutSet)
+            .where(inArray(workoutSet.logId, logIds))
+            .orderBy(asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id))
+        : Promise.resolve([] as any[]),
+      generatedSessionIds.length > 0
+        ? db
+            .select({
+              id: generatedSession.id,
+              sessionKey: generatedSession.sessionKey,
+            })
+            .from(generatedSession)
+            .where(inArray(generatedSession.id, generatedSessionIds))
+        : Promise.resolve([] as any[]),
+      logIds.length > 0
+        ? db
+            .select({
+              id: planProgressEvent.id,
+              logId: planProgressEvent.logId,
+              eventType: planProgressEvent.eventType,
+              programSlug: planProgressEvent.programSlug,
+              reason: planProgressEvent.reason,
+              beforeState: planProgressEvent.beforeState,
+              afterState: planProgressEvent.afterState,
+              meta: planProgressEvent.meta,
+              createdAt: planProgressEvent.createdAt,
+            })
+            .from(planProgressEvent)
+            .where(inArray(planProgressEvent.logId, logIds))
+            .orderBy(desc(planProgressEvent.createdAt), desc(planProgressEvent.id))
+        : Promise.resolve([] as any[]),
+    ]);
+
+    const setsByLogId = new Map<string, Array<any>>();
+    for (const s of sets) {
+      const list = setsByLogId.get(s.logId) ?? [];
+      list.push(s);
+      setsByLogId.set(s.logId, list);
+    }
+
     const generatedSessionsById = new Map<string, { id: string; sessionKey: string }>();
-
-    if (generatedSessionIds.length > 0) {
-      const sessions = await db
-        .select({
-          id: generatedSession.id,
-          sessionKey: generatedSession.sessionKey,
-        })
-        .from(generatedSession)
-        .where(inArray(generatedSession.id, generatedSessionIds));
-
-      for (const session of sessions) {
-        generatedSessionsById.set(session.id, session);
-      }
+    for (const session of sessions) {
+      generatedSessionsById.set(session.id, session);
     }
 
     const progressionSummaryByLogId = new Map<string, ReturnType<typeof buildProgressionSummary>>();
-
-    if (logIds.length > 0) {
-      const events = await db
-        .select({
-          id: planProgressEvent.id,
-          logId: planProgressEvent.logId,
-          eventType: planProgressEvent.eventType,
-          programSlug: planProgressEvent.programSlug,
-          reason: planProgressEvent.reason,
-          beforeState: planProgressEvent.beforeState,
-          afterState: planProgressEvent.afterState,
-          meta: planProgressEvent.meta,
-          createdAt: planProgressEvent.createdAt,
-        })
-        .from(planProgressEvent)
-        .where(inArray(planProgressEvent.logId, logIds))
-        .orderBy(desc(planProgressEvent.createdAt), desc(planProgressEvent.id));
-
-      for (const event of events) {
-        if (!event.logId) continue;
-        if (progressionSummaryByLogId.has(event.logId)) continue;
-        progressionSummaryByLogId.set(
-          event.logId,
-          buildProgressionSummary({
-            mode: "upsert",
-            eventRow: event,
-          }),
-        );
-      }
+    for (const event of events) {
+      if (!event.logId) continue;
+      if (progressionSummaryByLogId.has(event.logId)) continue;
+      progressionSummaryByLogId.set(
+        event.logId,
+        buildProgressionSummary({
+          mode: "upsert",
+          eventRow: event,
+        }),
+      );
     }
 
     const items = pageLogs.map((log) => ({
@@ -258,24 +257,26 @@ async function POSTImpl(req: Request) {
         }
       | null = null;
 
+    // PERF: planId와 generatedSessionId 조회를 병렬로 실행
+    const [planResult, sessionResult] = await Promise.all([
+      submittedPlanId
+        ? db.select({ id: plan.id, userId: plan.userId, params: plan.params }).from(plan).where(eq(plan.id, submittedPlanId)).limit(1)
+        : Promise.resolve(null),
+      submittedGeneratedSessionId
+        ? db.select({ id: generatedSession.id, userId: generatedSession.userId, planId: generatedSession.planId }).from(generatedSession).where(eq(generatedSession.id, submittedGeneratedSessionId)).limit(1)
+        : Promise.resolve(null),
+    ]);
+
     if (submittedPlanId) {
-      const p = await db
-        .select({ id: plan.id, userId: plan.userId, params: plan.params })
-        .from(plan)
-        .where(eq(plan.id, submittedPlanId))
-        .limit(1);
-      if (!p[0]) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
+      const p = planResult as Array<{ id: string; userId: string; params: unknown }> | null;
+      if (!p?.[0]) return NextResponse.json({ error: locale === "ko" ? "플랜을 찾을 수 없습니다." : "Plan not found." }, { status: 404 });
       if (p[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
       effectivePlan = p[0];
     }
 
     if (submittedGeneratedSessionId) {
-      const s = await db
-        .select({ id: generatedSession.id, userId: generatedSession.userId, planId: generatedSession.planId })
-        .from(generatedSession)
-        .where(eq(generatedSession.id, submittedGeneratedSessionId))
-        .limit(1);
-      if (!s[0]) return NextResponse.json({ error: locale === "ko" ? "생성된 세션을 찾을 수 없습니다." : "Generated session not found." }, { status: 404 });
+      const s = sessionResult as Array<{ id: string; userId: string; planId: string }> | null;
+      if (!s?.[0]) return NextResponse.json({ error: locale === "ko" ? "생성된 세션을 찾을 수 없습니다." : "Generated session not found." }, { status: 404 });
       if (s[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
       if (submittedPlanId && s[0].planId !== submittedPlanId) {
         return NextResponse.json(
@@ -311,8 +312,33 @@ async function POSTImpl(req: Request) {
       }
     }
 
+    // PERF: exercise resolution을 트랜잭션 밖에서 미리 수행 → DB lock 시간 단축
     const resolvedByName = new Map<string, string | null>();
     const resolvedById = new Map<string, string | null>();
+
+    const uniqueExerciseIds = Array.from(
+      new Set(sets.map((s: any) => (typeof s.exerciseId === "string" && s.exerciseId.trim() ? s.exerciseId.trim() : null)).filter(Boolean) as string[]),
+    );
+    const uniqueExerciseNames: string[] = Array.from(
+      new Set(
+        sets
+          .filter((s: any) => !(typeof s.exerciseId === "string" && s.exerciseId.trim()))
+          .map((s: any) => String(s.exerciseName ?? "").trim().toLowerCase())
+          .filter((n: string): n is string => n.length > 0),
+      ),
+    );
+
+    await Promise.all([
+      ...uniqueExerciseIds.map(async (id) => {
+        const found = await getExerciseById(id);
+        resolvedById.set(id, found?.id ?? null);
+      }),
+      ...uniqueExerciseNames.map(async (nameLower) => {
+        const found = await resolveExerciseByName(nameLower);
+        resolvedById.set(nameLower, found?.id ?? null);
+        resolvedByName.set(nameLower, found?.id ?? null);
+      }),
+    ]);
 
     const created = await db.transaction(async (tx) => {
       const [log] = await tx
@@ -329,50 +355,35 @@ async function POSTImpl(req: Request) {
         .returning();
 
       await tx.insert(workoutSet).values(
-        await Promise.all(
-          sets.map(async (s: any, idx: number) => {
-            const exerciseName = String(s.exerciseName ?? "").trim();
-            if (!exerciseName) {
-              throw new Error("exerciseName is required for all sets");
-            }
+        sets.map((s: any, idx: number) => {
+          const exerciseName = String(s.exerciseName ?? "").trim();
+          if (!exerciseName) {
+            throw new Error("exerciseName is required for all sets");
+          }
 
-            const submittedExerciseId =
-              typeof s.exerciseId === "string" && s.exerciseId.trim() ? s.exerciseId.trim() : null;
+          const submittedExerciseId =
+            typeof s.exerciseId === "string" && s.exerciseId.trim() ? s.exerciseId.trim() : null;
 
-            let exerciseId: string | null = null;
-            if (submittedExerciseId) {
-              if (resolvedById.has(submittedExerciseId)) {
-                exerciseId = resolvedById.get(submittedExerciseId) ?? null;
-              } else {
-                const found = await getExerciseById(submittedExerciseId);
-                exerciseId = found?.id ?? null;
-                resolvedById.set(submittedExerciseId, exerciseId);
-              }
-            } else {
-              const key = exerciseName.toLowerCase();
-              if (resolvedByName.has(key)) {
-                exerciseId = resolvedByName.get(key) ?? null;
-              } else {
-                const found = await resolveExerciseByName(exerciseName);
-                exerciseId = found?.id ?? null;
-                resolvedByName.set(key, exerciseId);
-              }
-            }
+          let exerciseId: string | null = null;
+          if (submittedExerciseId) {
+            exerciseId = resolvedById.get(submittedExerciseId) ?? null;
+          } else {
+            exerciseId = resolvedByName.get(exerciseName.toLowerCase()) ?? null;
+          }
 
-            return {
-              logId: log.id,
-              exerciseId,
-              exerciseName,
-              sortOrder: s.sortOrder ?? idx,
-              setNumber: s.setNumber ?? 1,
-              reps: s.reps ?? null,
-              weightKg: s.weightKg ?? null,
-              rpe: s.rpe ?? null,
-              isExtra: Boolean(s.isExtra ?? false),
-              meta: s.meta ?? {},
-            };
-          }),
-        ),
+          return {
+            logId: log.id,
+            exerciseId,
+            exerciseName,
+            sortOrder: s.sortOrder ?? idx,
+            setNumber: s.setNumber ?? 1,
+            reps: s.reps ?? null,
+            weightKg: s.weightKg ?? null,
+            rpe: s.rpe ?? null,
+            isExtra: Boolean(s.isExtra ?? false),
+            meta: s.meta ?? {},
+          };
+        }),
       );
 
       const progressionOverride =

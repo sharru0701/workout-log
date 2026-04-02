@@ -333,6 +333,8 @@ export const workoutLog = pgTable(
     ),
     planIdx: index("workout_log_plan_idx").on(t.planId),
     sessionIdx: index("workout_log_generated_session_idx").on(t.generatedSessionId),
+    // PERF: compliance 쿼리의 (userId, generatedSessionId) 복합 필터를 가속
+    userSessionIdx: index("workout_log_user_session_idx").on(t.userId, t.generatedSessionId),
   }),
 );
 

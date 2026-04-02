@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
     // Vercel deployment: use VERCEL_GIT_COMMIT_SHA, fallback to NEXT_PUBLIC_APP_VERSION or dev
     NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
   },
+  // PERF: 대용량 패키지의 named import를 자동으로 tree-shake → 번들 크기 감소
+  experimental: {
+    optimizePackageImports: ["drizzle-orm", "date-fns", "lucide-react"],
+  },
   // Vercel 환경에서는 output: "standalone"을 사용하지 않으므로 제거 또는 주석 처리
   // output: "standalone",
   outputFileTracingIncludes: {

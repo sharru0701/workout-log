@@ -40,7 +40,7 @@ function SectionHeading({ label, title, description }: { label: string; title: s
   );
 }
 
-function ComplianceRow({ r }: { r: any }) {
+const ComplianceRow = React.memo(function ComplianceRow({ r }: { r: any }) {
   const { locale } = useLocale();
   const pct = Math.round(r.compliance * 100);
   return (
@@ -83,9 +83,9 @@ function ComplianceRow({ r }: { r: any }) {
       </div>
     </div>
   );
-}
+});
 
-function PrRow({ r }: { r: any }) {
+const PrRow = React.memo(function PrRow({ r }: { r: any }) {
   const { locale } = useLocale();
   const imp = r.improvement;
   const impColor = imp > 0 ? "var(--color-success)" : "var(--color-text-muted)";
@@ -124,7 +124,7 @@ function PrRow({ r }: { r: any }) {
       <span className="material-symbols-outlined" style={{ fontSize: 16, color: "var(--color-text-muted)", opacity: 0.5, flexShrink: 0, fontVariationSettings: "'FILL' 0, 'wght' 300" }} aria-hidden="true">chevron_right</span>
     </Link>
   );
-}
+});
 
 // ─── Page ─────────────────────────────────────────────────────────
 

@@ -297,13 +297,27 @@ async function fetchPlans(userId: string, locale: AppLocale) {
     new Set(baseItems.map((p) => p.rootProgramVersionId).filter((v): v is string => Boolean(v))),
   );
 
-  const versionRows = rootVersionIds.length > 0
-    ? await db
-        .select({ versionId: programVersion.id, templateName: programTemplate.name })
-        .from(programVersion)
-        .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
-        .where(inArray(programVersion.id, rootVersionIds))
-    : [];
+  // PERF: versionRows와 logRows는 서로 의존하지 않으므로 병렬 실행
+  const [versionRows, logRows] = await Promise.all([
+    rootVersionIds.length > 0
+      ? db
+          .select({ versionId: programVersion.id, templateName: programTemplate.name })
+          .from(programVersion)
+          .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
+          .where(inArray(programVersion.id, rootVersionIds))
+      : Promise.resolve([]),
+    db
+      .select({ planId: workoutLog.planId, performedAt: workoutLog.performedAt })
+      .from(workoutLog)
+      .where(
+        and(
+          eq(workoutLog.userId, userId),
+          isNotNull(workoutLog.planId),
+          inArray(workoutLog.planId, baseItems.map(p => p.id)),
+        ),
+      )
+      .orderBy(desc(workoutLog.performedAt)),
+  ]);
 
   const versionNameById = new Map<string, string>();
   for (const row of versionRows) {
@@ -311,18 +325,6 @@ async function fetchPlans(userId: string, locale: AppLocale) {
     const label = String(row.templateName ?? "").trim();
     if (label) versionNameById.set(row.versionId, label);
   }
-
-  const logRows = await db
-    .select({ planId: workoutLog.planId, performedAt: workoutLog.performedAt })
-    .from(workoutLog)
-    .where(
-      and(
-        eq(workoutLog.userId, userId),
-        isNotNull(workoutLog.planId),
-        inArray(workoutLog.planId, baseItems.map(p => p.id)),
-      ),
-    )
-    .orderBy(desc(workoutLog.performedAt));
 
   const lastPerformedAtByPlanId = new Map<string, Date>();
   for (const row of logRows) {
