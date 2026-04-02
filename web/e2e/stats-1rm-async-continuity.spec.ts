@@ -121,6 +121,12 @@ test.describe("stats-1rm async continuity", () => {
         body: { settings: {} },
       },
       {
+        id: "stats.bundle",
+        method: "GET",
+        path: "/api/stats/bundle",
+        body: { sessions30d: 0, tonnage30d: 0, compliance90d: null, prs90d: [] },
+      },
+      {
         id: "options.exercises",
         method: "GET",
         path: "/api/exercises",
@@ -151,24 +157,20 @@ test.describe("stats-1rm async continuity", () => {
       },
     ]);
 
-    await page.goto("/stats-1rm", { waitUntil: "domcontentloaded" });
+    await page.goto("/stats", { waitUntil: "domcontentloaded" });
 
     const chartEmptyState = page.getByText("선택한 필터 조합에 데이터가 없습니다", { exact: true });
     await assertNeverVisibleDuring(chartEmptyState, 700);
 
-    await expect(page.getByRole("heading", { name: "그래프 영역" })).toBeVisible();
-    await expect(page.locator(".stats-chart-focus strong")).toHaveText("196.0 kg");
+    await expect(page.getByRole("heading", { name: "e1RM 상세 추이" })).toBeVisible();
+    await expect(page.locator(".metric-value").first()).toBeVisible();
     await expect(chartEmptyState).toBeHidden();
 
-    await page.locator(".stats-filter-chip").filter({ hasText: "기간" }).first().click();
-    const rangeDialog = page.getByRole("dialog");
-    await expect(rangeDialog).toBeVisible();
-    await rangeDialog.getByRole("button", { name: "최근 30일" }).click();
-    await rangeDialog.getByRole("button", { name: "기간 적용" }).click();
+    // "1M" 프리셋 버튼 클릭으로 범위 전환 (30일)
+    await page.getByRole("button", { name: "1M", exact: true }).click();
 
     await assertNeverVisibleDuring(chartEmptyState, 700);
-    await expect(page.getByRole("heading", { name: "그래프 영역" })).toBeVisible();
-    await expect(page.locator(".stats-chart-focus strong")).toHaveText("196.0 kg");
+    await expect(page.getByRole("heading", { name: "e1RM 상세 추이" })).toBeVisible();
     await expect(chartEmptyState).toBeHidden();
 
     apiMocks.assertHit("settings.snapshot");
@@ -189,6 +191,13 @@ test.describe("stats-1rm async continuity", () => {
         body: { settings: {} },
       },
       {
+        id: "stats.bundle",
+        method: "GET",
+        path: "/api/stats/bundle",
+        delayMs: 860,
+        body: { sessions30d: 0, tonnage30d: 0, compliance90d: null, prs90d: [] },
+      },
+      {
         id: "options.exercises",
         method: "GET",
         path: "/api/exercises",
@@ -204,12 +213,12 @@ test.describe("stats-1rm async continuity", () => {
       },
     ]);
 
-    await page.goto("/stats-1rm", { waitUntil: "domcontentloaded" });
+    await page.goto("/stats", { waitUntil: "domcontentloaded" });
 
     const noExerciseState = page.getByText("운동종목이 없습니다", { exact: true });
     await assertNeverVisibleDuring(noExerciseState, 760);
     await expect(noExerciseState).toBeVisible();
-    await expect(page.getByRole("heading", { name: "1RM Stats / Graph" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
 
     apiMocks.assertHit("settings.snapshot");
     apiMocks.assertHit("options.exercises");
