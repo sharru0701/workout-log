@@ -6,8 +6,9 @@ const nextConfig: NextConfig = {
     NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
   },
   // PERF: 대용량 패키지의 named import를 자동으로 tree-shake → 번들 크기 감소
+  // drizzle-orm만 유지 (date-fns, lucide-react는 실제 의존성에 없음)
   experimental: {
-    optimizePackageImports: ["drizzle-orm", "date-fns", "lucide-react"],
+    optimizePackageImports: ["drizzle-orm"],
   },
   // Vercel 환경에서는 output: "standalone"을 사용하지 않으므로 제거 또는 주석 처리
   // output: "standalone",
@@ -31,6 +32,27 @@ const nextConfig: NextConfig = {
   reactCompiler: process.env.NODE_ENV === "production",
   async headers() {
     return [
+      // 정적 자산 장기 캐싱 — Next.js는 /_next/static/** 파일에 content-hash를 포함하므로
+      // max-age=1년으로 설정해도 배포 후 새 파일 URL로 버스팅됨
+      {
+        source: "/_next/static/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // PWA 아이콘 / manifest 중간 캐싱
+      {
+        source: "/(icons|manifest.json|sw.js)(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=86400, stale-while-revalidate=604800",
+          },
+        ],
+      },
       {
         source: "/(.*)",
         headers: [

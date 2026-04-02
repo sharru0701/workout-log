@@ -127,6 +127,14 @@ function writeApiCache(key: string, data: unknown) {
     lastAccessedAt: now,
   });
   trimApiCache();
+  // IDB 영속화 (fire-and-forget, 클라이언트 전용)
+  if (typeof window !== "undefined") {
+    void import("./api-cache-idb").then(({ idbWriteEntry }) =>
+      idbWriteEntry(key, data, now, now).catch(() => {
+        // IDB 실패는 무시 — 인메모리 캐시가 primary
+      }),
+    );
+  }
 }
 
 function readApiCache(key: string): ApiCacheEntry | null {
@@ -290,11 +298,44 @@ async function requestAndCache<T>(
 export function apiInvalidateCache(cacheKeyPrefix?: string) {
   if (!cacheKeyPrefix) {
     apiResponseCache.clear();
-    return;
+  } else {
+    for (const key of apiResponseCache.keys()) {
+      if (!key.startsWith(cacheKeyPrefix)) continue;
+      apiResponseCache.delete(key);
+    }
   }
-  for (const key of apiResponseCache.keys()) {
-    if (!key.startsWith(cacheKeyPrefix)) continue;
-    apiResponseCache.delete(key);
+  // IDB에서도 동일 범위 삭제 (fire-and-forget)
+  if (typeof window !== "undefined") {
+    void import("./api-cache-idb").then(({ idbDeleteEntries }) =>
+      idbDeleteEntries(cacheKeyPrefix).catch(() => {}),
+    );
+  }
+}
+
+/**
+ * 앱 시작 시 IDB에 저장된 캐시를 인메모리 캐시로 복원.
+ * 엔트리는 "방금 stale됨" 상태로 삽입되어 즉시 UI에 표시되고
+ * 백그라운드에서 자동 재검증(stale-while-revalidate)이 트리거됨.
+ * 이미 인메모리에 있는 키는 덮어쓰지 않음.
+ */
+export async function warmApiCacheFromIDB(): Promise<void> {
+  if (typeof window === "undefined") return;
+  try {
+    const { idbLoadAllEntries } = await import("./api-cache-idb");
+    const entries = await idbLoadAllEntries();
+    // updatedAt을 "maxAgeMs 직전" 으로 조정 → SWR이 즉시 백그라운드 재검증 트리거
+    const adjustedUpdatedAt = cacheNow() - DEFAULT_MAX_AGE_MS - 1;
+    for (const entry of entries) {
+      if (apiResponseCache.has(entry.key)) continue;
+      apiResponseCache.set(entry.key, {
+        data: entry.data,
+        updatedAt: adjustedUpdatedAt,
+        lastAccessedAt: entry.lastAccessedAt,
+      });
+    }
+    trimApiCache();
+  } catch {
+    // 웜업 실패는 조용히 무시 — 앱 동작에 영향 없음
   }
 }
 

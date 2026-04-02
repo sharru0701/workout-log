@@ -9,6 +9,7 @@ import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { LocalePreferenceSync } from "@/components/locale-preference-sync";
 import { TimezonePreferenceSync } from "@/components/timezone-preference-sync";
 import { LocaleProvider } from "@/components/locale-provider";
+import { FontStylesheetLoader } from "@/components/font-stylesheet-loader";
 
 import {
   LOCALE_COOKIE_NAME,
@@ -59,23 +60,18 @@ export default async function RootLayout({
   return (
     <html lang={initialLocale} suppressHydrationWarning className={inter.variable}>
       <head>
-        {/* Google Fonts 연결 힌트 — DNS + TCP 핸드셰이크를 렌더-블로킹 전에 선점 */}
+        {/* DNS + TCP 핸드셰이크 선점 — FontStylesheetLoader가 삽입하기 전에 미리 연결 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Pretendard Variable — 한글 variable font (dynamic subset, wght 100–900) */}
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
-        />
-        {/* Material Symbols Outlined — variable icon font used across all screens */}
-        {/* PERF: display=swap → FCP 개선. 아이콘 폰트 로드 전 fallback 문자 표시 후 swap */}
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-        />
+        {/*
+          Pretendard + Material Symbols는 FontStylesheetLoader (useEffect)로 비블로킹 로드.
+          <link rel="stylesheet">를 여기에 두면 렌더 블로킹 → FCP 200-400ms 지연.
+          비블로킹으로 전환하면 시스템 폰트로 즉시 렌더 후 swap.
+        */}
       </head>
       <body>
+        <FontStylesheetLoader />
         <LocaleProvider initialLocale={initialLocale}>
           <AppLaunchSplash />
           <AppShell initialLocale={initialLocale}>
