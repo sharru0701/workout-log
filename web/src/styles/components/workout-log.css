@@ -13,6 +13,7 @@
   background: var(--color-surface-container-low);
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow-color-soft);
+  contain: layout paint;
 }
 
 .exercise-card__header {
@@ -149,8 +150,8 @@
 
 /* Pending sets — strongly dimmed */
 .set-row--pending {
-  opacity: 0.35;
-  filter: saturate(0.55);
+  opacity: 0.62;
+  background: color-mix(in srgb, var(--color-surface-container-high) 92%, transparent);
 }
 
 /* Failure set — red tint using set-failure tokens */
