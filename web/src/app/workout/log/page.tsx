@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
@@ -1034,12 +1034,15 @@ export default function WorkoutRecordPage() {
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
+  const deferredExerciseQuery = useDeferredValue(exerciseQuery);
   const [exerciseOptions, setExerciseOptions] = useState<ExerciseOption[]>([]);
   const [exerciseOptionsLoading, setExerciseOptionsLoading] = useState(false);
   const [exerciseOptionsError, setExerciseOptionsError] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState<AddExerciseDraft>(createDefaultAddExerciseDraft);
   const [programEntryState, setProgramEntryState] = useState<WorkoutProgramExerciseEntryStateMap>({});
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
+  const exerciseOptionsCacheRef = useRef(new Map<string, ExerciseOption[]>());
+  const exerciseOptionsAbortRef = useRef<AbortController | null>(null);
 
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
   useEffect(() => {
@@ -1048,7 +1051,7 @@ export default function WorkoutRecordPage() {
     isRestoredRef.current = false;
   }, [persistenceKey]);
 
-  const { cancelPendingSave, resetRestoreState } = useWorkoutRecordPersistence(
+  useWorkoutRecordPersistence(
     persistenceKey,
     draft,
     programEntryState,
@@ -1225,7 +1228,7 @@ export default function WorkoutRecordPage() {
     [addDraft.exerciseId, addDraft.exerciseName, workoutPreferences],
   );
   const filteredExerciseOptions = useMemo(() => {
-    const queryLower = exerciseQuery.trim().toLowerCase();
+    const queryLower = deferredExerciseQuery.trim().toLowerCase();
     if (!queryLower) return exerciseOptions;
     return exerciseOptions.filter((option) => {
       const aliasMatched = option.aliases.some((alias) => alias.toLowerCase().includes(queryLower));
@@ -1235,7 +1238,7 @@ export default function WorkoutRecordPage() {
         aliasMatched
       );
     });
-  }, [exerciseOptions, exerciseQuery]);
+  }, [deferredExerciseQuery, exerciseOptions]);
   const selectedExerciseOption = useMemo(
     () =>
       addDraft.exerciseId
@@ -1263,15 +1266,31 @@ export default function WorkoutRecordPage() {
 
   const loadExerciseOptions = useCallback(async (queryValue: string) => {
     try {
+      const normalizedQuery = queryValue.trim().toLowerCase();
+      const cached = exerciseOptionsCacheRef.current.get(normalizedQuery);
+      if (cached) {
+        setExerciseOptions(cached);
+        setExerciseOptionsError(null);
+        return;
+      }
+
+      exerciseOptionsAbortRef.current?.abort();
+      const controller = new AbortController();
+      exerciseOptionsAbortRef.current = controller;
       setExerciseOptionsLoading(true);
       setExerciseOptionsError(null);
       const params = new URLSearchParams({ limit: "40" });
       if (queryValue.trim()) {
         params.set("query", queryValue.trim());
       }
-      const res = await apiGet<ExerciseResponse>(`/api/exercises?${params.toString()}`);
-      setExerciseOptions(res.items ?? []);
+      const res = await apiGet<ExerciseResponse>(`/api/exercises?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      const nextItems = res.items ?? [];
+      exerciseOptionsCacheRef.current.set(normalizedQuery, nextItems);
+      setExerciseOptions(nextItems);
     } catch (e: any) {
+      if (e?.name === "AbortError") return;
       setExerciseOptionsError(e?.message ?? (locale === "ko" ? "운동종목 목록을 불러오지 못했습니다." : "Could not load the exercise list."));
     } finally {
       setExerciseOptionsLoading(false);
@@ -1575,12 +1594,16 @@ export default function WorkoutRecordPage() {
   useEffect(() => {
     if (!addSheetOpen) return;
     const timer = window.setTimeout(() => {
-      void loadExerciseOptions(exerciseQuery);
+      void loadExerciseOptions(deferredExerciseQuery);
     }, 160);
     return () => {
       window.clearTimeout(timer);
     };
-  }, [addSheetOpen, exerciseQuery, loadExerciseOptions]);
+  }, [addSheetOpen, deferredExerciseQuery, loadExerciseOptions]);
+
+  useEffect(() => () => {
+    exerciseOptionsAbortRef.current?.abort();
+  }, []);
 
   useEffect(() => {
     setDraft((prev) => (prev ? applyWeightRulesToDraft(prev, workoutPreferences) : prev));
@@ -1857,64 +1880,6 @@ export default function WorkoutRecordPage() {
     }
   }, [draft, locale, persistenceKey, programEntryState, router, selectedPlan, visibleExercises, workoutPreferences.bodyweightKg]);
 
-  const refreshRecordPage = useCallback(async () => {
-    if (workflowState === "saving") return;
-    // 복구 모달이 열려 있는 동안 PTR을 차단 — loadWorkoutContext 중복 호출 및 UI 깨짐 방지
-    if (isRestoringRef.current) return;
-
-    if (workflowState === "editing") {
-      const result = await confirm({
-        title: locale === "ko" ? "화면 새로고침" : "Refresh Screen",
-        message: locale === "ko" ? "저장하지 않은 변경사항이 사라지고 다시 불러옵니다.\n계속할까요?" : "Unsaved changes will be discarded and the screen will reload.\nContinue?",
-        confirmText: locale === "ko" ? "새로고침" : "Refresh",
-        cancelText: locale === "ko" ? "취소" : "Cancel",
-        closeAsNull: true, // X 버튼은 아무 동작 없이 닫기
-      });
-      if (result === null) return; // X 닫기 — 아무것도 하지 않음
-      if (!result) {
-        // "취소" 선택 — 화면 상태와 드래프트를 모두 유지한 채 PTR 종료
-        return;
-      }
-      // "새로고침" 선택 — debounce 취소 후 드래프트 삭제, 재로드
-      cancelPendingSave();
-      if (persistenceKey) await clearWorkoutDraft(persistenceKey);
-    }
-
-    // 이전 복구 시도가 화면 반영 전에 끝난 경우, 같은 키에 대한 복구 확인을 다시 허용한다.
-    resetRestoreState(persistenceKey);
-
-    // isRestoredRef 초기화: 이전 복구 상태가 남아있으면 loadWorkoutContext가 setDraft를 건너뜀
-    isRestoredRef.current = false;
-
-    const resolvedPlanId = selectedPlan?.id ?? draft?.session.planId ?? query.planId ?? "";
-    const resolvedPlanName = selectedPlan?.name ?? draft?.session.planName ?? (locale === "ko" ? "프로그램 미선택" : "No Program Selected");
-    if (query.logId) {
-      await loadWorkoutContext({
-        planId: resolvedPlanId,
-        planName: resolvedPlanName,
-        dateKey: query.hasExplicitDate ? query.date : "",
-        preferences: workoutPreferences,
-        planAutoProgression: selectedPlan?.params?.autoProgression === true,
-        planSchedule: selectedPlan?.params?.schedule,
-        planParams: selectedPlan?.params ?? null,
-        logId: query.logId,
-        isRefresh: true,
-      });
-      return;
-    }
-
-    if (!resolvedPlanId) return;
-    await loadWorkoutContext({
-      planId: resolvedPlanId,
-      planName: resolvedPlanName,
-      dateKey: query.date,
-      preferences: workoutPreferences,
-      planAutoProgression: selectedPlan?.params?.autoProgression === true,
-      planSchedule: selectedPlan?.params?.schedule,
-      planParams: selectedPlan?.params ?? null,
-      isRefresh: true,
-    });
-  }, [cancelPendingSave, confirm, draft, loadWorkoutContext, locale, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
   const noPlan = isPlansSettled && !error && plans.length === 0 && !query.logId;
   const isEditingExistingLog = Boolean(draft?.session.logId);

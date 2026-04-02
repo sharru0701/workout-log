@@ -1,6 +1,16 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, forwardRef, useImperativeHandle, useRef } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
@@ -12,11 +22,13 @@ import { CalendarRangePicker } from "@/components/ui/calendar-range-picker";
 type ExerciseOption = {
   id: string;
   name: string;
+  searchText: string;
 };
 
 type PlanOption = {
   id: string;
   name: string;
+  searchText: string;
 };
 
 type E1RMPoint = {
@@ -133,27 +145,38 @@ function E1RMInteractiveChart({
   const height = 400;
   const padX = 60;
   const padY = 40;
-
-  const e1rmValues = series.map((point) => point.e1rm);
-  const min = Math.min(...e1rmValues);
-  const max = Math.max(...e1rmValues);
-  const span = Math.max(1, max - min);
   const drawWidth = width - padX * 2;
   const drawHeight = height - padY * 2;
+  const chartGeometry = useMemo(() => {
+    if (series.length === 0) {
+      return {
+        max: 0,
+        span: 1,
+        points: [] as Array<{ x: number; y: number }>,
+        linePath: "",
+        areaPath: "",
+      };
+    }
 
-  const points = series.map((point, index) => {
-    const x = padX + (series.length === 1 ? drawWidth / 2 : (index * drawWidth) / (series.length - 1));
-    const y = padY + drawHeight - ((point.e1rm - min) / span) * drawHeight;
-    return { x, y };
-  });
+    const e1rmValues = series.map((point) => point.e1rm);
+    const min = Math.min(...e1rmValues);
+    const max = Math.max(...e1rmValues);
+    const span = Math.max(1, max - min);
+    const points = series.map((point, index) => {
+      const x = padX + (series.length === 1 ? drawWidth / 2 : (index * drawWidth) / (series.length - 1));
+      const y = padY + drawHeight - ((point.e1rm - min) / span) * drawHeight;
+      return { x, y };
+    });
+    const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
+    const areaPath =
+      points.length > 0
+        ? `${linePath} L ${points[points.length - 1].x},${height - padY} L ${points[0].x},${height - padY} Z`
+        : "";
 
-  const linePath = points.map((point, index) => `${index === 0 ? "M" : "L"}${point.x},${point.y}`).join(" ");
-  const areaPath =
-    points.length > 0
-      ? `${linePath} L ${points[points.length - 1].x},${height - padY} L ${points[0].x},${height - padY} Z`
-      : "";
+    return { max, span, points, linePath, areaPath };
+  }, [drawHeight, drawWidth, height, padX, padY, series]);
 
-  const selectedPoint = points[activeIndex];
+  const selectedPoint = chartGeometry.points[activeIndex];
   const selectedData = series[activeIndex];
   const yGuides = [0, 0.25, 0.5, 0.75, 1];
 
@@ -182,7 +205,7 @@ function E1RMInteractiveChart({
 
         {yGuides.map((ratio) => {
           const y = padY + drawHeight * ratio;
-          const value = max - span * ratio;
+          const value = chartGeometry.max - chartGeometry.span * ratio;
           return (
             <g key={ratio} style={{ color: "var(--color-border)" }}>
               <line
@@ -207,10 +230,10 @@ function E1RMInteractiveChart({
           );
         })}
 
-        {areaPath ? <path d={areaPath} fill="url(#chartGradient)" /> : null}
-        {linePath ? (
+        {chartGeometry.areaPath ? <path d={chartGeometry.areaPath} fill="url(#chartGradient)" /> : null}
+        {chartGeometry.linePath ? (
           <path
-            d={linePath}
+            d={chartGeometry.linePath}
             fill="none"
             stroke="currentColor"
             strokeWidth="3"
@@ -272,12 +295,18 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
   const [activePointIndex, setActivePointIndex] = useState(0);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [programQuery, setProgramQuery] = useState("");
+  const deferredExerciseQuery = useDeferredValue(exerciseQuery);
+  const deferredProgramQuery = useDeferredValue(programQuery);
+  const [isFilterPending, startFilterTransition] = useTransition();
+  const [isRangePending, startRangeTransition] = useTransition();
 
   useImperativeHandle(ref, () => ({
     selectExercise: (exerciseId: string) => {
-      setSelectedExerciseId(exerciseId);
-    }
-  }));
+      startFilterTransition(() => {
+        setSelectedExerciseId(exerciseId);
+      });
+    },
+  }), [startFilterTransition]);
 
   const selectedExercise = useMemo(
     () => exercises.find((entry) => entry.id === selectedExerciseId) ?? null,
@@ -312,10 +341,12 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       const nextExercises = (exerciseRes.items ?? []).map((entry) => ({
         id: entry.id,
         name: entry.name,
+        searchText: entry.name.toLowerCase(),
       }));
       const nextPlans = (planRes.items ?? []).map((entry) => ({
         id: entry.id,
         name: entry.name,
+        searchText: entry.name.toLowerCase(),
       }));
 
       setExercises(nextExercises);
@@ -327,6 +358,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       setSelectedPlanId((prev) => (prev && nextPlans.some((entry) => entry.id === prev) ? prev : ""));
       optionsHasLoadedRef.current = true;
     } catch (e: any) {
+      if (e?.name === "AbortError") return;
       setOptionsError(e?.message ?? (locale === "ko" ? "필터 옵션을 불러오지 못했습니다." : "Could not load filter options."));
     } finally {
       setOptionsLoading(false);
@@ -357,6 +389,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
     let cancelled = false;
     const nextLoadKey = `stats-1rm:data:${activeDataQueryKey}:${Date.now()}`;
+    const controller = new AbortController();
 
     (async () => {
       try {
@@ -374,13 +407,14 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
           to: rangeFilter.preset === "CUSTOM" ? rangeFilter.to : undefined,
         })}`;
 
-        const response = await apiGet<E1RMResponse>(path);
+        const response = await apiGet<E1RMResponse>(path, { signal: controller.signal });
         if (cancelled) return;
         setStats(response);
         setActivePointIndex(response.series.length > 0 ? response.series.length - 1 : 0);
         dataHasLoadedRef.current = true;
       } catch (e: any) {
         if (cancelled) return;
+        if (e?.name === "AbortError") return;
         setError(e?.message ?? (locale === "ko" ? "1RM 데이터를 불러오지 못했습니다." : "Could not load 1RM data."));
       } finally {
         if (!cancelled) setLoading(false);
@@ -389,6 +423,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [activeDataQueryKey, locale, rangeFilter, selectedExerciseId, selectedPlanId]);
 
@@ -402,8 +437,10 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         setRangeDraftError(locale === "ko" ? "시작일이 종료일보다 늦을 수 없습니다." : "The start date cannot be later than the end date.");
         return;
       }
-      setRangeFilter(rangeDraft);
-      setActiveSheet(null);
+      startRangeTransition(() => {
+        setRangeFilter(rangeDraft);
+        setActiveSheet(null);
+      });
       return;
     }
 
@@ -413,8 +450,10 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       from: dateDaysAgoDateOnly(nextPreset - 1),
       to: toDateOnly(new Date()),
     };
-    setRangeFilter(nextRange);
-    setActiveSheet(null);
+    startRangeTransition(() => {
+      setRangeFilter(nextRange);
+      setActiveSheet(null);
+    });
   };
 
   const canApplyRangeDraft =
@@ -422,52 +461,59 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     (Boolean(rangeDraft.from) && Boolean(rangeDraft.to) && rangeDraft.from <= rangeDraft.to);
 
   const filteredExerciseOptions = useMemo(() => {
-    const q = exerciseQuery.trim().toLowerCase();
+    const q = deferredExerciseQuery.trim().toLowerCase();
     return exercises
-      .filter((ex) => !q || ex.name.toLowerCase().includes(q))
+      .filter((ex) => !q || ex.searchText.includes(q))
       .map((ex) => ({
         key: ex.id,
         label: ex.name,
         active: ex.id === selectedExerciseId,
         ariaCurrent: ex.id === selectedExerciseId,
         onSelect: () => {
-          setSelectedExerciseId(ex.id);
-          setActiveSheet(null);
+          startFilterTransition(() => {
+            setSelectedExerciseId(ex.id);
+            setActiveSheet(null);
+          });
         },
       }));
-  }, [exercises, exerciseQuery, selectedExerciseId]);
+  }, [deferredExerciseQuery, exercises, selectedExerciseId, startFilterTransition]);
 
   const filteredProgramOptions = useMemo(() => {
-    const q = programQuery.trim().toLowerCase();
+    const q = deferredProgramQuery.trim().toLowerCase();
     const allOption = {
       key: "__all__",
       label: locale === "ko" ? "전체 플랜" : "All Plans",
       active: selectedPlanId === "",
       ariaCurrent: selectedPlanId === "",
       onSelect: () => {
-        setSelectedPlanId("");
-        setActiveSheet(null);
+        startFilterTransition(() => {
+          setSelectedPlanId("");
+          setActiveSheet(null);
+        });
       },
     };
     const planOptions = plans
-      .filter((plan) => !q || plan.name.toLowerCase().includes(q))
+      .filter((plan) => !q || plan.searchText.includes(q))
       .map((plan) => ({
         key: plan.id,
         label: plan.name,
         active: plan.id === selectedPlanId,
         ariaCurrent: plan.id === selectedPlanId,
         onSelect: () => {
-          setSelectedPlanId(plan.id);
-          setActiveSheet(null);
+          startFilterTransition(() => {
+            setSelectedPlanId(plan.id);
+            setActiveSheet(null);
+          });
         },
       }));
     if (q && !(locale === "ko" ? "전체 플랜" : "All Plans").toLowerCase().includes(q)) return planOptions;
     return [allOption, ...planOptions];
-  }, [locale, plans, programQuery, selectedPlanId]);
+  }, [deferredProgramQuery, locale, plans, selectedPlanId, startFilterTransition]);
 
   const showNoExerciseState = isOptionsSettled && !optionsError && exercises.length === 0;
   const showDataEmptyState = isDataSettled && !error && !showNoExerciseState && series.length === 0;
   const showChartSection = hasChartData;
+  const isControlPending = isFilterPending || isRangePending;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
@@ -491,7 +537,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         >
           <div style={{ overflow: "hidden" }}>
             <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>{locale === "ko" ? "운동종목" : "Exercise"}</div>
-            <div style={{ font: "var(--font-body)", fontWeight: 700, color: "var(--color-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ font: "var(--font-body)", fontWeight: 700, color: "var(--color-primary)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", opacity: isControlPending ? 0.72 : 1 }}>
               {selectedExercise?.name ?? (locale === "ko" ? "선택" : "Select")}
             </div>
           </div>
@@ -520,7 +566,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         >
           <div style={{ overflow: "hidden" }}>
             <div style={{ fontSize: "11px", color: "var(--color-text-muted)", marginBottom: "2px", fontWeight: 500 }}>{locale === "ko" ? "필터링" : "Filter"}</div>
-            <div style={{ font: "var(--font-body)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ font: "var(--font-body)", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", opacity: isControlPending ? 0.72 : 1 }}>
               {selectedProgramLabel}
             </div>
           </div>
@@ -547,10 +593,12 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                   key={opt.label}
                   onClick={() => {
                     const preset = opt.value as RangePreset;
-                    setRangeFilter({
-                      preset,
-                      from: dateDaysAgoDateOnly(preset === "CUSTOM" ? 89 : preset - 1),
-                      to: toDateOnly(new Date()),
+                    startRangeTransition(() => {
+                      setRangeFilter({
+                        preset,
+                        from: dateDaysAgoDateOnly(preset === "CUSTOM" ? 89 : preset - 1),
+                        to: toDateOnly(new Date()),
+                      });
                     });
                   }}
                   style={{

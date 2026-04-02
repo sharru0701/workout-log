@@ -128,7 +128,7 @@ export type HomeData = {
 // ─── Constants ──────────────────────────────────────────────────────
 
 const DEFAULT_RECENT_LIMIT = 3;
-const WEEKLY_WINDOW_DAYS = 7;
+const HOME_CACHE_MAX_AGE_SECONDS = 90;
 
 // ─── Formatting Helpers ─────────────────────────────────────────────
 
@@ -215,6 +215,20 @@ export async function getHomeData(params: {
   const { userId, locale, timezone = "UTC", recentLimit = DEFAULT_RECENT_LIMIT } = params;
   const now = new Date();
   const todayKey = dateOnlyInTimezone(now, timezone);
+  const homeCacheParams = {
+    locale,
+    timezone,
+    recentLimit,
+    todayKey,
+  };
+
+  const cached = await getStatsCache<HomeData>({
+    userId,
+    metric: "home_v1",
+    params: homeCacheParams,
+    maxAgeSeconds: HOME_CACHE_MAX_AGE_SECONDS,
+  });
+  if (cached) return cached;
 
   const prRangeDays = 365;
   const prFrom = new Date(now);
@@ -246,7 +260,7 @@ export async function getHomeData(params: {
   }
 
   // 데이터 가공 및 빌드
-  return buildHomeData({
+  const payload = buildHomeData({
     plans,
     logs,
     prs,
@@ -257,6 +271,15 @@ export async function getHomeData(params: {
     timezone,
     todayKey,
   });
+
+  await setStatsCache({
+    userId,
+    metric: "home_v1",
+    params: homeCacheParams,
+    payload,
+  });
+
+  return payload;
 }
 
 // ─── Fetchers ───────────────────────────────────────────────────────
