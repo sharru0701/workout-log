@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
@@ -11,7 +11,7 @@ import { apiDelete, apiGet } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 
 type Plan = {
   id: string;
@@ -235,11 +235,7 @@ function PlanHistoryPageContent() {
     void loadLogs(selectedPlanId, null, false);
   }, [loadLogs, selectedPlanId, refreshTick]);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      setRefreshTick((prev) => prev + 1);
-    },
-  });
+
 
   const loadedLogCount = logs.length;
   const loadedSetCount = useMemo(
@@ -291,7 +287,7 @@ function PlanHistoryPageContent() {
   }
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
 
       <section>
         <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
@@ -500,7 +496,7 @@ function PlanHistoryPageContent() {
         ) : null}
         </div>
       </section>
-    </PullToRefreshShell>
+    </>
   );
 }
 

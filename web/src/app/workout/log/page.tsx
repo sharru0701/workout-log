@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
@@ -18,7 +17,6 @@ import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { parseSessionKey } from "@/lib/session-key";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
 import { useWorkoutRecordPersistence } from "@/lib/workout-record/useWorkoutRecordPersistence";
 import WorkoutRecordLoading from "./loading";
 import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
@@ -1917,18 +1915,12 @@ export default function WorkoutRecordPage() {
       isRefresh: true,
     });
   }, [cancelPendingSave, confirm, draft, loadWorkoutContext, locale, persistenceKey, query, resetRestoreState, selectedPlan, workoutPreferences, workflowState]);
-
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: refreshRecordPage,
-  });
-
   const isPlansSettled = useQuerySettled(plansLoadKey, loading);
   const noPlan = isPlansSettled && !error && plans.length === 0 && !query.logId;
   const isEditingExistingLog = Boolean(draft?.session.logId);
 
   return (
     <>
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
       {loading && <WorkoutRecordLoading />}
       <ErrorStateRows
         message={error}
@@ -1976,7 +1968,7 @@ export default function WorkoutRecordPage() {
       {!noPlan && draft && (
         <>
           {/* ── Plan Selector ── */}
-          <section className="plan-selector-strip" data-pull-refresh-trigger="true">
+          <section className="plan-selector-strip">
             <div className="plan-selector-strip__label">{copy.workoutLog.activePlanLabel}</div>
             <PlanSelectorButton
               planName={selectedPlan?.name ?? draft.session.planName}
@@ -2518,7 +2510,7 @@ export default function WorkoutRecordPage() {
           </Link>
         </div>
       </BottomSheet>
-    </PullToRefreshShell>
+
     <FailureProtocolSheet
       open={failureProtocolSheet !== null}
       title={failureProtocolSheet?.title ?? ""}

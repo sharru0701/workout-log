@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
 import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { apiGet } from "@/lib/api";
@@ -19,7 +19,7 @@ import {
 } from "@/lib/date-utils";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { extractSessionDate, parseSessionKey } from "@/lib/session-key";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 import { buildTodayLogHref } from "@/lib/workout-links";
 
 type Plan = {
@@ -319,11 +319,7 @@ export default function CalendarPage() {
       normalizeSearchText(plan.name, plan.type).includes(normalizedQuery),
     );
   }, [orderedPlans, planQuery]);
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      setRefreshTick((prev) => prev + 1);
-    },
-  });
+
 
   // Load plans
   useEffect(() => {
@@ -740,11 +736,10 @@ export default function CalendarPage() {
   };
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
 
       {/* ── Page Header ── */}
       <div
-        data-pull-refresh-trigger="true"
         style={{
           display: "flex",
           alignItems: "center",
@@ -767,7 +762,6 @@ export default function CalendarPage() {
 
       {/* ── Filter Bar ── */}
       <div
-        data-pull-refresh-trigger="true"
         style={{
           display: "flex",
           gap: "10px",
@@ -1397,6 +1391,6 @@ export default function CalendarPage() {
         maxYear={getYear(today) + 10}
         onChange={handleMonthPickerChange}
       />
-    </PullToRefreshShell>
+    </>
   );
 }

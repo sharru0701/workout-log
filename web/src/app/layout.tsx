@@ -8,10 +8,7 @@ import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { LocalePreferenceSync } from "@/components/locale-preference-sync";
 import { LocaleProvider } from "@/components/locale-provider";
-import { PwaRegister } from "@/components/pwa-register";
-import { OfflineIndicator } from "@/components/offline-indicator";
-import { PwaInstallPrompt } from "@/components/pwa-install-prompt";
-import { OfflineQueueFlush } from "@/components/offline-queue-flush";
+
 import {
   LOCALE_COOKIE_NAME,
   coerceAppLocale,
@@ -45,18 +42,6 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Workout Log",
   description: "Workout tracking",
-  manifest: "/manifest.json",
-  appleWebApp: {
-    capable: true,
-    // black-translucent: transparent status bar in standalone mode.
-    // Safe because viewportFit=cover + safe-area-inset padding is already in place.
-    statusBarStyle: "black-translucent",
-    title: "Workout Log",
-  },
-  icons: {
-    // apple-touch-icon: used by iOS when adding to home screen.
-    apple: [{ url: "/icons/icon-192.png", sizes: "192x192" }],
-  },
 };
 
 async function resolveInitialLocale(): Promise<AppLocale> {
@@ -94,10 +79,7 @@ export default async function RootLayout({
             <LocalePreferenceSync />
             {children}
           </AppShell>
-          <OfflineIndicator />
-          <OfflineQueueFlush />
-          <PwaInstallPrompt />
-          <PwaRegister />
+
         </LocaleProvider>
       </body>
     </html>

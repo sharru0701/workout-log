@@ -12,8 +12,7 @@ const Stats1RMDetailed = dynamic(
   () => import("./_components/stats-1rm-detailed").then((m) => ({ default: m.Stats1RMDetailed })),
   { ssr: false }
 );
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 import { useSearchParams } from "next/navigation";
 import React from "react";
 
@@ -147,11 +146,6 @@ function StatsPageContent() {
   const [prs, setPrs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      setRefreshTick((prev) => prev + 1);
-    },
-  });
 
   useEffect(() => {
     const exerciseId = searchParams.get("exerciseId");
@@ -186,7 +180,7 @@ function StatsPageContent() {
   }, [refreshTick]);
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
       <div>
 
         {/* ── Page Header ── */}
@@ -270,6 +264,6 @@ function StatsPageContent() {
         </div>
 
       </div>
-    </PullToRefreshShell>
+    </>
   );
 }

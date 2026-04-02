@@ -1,14 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import {
   BaseGroupedList,
   NavigationRow,
   SectionFootnote,
 } from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 
 // ─── Row icon — 40×40 rounded-xl box with a filled Material Symbol ──
 
@@ -186,11 +186,7 @@ function ProfileCard() {
 export function SettingsHomeContent({ className = "" }: { className?: string }) {
   const router = useRouter();
   const { copy } = useLocale();
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: () => {
-      router.refresh();
-    },
-  });
+
 
   const appPreferenceRows: RowDef[] = [
     {
@@ -284,10 +280,7 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
   ];
 
   return (
-    <PullToRefreshShell
-      pullToRefresh={pullToRefresh}
-      className={className || undefined}
-    >
+    <div className={className || undefined}>
       <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 32 }}>
         {/* ── Profile Card ── */}
         <ProfileCard />
@@ -305,6 +298,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
           {copy.settings.detailDescription}
         </SectionFootnote>
       </div>
-    </PullToRefreshShell>
+    </div>
   );
 }

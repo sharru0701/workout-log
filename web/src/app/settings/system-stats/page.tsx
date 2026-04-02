@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { apiGet, isAbortError } from "@/lib/api";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 import { useLocale } from "@/components/locale-provider";
 
 type UxFunnelResp = {
@@ -202,9 +202,7 @@ export default function SystemStatsPage() {
   const [refreshTick, setRefreshTick] = useState(0);
   const [lookback, setLookback] = useState<number>(720);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => setRefreshTick(t => t + 1),
-  });
+
 
   useEffect(() => {
     const controller = new AbortController();
@@ -229,7 +227,7 @@ export default function SystemStatsPage() {
   }, [refreshTick, lookback]);
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
       <div>
         <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
           <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>
@@ -339,6 +337,6 @@ export default function SystemStatsPage() {
           </div>
         </section>
       </div>
-    </PullToRefreshShell>
+    </>
   );
 }

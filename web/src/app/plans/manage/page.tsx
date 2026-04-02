@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
@@ -11,7 +11,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 
 type Plan = {
   id: string;
@@ -244,11 +244,7 @@ function PlansManagePageContent() {
     setDeleting(false);
   }, [managePlanId, plans]);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      setRefreshTick((prev) => prev + 1);
-    },
-  });
+
 
   function openManageSheet(plan: Plan) {
     setError(null);
@@ -365,7 +361,7 @@ function PlansManagePageContent() {
         }
       `}</style>
 
-      <PullToRefreshShell pullToRefresh={pullToRefresh}>
+
         <section>
           {/* Page header */}
           <div
@@ -472,7 +468,7 @@ function PlansManagePageContent() {
             </div>
           ) : null}
         </section>
-      </PullToRefreshShell>
+
 
       <BottomSheet
         open={Boolean(managePlanId)}

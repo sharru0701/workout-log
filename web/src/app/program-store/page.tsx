@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
 import { ProgramDetailSheet } from "./_components/program-detail-sheet";
 import { useLocale } from "@/components/locale-provider";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
@@ -15,7 +15,7 @@ import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 import {
   createEmptyExerciseDraft,
   extractOneRmTargetsFromTemplate,
@@ -932,11 +932,6 @@ export default function ProgramStorePage() {
     void loadExerciseOptions();
   }, [loadExerciseOptions]);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => {
-      await Promise.all([loadStore({ isRefresh: true }), loadExerciseOptions()]);
-    },
-  });
 
   useEffect(() => {
     if (startProgramDraft) return;
@@ -1406,7 +1401,7 @@ export default function ProgramStorePage() {
   const hasStoreQuery = storeQuery.trim().length > 0;
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
       <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
         <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>{copy.programStore.eyebrow}</div>
         <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>{copy.programStore.title}</h1>
@@ -2140,6 +2135,6 @@ export default function ProgramStorePage() {
           </div>
         )}
       </BottomSheet>
-    </PullToRefreshShell>
+    </>
   );
 }

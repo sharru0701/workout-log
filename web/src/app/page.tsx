@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { HomeDashboard } from "@/components/home/home-dashboard";
-import { PullToRefreshShell } from "@/components/pull-to-refresh-shell";
+
 import { ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import {
   ApiHomeDataSource,
@@ -12,7 +12,7 @@ import {
   type HomeData,
   type HomeDataSource,
 } from "@/lib/home/home-data-source";
-import { usePullToRefresh } from "@/lib/usePullToRefresh";
+
 import HomeLoading from "./loading";
 
 const HOME_PREVIEW_MODE = process.env.NEXT_PUBLIC_HOME_DATA_MODE === "preview";
@@ -56,9 +56,7 @@ export default function HomePage() {
     }
   }, [copy.home.loadError, dataSource]);
 
-  const pullToRefresh = usePullToRefresh({
-    onRefresh: async () => loadHomeData({ isRefresh: true }),
-  });
+
 
   useEffect(() => {
     if (!HOME_PREVIEW_MODE) return;
@@ -94,7 +92,7 @@ export default function HomePage() {
   const viewData = homeData;
 
   return (
-    <PullToRefreshShell pullToRefresh={pullToRefresh}>
+    <>
       {!hasResolvedHomeData ? (
         <>
           {loading && <HomeLoading />}
@@ -128,6 +126,6 @@ export default function HomePage() {
           {!error && <HomeDashboard data={viewData ?? previewData} />}
         </>
       )}
-    </PullToRefreshShell>
+    </>
   );
 }
