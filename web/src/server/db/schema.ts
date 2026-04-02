@@ -253,6 +253,11 @@ export const generatedSession = pgTable(
     userIdx: index("generated_session_user_idx").on(t.userId),
     planIdx: index("generated_session_plan_idx").on(t.planId),
     planSessionUq: uniqueIndex("generated_session_plan_session_uq").on(t.planId, t.sessionKey),
+    // PERF: compliance 쿼리의 coalesce(scheduled_at, updated_at) 범위 필터를 가속하는 함수형 인덱스
+    userScheduledAtIdx: index("generated_session_user_scheduled_at_idx").on(
+      t.userId,
+      sql`coalesce(${t.scheduledAt}, ${t.updatedAt})`,
+    ),
   }),
 );
 

@@ -146,20 +146,32 @@ function StatsPageContent() {
   const [prs, setPrs] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
+  // 딥링크 스크롤: searchParams가 바뀌면 대상을 기억하고, 데이터 로딩이 끝난 뒤 실행
+  const pendingScrollTargetRef = useRef<string | null>(null);
+  const hasScrolledRef = useRef(false);
 
   useEffect(() => {
     const exerciseId = searchParams.get("exerciseId");
     const exerciseName = searchParams.get("exercise");
     if (exerciseId || exerciseName) {
-      const timer = setTimeout(() => {
-        if (detailedRef.current) {
-          detailedRef.current.selectExercise(exerciseId || exerciseName || "");
-          detailedSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 500);
-      return () => clearTimeout(timer);
+      pendingScrollTargetRef.current = exerciseId || exerciseName || "";
+      hasScrolledRef.current = false;
     }
   }, [searchParams]);
+
+  // loading이 false가 된 시점(= 데이터+렌더 완료)에 스크롤 실행
+  useEffect(() => {
+    if (loading || hasScrolledRef.current) return;
+    const target = pendingScrollTargetRef.current;
+    if (!target) return;
+    requestAnimationFrame(() => {
+      if (detailedRef.current) {
+        detailedRef.current.selectExercise(target);
+        detailedSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        hasScrolledRef.current = true;
+      }
+    });
+  }, [loading]);
 
   useEffect(() => {
     let cancelled = false;

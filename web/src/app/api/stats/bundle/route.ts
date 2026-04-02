@@ -223,13 +223,15 @@ async function GETImpl(req: Request) {
       prsLimit: 10,
     };
 
+    const CACHE_HEADERS = { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" };
+
     const cached = await getStatsCache<{
       sessions30d: number;
       tonnage30d: number;
       compliance90d: ComplianceResult;
       prs90d: PrItem[];
     }>({ userId, metric: "bundle_v2", params: cacheParams, maxAgeSeconds: 300 });
-    if (cached) return NextResponse.json(cached);
+    if (cached) return NextResponse.json(cached, { headers: CACHE_HEADERS });
 
     const [sessions30d, tonnage30d, compliance90d, prs90d] = await Promise.all([
       fetchSavedLogs(userId, from, to),
@@ -241,7 +243,7 @@ async function GETImpl(req: Request) {
     const payload = { sessions30d, tonnage30d, compliance90d, prs90d };
     await setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload });
 
-    return NextResponse.json(payload);
+    return NextResponse.json(payload, { headers: CACHE_HEADERS });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
     return apiErrorResponse(e);

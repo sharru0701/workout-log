@@ -65,6 +65,9 @@ export default async function RootLayout({
   return (
     <html lang={initialLocale} suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <head>
+        {/* Google Fonts 연결 힌트 — DNS + TCP 핸드셰이크를 렌더-블로킹 전에 선점 */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         {/* Material Symbols Outlined — variable icon font used across all screens */}
         <link
           rel="stylesheet"

@@ -69,7 +69,10 @@ async function GETImpl(req: Request) {
       aliases: aliasMap.get(r.id) ?? [],
     }));
 
-    return NextResponse.json({ items });
+    // 운동 카탈로그는 자주 변경되지 않으므로 5분 캐싱 허용
+    return NextResponse.json({ items }, {
+      headers: { "Cache-Control": "private, max-age=300, stale-while-revalidate=3600" },
+    });
   } catch (e: any) {
     logError("api.handler_error", { error: e });
     return apiErrorResponse(e);

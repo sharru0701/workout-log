@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -30,7 +30,7 @@ type EditingState = { id: string; name: string; category: string };
 
 // ─── Swipeable delete row ─────────────────────────────────────────────────────
 
-function SwipeableExerciseRow({
+const SwipeableExerciseRow = memo(function SwipeableExerciseRow({
   children,
   onDelete,
   deleteLabel,
@@ -105,7 +105,7 @@ function SwipeableExerciseRow({
       </div>
     </div>
   );
-}
+});
 
 // ─── Category badge ───────────────────────────────────────────────────────────
 
@@ -124,7 +124,7 @@ const CATEGORY_LABEL_CLASS: Record<string, string> = {
   cardio:     "label-complete",
 };
 
-function CategoryBadge({ category }: { category: string | null }) {
+const CategoryBadge = memo(function CategoryBadge({ category }: { category: string | null }) {
   if (!category) return null;
   const cls = CATEGORY_LABEL_CLASS[category.toLowerCase()] ?? "label-neutral";
   return (
@@ -132,11 +132,11 @@ function CategoryBadge({ category }: { category: string | null }) {
       {category}
     </span>
   );
-}
+});
 
 // ─── Category field (select + custom) ────────────────────────────────────────
 
-function CategoryField({
+const CategoryField = memo(function CategoryField({
   label,
   value,
   onChange,
@@ -180,7 +180,7 @@ function CategoryField({
       )}
     </div>
   );
-}
+});
 
 // ─── Shared field label ───────────────────────────────────────────────────────
 

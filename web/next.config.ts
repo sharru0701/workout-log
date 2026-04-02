@@ -16,6 +16,12 @@ const nextConfig: NextConfig = {
       "./node_modules/pg/**/*",
     ],
   },
+  // 서버 응답 gzip/brotli 압축 활성화 (Next.js 기본값이지만 명시)
+  compress: true,
+  // next/image 최적화: AVIF 우선, WebP 폴백 → 동일 품질에서 20-50% 용량 절감
+  images: {
+    formats: ["image/avif", "image/webp"],
+  },
   // production 빌드(Turbopack)에서만 React Compiler 활성화.
   // dev + Turbopack에서는 HMR 그래프 오류가 간헐적으로 발생할 수 있어 비활성화.
   reactCompiler: process.env.NODE_ENV === "production",
