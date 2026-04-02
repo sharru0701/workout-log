@@ -15,14 +15,24 @@
   /* 탭 영역 64px + iOS 홈 인디케이터 */
   padding-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* Frosted glass background */
-  background: color-mix(in srgb, var(--color-bg) 88%, transparent);
-  backdrop-filter: blur(24px) saturate(1.6);
-  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  /*
+   * Mobile Safari에서 `position: fixed` + 강한 blur 필터가 긴 리스트 스크롤 시
+   * 메인 스레드 페인트 부담을 크게 만들어 체크보드(검은/빈 영역)와 끊김을 유발할 수 있다.
+   * 기본은 불투명에 가까운 배경으로 두고, 데스크톱/정밀 포인터 환경에서만 blur를 켠다.
+   */
+  background: color-mix(in srgb, var(--color-bg) 96%, transparent);
 
   border-top: 1px solid color-mix(in srgb, var(--color-outline-variant, var(--color-border)) 60%, transparent);
   border-top-left-radius: 20px;
   border-top-right-radius: 20px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bottom-tab-bar {
+    background: color-mix(in srgb, var(--color-bg) 88%, transparent);
+    backdrop-filter: blur(24px) saturate(1.6);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  }
 }
 
 /* --------------------------------------------------------------------------
