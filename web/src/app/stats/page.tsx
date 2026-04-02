@@ -141,7 +141,7 @@ function StatsPageContent() {
   const searchParams = useSearchParams();
   const detailedRef = useRef<Stats1RMDetailedRef>(null);
   const detailedSectionRef = useRef<HTMLDivElement>(null);
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [refreshTick] = useState(0);
   const [compliance, setCompliance] = useState<any>(null);
   const [prs, setPrs] = useState<any>(null);
   const [loading, setLoading] = useState(true);

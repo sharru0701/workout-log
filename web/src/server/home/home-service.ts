@@ -528,12 +528,11 @@ function buildHomeData(params: {
 }): HomeData {
   const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey } = params;
 
-  const latestTodayLog = logs.find((l) => toLocalDateKey(l.performedAt) === todayKey) ?? null;
   const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } = buildPlannedExercises(snapshot);
 
   return {
     today: buildTodaySummary(plans, logs, plannedExercises, totalPlannedSets, locale, todayKey),
-    planOverview: buildPlanOverview(plans, latestTodayLog, locale),
+    planOverview: buildPlanOverview(plans, locale),
     weeklySummary: buildWeeklySummary(logs, locale, todayKey),
     recentLimit,
     recentSessions: buildRecentSessions(plans, logs, recentLimit, locale, todayKey),
@@ -594,7 +593,7 @@ function buildTodaySummary(plans: any[], logs: any[], plannedExercises: any[], t
   };
 }
 
-function buildPlanOverview(plans: any[], latestTodayLog: any, locale: AppLocale): HomePlanOverview {
+function buildPlanOverview(plans: any[], locale: AppLocale): HomePlanOverview {
   if (plans.length === 0) return { totalPlans: 0, highlightedPlanId: null, highlightedPlanName: null, highlightedProgramName: null, lastPerformedAtLabel: null };
   const highlightedPlan = resolveHighlightedPlan(plans, [], ""); // Simplified for overview
   return {

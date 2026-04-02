@@ -66,11 +66,11 @@ export const programTemplate = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    slugUnique: uniqueIndex("program_template_slug_uq").on(t.slug),
-    typeIdx: index("program_template_type_idx").on(t.type),
-    ownerIdx: index("program_template_owner_idx").on(t.ownerUserId),
-  }),
+  (t) => [
+    uniqueIndex("program_template_slug_uq").on(t.slug),
+    index("program_template_type_idx").on(t.type),
+    index("program_template_owner_idx").on(t.ownerUserId),
+  ],
 );
 
 /**
@@ -106,10 +106,10 @@ export const programVersion = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    templateVersionUq: uniqueIndex("program_version_template_version_uq").on(t.templateId, t.version),
-    templateIdx: index("program_version_template_idx").on(t.templateId),
-  }),
+  (t) => [
+    uniqueIndex("program_version_template_version_uq").on(t.templateId, t.version),
+    index("program_version_template_idx").on(t.templateId),
+  ],
 );
 
 /**
@@ -137,10 +137,10 @@ export const plan = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userIdx: index("plan_user_idx").on(t.userId),
-    typeIdx: index("plan_type_idx").on(t.type),
-  }),
+  (t) => [
+    index("plan_user_idx").on(t.userId),
+    index("plan_type_idx").on(t.type),
+  ],
 );
 
 /**
@@ -159,11 +159,11 @@ export const planRuntimeState = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    planUq: uniqueIndex("plan_runtime_state_plan_uq").on(t.planId),
-    userIdx: index("plan_runtime_state_user_idx").on(t.userId),
-    updatedAtIdx: index("plan_runtime_state_updated_at_idx").on(t.updatedAt),
-  }),
+  (t) => [
+    uniqueIndex("plan_runtime_state_plan_uq").on(t.planId),
+    index("plan_runtime_state_user_idx").on(t.userId),
+    index("plan_runtime_state_updated_at_idx").on(t.updatedAt),
+  ],
 );
 
 /**
@@ -190,10 +190,10 @@ export const planModule = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    planTargetUq: uniqueIndex("plan_module_plan_target_uq").on(t.planId, t.target),
-    planIdx: index("plan_module_plan_idx").on(t.planId),
-  }),
+  (t) => [
+    uniqueIndex("plan_module_plan_target_uq").on(t.planId, t.target),
+    index("plan_module_plan_idx").on(t.planId),
+  ],
 );
 
 /**
@@ -219,10 +219,10 @@ export const planOverride = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    planScopeIdx: index("plan_override_plan_scope_idx").on(t.planId, t.scope),
-    planWeekIdx: index("plan_override_plan_week_idx").on(t.planId, t.weekNumber),
-  }),
+  (t) => [
+    index("plan_override_plan_scope_idx").on(t.planId, t.scope),
+    index("plan_override_plan_week_idx").on(t.planId, t.weekNumber),
+  ],
 );
 
 /**
@@ -249,16 +249,16 @@ export const generatedSession = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userIdx: index("generated_session_user_idx").on(t.userId),
-    planIdx: index("generated_session_plan_idx").on(t.planId),
-    planSessionUq: uniqueIndex("generated_session_plan_session_uq").on(t.planId, t.sessionKey),
+  (t) => [
+    index("generated_session_user_idx").on(t.userId),
+    index("generated_session_plan_idx").on(t.planId),
+    uniqueIndex("generated_session_plan_session_uq").on(t.planId, t.sessionKey),
     // PERF: compliance 쿼리의 coalesce(scheduled_at, updated_at) 범위 필터를 가속하는 함수형 인덱스
-    userScheduledAtIdx: index("generated_session_user_scheduled_at_idx").on(
+    index("generated_session_user_scheduled_at_idx").on(
       t.userId,
       sql`coalesce(${t.scheduledAt}, ${t.updatedAt})`,
     ),
-  }),
+  ],
 );
 
 /**
@@ -272,9 +272,9 @@ export const exercise = pgTable(
     category: text("category"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    nameUq: uniqueIndex("exercise_name_uq").on(t.name),
-  }),
+  (t) => [
+    uniqueIndex("exercise_name_uq").on(t.name),
+  ],
 );
 
 /**
@@ -290,10 +290,10 @@ export const exerciseAlias = pgTable(
     alias: text("alias").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    aliasUq: uniqueIndex("exercise_alias_alias_uq").on(t.alias),
-    exerciseIdx: index("exercise_alias_exercise_idx").on(t.exerciseId),
-  }),
+  (t) => [
+    uniqueIndex("exercise_alias_alias_uq").on(t.alias),
+    index("exercise_alias_exercise_idx").on(t.exerciseId),
+  ],
 );
 
 /**
@@ -317,25 +317,25 @@ export const workoutLog = pgTable(
 
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userPerformedIdx: index("workout_log_user_performed_idx").on(t.userId, t.performedAt),
-    userDayBucketUtcIdx: index("workout_log_user_day_bucket_utc_idx").on(
+  (t) => [
+    index("workout_log_user_performed_idx").on(t.userId, t.performedAt),
+    index("workout_log_user_day_bucket_utc_idx").on(
       t.userId,
       sql`date_trunc('day', ${t.performedAt} at time zone 'UTC')`,
     ),
-    userWeekBucketUtcIdx: index("workout_log_user_week_bucket_utc_idx").on(
+    index("workout_log_user_week_bucket_utc_idx").on(
       t.userId,
       sql`date_trunc('week', ${t.performedAt} at time zone 'UTC')`,
     ),
-    userMonthBucketUtcIdx: index("workout_log_user_month_bucket_utc_idx").on(
+    index("workout_log_user_month_bucket_utc_idx").on(
       t.userId,
       sql`date_trunc('month', ${t.performedAt} at time zone 'UTC')`,
     ),
-    planIdx: index("workout_log_plan_idx").on(t.planId),
-    sessionIdx: index("workout_log_generated_session_idx").on(t.generatedSessionId),
+    index("workout_log_plan_idx").on(t.planId),
+    index("workout_log_generated_session_idx").on(t.generatedSessionId),
     // PERF: compliance 쿼리의 (userId, generatedSessionId) 복합 필터를 가속
-    userSessionIdx: index("workout_log_user_session_idx").on(t.userId, t.generatedSessionId),
-  }),
+    index("workout_log_user_session_idx").on(t.userId, t.generatedSessionId),
+  ],
 );
 
 /**
@@ -358,15 +358,15 @@ export const planProgressEvent = pgTable(
     meta: jsonb("meta").notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    planLogSlugUq: uniqueIndex("plan_progress_event_plan_log_slug_uq").on(
+  (t) => [
+    uniqueIndex("plan_progress_event_plan_log_slug_uq").on(
       t.planId,
       t.logId,
       t.programSlug,
     ),
-    planIdx: index("plan_progress_event_plan_idx").on(t.planId, t.createdAt),
-    userIdx: index("plan_progress_event_user_idx").on(t.userId, t.createdAt),
-  }),
+    index("plan_progress_event_plan_idx").on(t.planId, t.createdAt),
+    index("plan_progress_event_user_idx").on(t.userId, t.createdAt),
+  ],
 );
 
 /**
@@ -393,14 +393,14 @@ export const workoutSet = pgTable(
 
     meta: jsonb("meta").notNull().default({}),
   },
-  (t) => ({
-    logIdx: index("workout_set_log_idx").on(t.logId),
-    exerciseIdIdx: index("workout_set_exercise_id_idx").on(t.exerciseId),
-    exerciseIdx: index("workout_set_exercise_idx").on(t.exerciseName),
-    exerciseNameLowerIdx: index("workout_set_exercise_name_lower_idx").on(
+  (t) => [
+    index("workout_set_log_idx").on(t.logId),
+    index("workout_set_exercise_id_idx").on(t.exerciseId),
+    index("workout_set_exercise_idx").on(t.exerciseName),
+    index("workout_set_exercise_name_lower_idx").on(
       sql`lower(${t.exerciseName})`,
     ),
-  }),
+  ],
 );
 
 /**
@@ -417,15 +417,15 @@ export const statsCache = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userMetricParamsUq: uniqueIndex("stats_cache_user_metric_params_uq").on(
+  (t) => [
+    uniqueIndex("stats_cache_user_metric_params_uq").on(
       t.userId,
       t.metric,
       t.paramsHash,
     ),
-    userIdx: index("stats_cache_user_idx").on(t.userId),
-    updatedAtIdx: index("stats_cache_updated_at_idx").on(t.updatedAt),
-  }),
+    index("stats_cache_user_idx").on(t.userId),
+    index("stats_cache_updated_at_idx").on(t.updatedAt),
+  ],
 );
 
 /**
@@ -441,11 +441,11 @@ export const userSetting = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userKeyUq: uniqueIndex("user_setting_user_key_uq").on(t.userId, t.key),
-    userIdx: index("user_setting_user_idx").on(t.userId),
-    userUpdatedIdx: index("user_setting_user_updated_idx").on(t.userId, t.updatedAt),
-  }),
+  (t) => [
+    uniqueIndex("user_setting_user_key_uq").on(t.userId, t.key),
+    index("user_setting_user_idx").on(t.userId),
+    index("user_setting_user_updated_idx").on(t.userId, t.updatedAt),
+  ],
 );
 
 /**
@@ -462,18 +462,18 @@ export const uxEventLog = pgTable(
     props: jsonb("props").notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
   },
-  (t) => ({
-    userClientEventUq: uniqueIndex("ux_event_log_user_client_event_uq").on(
+  (t) => [
+    uniqueIndex("ux_event_log_user_client_event_uq").on(
       t.userId,
       t.clientEventId,
     ),
-    userRecordedIdx: index("ux_event_log_user_recorded_idx").on(t.userId, t.recordedAt),
-    userNameRecordedIdx: index("ux_event_log_user_name_recorded_idx").on(
+    index("ux_event_log_user_recorded_idx").on(t.userId, t.recordedAt),
+    index("ux_event_log_user_name_recorded_idx").on(
       t.userId,
       t.name,
       t.recordedAt,
     ),
-  }),
+  ],
 );
 
 /**
@@ -494,9 +494,9 @@ export const migrationRunLog = pgTable(
     lockWaitMs: integer("lock_wait_ms").notNull().default(0),
     details: jsonb("details").notNull().default({}),
   },
-  (t) => ({
-    runIdUq: uniqueIndex("migration_run_log_run_id_uq").on(t.runId),
-    startedIdx: index("migration_run_log_started_idx").on(t.startedAt),
-    statusStartedIdx: index("migration_run_log_status_started_idx").on(t.status, t.startedAt),
-  }),
+  (t) => [
+    uniqueIndex("migration_run_log_run_id_uq").on(t.runId),
+    index("migration_run_log_started_idx").on(t.startedAt),
+    index("migration_run_log_status_started_idx").on(t.status, t.startedAt),
+  ],
 );
