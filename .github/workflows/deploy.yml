@@ -27,48 +27,97 @@ jobs:
             exit 1
           fi
 
-          TEAM_QUERY=""
-          if [ -n "${{ secrets.VERCEL_TEAM_ID }}" ]; then
-            TEAM_QUERY="&teamId=${{ secrets.VERCEL_TEAM_ID }}"
-          fi
+          python3 - <<'PY'
+          import json
+          import os
+          import sys
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
 
-          echo "Waiting for Vercel deployment..."
-          echo "Target commit SHA: $TARGET_SHA"
-          for i in $(seq 1 40); do
-            RESPONSE=$(curl -fsS \
-              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=20&target=production$TEAM_QUERY")
+          token = os.environ["VERCEL_TOKEN"]
+          project_id = os.environ["VERCEL_PROJECT_ID"]
+          team_id = os.environ.get("VERCEL_TEAM_ID", "")
+          target_sha = os.environ["TARGET_SHA"]
 
-            STATE=$(
-              printf '%s' "$RESPONSE" | python3 -c '
-import json
-import os
-import sys
+          print("Waiting for Vercel deployment...")
+          print(f"Target commit SHA: {target_sha}")
 
-target_sha = os.environ.get("TARGET_SHA", "")
-payload = json.load(sys.stdin)
+          base_url = "https://api.vercel.com/v6/deployments"
 
-deployments = payload.get("deployments") or []
-target = next((d for d in deployments if (d.get("meta") or {}).get("githubCommitSha") == target_sha), None)
-
-if not target:
-    print("NOT_FOUND")
-else:
-    print(target.get("readyState") or "UNKNOWN")
-'
+          def fetch_page(until_cursor: str | None):
+            params = {
+              "projectId": project_id,
+              "limit": "100",
+              "target": "production",
+            }
+            if team_id:
+              params["teamId"] = team_id
+            if until_cursor:
+              params["until"] = until_cursor
+            query = urllib.parse.urlencode(params)
+            req = urllib.request.Request(
+              f"{base_url}?{query}",
+              headers={"Authorization": f"Bearer {token}"},
             )
+            with urllib.request.urlopen(req) as resp:
+              return json.load(resp)
 
-            echo "[$i/40] State for $TARGET_SHA: $STATE"
-            if [ "$STATE" = "READY" ]; then
-              echo "Vercel deployment is READY."
-              exit 0
-            elif [ "$STATE" = "NOT_FOUND" ]; then
-              echo "Vercel deployment for commit $TARGET_SHA is not visible yet."
-            elif [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
-              echo "Vercel deployment failed: $STATE"
-              exit 1
-            fi
-            sleep 15
-          done
-          echo "Timed out waiting for Vercel deployment for commit $TARGET_SHA."
-          exit 1
+          def find_target(deployments):
+            for deployment in deployments:
+              meta = deployment.get("meta") or {}
+              commit_sha = meta.get("githubCommitSha") or ""
+              if commit_sha == target_sha:
+                return deployment
+            return None
+
+          max_attempts = 40
+          for attempt in range(1, max_attempts + 1):
+            try:
+              page_count = 0
+              until = None
+              found = None
+
+              while page_count < 10:
+                payload = fetch_page(until)
+                page_count += 1
+                deployments = payload.get("deployments") or []
+                found = find_target(deployments)
+                if found:
+                  break
+                pagination = payload.get("pagination") or {}
+                until = pagination.get("next")
+                if not until or not deployments:
+                  break
+
+              state = "NOT_FOUND"
+              if found:
+                state = found.get("readyState") or "UNKNOWN"
+
+              print(f"[{attempt}/{max_attempts}] State for {target_sha}: {state}")
+
+              if state == "READY":
+                print("Vercel deployment is READY.")
+                sys.exit(0)
+              if state in {"ERROR", "CANCELED"}:
+                print(f"Vercel deployment failed: {state}")
+                sys.exit(1)
+              if state == "NOT_FOUND":
+                print("Vercel deployment for commit is not visible yet.")
+            except urllib.error.HTTPError as exc:
+              detail = exc.read().decode("utf-8", errors="replace")
+              print(f"Vercel API HTTP error {exc.code}: {detail}")
+            except urllib.error.URLError as exc:
+              print(f"Network error while polling Vercel API: {exc}")
+
+            time.sleep(15)
+
+          print(f"Timed out waiting for Vercel deployment for commit {target_sha}.")
+          sys.exit(1)
+          PY
+        env:
+          TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_TEAM_ID: ${{ secrets.VERCEL_TEAM_ID }}
