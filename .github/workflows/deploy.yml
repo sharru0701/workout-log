@@ -17,8 +17,15 @@ permissions:
 
 jobs:
   migrate:
-    name: DB Migration
+    name: DB Migration (${{ matrix.env }})
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - env: prod
+            secret: SUPABASE_DIRECT_URL
+          - env: dev
+            secret: SUPABASE_DEV_DIRECT_URL
     defaults:
       run:
         working-directory: web
@@ -43,6 +50,6 @@ jobs:
 
       - name: Run DB migrations
         env:
-          DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
-          DB_MIGRATE_RUNNER: github-actions
+          DATABASE_URL: ${{ secrets[matrix.secret] }}
+          DB_MIGRATE_RUNNER: github-actions-${{ matrix.env }}
         run: node scripts/migrate.mjs
