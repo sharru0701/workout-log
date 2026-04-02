@@ -15,24 +15,60 @@ jobs:
     name: Wait for Vercel Deployment
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
+    env:
+      TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Wait for Vercel deployment to be ready
         run: |
+          set -euo pipefail
+
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ] || [ -z "${{ secrets.VERCEL_PROJECT_ID }}" ]; then
+            echo "::error::Missing required Vercel secrets (VERCEL_TOKEN and/or VERCEL_PROJECT_ID)."
+            exit 1
+          fi
+
+          TEAM_QUERY=""
+          if [ -n "${{ secrets.VERCEL_TEAM_ID }}" ]; then
+            TEAM_QUERY="&teamId=${{ secrets.VERCEL_TEAM_ID }}"
+          fi
+
           echo "Waiting for Vercel deployment..."
+          echo "Target commit SHA: $TARGET_SHA"
           for i in $(seq 1 40); do
-            STATE=$(curl -s \
+            RESPONSE=$(curl -fsS \
               -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
-              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&target=production" \
-              | jq -r '.deployments[0].readyState')
-            echo "[$i/40] State: $STATE"
+              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=20&target=production$TEAM_QUERY")
+
+            STATE=$(
+              printf '%s' "$RESPONSE" | python3 -c '
+import json
+import os
+import sys
+
+target_sha = os.environ.get("TARGET_SHA", "")
+payload = json.load(sys.stdin)
+
+deployments = payload.get("deployments") or []
+target = next((d for d in deployments if (d.get("meta") or {}).get("githubCommitSha") == target_sha), None)
+
+if not target:
+    print("NOT_FOUND")
+else:
+    print(target.get("readyState") or "UNKNOWN")
+'
+            )
+
+            echo "[$i/40] State for $TARGET_SHA: $STATE"
             if [ "$STATE" = "READY" ]; then
               echo "Vercel deployment is READY."
               exit 0
+            elif [ "$STATE" = "NOT_FOUND" ]; then
+              echo "Vercel deployment for commit $TARGET_SHA is not visible yet."
             elif [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
               echo "Vercel deployment failed: $STATE"
               exit 1
             fi
             sleep 15
           done
-          echo "Timed out waiting for Vercel deployment."
+          echo "Timed out waiting for Vercel deployment for commit $TARGET_SHA."
           exit 1
