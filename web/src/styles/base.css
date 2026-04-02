@@ -5,6 +5,8 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   font-family: var(--font-family);
+  /* Variable font — wght axis 기본값 (개별 요소에서 --fvs-* 토큰으로 재정의) */
+  font-variation-settings: var(--fvs-normal);
   /* 동적 뷰포트를 항상 채우도록 설정 */
   min-height: 100vh;
   min-height: 100dvh;

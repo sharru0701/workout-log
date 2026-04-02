@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { cookies, headers } from "next/headers";
-import { Inter, Space_Grotesk } from "next/font/google";
+import { Inter } from "next/font/google";
 import "@/styles/index.css";
 import "@/styles/components/bottom-sheet.css";
 import { AppShell } from "@/components/app-shell";
@@ -16,18 +16,11 @@ import {
   type AppLocale,
 } from "@/lib/i18n/messages";
 
+// Inter Variable Font — wght 100–900 전 범위 지원
 const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
   display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  display: "swap",
-  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const viewport: Viewport = {
@@ -63,11 +56,17 @@ export default async function RootLayout({
   const initialLocale = await resolveInitialLocale();
 
   return (
-    <html lang={initialLocale} suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang={initialLocale} suppressHydrationWarning className={inter.variable}>
       <head>
         {/* Google Fonts 연결 힌트 — DNS + TCP 핸드셰이크를 렌더-블로킹 전에 선점 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Pretendard Variable — 한글 variable font (dynamic subset, wght 100–900) */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
+        />
         {/* Material Symbols Outlined — variable icon font used across all screens */}
         <link
           rel="stylesheet"
