@@ -1,55 +1,38 @@
 name: deploy
 
 on:
-  push:
+  workflow_run:
+    workflows: [db-migrate]
+    types: [completed]
     branches: [main]
-    paths:
-      - "web/**"
-      - ".github/workflows/deploy.yml"
   workflow_dispatch: {}
-
-concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: false  # 마이그레이션 중단 방지
 
 permissions:
   contents: read
 
 jobs:
-  migrate:
-    name: DB Migration (${{ matrix.env }})
+  wait-vercel:
+    name: Wait for Vercel Deployment
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        include:
-          - env: prod
-            secret: SUPABASE_DIRECT_URL
-          - env: dev
-            secret: SUPABASE_DEV_DIRECT_URL
-    defaults:
-      run:
-        working-directory: web
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up pnpm
-        uses: pnpm/action-setup@v5
-        with:
-          version: 10
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
-          cache-dependency-path: web/pnpm-lock.yaml
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Run DB migrations
-        env:
-          DATABASE_URL: ${{ secrets[matrix.secret] }}
-          DB_MIGRATE_RUNNER: github-actions-${{ matrix.env }}
-        run: node scripts/migrate.mjs
+      - name: Wait for Vercel deployment to be ready
+        run: |
+          echo "Waiting for Vercel deployment..."
+          for i in $(seq 1 40); do
+            STATE=$(curl -s \
+              -H "Authorization: Bearer ${{ secrets.VERCEL_TOKEN }}" \
+              "https://api.vercel.com/v6/deployments?projectId=${{ secrets.VERCEL_PROJECT_ID }}&limit=1&target=production" \
+              | jq -r '.deployments[0].readyState')
+            echo "[$i/40] State: $STATE"
+            if [ "$STATE" = "READY" ]; then
+              echo "Vercel deployment is READY."
+              exit 0
+            elif [ "$STATE" = "ERROR" ] || [ "$STATE" = "CANCELED" ]; then
+              echo "Vercel deployment failed: $STATE"
+              exit 1
+            fi
+            sleep 15
+          done
+          echo "Timed out waiting for Vercel deployment."
+          exit 1

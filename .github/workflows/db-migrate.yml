@@ -1,0 +1,55 @@
+name: db-migrate
+
+on:
+  workflow_run:
+    workflows: [e2e]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: db-migrate-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: DB Migration (${{ matrix.env }})
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - env: prod
+            secret: SUPABASE_DIRECT_URL
+          - env: dev
+            secret: SUPABASE_DEV_DIRECT_URL
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run DB migrations
+        env:
+          DATABASE_URL: ${{ secrets[matrix.secret] }}
+          DB_MIGRATE_RUNNER: github-actions-${{ matrix.env }}
+        run: node scripts/migrate.mjs
