@@ -601,38 +601,6 @@ function SwipeableSetRow({
   );
 }
 
-function isSameNumberArray(a: number[] | undefined, b: number[] | undefined) {
-  if (a === b) return true;
-  if (!a || !b || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-function isSameStringArray(a: string[] | undefined, b: string[] | undefined) {
-  if (a === b) return true;
-  if (!a || !b || a.length !== b.length) return false;
-  for (let i = 0; i < a.length; i += 1) {
-    if (a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-function isSameProgramEntryState(
-  a?: WorkoutProgramExerciseEntryState,
-  b?: WorkoutProgramExerciseEntryState,
-) {
-  if (a === b) return true;
-  if (!a || !b) return false;
-  return (
-    a.memoInput === b.memoInput &&
-    a.memoPlaceholder === b.memoPlaceholder &&
-    isSameStringArray(a.repsInputs, b.repsInputs) &&
-    isSameNumberArray(a.plannedRepsPerSet, b.plannedRepsPerSet)
-  );
-}
-
 const ExerciseRow = memo(function ExerciseRow({
   exercise,
   minimumPlateIncrementKg,
@@ -870,26 +838,6 @@ const ExerciseRow = memo(function ExerciseRow({
         </label>
       </div>
     </article>
-  );
-}, (prev, next) => {
-  const prevExercise = prev.exercise;
-  const nextExercise = next.exercise;
-  return (
-    prev.minimumPlateIncrementKg === next.minimumPlateIncrementKg &&
-    prev.showMinimumPlateInfo === next.showMinimumPlateInfo &&
-    prev.bodyweightKg === next.bodyweightKg &&
-    prev.prevPerformance === next.prevPerformance &&
-    prevExercise.id === nextExercise.id &&
-    prevExercise.exerciseId === nextExercise.exerciseId &&
-    prevExercise.exerciseName === nextExercise.exerciseName &&
-    prevExercise.source === nextExercise.source &&
-    prevExercise.badge === nextExercise.badge &&
-    prevExercise.note.memo === nextExercise.note.memo &&
-    prevExercise.set.weightKg === nextExercise.set.weightKg &&
-    isSameNumberArray(prevExercise.set.repsPerSet, nextExercise.set.repsPerSet) &&
-    isSameNumberArray(prevExercise.plannedSetMeta?.targetWeightKgPerSet, nextExercise.plannedSetMeta?.targetWeightKgPerSet) &&
-    isSameNumberArray(prevExercise.plannedSetMeta?.repsPerSet, nextExercise.plannedSetMeta?.repsPerSet) &&
-    isSameProgramEntryState(prev.programEntryState, next.programEntryState)
   );
 });
 
