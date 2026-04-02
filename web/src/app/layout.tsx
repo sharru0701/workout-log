@@ -7,6 +7,7 @@ import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
 import { LocalePreferenceSync } from "@/components/locale-preference-sync";
+import { TimezonePreferenceSync } from "@/components/timezone-preference-sync";
 import { LocaleProvider } from "@/components/locale-provider";
 
 import {
@@ -79,6 +80,7 @@ export default async function RootLayout({
           <AppShell initialLocale={initialLocale}>
             <ThemePreferenceSync />
             <LocalePreferenceSync />
+            <TimezonePreferenceSync />
             {children}
           </AppShell>
 

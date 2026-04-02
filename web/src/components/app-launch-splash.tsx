@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLocale } from "@/components/locale-provider";
 
-const MIN_VISIBLE_MS = 560;
-const EXIT_ANIMATION_MS = 220;
+const MIN_VISIBLE_MS = 300;
+const EXIT_ANIMATION_MS = 200;
 
 type SplashPhase = "visible" | "hiding" | "hidden";
 
