@@ -148,10 +148,11 @@
   background: var(--label-complete-bg);
 }
 
-/* Pending sets — strongly dimmed */
+/* Pending sets — dimmed via token override (opacity would create GPU compositing layers) */
 .set-row--pending {
-  opacity: 0.62;
   background: color-mix(in srgb, var(--color-surface-container-high) 92%, transparent);
+  --text-metric-weight: var(--color-text-muted);
+  --text-metric-reps: var(--color-text-muted);
 }
 
 /* Failure set — red tint using set-failure tokens */
