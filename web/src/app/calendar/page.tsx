@@ -288,10 +288,11 @@ export default function CalendarPage() {
   const [recentSessions, setRecentSessions] = useState<RecentGeneratedSession[]>([]);
   const [allPlanLogs, setAllPlanLogs] = useState<WorkoutLogSummary[]>([]);
   const [selectedLog, setSelectedLog] = useState<WorkoutLogForDate | null>(null);
+  const [selectedLogKey, setSelectedLogKey] = useState("");
   const [selectedLogLoading, setSelectedLogLoading] = useState(false);
   const [completedLogKey, setCompletedLogKey] = useState("");
   const [selectedSessionDetail, setSelectedSessionDetail] = useState<GeneratedSessionDetail | null>(null);
-  const [selectedSessionLoading, setSelectedSessionLoading] = useState(false);
+  const [, setSelectedSessionLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const plansLoadedRef = useRef(false);
@@ -306,6 +307,7 @@ export default function CalendarPage() {
   const monthNavFeedbackTimerRef = useRef<number | null>(null);
 
   const currentLogKey = planId ? `${planId}|${selectedDate}` : "";
+  const currentSelectedLog = selectedLogKey === currentLogKey ? selectedLog : null;
 
   const selectedPlan = useMemo(() => plans.find((p) => p.id === planId) ?? null, [plans, planId]);
   const orderedPlans = useMemo(() => {
@@ -374,6 +376,7 @@ export default function CalendarPage() {
   useEffect(() => {
     if (!planId) {
       setSelectedLog(null);
+      setSelectedLogKey("");
       setCompletedLogKey("");
       setSelectedLogLoading(false);
       return;
@@ -395,10 +398,12 @@ export default function CalendarPage() {
         if (cancelled) return;
         logFetchCacheRef.current.add(fetchKey);
         setSelectedLog(res.items[0] ?? null);
+        setSelectedLogKey(fetchKey);
         setCompletedLogKey(fetchKey);
       } catch (e: any) {
         if (!cancelled) {
           setSelectedLog(null);
+          setSelectedLogKey(fetchKey);
           setCompletedLogKey(fetchKey);
           setError(e?.message ?? (locale === "ko" ? "운동기록을 불러오지 못했습니다." : "Could not load workout logs."));
         }
@@ -558,10 +563,10 @@ export default function CalendarPage() {
   const selectedSession = getSessionForDate(selectedDate);
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
   const isPastDate = selectedDate < today;
-  const isPastDateCreationBlocked = isAutoProgressionPlan && isPastDate && !selectedLog;
+  const isPastDateCreationBlocked = isAutoProgressionPlan && isPastDate && !currentSelectedLog;
   const loggedSummary = useMemo(
-    () => buildLoggedExercisePreview(selectedLog?.sets ?? []),
-    [selectedLog],
+    () => buildLoggedExercisePreview(currentSelectedLog?.sets ?? []),
+    [currentSelectedLog],
   );
   const plannedExercises = useMemo(
     () => buildPlannedExercisePreview(selectedSessionDetail?.snapshot ?? null),
@@ -583,9 +588,9 @@ export default function CalendarPage() {
 
   // WxDy label for the currently selected log (from actual session key, not calendar math)
   const loggedDayLabel = useMemo(() => {
-    if (!selectedLog?.generatedSessionId) return selectedDayLabel;
-    return sessionKeyToWDLabel(generatedById.get(selectedLog.generatedSessionId)?.sessionKey ?? "") ?? selectedDayLabel;
-  }, [selectedLog, generatedById, selectedDayLabel]);
+    if (!currentSelectedLog?.generatedSessionId) return selectedDayLabel;
+    return sessionKeyToWDLabel(generatedById.get(currentSelectedLog.generatedSessionId)?.sessionKey ?? "") ?? selectedDayLabel;
+  }, [currentSelectedLog, generatedById, selectedDayLabel]);
 
   // WxDy label for a generated-but-unlogged session
   const selectedSessionWDLabel = useMemo(() => {
@@ -593,14 +598,14 @@ export default function CalendarPage() {
     return sessionKeyToWDLabel(selectedSession.sessionKey);
   }, [selectedSession]);
 
-  const workoutHref = selectedLog
-    ? buildTodayLogHref({ planId, date: selectedDate, logId: selectedLog.id })
+  const workoutHref = currentSelectedLog
+    ? buildTodayLogHref({ planId, date: selectedDate, logId: currentSelectedLog.id })
     : planId
       ? buildTodayLogHref({ planId, date: selectedDate, autoGenerate: false })
       : APP_ROUTES.todayLog;
 
   useEffect(() => {
-    if (!selectedSession?.id || selectedLog) {
+    if (!selectedSession?.id || currentSelectedLog) {
       setSelectedSessionDetail(null);
       setSelectedSessionLoading(false);
       return;
@@ -636,7 +641,7 @@ export default function CalendarPage() {
     return () => {
       cancelled = true;
     };
-  }, [locale, planId, selectedLog, selectedSession?.id]);
+  }, [currentSelectedLog, locale, planId, selectedSession?.id]);
 
   useEffect(
     () => () => {
@@ -991,7 +996,7 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {loading || selectedLogLoading || selectedSessionLoading || (!!planId && completedLogKey !== currentLogKey) ? (
+        {loading || selectedLogLoading || (!!planId && completedLogKey !== currentLogKey) ? (
           <div style={{
             display: "flex",
             gap: "6px",
@@ -1019,7 +1024,7 @@ export default function CalendarPage() {
               {copy.calendarMain.noPlanSelected}
             </p>
           </div>
-        ) : selectedLog ? (
+        ) : currentSelectedLog ? (
           /* ── Logged session card ── */
           <div style={{ background: "var(--color-surface-container-low)", borderRadius: "24px", padding: "24px" }}>
             {/* Header */}
