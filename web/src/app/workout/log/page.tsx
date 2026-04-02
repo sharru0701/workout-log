@@ -510,39 +510,42 @@ function SwipeableSetRow({
   deleteLabel: string;
   disabled?: boolean;
 }) {
-  const [offsetX, setOffsetX] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
+  const rowRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number | null>(null);
-  const currentXRef = useRef<number | null>(null);
+  const isDraggingRef = useRef(false);
+  const offsetXRef = useRef(0);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (disabled) return;
     startXRef.current = e.touches[0].clientX;
-    currentXRef.current = e.touches[0].clientX;
-    setIsDragging(true);
+    isDraggingRef.current = true;
+    if (rowRef.current) rowRef.current.style.transition = "none";
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
-    if (disabled || !isDragging || startXRef.current === null) return;
-    currentXRef.current = e.touches[0].clientX;
-    const diff = currentXRef.current - startXRef.current;
+    if (disabled || !isDraggingRef.current || startXRef.current === null || !rowRef.current) return;
+    const diff = e.touches[0].clientX - startXRef.current;
     if (diff < 0) {
-      setOffsetX(Math.max(diff, -44));
-    } else if (offsetX < 0) {
-      setOffsetX(Math.min(0, offsetX + diff));
-      startXRef.current = currentXRef.current;
+      offsetXRef.current = Math.max(diff, -44);
+    } else if (offsetXRef.current < 0) {
+      offsetXRef.current = Math.min(0, offsetXRef.current + diff);
+      startXRef.current = e.touches[0].clientX;
     } else {
-      setOffsetX(0);
+      offsetXRef.current = 0;
     }
+    rowRef.current.style.transform = offsetXRef.current !== 0 ? `translateX(${offsetXRef.current}px)` : "";
   };
 
   const handleTouchEnd = () => {
-    if (disabled) return;
-    setIsDragging(false);
-    if (offsetX < -22) {
-      setOffsetX(-44);
+    if (disabled || !rowRef.current) return;
+    isDraggingRef.current = false;
+    rowRef.current.style.transition = "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)";
+    if (offsetXRef.current < -22) {
+      offsetXRef.current = -44;
+      rowRef.current.style.transform = "translateX(-44px)";
     } else {
-      setOffsetX(0);
+      offsetXRef.current = 0;
+      rowRef.current.style.transform = "";
     }
   };
 
@@ -564,7 +567,11 @@ function SwipeableSetRow({
         <button
           type="button"
           onClick={() => {
-            setOffsetX(0);
+            if (rowRef.current) {
+              rowRef.current.style.transform = "";
+              rowRef.current.style.transition = "";
+            }
+            offsetXRef.current = 0;
             onDelete();
           }}
           style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--color-danger)", backgroundColor: "transparent", border: "none", boxShadow: "none", cursor: "pointer" }}
@@ -574,13 +581,12 @@ function SwipeableSetRow({
         </button>
       </div>
       <div
+        ref={rowRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
         style={{
-          transform: `translateX(${offsetX}px)`,
-          transition: isDragging ? "none" : "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)",
           backgroundColor: "var(--color-surface-container-low)",
           borderRadius: "6px",
           position: "relative",
