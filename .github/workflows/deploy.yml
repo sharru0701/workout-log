@@ -65,10 +65,20 @@ jobs:
             with urllib.request.urlopen(req) as resp:
               return json.load(resp)
 
+          def deployment_commit_sha(deployment):
+            meta = deployment.get("meta") or {}
+            if meta.get("githubCommitSha"):
+              return meta["githubCommitSha"]
+
+            git_source = deployment.get("gitSource") or {}
+            if git_source.get("sha"):
+              return git_source["sha"]
+
+            return ""
+
           def find_target(deployments):
             for deployment in deployments:
-              meta = deployment.get("meta") or {}
-              commit_sha = meta.get("githubCommitSha") or ""
+              commit_sha = deployment_commit_sha(deployment)
               if commit_sha == target_sha:
                 return deployment
             return None
@@ -80,10 +90,14 @@ jobs:
               until = None
               found = None
 
+              latest_seen_sha = ""
+
               while page_count < 10:
                 payload = fetch_page(until)
                 page_count += 1
                 deployments = payload.get("deployments") or []
+                if not latest_seen_sha and deployments:
+                  latest_seen_sha = deployment_commit_sha(deployments[0])
                 found = find_target(deployments)
                 if found:
                   break
@@ -106,6 +120,8 @@ jobs:
                 sys.exit(1)
               if state == "NOT_FOUND":
                 print("Vercel deployment for commit is not visible yet.")
+                if latest_seen_sha:
+                  print(f"Most recent deployment commit seen: {latest_seen_sha}")
             except urllib.error.HTTPError as exc:
               detail = exc.read().decode("utf-8", errors="replace")
               print(f"Vercel API HTTP error {exc.code}: {detail}")
