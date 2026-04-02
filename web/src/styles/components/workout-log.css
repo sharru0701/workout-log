@@ -13,7 +13,12 @@
   background: var(--color-surface-container-low);
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow-color-soft);
-  contain: layout;
+  /*
+   * `contain: layout` isolated each card into its own layout container.
+   * On long workout logs this made fast scrolls show checkerboard-like
+   * repaints when cards re-entered the viewport on mobile browsers.
+   * Keep cards in normal flow to prioritize scroll continuity.
+   */
 }
 
 .exercise-card__header {
