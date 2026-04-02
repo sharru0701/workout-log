@@ -43,6 +43,6 @@ jobs:
 
       - name: Run DB migrations
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ secrets.SUPABASE_DIRECT_URL }}
           DB_MIGRATE_RUNNER: github-actions
         run: node scripts/migrate.mjs
