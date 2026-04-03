@@ -1060,23 +1060,101 @@ function buildResetProtocolMessage(
   return lines.join("\n");
 }
 
-function cleanupStaleBottomSheetLock() {
-  if (typeof window === "undefined") return;
-  const activeSheets = document.querySelectorAll(".mobile-bottom-sheet:not([inert])");
-  if (activeSheets.length > 0) return;
+function RestoreDraftSheet({
+  request,
+  title,
+  message,
+  confirmText,
+  cancelText,
+  closeLabel,
+  onResolve,
+}: {
+  request: PendingRestorePrompt | null;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  closeLabel: string;
+  onResolve: (keep: boolean) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const closeTimerRef = useRef<number | null>(null);
+  const closingRef = useRef(false);
 
-  const body = document.body;
-  const root = document.documentElement;
-  delete body.dataset.bottomSheetLockCount;
-  delete body.dataset.bottomSheetScrollY;
-  delete root.dataset.bottomSheetOpen;
-  body.style.position = "";
-  body.style.top = "";
-  body.style.left = "";
-  body.style.right = "";
-  body.style.width = "";
-  body.style.overflow = "";
-  root.style.overflow = "";
+  useEffect(() => {
+    if (request) {
+      closingRef.current = false;
+      setOpen(true);
+      return;
+    }
+    setOpen(false);
+  }, [request]);
+
+  const beginClose = useCallback((keep: boolean) => {
+    if (!request || closingRef.current) return;
+    closingRef.current = true;
+    setOpen(false);
+    if (closeTimerRef.current !== null) {
+      window.clearTimeout(closeTimerRef.current);
+    }
+    closeTimerRef.current = window.setTimeout(() => {
+      closeTimerRef.current = null;
+      closingRef.current = false;
+      onResolve(keep);
+    }, 420);
+  }, [onResolve, request]);
+
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current !== null) {
+        window.clearTimeout(closeTimerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <BottomSheet
+      open={open}
+      title={title}
+      description={message}
+      onClose={() => beginClose(false)}
+      closeLabel={closeLabel}
+      footer={
+        request ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--space-xs)",
+              width: "100%",
+            }}
+          >
+            <PrimaryButton
+              type="button"
+              variant="primary"
+              fullWidth
+              onClick={() => beginClose(true)}
+            >
+              {confirmText}
+            </PrimaryButton>
+            <button
+              type="button"
+              className="btn btn-secondary btn-full"
+              onClick={() => beginClose(false)}
+            >
+              {cancelText}
+            </button>
+          </div>
+        ) : null
+      }
+    >
+      <div style={{ paddingBottom: "var(--space-sm)" }}>
+        <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--color-text-muted)" }}>
+          {message}
+        </p>
+      </div>
+    </BottomSheet>
+  );
 }
 
 export default function WorkoutRecordPage() {
@@ -1117,7 +1195,6 @@ export default function WorkoutRecordPage() {
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [pendingRestorePrompt, setPendingRestorePrompt] = useState<PendingRestorePrompt | null>(null);
-  const [restorePromptOpen, setRestorePromptOpen] = useState(false);
 
   const [failureProtocolSheet, setFailureProtocolSheet] = useState<{
     title: string;
@@ -1126,7 +1203,6 @@ export default function WorkoutRecordPage() {
   } | null>(null);
   const failureProtocolResolveRef = useRef<((choice: FailureProtocolChoice) => void) | null>(null);
   const restorePromptResolveRef = useRef<((keep: boolean) => void) | null>(null);
-  const restorePromptCloseTimerRef = useRef<number | null>(null);
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -1144,7 +1220,7 @@ export default function WorkoutRecordPage() {
   const workoutPreferencesRef = useRef<WorkoutPreferences>(toDefaultWorkoutPreferences());
 
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
-  const isRestoreFlowActive = restorePromptOpen || pendingRestorePrompt !== null || isRestoringRef.current;
+  const isRestoreFlowActive = pendingRestorePrompt !== null || isRestoringRef.current;
   useEffect(() => {
     persistenceKeyRef.current = persistenceKey;
     // 플랜이나 날짜가 바뀌면 이전 복구 상태는 더 이상 유효하지 않음
@@ -1173,7 +1249,6 @@ export default function WorkoutRecordPage() {
             capturedKey,
             data,
           });
-          setRestorePromptOpen(true);
         });
 
         if (shouldKeep) {
@@ -1198,35 +1273,10 @@ export default function WorkoutRecordPage() {
   );
 
   const resolveRestorePrompt = useCallback((keep: boolean) => {
-    setRestorePromptOpen(false);
-    if (restorePromptCloseTimerRef.current !== null) {
-      window.clearTimeout(restorePromptCloseTimerRef.current);
-    }
-    restorePromptCloseTimerRef.current = window.setTimeout(() => {
-      restorePromptResolveRef.current?.(keep);
-      restorePromptResolveRef.current = null;
-      restorePromptCloseTimerRef.current = null;
-      setPendingRestorePrompt(null);
-    }, 420);
+    restorePromptResolveRef.current?.(keep);
+    restorePromptResolveRef.current = null;
+    setPendingRestorePrompt(null);
   }, []);
-
-  useEffect(() => {
-    return () => {
-      if (restorePromptCloseTimerRef.current !== null) {
-        window.clearTimeout(restorePromptCloseTimerRef.current);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (restorePromptOpen || pendingRestorePrompt !== null) return;
-    const timer = window.setTimeout(() => {
-      cleanupStaleBottomSheetLock();
-    }, 450);
-    return () => {
-      window.clearTimeout(timer);
-    };
-  }, [pendingRestorePrompt, restorePromptOpen]);
 
   const selectedPlan = useMemo(
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
@@ -2675,47 +2725,15 @@ export default function WorkoutRecordPage() {
         </div>
       </BottomSheet>
 
-    <BottomSheet
-      open={restorePromptOpen}
+    <RestoreDraftSheet
+      request={pendingRestorePrompt}
       title={copy.workoutLog.restoreDraftTitle}
-      description={copy.workoutLog.restoreDraftMessage}
-      onClose={() => resolveRestorePrompt(false)}
+      message={copy.workoutLog.restoreDraftMessage}
+      confirmText={copy.workoutLog.restoreDraftConfirm}
+      cancelText={copy.workoutLog.restoreDraftDiscard}
       closeLabel={copy.workoutLog.close}
-      footer={
-        pendingRestorePrompt ? (
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "var(--space-xs)",
-              width: "100%",
-            }}
-          >
-            <PrimaryButton
-              type="button"
-              variant="primary"
-              fullWidth
-              onClick={() => resolveRestorePrompt(true)}
-            >
-              {copy.workoutLog.restoreDraftConfirm}
-            </PrimaryButton>
-            <button
-              type="button"
-              className="btn btn-secondary btn-full"
-              onClick={() => resolveRestorePrompt(false)}
-            >
-              {copy.workoutLog.restoreDraftDiscard}
-            </button>
-          </div>
-        ) : null
-      }
-    >
-      <div style={{ paddingBottom: "var(--space-sm)" }}>
-        <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--color-text-muted)" }}>
-          {copy.workoutLog.restoreDraftMessage}
-        </p>
-      </div>
-    </BottomSheet>
+      onResolve={resolveRestorePrompt}
+    />
 
     <FailureProtocolSheet
       open={failureProtocolSheet !== null}
