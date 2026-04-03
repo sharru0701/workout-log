@@ -255,15 +255,11 @@ export function BottomSheet({
     if (!open) return;
 
     const body = document.body;
-    const root = document.documentElement;
     const lockCount = Number(body.dataset.bottomSheetLockCount ?? "0");
 
     if (lockCount === 0) {
-      root.dataset.bottomSheetOpen = "true";
-      body.style.overflow = "hidden";
-      body.style.touchAction = "none";
-      root.style.overflow = "hidden";
-      root.style.overscrollBehavior = "none";
+      // No global html/body scroll lock here.
+      // iOS Safari paints the status bar from the root layer when these styles change.
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -273,12 +269,7 @@ export function BottomSheet({
       body.dataset.bottomSheetLockCount = String(nextLockCount);
       if (nextLockCount > 0) return;
 
-      delete body.dataset.bottomSheetLockCount; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.overflow = "";
-      body.style.touchAction = "";
-      delete root.dataset.bottomSheetOpen;
-      root.style.overflow = "";
-      root.style.overscrollBehavior = "";
+      delete body.dataset.bottomSheetLockCount;
     };
   }, [open]);
 
