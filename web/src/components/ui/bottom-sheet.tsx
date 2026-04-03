@@ -2,7 +2,6 @@
 
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 import { BottomSheetActionHeader, type BottomSheetPrimaryAction } from "./bottom-sheet-action-header";
 
@@ -85,7 +84,6 @@ export function BottomSheet({
   footer,
 }: BottomSheetProps) {
   const sheetId = useId();
-  const [mounted, setMounted] = useState(false);
   const [present, setPresent] = useState(open);
   const [isTopSheet, setIsTopSheet] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
@@ -95,10 +93,6 @@ export function BottomSheet({
   const openAnimationFrameRef = useRef<number | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const closeAnimationMs = 400;
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (open) {
@@ -115,7 +109,6 @@ export function BottomSheet({
   }, [closeAnimationMs, open, present]);
 
   useEffect(() => {
-    if (!mounted) return;
     if (openAnimationFrameRef.current !== null) {
       window.cancelAnimationFrame(openAnimationFrameRef.current);
       openAnimationFrameRef.current = null;
@@ -136,7 +129,7 @@ export function BottomSheet({
       window.cancelAnimationFrame(openAnimationFrameRef.current);
       openAnimationFrameRef.current = null;
     };
-  }, [mounted, open]);
+  }, [open]);
 
   const syncTopSheetState = useCallback(() => {
     if (!open) {
@@ -454,7 +447,7 @@ export function BottomSheet({
     </div>
   );
 
-  if (!mounted || !present) return null;
+  if (!present) return null;
 
-  return createPortal(sheetElement, document.body);
+  return sheetElement;
 }
