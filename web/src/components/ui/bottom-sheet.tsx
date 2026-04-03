@@ -259,16 +259,11 @@ export function BottomSheet({
     const lockCount = Number(body.dataset.bottomSheetLockCount ?? "0");
 
     if (lockCount === 0) {
-      const scrollY = window.scrollY;
-      body.dataset.bottomSheetScrollY = String(scrollY);
       root.dataset.bottomSheetOpen = "true";
-      body.style.position = "fixed"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.top = `-${scrollY}px`; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.left = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.right = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.width = "100%"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      root.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.overflow = "hidden";
+      body.style.touchAction = "none";
+      root.style.overflow = "hidden";
+      root.style.overscrollBehavior = "none";
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -278,18 +273,12 @@ export function BottomSheet({
       body.dataset.bottomSheetLockCount = String(nextLockCount);
       if (nextLockCount > 0) return;
 
-      const scrollY = Number(body.dataset.bottomSheetScrollY ?? "0");
       delete body.dataset.bottomSheetLockCount; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      delete body.dataset.bottomSheetScrollY; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.position = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.top = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.left = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.right = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.width = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.overflow = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      body.style.overflow = "";
+      body.style.touchAction = "";
       delete root.dataset.bottomSheetOpen;
       root.style.overflow = "";
-      window.scrollTo(0, scrollY); // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
+      root.style.overscrollBehavior = "";
     };
   }, [open]);
 
