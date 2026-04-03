@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
@@ -1142,9 +1142,11 @@ export default function WorkoutRecordPage() {
         });
 
         if (shouldKeep) {
-          setDraft(data.draft);
-          setProgramEntryState(data.programEntryState);
-          setWorkflowState("editing");
+          startTransition(() => {
+            setDraft(data.draft);
+            setProgramEntryState(data.programEntryState);
+            setWorkflowState("editing");
+          });
           return true;
         }
 
@@ -1200,41 +1202,65 @@ export default function WorkoutRecordPage() {
       sourceDraft: WorkoutRecordDraft,
       preferences: WorkoutPreferences,
     ) => {
+      let seedChanged = false;
+      const nextSeedExercises = sourceDraft.seedExercises.map((exercise) => {
+        const nextWeightKg = resolveWeightWithPreferences(
+          computeExternalLoadFromTotalKg(
+            exercise.exerciseName,
+            typeof exercise.prescribedWeightKg === "number"
+              ? exercise.prescribedWeightKg
+              : exercise.set.weightKg,
+            preferences.bodyweightKg,
+          ) ??
+            (typeof exercise.prescribedWeightKg === "number"
+              ? exercise.prescribedWeightKg
+              : exercise.set.weightKg),
+          exercise.exerciseId,
+          exercise.exerciseName,
+          preferences,
+        );
+        if (Math.abs(exercise.set.weightKg - nextWeightKg) < 0.0001) {
+          return exercise;
+        }
+        seedChanged = true;
+        return {
+          ...exercise,
+          set: {
+            ...exercise.set,
+            weightKg: nextWeightKg,
+          },
+        };
+      });
+
+      let userChanged = false;
+      const nextUserExercises = sourceDraft.userExercises.map((exercise) => {
+        const nextWeightKg = resolveWeightWithPreferences(
+          exercise.set.weightKg,
+          exercise.exerciseId,
+          exercise.exerciseName,
+          preferences,
+        );
+        if (Math.abs(exercise.set.weightKg - nextWeightKg) < 0.0001) {
+          return exercise;
+        }
+        userChanged = true;
+        return {
+          ...exercise,
+          set: {
+            ...exercise.set,
+            weightKg: nextWeightKg,
+          },
+        };
+      });
+
+      if (!seedChanged && !userChanged) {
+        return sourceDraft;
+      }
+
       return {
         ...sourceDraft,
-        seedExercises: sourceDraft.seedExercises.map((exercise) => ({
-          ...exercise,
-          set: {
-            ...exercise.set,
-            weightKg: resolveWeightWithPreferences(
-              computeExternalLoadFromTotalKg(
-                exercise.exerciseName,
-                typeof exercise.prescribedWeightKg === "number"
-                  ? exercise.prescribedWeightKg
-                  : exercise.set.weightKg,
-                preferences.bodyweightKg,
-              ) ??
-                (typeof exercise.prescribedWeightKg === "number"
-                  ? exercise.prescribedWeightKg
-                  : exercise.set.weightKg),
-              exercise.exerciseId,
-              exercise.exerciseName,
-              preferences,
-            ),
-          },
-        })),
-        userExercises: sourceDraft.userExercises.map((exercise) => ({
-          ...exercise,
-          set: {
-            ...exercise.set,
-            weightKg: resolveWeightWithPreferences(
-              exercise.set.weightKg,
-              exercise.exerciseId,
-              exercise.exerciseName,
-              preferences,
-            ),
-          },
-        })),
+        seedExercises: nextSeedExercises,
+        userExercises: nextUserExercises,
       };
     },
     [resolveWeightWithPreferences],
