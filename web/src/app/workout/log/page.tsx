@@ -573,6 +573,7 @@ function SwipeableSetRow({
           right: 0,
           top: 0,
           bottom: 0,
+          zIndex: 0,
           width: "44px",
           display: "flex",
           alignItems: "center",
@@ -603,6 +604,8 @@ function SwipeableSetRow({
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
         style={{
+          position: "relative",
+          zIndex: 1,
           backgroundColor: "var(--color-surface-container-low)",
           borderRadius: "6px",
           touchAction: "pan-y",
