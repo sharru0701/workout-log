@@ -14,11 +14,12 @@
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow-color-soft);
   /*
-   * `contain: layout` isolated each card into its own layout container.
-   * On long workout logs this made fast scrolls show checkerboard-like
-   * repaints when cards re-entered the viewport on mobile browsers.
-   * Keep cards in normal flow to prioritize scroll continuity.
+   * content-visibility: auto — 뷰포트 밖 카드의 레이아웃/페인트를 브라우저가 즉시 건너뜀.
+   * contain-intrinsic-size — 카드 높이 추정값을 힌트로 제공, 스크롤바 위치 안정화.
+   * 빠른 스크롤 중 체커보드 재페인트와 렌더링 지연 문제를 해소합니다.
    */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 280px;
 }
 
 .exercise-card__header {

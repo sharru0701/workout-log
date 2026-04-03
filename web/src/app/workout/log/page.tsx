@@ -519,7 +519,10 @@ function SwipeableSetRow({
     if (disabled) return;
     startXRef.current = e.touches[0].clientX;
     isDraggingRef.current = true;
-    if (rowRef.current) rowRef.current.style.transition = "none";
+    if (rowRef.current) {
+      rowRef.current.style.transition = "none";
+      rowRef.current.style.willChange = "transform";
+    }
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -539,6 +542,7 @@ function SwipeableSetRow({
   const handleTouchEnd = () => {
     if (disabled || !rowRef.current) return;
     isDraggingRef.current = false;
+    rowRef.current.style.willChange = "auto";
     rowRef.current.style.transition = "transform 0.2s cubic-bezier(0.32, 0.72, 0, 1)";
     if (offsetXRef.current < -22) {
       offsetXRef.current = -44;

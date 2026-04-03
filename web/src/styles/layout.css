@@ -12,6 +12,11 @@
   padding-top: env(safe-area-inset-top, 0px);
   /* 하단 탭바(64px) + iOS 홈 인디케이터 영역 + 여백 */
   padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--space-md));
+  /*
+   * touch-action: pan-y — 브라우저에게 수직 스크롤 전용임을 힌트.
+   * 수평 스와이프와의 충돌 없이 스크롤 처리를 즉각화합니다.
+   */
+  touch-action: pan-y;
 }
 
 /* Base utility padding container */

@@ -10,6 +10,11 @@ body {
   /* 동적 뷰포트를 항상 채우도록 설정 */
   min-height: 100vh;
   min-height: 100dvh;
+  /*
+   * overscroll-behavior-y: contain — 페이지 끝에서 스크롤 바운스/체이닝 방지.
+   * 모바일에서 pull-to-refresh 트리거, iOS bounce 등 스크롤 끊김의 주요 원인을 제거.
+   */
+  overscroll-behavior-y: contain;
 }
 
 *,
