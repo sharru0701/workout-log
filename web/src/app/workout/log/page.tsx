@@ -1066,7 +1066,6 @@ function RestoreDraftSheet({
   message,
   confirmText,
   cancelText,
-  closeLabel,
   onResolve,
 }: {
   request: PendingRestorePrompt | null;
@@ -1074,7 +1073,6 @@ function RestoreDraftSheet({
   message: string;
   confirmText: string;
   cancelText: string;
-  closeLabel: string;
   onResolve: (keep: boolean) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -1112,48 +1110,134 @@ function RestoreDraftSheet({
     };
   }, []);
 
+  useEffect(() => {
+    if (!open || !request) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        beginClose(false);
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [beginClose, open, request]);
+
+  if (!request) return null;
+
   return (
-    <BottomSheet
-      open={open}
-      title={title}
-      description={message}
-      onClose={() => beginClose(false)}
-      closeLabel={closeLabel}
-      footer={
-        request ? (
+    <div
+      aria-hidden={!open}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 9999,
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: `max(env(safe-area-inset-top, 0px), var(--space-md)) var(--space-md) calc(env(safe-area-inset-bottom, 0px) + var(--space-md))`,
+        pointerEvents: open ? "auto" : "none",
+        opacity: open ? 1 : 0,
+        transition: "opacity 0.28s ease",
+      }}
+    >
+      <button
+        type="button"
+        aria-label={cancelText}
+        onClick={() => beginClose(false)}
+        style={{
+          position: "absolute",
+          inset: 0,
+          border: "none",
+          background: "var(--color-overlay)",
+          backdropFilter: "blur(8px)",
+          WebkitBackdropFilter: "blur(8px)",
+          cursor: "pointer",
+          opacity: open ? 1 : 0,
+          transition: "opacity 0.28s ease",
+        }}
+      />
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        style={{
+          position: "relative",
+          width: "min(100%, 640px)",
+          background: "var(--color-surface-container-low)",
+          borderTopLeftRadius: 32,
+          borderTopRightRadius: 32,
+          border: "1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent)",
+          boxShadow: "0 -12px 48px var(--shadow-color-strong), 0 -2px 8px var(--shadow-color-soft)",
+          padding: "var(--space-lg) var(--space-md) calc(env(safe-area-inset-bottom, 0px) + var(--space-md))",
+          transform: open ? "translateY(0)" : "translateY(100%)",
+          transition: "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            marginBottom: "var(--space-md)",
+          }}
+        >
           <div
+            aria-hidden="true"
             style={{
-              display: "flex",
-              flexDirection: "column",
-              gap: "var(--space-xs)",
-              width: "100%",
+              width: 48,
+              height: 4,
+              borderRadius: 999,
+              background: "var(--color-outline-variant)",
+              opacity: 0.3,
+            }}
+          />
+        </div>
+        <div style={{ textAlign: "center", marginBottom: "var(--space-md)" }}>
+          <h2
+            style={{
+              margin: 0,
+              fontFamily: "var(--font-headline-family)",
+              fontSize: "16px",
+              fontWeight: 800,
+              letterSpacing: "-0.3px",
+              color: "var(--color-text)",
+              lineHeight: 1.2,
             }}
           >
-            <PrimaryButton
-              type="button"
-              variant="primary"
-              fullWidth
-              onClick={() => beginClose(true)}
-            >
-              {confirmText}
-            </PrimaryButton>
-            <button
-              type="button"
-              className="btn btn-secondary btn-full"
-              onClick={() => beginClose(false)}
-            >
-              {cancelText}
-            </button>
-          </div>
-        ) : null
-      }
-    >
-      <div style={{ paddingBottom: "var(--space-sm)" }}>
-        <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--color-text-muted)" }}>
-          {message}
-        </p>
-      </div>
-    </BottomSheet>
+            {title}
+          </h2>
+        </div>
+        <div style={{ paddingBottom: "var(--space-md)" }}>
+          <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--color-text-muted)", textAlign: "center" }}>
+            {message}
+          </p>
+        </div>
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "var(--space-xs)",
+            width: "100%",
+          }}
+        >
+          <PrimaryButton
+            type="button"
+            variant="primary"
+            fullWidth
+            onClick={() => beginClose(true)}
+          >
+            {confirmText}
+          </PrimaryButton>
+          <button
+            type="button"
+            className="btn btn-secondary btn-full"
+            onClick={() => beginClose(false)}
+          >
+            {cancelText}
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -2731,7 +2815,6 @@ export default function WorkoutRecordPage() {
       message={copy.workoutLog.restoreDraftMessage}
       confirmText={copy.workoutLog.restoreDraftConfirm}
       cancelText={copy.workoutLog.restoreDraftDiscard}
-      closeLabel={copy.workoutLog.close}
       onResolve={resolveRestorePrompt}
     />
 
