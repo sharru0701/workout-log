@@ -432,9 +432,9 @@ function WorkoutRecordInlinePicker({
 }: {
   label: string;
   value: number;
-  min: number;
-  max: number;
-  step: number;
+  min?: number;
+  max?: number;
+  step?: number;
   onChange: (value: number) => void;
   formatValue?: (value: number) => string;
   sheetTitle?: string;
@@ -444,6 +444,10 @@ function WorkoutRecordInlinePicker({
 }) {
   const [open, setOpen] = useState(false);
   const displayValue = formatValue ? formatValue(value) : String(value);
+  const usesLocalSheet =
+    typeof min === "number" &&
+    typeof max === "number" &&
+    typeof step === "number";
 
   return (
     <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
@@ -479,22 +483,30 @@ function WorkoutRecordInlinePicker({
           fontVariantNumeric: "tabular-nums",
           minHeight: "44px",
         }}
-        onClick={() => setOpen(true)}
+        onClick={() => {
+          if (usesLocalSheet) {
+            setOpen(true);
+            return;
+          }
+          onChange(value);
+        }}
         aria-label={`${label}: ${displayValue}`}
       >
         <span>{displayValue}</span>
       </button>
-      <NumberPickerSheet
-        open={open}
-        onClose={() => setOpen(false)}
-        title={sheetTitle ?? label}
-        value={value}
-        min={min}
-        max={max}
-        step={step}
-        onChange={onChange}
-        formatValue={formatValue}
-      />
+      {usesLocalSheet ? (
+        <NumberPickerSheet
+          open={open}
+          onClose={() => setOpen(false)}
+          title={sheetTitle ?? label}
+          value={value}
+          min={min}
+          max={max}
+          step={step}
+          onChange={onChange}
+          formatValue={formatValue}
+        />
+      ) : null}
     </div>
   );
 }
@@ -611,6 +623,29 @@ type ExerciseRowAction =
   | { type: "CHANGE_MEMO"; value: string }
   | { type: "DELETE" };
 
+type InlinePickerRequest =
+  | {
+      type: "CHANGE_WEIGHT";
+      exerciseId: string;
+      title: string;
+      value: number;
+      min: number;
+      max: number;
+      step: number;
+      formatValue?: (value: number) => string;
+    }
+  | {
+      type: "CHANGE_SET_REPS";
+      exerciseId: string;
+      setIndex: number;
+      title: string;
+      value: number;
+      min: number;
+      max: number;
+      step: number;
+      formatValue?: (value: number) => string;
+    };
+
 const ExerciseRow = memo(function ExerciseRow({
   exerciseId,
   exercise,
@@ -620,6 +655,7 @@ const ExerciseRow = memo(function ExerciseRow({
   programEntryState,
   prevPerformance,
   onAction,
+  onOpenInlinePicker,
 }: {
   exerciseId: string;
   exercise: WorkoutExerciseViewModel;
@@ -629,6 +665,7 @@ const ExerciseRow = memo(function ExerciseRow({
   programEntryState?: WorkoutProgramExerciseEntryState;
   prevPerformance?: string;
   onAction: (exerciseId: string, action: ExerciseRowAction) => void;
+  onOpenInlinePicker: (request: InlinePickerRequest) => void;
 }) {
   const { copy, locale } = useLocale();
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
@@ -762,26 +799,43 @@ const ExerciseRow = memo(function ExerciseRow({
                   <WorkoutRecordInlinePicker
                     label={locale === "ko" ? `${index + 1}세트 무게` : `Set ${index + 1} Weight`}
                     value={resolvedRowWeightKg}
-                    min={0}
-                    max={1000}
-                    step={minimumPlateIncrementKg}
                     formatValue={(value) => formatCompactWeightValue(value, minimumPlateIncrementKg)}
                     color="var(--text-metric-weight)"
                     complete={isSetComplete}
                     failed={isFailure}
-                    onChange={(value) => onAction(exerciseId, { type: "CHANGE_WEIGHT", value })}
+                    onChange={(value) =>
+                      onOpenInlinePicker({
+                        type: "CHANGE_WEIGHT",
+                        exerciseId,
+                        title: locale === "ko" ? `${exercise.exerciseName} 무게` : `${exercise.exerciseName} Weight`,
+                        value,
+                        min: 0,
+                        max: 1000,
+                        step: minimumPlateIncrementKg,
+                        formatValue: (nextValue) => formatCompactWeightValue(nextValue, minimumPlateIncrementKg),
+                      })
+                    }
                   />
                   <WorkoutRecordInlinePicker
                     label={locale === "ko" ? `${index + 1}세트 횟수` : `Set ${index + 1} Reps`}
                     value={setReps}
-                    min={0}
-                    max={100}
-                    step={1}
                     complete={isSetComplete}
                     failed={isFailure}
                     formatValue={(value) => String(Math.round(value))}
                     color="var(--text-metric-reps)"
-                    onChange={(value) => onAction(exerciseId, { type: "CHANGE_SET_REPS", setIndex: index, value })}
+                    onChange={(value) =>
+                      onOpenInlinePicker({
+                        type: "CHANGE_SET_REPS",
+                        exerciseId,
+                        setIndex: index,
+                        title: locale === "ko" ? `${exercise.exerciseName} ${index + 1}세트 횟수` : `${exercise.exerciseName} Set ${index + 1} Reps`,
+                        value,
+                        min: 0,
+                        max: 100,
+                        step: 1,
+                        formatValue: (nextValue) => String(Math.round(nextValue)),
+                      })
+                    }
                   />
                   <div className="set-row__done">
                     {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
@@ -1048,6 +1102,7 @@ export default function WorkoutRecordPage() {
   const [exerciseOptionsError, setExerciseOptionsError] = useState<string | null>(null);
   const [addDraft, setAddDraft] = useState<AddExerciseDraft>(createDefaultAddExerciseDraft);
   const [programEntryState, setProgramEntryState] = useState<WorkoutProgramExerciseEntryStateMap>({});
+  const [inlinePickerRequest, setInlinePickerRequest] = useState<InlinePickerRequest | null>(null);
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
   const exerciseOptionsCacheRef = useRef(new Map<string, ExerciseOption[]>());
   const exerciseOptionsAbortRef = useRef<AbortController | null>(null);
@@ -1376,6 +1431,27 @@ export default function WorkoutRecordPage() {
       }
     }
   }, [applyEditing, setProgramEntryState, resolveWeightWithPreferences]);
+
+  const openInlinePicker = useCallback((request: InlinePickerRequest) => {
+    setInlinePickerRequest(request);
+  }, []);
+
+  const closeInlinePicker = useCallback(() => {
+    setInlinePickerRequest(null);
+  }, []);
+
+  const handleInlinePickerChange = useCallback((value: number) => {
+    if (!inlinePickerRequest) return;
+    if (inlinePickerRequest.type === "CHANGE_WEIGHT") {
+      handleExerciseAction(inlinePickerRequest.exerciseId, { type: "CHANGE_WEIGHT", value });
+    } else {
+      handleExerciseAction(inlinePickerRequest.exerciseId, {
+        type: "CHANGE_SET_REPS",
+        setIndex: inlinePickerRequest.setIndex,
+        value,
+      });
+    }
+  }, [handleExerciseAction, inlinePickerRequest]);
 
   const loadExerciseOptions = useCallback(async (queryValue: string) => {
     try {
@@ -2130,6 +2206,7 @@ export default function WorkoutRecordPage() {
                           prevPerformance={prevPerformanceMap[exercise.exerciseName]}
                           programEntryState={memoizedProgramEntryStates[exercise.id]}
                           onAction={handleExerciseAction}
+                          onOpenInlinePicker={openInlinePicker}
                         />
                       </div>
                     ))}
@@ -2219,6 +2296,18 @@ export default function WorkoutRecordPage() {
           </section>
         </>
       )}
+
+      <NumberPickerSheet
+        open={inlinePickerRequest !== null}
+        onClose={closeInlinePicker}
+        title={inlinePickerRequest?.title ?? (locale === "ko" ? "숫자 선택" : "Select Number")}
+        value={inlinePickerRequest?.value ?? 0}
+        min={inlinePickerRequest?.min ?? 0}
+        max={inlinePickerRequest?.max ?? 100}
+        step={inlinePickerRequest?.step ?? 1}
+        onChange={handleInlinePickerChange}
+        formatValue={inlinePickerRequest?.formatValue}
+      />
 
       <SearchSelectSheet
         open={planSheetOpen}
