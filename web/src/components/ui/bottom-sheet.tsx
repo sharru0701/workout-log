@@ -56,6 +56,32 @@ function getActiveHtmlElement() {
   return document.activeElement instanceof HTMLElement ? document.activeElement : null;
 }
 
+function findScrollableAncestorWithin(root: HTMLElement, target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return null;
+
+  let current: HTMLElement | null = target;
+  while (current && current !== root) {
+    const style = window.getComputedStyle(current);
+    const canScrollY = /(auto|scroll|overlay)/.test(style.overflowY);
+    if (canScrollY && current.scrollHeight > current.clientHeight + 1) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+
+  return root.scrollHeight > root.clientHeight + 1 ? root : null;
+}
+
+function canScrollInDirection(element: HTMLElement, deltaY: number) {
+  if (deltaY < 0) {
+    return element.scrollTop > 0;
+  }
+  if (deltaY > 0) {
+    return element.scrollTop + element.clientHeight < element.scrollHeight - 1;
+  }
+  return true;
+}
+
 type BottomSheetProps = {
   open: boolean;
   title: string;
@@ -88,10 +114,12 @@ export function BottomSheet({
   const [isTopSheet, setIsTopSheet] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
+  const contentRef = useRef<HTMLDivElement | null>(null);
   const dragCleanupRef = useRef<(() => void) | null>(null);
   const closeAnimationTimerRef = useRef<number | null>(null);
   const openAnimationFrameRef = useRef<number | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
+  const lastTouchYRef = useRef<number | null>(null);
   const closeAnimationMs = 400;
 
   useEffect(() => {
@@ -282,6 +310,74 @@ export function BottomSheet({
   }, [open]);
 
   useEffect(() => {
+    if (!isInteractiveSheet) return;
+
+    const content = contentRef.current;
+    const panel = panelRef.current;
+    if (!content || !panel) return;
+
+    const onTouchStart = (event: TouchEvent) => {
+      lastTouchYRef.current = event.touches[0]?.clientY ?? null;
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      const target = event.target;
+      const touchY = event.touches[0]?.clientY ?? null;
+      const previousTouchY = lastTouchYRef.current;
+      if (touchY !== null) {
+        lastTouchYRef.current = touchY;
+      }
+
+      if (panel.contains(target as Node) && !content.contains(target as Node)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!content.contains(target as Node)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (touchY === null || previousTouchY === null) return;
+
+      const deltaY = previousTouchY - touchY;
+      const scrollable = findScrollableAncestorWithin(content, target);
+      if (!scrollable || !canScrollInDirection(scrollable, deltaY)) {
+        event.preventDefault();
+      }
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      const target = event.target;
+      if (panel.contains(target as Node) && !content.contains(target as Node)) {
+        event.preventDefault();
+        return;
+      }
+
+      if (!content.contains(target as Node)) {
+        event.preventDefault();
+        return;
+      }
+
+      const scrollable = findScrollableAncestorWithin(content, target);
+      if (!scrollable || !canScrollInDirection(scrollable, event.deltaY)) {
+        event.preventDefault();
+      }
+    };
+
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
+    document.addEventListener("touchmove", onTouchMove, { capture: true, passive: false });
+    document.addEventListener("wheel", onWheel, { capture: true, passive: false });
+
+    return () => {
+      lastTouchYRef.current = null;
+      document.removeEventListener("touchstart", onTouchStart, true);
+      document.removeEventListener("touchmove", onTouchMove, true);
+      document.removeEventListener("wheel", onWheel, true);
+    };
+  }, [isInteractiveSheet]);
+
+  useEffect(() => {
     if (open) {
       if (closeAnimationTimerRef.current !== null) {
         window.clearTimeout(closeAnimationTimerRef.current);
@@ -440,7 +536,7 @@ export function BottomSheet({
               </button>
             </header>
           ))}
-          <div className="mobile-bottom-sheet-content">{children}</div>
+          <div ref={contentRef} className="mobile-bottom-sheet-content">{children}</div>
           {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
         </section>
       </div>
