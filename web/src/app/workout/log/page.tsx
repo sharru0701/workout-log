@@ -1125,6 +1125,7 @@ export default function WorkoutRecordPage() {
   const workoutPreferencesRef = useRef<WorkoutPreferences>(toDefaultWorkoutPreferences());
 
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
+  const isRestoreFlowActive = restorePromptOpen || pendingRestorePrompt !== null || isRestoringRef.current;
   useEffect(() => {
     persistenceKeyRef.current = persistenceKey;
     // 플랜이나 날짜가 바뀌면 이전 복구 상태는 더 이상 유효하지 않음
@@ -1727,6 +1728,7 @@ export default function WorkoutRecordPage() {
         planAutoProgression: plan?.params?.autoProgression === true,
         planSchedule: plan?.params?.schedule,
         planParams: plan?.params ?? null,
+        isRefresh: true,
       });
     };
   }, [selectedPlan, workoutPreferences, query, loadWorkoutContext, locale]);
@@ -2139,7 +2141,7 @@ export default function WorkoutRecordPage() {
 
   return (
     <>
-      {loading && <WorkoutRecordLoading />}
+      {loading && !isRestoreFlowActive && <WorkoutRecordLoading />}
       <ErrorStateRows
         message={error}
         title={locale === "ko" ? "기록 화면 데이터를 불러오지 못했습니다" : "Could not load workout log data"}
