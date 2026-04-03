@@ -1060,6 +1060,25 @@ function buildResetProtocolMessage(
   return lines.join("\n");
 }
 
+function cleanupStaleBottomSheetLock() {
+  if (typeof window === "undefined") return;
+  const activeSheets = document.querySelectorAll(".mobile-bottom-sheet:not([inert])");
+  if (activeSheets.length > 0) return;
+
+  const body = document.body;
+  const root = document.documentElement;
+  delete body.dataset.bottomSheetLockCount;
+  delete body.dataset.bottomSheetScrollY;
+  delete root.dataset.bottomSheetOpen;
+  body.style.position = "";
+  body.style.top = "";
+  body.style.left = "";
+  body.style.right = "";
+  body.style.width = "";
+  body.style.overflow = "";
+  root.style.overflow = "";
+}
+
 export default function WorkoutRecordPage() {
   const router = useRouter();
   const { copy, locale } = useLocale();
@@ -1198,6 +1217,16 @@ export default function WorkoutRecordPage() {
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (restorePromptOpen || pendingRestorePrompt !== null) return;
+    const timer = window.setTimeout(() => {
+      cleanupStaleBottomSheetLock();
+    }, 450);
+    return () => {
+      window.clearTimeout(timer);
+    };
+  }, [pendingRestorePrompt, restorePromptOpen]);
 
   const selectedPlan = useMemo(
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
