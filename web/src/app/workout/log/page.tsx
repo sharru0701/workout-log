@@ -16,6 +16,7 @@ import { useLocale } from "@/components/locale-provider";
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";
 import { parseSessionKey } from "@/lib/session-key";
+import type { WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { useWorkoutRecordPersistence } from "@/lib/workout-record/useWorkoutRecordPersistence";
 import WorkoutRecordLoading from "./loading";
@@ -649,6 +650,11 @@ type InlinePickerRequest =
       formatValue?: (value: number) => string;
     };
 
+type PendingRestorePrompt = {
+  capturedKey: string | null;
+  data: WorkoutDraftData;
+};
+
 const ExerciseRow = memo(function ExerciseRow({
   exerciseId,
   exercise,
@@ -1057,7 +1063,7 @@ function buildResetProtocolMessage(
 export default function WorkoutRecordPage() {
   const router = useRouter();
   const { copy, locale } = useLocale();
-  const { alert, confirm } = useAppDialog();
+  const { alert } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     [],
@@ -1091,6 +1097,7 @@ export default function WorkoutRecordPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
+  const [pendingRestorePrompt, setPendingRestorePrompt] = useState<PendingRestorePrompt | null>(null);
 
   const [failureProtocolSheet, setFailureProtocolSheet] = useState<{
     title: string;
@@ -1098,6 +1105,7 @@ export default function WorkoutRecordPage() {
     mode: "block-completion" | "greyskull-reset";
   } | null>(null);
   const failureProtocolResolveRef = useRef<((choice: FailureProtocolChoice) => void) | null>(null);
+  const restorePromptResolveRef = useRef<((keep: boolean) => void) | null>(null);
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -1136,12 +1144,13 @@ export default function WorkoutRecordPage() {
 
       try {
         await new Promise((resolve) => setTimeout(resolve, 150));
-        console.log("[WorkoutRecordPage] Showing restore confirm");
-        const shouldKeep = await confirm({
-          title: copy.workoutLog.restoreDraftTitle,
-          message: copy.workoutLog.restoreDraftMessage,
-          confirmText: copy.workoutLog.restoreDraftConfirm,
-          cancelText: copy.workoutLog.restoreDraftDiscard,
+        console.log("[WorkoutRecordPage] Showing restore bottom sheet");
+        const shouldKeep = await new Promise<boolean>((resolve) => {
+          restorePromptResolveRef.current = resolve;
+          setPendingRestorePrompt({
+            capturedKey,
+            data,
+          });
         });
 
         if (shouldKeep) {
@@ -1158,11 +1167,18 @@ export default function WorkoutRecordPage() {
         await reloadDraftContextRef.current?.();
         return false;
       } finally {
+        restorePromptResolveRef.current = null;
         isRestoringRef.current = false;
       }
-    }, [confirm, copy.workoutLog.restoreDraftConfirm, copy.workoutLog.restoreDraftDiscard, copy.workoutLog.restoreDraftMessage, copy.workoutLog.restoreDraftTitle]),
+    }, []),
     { enabled: true } // 즉시 복구 시도
   );
+
+  const resolveRestorePrompt = useCallback((keep: boolean) => {
+    restorePromptResolveRef.current?.(keep);
+    restorePromptResolveRef.current = null;
+    setPendingRestorePrompt(null);
+  }, []);
 
   const selectedPlan = useMemo(
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
@@ -2609,6 +2625,48 @@ export default function WorkoutRecordPage() {
           </Link>
         </div>
       </BottomSheet>
+
+    <BottomSheet
+      open={pendingRestorePrompt !== null}
+      title={copy.workoutLog.restoreDraftTitle}
+      description={copy.workoutLog.restoreDraftMessage}
+      onClose={() => resolveRestorePrompt(false)}
+      closeLabel={copy.workoutLog.close}
+      footer={
+        pendingRestorePrompt ? (
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "var(--space-xs)",
+              width: "100%",
+            }}
+          >
+            <PrimaryButton
+              type="button"
+              variant="primary"
+              fullWidth
+              onClick={() => resolveRestorePrompt(true)}
+            >
+              {copy.workoutLog.restoreDraftConfirm}
+            </PrimaryButton>
+            <button
+              type="button"
+              className="btn btn-secondary btn-full"
+              onClick={() => resolveRestorePrompt(false)}
+            >
+              {copy.workoutLog.restoreDraftDiscard}
+            </button>
+          </div>
+        ) : null
+      }
+    >
+      <div style={{ paddingBottom: "var(--space-sm)" }}>
+        <p style={{ margin: 0, whiteSpace: "pre-line", color: "var(--color-text-muted)" }}>
+          {copy.workoutLog.restoreDraftMessage}
+        </p>
+      </div>
+    </BottomSheet>
 
     <FailureProtocolSheet
       open={failureProtocolSheet !== null}
