@@ -1098,6 +1098,7 @@ export default function WorkoutRecordPage() {
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [pendingRestorePrompt, setPendingRestorePrompt] = useState<PendingRestorePrompt | null>(null);
+  const [restorePromptOpen, setRestorePromptOpen] = useState(false);
 
   const [failureProtocolSheet, setFailureProtocolSheet] = useState<{
     title: string;
@@ -1106,6 +1107,7 @@ export default function WorkoutRecordPage() {
   } | null>(null);
   const failureProtocolResolveRef = useRef<((choice: FailureProtocolChoice) => void) | null>(null);
   const restorePromptResolveRef = useRef<((keep: boolean) => void) | null>(null);
+  const restorePromptCloseTimerRef = useRef<number | null>(null);
 
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [exerciseQuery, setExerciseQuery] = useState("");
@@ -1151,6 +1153,7 @@ export default function WorkoutRecordPage() {
             capturedKey,
             data,
           });
+          setRestorePromptOpen(true);
         });
 
         if (shouldKeep) {
@@ -1175,9 +1178,24 @@ export default function WorkoutRecordPage() {
   );
 
   const resolveRestorePrompt = useCallback((keep: boolean) => {
-    restorePromptResolveRef.current?.(keep);
-    restorePromptResolveRef.current = null;
-    setPendingRestorePrompt(null);
+    setRestorePromptOpen(false);
+    if (restorePromptCloseTimerRef.current !== null) {
+      window.clearTimeout(restorePromptCloseTimerRef.current);
+    }
+    restorePromptCloseTimerRef.current = window.setTimeout(() => {
+      restorePromptResolveRef.current?.(keep);
+      restorePromptResolveRef.current = null;
+      restorePromptCloseTimerRef.current = null;
+      setPendingRestorePrompt(null);
+    }, 420);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (restorePromptCloseTimerRef.current !== null) {
+        window.clearTimeout(restorePromptCloseTimerRef.current);
+      }
+    };
   }, []);
 
   const selectedPlan = useMemo(
@@ -2627,7 +2645,7 @@ export default function WorkoutRecordPage() {
       </BottomSheet>
 
     <BottomSheet
-      open={pendingRestorePrompt !== null}
+      open={restorePromptOpen}
       title={copy.workoutLog.restoreDraftTitle}
       description={copy.workoutLog.restoreDraftMessage}
       onClose={() => resolveRestorePrompt(false)}
