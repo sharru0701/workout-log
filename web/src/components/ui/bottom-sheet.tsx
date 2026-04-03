@@ -86,6 +86,7 @@ export function BottomSheet({
 }: BottomSheetProps) {
   const sheetId = useId();
   const [mounted, setMounted] = useState(false);
+  const [present, setPresent] = useState(open);
   const [isTopSheet, setIsTopSheet] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
   const panelRef = useRef<HTMLElement | null>(null);
@@ -98,6 +99,20 @@ export function BottomSheet({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (open) {
+      setPresent(true);
+      return;
+    }
+
+    if (!present) return;
+    const timer = window.setTimeout(() => {
+      setPresent(false);
+    }, closeAnimationMs);
+
+    return () => window.clearTimeout(timer);
+  }, [closeAnimationMs, open, present]);
 
   useEffect(() => {
     if (!mounted) return;
@@ -436,7 +451,7 @@ export function BottomSheet({
     </div>
   );
 
-  if (!mounted) return null;
+  if (!mounted || !present) return null;
 
   return createPortal(sheetElement, document.body);
 }
