@@ -2,7 +2,10 @@
 
 .mobile-bottom-sheet {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 9999;
   display: flex;
   flex-direction: column;
@@ -22,7 +25,10 @@
 
 .mobile-bottom-sheet-overlay {
   position: absolute;
-  inset: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: 0;
   background-color: var(--color-overlay);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -48,8 +54,7 @@
   border-top-left-radius: 32px;
   border-top-right-radius: 32px;
   border-top: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
-  max-height: min(92vh, calc(100dvh - env(safe-area-inset-top, 0px)));
-  margin-top: env(safe-area-inset-top, 0px);
+  max-height: 92vh;
   display: flex;
   flex-direction: column;
   pointer-events: auto;
