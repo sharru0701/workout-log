@@ -26,8 +26,11 @@
 ## 피해야 할 패턴
 
 - `fixed` fullscreen backdrop를 safe-area top까지 덮는 것
+- `BottomSheet`처럼 화면 전체를 덮는 투명 버튼/overlay를 두는 것
+- overlay가 투명이어도 Safari는 그 fullscreen 레이어 자체를 top bar tint 합성 대상으로 볼 수 있음
 - `body.style.position = "fixed"` 같은 body lock
 - 모달을 닫은 뒤에도 남는 전역 dataset/class/style
+- `body.dataset.*` 같이 루트 노드에 모달 상태를 기록하는 방식
 - splash / launch overlay가 상태바 영역까지 덮는 것
 
 ## 현재 유지 중인 대응
@@ -40,18 +43,39 @@
 - [`components/app-launch-splash.tsx`](../src/components/app-launch-splash.tsx)
 - splash는 `top: env(safe-area-inset-top, 0px)` 아래에서만 렌더
 
+3. 공통 BottomSheet fullscreen overlay 제거
+- [`components/ui/bottom-sheet.tsx`](../src/components/ui/bottom-sheet.tsx)
+- [`styles/components/bottom-sheet.css`](../src/styles/components/bottom-sheet.css)
+- 바깥 탭 닫기는 fullscreen overlay/button 대신 `document` `pointerdown` 캡처로 처리
+- 시트 루트는 `top: env(safe-area-inset-top, 0px)`부터 시작
+- `body.dataset.bottomSheetStack`, `body.dataset.bottomSheetLockCount` 같은 루트 상태 기록은 사용하지 않음
+
+## 이번 이슈 결론
+
+- 공통 바텀시트의 tint 원인은 색상값 자체보다 fullscreen overlay 레이어였다
+- overlay 배경을 `transparent`로 바꾸는 것만으로는 부족했다
+- 실제로 해결된 변경은:
+  - fullscreen overlay/button 제거
+  - 바깥 탭 닫기를 문서 이벤트로 이동
+  - 시트 루트를 safe-area 아래부터 시작
+  - body dataset 기반 전역 상태 제거
+
 ## 수정할 때 체크리스트
 
 - 새 `fixed` overlay가 safe-area top까지 덮지 않는지
+- 투명 overlay라도 fullscreen 레이어 자체가 추가되지 않는지
 - top bar tint가 변하는 시점이 “첫 렌더 직후”인지, “모달 open/close 후”인지
 - `html/body` 배경과 `data-theme-preference` 적용 순서가 바뀌지 않았는지
+- `body`/`html` dataset, class, style을 모달 open/close 때 새로 건드리지 않는지
 - iOS Safari 실기기에서 새로고침 직후와 모달 open/close 후 둘 다 확인했는지
 
 ## 관련 파일
 
 - [`app/layout.tsx`](../src/app/layout.tsx)
 - [`components/app-launch-splash.tsx`](../src/components/app-launch-splash.tsx)
+- [`components/ui/bottom-sheet.tsx`](../src/components/ui/bottom-sheet.tsx)
 - [`styles/base.css`](../src/styles/base.css)
+- [`styles/components/bottom-sheet.css`](../src/styles/components/bottom-sheet.css)
 - [`styles/layout.css`](../src/styles/layout.css)
 
 ## 참고

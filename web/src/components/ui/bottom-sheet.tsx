@@ -6,50 +6,28 @@ import { MINIMAL_COPY_MODE } from "@/lib/ui/minimal-copy";
 import { BottomSheetActionHeader, type BottomSheetPrimaryAction } from "./bottom-sheet-action-header";
 
 const SHEET_STACK_EVENT = "mobile-bottom-sheet-stack-change";
-const SHEET_STACK_DATA_KEY = "bottomSheetStack";
+const sheetStack: string[] = [];
 
-function readSheetStack(body: HTMLElement) {
-  const raw = body.dataset[SHEET_STACK_DATA_KEY];
-  if (!raw) return [] as string[];
-
-  try {
-    const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed) && parsed.every((id) => typeof id === "string")) {
-      return parsed;
-    }
-  } catch {
-    return [] as string[];
-  }
-
-  return [] as string[];
-}
-
-function writeSheetStack(body: HTMLElement, stack: string[]) {
-  if (stack.length > 0) {
-    body.dataset[SHEET_STACK_DATA_KEY] = JSON.stringify(stack);
-  } else {
-    delete body.dataset[SHEET_STACK_DATA_KEY];
-  }
-
+function writeSheetStack(stack: string[]) {
+  sheetStack.splice(0, sheetStack.length, ...stack);
   window.dispatchEvent(new Event(SHEET_STACK_EVENT));
 }
 
-function upsertSheetId(body: HTMLElement, id: string) {
-  const nextStack = readSheetStack(body).filter((item) => item !== id);
+function upsertSheetId(id: string) {
+  const nextStack = sheetStack.filter((item) => item !== id);
   nextStack.push(id);
-  writeSheetStack(body, nextStack);
+  writeSheetStack(nextStack);
 }
 
-function removeSheetId(body: HTMLElement, id: string) {
-  const currentStack = readSheetStack(body);
+function removeSheetId(id: string) {
+  const currentStack = [...sheetStack];
   const nextStack = currentStack.filter((item) => item !== id);
   if (nextStack.length === currentStack.length) return;
-  writeSheetStack(body, nextStack);
+  writeSheetStack(nextStack);
 }
 
-function topSheetId(body: HTMLElement) {
-  const stack = readSheetStack(body);
-  return stack.length > 0 ? stack[stack.length - 1] : null;
+function topSheetId() {
+  return sheetStack.length > 0 ? sheetStack[sheetStack.length - 1] : null;
 }
 
 function getActiveHtmlElement() {
@@ -164,23 +142,23 @@ export function BottomSheet({
       setIsTopSheet(false);
       return;
     }
-    setIsTopSheet(topSheetId(document.body) === sheetId);
+    setIsTopSheet(topSheetId() === sheetId);
   }, [open, sheetId]);
 
   useEffect(() => {
     if (!open) {
-      removeSheetId(document.body, sheetId);
+      removeSheetId(sheetId);
       syncTopSheetState();
       return;
     }
 
-    upsertSheetId(document.body, sheetId);
+    upsertSheetId(sheetId);
     syncTopSheetState();
     window.addEventListener(SHEET_STACK_EVENT, syncTopSheetState);
 
     return () => {
       window.removeEventListener(SHEET_STACK_EVENT, syncTopSheetState);
-      removeSheetId(document.body, sheetId);
+      removeSheetId(sheetId);
     };
   }, [open, sheetId, syncTopSheetState]);
 
@@ -231,7 +209,7 @@ export function BottomSheet({
       const ownerSheet = restoreTarget.closest(".mobile-bottom-sheet");
       if (ownerSheet instanceof HTMLElement) {
         if (ownerSheet.hasAttribute("inert")) return;
-      } else if (topSheetId(document.body) !== null) {
+      } else if (topSheetId() !== null) {
         return;
       }
 
@@ -288,26 +266,18 @@ export function BottomSheet({
   }, [isInteractiveSheet, handleClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isInteractiveSheet) return;
 
-    const body = document.body;
-    const lockCount = Number(body.dataset.bottomSheetLockCount ?? "0");
-
-    if (lockCount === 0) {
-      // No global html/body scroll lock here.
-      // iOS Safari paints the status bar from the root layer when these styles change.
-    }
-
-    body.dataset.bottomSheetLockCount = String(lockCount + 1);
-
-    return () => {
-      const nextLockCount = Math.max(Number(body.dataset.bottomSheetLockCount ?? "1") - 1, 0);
-      body.dataset.bottomSheetLockCount = String(nextLockCount);
-      if (nextLockCount > 0) return;
-
-      delete body.dataset.bottomSheetLockCount;
+    const onPointerDown = (event: PointerEvent) => {
+      const panel = panelRef.current;
+      if (!panel) return;
+      if (event.target instanceof Node && panel.contains(event.target)) return;
+      handleClose();
     };
-  }, [open]);
+
+    document.addEventListener("pointerdown", onPointerDown, true);
+    return () => document.removeEventListener("pointerdown", onPointerDown, true);
+  }, [isInteractiveSheet, handleClose]);
 
   useEffect(() => {
     if (!isInteractiveSheet) return;
@@ -487,17 +457,7 @@ export function BottomSheet({
       inert={!isInteractiveSheet}
       className={`mobile-bottom-sheet ${className}`}
     >
-      <div aria-hidden="true" className="mobile-bottom-sheet-safe-area" />
       <div className="mobile-bottom-sheet-frame">
-        <button
-          type="button"
-          aria-label={closeLabel}
-          className="mobile-bottom-sheet-overlay"
-          onClick={() => {
-            if (!isInteractiveSheet) return;
-            handleClose();
-          }}
-        />
         <section
           ref={panelRef}
           role="dialog"
