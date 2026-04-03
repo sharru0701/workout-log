@@ -12,7 +12,6 @@
   border-radius: 16px;
   background: var(--color-surface-container-low);
   overflow: hidden;
-  box-shadow: 0 1px 3px var(--shadow-color-soft);
 }
 
 .exercise-card__header {

@@ -603,32 +603,32 @@ function SwipeableSetRow({
   );
 }
 
+type ExerciseRowAction =
+  | { type: "CHANGE_WEIGHT"; value: number }
+  | { type: "CHANGE_SET_REPS"; setIndex: number; value: number }
+  | { type: "ADD_SET" }
+  | { type: "REMOVE_SET"; index: number }
+  | { type: "CHANGE_MEMO"; value: string }
+  | { type: "DELETE" };
+
 const ExerciseRow = memo(function ExerciseRow({
+  exerciseId,
   exercise,
   minimumPlateIncrementKg,
   showMinimumPlateInfo,
   bodyweightKg,
   programEntryState,
   prevPerformance,
-  onChangeWeight,
-  onChangeSetReps,
-  onAddSet,
-  onRemoveSet,
-  onChangeMemo,
-  onDelete,
+  onAction,
 }: {
+  exerciseId: string;
   exercise: WorkoutExerciseViewModel;
   minimumPlateIncrementKg: number;
   showMinimumPlateInfo: boolean;
   bodyweightKg: number | null;
   programEntryState?: WorkoutProgramExerciseEntryState;
   prevPerformance?: string;
-  onChangeWeight: (value: number) => void;
-  onChangeSetReps: (setIndex: number, value: number) => void;
-  onAddSet: () => void;
-  onRemoveSet: (index: number) => void;
-  onChangeMemo: (value: string) => void;
-  onDelete: () => void;
+  onAction: (exerciseId: string, action: ExerciseRowAction) => void;
 }) {
   const { copy, locale } = useLocale();
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
@@ -685,7 +685,7 @@ const ExerciseRow = memo(function ExerciseRow({
               className="btn btn-icon btn-icon-danger"
               aria-label={locale === "ko" ? "운동 삭제" : "Remove exercise"}
               title={locale === "ko" ? "운동 삭제" : "Remove exercise"}
-              onClick={onDelete}
+              onClick={() => onAction(exerciseId, { type: "DELETE" })}
             >
               <AppPlusMinusIcon kind="minus" />
             </button>
@@ -755,7 +755,7 @@ const ExerciseRow = memo(function ExerciseRow({
                 disabled={usesProgramPlaceholders
                   ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
                   : exercise.set.repsPerSet.length <= 1}
-                onDelete={() => onRemoveSet(index)}
+                onDelete={() => onAction(exerciseId, { type: "REMOVE_SET", index })}
               >
                 <div role="listitem" className={rowClass}>
                   <span className="set-row__number">{index + 1}</span>
@@ -769,7 +769,7 @@ const ExerciseRow = memo(function ExerciseRow({
                     color="var(--text-metric-weight)"
                     complete={isSetComplete}
                     failed={isFailure}
-                    onChange={onChangeWeight}
+                    onChange={(value) => onAction(exerciseId, { type: "CHANGE_WEIGHT", value })}
                   />
                   <WorkoutRecordInlinePicker
                     label={locale === "ko" ? `${index + 1}세트 횟수` : `Set ${index + 1} Reps`}
@@ -781,7 +781,7 @@ const ExerciseRow = memo(function ExerciseRow({
                     failed={isFailure}
                     formatValue={(value) => String(Math.round(value))}
                     color="var(--text-metric-reps)"
-                    onChange={(value) => onChangeSetReps(index, value)}
+                    onChange={(value) => onAction(exerciseId, { type: "CHANGE_SET_REPS", setIndex: index, value })}
                   />
                   <div className="set-row__done">
                     {isFailure ? <FailureIcon /> : isSetComplete ? <CheckIcon /> : null}
@@ -797,7 +797,7 @@ const ExerciseRow = memo(function ExerciseRow({
       <button
         type="button"
         className="set-add-btn"
-        onClick={onAddSet}
+        onClick={() => onAction(exerciseId, { type: "ADD_SET" })}
       >
         <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>add</span>
         {copy.workoutLog.addSet}
@@ -827,7 +827,7 @@ const ExerciseRow = memo(function ExerciseRow({
           <AppTextarea
             variant="workout"
             value={usesProgramPlaceholders ? (programEntryState?.memoInput ?? "") : exercise.note.memo}
-            onChange={(event) => onChangeMemo(event.target.value)}
+            onChange={(event) => onAction(exerciseId, { type: "CHANGE_MEMO", value: event.target.value })}
             placeholder={usesProgramPlaceholders ? programEntryState?.memoPlaceholder || (locale === "ko" ? "메모" : "Memo") : (locale === "ko" ? "메모" : "Memo")}
             style={{
               border: "none",
@@ -1051,6 +1051,8 @@ export default function WorkoutRecordPage() {
   const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
   const exerciseOptionsCacheRef = useRef(new Map<string, ExerciseOption[]>());
   const exerciseOptionsAbortRef = useRef<AbortController | null>(null);
+  const visibleExercisesRef = useRef<WorkoutExerciseViewModel[]>([]);
+  const workoutPreferencesRef = useRef<WorkoutPreferences>(toDefaultWorkoutPreferences());
 
   const persistenceKey = selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
   useEffect(() => {
@@ -1183,6 +1185,9 @@ export default function WorkoutRecordPage() {
   );
 
   const visibleExercises = useMemo(() => (draft ? materializeWorkoutExercises(draft) : []), [draft]);
+  // Refs for stable handleExerciseAction (avoids stale closures without adding deps)
+  visibleExercisesRef.current = visibleExercises;
+  workoutPreferencesRef.current = workoutPreferences;
 
   // Previous performance map: exercise name → "Xkg × Y" best set from most recent log
   const prevPerformanceMap = useMemo(() => {
@@ -1207,6 +1212,18 @@ export default function WorkoutRecordPage() {
     }
     return map;
   }, [locale, recentLogItems]);
+
+  // Memoize programEntryState fallback per exercise — prevents ExerciseRow from seeing
+  // a new object reference every render when unrelated state changes.
+  const memoizedProgramEntryStates = useMemo(() => {
+    const result: Record<string, WorkoutProgramExerciseEntryState> = {};
+    for (const exercise of visibleExercises) {
+      if (exercise.source === "PROGRAM") {
+        result[exercise.id] = createFallbackProgramEntryState(exercise, programEntryState[exercise.id]);
+      }
+    }
+    return result;
+  }, [visibleExercises, programEntryState]);
 
   // Count exercises with at least one completed set for the progress chip
   const completedExercisesCount = useMemo(() => {
@@ -1271,6 +1288,94 @@ export default function WorkoutRecordPage() {
     });
     setWorkflowState((prev) => (prev === "saving" ? prev : "editing"));
   }, []);
+
+  const handleExerciseAction = useCallback((exerciseId: string, action: ExerciseRowAction) => {
+    const exercise = visibleExercisesRef.current.find((e) => e.id === exerciseId);
+    if (!exercise) return;
+    switch (action.type) {
+      case "CHANGE_WEIGHT": {
+        const { value } = action;
+        if (!Number.isFinite(value)) return;
+        const snapped = resolveWeightWithPreferences(value, exercise.exerciseId, exercise.exerciseName, workoutPreferencesRef.current);
+        if (exercise.source === "PROGRAM") {
+          applyEditing((prev) => patchSeedExercise(prev, exerciseId, { set: { weightKg: snapped } }));
+        } else {
+          applyEditing((prev) => updateUserExercise(prev, exerciseId, { set: { weightKg: snapped } }));
+        }
+        break;
+      }
+      case "CHANGE_SET_REPS": {
+        const { setIndex, value } = action;
+        const repsPerSet = patchSetRepsAtIndex(exercise.set.repsPerSet, setIndex, value);
+        if (exercise.source === "PROGRAM") {
+          setProgramEntryState((prev) => {
+            const current = createFallbackProgramEntryState(exercise, prev[exerciseId]);
+            const repsInputs = current.repsInputs.slice();
+            repsInputs[setIndex] = String(value);
+            return { ...prev, [exerciseId]: { ...current, repsInputs } };
+          });
+          applyEditing((prev) => patchSeedExercise(prev, exerciseId, { set: { repsPerSet } }));
+        } else {
+          applyEditing((prev) => updateUserExercise(prev, exerciseId, { set: { repsPerSet } }));
+        }
+        break;
+      }
+      case "ADD_SET": {
+        const repsPerSet = appendSetReps(exercise.set.repsPerSet);
+        if (exercise.source === "PROGRAM") {
+          setProgramEntryState((prev) => {
+            const current = createFallbackProgramEntryState(exercise, prev[exerciseId]);
+            return { ...prev, [exerciseId]: { ...current, repsInputs: [...current.repsInputs, ""] } };
+          });
+          applyEditing((prev) => patchSeedExercise(prev, exerciseId, { set: { repsPerSet } }));
+        } else {
+          applyEditing((prev) => updateUserExercise(prev, exerciseId, { set: { repsPerSet } }));
+        }
+        break;
+      }
+      case "REMOVE_SET": {
+        const { index } = action;
+        const repsPerSet = removeSetRepsAtIndex(exercise.set.repsPerSet, index);
+        if (exercise.source === "PROGRAM") {
+          setProgramEntryState((prev) => {
+            const current = createFallbackProgramEntryState(exercise, prev[exerciseId]);
+            return {
+              ...prev,
+              [exerciseId]: {
+                ...current,
+                repsInputs: [...current.repsInputs.slice(0, index), ...current.repsInputs.slice(index + 1)],
+              },
+            };
+          });
+          applyEditing((prev) => patchSeedExercise(prev, exerciseId, { set: { repsPerSet } }));
+        } else {
+          applyEditing((prev) => updateUserExercise(prev, exerciseId, { set: { repsPerSet } }));
+        }
+        break;
+      }
+      case "CHANGE_MEMO": {
+        const { value } = action;
+        if (exercise.source === "PROGRAM") {
+          setProgramEntryState((prev) => {
+            const current = createFallbackProgramEntryState(exercise, prev[exerciseId]);
+            return { ...prev, [exerciseId]: { ...current, memoInput: value } };
+          });
+          applyEditing((prev) => patchSeedExercise(prev, exerciseId, { note: { memo: value } }));
+        } else {
+          applyEditing((prev) => updateUserExercise(prev, exerciseId, { note: { memo: value } }));
+        }
+        break;
+      }
+      case "DELETE": {
+        if (exercise.source === "PROGRAM") {
+          applyEditing((prev) => removeSeedExercise(prev, exerciseId));
+        } else {
+          applyEditing((prev) => removeUserExercise(prev, exerciseId));
+        }
+        break;
+      }
+    }
+  }, [applyEditing, setProgramEntryState, resolveWeightWithPreferences]);
 
   const loadExerciseOptions = useCallback(async (queryValue: string) => {
     try {
@@ -2009,6 +2114,7 @@ export default function WorkoutRecordPage() {
                   {visibleExercises.map((exercise) => (
                     <div key={exercise.id}>
                       <ExerciseRow
+                          exerciseId={exercise.id}
                           exercise={exercise}
                           minimumPlateIncrementKg={resolveMinimumPlateIncrementKg(workoutPreferences, {
                             exerciseId: exercise.exerciseId,
@@ -2022,107 +2128,8 @@ export default function WorkoutRecordPage() {
                           }
                           bodyweightKg={workoutPreferences.bodyweightKg}
                           prevPerformance={prevPerformanceMap[exercise.exerciseName]}
-                          programEntryState={
-                            exercise.source === "PROGRAM"
-                              ? createFallbackProgramEntryState(exercise, programEntryState[exercise.id])
-                              : undefined
-                          }
-                          onChangeWeight={(value) => {
-                            if (!Number.isFinite(value)) return;
-                            const snapped = resolveWeightWithCurrentPreferences(
-                              value,
-                              exercise.exerciseId,
-                              exercise.exerciseName,
-                            );
-                            if (exercise.source === "PROGRAM") {
-                              applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { weightKg: snapped } }));
-                              return;
-                            }
-                            applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { weightKg: snapped } }));
-                          }}
-                          onChangeSetReps={(setIndex, value) => {
-                            const repsPerSet = patchSetRepsAtIndex(exercise.set.repsPerSet, setIndex, value);
-                            if (exercise.source === "PROGRAM") {
-                              setProgramEntryState((prev) => {
-                                const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
-                                const repsInputs = current.repsInputs.slice();
-                                repsInputs[setIndex] = String(value);
-                                return {
-                                  ...prev,
-                                  [exercise.id]: {
-                                    ...current,
-                                    repsInputs,
-                                  },
-                                };
-                              });
-                              applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
-                              return;
-                            }
-                            applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
-                          }}
-                          onAddSet={() => {
-                            const repsPerSet = appendSetReps(exercise.set.repsPerSet);
-                            if (exercise.source === "PROGRAM") {
-                              setProgramEntryState((prev) => {
-                                const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
-                                return {
-                                  ...prev,
-                                  [exercise.id]: {
-                                    ...current,
-                                    repsInputs: [...current.repsInputs, ""],
-                                  },
-                                };
-                              });
-                              applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
-                              return;
-                            }
-                            applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
-                          }}
-                          onRemoveSet={(index) => {
-                            const repsPerSet = removeSetRepsAtIndex(exercise.set.repsPerSet, index);
-                            if (exercise.source === "PROGRAM") {
-                              setProgramEntryState((prev) => {
-                                const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
-                                return {
-                                  ...prev,
-                                  [exercise.id]: {
-                                    ...current,
-                                    repsInputs: [
-                                      ...current.repsInputs.slice(0, index),
-                                      ...current.repsInputs.slice(index + 1)
-                                    ],
-                                  },
-                                };
-                              });
-                              applyEditing((prev) => patchSeedExercise(prev, exercise.id, { set: { repsPerSet } }));
-                              return;
-                            }
-                            applyEditing((prev) => updateUserExercise(prev, exercise.id, { set: { repsPerSet } }));
-                          }}
-                          onChangeMemo={(value) => {
-                            if (exercise.source === "PROGRAM") {
-                              setProgramEntryState((prev) => {
-                                const current = createFallbackProgramEntryState(exercise, prev[exercise.id]);
-                                return {
-                                  ...prev,
-                                  [exercise.id]: {
-                                    ...current,
-                                    memoInput: value,
-                                  },
-                                };
-                              });
-                              applyEditing((prev) => patchSeedExercise(prev, exercise.id, { note: { memo: value } }));
-                              return;
-                            }
-                            applyEditing((prev) => updateUserExercise(prev, exercise.id, { note: { memo: value } }));
-                          }}
-                          onDelete={() => {
-                            if (exercise.source === "PROGRAM") {
-                              applyEditing((prev) => removeSeedExercise(prev, exercise.id));
-                              return;
-                            }
-                            applyEditing((prev) => removeUserExercise(prev, exercise.id));
-                          }}
+                          programEntryState={memoizedProgramEntryStates[exercise.id]}
+                          onAction={handleExerciseAction}
                         />
                       </div>
                     ))}
