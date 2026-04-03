@@ -792,7 +792,11 @@ const ExerciseRow = memo(function ExerciseRow({
               <SwipeableSetRow
                 key={`${exercise.id}-set-${index}`}
                 deleteLabel={locale === "ko" ? "세트 삭제" : "Delete set"}
-                disabled={exercise.set.repsPerSet.length <= 1}
+                disabled={
+                  usesProgramPlaceholders
+                    ? index < (programEntryState?.plannedRepsPerSet?.length ?? exercise.set.repsPerSet.length)
+                    : exercise.set.repsPerSet.length <= 1
+                }
                 onDelete={() => onAction(exerciseId, { type: "REMOVE_SET", index })}
               >
                 <div role="listitem" className={rowClass}>
