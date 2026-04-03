@@ -1142,7 +1142,6 @@ export default function WorkoutRecordPage() {
           message: copy.workoutLog.restoreDraftMessage,
           confirmText: copy.workoutLog.restoreDraftConfirm,
           cancelText: copy.workoutLog.restoreDraftDiscard,
-          closeAsConfirm: true,
         });
 
         if (shouldKeep) {

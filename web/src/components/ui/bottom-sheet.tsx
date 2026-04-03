@@ -53,9 +53,6 @@ function topSheetId(body: HTMLElement) {
   return stack.length > 0 ? stack[stack.length - 1] : null;
 }
 
-const BODY_BG_DATA_KEY = "bottomSheetBodyBg";
-const ROOT_BG_DATA_KEY = "bottomSheetRootBg";
-
 function getActiveHtmlElement() {
   return document.activeElement instanceof HTMLElement ? document.activeElement : null;
 }
@@ -264,8 +261,6 @@ export function BottomSheet({
     if (lockCount === 0) {
       const scrollY = window.scrollY;
       body.dataset.bottomSheetScrollY = String(scrollY);
-      body.dataset[BODY_BG_DATA_KEY] = body.style.backgroundColor;
-      root.dataset[ROOT_BG_DATA_KEY] = root.style.backgroundColor;
       root.dataset.bottomSheetOpen = "true";
       body.style.position = "fixed"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.top = `-${scrollY}px`; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
@@ -273,9 +268,7 @@ export function BottomSheet({
       body.style.right = "0"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.width = "100%"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.backgroundColor = "transparent";
       root.style.overflow = "hidden"; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      root.style.backgroundColor = "transparent";
     }
 
     body.dataset.bottomSheetLockCount = String(lockCount + 1);
@@ -288,20 +281,14 @@ export function BottomSheet({
       const scrollY = Number(body.dataset.bottomSheetScrollY ?? "0");
       delete body.dataset.bottomSheetLockCount; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       delete body.dataset.bottomSheetScrollY; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      const previousBodyBg = body.dataset[BODY_BG_DATA_KEY] ?? "";
-      const previousRootBg = root.dataset[ROOT_BG_DATA_KEY] ?? "";
-      delete body.dataset[BODY_BG_DATA_KEY];
-      delete root.dataset[ROOT_BG_DATA_KEY];
       body.style.position = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.top = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.left = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.right = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.width = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
       body.style.overflow = ""; // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
-      body.style.backgroundColor = previousBodyBg;
       delete root.dataset.bottomSheetOpen;
       root.style.overflow = "";
-      root.style.backgroundColor = previousRootBg;
       window.scrollTo(0, scrollY); // [수정됨] 상태바 배경 애니메이션 딜레이 및 주소창 대응
     };
   }, [open]);
