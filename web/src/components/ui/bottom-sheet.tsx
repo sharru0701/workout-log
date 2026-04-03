@@ -398,56 +398,59 @@ export function BottomSheet({
       inert={!isInteractiveSheet}
       className={`mobile-bottom-sheet ${className}`}
     >
-      <button
-        type="button"
-        aria-label={closeLabel}
-        className="mobile-bottom-sheet-overlay"
-        onClick={() => {
-          if (!isInteractiveSheet) return;
-          handleClose();
-        }}
-      />
-      <section
-        ref={panelRef}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        tabIndex={-1}
-        className={`mobile-bottom-sheet-panel ${panelClassName}`}
-      >
-        <div
-          className="mobile-bottom-sheet-drag-handle"
-          onPointerDown={(e) => onHandlePointerDown(e, true)}
+      <div aria-hidden="true" className="mobile-bottom-sheet-safe-area" />
+      <div className="mobile-bottom-sheet-frame">
+        <button
+          type="button"
+          aria-label={closeLabel}
+          className="mobile-bottom-sheet-overlay"
+          onClick={() => {
+            if (!isInteractiveSheet) return;
+            handleClose();
+          }}
+        />
+        <section
+          ref={panelRef}
+          role="dialog"
+          aria-modal="true"
+          aria-label={title}
+          tabIndex={-1}
+          className={`mobile-bottom-sheet-panel ${panelClassName}`}
         >
-          <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
-        </div>
-        {header ?? (primaryAction ? (
-          <BottomSheetActionHeader
-            title={title}
-            description={hasDescription ? description : undefined}
-            closeLabel={closeLabel}
-            onClose={handleClose}
-            action={primaryAction}
-            onPointerDown={onHandlePointerDown}
-          />
-        ) : (
-          <header
-            className="mobile-bottom-sheet-header"
-            onPointerDown={onHandlePointerDown}
+          <div
+            className="mobile-bottom-sheet-drag-handle"
+            onPointerDown={(e) => onHandlePointerDown(e, true)}
           >
-            <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
-            <div className="mobile-bottom-sheet-title">
-              <h2>{title}</h2>
-              {hasDescription ? <p>{description}</p> : null}
-            </div>
-            <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
-              <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'wght' 500" }}>close</span>
-            </button>
-          </header>
-        ))}
-        <div className="mobile-bottom-sheet-content">{children}</div>
-        {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
-      </section>
+            <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
+          </div>
+          {header ?? (primaryAction ? (
+            <BottomSheetActionHeader
+              title={title}
+              description={hasDescription ? description : undefined}
+              closeLabel={closeLabel}
+              onClose={handleClose}
+              action={primaryAction}
+              onPointerDown={onHandlePointerDown}
+            />
+          ) : (
+            <header
+              className="mobile-bottom-sheet-header"
+              onPointerDown={onHandlePointerDown}
+            >
+              <span aria-hidden="true" className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn-spacer" />
+              <div className="mobile-bottom-sheet-title">
+                <h2>{title}</h2>
+                {hasDescription ? <p>{description}</p> : null}
+              </div>
+              <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'wght' 500" }}>close</span>
+              </button>
+            </header>
+          ))}
+          <div className="mobile-bottom-sheet-content">{children}</div>
+          {footer ? <footer className="mobile-bottom-sheet-footer">{footer}</footer> : null}
+        </section>
+      </div>
     </div>
   );
 
