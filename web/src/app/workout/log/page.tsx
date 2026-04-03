@@ -554,7 +554,7 @@ function SwipeableSetRow({
   };
 
   return (
-    <div style={{ position: "relative", overflow: "hidden", borderRadius: "6px", marginBottom: "var(--space-xs)" }}>
+    <div style={{ position: "relative", clipPath: "inset(0 0 0 0 round 6px)", marginBottom: "var(--space-xs)" }}>
       <div
         style={{
           position: "absolute",
@@ -593,8 +593,6 @@ function SwipeableSetRow({
         style={{
           backgroundColor: "var(--color-surface-container-low)",
           borderRadius: "6px",
-          position: "relative",
-          zIndex: 1,
           touchAction: "pan-y",
           padding: "2px 0",
         }}

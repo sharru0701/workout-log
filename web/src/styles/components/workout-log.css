@@ -13,13 +13,6 @@
   background: var(--color-surface-container-low);
   overflow: hidden;
   box-shadow: 0 1px 3px var(--shadow-color-soft);
-  /*
-   * content-visibility: auto — 뷰포트 밖 카드의 레이아웃/페인트를 브라우저가 즉시 건너뜀.
-   * contain-intrinsic-size — 카드 높이 추정값을 힌트로 제공, 스크롤바 위치 안정화.
-   * 빠른 스크롤 중 체커보드 재페인트와 렌더링 지연 문제를 해소합니다.
-   */
-  content-visibility: auto;
-  contain-intrinsic-size: auto 280px;
 }
 
 .exercise-card__header {
@@ -135,17 +128,24 @@
   min-height: 54px;
   padding: 4px 0;
   border-radius: 8px;
-  transition: background-color 0.15s ease;
+  /*
+   * transition 제거 — 스크롤 중에도 모든 세트에 걸려 프레임 드롭 유발.
+   * 세트 상태 변경은 사용자 입력 시점에만 일어나므로 transition 불필요.
+   */
 }
 
 /* Active set — strong left accent, full-width blue-tint background */
 .set-row--active {
   background: color-mix(in srgb, var(--color-primary) 8%, transparent);
-  box-shadow: inset 4px 0 0 0 var(--color-primary);
+  /*
+   * border-left로 대체 — inset box-shadow는 매 세트마다 GPU compositing layer를 강제 생성.
+   * border-left는 추가 레이어 없이 동일한 시각 효과를 냅니다.
+   */
+  border-left: 4px solid var(--color-primary);
   border-radius: 0;
   margin-left: calc(-1 * var(--space-md));
   margin-right: calc(-1 * var(--space-md));
-  padding-left: var(--space-md);
+  padding-left: calc(var(--space-md) - 4px);
   padding-right: var(--space-md);
 }
 
