@@ -3,6 +3,7 @@
 추가 문서:
 - `git clone` 직후 온보딩: [`docs/local-dev-after-clone-guide.md`](./docs/local-dev-after-clone-guide.md)
 - 언어 설정 / i18n 운영 가이드: [`docs/language-settings-guide.md`](./docs/language-settings-guide.md)
+- iOS Safari 상태바 / safe-area 메모: [`docs/safari-status-bar-guide.md`](./docs/safari-status-bar-guide.md)
 - 기여/형상관리 규칙: [`../CONTRIBUTING.md`](../CONTRIBUTING.md)
 
 ## Local Dev (Docker, Recommended)
