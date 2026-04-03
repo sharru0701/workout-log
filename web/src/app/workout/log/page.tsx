@@ -1126,6 +1126,29 @@ function RestoreDraftSheet({
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [beginClose, open, request]);
 
+  useEffect(() => {
+    if (!open || !request) return;
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const stopBackgroundScroll = (event: TouchEvent | WheelEvent) => {
+      const target = event.target;
+      if (target instanceof Node && panel.contains(target)) {
+        return;
+      }
+      event.preventDefault();
+    };
+
+    document.addEventListener("touchmove", stopBackgroundScroll, { capture: true, passive: false });
+    document.addEventListener("wheel", stopBackgroundScroll, { capture: true, passive: false });
+
+    return () => {
+      document.removeEventListener("touchmove", stopBackgroundScroll, true);
+      document.removeEventListener("wheel", stopBackgroundScroll, true);
+    };
+  }, [open, request]);
+
   const onHandlePointerDown = useCallback((event: React.PointerEvent<HTMLElement>) => {
     if (!open || !request || closingRef.current) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
@@ -1148,16 +1171,16 @@ function RestoreDraftSheet({
     panel.style.transition = "none";
     panel.style.willChange = "transform";
 
-    const finish = (shouldClose: boolean) => {
-      dragCleanupRef.current?.();
-      dragCleanupRef.current = null;
-      panel.style.willChange = "";
-      if (shouldClose) {
-        panel.style.transition = "transform 0.35s cubic-bezier(0.4, 0, 1, 1)";
-        panel.style.transform = "translateY(100%)";
-        beginClose(false);
-        return;
-      }
+      const finish = (shouldClose: boolean) => {
+        dragCleanupRef.current?.();
+        dragCleanupRef.current = null;
+        panel.style.willChange = "";
+        if (shouldClose) {
+          panel.style.transition = "transform 0.35s cubic-bezier(0.4, 0, 1, 1)";
+          panel.style.transform = "translateY(100%)";
+          beginClose(true);
+          return;
+        }
       panel.style.transition = "transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)";
       panel.style.transform = "translateY(0)";
     };
@@ -1226,7 +1249,7 @@ function RestoreDraftSheet({
           bottom: 0,
           top: 0,
           border: "none",
-          background: "var(--color-overlay)",
+          background: "transparent",
           cursor: "pointer",
           opacity: open ? 1 : 0,
           transition: "opacity 0.28s ease",
