@@ -55,7 +55,10 @@ export function AppLaunchSplash() {
       aria-label={locale === "ko" ? "앱을 불러오는 중" : "Loading app"}
       style={{
         position: "fixed",
-        inset: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        top: "env(safe-area-inset-top, 0px)",
         zIndex: 9999,
         display: "flex",
         alignItems: "center",
