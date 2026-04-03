@@ -40,8 +40,6 @@
   position: absolute;
   inset: 0;
   background-color: var(--color-overlay);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
   appearance: none;
   -webkit-appearance: none;
   border: none;
