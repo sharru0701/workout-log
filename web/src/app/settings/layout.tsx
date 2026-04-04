@@ -79,20 +79,24 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
     }, 400);
   }, [router]);
 
-  if (isRoot) {
-    return <>{children}</>;
-  }
-
   return (
     <SettingsModalHeaderActionProvider>
-      <SettingsChildModal pathname={pathname} sheetOpen={sheetOpen} onClose={handleClose}>
-        {children}
-      </SettingsChildModal>
+      {/*
+       * SettingsHomeContent는 항상 이 위치(첫 번째 자식)에 렌더링됩니다.
+       * isRoot 조건에 따라 최상위 컴포넌트 타입이 바뀌었던 기존 구조와 달리,
+       * 동일한 React 트리 위치를 유지하므로 라우트 이동 시 remount가 발생하지 않습니다.
+       */}
+      <SettingsHomeContent />
+      {!isRoot && (
+        <SettingsSheetOverlay pathname={pathname} sheetOpen={sheetOpen} onClose={handleClose}>
+          {children}
+        </SettingsSheetOverlay>
+      )}
     </SettingsModalHeaderActionProvider>
   );
 }
 
-function SettingsChildModal({
+function SettingsSheetOverlay({
   pathname,
   sheetOpen,
   onClose,
@@ -109,21 +113,16 @@ function SettingsChildModal({
   const panelClassName = `settings-child-modal-panel${isExerciseManagement ? " settings-child-modal-panel--fixed-height" : ""}`;
 
   return (
-    <>
-      {/* ── Root content rendered behind the sheet ── */}
-      <SettingsHomeContent />
-
-      <BottomSheet
-        open={sheetOpen}
-        onClose={onClose}
-        title={modalTitleFromPathname(pathname, copy.settings.modalTitles, copy.settings.detailTitle)}
-        description={modalDescriptionFromPathname(pathname, copy.settings.modalDescriptions)}
-        closeLabel={copy.settings.close}
-        panelClassName={panelClassName}
-        primaryAction={headerAction}
-      >
-        <div>{children}</div>
-      </BottomSheet>
-    </>
+    <BottomSheet
+      open={sheetOpen}
+      onClose={onClose}
+      title={modalTitleFromPathname(pathname, copy.settings.modalTitles, copy.settings.detailTitle)}
+      description={modalDescriptionFromPathname(pathname, copy.settings.modalDescriptions)}
+      closeLabel={copy.settings.close}
+      panelClassName={panelClassName}
+      primaryAction={headerAction}
+    >
+      <div>{children}</div>
+    </BottomSheet>
   );
 }

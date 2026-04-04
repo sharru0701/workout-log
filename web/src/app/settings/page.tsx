@@ -1,5 +1,4 @@
-import { SettingsHomeContent } from "@/components/settings/settings-home-content";
-
+// Layout renders SettingsHomeContent directly to keep it stable across route transitions.
 export default function SettingsPage() {
-  return <SettingsHomeContent />;
+  return null;
 }
