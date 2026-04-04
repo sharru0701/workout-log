@@ -1,3 +1,5 @@
+"use client";
+
 import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
 
