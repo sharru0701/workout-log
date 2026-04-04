@@ -6,7 +6,7 @@ import { useLocale } from "@/components/locale-provider";
 
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppSelect } from "@/components/ui/form-controls";
-import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet } from "@/lib/api";
 import { Card } from "@/components/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
@@ -298,9 +298,10 @@ function PlanHistoryPageContent() {
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
 
-        {plansLoading && (
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
-        )}
+        <LoadingStateRows
+          active={plansLoading}
+          label={locale === "ko" ? "플랜을 불러오는 중" : "Loading plans"}
+        />
         <ErrorStateRows
           message={plansError}
           title={copy.plansHistory.plansLoadError}
@@ -365,24 +366,10 @@ function PlanHistoryPageContent() {
           preferInline
         />
 
-        {Boolean(selectedPlanId) && logsLoading && logs.length === 0 && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 8 }} />
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "70%", marginBottom: 12 }} />
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-sm)" }}>
-                  {Array.from({ length: 3 }).map((_, j) => (
-                    <div key={j}>
-                      <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "60%", marginBottom: 4 }} />
-                      <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 18, width: "80%" }} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <LoadingStateRows
+          active={Boolean(selectedPlanId) && logsLoading && logs.length === 0}
+          label={locale === "ko" ? "로그를 불러오는 중" : "Loading logs"}
+        />
         <ErrorStateRows
           message={logsError}
           title={copy.plansHistory.logsLoadError}

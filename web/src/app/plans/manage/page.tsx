@@ -8,7 +8,7 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchInput } from "@/components/ui/search-input";
-import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
@@ -345,23 +345,8 @@ function PlansManagePageContent() {
     }
   }
 
-  const skeletonBase: React.CSSProperties = {
-    background: "linear-gradient(90deg, var(--color-surface-container-low) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container-low) 100%)",
-    backgroundSize: "200% 100%",
-    animation: "skeleton-shimmer 1.4s ease infinite",
-    borderRadius: 8,
-  };
-
   return (
     <>
-      <style>{`
-        @keyframes skeleton-shimmer {
-          0% { background-position: 200% 0; }
-          100% { background-position: -200% 0; }
-        }
-      `}</style>
-
-
         <section>
           {/* Page header */}
           <div
@@ -412,30 +397,10 @@ function PlansManagePageContent() {
             </div>
           ) : null}
 
-          {loading && (
-            <div>
-              {Array.from({ length: 2 }).map((_, i) => (
-                <div
-                  key={i}
-                  style={{
-                    background: "var(--color-surface-container-low)",
-                    borderRadius: "16px",
-                    padding: "20px",
-                    marginBottom: "var(--space-sm)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...skeletonBase, height: 18, width: "55%", marginBottom: 8 }} />
-                      <div style={{ ...skeletonBase, height: 12, width: "70%", marginBottom: 6, borderRadius: 4 }} />
-                      <div style={{ ...skeletonBase, height: 12, width: "50%", borderRadius: 4 }} />
-                    </div>
-                    <div style={{ ...skeletonBase, height: 32, width: 72, borderRadius: 10 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <LoadingStateRows
+            active={loading}
+            label={locale === "ko" ? "플랜 목록을 불러오는 중" : "Loading plans"}
+          />
 
           <ErrorStateRows
             message={error}
