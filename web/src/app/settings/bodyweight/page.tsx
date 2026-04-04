@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   SectionFootnote,
   SectionHeader,
@@ -23,12 +23,9 @@ function normalizeBodyweightKg(value: number) {
 
 export default function SettingsBodyweightPage() {
   const { locale } = useLocale();
-  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverBodyweightKg, setServerBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
   const [draftBodyweightKg, setDraftBodyweightKg] = useState(DEFAULT_BODYWEIGHT_KG);
-  const hasLoadedRef = useRef(false);
-
   const bodyweight = useSettingRowMutation<number>({
     key: SETTINGS_KEYS.bodyweightKg,
     fallbackValue: DEFAULT_BODYWEIGHT_KG,
@@ -40,18 +37,14 @@ export default function SettingsBodyweightPage() {
 
   const loadBodyweight = useCallback(async () => {
     try {
-      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       const snapshot = await fetchSettingsSnapshot();
       const parsed = Number(snapshot[SETTINGS_KEYS.bodyweightKg]);
       const resolved = normalizeBodyweightKg(Number.isFinite(parsed) ? parsed : DEFAULT_BODYWEIGHT_KG);
-      hasLoadedRef.current = true;
       setServerBodyweightKg(resolved);
       setDraftBodyweightKg(resolved);
     } catch (e: any) {
       setLoadError(e?.message ?? (locale === "ko" ? "몸무게 설정을 불러오지 못했습니다." : "Could not load bodyweight settings."));
-    } finally {
-      setLoading(false);
     }
   }, [locale]);
 
@@ -74,36 +67,6 @@ export default function SettingsBodyweightPage() {
       setDraftBodyweightKg(normalizeBodyweightKg(result.value));
     }
   }, [bodyweight, normalizedDraftBodyweightKg]);
-
-  if (loading) {
-    const sk: React.CSSProperties = {
-      background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
-      backgroundSize: "200% 100%",
-      animation: "skeleton-shimmer 1.4s ease infinite",
-    };
-    return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {/* SectionHeader: title + description */}
-        <div style={{ ...sk, borderRadius: 4, height: 11, width: "40%", marginBottom: 4 }} />
-        <div style={{ ...sk, borderRadius: 4, height: 11, width: "65%", marginBottom: 16 }} />
-        {/* Card */}
-        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-          {/* AppNumberStepper: label text + stepper widget */}
-          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-            <div style={{ ...sk, borderRadius: 4, height: 13, width: "50%" }} />
-            <div style={{ ...sk, borderRadius: 8, height: 44 }} />
-          </div>
-          {/* Save button */}
-          <div style={{ ...sk, borderRadius: 10, height: 44 }} />
-        </div>
-        {/* SectionFootnote: 2 lines */}
-        <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
-          <div style={{ ...sk, borderRadius: 4, height: 11, width: "90%" }} />
-          <div style={{ ...sk, borderRadius: 4, height: 11, width: "70%" }} />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div>
