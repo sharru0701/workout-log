@@ -75,20 +75,23 @@ export default function SettingsBodyweightPage() {
     }
   }, [bodyweight, normalizedDraftBodyweightKg]);
 
+  if (loading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
+        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
+            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36, width: 120 }} />
+          </div>
+        </div>
+        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
+      </div>
+    );
+  }
+
   return (
     <div>
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
-          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36, width: 120 }} />
-            </div>
-          </div>
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
-        </div>
-      )}
       <ErrorStateRows
         message={loadError}
         title={locale === "ko" ? "몸무게 설정 조회 실패" : "Could not load bodyweight settings"}

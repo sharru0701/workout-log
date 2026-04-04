@@ -248,21 +248,24 @@ export default function SettingsMinimumPlatePage() {
     }
   };
 
+  if (loading) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
+        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
+              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
-          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
       <ErrorStateRows
         message={loadError}
         title={locale === "ko" ? "최소 원판 설정 조회 실패" : "Could not load minimum plate settings"}
