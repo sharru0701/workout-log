@@ -76,16 +76,31 @@ export default function SettingsBodyweightPage() {
   }, [bodyweight, normalizedDraftBodyweightKg]);
 
   if (loading) {
+    const sk: React.CSSProperties = {
+      background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
+      backgroundSize: "200% 100%",
+      animation: "skeleton-shimmer 1.4s ease infinite",
+    };
     return (
       <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "45%", marginBottom: 4 }} />
-        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "35%" }} />
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36, width: 120 }} />
+        {/* SectionHeader: title + description */}
+        <div style={{ ...sk, borderRadius: 4, height: 11, width: "40%", marginBottom: 4 }} />
+        <div style={{ ...sk, borderRadius: 4, height: 11, width: "65%", marginBottom: 16 }} />
+        {/* Card */}
+        <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          {/* AppNumberStepper: label text + stepper widget */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+            <div style={{ ...sk, borderRadius: 4, height: 13, width: "50%" }} />
+            <div style={{ ...sk, borderRadius: 8, height: 44 }} />
           </div>
+          {/* Save button */}
+          <div style={{ ...sk, borderRadius: 10, height: 44 }} />
         </div>
-        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 44 }} />
+        {/* SectionFootnote: 2 lines */}
+        <div style={{ paddingTop: 10, display: "flex", flexDirection: "column", gap: 4 }}>
+          <div style={{ ...sk, borderRadius: 4, height: 11, width: "90%" }} />
+          <div style={{ ...sk, borderRadius: 4, height: 11, width: "70%" }} />
+        </div>
       </div>
     );
   }

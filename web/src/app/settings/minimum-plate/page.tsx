@@ -249,16 +249,51 @@ export default function SettingsMinimumPlatePage() {
   };
 
   if (loading) {
+    const sk: React.CSSProperties = {
+      background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
+      backgroundSize: "200% 100%",
+      animation: "skeleton-shimmer 1.4s ease infinite",
+    };
+    const sectionHeader = (titleWidth: string) => (
+      <div style={{ marginBottom: 8 }}>
+        <div style={{ ...sk, borderRadius: 4, height: 11, width: titleWidth, marginBottom: 4 }} />
+        <div style={{ ...sk, borderRadius: 4, height: 11, width: "70%" }} />
+      </div>
+    );
     return (
       <div style={{ display: "flex", flexDirection: "column" }}>
-        <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "35%", marginBottom: 12 }} />
+        {/* Section 1: 기본 최소 원판 무게 — current default value display */}
+        {sectionHeader("45%")}
         <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 14, width: "40%" }} />
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: 64 }} />
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12 }}>
+            <div style={{ ...sk, borderRadius: 4, height: 14, width: "45%" }} />
+            <div style={{ ...sk, borderRadius: 4, height: 14, width: 52 }} />
+          </div>
+        </div>
+
+        {/* Section 2: 기본값 조절 — stepper + save button */}
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column" }}>
+          {sectionHeader("35%")}
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)", display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ ...sk, borderRadius: 4, height: 13, width: "55%" }} />
+              <div style={{ ...sk, borderRadius: 8, height: 44 }} />
             </div>
-          ))}
+            <div style={{ ...sk, borderRadius: 10, height: 44 }} />
+          </div>
+        </div>
+
+        {/* Section 3: 종목별 최소 원판 규칙 — per-exercise rule list */}
+        <div style={{ marginTop: 24, display: "flex", flexDirection: "column" }}>
+          {sectionHeader("50%")}
+          <div style={{ background: "var(--color-surface-container-low)", borderRadius: 20, padding: "var(--space-md)" }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 12, borderBottom: i < 2 ? "1px solid color-mix(in srgb, var(--color-outline-variant) 14%, transparent)" : "none" }}>
+                <div style={{ ...sk, borderRadius: 4, height: 14, width: "40%" }} />
+                <div style={{ ...sk, borderRadius: 8, height: 28, width: 64 }} />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
