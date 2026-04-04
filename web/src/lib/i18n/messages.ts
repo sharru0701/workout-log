@@ -18,6 +18,7 @@ export type AppCopy = {
     mainNavigation: string;
   };
   settings: {
+    headerEyebrow: string;
     title: string;
     detailTitle: string;
     detailDescription: string;
@@ -492,6 +493,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       mainNavigation: "메인 내비게이션",
     },
     settings: {
+      headerEyebrow: "App Settings",
       title: "설정",
       detailTitle: "설정 상세",
       detailDescription: "설정 변경사항은 저장 즉시 반영됩니다.",
@@ -964,6 +966,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       mainNavigation: "Main navigation",
     },
     settings: {
+      headerEyebrow: "App Settings",
       title: "Settings",
       detailTitle: "Settings Detail",
       detailDescription: "Changes apply immediately after saving.",

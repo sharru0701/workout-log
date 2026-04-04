@@ -281,6 +281,41 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
 
   return (
     <div className={className || undefined}>
+      {/* ── Editorial header ── */}
+      <div
+        style={{
+          marginBottom: "var(--space-xl)",
+          paddingBottom: "var(--space-md)",
+          borderBottom: "1px solid var(--color-border)",
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "var(--font-label-family)",
+            fontSize: "10px",
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "var(--color-primary)",
+            marginBottom: "4px",
+          }}
+        >
+          {copy.settings.headerEyebrow}
+        </div>
+        <h1
+          style={{
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "28px",
+            fontWeight: 800,
+            letterSpacing: "-0.5px",
+            color: "var(--color-text)",
+            margin: 0,
+          }}
+        >
+          {copy.settings.title}
+        </h1>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 32 }}>
         {/* ── Profile Card ── */}
         <ProfileCard />

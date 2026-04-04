@@ -49,7 +49,6 @@ function modalDescriptionFromPathname(
 export default function SettingsLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname() ?? "/settings";
   const router = useRouter();
-  const { copy } = useLocale();
   const isRoot = pathname === "/settings";
   const closeTimerRef = useRef<number | null>(null);
   const [sheetOpen, setSheetOpen] = useState(true);
@@ -81,56 +80,7 @@ export default function SettingsLayout({ children }: { children: ReactNode }) {
   }, [router]);
 
   if (isRoot) {
-    return (
-      <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-        {/* ── Sticky header ── */}
-        <header
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 50,
-            backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-                      }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "16px 20px 12px",
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "var(--font-headline-family)",
-                fontSize: 28,
-                fontWeight: 800,
-                letterSpacing: "-0.6px",
-                color: "var(--color-text)",
-                margin: 0,
-              }}
-            >
-              {copy.settings.title}
-            </h1>
-          </div>
-        </header>
-
-        {/* ── Page content ── */}
-        <main
-          style={{
-            flex: 1,
-            maxWidth: 576,
-            width: "100%",
-            margin: "0 auto",
-            padding: "8px 16px 128px",
-          }}
-        >
-          {children}
-        </main>
-      </div>
-    );
+    return <>{children}</>;
   }
 
   return (
@@ -160,52 +110,8 @@ function SettingsChildModal({
 
   return (
     <>
-      {/* ── Root layout rendered behind the sheet ── */}
-      <div style={{ display: "flex", flexDirection: "column", minHeight: "100dvh" }}>
-        <header
-          style={{
-            position: "sticky",
-            top: 0,
-            zIndex: 50,
-            backgroundColor: "color-mix(in srgb, var(--color-bg) 80%, transparent)",
-            backdropFilter: "blur(12px)",
-            WebkitBackdropFilter: "blur(12px)",
-                      }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              padding: "16px 20px 12px",
-            }}
-          >
-            <h1
-              style={{
-                fontFamily: "var(--font-headline-family)",
-                fontSize: 28,
-                fontWeight: 800,
-                letterSpacing: "-0.6px",
-                color: "var(--color-text)",
-                margin: 0,
-              }}
-            >
-              {copy.settings.title}
-            </h1>
-          </div>
-        </header>
-        <main
-          style={{
-            flex: 1,
-            maxWidth: 576,
-            width: "100%",
-            margin: "0 auto",
-            padding: "16px 16px 128px",
-          }}
-        >
-          <SettingsHomeContent />
-        </main>
-      </div>
+      {/* ── Root content rendered behind the sheet ── */}
+      <SettingsHomeContent />
 
       <BottomSheet
         open={sheetOpen}
