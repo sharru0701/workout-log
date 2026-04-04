@@ -11,7 +11,7 @@ import { Card } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { SearchInput } from "@/components/ui/search-input";
-import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -143,13 +143,6 @@ function storeCategories(locale: "ko" | "en") {
     { key: "endurance", label: locale === "ko" ? "지구력" : "Endurance" },
   ] as const;
 }
-
-const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
-  backgroundSize: "200% 100%",
-  animation: "skeleton-shimmer 1.4s ease infinite",
-  borderRadius: 8,
-};
 
 function todayKeyInTimezone(timezone: string) {
   const fmt = new Intl.DateTimeFormat("en-CA", {
@@ -1408,57 +1401,10 @@ export default function ProgramStorePage() {
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>{copy.programStore.description}</p>
       </div>
 
-      {loading && (
-        <div style={{ paddingBlock: "var(--space-md)" }}>
-          <style>{`
-            @keyframes skeleton-shimmer {
-              0% { background-position: 200% 0; }
-              100% { background-position: -200% 0; }
-            }
-          `}</style>
-          <div className="card" style={{ padding: 0, marginBottom: "var(--space-md)" }}>
-            <div style={{ ...skeletonStyle, height: 48, borderRadius: 10 }} />
-          </div>
-
-          <section>
-            <div style={{ marginBottom: "var(--space-sm)" }}>
-              <div style={{ ...skeletonStyle, height: 10, width: "25%", marginBottom: "6px" }} />
-              <div style={{ ...skeletonStyle, height: 18, width: "40%" }} />
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ background: "var(--color-surface-container-low)", borderRadius: 16, padding: "var(--space-lg)" }}>
-                  {/* badge + title */}
-                  <div style={{ ...skeletonStyle, height: 18, width: "18%", marginBottom: "var(--space-sm)", borderRadius: 4 }} />
-                  <div style={{ ...skeletonStyle, height: 22, width: "65%", marginBottom: "var(--space-xs)" }} />
-                  <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: "var(--space-md)", borderRadius: 4 }} />
-                  {/* meta row */}
-                  <div style={{ display: "flex", gap: "var(--space-md)", background: "var(--color-surface-container-lowest)", padding: "var(--space-sm) var(--space-md)", borderRadius: 10, marginBottom: "var(--space-md)" }}>
-                    {Array.from({ length: 3 }).map((_, j) => (
-                      <div key={j} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        <div style={{ ...skeletonStyle, height: 10, width: 36, borderRadius: 4 }} />
-                        <div style={{ ...skeletonStyle, height: 14, width: 56, borderRadius: 4 }} />
-                      </div>
-                    ))}
-                  </div>
-                  {/* intensity + cta */}
-                  <div style={{ display: "flex", alignItems: "center", gap: "var(--space-md)" }}>
-                    <div style={{ flex: 1 }}>
-                      <div style={{ ...skeletonStyle, height: 10, width: 32, marginBottom: 6, borderRadius: 4 }} />
-                      <div style={{ display: "flex", gap: 3 }}>
-                        {Array.from({ length: 5 }).map((_, k) => (
-                          <div key={k} style={{ ...skeletonStyle, height: 6, flex: 1, borderRadius: 9999 }} />
-                        ))}
-                      </div>
-                    </div>
-                    <div style={{ ...skeletonStyle, height: 40, width: 88, borderRadius: 10 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-        </div>
-      )}
+      <LoadingStateRows
+        active={loading}
+        label={locale === "ko" ? "프로그램 스토어를 불러오는 중" : "Loading program store"}
+      />
       <ErrorStateRows
         message={error}
         title={copy.programStore.loadError}

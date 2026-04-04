@@ -9,7 +9,7 @@ import { AccordionSection } from "@/components/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { DisabledStateRows, EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { Card } from "@/components/ui/card";
 
 type TemplateItem = {
@@ -393,13 +393,10 @@ export default function TemplatesPage() {
           </a>
         </div>
         <div>
-          {(loadingTemplates || loadingVersions) && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
-              ))}
-            </div>
-          )}
+          <LoadingStateRows
+            active={loadingTemplates || loadingVersions}
+            label={locale === "ko" ? "템플릿을 불러오는 중" : "Loading templates"}
+          />
         </div>
         <div>
           <ErrorStateRows
@@ -528,13 +525,10 @@ export default function TemplatesPage() {
               </AppSelect>
             </div>
 
-            {loadingVersions && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-                {Array.from({ length: 2 }).map((_, i) => (
-                  <div key={i} style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 36 }} />
-                ))}
-              </div>
-            )}
+            <LoadingStateRows
+              active={loadingVersions}
+              label={locale === "ko" ? "버전 목록을 불러오는 중" : "Loading versions"}
+            />
 
             {selectedTemplate.type === "MANUAL" ? (
               <AccordionSection
