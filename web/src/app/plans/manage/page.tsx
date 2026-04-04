@@ -189,7 +189,7 @@ function PlanListCard({
 }
 
 function PlansManagePageContent() {
-  const { copy } = useLocale();
+  const { copy, locale } = useLocale();
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
