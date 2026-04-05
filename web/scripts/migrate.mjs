@@ -4,7 +4,13 @@ import { randomUUID } from "node:crypto";
 import os from "node:os";
 import { Pool } from "pg";
 
+const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0";
 const connectionString = process.env.DATABASE_URL;
+
+if (!migrateEnabled) {
+  console.log("[migrate] DB_MIGRATE_ENABLED=0, skipping migrations");
+  process.exit(0);
+}
 
 if (!connectionString) {
   console.error("[migrate] DATABASE_URL is not set");
@@ -17,7 +23,6 @@ function parsePositiveInt(raw, fallback) {
   return parsed;
 }
 
-const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0";
 const maxAttempts = parsePositiveInt(process.env.DB_MIGRATE_MAX_ATTEMPTS, 30);
 const delayMs = parsePositiveInt(process.env.DB_MIGRATE_RETRY_DELAY_MS, 2000);
 const useAdvisoryLock = process.env.DB_MIGRATE_USE_ADVISORY_LOCK !== "0";
