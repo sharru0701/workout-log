@@ -114,29 +114,6 @@ export function BottomSheet({
     return () => window.clearTimeout(timer);
   }, [closeAnimationMs, open, present]);
 
-  useEffect(() => {
-    if (openAnimationFrameRef.current !== null) {
-      window.cancelAnimationFrame(openAnimationFrameRef.current);
-      openAnimationFrameRef.current = null;
-    }
-
-    if (!open) {
-      return;
-    }
-
-    openAnimationFrameRef.current = window.requestAnimationFrame(() => {
-      openAnimationFrameRef.current = window.requestAnimationFrame(() => {
-        openAnimationFrameRef.current = null;
-      });
-    });
-
-    return () => {
-      if (openAnimationFrameRef.current === null) return;
-      window.cancelAnimationFrame(openAnimationFrameRef.current);
-      openAnimationFrameRef.current = null;
-    };
-  }, [open]);
-
   const syncTopSheetState = useCallback(() => {
     if (!open) {
       setIsTopSheet(false);
@@ -147,18 +124,34 @@ export function BottomSheet({
 
   useEffect(() => {
     if (!open) {
+      if (openAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(openAnimationFrameRef.current);
+        openAnimationFrameRef.current = null;
+      }
       removeSheetId(sheetId);
       syncTopSheetState();
       return;
     }
 
     upsertSheetId(sheetId);
-    syncTopSheetState();
     window.addEventListener(SHEET_STACK_EVENT, syncTopSheetState);
+
+    // Double rAF: let the panel mount in the off-screen (inert) state for one
+    // frame before removing inert, so the CSS entry transition can fire.
+    openAnimationFrameRef.current = window.requestAnimationFrame(() => {
+      openAnimationFrameRef.current = window.requestAnimationFrame(() => {
+        openAnimationFrameRef.current = null;
+        syncTopSheetState();
+      });
+    });
 
     return () => {
       window.removeEventListener(SHEET_STACK_EVENT, syncTopSheetState);
       removeSheetId(sheetId);
+      if (openAnimationFrameRef.current !== null) {
+        window.cancelAnimationFrame(openAnimationFrameRef.current);
+        openAnimationFrameRef.current = null;
+      }
     };
   }, [open, sheetId, syncTopSheetState]);
 

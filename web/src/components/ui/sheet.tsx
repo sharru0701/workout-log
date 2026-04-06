@@ -95,9 +95,12 @@ export function Sheet({
         dialog.showModal();
       }
 
-      // Force layout flush, then trigger enter animation
+      // Double rAF: first frame renders dialog in initial (off-screen) state,
+      // second frame applies data-open to trigger the CSS enter transition.
       requestAnimationFrame(() => {
-        dialog.setAttribute("data-open", "");
+        requestAnimationFrame(() => {
+          dialog.setAttribute("data-open", "");
+        });
       });
     } else {
       if (dialog.open && !isClosingRef.current) {
