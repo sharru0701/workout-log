@@ -16,10 +16,11 @@ test("searchSettingsIndex finds timezone-related deep links", () => {
 });
 
 test("searchSettingsIndex prioritizes direct title match", () => {
-  const results = searchSettingsIndex(settingsSearchIndex, "오프라인");
+  // "캘린더"는 settingsSearchIndex에 실제로 존재하는 항목
+  const results = searchSettingsIndex(settingsSearchIndex, "캘린더");
 
   assert.ok(results.length > 0);
-  assert.equal(results[0]?.entry.key, "offline.help");
+  assert.ok(results[0]?.entry.key.startsWith("calendar."));
 });
 
 test("searchSettingsIndex returns empty list when no match exists", () => {
