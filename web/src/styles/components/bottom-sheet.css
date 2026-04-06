@@ -30,23 +30,6 @@
   opacity: 1;
 }
 
-/* ── Backdrop ─────────────────────────────────────────── */
-
-.mobile-bottom-sheet-backdrop {
-  position: fixed;
-  inset: 0;
-  background-color: var(--color-overlay);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.35s ease;
-}
-
-.mobile-bottom-sheet:not([inert]) .mobile-bottom-sheet-backdrop {
-  opacity: 1;
-}
-
 /* ── Panel ────────────────────────────────────────────── */
 
 .mobile-bottom-sheet-panel {
