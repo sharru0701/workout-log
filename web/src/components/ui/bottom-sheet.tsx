@@ -457,7 +457,6 @@ export function BottomSheet({
       inert={!isInteractiveSheet}
       className={`mobile-bottom-sheet ${className}`}
     >
-      <div className="mobile-bottom-sheet-backdrop" aria-hidden="true" />
       <div className="mobile-bottom-sheet-frame">
         <section
           ref={panelRef}
