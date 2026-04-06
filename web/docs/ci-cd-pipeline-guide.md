@@ -321,3 +321,4 @@ Vercel Dashboard → Deployments → 이전 production 배포 → `...` → Prom
 2. `deployment_status` 수신 여부: GitHub → repo Settings → Webhooks
 3. `github.event.deployment.environment` 값이 정확히 `Preview`인지 확인 (대소문자 구분)
 4. `VERCEL_AUTOMATION_BYPASS_SECRET`이 GitHub Secrets에 등록됐는지 확인
+# CI pipeline test - 2026-04-06 12:08:16
