@@ -1401,10 +1401,6 @@ export default function ProgramStorePage() {
         <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>{copy.programStore.description}</p>
       </div>
 
-      <LoadingStateRows
-        active={loading}
-        label={locale === "ko" ? "프로그램 스토어를 불러오는 중" : "Loading program store"}
-      />
       <ErrorStateRows
         message={error}
         title={copy.programStore.loadError}

@@ -297,11 +297,6 @@ function PlanHistoryPageContent() {
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-
-        <LoadingStateRows
-          active={plansLoading}
-          label={locale === "ko" ? "플랜을 불러오는 중" : "Loading plans"}
-        />
         <ErrorStateRows
           message={plansError}
           title={copy.plansHistory.plansLoadError}
@@ -366,10 +361,6 @@ function PlanHistoryPageContent() {
           preferInline
         />
 
-        <LoadingStateRows
-          active={Boolean(selectedPlanId) && logsLoading && logs.length === 0}
-          label={locale === "ko" ? "로그를 불러오는 중" : "Loading logs"}
-        />
         <ErrorStateRows
           message={logsError}
           title={copy.plansHistory.logsLoadError}

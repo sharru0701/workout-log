@@ -643,12 +643,6 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
       </div>
 
       <div>
-        {optionsLoading && (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 40 }} />
-          </div>
-        )}
         <ErrorStateRows
           message={optionsError}
           title={locale === "ko" ? "필터 옵션을 불러오지 못했습니다" : "Could not load filter options"}
@@ -664,15 +658,6 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
 
         {!showNoExerciseState && (
           <>
-            {loading && (
-              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-                <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 10, height: 180 }} />
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 48 }} />
-                </div>
-              </div>
-            )}
             <ErrorStateRows
               message={error}
               title={locale === "ko" ? "1RM 데이터를 불러오지 못했습니다" : "Could not load 1RM data"}

@@ -293,33 +293,6 @@ export default function WorkoutSessionDetailPage() {
         </div>
       </Card>
 
-      {loading && (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <div className="card" style={{ padding: "var(--space-md)" }}>
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 16, width: "50%", marginBottom: 8 }} />
-            <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "70%", marginBottom: 12 }} />
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--space-sm)" }}>
-              {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "60%", marginBottom: 4 }} />
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 20, width: "80%" }} />
-                </div>
-              ))}
-            </div>
-          </div>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div key={i} className="card" style={{ padding: "var(--space-md)" }}>
-              <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 14, width: "40%", marginBottom: 8 }} />
-              {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingBlock: 8, borderBottom: j < 2 ? "1px solid var(--color-border)" : "none" }}>
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 13, width: "45%" }} />
-                  <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 13, width: 40 }} />
-                </div>
-              ))}
-            </div>
-          ))}
-        </div>
-      )}
       <ErrorStateRows
         message={error}
         onRetry={() => {

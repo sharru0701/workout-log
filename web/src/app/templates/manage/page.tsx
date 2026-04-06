@@ -393,12 +393,6 @@ export default function TemplatesPage() {
           </a>
         </div>
         <div>
-          <LoadingStateRows
-            active={loadingTemplates || loadingVersions}
-            label={locale === "ko" ? "템플릿을 불러오는 중" : "Loading templates"}
-          />
-        </div>
-        <div>
           <ErrorStateRows
             message={error}
             onRetry={() => {
@@ -524,11 +518,6 @@ export default function TemplatesPage() {
                 ))}
               </AppSelect>
             </div>
-
-            <LoadingStateRows
-              active={loadingVersions}
-              label={locale === "ko" ? "버전 목록을 불러오는 중" : "Loading versions"}
-            />
 
             {selectedTemplate.type === "MANUAL" ? (
               <AccordionSection

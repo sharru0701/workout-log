@@ -397,11 +397,6 @@ function PlansManagePageContent() {
             </div>
           ) : null}
 
-          <LoadingStateRows
-            active={loading}
-            label={locale === "ko" ? "플랜 목록을 불러오는 중" : "Loading plans"}
-          />
-
           <ErrorStateRows
             message={error}
             title={copy.plansManage.loadError}

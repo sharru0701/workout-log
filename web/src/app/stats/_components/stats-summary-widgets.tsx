@@ -49,17 +49,7 @@ export const StrengthSummaryGrid = memo(function StrengthSummaryGrid({ onExercis
     void loadData();
   }, [loadData]);
 
-  if (loading) return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "var(--space-md)" }}>
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} style={{ padding: "var(--space-md)", background: "var(--color-surface-container-low)", borderRadius: 20, boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 12, width: "60%", marginBottom: 10 }} />
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 8, height: 28, width: "80%", marginBottom: 6 }} />
-          <div style={{ background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)", backgroundSize: "200% 100%", animation: "skeleton-shimmer 1.4s ease infinite", borderRadius: 4, height: 11, width: "50%" }} />
-        </div>
-      ))}
-    </div>
-  );
+  if (loading) return null;
   if (error) return <ErrorStateRows message={error} onRetry={loadData} />;
   if (!data || data.length === 0) return <EmptyStateRows when={true} label={locale === "ko" ? "기록된 운동이 없습니다." : "No recorded exercises."} description={locale === "ko" ? "무거운 중량으로 운동을 기록하면 여기에 나타납니다." : "Heavy logged lifts will appear here."} />;
 
