@@ -94,6 +94,7 @@ jobs:
             nextjs-build-${{ runner.os }}-
 
       - name: Build
+        run: pnpm build
         env:
           # migrate.mjs 스킵 (DB 없어도 빌드 통과)
           DB_MIGRATE_ENABLED: "0"
