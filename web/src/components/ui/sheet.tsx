@@ -5,7 +5,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -95,12 +94,11 @@ export function Sheet({
         dialog.showModal();
       }
 
-      // Double rAF: first frame renders dialog in initial (off-screen) state,
-      // second frame applies data-open to trigger the CSS enter transition.
+      // Force a synchronous reflow so the browser commits the dialog's
+      // initial translateY(100%) state before triggering the entry transition.
+      void dialog.offsetHeight;
       requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          dialog.setAttribute("data-open", "");
-        });
+        dialog.setAttribute("data-open", "");
       });
     } else {
       if (dialog.open && !isClosingRef.current) {

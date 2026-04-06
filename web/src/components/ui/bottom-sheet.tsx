@@ -158,6 +158,29 @@ export function BottomSheet({
   const isInteractiveSheet = open && isTopSheet;
   const hasDescription = !MINIMAL_COPY_MODE && Boolean(description);
 
+  // Safety net: if React batched present+isTopSheet updates (both become true
+  // in the same render), the panel mounts without inert and the CSS entry
+  // transition never fires. Detect this case and force the initial off-screen
+  // state synchronously, then restore CSS control in the next frame.
+  useLayoutEffect(() => {
+    if (!present || !isInteractiveSheet) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    panel.style.transform = "translateY(100%)";
+    panel.style.transition = "none";
+    void panel.offsetHeight;
+    panel.style.transition = "";
+    const frame = requestAnimationFrame(() => {
+      panel.style.transform = "";
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      panel.style.transform = "";
+      panel.style.transition = "";
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [present]); // intentionally only [present]: runs once on mount
+
   useLayoutEffect(() => {
     if (isInteractiveSheet) return;
 
