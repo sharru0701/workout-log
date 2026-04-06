@@ -5,7 +5,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
 } from "react";
@@ -95,7 +94,9 @@ export function Sheet({
         dialog.showModal();
       }
 
-      // Force layout flush, then trigger enter animation
+      // Force a synchronous reflow so the browser commits the dialog's
+      // initial translateY(100%) state before triggering the entry transition.
+      void dialog.offsetHeight;
       requestAnimationFrame(() => {
         dialog.setAttribute("data-open", "");
       });
