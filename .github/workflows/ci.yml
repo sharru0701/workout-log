@@ -1,0 +1,192 @@
+name: CI
+
+on:
+  pull_request:
+    paths:
+      - "web/**"
+      - ".github/workflows/ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "web/**"
+      - ".github/workflows/ci.yml"
+  workflow_dispatch: {}
+
+# PR당 최신 push만 실행 — 이전 실행은 취소
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Job 1: lint + typecheck + unit tests
+  # 가장 빠른 피드백. 이 job이 통과해야 build/e2e 시작
+  # ──────────────────────────────────────────────
+  quality:
+    name: Lint · Typecheck · Unit Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Unit tests
+        run: pnpm test:unit
+
+  # ──────────────────────────────────────────────
+  # Job 2: next build 검증
+  # DB_MIGRATE_ENABLED=0 으로 migrate.mjs를 스킵하고 빌드만 실행
+  # ──────────────────────────────────────────────
+  build:
+    name: Build
+    needs: quality
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # .next/cache 캐시 — 변경된 파일 기준으로 복원, 전체 재빌드 방지
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: web/.next/cache
+          key: nextjs-build-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-${{ hashFiles('web/src/**/*.{ts,tsx,css}') }}
+          restore-keys: |
+            nextjs-build-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml') }}-
+            nextjs-build-${{ runner.os }}-
+
+      - name: Build
+        env:
+          # migrate.mjs 스킵 (DB 없어도 빌드 통과)
+          DB_MIGRATE_ENABLED: "0"
+          # next build 시 DATABASE_URL 형식 체크 통과용 (실제 연결 안 함)
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          NEXT_TELEMETRY_DISABLED: "1"
+          WORKOUT_AUTH_USER_ID: ci-user
+          NEXT_PUBLIC_APP_URL: http://localhost:3100
+
+  # ──────────────────────────────────────────────
+  # Job 3: Playwright smoke E2E
+  # quality 통과 후 build와 병렬 실행 — 빌드 아티팩트 불필요
+  # PostgreSQL 서비스 컨테이너 + next dev 서버 사용
+  # ──────────────────────────────────────────────
+  e2e-smoke:
+    name: E2E Smoke
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workout_log_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v5
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # Playwright 브라우저 캐시 — pnpm-lock.yaml 변경 시에만 재다운로드
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('web/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: pnpm exec playwright install chromium
+
+      - name: Run DB migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+        run: pnpm db:migrate
+
+      - name: Seed DB
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          WORKOUT_AUTH_USER_ID: ci-user
+        run: pnpm db:seed
+
+      - name: Run smoke E2E tests
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          WORKOUT_AUTH_USER_ID: ci-user
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+          NEXT_TELEMETRY_DISABLED: "1"
+          PLAYWRIGHT_SERVER_MODE: dev
+          CI: "true"
+        run: pnpm exec playwright test e2e/smoke.spec.ts --project chromium
+
+      # 실패 시 trace/screenshot/video를 artifact로 보관
+      - name: Upload Playwright artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            web/playwright-report
+            web/test-results
+          if-no-files-found: ignore
+          retention-days: 14

@@ -2,6 +2,8 @@ import { defineConfig, devices } from "@playwright/test";
 
 const port = Number(process.env.PORT ?? 3100);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
+// Vercel Deployment Protection bypass — set via GitHub Secret VERCEL_AUTOMATION_BYPASS_SECRET
+const vercelBypassToken = process.env.VERCEL_AUTOMATION_BYPASS_SECRET ?? "";
 const fallbackDatabaseUrl = "postgresql://postgres:postgres@127.0.0.1:5432/workout_log_ci";
 const serverMode = process.env.PLAYWRIGHT_SERVER_MODE === "prod" ? "prod" : "dev";
 const serverCommand =
@@ -24,6 +26,8 @@ export default defineConfig({
     baseURL,
     trace: "on-first-retry",
     headless: true,
+    // Vercel Deployment Protection bypass header (no-op when token is empty)
+    ...(vercelBypassToken ? { extraHTTPHeaders: { "x-vercel-protection-bypass": vercelBypassToken } } : {}),
   },
   webServer: process.env.PLAYWRIGHT_BASE_URL
     ? undefined

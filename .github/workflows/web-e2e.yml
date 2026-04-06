@@ -1,10 +1,11 @@
-name: e2e
+name: e2e (design compliance)
+# iOS Settings 디자인 컴플라이언스 전용 — PR 필수 체크 아님
+# PR 필수 체크는 ci.yml (e2e-smoke) 사용
+# nightly + main push + 수동 실행만
 
 on:
-  pull_request:
-    paths:
-      - "web/**"
-      - ".github/workflows/web-e2e.yml"
+  schedule:
+    - cron: "0 20 * * *"  # 매일 05:00 KST
   push:
     branches: ["main"]
     paths:

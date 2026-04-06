@@ -1,8 +1,9 @@
 name: db-migrate
 
 on:
+  # CI 워크플로우(lint+typecheck+build+e2e-smoke) 가 main에서 성공한 후 실행
   workflow_run:
-    workflows: [e2e]
+    workflows: [CI]
     types: [completed]
     branches: [main]
   workflow_dispatch: {}
