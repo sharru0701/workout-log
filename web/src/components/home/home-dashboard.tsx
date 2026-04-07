@@ -1,8 +1,4 @@
-"use client";
-
-import { memo } from "react";
 import Link from "next/link";
-import { useLocale } from "@/components/locale-provider";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   HomeData,
@@ -12,6 +8,7 @@ import type {
   HomeTodaySummary,
   HomeWeeklySummary,
 } from "@/lib/home/home-data-source";
+import type { AppCopy, AppLocale } from "@/lib/i18n/messages";
 
 // ─── Helpers ──────────────────────────────────────────────────────────
 
@@ -21,7 +18,6 @@ function formatVolumeTons(kg: number): string {
 }
 
 function formatDurationMin(sets: number): number {
-  // Estimate duration: ~2 min per set as a rough proxy
   return Math.max(20, Math.round(sets * 2));
 }
 
@@ -32,8 +28,7 @@ function todayDateString(locale: string, options: Intl.DateTimeFormatOptions): s
 
 // ─── Section 1: Welcome Header ────────────────────────────────────────
 
-const WelcomeSection = memo(function WelcomeSection({ today }: { today: HomeTodaySummary }) {
-  const { locale, copy } = useLocale();
+function WelcomeSection({ today, copy, locale }: { today: HomeTodaySummary; copy: AppCopy; locale: AppLocale }) {
   const hasPlan = today.hasPlan;
   const statusLabel = hasPlan ? copy.home.welcome.active : copy.home.welcome.noPlan;
 
@@ -43,18 +38,19 @@ const WelcomeSection = memo(function WelcomeSection({ today }: { today: HomeToda
       <h1 className="hd-welcome__title">{todayDateString(locale, copy.home.todayDate)}</h1>
     </section>
   );
-});
+}
 
 // ─── Section 2: Streak / Momentum Banner ─────────────────────────────
 
-const MomentumBanner = memo(function MomentumBanner({
+function MomentumBanner({
   quickStats,
   today,
+  copy,
 }: {
   quickStats: HomeQuickStats;
   today: HomeTodaySummary;
+  copy: AppCopy;
 }) {
-  const { copy } = useLocale();
   const streak = quickStats.currentStreak;
   const hasStreak = streak > 0;
 
@@ -84,20 +80,21 @@ const MomentumBanner = memo(function MomentumBanner({
       <div className="hd-banner__glow" aria-hidden="true" />
     </section>
   );
-});
+}
 
 // ─── Section 3: Today's Protocol Card ────────────────────────────────
 
-const TodayProtocolCard = memo(function TodayProtocolCard({
+function TodayProtocolCard({
   today,
   planOverview,
   weeklySummary,
+  copy,
 }: {
   today: HomeTodaySummary;
   planOverview: HomePlanOverview;
   weeklySummary: HomeWeeklySummary;
+  copy: AppCopy;
 }) {
-  const { copy } = useLocale();
   const hasPlan = planOverview.totalPlans > 0;
   const programName = planOverview.highlightedProgramName ?? planOverview.highlightedPlanName ?? null;
   const planName = planOverview.highlightedPlanName ?? today.programName;
@@ -159,7 +156,6 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
           )}
           <h4 className="hd-protocol__name">{planName}</h4>
 
-          {/* Weekly progress bar */}
           <div className="hd-protocol__progress">
             <div className="hd-protocol__progress-labels">
               <span className="hd-protocol__progress-label">{copy.home.protocol.weeklyActivity}</span>
@@ -170,7 +166,6 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
             </div>
           </div>
 
-          {/* Weekly activity dots */}
           <div
             className="hd-protocol__week-dots"
             aria-label={copy.home.protocol.recent7Days}
@@ -203,16 +198,14 @@ const TodayProtocolCard = memo(function TodayProtocolCard({
       </div>
     </section>
   );
-});
+}
 
 // ─── Section 4: Last Entry Bento ─────────────────────────────────────
 
-const LastEntryBento = memo(function LastEntryBento({ session }: { session: HomeLastSession }) {
-  const { copy } = useLocale();
+function LastEntryBento({ session, copy }: { session: HomeLastSession; copy: AppCopy }) {
   const totalVolumeTons = formatVolumeTons(session.totalVolume);
   const durationMin = formatDurationMin(session.totalSets);
 
-  // Count PRs: exercises where weightDelta is null or negative (they matched or beat target)
   const prCount = session.exercises.filter(
     (ex) => ex.weightDelta !== null && ex.weightDelta <= 0
   ).length;
@@ -225,7 +218,6 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
       </div>
 
       <Link href={session.href} className="hd-bento-grid" aria-label={copy.home.lastSession.ariaLabel(session.planName)}>
-        {/* Full-width workload tile */}
         <div className="hd-bento-tile hd-bento-tile--wide">
           <div>
             <p className="hd-bento-tile__label">{copy.home.lastSession.totalWorkload}</p>
@@ -240,7 +232,6 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
           </span>
         </div>
 
-        {/* Duration tile */}
         <div className="hd-bento-tile">
           <p className="hd-bento-tile__label">{copy.home.lastSession.duration}</p>
           <div className="hd-bento-tile__value-row">
@@ -250,7 +241,6 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
           <p className="hd-bento-tile__sub">{session.totalSets} {copy.home.lastSession.sets}</p>
         </div>
 
-        {/* PRs tile */}
         <div className="hd-bento-tile hd-bento-tile--pr">
           <p className="hd-bento-tile__label">{copy.home.lastSession.goalHits}</p>
           <div className="hd-bento-tile__value-row hd-bento-tile__value-row--tertiary">
@@ -267,12 +257,11 @@ const LastEntryBento = memo(function LastEntryBento({ session }: { session: Home
       </Link>
     </section>
   );
-});
+}
 
 // ─── Section 5: Logistics Quick Links ────────────────────────────────
 
-const LogisticsSection = memo(function LogisticsSection() {
-  const { copy } = useLocale();
+function LogisticsSection({ copy }: { copy: AppCopy }) {
   const links = [
     {
       href: APP_ROUTES.programStore,
@@ -327,22 +316,23 @@ const LogisticsSection = memo(function LogisticsSection() {
       </div>
     </section>
   );
-});
+}
 
 // ─── Main Dashboard ───────────────────────────────────────────────────
 
-export function HomeDashboard({ data }: { data: HomeData }) {
+export function HomeDashboard({ data, copy, locale }: { data: HomeData; copy: AppCopy; locale: AppLocale }) {
   return (
     <div className="hd-root">
-      <WelcomeSection today={data.today} />
-      <MomentumBanner quickStats={data.quickStats} today={data.today} />
+      <WelcomeSection today={data.today} copy={copy} locale={locale} />
+      <MomentumBanner quickStats={data.quickStats} today={data.today} copy={copy} />
       <TodayProtocolCard
         today={data.today}
         planOverview={data.planOverview}
         weeklySummary={data.weeklySummary}
+        copy={copy}
       />
-      {data.lastSession && <LastEntryBento session={data.lastSession} />}
-      <LogisticsSection />
+      {data.lastSession && <LastEntryBento session={data.lastSession} copy={copy} />}
+      <LogisticsSection copy={copy} />
     </div>
   );
 }

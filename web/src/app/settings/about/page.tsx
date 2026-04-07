@@ -1,10 +1,19 @@
-"use client";
-
 import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } from "@/components/ui/settings-list";
-import { useLocale } from "@/components/locale-provider";
+import { cookies, headers } from "next/headers";
+import { LOCALE_COOKIE_NAME, coerceAppLocale, parseAcceptLanguage } from "@/lib/i18n/messages";
 
-export default function SettingsAboutPage() {
-  const { locale } = useLocale();
+async function resolveLocale() {
+  const cookieStore = await cookies();
+  const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  if (cookieLocale) {
+    return coerceAppLocale(cookieLocale);
+  }
+  const requestHeaders = await headers();
+  return parseAcceptLanguage(requestHeaders.get("accept-language"));
+}
+
+export default async function SettingsAboutPage() {
+  const locale = await resolveLocale();
   return (
     <div>
       <section>

@@ -1,27 +1,45 @@
 "use client";
 
-import { useEffect } from 'react';
-import { useWorkoutSession, useIsRestoring, useWorkoutActions } from '@/store/workoutStore';
-import { useWorkoutPersistence } from '@/lib/workout/useWorkoutPersistence';
-import { ResilientTimer } from '@/components/workout/resilient-timer';
-import type { WorkoutSession } from '@/lib/workout/session.types';
+import { useWorkoutSession, useIsRestoring, useWorkoutActions, useCurrentExerciseIndex } from "@/store/workoutStore";
+import { useWorkoutPersistence } from "@/lib/workout/useWorkoutPersistence";
+import { ResilientTimer } from "@/components/workout/resilient-timer";
+import { ExerciseItem } from "@/components/workout/exercise-item";
+import { WorkoutActions } from "@/components/workout/workout-actions";
+import { useEffect, useState, memo } from "react";
+import type { WorkoutSession } from "@/lib/workout/session.types";
 
 // Dummy data for a new session
 const createNewSession = (sessionId: string): WorkoutSession => ({
   sessionId,
-  programId: 'program-1',
+  programId: "program-1",
   currentExerciseIndex: 0,
   currentSetIndex: 0,
   exercises: [
-    { exerciseId: 'squat', sets: [{ weight: 0, reps: 0, completed: false }, { weight: 0, reps: 0, completed: false }] },
-    { exerciseId: 'bench-press', sets: [{ weight: 0, reps: 0, completed: false }, { weight: 0, reps: 0, completed: false }] },
+    {
+      exerciseId: "squat",
+      sets: [
+        { weight: 60, reps: 10, completed: false },
+        { weight: 60, reps: 10, completed: false },
+        { weight: 60, reps: 10, completed: false },
+      ],
+    },
+    {
+      exerciseId: "bench-press",
+      sets: [
+        { weight: 40, reps: 12, completed: false },
+        { weight: 40, reps: 12, completed: false },
+      ],
+    },
   ],
   restTimer: { startedAt: null, durationSec: 60 },
   updatedAt: Date.now(),
 });
 
-// A simple toast component for notifications
-function Toast({ message, show, onDismiss }: { message: string; show: boolean; onDismiss: () => void }) {
+/**
+ * Toast Notification Component
+ * PERF: Uses Tailwind 4 for styling.
+ */
+const Toast = memo(function Toast({ message, show, onDismiss }: { message: string; show: boolean; onDismiss: () => void }) {
   useEffect(() => {
     if (show) {
       const timer = setTimeout(() => onDismiss(), 3000);
@@ -32,31 +50,44 @@ function Toast({ message, show, onDismiss }: { message: string; show: boolean; o
   if (!show) return null;
 
   return (
-    <div style={{ position: "fixed", top: "20px", right: "20px", backgroundColor: "var(--color-success)", color: "var(--color-text-on-primary)", padding: "8px 16px", borderRadius: "8px", boxShadow: "0 4px 12px var(--shadow-color-medium)" }}>
-      {message}
+    <div className="fixed top-6 left-1/2 -translate-x-1/2 bg-success text-white px-6 py-3 rounded-2xl shadow-2xl z-[100] font-bold animate-in fade-in slide-in-from-top-4 duration-300">
+      <div className="flex items-center gap-2">
+        <span className="material-symbols-outlined text-xl">check_circle</span>
+        {message}
+      </div>
     </div>
   );
-}
-
+});
 
 export default function WorkoutPage({ params }: { params: { sessionId: string } }) {
   const { sessionId } = params;
   const { showRestoredToast, setShowRestoredToast } = useWorkoutPersistence(sessionId);
-  
+
   const session = useWorkoutSession();
   const isRestoring = useIsRestoring();
   const actions = useWorkoutActions();
+  const currentExerciseIndex = useCurrentExerciseIndex();
 
   if (isRestoring) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[80vh] gap-4">
+        <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+        <p className="text-text-secondary font-medium animate-pulse">Restoring your workout...</p>
+      </div>
+    );
   }
 
   if (!session) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex flex-col items-center justify-center min-h-[80vh] px-6 text-center">
+        <div className="w-20 h-20 bg-surface-2 rounded-full flex items-center justify-center mb-6">
+          <span className="material-symbols-outlined text-4xl text-text-tertiary">fitness_center</span>
+        </div>
+        <h1 className="text-2xl font-black mb-2 text-text">Ready for your workout?</h1>
+        <p className="text-text-secondary mb-8">Your progress will be automatically saved as you train.</p>
         <button
           onClick={() => actions.startSession(createNewSession(sessionId))}
-          className="btn btn-primary"
+          className="w-full max-w-xs bg-primary text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-primary/20 active:scale-95 transition-all"
         >
           Start New Workout
         </button>
@@ -64,63 +95,33 @@ export default function WorkoutPage({ params }: { params: { sessionId: string } 
     );
   }
 
-  const currentExercise = session.exercises[session.currentExerciseIndex];
-
   return (
-    <div className="p-4">
+    <div className="max-w-md mx-auto px-4 pt-4 pb-24">
       <Toast
-        message="이전 운동을 복구했습니다."
+        message="Your workout session has been restored."
         show={showRestoredToast}
         onDismiss={() => setShowRestoredToast(false)}
       />
 
-      <h1 className="text-2xl font-bold mb-4">Workout in Progress</h1>
-      <h2 className="text-xl capitalize mb-2">Exercise: {currentExercise.exerciseId}</h2>
-
-      <div className="space-y-4">
-        {currentExercise.sets.map((set, setIndex) => (
-          <div key={setIndex} className="p-2 border rounded" style={set.completed ? { backgroundColor: "var(--color-surface-2)" } : undefined}>
-            <p>Set {setIndex + 1}</p>
-            <input
-              type="number"
-              value={set.weight}
-              onChange={(e) => actions.updateSet(session.currentExerciseIndex, setIndex, { weight: Number(e.target.value) })}
-              className="border p-1 mr-2"
-              placeholder="Weight"
-            />
-            <input
-              type="number"
-              value={set.reps}
-              onChange={(e) => actions.updateSet(session.currentExerciseIndex, setIndex, { reps: Number(e.target.value) })}
-              className="border p-1 mr-2"
-              placeholder="Reps"
-            />
-            {!set.completed && (
-              <button
-                onClick={() => {
-                  actions.toggleSetCompletion(session.currentExerciseIndex, setIndex);
-                  actions.startRestTimer(session.restTimer.durationSec);
-                }}
-                className="btn btn-primary"
-              >
-                Complete Set
-              </button>
-            )}
-          </div>
+      {/* Progress Indicator */}
+      <div className="flex gap-1 mb-8">
+        {session.exercises.map((_, idx) => (
+          <div 
+            key={idx}
+            className={`h-1.5 flex-1 rounded-full transition-all duration-500 ${
+              idx === currentExerciseIndex 
+                ? "bg-primary" 
+                : idx < currentExerciseIndex 
+                  ? "bg-success" 
+                  : "bg-surface-3"
+            }`}
+          />
         ))}
       </div>
-      
-      {session.currentExerciseIndex < session.exercises.length - 1 && (
-        <button 
-          onClick={actions.goToNextExercise} 
-          className="btn btn-secondary" style={{ marginTop: "var(--space-md)" }}>
-          Next Exercise
-        </button>
-      )}
 
-      <button onClick={actions.endSession} className="btn btn-danger" style={{ marginTop: "var(--space-md)", marginLeft: "var(--space-md)" }}>
-        End Workout
-      </button>
+      <ExerciseItem exerciseIndex={currentExerciseIndex} />
+      
+      <WorkoutActions />
 
       <ResilientTimer />
     </div>

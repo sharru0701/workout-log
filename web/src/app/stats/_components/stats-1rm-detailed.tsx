@@ -11,11 +11,13 @@ import {
   useState,
   useTransition,
 } from "react";
+import dynamic from "next/dynamic";
 import { useLocale } from "@/components/locale-provider";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
 import { apiGet } from "@/lib/api";
+
+const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
+const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { CalendarRangePicker } from "@/components/ui/calendar-range-picker";
 

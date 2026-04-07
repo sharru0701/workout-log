@@ -2,16 +2,18 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { getHomeData } from "@/server/home/home-service";
 import { getAuthenticatedUserId } from "@/server/auth/user";
-import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { resolveRequestLocale, getAppCopy } from "@/lib/i18n/messages";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import HomeLoading from "./loading";
 
-// PERF: 서버 사이드 데이터 페칭으로 Waterfall 제거 (RTT ~300ms+ 단축)
-// React 19 Streaming + Suspense 활용
+// PERF: 완전한 Server Component화로 클라이언트 JS 번들 최소화 및 Waterfall 제거
+// React 19 Streaming + Zero-JS Dashboard (상호작용이 필요 없는 정적 뷰)
 
 async function HomeContent() {
   const userId = getAuthenticatedUserId();
   const locale = await resolveRequestLocale();
+  const copy = getAppCopy(locale);
+  
   const cookieStore = await cookies();
   const timezone = cookieStore.get("timezone")?.value ?? "UTC";
 
@@ -22,7 +24,7 @@ async function HomeContent() {
     timezone,
   });
 
-  return <HomeDashboard data={data} />;
+  return <HomeDashboard data={data} copy={copy} locale={locale} />;
 }
 
 export default function HomePage() {

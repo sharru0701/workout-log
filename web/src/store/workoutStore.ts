@@ -115,5 +115,12 @@ export const useWorkoutSession = () => useWorkoutStore((state) => state.session)
 export const useIsRestoring = () => useWorkoutStore((state) => state.isRestoring);
 export const useWorkoutActions = () => useWorkoutStore((state) => state.actions);
 
+// Atomic Selectors for better performance
+export const useCurrentExerciseIndex = () => useWorkoutStore((state) => state.session?.currentExerciseIndex ?? 0);
+export const useRestTimer = () => useWorkoutStore((state) => state.session?.restTimer);
+export const useExercise = (index: number) => useWorkoutStore((state) => state.session?.exercises[index]);
+export const useSet = (exerciseIndex: number, setIndex: number) => 
+  useWorkoutStore((state) => state.session?.exercises[exerciseIndex]?.sets[setIndex]);
+
 // Exporting the store itself for use in non-React files if needed
 export default useWorkoutStore;
