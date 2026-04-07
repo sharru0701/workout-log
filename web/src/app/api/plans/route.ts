@@ -115,9 +115,11 @@ async function GETImpl() {
     ),
   );
 
-  const versionRows =
+  // PERF: versionRows와 logRows는 서로 독립적이므로 병렬 실행
+  const planIds = baseItems.map((item) => item.id);
+  const [versionRows, logRows] = await Promise.all([
     rootVersionIds.length > 0
-      ? await db
+      ? db
           .select({
             versionId: programVersion.id,
             templateName: programTemplate.name,
@@ -125,7 +127,22 @@ async function GETImpl() {
           .from(programVersion)
           .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
           .where(inArray(programVersion.id, rootVersionIds))
-      : [];
+      : Promise.resolve([]),
+    db
+      .select({
+        planId: workoutLog.planId,
+        performedAt: workoutLog.performedAt,
+      })
+      .from(workoutLog)
+      .where(
+        and(
+          eq(workoutLog.userId, userId),
+          isNotNull(workoutLog.planId),
+          inArray(workoutLog.planId, planIds),
+        ),
+      )
+      .orderBy(desc(workoutLog.performedAt)),
+  ]);
   const versionNameById = new Map<string, string>();
   for (const row of versionRows) {
     if (!row.versionId) continue;
@@ -133,22 +150,6 @@ async function GETImpl() {
     if (!label) continue;
     versionNameById.set(row.versionId, label);
   }
-
-  const planIds = baseItems.map((item) => item.id);
-  const logRows = await db
-    .select({
-      planId: workoutLog.planId,
-      performedAt: workoutLog.performedAt,
-    })
-    .from(workoutLog)
-    .where(
-      and(
-        eq(workoutLog.userId, userId),
-        isNotNull(workoutLog.planId),
-        inArray(workoutLog.planId, planIds),
-      ),
-    )
-    .orderBy(desc(workoutLog.performedAt));
   const lastPerformedAtByPlanId = new Map<string, Date>();
   for (const row of logRows) {
     const planId = row.planId;
