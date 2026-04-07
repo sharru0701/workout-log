@@ -418,6 +418,8 @@ export default function CalendarPage({
         sp.set("date", selectedDate);
         sp.set("timezone", timezone);
         sp.set("limit", "1");
+        sp.set("includeGeneratedSession", "0");
+        sp.set("includeProgression", "0");
         const res = await apiGet<{ items: WorkoutLogForDate[] }>(`/api/logs?${sp.toString()}`);
         if (cancelled) return;
         logFetchCacheRef.current.add(fetchKey);
@@ -455,6 +457,9 @@ export default function CalendarPage({
         const sp = new URLSearchParams();
         sp.set("planId", planId);
         sp.set("limit", "200");
+        sp.set("includeSets", "0");
+        sp.set("includeGeneratedSession", "0");
+        sp.set("includeProgression", "0");
         const res = await apiGet<{ items: WorkoutLogSummary[] }>(`/api/logs?${sp.toString()}`);
         if (!cancelled) setAllPlanLogs(res.items);
       } catch {}

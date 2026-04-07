@@ -1851,8 +1851,8 @@ export function WorkoutRecordPage({ initialPlans, initialSettings }: WorkoutReco
         setError(null);
         setSaveError(null);
         const recentLogsPath = input.planId
-          ? `/api/logs?planId=${encodeURIComponent(input.planId)}&limit=6`
-          : "/api/logs?limit=6";
+          ? `/api/logs?planId=${encodeURIComponent(input.planId)}&limit=6&includeProgression=0`
+          : "/api/logs?limit=6&includeProgression=0";
 
         if (input.logId) {
           const [logRes, logsRes] = await Promise.all([
@@ -1900,7 +1900,7 @@ export function WorkoutRecordPage({ initialPlans, initialSettings }: WorkoutReco
 
         if (input.planId && input.dateKey) {
           const existingLogLookup = await apiGet<LogsResponse>(
-            `/api/logs?planId=${encodeURIComponent(input.planId)}&date=${encodeURIComponent(input.dateKey)}&timezone=${encodeURIComponent(browserTimezone)}&limit=1`,
+            `/api/logs?planId=${encodeURIComponent(input.planId)}&date=${encodeURIComponent(input.dateKey)}&timezone=${encodeURIComponent(browserTimezone)}&limit=1&includeSets=0&includeGeneratedSession=0&includeProgression=0`,
           );
           const existingLogId = existingLogLookup.items[0]?.id ?? null;
           if (existingLogId) {
