@@ -31,7 +31,9 @@ export function FontStylesheetLoader() {
       const link = document.createElement("link");
       link.rel = "stylesheet";
       link.href = href;
-      link.crossOrigin = "anonymous";
+      // crossOrigin 미설정 — CSS 스타일시트는 CORS 불필요, Safari 호환성 확보.
+      // crossOrigin="anonymous"를 설정하면 Safari가 stylesheet를 CORS 컨텍스트로 처리하고
+      // 내부 @font-face → fonts.gstatic.com 폰트 파일을 다른 CORS 컨텍스트로 취급해 로드 거부.
       document.head.appendChild(link);
     }
   }, []);
