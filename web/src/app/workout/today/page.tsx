@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { NavRow } from "@/components/workout/nav-row";
 
 type NavItem = {
   href: string;
@@ -10,84 +11,9 @@ type NavItem = {
   iconSymbol: string;
 };
 
-function NavRow({ item }: { item: NavItem }) {
-  return (
-    <Link
-      href={item.href}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "var(--space-md)",
-        padding: "14px 16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        textDecoration: "none",
-        transition: "background 0.12s ease",
-      }}
-    >
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 22,
-          color: "var(--color-primary)",
-          flexShrink: 0,
-          fontVariationSettings: "'FILL' 0, 'wght' 300",
-        }}
-        aria-hidden="true"
-      >
-        {item.iconSymbol}
-      </span>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--color-primary)",
-            marginBottom: "1px",
-          }}
-        >
-          {item.subtitle}
-        </div>
-        <div
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "15px",
-            fontWeight: 700,
-            color: "var(--color-text)",
-            letterSpacing: "-0.1px",
-            marginBottom: "2px",
-          }}
-        >
-          {item.label}
-        </div>
-        <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.4 }}>
-          {item.description}
-        </div>
-      </div>
-
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 18,
-          color: "var(--color-text-muted)",
-          opacity: 0.5,
-          flexShrink: 0,
-          fontVariationSettings: "'FILL' 0, 'wght' 300",
-        }}
-        aria-hidden="true"
-      >
-        chevron_right
-      </span>
-    </Link>
-  );
-}
-
 export default async function WorkoutTodayIndexPage() {
   const locale = await resolveRequestLocale();
+  
   const primaryItems: NavItem[] = [
     {
       href: APP_ROUTES.todayLog,
@@ -140,121 +66,55 @@ export default async function WorkoutTodayIndexPage() {
   ];
 
   return (
-    <div>
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20 px-4">
       {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: "var(--space-xl)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
+      <header className="flex items-start justify-between mb-8 py-6 border-b border-border">
         <div>
-          <div
-            style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--color-primary)",
-              marginBottom: "4px",
-            }}
-          >
+          <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1 font-label">
             Workout
           </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "28px",
-              fontWeight: 800,
-              letterSpacing: "-0.5px",
-              color: "var(--color-text)",
-              margin: 0,
-            }}
-          >
+          <h1 className="text-3xl font-black tracking-tight text-text font-headline">
             {locale === "ko" ? "오늘 운동" : "Today's Workout"}
           </h1>
         </div>
         <Link
           href={APP_ROUTES.todayLog}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-            padding: "9px 16px",
-            borderRadius: "22px",
-            background: "var(--color-primary)",
-            color: "var(--color-text-on-primary)",
-            fontFamily: "var(--font-label-family)",
-            fontSize: "13px",
-            fontWeight: 700,
-            letterSpacing: "0.02em",
-            textDecoration: "none",
-            flexShrink: 0,
-          }}
+          className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all no-underline"
         >
           <span
-            className="material-symbols-outlined"
-            style={{ fontSize: 16, fontVariationSettings: "'FILL' 1, 'wght' 500" }}
+            className="material-symbols-outlined text-lg"
+            style={{ fontVariationSettings: "'FILL' 1, 'wght' 500" }}
             aria-hidden="true"
           >
             play_arrow
           </span>
           {locale === "ko" ? "기록 시작" : "Start Logging"}
         </Link>
-      </div>
+      </header>
 
       {/* Primary Section */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "13px",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-              margin: 0,
-            }}
-          >
-            {locale === "ko" ? "핵심 동선" : "Core Flow"}
-          </h2>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+      <section className="mb-10">
+        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-text-tertiary mb-4 font-headline ml-1">
+          {locale === "ko" ? "핵심 동선" : "Core Flow"}
+        </h2>
+        <div className="grid gap-3">
           {primaryItems.map((item) => (
             <NavRow key={item.href} item={item} />
           ))}
         </div>
-      </div>
+      </section>
 
       {/* Tools Section */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "13px",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-              margin: 0,
-            }}
-          >
-            {locale === "ko" ? "보조 도구" : "Tools"}
-          </h2>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+      <section>
+        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-text-tertiary mb-4 font-headline ml-1">
+          {locale === "ko" ? "보조 도구" : "Tools"}
+        </h2>
+        <div className="grid gap-3">
           {toolItems.map((item) => (
             <NavRow key={item.href} item={item} />
           ))}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

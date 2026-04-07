@@ -90,7 +90,7 @@ export default async function RootLayout({
         {/* DNS + TCP 핸드셰이크 선점 — FontStylesheetLoader가 삽입하기 전에 미리 연결 */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
       </head>
       <body>
         <FontStylesheetLoader />

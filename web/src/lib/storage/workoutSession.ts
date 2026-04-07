@@ -1,48 +1,52 @@
 "use client";
 
-import { openDB, DBSchema } from "idb";
 import type { WorkoutSession } from "@/lib/workout/session.types";
 
-const DB_NAME = "workout-log-db";
-const STORE_NAME = "workout-sessions";
-const DB_VERSION = 1;
+/**
+ * Workout Session Storage Module
+ * PERF: Uses a Web Worker to offload IndexedDB operations from the main thread.
+ * Falls back to localStorage if Workers or IndexedDB are unavailable.
+ */
 
-interface WorkoutDB extends DBSchema {
-  [STORE_NAME]: {
-    key: string;
-    value: WorkoutSession;
+let worker: Worker | null = null;
+const pendingRequests = new Map<string, { resolve: (val: any) => void; reject: (err: any) => void }>();
+
+if (typeof window !== "undefined" && window.Worker) {
+  worker = new Worker(new URL("./storage.worker.ts", import.meta.url));
+  worker.onmessage = (event) => {
+    const { id, result, success, error } = event.data;
+    const pending = pendingRequests.get(id);
+    if (pending) {
+      if (success) pending.resolve(result);
+      else pending.reject(new Error(error));
+      pendingRequests.delete(id);
+    }
   };
 }
 
-const isIndexedDBSupported = () => typeof window !== "undefined" && "indexedDB" in window;
-
-const dbPromise = isIndexedDBSupported()
-  ? openDB<WorkoutDB>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          db.createObjectStore(STORE_NAME, { keyPath: "sessionId" });
-        }
-      },
-    })
-  : null;
+function callWorker(type: string, payload: any): Promise<any> {
+  if (!worker) return Promise.reject(new Error("Worker not available"));
+  const id = Math.random().toString(36).substring(7);
+  return new Promise((resolve, reject) => {
+    pendingRequests.set(id, { resolve, reject });
+    worker!.postMessage({ type, payload, id });
+  });
+}
 
 const getLocalStorageKey = (sessionId: string) => `workout-session-${sessionId}`;
 
 /**
- * Saves a workout session. Prefers IndexedDB, falls back to localStorage.
- * @param session The workout session to save.
+ * Saves a workout session. Prefers Web Worker (IndexedDB), falls back to localStorage.
  */
 export async function saveSession(session: WorkoutSession): Promise<void> {
-  // Ensure updatedAt is always current on save
   const sessionToSave = { ...session, updatedAt: Date.now() };
 
-  if (dbPromise) {
+  if (worker) {
     try {
-      const db = await dbPromise;
-      await db.put(STORE_NAME, sessionToSave);
+      await callWorker("save", sessionToSave);
       return;
     } catch (error) {
-      console.error("IndexedDB save failed, falling back to localStorage.", error);
+      console.error("Worker save failed, falling back to localStorage.", error);
     }
   }
 
@@ -55,18 +59,15 @@ export async function saveSession(session: WorkoutSession): Promise<void> {
 }
 
 /**
- * Loads a workout session. Checks IndexedDB first, then localStorage.
- * @param sessionId The ID of the session to load.
- * @returns The workout session, or null if not found.
+ * Loads a workout session. Checks Web Worker (IndexedDB) first, then localStorage.
  */
 export async function loadSession(sessionId: string): Promise<WorkoutSession | null> {
-  if (dbPromise) {
+  if (worker) {
     try {
-      const db = await dbPromise;
-      const session = await db.get(STORE_NAME, sessionId);
+      const session = await callWorker("load", { sessionId });
       if (session) return session;
     } catch (error) {
-      console.error("IndexedDB load failed, falling back to localStorage.", error);
+      console.error("Worker load failed, falling back to localStorage.", error);
     }
   }
 
@@ -85,15 +86,13 @@ export async function loadSession(sessionId: string): Promise<WorkoutSession | n
 
 /**
  * Clears a workout session from all storage.
- * @param sessionId The ID of the session to clear.
  */
 export async function clearSession(sessionId: string): Promise<void> {
-  if (dbPromise) {
+  if (worker) {
     try {
-      const db = await dbPromise;
-      await db.delete(STORE_NAME, sessionId);
+      await callWorker("clear", { sessionId });
     } catch (error) {
-      console.error("IndexedDB delete failed.", error);
+      console.error("Worker delete failed.", error);
     }
   }
 
@@ -107,8 +106,6 @@ export async function clearSession(sessionId: string): Promise<void> {
 
 /**
  * A simple debounce utility.
- * @param func The function to debounce.
- * @param delay The debounce delay in ms.
  */
 export function debounce<F extends (...args: any[]) => any>(
   func: F,

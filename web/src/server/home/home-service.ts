@@ -291,107 +291,92 @@ export async function getHomeData(params: {
 // ─── Fetchers ───────────────────────────────────────────────────────
 
 async function fetchPlans(userId: string, locale: AppLocale) {
-  const baseItems = await db
-    .select()
+  const rows = await db
+    .select({
+      id: plan.id,
+      name: plan.name,
+      type: plan.type,
+      rootProgramVersionId: plan.rootProgramVersionId,
+      createdAt: plan.createdAt,
+      templateName: programTemplate.name,
+      lastPerformedAt: sql<Date | null>`max(${workoutLog.performedAt})`,
+    })
     .from(plan)
+    .leftJoin(programVersion, eq(programVersion.id, plan.rootProgramVersionId))
+    .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
+    .leftJoin(workoutLog, eq(workoutLog.planId, plan.id))
     .where(eq(plan.userId, userId))
+    .groupBy(plan.id, programTemplate.name)
     .orderBy(desc(plan.createdAt));
 
-  if (baseItems.length === 0) return [];
+  if (rows.length === 0) return [];
 
-  const rootVersionIds = Array.from(
-    new Set(baseItems.map((p) => p.rootProgramVersionId).filter((v): v is string => Boolean(v))),
-  );
-
-  // PERF: versionRows와 logRows는 서로 의존하지 않으므로 병렬 실행
-  const [versionRows, logRows] = await Promise.all([
-    rootVersionIds.length > 0
-      ? db
-          .select({ versionId: programVersion.id, templateName: programTemplate.name })
-          .from(programVersion)
-          .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
-          .where(inArray(programVersion.id, rootVersionIds))
-      : Promise.resolve([]),
-    db
-      .select({ planId: workoutLog.planId, performedAt: workoutLog.performedAt })
-      .from(workoutLog)
-      .where(
-        and(
-          eq(workoutLog.userId, userId),
-          isNotNull(workoutLog.planId),
-          inArray(workoutLog.planId, baseItems.map(p => p.id)),
-        ),
-      )
-      .orderBy(desc(workoutLog.performedAt)),
-  ]);
-
-  const versionNameById = new Map<string, string>();
-  for (const row of versionRows) {
-    if (!row.versionId) continue;
-    const label = String(row.templateName ?? "").trim();
-    if (label) versionNameById.set(row.versionId, label);
-  }
-
-  const lastPerformedAtByPlanId = new Map<string, Date>();
-  for (const row of logRows) {
-    const pId = row.planId;
-    if (!pId || lastPerformedAtByPlanId.has(pId)) continue;
-    lastPerformedAtByPlanId.set(pId, row.performedAt);
-  }
-
-  return baseItems.map((item) => {
+  return rows.map((row) => {
     const baseProgramName =
-      (item.rootProgramVersionId && versionNameById.get(item.rootProgramVersionId)) ??
-      (item.type === "COMPOSITE"
-        ? (locale === "ko" ? "복합 플랜" : "Composite Plan")
-        : (locale === "ko" ? "프로그램 정보 없음" : "No Program Info"));
+      (row.rootProgramVersionId && row.templateName)
+        ? String(row.templateName).trim()
+        : (row.type === "COMPOSITE"
+          ? (locale === "ko" ? "복합 플랜" : "Composite Plan")
+          : (locale === "ko" ? "프로그램 정보 없음" : "No Program Info"));
     return {
-      ...item,
+      id: row.id,
+      name: row.name,
+      type: row.type,
+      rootProgramVersionId: row.rootProgramVersionId,
+      createdAt: row.createdAt,
       baseProgramName,
-      lastPerformedAt: lastPerformedAtByPlanId.get(item.id) ?? null,
+      lastPerformedAt: row.lastPerformedAt,
     };
   });
 }
 
 async function fetchLogs(userId: string, limit: number) {
-  const logs = await db
-    .select({
-      id: workoutLog.id,
-      planId: workoutLog.planId,
-      performedAt: workoutLog.performedAt,
-    })
+  const subq = db
+    .select()
     .from(workoutLog)
     .where(eq(workoutLog.userId, userId))
     .orderBy(desc(workoutLog.performedAt))
-    .limit(limit);
+    .limit(limit)
+    .as("l");
 
-  if (logs.length === 0) return [];
-
-  const logIds = logs.map((l) => l.id);
-  const sets = await db
+  const rows = await db
     .select({
-      logId: workoutSet.logId,
+      id: subq.id,
+      planId: subq.planId,
+      performedAt: subq.performedAt,
       exerciseName: workoutSet.exerciseName,
       reps: workoutSet.reps,
       weightKg: workoutSet.weightKg,
       meta: workoutSet.meta,
     })
-    .from(workoutSet)
-    .where(inArray(workoutSet.logId, logIds));
+    .from(subq)
+    .leftJoin(workoutSet, eq(workoutSet.logId, subq.id))
+    .orderBy(desc(subq.performedAt), subq.id, workoutSet.sortOrder);
 
-  const setsByLogId = new Map<string, any[]>();
-  for (const s of sets) {
-    const list = setsByLogId.get(s.logId) ?? [];
-    list.push({ exerciseName: s.exerciseName, reps: s.reps, weightKg: s.weightKg, meta: s.meta });
-    setsByLogId.set(s.logId, list);
+  if (rows.length === 0) return [];
+
+  const logsById = new Map<string, any>();
+
+  for (const r of rows) {
+    if (!logsById.has(r.id)) {
+      logsById.set(r.id, {
+        id: r.id,
+        planId: r.planId,
+        performedAt: r.performedAt,
+        sets: [],
+      });
+    }
+    if (r.exerciseName) {
+      logsById.get(r.id).sets.push({
+        exerciseName: r.exerciseName,
+        reps: r.reps,
+        weightKg: r.weightKg,
+        meta: r.meta,
+      });
+    }
   }
 
-  return logs.map((l) => ({
-    id: l.id,
-    planId: l.planId,
-    performedAt: l.performedAt,
-    sets: setsByLogId.get(l.id) ?? [],
-  }));
+  return Array.from(logsById.values());
 }
 
 async function fetchPrs(userId: string, from: Date, to: Date, limit: number, locale: AppLocale) {

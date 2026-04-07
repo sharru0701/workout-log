@@ -3,15 +3,19 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo, startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
+import dynamic from "next/dynamic";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { FailureProtocolSheet, type FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
+import type { FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppPlusMinusIcon, AppTextarea } from "@/components/ui/form-controls";
-import { NumberPickerSheet } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
-import { SearchSelectCombobox, SearchSelectSheet } from "@/components/ui/search-select-sheet";
+import { SearchSelectCombobox } from "@/components/ui/search-select-sheet";
 import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+
+const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
+const FailureProtocolSheet = dynamic(() => import("@/components/ui/failure-protocol-sheet").then(mod => mod.FailureProtocolSheet), { ssr: false });
+const NumberPickerSheet = dynamic(() => import("@/components/ui/number-picker-sheet").then(mod => mod.NumberPickerSheet), { ssr: false });
+const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
 import { useLocale } from "@/components/locale-provider";
 import { apiGet, apiPatch, apiPost } from "@/lib/api";
 import { computeExternalLoadFromTotalKg, formatKgValue, isBodyweightExerciseName } from "@/lib/bodyweight-load";

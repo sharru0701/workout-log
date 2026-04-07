@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { useWorkoutSession, useWorkoutActions } from '@/store/workoutStore';
+import { useState, useEffect, memo } from 'react';
+import { useRestTimer, useWorkoutActions } from '@/store/workoutStore';
 
 // Helper to format seconds into MM:SS
 const formatTime = (seconds: number): string => {
@@ -11,12 +11,18 @@ const formatTime = (seconds: number): string => {
   return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 };
 
-export function ResilientTimer() {
-  const session = useWorkoutSession();
+/**
+ * ResilientTimer Component
+ * PERF: Uses atomic 'useRestTimer' selector.
+ * Memoized to prevent re-renders when other session data changes.
+ * Uses requestAnimationFrame for smooth countdown.
+ */
+export const ResilientTimer = memo(function ResilientTimer() {
+  const restTimer = useRestTimer();
   const { clearRestTimer } = useWorkoutActions();
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
 
-  const { startedAt, durationSec } = session?.restTimer || {};
+  const { startedAt, durationSec } = restTimer || {};
 
   useEffect(() => {
     if (!startedAt || !durationSec) {
@@ -52,9 +58,11 @@ export function ResilientTimer() {
   }
 
   return (
-    <div className="fixed bottom-20 left-1/2 -translate-x-1/2 p-4 rounded-lg" style={{ backgroundColor: "var(--color-surface-2)", color: "var(--color-text)", border: "1px solid var(--color-border)", boxShadow: "0 4px 12px var(--shadow-color-strong)" }}>
-      <h3 className="text-lg font-bold">Rest Timer</h3>
-      <p className="text-4xl font-mono">{formatTime(remainingSeconds)}</p>
+    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 p-6 rounded-2xl bg-surface-2 border border-border shadow-2xl z-50 animate-in zoom-in slide-in-from-bottom-4 duration-300">
+      <div className="text-center">
+        <h3 className="text-sm font-bold uppercase tracking-widest text-text-secondary mb-1">Resting</h3>
+        <p className="text-5xl font-black font-mono tabular-nums text-primary">{formatTime(remainingSeconds)}</p>
+      </div>
     </div>
   );
-}
+});

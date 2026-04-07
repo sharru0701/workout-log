@@ -2,17 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import ExerciseEditorRow from "./_components/program-exercise-editor-row";
-import { ProgramDetailSheet } from "./_components/program-detail-sheet";
 import { useLocale } from "@/components/locale-provider";
 
-import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { Card } from "@/components/ui/card";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
+
+const ProgramDetailSheet = dynamic(() => import("./_components/program-detail-sheet").then(mod => mod.ProgramDetailSheet), { ssr: false });
+const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut, isAbortError } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 

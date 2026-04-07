@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { buildSessionKey } from "@/lib/session-key";
 import { db } from "@/server/db/client";
 import {
@@ -952,41 +952,42 @@ export async function generateAndSaveSession(input: {
   if (p.type === "COMPOSITE") {
     const modules = await db.select().from(planModule).where(eq(planModule.planId, p.id));
 
-    const blocks = await Promise.all(
-      modules
-        .slice()
-        .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
-        .map(async (m) => {
-          const v = await db
-            .select()
-            .from(programVersion)
-            .where(eq(programVersion.id, m.programVersionId))
-            .limit(1);
-          const version = v[0];
-          if (!version) throw new Error("Program version not found");
+    const versionIds = Array.from(new Set(modules.map((m) => m.programVersionId).filter((id): id is string => Boolean(id))));
+    const versionsWithTemplates = versionIds.length > 0
+      ? await db
+          .select({
+            version: programVersion,
+            template: programTemplate,
+          })
+          .from(programVersion)
+          .innerJoin(programTemplate, eq(programVersion.templateId, programTemplate.id))
+          .where(inArray(programVersion.id, versionIds))
+      : [];
 
-          const t = await db
-            .select()
-            .from(programTemplate)
-            .where(eq(programTemplate.id, version.templateId))
-            .limit(1);
-          const template = t[0];
-          if (!template) throw new Error("Program template not found");
+    const versionMap = new Map(versionsWithTemplates.map((row) => [row.version.id, row]));
 
-          return {
-            target: m.target,
-            program: {
-              slug: template.slug,
-              name: template.name,
-              type: template.type,
-              version: version.version,
-            },
-            definition: version.definition,
-            defaults: version.defaults ?? {},
-            params: m.params ?? {},
-          };
-        }),
-    );
+    const blocks = modules
+      .slice()
+      .sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0))
+      .map((m) => {
+        if (!m.programVersionId) throw new Error("Program version not found");
+        const row = versionMap.get(m.programVersionId);
+        if (!row) throw new Error("Program version/template not found");
+        const { version, template } = row;
+
+        return {
+          target: m.target,
+          program: {
+            slug: template.slug,
+            name: template.name,
+            type: template.type,
+            version: version.version,
+          },
+          definition: version.definition,
+          defaults: version.defaults ?? {},
+          params: m.params ?? {},
+        };
+      });
 
     snapshot.blocks = blocks;
     snapshot.exercises = plannedExercisesFromBlocks(
@@ -999,21 +1000,18 @@ export async function generateAndSaveSession(input: {
   } else {
     if (!p.rootProgramVersionId) throw new Error("rootProgramVersionId missing");
 
-    const v = await db
-      .select()
+    const rows = await db
+      .select({
+        version: programVersion,
+        template: programTemplate,
+      })
       .from(programVersion)
+      .innerJoin(programTemplate, eq(programVersion.templateId, programTemplate.id))
       .where(eq(programVersion.id, p.rootProgramVersionId))
       .limit(1);
-    const version = v[0];
-    if (!version) throw new Error("Program version not found");
-
-    const t = await db
-      .select()
-      .from(programTemplate)
-      .where(eq(programTemplate.id, version.templateId))
-      .limit(1);
-    const template = t[0];
-    if (!template) throw new Error("Program template not found");
+    const row = rows[0];
+    if (!row) throw new Error("Program version/template not found");
+    const { version, template } = row;
 
     if (p.type === "MANUAL") {
       const schedule = Array.isArray((effectivePlanParams as any)?.schedule)

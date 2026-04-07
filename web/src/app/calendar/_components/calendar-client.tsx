@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useLocale } from "@/components/locale-provider";
 
-import { MonthYearPickerSheet } from "@/components/ui/month-year-picker-sheet";
-import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
+const MonthYearPickerSheet = dynamic(() => import("@/components/ui/month-year-picker-sheet").then(mod => mod.MonthYearPickerSheet), { ssr: false });
+const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
+
 import { apiGet } from "@/lib/api";
 import {
   dateOnlyToUtcDate,
