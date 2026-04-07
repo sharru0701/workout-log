@@ -91,27 +91,6 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-        {/*
-          PERF: <link rel="preload" as="style"> — 렌더 블로킹 없이 CSS 다운로드를 최대한 일찍 시작.
-          preload는 파싱 단계에서 발견되어 폰트 CSS 다운로드를 useEffect 실행 전에 예약.
-          FontStylesheetLoader(useEffect)가 <link rel="stylesheet">를 삽입할 때는 이미 캐시에 있으므로
-          FOUT(폰트 교체) 지연이 줄어듦.
-
-          crossOrigin 미설정 — CSS 스타일시트는 CORS 불필요.
-          preload와 stylesheet의 CORS 모드가 일치해야 브라우저가 동일 캐시 항목을 재사용.
-          preload에 crossOrigin="anonymous" → stylesheet에 미설정이면 캐시 키가 달라져
-          Safari에서 @font-face 폰트 파일 로드 실패 (아이콘이 텍스트로 표시되는 버그).
-        */}
-        <link
-          rel="preload"
-          as="style"
-          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
-        />
-        <link
-          rel="preload"
-          as="style"
-          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
-        />
       </head>
       <body>
         <FontStylesheetLoader />
