@@ -5,7 +5,7 @@ import { useWorkoutPersistence } from "@/lib/workout/useWorkoutPersistence";
 import { ResilientTimer } from "@/components/workout/resilient-timer";
 import { ExerciseItem } from "@/components/workout/exercise-item";
 import { WorkoutActions } from "@/components/workout/workout-actions";
-import { useEffect, useState, memo } from "react";
+import { useEffect, memo } from "react";
 import type { WorkoutSession } from "@/lib/workout/session.types";
 
 // Dummy data for a new session

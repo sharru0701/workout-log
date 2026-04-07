@@ -2,7 +2,6 @@
 
 import { useState, useEffect, memo } from "react";
 import { useWorkoutActions, useSet } from "@/store/workoutStore";
-import type { WorkoutSet } from "@/lib/workout/session.types";
 
 interface SetItemProps {
   exerciseIndex: number;
@@ -29,7 +28,7 @@ export const SetItem = memo(function SetItem({ exerciseIndex, setIndex }: SetIte
       setLocalWeight(set.weight.toString());
       setLocalReps(set.reps.toString());
     }
-  }, [set?.weight, set?.reps]);
+  }, [set, set?.weight, set?.reps]);
 
   if (!set) return null;
 

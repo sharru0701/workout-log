@@ -40,10 +40,13 @@ export function AppShell({
       const href = target.getAttribute("href");
       if (!href) return;
 
-      // @ts-ignore - View Transitions API is new
-      document.startViewTransition(() => {
+      if (typeof document !== "undefined" && "startViewTransition" in document) {
+        (document as any).startViewTransition(() => {
+          router.push(href);
+        });
+      } else {
         router.push(href);
-      });
+      }
     };
 
     window.addEventListener("click", handleLinkClick);
