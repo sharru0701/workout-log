@@ -249,6 +249,6 @@ export async function fetchStatsBundle({
   ]);
 
   const payload: StatsBundleResult = { sessions30d, tonnage30d, compliance90d, prs90d };
-  await setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload });
+  await setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload, maxAgeSeconds: 300 });
   return payload;
 }

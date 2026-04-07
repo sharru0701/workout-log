@@ -1449,7 +1449,10 @@ export function parseAcceptLanguage(header: string | null | undefined): AppLocal
   return coerceAppLocale(first);
 }
 
-export async function resolveRequestLocale(): Promise<AppLocale> {
+// PERF: cache()로 래핑 → 동일 요청 내 여러 RSC/API Route에서 호출해도 쿠키+헤더를 한 번만 읽음.
+// React.cache()는 요청 단위 메모이제이션 (전역 캐시 아님, SSR 요청 간 공유되지 않음).
+import { cache } from "react";
+export const resolveRequestLocale = cache(async (): Promise<AppLocale> => {
   const { cookies, headers } = await import("next/headers");
   const cookieStore = await cookies();
   const cookieLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
@@ -1459,4 +1462,4 @@ export async function resolveRequestLocale(): Promise<AppLocale> {
 
   const requestHeaders = await headers();
   return parseAcceptLanguage(requestHeaders.get("accept-language"));
-}
+});

@@ -92,10 +92,23 @@ export default async function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="preconnect" href="https://cdn.jsdelivr.net" />
         {/*
-          Pretendard + Material Symbols는 FontStylesheetLoader (useEffect)로 비블로킹 로드.
-          <link rel="stylesheet">를 여기에 두면 렌더 블로킹 → FCP 200-400ms 지연.
-          비블로킹으로 전환하면 시스템 폰트로 즉시 렌더 후 swap.
+          PERF: <link rel="preload" as="style"> — 렌더 블로킹 없이 CSS 다운로드를 최대한 일찍 시작.
+          preload는 파싱 단계에서 발견되어 폰트 CSS 다운로드를 useEffect 실행 전에 예약.
+          FontStylesheetLoader(useEffect)가 <link rel="stylesheet">를 삽입할 때는 이미 캐시에 있으므로
+          FOUT(폰트 교체) 지연이 줄어듦.
         */}
+        <link
+          rel="preload"
+          as="style"
+          href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.css"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          as="style"
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap"
+          crossOrigin="anonymous"
+        />
       </head>
       <body>
         <FontStylesheetLoader />

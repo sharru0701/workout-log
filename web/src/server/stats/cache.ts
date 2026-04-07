@@ -3,6 +3,16 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { statsCache } from "@/server/db/schema";
 
+// PERF: DB statsCache 위에 얹는 in-process 메모리 캐시.
+// 동일 서버리스 컨테이너 내 반복 요청에서 DB 쿼리 1회 제거.
+// 키: "userId:metric:paramsHash", 값: { data, expiresAt }
+declare global {
+  var __statsMemCache: Map<string, { data: unknown; expiresAt: number }> | undefined;
+}
+const statsMemCache: Map<string, { data: unknown; expiresAt: number }> =
+  global.__statsMemCache ?? new Map();
+global.__statsMemCache = statsMemCache;
+
 function stableSerialize(value: unknown): string {
   if (value === null || value === undefined) return "null";
   if (Array.isArray(value)) return `[${value.map((v) => stableSerialize(v)).join(",")}]`;
@@ -26,6 +36,15 @@ export async function getStatsCache<T>(input: {
   maxAgeSeconds?: number;
 }): Promise<T | null> {
   const paramsHash = hashParams(input.params);
+  const memKey = `${input.userId}:${input.metric}:${paramsHash}`;
+
+  // 1) in-process 메모리 캐시 확인 (DB 쿼리 없음)
+  const memEntry = statsMemCache.get(memKey);
+  if (memEntry && Date.now() < memEntry.expiresAt) {
+    return memEntry.data as T;
+  }
+
+  // 2) DB 캐시 확인
   const rows = await db
     .select({
       payload: statsCache.payload,
@@ -49,6 +68,14 @@ export async function getStatsCache<T>(input: {
     if (new Date(row.updatedAt).getTime() < minUpdatedAt) return null;
   }
 
+  // DB 히트 시 메모리 캐시에도 저장 (나머지 TTL만큼)
+  const remainingMs = input.maxAgeSeconds
+    ? new Date(row.updatedAt).getTime() + input.maxAgeSeconds * 1000 - Date.now()
+    : 60_000;
+  if (remainingMs > 0) {
+    statsMemCache.set(memKey, { data: row.payload, expiresAt: Date.now() + remainingMs });
+  }
+
   return row.payload as T;
 }
 
@@ -57,6 +84,7 @@ export async function setStatsCache<T>(input: {
   metric: string;
   params: Record<string, unknown>;
   payload: T;
+  maxAgeSeconds?: number;
 }) {
   const paramsHash = hashParams(input.params);
   await db
@@ -75,9 +103,18 @@ export async function setStatsCache<T>(input: {
         updatedAt: new Date(),
       },
     });
+
+  // DB 저장 후 in-process 메모리 캐시도 갱신
+  const memKey = `${input.userId}:${input.metric}:${paramsHash}`;
+  const ttlMs = (input.maxAgeSeconds ?? 60) * 1000;
+  statsMemCache.set(memKey, { data: input.payload, expiresAt: Date.now() + ttlMs });
 }
 
 export async function invalidateStatsCacheForUser(userId: string, tx?: any) {
   const executor = tx ?? db;
   await executor.delete(statsCache).where(eq(statsCache.userId, userId));
+  // in-process 메모리 캐시에서 해당 userId 항목 제거
+  for (const key of statsMemCache.keys()) {
+    if (key.startsWith(`${userId}:`)) statsMemCache.delete(key);
+  }
 }
