@@ -24,6 +24,31 @@ const CAPS_LABEL_STYLE: React.CSSProperties = {
   textTransform: "uppercase",
 };
 
+type StatsFilterOption = {
+  id: string;
+  name: string;
+};
+
+type InitialE1RMStats = {
+  from: string;
+  to: string;
+  rangeDays: number;
+  exercise: string | null;
+  exerciseId: string | null;
+  best: {
+    date: string;
+    e1rm: number;
+    weightKg: number;
+    reps: number;
+  } | null;
+  series: Array<{
+    date: string;
+    e1rm: number;
+    weightKg: number;
+    reps: number;
+  }>;
+};
+
 function SectionHeading({
   label,
   title,
@@ -255,7 +280,21 @@ const PrRow = React.memo(function PrRow({
 
 // ─── Main client component ────────────────────────────────────────────────────
 
-export function StatsClient({ initialBundle }: { initialBundle: StatsBundleResult }) {
+export function StatsClient({
+  initialBundle,
+  initialExercises,
+  initialPlans,
+  initialE1rm,
+  initialSelectedExerciseId,
+  initialSelectedPlanId,
+}: {
+  initialBundle: StatsBundleResult;
+  initialExercises: StatsFilterOption[];
+  initialPlans: StatsFilterOption[];
+  initialE1rm: InitialE1RMStats | null;
+  initialSelectedExerciseId: string | null;
+  initialSelectedPlanId: string;
+}) {
   const { locale } = useLocale();
   const searchParams = useSearchParams();
   const detailedRef = useRef<Stats1RMDetailedRef>(null);
@@ -339,7 +378,15 @@ export function StatsClient({ initialBundle }: { initialBundle: StatsBundleResul
             }
           />
           <div style={{ marginTop: "var(--space-sm)" }}>
-            <Stats1RMDetailed ref={detailedRef} refreshTick={0} />
+            <Stats1RMDetailed
+              ref={detailedRef}
+              refreshTick={0}
+              initialExercises={initialExercises}
+              initialPlans={initialPlans}
+              initialStats={initialE1rm}
+              initialSelectedExerciseId={initialSelectedExerciseId}
+              initialSelectedPlanId={initialSelectedPlanId}
+            />
           </div>
         </div>
 

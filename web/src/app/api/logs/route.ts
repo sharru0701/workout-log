@@ -74,6 +74,21 @@ function encodeCursor(cursor: LogCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
+function parseBooleanQueryParam(raw: string | null, defaultValue: boolean) {
+  if (raw == null) return defaultValue;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === "0" || normalized === "false" || normalized === "no") return false;
+  if (normalized === "1" || normalized === "true" || normalized === "yes") return true;
+  return defaultValue;
+}
+
+function buildLocalDateRangeFilter(dateFilter: string, timezone: string) {
+  return sql`
+    ${workoutLog.performedAt} >= (to_date(${dateFilter}, 'YYYY-MM-DD')::timestamp at time zone ${timezone})
+    and ${workoutLog.performedAt} < ((to_date(${dateFilter}, 'YYYY-MM-DD') + interval '1 day')::timestamp at time zone ${timezone})
+  `;
+}
+
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
@@ -82,6 +97,9 @@ async function GETImpl(req: Request) {
     const dateFilter = searchParams.get("date")?.trim() ?? "";
     const timezone = normalizeTimezone(searchParams.get("timezone"));
     const cursor = parseCursor(searchParams.get("cursor"));
+    const includeSets = parseBooleanQueryParam(searchParams.get("includeSets"), true);
+    const includeGeneratedSession = parseBooleanQueryParam(searchParams.get("includeGeneratedSession"), true);
+    const includeProgression = parseBooleanQueryParam(searchParams.get("includeProgression"), true);
     const limitRaw = Number(searchParams.get("limit") ?? "20");
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;
 
@@ -92,9 +110,7 @@ async function GETImpl(req: Request) {
     }
 
     if (DATE_ONLY_PATTERN.test(dateFilter)) {
-      filters.push(
-        sql`date(${workoutLog.performedAt} at time zone ${timezone}) = to_date(${dateFilter}, 'YYYY-MM-DD')`,
-      );
+      filters.push(buildLocalDateRangeFilter(dateFilter, timezone));
     }
 
     if (cursor) {
@@ -130,13 +146,15 @@ async function GETImpl(req: Request) {
     const pageLogs = hasMore ? logs.slice(0, limit) : logs;
     const logIds = pageLogs.map((l) => l.id);
 
-    const generatedSessionIds = Array.from(
-      new Set(pageLogs.map((log) => log.generatedSessionId).filter((value): value is string => Boolean(value))),
-    );
+    const generatedSessionIds = includeGeneratedSession
+      ? Array.from(
+          new Set(pageLogs.map((log) => log.generatedSessionId).filter((value): value is string => Boolean(value))),
+        )
+      : [];
 
-    // PERF: 3개 독립 쿼리를 병렬 실행 → 순차 대비 ~2x 속도 향상
+    // PERF: 요청한 detail level에 맞춰 보조 쿼리를 선택적으로 실행
     const [sets, sessions, events] = await Promise.all([
-      logIds.length > 0
+      includeSets && logIds.length > 0
         ? db
             .select({
               id: workoutSet.id,
@@ -155,7 +173,7 @@ async function GETImpl(req: Request) {
             .where(inArray(workoutSet.logId, logIds))
             .orderBy(asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id))
         : Promise.resolve([] as any[]),
-      generatedSessionIds.length > 0
+      includeGeneratedSession && generatedSessionIds.length > 0
         ? db
             .select({
               id: generatedSession.id,
@@ -164,7 +182,7 @@ async function GETImpl(req: Request) {
             .from(generatedSession)
             .where(inArray(generatedSession.id, generatedSessionIds))
         : Promise.resolve([] as any[]),
-      logIds.length > 0
+      includeProgression && logIds.length > 0
         ? db
             .select({
               id: planProgressEvent.id,
@@ -210,11 +228,11 @@ async function GETImpl(req: Request) {
 
     const items = pageLogs.map((log) => ({
       ...log,
-      sets: setsByLogId.get(log.id) ?? [],
-      generatedSession: log.generatedSessionId
+      sets: includeSets ? (setsByLogId.get(log.id) ?? []) : [],
+      generatedSession: includeGeneratedSession && log.generatedSessionId
         ? (generatedSessionsById.get(log.generatedSessionId) ?? null)
         : null,
-      progression: progressionSummaryByLogId.get(log.id) ?? null,
+      progression: includeProgression ? (progressionSummaryByLogId.get(log.id) ?? null) : null,
     }));
 
     const last = pageLogs[pageLogs.length - 1];

@@ -19,6 +19,11 @@ import { apiGet } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { CalendarRangePicker } from "@/components/ui/calendar-range-picker";
 
+type BaseFilterOption = {
+  id: string;
+  name: string;
+};
+
 type ExerciseOption = {
   id: string;
   name: string;
@@ -97,8 +102,32 @@ function dateDaysAgoDateOnly(daysAgo: number) {
 function toDefaultRange(): RangeFilter {
   return {
     preset: 90,
-    from: dateDaysAgoDateOnly(89),
+    from: dateDaysAgoDateOnly(90),
     to: toDateOnly(new Date()),
+  };
+}
+
+function withSearchText<T extends BaseFilterOption>(items: T[]) {
+  return items.map((item) => ({
+    ...item,
+    searchText: item.name.toLowerCase(),
+  }));
+}
+
+function deriveRangeFilterFromStats(stats: E1RMResponse): RangeFilter {
+  const from = stats.from.slice(0, 10);
+  const to = stats.to.slice(0, 10);
+  const presetByDays = new Map<number, RangePreset>([
+    [7, 7],
+    [30, 30],
+    [90, 90],
+    [180, 180],
+    [365, 365],
+  ]);
+  return {
+    preset: presetByDays.get(stats.rangeDays) ?? "CUSTOM",
+    from,
+    to,
   };
 }
 
@@ -272,27 +301,54 @@ export type Stats1RMDetailedRef = {
   selectExercise: (exerciseId: string) => void;
 };
 
-export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: number }>(function Stats1RMDetailed({ refreshTick = 0 }, ref) {
+type Stats1RMDetailedProps = {
+  refreshTick?: number;
+  initialExercises?: BaseFilterOption[];
+  initialPlans?: BaseFilterOption[];
+  initialStats?: E1RMResponse | null;
+  initialSelectedExerciseId?: string | null;
+  initialSelectedPlanId?: string;
+};
+
+export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, Stats1RMDetailedProps>(function Stats1RMDetailed({
+  refreshTick = 0,
+  initialExercises,
+  initialPlans,
+  initialStats,
+  initialSelectedExerciseId,
+  initialSelectedPlanId = "",
+}, ref) {
   const { locale } = useLocale();
+  const initialRangeFilter = useMemo(
+    () => (initialStats ? deriveRangeFilterFromStats(initialStats) : toDefaultRange()),
+    [initialStats],
+  );
+  const initialExerciseOptions = useMemo(() => withSearchText(initialExercises ?? []), [initialExercises]);
+  const initialPlanOptions = useMemo(() => withSearchText(initialPlans ?? []), [initialPlans]);
+  const hasInitialOptions = initialExercises !== undefined && initialPlans !== undefined;
   const [activeSheet, setActiveSheet] = useState<SheetType>(null);
-  const [optionsLoading, setOptionsLoading] = useState(true);
-  const optionsHasLoadedRef = useRef(false);
-  const [optionsLoadKey, setOptionsLoadKey] = useState("stats-1rm:options:init");
+  const [optionsLoading, setOptionsLoading] = useState(!hasInitialOptions);
+  const optionsHasLoadedRef = useRef(hasInitialOptions);
+  const [optionsLoadKey, setOptionsLoadKey] = useState(hasInitialOptions ? "stats-1rm:options:hydrated" : "stats-1rm:options:init");
   const [optionsError, setOptionsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const dataHasLoadedRef = useRef(false);
-  const [dataLoadKey, setDataLoadKey] = useState<string | null>(null);
+  const dataHasLoadedRef = useRef(Boolean(initialStats));
+  const [dataLoadKey, setDataLoadKey] = useState<string | null>(initialStats ? "stats-1rm:data:hydrated" : null);
   const [error, setError] = useState<string | null>(null);
   const [internalRefreshTick, setInternalRefreshTick] = useState(0);
-  const [exercises, setExercises] = useState<ExerciseOption[]>([]);
-  const [plans, setPlans] = useState<PlanOption[]>([]);
-  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(null);
-  const [selectedPlanId, setSelectedPlanId] = useState("");
-  const [rangeFilter, setRangeFilter] = useState<RangeFilter>(toDefaultRange);
-  const [rangeDraft, setRangeDraft] = useState<RangeFilter>(toDefaultRange);
+  const [exercises, setExercises] = useState<ExerciseOption[]>(initialExerciseOptions);
+  const [plans, setPlans] = useState<PlanOption[]>(initialPlanOptions);
+  const [selectedExerciseId, setSelectedExerciseId] = useState<string | null>(
+    initialSelectedExerciseId ?? initialExerciseOptions[0]?.id ?? null,
+  );
+  const [selectedPlanId, setSelectedPlanId] = useState(initialSelectedPlanId);
+  const [rangeFilter, setRangeFilter] = useState<RangeFilter>(initialRangeFilter);
+  const [rangeDraft, setRangeDraft] = useState<RangeFilter>(initialRangeFilter);
   const [rangeDraftError, setRangeDraftError] = useState<string | null>(null);
-  const [stats, setStats] = useState<E1RMResponse | null>(null);
-  const [activePointIndex, setActivePointIndex] = useState(0);
+  const [stats, setStats] = useState<E1RMResponse | null>(initialStats ?? null);
+  const [activePointIndex, setActivePointIndex] = useState(
+    initialStats?.series.length ? initialStats.series.length - 1 : 0,
+  );
   const [exerciseQuery, setExerciseQuery] = useState("");
   const [programQuery, setProgramQuery] = useState("");
   const deferredExerciseQuery = useDeferredValue(exerciseQuery);
@@ -301,12 +357,19 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
   const [isRangePending, startRangeTransition] = useTransition();
 
   useImperativeHandle(ref, () => ({
-    selectExercise: (exerciseId: string) => {
+    selectExercise: (target: string) => {
       startFilterTransition(() => {
-        setSelectedExerciseId(exerciseId);
+        const normalized = target.trim();
+        const matchedExercise = exercises.find(
+          (entry) =>
+            entry.id === normalized ||
+            entry.name === normalized ||
+            entry.searchText === normalized.toLowerCase(),
+        );
+        setSelectedExerciseId(matchedExercise?.id ?? normalized);
       });
     },
-  }), [startFilterTransition]);
+  }), [exercises, startFilterTransition]);
 
   const selectedExercise = useMemo(
     () => exercises.find((entry) => entry.id === selectedExerciseId) ?? null,
@@ -324,11 +387,15 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     if (!selectedExerciseId) return null;
     return [selectedExerciseId, selectedPlanId || "", rangeFilter.preset, rangeFilter.from, rangeFilter.to, refreshTick, internalRefreshTick].join("|");
   }, [rangeFilter.from, rangeFilter.preset, rangeFilter.to, refreshTick, internalRefreshTick, selectedExerciseId, selectedPlanId]);
+  const hydratedDataQueryKeyRef = useRef<string | null>(initialStats ? activeDataQueryKey : null);
   const isOptionsSettled = useQuerySettled(optionsLoadKey, optionsLoading);
   const isDataSettled = useQuerySettled(dataLoadKey, loading);
 
   const loadFilterOptions = useCallback(async () => {
     try {
+      if (optionsHasLoadedRef.current) {
+        return;
+      }
       if (!optionsHasLoadedRef.current) {
         setOptionsLoading(true);
       }
@@ -338,21 +405,18 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
         apiGet<ExercisesResponse>("/api/exercises?limit=200"),
         apiGet<PlansResponse>("/api/plans"),
       ]);
-      const nextExercises = (exerciseRes.items ?? []).map((entry) => ({
-        id: entry.id,
-        name: entry.name,
-        searchText: entry.name.toLowerCase(),
-      }));
-      const nextPlans = (planRes.items ?? []).map((entry) => ({
-        id: entry.id,
-        name: entry.name,
-        searchText: entry.name.toLowerCase(),
-      }));
+      const nextExercises = withSearchText(exerciseRes.items ?? []);
+      const nextPlans = withSearchText(planRes.items ?? []);
 
       setExercises(nextExercises);
       setPlans(nextPlans);
       setSelectedExerciseId((prev) => {
-        if (prev && nextExercises.some((entry) => entry.id === prev)) return prev;
+        if (prev) {
+          const matchedExercise = nextExercises.find(
+            (entry) => entry.id === prev || entry.searchText === prev.trim().toLowerCase(),
+          );
+          if (matchedExercise) return matchedExercise.id;
+        }
         return nextExercises[0]?.id ?? null;
       });
       setSelectedPlanId((prev) => (prev && nextPlans.some((entry) => entry.id === prev) ? prev : ""));
@@ -384,6 +448,12 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     if (!selectedExerciseId || !activeDataQueryKey) {
       setStats(null);
       setDataLoadKey(null);
+      return;
+    }
+
+    if (hydratedDataQueryKeyRef.current === activeDataQueryKey && dataHasLoadedRef.current) {
+      hydratedDataQueryKeyRef.current = null;
+      setDataLoadKey(`stats-1rm:data:hydrated:${activeDataQueryKey}`);
       return;
     }
 
@@ -447,7 +517,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
     const nextPreset = rangeDraft.preset;
     const nextRange: RangeFilter = {
       preset: nextPreset,
-      from: dateDaysAgoDateOnly(nextPreset - 1),
+      from: dateDaysAgoDateOnly(nextPreset),
       to: toDateOnly(new Date()),
     };
     startRangeTransition(() => {
@@ -596,7 +666,7 @@ export const Stats1RMDetailed = forwardRef<Stats1RMDetailedRef, { refreshTick?: 
                     startRangeTransition(() => {
                       setRangeFilter({
                         preset,
-                        from: dateDaysAgoDateOnly(preset === "CUSTOM" ? 89 : preset - 1),
+                        from: dateDaysAgoDateOnly(preset === "CUSTOM" ? 90 : preset),
                         to: toDateOnly(new Date()),
                       });
                     });
