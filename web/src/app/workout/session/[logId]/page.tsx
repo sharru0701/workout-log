@@ -98,19 +98,16 @@ export default function WorkoutSessionDetailPage() {
 
   const [item, setItem] = useState<LogItem | null>(null);
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!logId) {
-      setLoading(false);
       return;
     }
     let cancelled = false;
 
     (async () => {
       try {
-        setLoading(true);
         setError(null);
         const [res, settings] = await Promise.all([
           apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`),
@@ -127,8 +124,6 @@ export default function WorkoutSessionDetailPage() {
           setItem(null);
           setError(e?.message ?? (locale === "ko" ? "세션 상세를 불러오지 못했습니다." : "Could not load the session details."));
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     })();
 

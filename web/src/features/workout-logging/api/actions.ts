@@ -42,7 +42,7 @@ export async function generateWorkoutSessionAction(params: {
 export async function saveWorkoutLogAction(payload: WorkoutLogPayload) {
   try {
     const userId = getAuthenticatedUserId();
-    const { sets, planId, generatedSessionId, performedAt, durationMinutes, notes, timezone } = payload;
+    const { sets, planId, generatedSessionId, performedAt, durationMinutes, notes } = payload;
 
     if (!sets || sets.length === 0) {
       throw new Error("Sets are required.");

@@ -10,7 +10,7 @@ import {
   WorkoutProgramExerciseEntryStateMap
 } from "@/entities/workout";
 import { generateWorkoutSessionAction } from "../api/actions";
-import { WorkoutPreferences, readWorkoutPreferences } from "@/lib/settings/workout-preferences";
+import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
 
 export function WorkoutLogRoot({

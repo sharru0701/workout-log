@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
  * Wraps global providers and manages the main layout structure.
  */
 export function AppShell({
-  initialLocale: _initialLocale,
   children,
 }: {
   initialLocale: AppLocale;

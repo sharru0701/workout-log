@@ -324,7 +324,8 @@ export default function CalendarPage({
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
-  const [refreshTick, _setRefreshTick] = useState(0);
+  const [, setRefreshTick] = useState(0);
+
   const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
   const monthNavFeedbackTimerRef = useRef<number | null>(null);
 
@@ -469,7 +470,7 @@ export default function CalendarPage({
     return () => {
       cancelled = true;
     };
-  }, [planId, refreshTick]);
+  }, [planId, refreshTick, initialLogs, initialPlanId]);
 
   // Build lookup maps
   const generatedByDate = useMemo(() => {

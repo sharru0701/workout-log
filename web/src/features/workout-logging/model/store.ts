@@ -1,5 +1,4 @@
 import { atom } from "jotai";
-import { atomWithStorage } from "jotai/utils";
 import type { WorkoutSession, WorkoutSet } from "@/lib/workout/session.types";
 import { saveSession, debounce } from "@/lib/storage/workoutSession";
 import { produce } from "immer";

@@ -1,20 +1,16 @@
-import { memo, useMemo, useState, useDeferredValue } from "react";
-import Link from "next/link";
+import { memo, useMemo } from "react";
+import { AppPlusMinusIcon } from "./form-controls";
 import { useLocale } from "@/components/locale-provider";
-import { BottomSheet } from "@/shared/ui/bottom-sheet";
-import { SearchSelectCombobox } from "@/shared/ui/search-select-sheet";
-import { AppPlusMinusIcon, AppTextarea } from "@/shared/ui/form-controls";
-import { SwipeableSetRow } from "./swipeable-set-row";
-import { WorkoutRecordInlinePicker } from "./inline-picker";
 import { 
-  isBodyweightExerciseName, 
-} from "@/lib/bodyweight-load";
-import { 
-  computeBodyweightTotalLoadKg,
-  resolveMinimumPlateIncrement,
   resolveMinimumPlateIncrementKg,
 } from "@/lib/settings/workout-preferences";
 import type { WorkoutPreferences } from "@/lib/settings/workout-preferences";
+import { BottomSheet } from "@/shared/ui/bottom-sheet";
+import { SearchSelectCombobox } from "@/shared/ui/search-select-sheet";
+import { AppTextarea } from "@/shared/ui/form-controls";
+import { WorkoutRecordInlinePicker } from "./inline-picker";
+import Link from "next/link";
+import { useState, useDeferredValue } from "react";
 
 export type ExerciseOption = {
   id: string;
@@ -78,17 +74,6 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
     exerciseId: addDraft.exerciseId,
     exerciseName: addDraft.exerciseName,
   });
-
-  const incrementInfo = resolveMinimumPlateIncrement(preferences, {
-    exerciseId: addDraft.exerciseId,
-    exerciseName: addDraft.exerciseName,
-  });
-
-  const totalLoadKg = computeBodyweightTotalLoadKg(
-    addDraft.exerciseName,
-    addDraft.weightKg,
-    preferences.bodyweightKg
-  );
 
   const handleSelectOption = (option: ExerciseOption | null) => {
     if (!option) {
@@ -201,8 +186,29 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                 />
              </div>
            ))}
-           <button onClick={() => setAddDraft(p => ({ ...p, repsPerSet: [...p.repsPerSet, p.repsPerSet[p.repsPerSet.length-1] ?? 5] }))}>
-             {copy.workoutLog.addSet}
+           <button 
+             type="button"
+             onClick={() => setAddDraft(p => ({ ...p, repsPerSet: [...p.repsPerSet, p.repsPerSet[p.repsPerSet.length-1] ?? 5] }))}
+             style={{
+               width: "100%",
+               marginTop: "12px",
+               padding: "10px",
+               background: "var(--color-surface-container-high)",
+               border: "none",
+               borderRadius: "12px",
+               color: "var(--color-text-muted)",
+               display: "flex",
+               alignItems: "center",
+               justifyContent: "center",
+               gap: "6px",
+               fontFamily: "var(--font-label-family)",
+               fontSize: "13px",
+               fontWeight: 700,
+               cursor: "pointer",
+             }}
+           >
+             <AppPlusMinusIcon kind="plus" size={14} />
+             <span>{copy.workoutLog.addSet}</span>
            </button>
         </div>
 
@@ -212,7 +218,22 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
           placeholder="Memo"
         />
 
-        <Link href="/workout/log/exercise-catalog" onClick={onClose}>
+        <Link href="/workout/log/exercise-catalog" onClick={onClose} style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "6px",
+          padding: "12px",
+          borderRadius: "14px",
+          background: "var(--color-surface-container)",
+          color: "var(--color-text-muted)",
+          textDecoration: "none",
+          fontFamily: "var(--font-label-family)",
+          fontSize: "13px",
+          fontWeight: 700,
+          letterSpacing: "0.02em",
+        }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>tune</span>
           {locale === "ko" ? "운동종목 관리" : "Manage Exercises"}
         </Link>
       </div>

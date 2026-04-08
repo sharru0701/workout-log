@@ -9,7 +9,7 @@ import { AccordionSection } from "@/shared/ui/accordion-section";
 import { AppSelect, AppTextInput } from "@/shared/ui/form-controls";
 import { NumberPickerField } from "@/shared/ui/number-picker-sheet";
 import { PrimaryButton } from "@/shared/ui/primary-button";
-import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { DisabledStateRows, EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
 import { Card } from "@/shared/ui/card";
 
 type TemplateItem = {

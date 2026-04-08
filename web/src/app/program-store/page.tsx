@@ -10,7 +10,7 @@ import { Card } from "@/shared/ui/card";
 import { AppSelect, AppTextInput } from "@/shared/ui/form-controls";
 import { NumberPickerField } from "@/shared/ui/number-picker-sheet";
 import { SearchInput } from "@/shared/ui/search-input";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
 import { useAppDialog } from "@/shared/ui/app-dialog-provider";
 
 const ProgramDetailSheet = dynamic(() => import("./_components/program-detail-sheet").then(mod => mod.ProgramDetailSheet), { ssr: false });

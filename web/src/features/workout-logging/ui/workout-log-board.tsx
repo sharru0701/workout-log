@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback, useRef, useEffect } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { useWorkoutLogState } from "../model/use-workout-log-state";
@@ -12,7 +12,6 @@ import { saveWorkoutLogAction, generateWorkoutSessionAction } from "../api/actio
 import { 
   WorkoutRecordDraft, 
   WorkoutProgramExerciseEntryStateMap,
-  WorkoutExerciseViewModel,
   materializeWorkoutExercises,
   validateWorkoutRecordEntryState,
   validateWorkoutDraft,
@@ -69,9 +68,9 @@ export function WorkoutLogBoard({
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [inlinePickerRequest, setInlinePickerRequest] = useState<InlinePickerRequest | null>(null);
-  const [recentLogItems, setRecentLogItems] = useState(initialRecentLogs);
-  const [lastSession, setLastSession] = useState(initialLastSession);
-  const [exerciseOptions, setExerciseOptions] = useState(initialExerciseOptions);
+  const recentLogItems = initialRecentLogs;
+  const lastSession = initialLastSession;
+  const exerciseOptions = initialExerciseOptions;
 
   // Persistence
   useWorkoutRecordPersistence(

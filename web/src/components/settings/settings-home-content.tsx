@@ -1,7 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import {
   BaseGroupedList,
   NavigationRow,
@@ -184,7 +182,6 @@ function ProfileCard() {
 // ─── Main export ──────────────────────────────────────────────
 
 export function SettingsHomeContent({ className = "" }: { className?: string }) {
-  const router = useRouter();
   const { copy } = useLocale();
 
 

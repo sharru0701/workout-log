@@ -44,7 +44,6 @@ function SelectedCheckIcon() {
 
 export default function SettingsLanguagePage() {
   const { locale, setLocale, copy } = useLocale();
-  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverLocale, setServerLocale] = useState<LocalePreference>(locale);
   const hasLoadedRef = useRef(false);
@@ -60,7 +59,6 @@ export default function SettingsLanguagePage() {
 
   const loadLanguage = useCallback(async () => {
     try {
-      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       const snapshot = await fetchSettingsSnapshot();
       const resolvedLocale = normalizeLocalePreference(snapshot[SETTINGS_KEYS.locale]);
@@ -69,8 +67,6 @@ export default function SettingsLanguagePage() {
       setLocale(resolvedLocale);
     } catch (e: any) {
       setLoadError(e?.message ?? copy.settings.languagePage.loadErrorTitle);
-    } finally {
-      setLoading(false);
     }
   }, [copy.settings.languagePage.loadErrorTitle, setLocale]);
 

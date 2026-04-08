@@ -6,7 +6,7 @@ import { useLocale } from "@/components/locale-provider";
 
 import { useAppDialog } from "@/shared/ui/app-dialog-provider";
 import { AppSelect } from "@/shared/ui/form-controls";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
 import { apiDelete, apiGet } from "@/shared/api/api";
 import { Card } from "@/shared/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";

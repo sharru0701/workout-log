@@ -8,9 +8,7 @@ type AccordionSectionProps = {
   title: string;
   description?: string;
   defaultOpen?: boolean;
-  className?: string;
   summarySlot?: ReactNode;
-  surface?: "flat" | "surface";
   children: ReactNode;
 };
 
@@ -18,9 +16,7 @@ export function AccordionSection({
   title,
   description,
   defaultOpen = false,
-  className = "",
   summarySlot,
-  surface = "flat",
   children,
 }: AccordionSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);

@@ -8,7 +8,7 @@ import { useAppDialog } from "@/shared/ui/app-dialog-provider";
 import { AppTextInput } from "@/shared/ui/form-controls";
 import { PrimaryButton } from "@/shared/ui/primary-button";
 import { SearchInput } from "@/shared/ui/search-input";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/shared/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows } from "@/shared/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/shared/api/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
@@ -189,13 +189,12 @@ function PlanListCard({
 }
 
 function PlansManagePageContent() {
-  const { copy, locale } = useLocale();
+  const { copy } = useLocale();
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadKey, setLoadKey] = useState("plans-manage:load:init");
   const [error, setError] = useState<string | null>(null);
-  const [refreshTick, setRefreshTick] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const storeHasLoadedRef = useRef(false);
 
@@ -233,8 +232,8 @@ function PlansManagePageContent() {
   }, []);
 
   useEffect(() => {
-    void loadPlans({ isRefresh: refreshTick > 0 });
-  }, [loadPlans, refreshTick]);
+    void loadPlans();
+  }, [loadPlans]);
 
   useEffect(() => {
     if (!managePlanId) return;

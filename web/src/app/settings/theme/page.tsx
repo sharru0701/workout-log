@@ -43,7 +43,6 @@ function SelectedCheckIcon() {
 
 export default function SettingsThemePage() {
   const { locale } = useLocale();
-  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [serverTheme, setServerTheme] = useState<ThemePreference>("SYSTEM");
   const hasLoadedRef = useRef(false);
@@ -59,15 +58,12 @@ export default function SettingsThemePage() {
 
   const loadTheme = useCallback(async () => {
     try {
-      if (!hasLoadedRef.current) setLoading(true);
       setLoadError(null);
       const snapshot = await fetchSettingsSnapshot();
       hasLoadedRef.current = true;
       setServerTheme(normalizeThemePreference(snapshot[SETTINGS_KEYS.theme]));
     } catch (e: any) {
       setLoadError(e?.message ?? (locale === "ko" ? "테마 설정을 불러오지 못했습니다." : "Could not load theme settings."));
-    } finally {
-      setLoading(false);
     }
   }, [locale]);
 

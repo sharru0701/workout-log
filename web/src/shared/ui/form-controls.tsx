@@ -1,276 +1,141 @@
-"use client";
+import { memo } from "react";
 
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type InputHTMLAttributes,
-  type SelectHTMLAttributes,
-  type TextareaHTMLAttributes,
-} from "react";
-import { NumberPickerField } from "./number-picker-sheet";
-
-type ClassValue = string | null | undefined | false;
-
-type FormControlVariant = "default" | "compact" | "dense" | "workout" | "workout-number";
-
-function cx(...values: ClassValue[]) {
-  return values.filter(Boolean).join(" ");
-}
-
-function resolveControlClassName(variant: FormControlVariant) {
-  if (variant === "workout-number") {
-    return "app-form-control workout-set-input workout-set-input-number workout-record-framed-input";
-  }
-  if (variant === "workout") {
-    return "app-form-control workout-set-input workout-set-input-text workout-record-framed-input";
-  }
-  if (variant === "dense") {
-    return "app-form-control rounded-lg border px-2 py-1 text-sm";
-  }
-  if (variant === "compact") {
-    return "app-form-control rounded-lg border px-3 py-2 text-sm";
-  }
-  return "app-form-control rounded-lg border px-3 py-3 text-base";
-}
-
-export function AppPlusMinusIcon({
-  kind,
-  className = "h-4 w-4",
-  size = 24,
-}: {
+export type AppPlusMinusIconProps = {
   kind: "plus" | "minus";
+  size?: number;
+  color?: string;
   className?: string;
-  size?: number | string;
-}) {
-  const resolvedSize = typeof size === "number" ? `${size}px` : size;
+};
+
+export const AppPlusMinusIcon = memo(function AppPlusMinusIcon({
+  kind,
+  size = 24,
+  color = "currentColor",
+}: AppPlusMinusIconProps) {
   return (
     <span
-      className={`material-symbols-outlined${className ? ` ${className}` : ""}`}
+      className="material-symbols-outlined"
+      style={{
+        fontSize: size,
+        color,
+        fontVariationSettings: "'wght' 500",
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
       aria-hidden="true"
-      style={{ fontSize: resolvedSize, fontVariationSettings: "'FILL' 0, 'wght' 400", lineHeight: 1 }}
     >
-      {kind === "plus" ? "add" : "remove"}
+      {kind}
     </span>
   );
-}
-
-export const AppTextInput = forwardRef<
-  HTMLInputElement,
-  InputHTMLAttributes<HTMLInputElement> & { variant?: FormControlVariant }
->(function AppTextInput({ variant = "default", className, style, ...props }, ref) {
-  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", ...style }} {...props} />;
 });
 
-export const AppTextarea = forwardRef<
-  HTMLTextAreaElement,
-  TextareaHTMLAttributes<HTMLTextAreaElement> & { variant?: FormControlVariant }
->(function AppTextarea({ variant = "default", className, style, ...props }, ref) {
-  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", minHeight: "60px", resize: "vertical", ...style }} {...props} />;
-});
+export type AppTextareaProps = React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  variant?: "default" | "workout";
+};
 
-export const AppSelect = forwardRef<
-  HTMLSelectElement,
-  SelectHTMLAttributes<HTMLSelectElement> & {
-    variant?: FormControlVariant;
-    wrapperClassName?: string;
-    label?: string;
-    chrome?: "default" | "row";
-  }
->(function AppSelect(
-  {
-    variant = "default",
-    wrapperClassName,
-    className,
-    children,
-    multiple,
-    size,
-    label,
-    chrome = "default",
-    ...props
-  },
-  ref,
-) {
-  const supportsSingleChevron = !multiple && (typeof size !== "number" || size <= 1);
-  const usesRowChrome = supportsSingleChevron && (chrome === "row" || Boolean(label));
-  const WrapperTag = label ? "label" : "div";
-
-  // iOS settings-row mode: label on left, value + up-down chevron on right
-  if (usesRowChrome) {
-    return (
-      <WrapperTag
-        className={wrapperClassName}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: "var(--space-sm)",
-          width: "100%",
-          minHeight: "44px",
-          border: "1px solid var(--color-border)",
-          borderRadius: "8px",
-          padding: "var(--space-sm) var(--space-md)",
-          backgroundColor: "var(--color-surface-container-low)",
-          boxSizing: "border-box",
-        }}
-      >
-        {label ? (
-          <span style={{ color: "var(--color-text-muted)", font: "var(--font-secondary)", whiteSpace: "nowrap" }}>
-            {label}
-          </span>
-        ) : null}
-        <span style={{ display: "inline-flex", alignItems: "center", gap: "var(--space-xs)", minWidth: 0 }}>
-          <select
-            ref={ref}
-            className={className}
-            style={{
-              border: "none",
-              background: "transparent",
-              color: "var(--color-text)",
-              font: "var(--font-body)",
-              outline: "none",
-              appearance: "none",
-              WebkitAppearance: "none",
-              minWidth: 0,
-              textAlign: "right",
-              textAlignLast: "right",
-              paddingRight: "0",
-            }}
-            {...props}
-            multiple={multiple}
-            size={size}
-          >
-            {children}
-          </select>
-          <span
-            aria-hidden="true"
-            style={{
-              color: "var(--color-text-subtle)",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: "10px",
-              height: "14px",
-              flexShrink: 0,
-            }}
-          >
-            <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>unfold_more</span>
-          </span>
-        </span>
-      </WrapperTag>
-    );
-  }
-
-  const resolvedClassName = cx(
-    resolveControlClassName(variant),
-    supportsSingleChevron && "app-form-select",
-    className,
+export const AppTextarea = memo(function AppTextarea({
+  variant = "default",
+  style,
+  ...props
+}: AppTextareaProps) {
+  return (
+    <textarea
+      {...props}
+      style={{
+        width: "100%",
+        padding: "12px 16px",
+        borderRadius: "12px",
+        border: variant === "workout" ? "none" : "1px solid var(--color-border)",
+        background: variant === "workout" ? "var(--color-surface-container)" : "var(--color-surface)",
+        color: "var(--color-text)",
+        fontFamily: "var(--font-body-family)",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        resize: "none",
+        minHeight: "80px",
+        ...style,
+      }}
+    />
   );
-  const selectBaseStyle = {
-    width: "100%",
-    padding: "var(--space-sm) var(--space-md)",
-    border: "1px solid var(--color-border)",
-    borderRadius: "8px",
-    font: "var(--font-body)",
-    backgroundColor: "var(--color-surface-container-low)",
-    color: "var(--color-text)",
-    outline: "none",
-    boxSizing: "border-box" as const,
+});
+
+export type StepperControlProps = {
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (value: number) => void;
+  formatValue?: (value: number) => string;
+  label: string;
+  variant?: "default" | "stepper";
+  complete?: boolean;
+};
+
+export const StepperControl = memo(function StepperControl({
+  value,
+  min,
+  max,
+  step,
+  onChange,
+  formatValue,
+  label,
+  variant = "default",
+  complete = false,
+}: StepperControlProps) {
+  const displayValue = formatValue ? formatValue(value) : String(value);
+
+  const handleDecrement = () => {
+    onChange(Math.max(min, value - step));
   };
 
-  if (!supportsSingleChevron) {
-    return (
-      <select ref={ref} className={resolvedClassName} style={selectBaseStyle} {...props} multiple={multiple} size={size}>
-        {children}
-      </select>
-    );
-  }
+  const handleIncrement = () => {
+    onChange(Math.min(max, value + step));
+  };
 
   return (
-    <div style={{ position: "relative", width: "100%" }}>
-      <select
-        ref={ref}
-        className={resolvedClassName}
-        style={{ ...selectBaseStyle, paddingRight: "2.25rem", appearance: "none", WebkitAppearance: "none" }}
-        {...props}
-        multiple={multiple}
-        size={size}
+    <div className={`stepper-control stepper-control--${variant} ${complete ? "stepper-control--complete" : ""}`}>
+      <button
+        type="button"
+        className="stepper-control__btn"
+        onClick={handleDecrement}
+        disabled={value <= min}
+        aria-label={`Decrease ${label}`}
       >
-        {children}
-      </select>
-      <span
-        aria-hidden="true"
-        style={{
-          position: "absolute",
-          insetInlineEnd: "0.92rem",
-          top: "50%",
-          transform: "translateY(-50%)",
-          width: "0.82rem",
-          height: "0.82rem",
-          pointerEvents: "none",
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
+        <AppPlusMinusIcon kind="minus" size={18} />
+      </button>
+      <div className="stepper-control__value" aria-label={`${label}: ${displayValue}`}>
+        {displayValue}
+      </div>
+      <button
+        type="button"
+        className="stepper-control__btn"
+        onClick={handleIncrement}
+        disabled={value >= max}
+        aria-label={`Increase ${label}`}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>expand_more</span>
-      </span>
+        <AppPlusMinusIcon kind="plus" size={18} />
+      </button>
     </div>
   );
 });
 
-AppTextInput.displayName = "AppTextInput";
-AppTextarea.displayName = "AppTextarea";
-AppSelect.displayName = "AppSelect";
+export type AppStepperFieldProps = StepperControlProps;
 
-export function AppNumberStepper({
-  label,
+export function AppStepperField({
   value,
   min,
   max,
-  step = 1,
+  step,
   onChange,
-  inputMode = "numeric",
-  placeholder: _placeholder,
-  allowEmpty: _allowEmpty = false,
-  displayValue: _displayValue,
-  onDisplayValueChange: _onDisplayValueChange,
-  complete = false,
-}: {
-  label: string;
-  value: number;
-  min: number;
-  max: number;
-  step?: number;
-  onChange: (next: number) => void;
-  inputMode?: "numeric" | "decimal";
-  placeholder?: string;
-  allowEmpty?: boolean;
-  displayValue?: string;
-  onDisplayValueChange?: (next: string) => void;
-  complete?: boolean;
-}) {
-  const stepPrecision = useMemo(() => {
-    const raw = String(step);
-    if (!raw.includes(".")) return 0;
-    return Math.min(4, raw.split(".")[1]?.length ?? 0);
-  }, [step]);
-
-  const formatValue = useCallback(
-    (v: number) => {
-      if (stepPrecision > 0) return v.toFixed(stepPrecision);
-      if (inputMode === "decimal") return v.toFixed(1);
-      return String(v);
-    },
-    [stepPrecision, inputMode],
-  );
-
+  formatValue,
+  label,
+  complete,
+}: AppStepperFieldProps) {
   return (
-    <label>
-      <span>{label}</span>
-      <NumberPickerField
+    <label className="app-stepper-field">
+      <span className="app-stepper-field__label">{label}</span>
+      <StepperControl
         value={value}
         min={min}
         max={max}

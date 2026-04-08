@@ -12,7 +12,6 @@ type LoadingStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
-  className?: string;
 };
 
 type EmptyStateRowsProps = {
@@ -20,7 +19,6 @@ type EmptyStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
-  className?: string;
   deferWhileNetworkBusy?: boolean;
   maxDeferMs?: number;
   revealDelayMs?: number;
@@ -33,7 +31,6 @@ type ErrorStateRowsProps = {
   retryLabel?: ReactNode;
   title?: ReactNode;
   ariaLabel?: string;
-  className?: string;
 };
 
 type DisabledStateRowsProps = {
@@ -41,7 +38,6 @@ type DisabledStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
-  className?: string;
 };
 
 type NoticeStateRowsProps = {
@@ -50,7 +46,6 @@ type NoticeStateRowsProps = {
   label?: ReactNode;
   preferInline?: boolean;
   ariaLabel?: string;
-  className?: string;
 };
 
 export function useDelayedVisibility(active: boolean, delayMs = 420) {
