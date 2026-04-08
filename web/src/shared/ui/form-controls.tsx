@@ -1,4 +1,4 @@
-import { memo, type ReactNode } from "react";
+import { forwardRef, memo, type ReactNode } from "react";
 
 export type AppPlusMinusIconProps = {
   kind: "plus" | "minus";
@@ -124,44 +124,46 @@ export type AppTextInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
   variant?: "default" | "workout" | "compact" | "dense";
 };
 
-export const AppTextInput = memo(function AppTextInput({
-  variant = "default",
-  style,
-  ...props
-}: AppTextInputProps) {
-  return (
-    <input
-      {...props}
-      style={{
-        width: "100%",
-        padding: "12px 16px",
-        borderRadius: "12px",
-        border: variant === "workout" ? "none" : "1px solid var(--color-border)",
-        background: variant === "workout" ? "var(--color-surface-container)" : "var(--color-surface)",
-        color: "var(--color-text)",
-        fontFamily: "var(--font-body-family)",
-        fontSize: "14px",
-        lineHeight: "1.5",
-        ...style,
-      }}
-    />
-  );
-});
+// forwardRef: ref를 직접 input 엘리먼트로 전달 (프로그래매틱 포커스 등 지원)
+export const AppTextInput = forwardRef<HTMLInputElement, AppTextInputProps>(
+  function AppTextInput({ variant = "default", style, ...props }, ref) {
+    return (
+      <input
+        ref={ref}
+        {...props}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          borderRadius: "12px",
+          border: variant === "workout" ? "none" : "1px solid var(--color-border)",
+          background: variant === "workout" ? "var(--color-surface-container)" : "var(--color-surface)",
+          color: "var(--color-text)",
+          fontFamily: "var(--font-body-family)",
+          fontSize: "14px",
+          lineHeight: "1.5",
+          ...style,
+        }}
+      />
+    );
+  },
+);
 
 export type AppSelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
   label?: string;
   variant?: "default" | "compact";
+  wrapperClassName?: string;
   children?: ReactNode;
 };
 
 export const AppSelect = memo(function AppSelect({
   label: _label,
   variant: _variant,
+  wrapperClassName,
   style,
   children,
   ...props
 }: AppSelectProps) {
-  return (
+  const select = (
     <select
       {...props}
       style={{
@@ -181,6 +183,11 @@ export const AppSelect = memo(function AppSelect({
       {children}
     </select>
   );
+
+  if (wrapperClassName) {
+    return <div className={wrapperClassName}>{select}</div>;
+  }
+  return select;
 });
 
 export type AppNumberStepperProps = {
