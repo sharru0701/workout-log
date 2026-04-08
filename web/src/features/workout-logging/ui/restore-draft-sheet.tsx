@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { PrimaryButton } from "@/shared/ui/primary-button";
-import type { WorkoutDraftData } from "@/lib/workout-record/persistence";
+import type { WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
 
 export type PendingRestorePrompt = {
   capturedKey: string | null;

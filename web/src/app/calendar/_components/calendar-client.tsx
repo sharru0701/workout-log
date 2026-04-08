@@ -324,7 +324,7 @@ export default function CalendarPage({
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
-  const [, setRefreshTick] = useState(0);
+  const [refreshTick, _setRefreshTick] = useState(0);
 
   const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
   const monthNavFeedbackTimerRef = useRef<number | null>(null);

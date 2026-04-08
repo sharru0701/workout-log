@@ -99,6 +99,7 @@ export default function WorkoutSessionDetailPage() {
   const [item, setItem] = useState<LogItem | null>(null);
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
   const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!logId) {

@@ -1,5 +1,5 @@
 import { memo, useMemo } from "react";
-import { AppPlusMinusIcon } from "./form-controls";
+import { AppPlusMinusIcon } from "@/shared/ui/form-controls";
 import { useLocale } from "@/components/locale-provider";
 import { 
   resolveMinimumPlateIncrementKg,

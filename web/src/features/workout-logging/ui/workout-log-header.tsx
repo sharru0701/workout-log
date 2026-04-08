@@ -1,6 +1,6 @@
 import { memo } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { formatDateFriendly } from "@/lib/date";
+import { formatDateFriendly } from "@/lib/date-utils";
 
 export type LastSessionSummary = {
   weekLabel: string;

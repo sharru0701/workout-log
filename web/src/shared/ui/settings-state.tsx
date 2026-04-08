@@ -12,6 +12,7 @@ type LoadingStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
+  className?: string;
 };
 
 type EmptyStateRowsProps = {
@@ -19,6 +20,7 @@ type EmptyStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
+  className?: string;
   deferWhileNetworkBusy?: boolean;
   maxDeferMs?: number;
   revealDelayMs?: number;
@@ -31,6 +33,7 @@ type ErrorStateRowsProps = {
   retryLabel?: ReactNode;
   title?: ReactNode;
   ariaLabel?: string;
+  className?: string;
 };
 
 type DisabledStateRowsProps = {
@@ -38,6 +41,7 @@ type DisabledStateRowsProps = {
   label?: ReactNode;
   description?: ReactNode;
   ariaLabel?: string;
+  className?: string;
 };
 
 type NoticeStateRowsProps = {
@@ -46,6 +50,7 @@ type NoticeStateRowsProps = {
   label?: ReactNode;
   preferInline?: boolean;
   ariaLabel?: string;
+  className?: string;
 };
 
 export function useDelayedVisibility(active: boolean, delayMs = 420) {
@@ -100,7 +105,7 @@ export function LoadingStateRows({
   delayMs = 420,
   label,
   ariaLabel,
-  className,
+  className: _className,
 }: LoadingStateRowsProps) {
   const { locale } = useLocale();
   const resolvedLabel = label ?? (locale === "ko" ? "불러오는 중" : "Loading");
@@ -136,7 +141,7 @@ export function EmptyStateRows({
   when,
   label,
   ariaLabel,
-  className,
+  className: _className,
   deferWhileNetworkBusy = true,
   maxDeferMs = 540,
   revealDelayMs = 120,
@@ -182,7 +187,7 @@ export function ErrorStateRows({
   retryLabel,
   title,
   ariaLabel,
-  className,
+  className: _className,
 }: ErrorStateRowsProps) {
   const { locale } = useLocale();
   const resolvedRetryLabel = retryLabel ?? (locale === "ko" ? "다시 시도" : "Retry");
@@ -238,7 +243,7 @@ export function DisabledStateRows({
   when,
   label,
   ariaLabel,
-  className,
+  className: _className,
 }: DisabledStateRowsProps) {
   const { locale } = useLocale();
   const resolvedLabel = label ?? (locale === "ko" ? "현재 사용할 수 없음" : "Currently unavailable");
@@ -258,7 +263,7 @@ export function NoticeStateRows({
   label,
   preferInline = false,
   ariaLabel,
-  className,
+  className: _className,
 }: NoticeStateRowsProps) {
   const { locale } = useLocale();
   const resolvedLabel = label ?? (locale === "ko" ? "안내" : "Notice");

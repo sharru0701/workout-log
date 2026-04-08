@@ -2,10 +2,10 @@ import { memo } from "react";
 import { AppPlusMinusIcon, AppTextarea } from "@/shared/ui/form-controls";
 import { useLocale } from "@/components/locale-provider";
 import { isBodyweightExerciseName } from "@/lib/bodyweight-load";
-import { 
+import {
   computeBodyweightTotalLoadKg,
   formatKgValue,
-} from "@/lib/settings/workout-preferences";
+} from "@/lib/bodyweight-load";
 import type { WorkoutProgramExerciseEntryState } from "@/entities/workout";
 import type { WorkoutExerciseViewModel, ExerciseRowAction } from "@/entities/workout";
 import { WorkoutRecordInlinePicker, type InlinePickerRequest } from "./inline-picker";

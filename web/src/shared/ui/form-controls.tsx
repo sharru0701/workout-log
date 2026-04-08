@@ -1,4 +1,4 @@
-import { memo } from "react";
+import { memo, type ReactNode } from "react";
 
 export type AppPlusMinusIconProps = {
   kind: "plus" | "minus";
@@ -117,6 +117,105 @@ export const StepperControl = memo(function StepperControl({
         <AppPlusMinusIcon kind="plus" size={18} />
       </button>
     </div>
+  );
+});
+
+export type AppTextInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+  variant?: "default" | "workout" | "compact" | "dense";
+};
+
+export const AppTextInput = memo(function AppTextInput({
+  variant = "default",
+  style,
+  ...props
+}: AppTextInputProps) {
+  return (
+    <input
+      {...props}
+      style={{
+        width: "100%",
+        padding: "12px 16px",
+        borderRadius: "12px",
+        border: variant === "workout" ? "none" : "1px solid var(--color-border)",
+        background: variant === "workout" ? "var(--color-surface-container)" : "var(--color-surface)",
+        color: "var(--color-text)",
+        fontFamily: "var(--font-body-family)",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        ...style,
+      }}
+    />
+  );
+});
+
+export type AppSelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+  label?: string;
+  variant?: "default" | "compact";
+  children?: ReactNode;
+};
+
+export const AppSelect = memo(function AppSelect({
+  label: _label,
+  variant: _variant,
+  style,
+  children,
+  ...props
+}: AppSelectProps) {
+  return (
+    <select
+      {...props}
+      style={{
+        width: "100%",
+        padding: "10px 16px",
+        borderRadius: "12px",
+        border: "1px solid var(--color-border)",
+        background: "var(--color-surface)",
+        color: "var(--color-text)",
+        fontFamily: "var(--font-body-family)",
+        fontSize: "14px",
+        lineHeight: "1.5",
+        appearance: "auto",
+        ...style,
+      }}
+    >
+      {children}
+    </select>
+  );
+});
+
+export type AppNumberStepperProps = {
+  label: string;
+  value: number;
+  min: number;
+  max: number;
+  step: number;
+  onChange: (next: number) => void;
+  formatValue?: (value: number) => string;
+  inputMode?: React.HTMLAttributes<HTMLElement>["inputMode"];
+  complete?: boolean;
+};
+
+export const AppNumberStepper = memo(function AppNumberStepper({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+  formatValue,
+  complete,
+}: AppNumberStepperProps) {
+  return (
+    <AppStepperField
+      label={label}
+      value={value}
+      min={min}
+      max={max}
+      step={step}
+      onChange={onChange}
+      formatValue={formatValue}
+      complete={complete}
+    />
   );
 });
 
