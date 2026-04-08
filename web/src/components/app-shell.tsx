@@ -2,7 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { BottomNav } from "@/components/bottom-nav";
-import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
+import { AppDialogProvider } from "@/shared/ui/app-dialog-provider";
 import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { useRouter } from "next/navigation";
@@ -13,7 +13,6 @@ import { useRouter } from "next/navigation";
  * Wraps global providers and manages the main layout structure.
  */
 export function AppShell({
-  initialLocale: _initialLocale,
   children,
 }: {
   initialLocale: AppLocale;

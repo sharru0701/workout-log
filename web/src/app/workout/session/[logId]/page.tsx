@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/shared/api/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { formatExerciseLoadLabel, computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { Card } from "@/components/ui/card";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { Card } from "@/shared/ui/card";
 
 type PlannedRow = {
   exerciseName: string;
@@ -98,19 +98,17 @@ export default function WorkoutSessionDetailPage() {
 
   const [item, setItem] = useState<LogItem | null>(null);
   const [bodyweightKg, setBodyweightKg] = useState<number | null>(toDefaultWorkoutPreferences().bodyweightKg);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [_loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!logId) {
-      setLoading(false);
       return;
     }
     let cancelled = false;
 
     (async () => {
       try {
-        setLoading(true);
         setError(null);
         const [res, settings] = await Promise.all([
           apiGet<{ item: LogItem }>(`/api/logs/${encodeURIComponent(logId)}`),
@@ -127,8 +125,6 @@ export default function WorkoutSessionDetailPage() {
           setItem(null);
           setError(e?.message ?? (locale === "ko" ? "세션 상세를 불러오지 못했습니다." : "Could not load the session details."));
         }
-      } finally {
-        if (!cancelled) setLoading(false);
       }
     })();
 

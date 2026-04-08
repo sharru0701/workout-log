@@ -27,7 +27,6 @@ export function PrimaryButton<T extends ElementType = "button">({
   variant = "primary",
   size = "md",
   fullWidth = false,
-  interactive = true,
   ...props
 }: PrimaryButtonProps<T>) {
   const Component = (as ?? "button") as ElementType;

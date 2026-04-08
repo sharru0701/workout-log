@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { MultiSelectionScreen, PickerSelectionScreen, SingleSelectionScreen } from "@/components/ui/selection-screen-template";
+import { MultiSelectionScreen, PickerSelectionScreen, SingleSelectionScreen } from "@/shared/ui/selection-screen-template";
 import { useLocale } from "@/components/locale-provider";
 import { commonExerciseOptions, statsMetricOptions } from "@/lib/selection-options";
 

@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput } from "@/shared/ui/form-controls";
 import {
   inferProgressionTargetFromExerciseName,
   isOperatorAutoRowType,

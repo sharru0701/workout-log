@@ -3,8 +3,8 @@
 import { useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { ErrorStateRows } from "@/components/ui/settings-state";
-import { SingleSelectionScreen, type SelectionOption } from "@/components/ui/selection-screen-template";
+import { ErrorStateRows } from "@/shared/ui/settings-state";
+import { SingleSelectionScreen, type SelectionOption } from "@/shared/ui/selection-screen-template";
 import { commonTimezoneOptions } from "@/lib/selection-options";
 import { normalizeReturnTo, readParamFromHref, withPatchedQuery } from "@/lib/selection-navigation";
 

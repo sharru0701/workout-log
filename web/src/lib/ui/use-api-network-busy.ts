@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getApiNetworkInflightCount, subscribeApiNetworkInflight } from "@/lib/api";
+import { getApiNetworkInflightCount, subscribeApiNetworkInflight } from "@/shared/api/api";
 
 type UseApiNetworkBusyOptions = {
   idleDelayMs?: number;

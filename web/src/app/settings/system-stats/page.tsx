@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { apiGet, isAbortError } from "@/lib/api";
+import { apiGet, isAbortError } from "@/shared/api/api";
 
 import { useLocale } from "@/components/locale-provider";
 
@@ -199,7 +199,6 @@ export default function SystemStatsPage() {
   const [uxSnapshot, setUxSnapshot] = useState<UxSnapshotResp | null>(null);
   const [migrationTelemetry, setMigrationTelemetry] = useState<MigrationTelemetryResp | null>(null);
   const [loading, setLoading] = useState(false);
-  const [refreshTick, setRefreshTick] = useState(0);
   const [lookback, setLookback] = useState<number>(720);
 
 
@@ -224,7 +223,7 @@ export default function SystemStatsPage() {
       }
     })();
     return () => { cancelled = true; controller.abort(); };
-  }, [refreshTick, lookback]);
+  }, [lookback]);
 
   return (
     <>

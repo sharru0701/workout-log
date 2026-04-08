@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/ui/card";
 import { normalizeLocalePreference } from "@/lib/settings/workout-preferences";
 
 type ErrorWithDigest = Error & { digest?: string };

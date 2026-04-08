@@ -2,8 +2,8 @@
 
 import { memo, useCallback, useEffect, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet } from "@/lib/api";
-import { ErrorStateRows, EmptyStateRows } from "@/components/ui/settings-state";
+import { apiGet } from "@/shared/api/api";
+import { ErrorStateRows, EmptyStateRows } from "@/shared/ui/settings-state";
 
 type StrengthSummaryItem = {
   exerciseId: string | null;

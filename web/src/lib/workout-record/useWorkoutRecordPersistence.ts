@@ -2,9 +2,9 @@
 
 import { useEffect, useCallback, useRef } from "react";
 import { saveWorkoutDraft, loadWorkoutDraft, saveWorkoutDraftSync, type WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
-import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
-import { hasWorkoutEdits } from "@/lib/workout-record/model";
-import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
+import type { WorkoutRecordDraft } from "@/entities/workout";
+import { hasWorkoutEdits } from "@/entities/workout";
+import type { WorkoutProgramExerciseEntryStateMap } from "@/entities/workout";
 import { debounce } from "@/lib/storage/workoutSession";
 
 const DRAFT_EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6 hours
