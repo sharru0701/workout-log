@@ -1,0 +1,91 @@
+import type {
+  ExistingWorkoutLogLike,
+  GeneratedSessionLike,
+} from "@/entities/workout-record";
+
+export type WorkoutLogPlanItem = {
+  id: string;
+  name: string;
+  params?: Record<string, unknown> | null;
+  isArchived?: boolean;
+};
+
+export type WorkoutLogRecentLogItem = {
+  id: string;
+  performedAt: string;
+  generatedSession?: {
+    id: string;
+    sessionKey: string;
+  } | null;
+  sets: Array<{
+    exerciseName: string;
+    reps: number | null;
+    weightKg: number | null;
+    meta?: unknown;
+  }>;
+};
+
+export type WorkoutLogDetailedLogItem = ExistingWorkoutLogLike & {
+  generatedSession: (ExistingWorkoutLogLike["generatedSession"] & { sessionKey: string; snapshot: any }) | null;
+};
+
+export type WorkoutLogExerciseOption = {
+  id: string;
+  name: string;
+  category: string | null;
+  aliases: string[];
+};
+
+export type WorkoutLogGeneratedSessionResponse = {
+  session: GeneratedSessionLike;
+};
+
+export type WorkoutLogPlansResponse = {
+  items: WorkoutLogPlanItem[];
+};
+
+export type WorkoutLogLogsResponse = {
+  items: WorkoutLogRecentLogItem[];
+};
+
+export type WorkoutLogDetailResponse = {
+  item: WorkoutLogDetailedLogItem;
+};
+
+export type WorkoutLogExerciseResponse = {
+  items: WorkoutLogExerciseOption[];
+};
+
+export type AddExerciseDraft = {
+  exerciseId: string | null;
+  exerciseName: string;
+  weightKg: number;
+  repsPerSet: number[];
+  memo: string;
+};
+
+export function createDefaultAddExerciseDraft(): AddExerciseDraft {
+  return {
+    exerciseId: null,
+    exerciseName: "",
+    weightKg: 0,
+    repsPerSet: [5, 5, 5],
+    memo: "",
+  };
+}
+
+export type WorkoutLogLastSessionExerciseSummary = {
+  name: string;
+  sets: number;
+  bestSet: string;
+};
+
+export type WorkoutLogLastSessionSummary = {
+  dateLabel: string | null;
+  weekLabel: string;
+  sessionLabel: string;
+  bodyweightKg: number | null;
+  totalSets: number;
+  totalVolume: number;
+  exercises: WorkoutLogLastSessionExerciseSummary[];
+};

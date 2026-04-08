@@ -1,0 +1,33 @@
+import type { ProgramTemplate } from "@/lib/program-store/model";
+
+export type PlanItem = {
+  id: string;
+  name: string;
+  type: "SINGLE" | "COMPOSITE" | "MANUAL";
+  rootProgramVersionId: string | null;
+  params: any;
+};
+
+export type ExerciseOption = {
+  id: string;
+  name: string;
+  category: string | null;
+};
+
+export type TemplatesResponse = {
+  items: ProgramTemplate[];
+};
+
+export type PlansResponse = {
+  items: PlanItem[];
+};
+
+export type ExerciseResponse = {
+  items: ExerciseOption[];
+};
+
+export type ProgramStoreQueryState = {
+  detail: string;
+  customize: string;
+  create: string;
+};

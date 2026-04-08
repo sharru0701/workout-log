@@ -157,7 +157,7 @@ test.describe("stats-1rm async continuity", () => {
       },
     ]);
 
-    await page.goto("/stats", { waitUntil: "domcontentloaded" });
+    await page.goto("/stats?defer1rmBootstrap=1", { waitUntil: "domcontentloaded" });
 
     const chartEmptyState = page.getByText("선택한 필터 조합에 데이터가 없습니다", { exact: true });
     await assertNeverVisibleDuring(chartEmptyState, 700);
@@ -213,7 +213,7 @@ test.describe("stats-1rm async continuity", () => {
       },
     ]);
 
-    await page.goto("/stats", { waitUntil: "domcontentloaded" });
+    await page.goto("/stats?defer1rmBootstrap=1", { waitUntil: "domcontentloaded" });
 
     const noExerciseState = page.getByText("운동종목이 없습니다", { exact: true });
     await assertNeverVisibleDuring(noExerciseState, 760);

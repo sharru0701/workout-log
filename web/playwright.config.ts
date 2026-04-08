@@ -1,4 +1,25 @@
+import { config as loadDotenv } from "dotenv";
+import path from "node:path";
 import { defineConfig, devices } from "@playwright/test";
+
+const originalEnvKeys = new Set(Object.keys(process.env));
+
+function preloadEnvFile(relativePath: string) {
+  const result = loadDotenv({
+    path: path.resolve(process.cwd(), relativePath),
+    processEnv: {},
+    quiet: true,
+  });
+  if (result.error || !result.parsed) return;
+
+  for (const [key, value] of Object.entries(result.parsed)) {
+    if (originalEnvKeys.has(key)) continue;
+    process.env[key] = value;
+  }
+}
+
+preloadEnvFile(".env");
+preloadEnvFile(".env.local");
 
 const port = Number(process.env.PORT ?? 3100);
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://127.0.0.1:${port}`;
