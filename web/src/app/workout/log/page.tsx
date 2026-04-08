@@ -3,14 +3,15 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { plan, userSetting } from "@/server/db/schema";
 import { getAuthenticatedUserId } from "@/server/auth/user";
-import { WorkoutRecordPage } from "./_components/workout-log-client";
+import { WorkoutLogRoot } from "@/features/workout-logging/ui/workout-log-root";
 import WorkoutRecordLoading from "./loading";
 
-// PERF: RSC에서 플랜 목록 + 사용자 설정을 병렬 조회 → 클라이언트 mount 후 첫 번째 API 왕복 제거
-// Before: mount → /api/plans + /api/settings (1 RTT) → 기존 로그 확인 (1 RTT) → 세션 생성 (1 RTT) = 3 RTTs
-// After:  SSR에서 plans+settings 포함 → mount → 기존 로그 확인 (1 RTT) → 세션 생성 (1 RTT) = 2 RTTs
-async function WorkoutLogPageContent() {
+async function WorkoutLogPageContent({ searchParams }: { searchParams: Promise<any> }) {
   const userId = getAuthenticatedUserId();
+  const params = await searchParams;
+  const date = params.date || "";
+  const logId = params.logId || "";
+  const planIdFromQuery = params.planId || "";
 
   const [plans, settingRows] = await Promise.all([
     db
@@ -45,18 +46,22 @@ async function WorkoutLogPageContent() {
     isArchived: p.isArchived,
   }));
 
+  const selectedPlanId = planIdFromQuery || serializedPlans[0]?.id || "";
+  const persistenceKey = logId ? `log:${logId}` : selectedPlanId && date ? `plan:${selectedPlanId}:${date}` : null;
+
   return (
-    <WorkoutRecordPage
+    <WorkoutLogRoot
       initialPlans={serializedPlans}
       initialSettings={settingsSnapshot}
+      persistenceKey={persistenceKey}
     />
   );
 }
 
-export default function WorkoutLogPage() {
+export default function WorkoutLogPage({ searchParams }: { searchParams: Promise<any> }) {
   return (
     <Suspense fallback={<WorkoutRecordLoading />}>
-      <WorkoutLogPageContent />
+      <WorkoutLogPageContent searchParams={searchParams} />
     </Suspense>
   );
 }

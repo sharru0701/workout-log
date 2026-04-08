@@ -4,11 +4,11 @@ import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "rea
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 
-import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { AppSelect } from "@/components/ui/form-controls";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { apiDelete, apiGet } from "@/lib/api";
-import { Card } from "@/components/ui/card";
+import { useAppDialog } from "@/shared/ui/app-dialog-provider";
+import { AppSelect } from "@/shared/ui/form-controls";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { apiDelete, apiGet } from "@/shared/api/api";
+import { Card } from "@/shared/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 

@@ -3,15 +3,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/shared/api/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { formatExerciseLoadLabel, computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { readWorkoutPreferences, toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
-import { Card } from "@/components/ui/card";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { Card } from "@/shared/ui/card";
 
 type PlannedRow = {
   exerciseName: string;

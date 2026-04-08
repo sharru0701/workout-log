@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-import { apiGet, isAbortError } from "@/lib/api";
+import { apiGet, isAbortError } from "@/shared/api/api";
 
 import { useLocale } from "@/components/locale-provider";
 

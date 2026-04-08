@@ -6,7 +6,7 @@ import {
   BaseGroupedList,
   NavigationRow,
   SectionFootnote,
-} from "@/components/ui/settings-list";
+} from "@/shared/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
 
 

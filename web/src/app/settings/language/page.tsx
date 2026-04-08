@@ -6,8 +6,8 @@ import {
   NavigationRow,
   SectionFootnote,
   SectionHeader,
-} from "@/components/ui/settings-list";
-import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+} from "@/shared/ui/settings-list";
+import { ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
 import { useLocale } from "@/components/locale-provider";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";

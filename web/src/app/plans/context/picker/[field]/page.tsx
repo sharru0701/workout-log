@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { ErrorStateRows } from "@/components/ui/settings-state";
-import { PickerSelectionScreen } from "@/components/ui/selection-screen-template";
+import { ErrorStateRows } from "@/shared/ui/settings-state";
+import { PickerSelectionScreen } from "@/shared/ui/selection-screen-template";
 import { normalizeReturnTo, readParamFromHref, withPatchedQuery } from "@/lib/selection-navigation";
 
 type PickerField = "start-date" | "week" | "day";

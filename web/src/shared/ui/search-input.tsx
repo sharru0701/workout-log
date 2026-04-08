@@ -1,6 +1,6 @@
 import type { ChangeEvent } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { Card } from "@/components/ui/card";
+import { Card } from "@/shared/ui/card";
 
 type SearchInputRowProps = {
   value: string;

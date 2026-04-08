@@ -1,17 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { useAppDialog } from "@/shared/ui/app-dialog-provider";
 import {
   BaseGroupedList,
   InfoRow,
   NavigationRow,
   SectionFootnote,
   SectionHeader,
-} from "@/components/ui/settings-list";
+} from "@/shared/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
-import { NoticeStateRows } from "@/components/ui/settings-state";
-import { apiInvalidateCache, apiPost } from "@/lib/api";
+import { NoticeStateRows } from "@/shared/ui/settings-state";
+import { apiInvalidateCache, apiPost } from "@/shared/api/api";
 
 type ResetAppDataResponse = {
   ok: boolean;

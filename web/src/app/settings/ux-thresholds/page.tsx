@@ -2,18 +2,18 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/shared/api/api";
 import {
   BaseGroupedList,
   InfoRow,
   SectionFootnote,
   SectionHeader,
   ValueRow,
-} from "@/components/ui/settings-list";
-import { NoticeStateRows } from "@/components/ui/settings-state";
+} from "@/shared/ui/settings-list";
+import { NoticeStateRows } from "@/shared/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
-import { AppSelect } from "@/components/ui/form-controls";
+import { AppSelect } from "@/shared/ui/form-controls";
 
 const DEFAULT_TARGETS = {
   saveFromGenerate: 0.65,

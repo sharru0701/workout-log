@@ -2,8 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { Card, CardContent } from "@/components/ui/card";
+import { BottomSheet } from "@/shared/ui/bottom-sheet";
+import { Card, CardContent } from "@/shared/ui/card";
 
 type DialogTone = "default" | "danger";
 

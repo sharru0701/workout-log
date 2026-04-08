@@ -1,18 +1,18 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
+import { BottomSheet } from "@/shared/ui/bottom-sheet";
+import { AppNumberStepper, AppTextInput } from "@/shared/ui/form-controls";
 import {
   BaseGroupedList,
   NavigationRow,
   SectionFootnote,
   SectionHeader,
   ValueRow,
-} from "@/components/ui/settings-list";
-import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+} from "@/shared/ui/settings-list";
+import { EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet } from "@/lib/api";
+import { apiGet } from "@/shared/api/api";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
