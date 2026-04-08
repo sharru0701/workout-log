@@ -4,10 +4,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useLocale } from "@/components/locale-provider";
 
-const MonthYearPickerSheet = dynamic(() => import("@/shared/ui/month-year-picker-sheet").then(mod => mod.MonthYearPickerSheet), { ssr: false });
-const SearchSelectSheet = dynamic(() => import("@/shared/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
+const MonthYearPickerSheet = dynamic(() => import("@/components/ui/month-year-picker-sheet").then(mod => mod.MonthYearPickerSheet), { ssr: false });
+const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
 
-import { apiGet } from "@/shared/api/api";
+import { apiGet } from "@/lib/api";
 import {
   dateOnlyToUtcDate,
   monthStart,
@@ -325,7 +325,6 @@ export default function CalendarPage({
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
   const [planQuery, setPlanQuery] = useState("");
   const [refreshTick, _setRefreshTick] = useState(0);
-
   const [monthNavFeedback, setMonthNavFeedback] = useState<"" | "prev" | "next">("");
   const monthNavFeedbackTimerRef = useRef<number | null>(null);
 
@@ -470,7 +469,7 @@ export default function CalendarPage({
     return () => {
       cancelled = true;
     };
-  }, [planId, refreshTick, initialLogs, initialPlanId]);
+  }, [planId, refreshTick]);
 
   // Build lookup maps
   const generatedByDate = useMemo(() => {

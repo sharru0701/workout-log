@@ -6,12 +6,14 @@ import { useId, useState } from "react";
 type InlineDisclosureProps = {
   label?: string;
   defaultOpen?: boolean;
+  className?: string;
   children: ReactNode;
 };
 
 export function InlineDisclosure({
   label = "Details",
   defaultOpen = false,
+  className = "",
   children,
 }: InlineDisclosureProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);

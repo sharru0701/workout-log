@@ -129,7 +129,7 @@ function writeApiCache(key: string, data: unknown) {
   trimApiCache();
   // IDB 영속화 (fire-and-forget, 클라이언트 전용)
   if (typeof window !== "undefined") {
-    void import("@/lib/api-cache-idb").then(({ idbWriteEntry }) =>
+    void import("./api-cache-idb").then(({ idbWriteEntry }) =>
       idbWriteEntry(key, data, now, now).catch(() => {
         // IDB 실패는 무시 — 인메모리 캐시가 primary
       }),
@@ -306,7 +306,7 @@ export function apiInvalidateCache(cacheKeyPrefix?: string) {
   }
   // IDB에서도 동일 범위 삭제 (fire-and-forget)
   if (typeof window !== "undefined") {
-    void import("@/lib/api-cache-idb").then(({ idbDeleteEntries }) =>
+    void import("./api-cache-idb").then(({ idbDeleteEntries }) =>
       idbDeleteEntries(cacheKeyPrefix).catch(() => {}),
     );
   }
@@ -321,7 +321,7 @@ export function apiInvalidateCache(cacheKeyPrefix?: string) {
 export async function warmApiCacheFromIDB(): Promise<void> {
   if (typeof window === "undefined") return;
   try {
-    const { idbLoadAllEntries } = await import("@/lib/api-cache-idb");
+    const { idbLoadAllEntries } = await import("./api-cache-idb");
     const entries = await idbLoadAllEntries();
     // updatedAt을 "maxAgeMs 직전" 으로 조정 → SWR이 즉시 백그라운드 재검증 트리거
     const adjustedUpdatedAt = cacheNow() - DEFAULT_MAX_AGE_MS - 1;
@@ -424,7 +424,7 @@ async function apiMutate<T>(
         typeof window !== "undefined"
       ) {
         // 동적 import: api.ts를 서버 번들에서 분리 유지
-        const { enqueueMutation } = await import("@/lib/offline-queue");
+        const { enqueueMutation } = await import("./offline-queue");
         await enqueueMutation({
           method,
           path,

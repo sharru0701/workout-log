@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { workoutLog, workoutSet } from "@/server/db/schema";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { exercise, plan, workoutLog, workoutSet } from "@/server/db/schema";
+import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";

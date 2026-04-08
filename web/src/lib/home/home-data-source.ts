@@ -1,4 +1,4 @@
-import { apiGet } from "@/shared/api/api";
+import { apiGet } from "@/lib/api";
 import type { AppLocale } from "@/lib/i18n/messages";
 import type { HomeData } from "@/server/home/home-service";
 

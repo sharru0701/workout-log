@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import {
   SectionFootnote,
   SectionHeader,
-} from "@/shared/ui/settings-list";
+} from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
-import { ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
+import { ErrorStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting, fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { SETTINGS_KEYS } from "@/lib/settings/workout-preferences";
-import { AppNumberStepper } from "@/shared/ui/form-controls";
+import { AppNumberStepper } from "@/components/ui/form-controls";
 
 const MIN_BODYWEIGHT_KG = 20;
 const MAX_BODYWEIGHT_KG = 300;

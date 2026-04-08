@@ -59,13 +59,3 @@ export function shiftDateByMonths(dateOnly: string, delta: number) {
   const targetMonth = new Date(Date.UTC(getYear(dateOnly), getMonth(dateOnly) - 1 + delta, 1));
   return setMonthOfDate(dateOnly, targetMonth.getUTCFullYear(), targetMonth.getUTCMonth() + 1);
 }
-
-export function formatDateFriendly(dateOnly: string, locale: "ko" | "en"): string {
-  const d = dateOnlyToUtcDate(dateOnly);
-  return new Intl.DateTimeFormat(locale === "ko" ? "ko-KR" : "en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    timeZone: "UTC",
-  }).format(d);
-}

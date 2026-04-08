@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { SettingsDeepLinkInvalidView } from "@/shared/ui/settings-deeplink-invalid";
+import { SettingsDeepLinkInvalidView } from "@/components/ui/settings-deeplink-invalid";
 import { toSettingsDeepLinkHref } from "@/lib/settings/settings-deeplink";
 
 type SearchParams = Record<string, string | string[] | undefined>;

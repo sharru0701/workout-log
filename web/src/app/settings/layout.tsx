@@ -9,7 +9,7 @@ import {
 } from "@/components/settings/settings-modal-header-action";
 import { useLocale } from "@/components/locale-provider";
 import { SettingsHomeContent } from "@/components/settings/settings-home-content";
-import { BottomSheet } from "@/shared/ui/bottom-sheet";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 function modalTitleFromPathname(
   pathname: string,

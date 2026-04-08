@@ -8,9 +8,9 @@ import {
   SectionHeader,
   ToggleRow,
   ValueRow,
-} from "@/shared/ui/settings-list";
+} from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
-import { NoticeStateRows } from "@/shared/ui/settings-state";
+import { NoticeStateRows } from "@/components/ui/settings-state";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 

@@ -13,13 +13,13 @@ import {
 } from "react";
 import dynamic from "next/dynamic";
 import { useLocale } from "@/components/locale-provider";
-import { EmptyStateRows, ErrorStateRows } from "@/shared/ui/settings-state";
-import { apiGet } from "@/shared/api/api";
+import { EmptyStateRows, ErrorStateRows } from "@/components/ui/settings-state";
+import { apiGet } from "@/lib/api";
 
-const BottomSheet = dynamic(() => import("@/shared/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
-const SearchSelectSheet = dynamic(() => import("@/shared/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
+const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
+const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { CalendarRangePicker } from "@/shared/ui/calendar-range-picker";
+import { CalendarRangePicker } from "@/components/ui/calendar-range-picker";
 
 type BaseFilterOption = {
   id: string;
