@@ -1,4 +1,4 @@
-import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } from "@/shared/ui/settings-list";
+import { BaseGroupedList, InfoRow, SectionFootnote, SectionHeader, ValueRow } from "@/components/ui/settings-list";
 import { cookies, headers } from "next/headers";
 import { LOCALE_COOKIE_NAME, coerceAppLocale, parseAcceptLanguage } from "@/lib/i18n/messages";
 

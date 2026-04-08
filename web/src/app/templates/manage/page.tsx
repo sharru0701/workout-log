@@ -2,15 +2,15 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { apiGet, apiPost } from "@/shared/api/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { AccordionSection } from "@/shared/ui/accordion-section";
-import { AppSelect, AppTextInput } from "@/shared/ui/form-controls";
-import { NumberPickerField } from "@/shared/ui/number-picker-sheet";
-import { PrimaryButton } from "@/shared/ui/primary-button";
-import { DisabledStateRows, EmptyStateRows, ErrorStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
-import { Card } from "@/shared/ui/card";
+import { AccordionSection } from "@/components/ui/accordion-section";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
+import { PrimaryButton } from "@/components/ui/primary-button";
+import { DisabledStateRows, EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { Card } from "@/components/ui/card";
 
 type TemplateItem = {
   id: string;

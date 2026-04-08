@@ -2,8 +2,8 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { BottomSheet } from "@/shared/ui/bottom-sheet";
-import { PrimaryButton } from "@/shared/ui/primary-button";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { PrimaryButton } from "@/components/ui/primary-button";
 import {
   getProgramDescription,
   getProgramDetailInfo,

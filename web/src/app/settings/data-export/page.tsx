@@ -6,9 +6,9 @@ import {
   NavigationRow,
   SectionFootnote,
   SectionHeader,
-} from "@/shared/ui/settings-list";
+} from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
-import { NoticeStateRows } from "@/shared/ui/settings-state";
+import { NoticeStateRows } from "@/components/ui/settings-state";
 
 type ExportFormat = "json" | "csv";
 

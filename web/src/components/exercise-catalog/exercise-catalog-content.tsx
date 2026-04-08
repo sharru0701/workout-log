@@ -2,13 +2,13 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { apiDelete, apiGet, apiPatch, apiPost } from "@/shared/api/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/shared/ui/settings-state";
-import { useAppDialog } from "@/shared/ui/app-dialog-provider";
-import { Card, CardContent } from "@/shared/ui/card";
-import { AppSelect, AppTextInput } from "@/shared/ui/form-controls";
-import { SearchInput } from "@/shared/ui/search-input";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { Card, CardContent } from "@/components/ui/card";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { SearchInput } from "@/components/ui/search-input";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

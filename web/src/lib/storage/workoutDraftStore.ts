@@ -1,8 +1,8 @@
 "use client";
 
 import { openDB, DBSchema } from "idb";
-import type { WorkoutRecordDraft } from "@/entities/workout";
-import type { WorkoutProgramExerciseEntryStateMap } from "@/entities/workout";
+import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
+import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
 
 const DB_NAME = "workout-draft-db";
 const STORE_NAME = "workout-drafts";

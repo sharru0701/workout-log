@@ -3,13 +3,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 
-import { BottomSheet } from "@/shared/ui/bottom-sheet";
-import { useAppDialog } from "@/shared/ui/app-dialog-provider";
-import { AppTextInput } from "@/shared/ui/form-controls";
-import { PrimaryButton } from "@/shared/ui/primary-button";
-import { SearchInput } from "@/shared/ui/search-input";
-import { EmptyStateRows, ErrorStateRows } from "@/shared/ui/settings-state";
-import { apiDelete, apiGet, apiPatch } from "@/shared/api/api";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
+import { AppTextInput } from "@/components/ui/form-controls";
+import { PrimaryButton } from "@/components/ui/primary-button";
+import { SearchInput } from "@/components/ui/search-input";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 
 
@@ -189,12 +189,13 @@ function PlanListCard({
 }
 
 function PlansManagePageContent() {
-  const { copy } = useLocale();
+  const { copy, locale } = useLocale();
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadKey, setLoadKey] = useState("plans-manage:load:init");
   const [error, setError] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const storeHasLoadedRef = useRef(false);
 
@@ -232,8 +233,8 @@ function PlansManagePageContent() {
   }, []);
 
   useEffect(() => {
-    void loadPlans();
-  }, [loadPlans]);
+    void loadPlans({ isRefresh: refreshTick > 0 });
+  }, [loadPlans, refreshTick]);
 
   useEffect(() => {
     if (!managePlanId) return;

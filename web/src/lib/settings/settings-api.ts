@@ -1,5 +1,5 @@
 import type { PersistSettingFn, SettingValue } from "./update-setting";
-import { apiGet, apiPatch } from "@/shared/api/api";
+import { apiGet, apiPatch } from "@/lib/api";
 
 type SettingsSnapshot = Record<string, SettingValue>;
 

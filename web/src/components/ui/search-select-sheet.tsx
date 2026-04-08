@@ -2,9 +2,9 @@
 
 import type { ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import type { BottomSheetPrimaryAction } from "@/shared/ui/bottom-sheet-action-header";
-import { BottomSheet } from "@/shared/ui/bottom-sheet";
-import { SearchInput } from "@/shared/ui/search-input";
+import type { BottomSheetPrimaryAction } from "@/components/ui/bottom-sheet-action-header";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
+import { SearchInput } from "@/components/ui/search-input";
 
 export type SearchSelectOption = {
   key: string;

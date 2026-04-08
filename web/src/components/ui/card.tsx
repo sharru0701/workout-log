@@ -34,7 +34,7 @@ type CardMetaItemProps = {
 export function Card<T extends ElementType = "div">({
   as,
   children,
-  className,
+  className = "",
   elevated = true,
   tone = "default",
   padding = "md",
@@ -66,7 +66,7 @@ export function Card<T extends ElementType = "div">({
   );
 }
 
-export function CardHeader({ children, className, ...props }: CardSectionProps) {
+export function CardHeader({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div className={cx("card-header", className)} {...props}>
       {children}
@@ -74,7 +74,7 @@ export function CardHeader({ children, className, ...props }: CardSectionProps) 
   );
 }
 
-export function CardTitle({ children, className, ...props }: CardSectionProps) {
+export function CardTitle({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div className={cx("card-title", className)} {...props}>
       {children}
@@ -82,7 +82,7 @@ export function CardTitle({ children, className, ...props }: CardSectionProps) {
   );
 }
 
-export function CardDescription({ children, className, ...props }: CardSectionProps) {
+export function CardDescription({ children, className = "", ...props }: CardSectionProps) {
   return (
     <p
       className={cx(className)}
@@ -94,7 +94,7 @@ export function CardDescription({ children, className, ...props }: CardSectionPr
   );
 }
 
-export function CardContent({ children, className, ...props }: CardSectionProps) {
+export function CardContent({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div className={cx("card-body", className)} {...props}>
       {children}
@@ -102,7 +102,7 @@ export function CardContent({ children, className, ...props }: CardSectionProps)
   );
 }
 
-export function CardFooter({ children, className, ...props }: CardSectionProps) {
+export function CardFooter({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div {...props}>
       {children}
@@ -110,7 +110,7 @@ export function CardFooter({ children, className, ...props }: CardSectionProps) 
   );
 }
 
-export function CardActionGroup({ children, className, ...props }: CardSectionProps) {
+export function CardActionGroup({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div {...props}>
       {children}
@@ -118,7 +118,7 @@ export function CardActionGroup({ children, className, ...props }: CardSectionPr
   );
 }
 
-export function CardMetaGrid({ children, className, ...props }: CardSectionProps) {
+export function CardMetaGrid({ children, className = "", ...props }: CardSectionProps) {
   return (
     <div {...props}>
       {children}
@@ -126,7 +126,7 @@ export function CardMetaGrid({ children, className, ...props }: CardSectionProps
   );
 }
 
-export function CardMetaItem({ label, value, className }: CardMetaItemProps) {
+export function CardMetaItem({ label, value, className = "" }: CardMetaItemProps) {
   return (
     <div>
       <div>{label}</div>
