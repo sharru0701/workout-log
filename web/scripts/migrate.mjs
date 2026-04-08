@@ -2,7 +2,28 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { randomUUID } from "node:crypto";
 import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { Pool } from "pg";
+import { config as loadDotenv } from "dotenv";
+
+const scriptDir = path.dirname(fileURLToPath(import.meta.url));
+const projectRoot = path.resolve(scriptDir, "..");
+
+function preloadEnvFile(relativePath, originalEnvKeys) {
+  const absolutePath = path.join(projectRoot, relativePath);
+  const result = loadDotenv({ path: absolutePath, processEnv: {}, quiet: true });
+  if (result.error || !result.parsed) return;
+
+  for (const [key, value] of Object.entries(result.parsed)) {
+    if (originalEnvKeys.has(key)) continue;
+    process.env[key] = value;
+  }
+}
+
+const originalEnvKeys = new Set(Object.keys(process.env));
+preloadEnvFile(".env", originalEnvKeys);
+preloadEnvFile(".env.local", originalEnvKeys);
 
 const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0";
 const connectionString = process.env.DATABASE_URL;
