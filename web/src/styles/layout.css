@@ -58,3 +58,37 @@
     opacity: 1;
   }
 }
+
+/* ─── View Transitions API ───────────────────────────────────────
+ * iOS Safari 18+ / Android Chrome 111+ 지원
+ * @supports 가드로 미지원 브라우저에서 안전하게 무시됨
+ * PERF: 네이티브 앱 수준의 페이지 전환 애니메이션
+ */
+@supports (view-transition-name: none) {
+  /* 기본 크로스페이드 - 빠르고 자연스러운 전환 */
+  ::view-transition-old(root) {
+    animation: view-transition-out 150ms ease-out both;
+  }
+
+  ::view-transition-new(root) {
+    animation: view-transition-in 200ms ease-out both;
+  }
+}
+
+@keyframes view-transition-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes view-transition-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* 모션 감소 설정 시 트랜지션 비활성화 (접근성) */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

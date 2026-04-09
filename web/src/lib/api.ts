@@ -66,8 +66,14 @@ type ApiInflightRequest = {
 
 type ApiNetworkListener = (inflightCount: number) => void;
 
-const DEFAULT_MAX_AGE_MS = 8_000;
-const DEFAULT_STALE_WHILE_REVALIDATE_MS = 52_000;
+// PERF: 기본 캐시 시간 조정
+// maxAgeMs: 30s → 서버 HTTP Cache-Control max-age와 정합 (home=60s, plans=30s)
+//   8s는 너무 짧아 동일 데이터를 자주 재요청함. 30s로 늘려 네트워크 요청 감소.
+// staleWhileRevalidateMs: 120s → HTTP stale-while-revalidate=120 과 정합
+//   캐시 만료 후에도 120s간 stale 데이터 반환, 백그라운드에서 자동 재검증
+const DEFAULT_MAX_AGE_MS = 30_000;
+const DEFAULT_STALE_WHILE_REVALIDATE_MS = 120_000;
+// PERF: 캐시 엔트리 수 180개 유지 (주요 API * 경우의 수 기준 충분)
 const API_CACHE_MAX_ENTRIES = 180;
 
 const apiResponseCache = new Map<string, ApiCacheEntry>();

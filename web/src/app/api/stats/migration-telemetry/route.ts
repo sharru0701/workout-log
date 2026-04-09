@@ -1,6 +1,6 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { getAuthenticatedUserId } from "@/server/auth/user";
@@ -335,12 +335,13 @@ async function GETImpl(req: Request) {
         },
       };
 
-      await setStatsCache({
+      // PERF: after()로 캐시 쓰기를 응답 전송 후 처리 → API 응답 지연 제거
+    after(() => setStatsCache({
         userId,
         metric: "migration_telemetry",
         params: cacheParams,
         payload,
-      });
+      }));
     }
 
     const responsePayload: DashboardMigrationTelemetryPayload = {

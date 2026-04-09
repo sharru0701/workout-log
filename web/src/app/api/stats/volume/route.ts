@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { db } from "@/server/db/client";
 import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
@@ -194,12 +194,13 @@ async function GETImpl(req: Request) {
       byExercise,
     };
 
-    await setStatsCache({
+    // PERF: after()로 캐시 쓰기를 응답 전송 후 처리 → API 응답 지연 제거
+    after(() => setStatsCache({
       userId,
       metric: "volume_totals",
       params: cacheParams,
       payload,
-    });
+    }));
 
     return NextResponse.json(payload);
   } catch (e: any) {

@@ -252,6 +252,7 @@ export async function fetchStatsBundle({
   ]);
 
   const payload: StatsBundleResult = { sessions30d, tonnage30d, compliance90d, prs90d };
-  await setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload, maxAgeSeconds: 300 });
+  // PERF: fire-and-forget 캐시 쓰기 → 응답 지연 없이 캐시 갱신
+  void setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload, maxAgeSeconds: 300 });
   return payload;
 }

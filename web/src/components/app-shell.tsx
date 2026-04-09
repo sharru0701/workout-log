@@ -7,10 +7,14 @@ import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { useRouter } from "next/navigation";
 
+// PERF: 앱 시작 시 즉시 prefetch할 주요 네비게이션 경로
+// 사용자가 탭을 클릭하기 전에 미리 JS 청크를 다운로드 → 네비게이션 체감 속도 향상
+const PREFETCH_ROUTES = ["/", "/workout/log", "/stats", "/calendar", "/plans"];
+
 /**
  * AppShell Component
- * PERF: Added View Transitions API support for native-like page transitions.
- * Wraps global providers and manages the main layout structure.
+ * PERF: View Transitions API로 네이티브 앱 같은 페이지 전환 제공.
+ * PERF: 주요 경로 prefetch로 즉각적인 네비게이션 응답성 확보.
  */
 export function AppShell({
   initialLocale: _initialLocale,
@@ -21,16 +25,26 @@ export function AppShell({
 }) {
   const router = useRouter();
 
-  // PERF: View Transitions API Integration
-  // Automatically applies smooth transitions when navigating between pages
+  // PERF: 앱 마운트 시 주요 경로 prefetch (300ms 지연 후 → 초기 렌더 차단 방지)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      for (const route of PREFETCH_ROUTES) {
+        router.prefetch(route);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [router]);
+
+  // PERF: View Transitions API - iOS Safari 18+ / Android Chrome 111+ 지원
+  // 미지원 브라우저는 자동 fallback (일반 router.push)
   useEffect(() => {
     if (!("startViewTransition" in document)) return;
 
     const handleLinkClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest("a");
       if (
-        !target || 
-        target.origin !== window.location.origin || 
+        !target ||
+        target.origin !== window.location.origin ||
         target.hasAttribute("download") ||
         target.target === "_blank" ||
         e.metaKey || e.ctrlKey || e.shiftKey || e.altKey
@@ -40,13 +54,9 @@ export function AppShell({
       const href = target.getAttribute("href");
       if (!href) return;
 
-      if (typeof document !== "undefined" && "startViewTransition" in document) {
-        (document as any).startViewTransition(() => {
-          router.push(href);
-        });
-      } else {
+      (document as any).startViewTransition(() => {
         router.push(href);
-      }
+      });
     };
 
     window.addEventListener("click", handleLinkClick);

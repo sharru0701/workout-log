@@ -3,6 +3,7 @@ import { getCalendarPageBootstrap } from "@/server/services/calendar/get-calenda
 import { CalendarScreen } from "@/widgets/calendar-screen";
 import CalendarLoading from "./loading";
 
+
 async function CalendarPageContent() {
   const bootstrap = await getCalendarPageBootstrap();
   return <CalendarScreen {...bootstrap} />;

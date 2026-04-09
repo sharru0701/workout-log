@@ -6,8 +6,6 @@ import { resolveRequestLocale, getAppCopy } from "@/lib/i18n/messages";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import HomeLoading from "./loading";
 
-// PERF: 완전한 Server Component화로 클라이언트 JS 번들 최소화 및 Waterfall 제거
-// React 19 Streaming + Zero-JS Dashboard (상호작용이 필요 없는 정적 뷰)
 
 async function HomeContent() {
   const userId = getAuthenticatedUserId();
