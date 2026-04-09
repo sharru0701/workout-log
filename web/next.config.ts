@@ -13,8 +13,8 @@ const nextConfig: NextConfig = {
     // PERF: React 서버 렌더링 최적화 (불필요한 서버 컴포넌트 래퍼 제거)
     optimizeServerReact: true,
     // PERF: Partial Prerendering - 정적 쉘을 즉시 서빙하고 동적 콘텐츠를 스트리밍
-    // 각 페이지에서 `export const experimental_ppr = true` 로 opt-in
-    ppr: "incremental",
+    // Next.js 16에서 ppr → cacheComponents로 이름 변경 (전역 활성화)
+    cacheComponents: true,
     // PERF: 클라이언트 사이드 라우터 캐시 TTL 설정
     // dynamic: 30s — API 데이터가 포함된 동적 페이지 캐시 (SWR 패턴과 정합)
     // static: 300s — 정적 페이지 캐시 (5분)
