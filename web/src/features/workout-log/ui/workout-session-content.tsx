@@ -1,7 +1,6 @@
 "use client";
 
-import { memo, useRef } from "react";
-import { useWindowVirtualizer } from "@tanstack/react-virtual";
+import { memo } from "react";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppTextarea } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -100,14 +99,6 @@ const WorkoutExerciseCardsList = memo(function WorkoutExerciseCardsList({
   onExerciseAction,
   onOpenInlinePicker,
 }: WorkoutExerciseCardsListProps) {
-  const listRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useWindowVirtualizer({
-    count: exerciseIds.length,
-    estimateSize: () => 220, // Estimated height of an ExerciseRow
-    overscan: 3, // Render slightly off-screen to prevent flickering during fast scrolls
-  });
-
   if (exerciseIds.length === 0) {
     return (
       <div
@@ -123,38 +114,17 @@ const WorkoutExerciseCardsList = memo(function WorkoutExerciseCardsList({
   }
 
   return (
-    <div
-      ref={listRef}
-      style={{
-        position: "relative",
-        width: "100%",
-        height: `${virtualizer.getTotalSize()}px`,
-      }}
-    >
-      {virtualizer.getVirtualItems().map((virtualItem) => {
-        const id = exerciseIds[virtualItem.index];
-        return (
-          <div
-            key={id}
-            data-index={virtualItem.index}
-            ref={virtualizer.measureElement}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              width: "100%",
-              transform: `translateY(${virtualItem.start}px)`,
-            }}
-          >
-            <ExerciseRow
-              exerciseId={id}
-              bodyweightKg={bodyweightKg}
-              onAction={onExerciseAction}
-              onOpenInlinePicker={onOpenInlinePicker}
-            />
-          </div>
-        );
-      })}
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xl)", width: "100%" }}>
+      {exerciseIds.map((id) => (
+        <div key={id}>
+          <ExerciseRow
+            exerciseId={id}
+            bodyweightKg={bodyweightKg}
+            onAction={onExerciseAction}
+            onOpenInlinePicker={onOpenInlinePicker}
+          />
+        </div>
+      ))}
     </div>
   );
 }, areWorkoutExerciseCardsListPropsEqual);
