@@ -44,10 +44,11 @@ const nextConfig: NextConfig = {
   // dev + Turbopack에서는 HMR 그래프 오류가 간헐적으로 발생할 수 있어 비활성화.
   reactCompiler: process.env.NODE_ENV === "production",
   async headers() {
+    const isProd = process.env.NODE_ENV === "production";
     return [
-      // 정적 자산 장기 캐싱 — Next.js는 /_next/static/** 파일에 content-hash를 포함하므로
-      // max-age=1년으로 설정해도 배포 후 새 파일 URL로 버스팅됨
-      {
+      // 정적 자산 장기 캐싱 — content-hash URL이므로 1년 캐싱 안전
+      // 개발 모드에서는 HMR 동작을 보호하기 위해 헤더를 추가하지 않음
+      ...(isProd ? [{
         source: "/_next/static/(.*)",
         headers: [
           {
@@ -55,7 +56,7 @@ const nextConfig: NextConfig = {
             value: "public, max-age=31536000, immutable",
           },
         ],
-      },
+      }] : []),
       // PERF: 자체 호스팅 폰트 CSS 장기 캐싱 (내용 변경 시 파일명 변경으로 캐시 버스팅)
       {
         source: "/fonts/(.*)",
