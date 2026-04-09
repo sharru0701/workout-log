@@ -1,7 +1,6 @@
-import { apiPatch, apiPost } from "@/shared/api";
 import { toWorkoutLogPayload, type WorkoutRecordDraft } from "@/entities/workout-record";
 import { isBodyweightExerciseName } from "@/lib/bodyweight-load";
-import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
+import { submitWorkoutLogAction } from "../actions/submit-workout-log";
 
 export async function submitWorkoutLogDraft({
   draft,
@@ -18,15 +17,27 @@ export async function submitWorkoutLogDraft({
     bodyweightKg: bodyweightKg ?? null,
     isBodyweightExercise: isBodyweightExerciseName,
   });
+
   const payloadWithOverride = progressionOverride ? { ...payload, progressionOverride } : payload;
+  
+  const result = await submitWorkoutLogAction(
+    {
+      logId: draft.session.logId ?? undefined,
+      timezone: payloadWithOverride.timezone ?? "UTC",
+      performedAt: new Date(payloadWithOverride.performedAt),
+      durationMinutes: payloadWithOverride.durationMinutes,
+      notes: payloadWithOverride.notes,
+      planId: payloadWithOverride.planId,
+      generatedSessionId: payloadWithOverride.generatedSessionId,
+      sets: payloadWithOverride.sets,
+      progressionOverride: (payloadWithOverride as any).progressionOverride as "hold" | "increase" | "reset" | undefined,
+    },
+    persistenceKey,
+  );
 
-  if (draft.session.logId) {
-    await apiPatch(`/api/logs/${encodeURIComponent(draft.session.logId)}`, payloadWithOverride);
-  } else {
-    await apiPost("/api/logs", payloadWithOverride);
+  if (!result.success) {
+    throw new Error(result.error);
   }
 
-  if (persistenceKey) {
-    await clearWorkoutDraft(persistenceKey);
-  }
+  return result.data;
 }

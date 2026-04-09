@@ -2,8 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
 import { generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
-import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
-import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
+import { rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
@@ -11,6 +10,7 @@ import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
 
 type Ctx = { params: Promise<{ logId: string }> };
 
@@ -110,147 +110,19 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
       return NextResponse.json({ error: locale === "ko" ? "세트 정보가 필요합니다." : "Sets are required." }, { status: 400 });
     }
 
-    const existingRows = await db
-      .select({
-        id: workoutLog.id,
-        userId: workoutLog.userId,
-        planId: workoutLog.planId,
-        generatedSessionId: workoutLog.generatedSessionId,
-      })
-      .from(workoutLog)
-      .where(eq(workoutLog.id, logId))
-      .limit(1);
-
-    const existing = existingRows[0];
-    if (!existing) return NextResponse.json({ error: locale === "ko" ? "기록을 찾을 수 없습니다." : "Log not found." }, { status: 404 });
-    if (existing.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
-
-    const submittedPlanId =
-      typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : existing.planId;
-    const submittedGeneratedSessionId =
-      typeof body.generatedSessionId === "string" && body.generatedSessionId.trim()
-        ? body.generatedSessionId.trim()
-        : existing.generatedSessionId;
-
-    if (submittedPlanId !== existing.planId) {
-      return NextResponse.json({ error: locale === "ko" ? "기록 수정 시 planId는 변경할 수 없습니다." : "planId change is not allowed on log update." }, { status: 400 });
-    }
-    if (submittedGeneratedSessionId !== existing.generatedSessionId) {
-      return NextResponse.json({ error: locale === "ko" ? "기록 수정 시 generatedSessionId는 변경할 수 없습니다." : "generatedSessionId change is not allowed on log update." }, { status: 400 });
-    }
-
-    if (submittedGeneratedSessionId) {
-      const s = await db
-        .select({ id: generatedSession.id, userId: generatedSession.userId, planId: generatedSession.planId })
-        .from(generatedSession)
-        .where(eq(generatedSession.id, submittedGeneratedSessionId))
-        .limit(1);
-      if (!s[0]) return NextResponse.json({ error: locale === "ko" ? "생성된 세션을 찾을 수 없습니다." : "Generated session not found." }, { status: 404 });
-      if (s[0].userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
-      if (submittedPlanId && s[0].planId !== submittedPlanId) {
-        return NextResponse.json(
-          { error: locale === "ko" ? "generatedSession이 전달된 planId에 속하지 않습니다." : "generatedSession does not belong to the provided planId." },
-          { status: 400 },
-        );
-      }
-    }
-
-    const resolvedByName = new Map<string, string | null>();
-    const resolvedById = new Map<string, string | null>();
-
-    const updated = await db.transaction(async (tx) => {
-      const [log] = await tx
-        .update(workoutLog)
-        .set({
-          performedAt: body.performedAt ? new Date(body.performedAt) : undefined,
-          durationMinutes:
-            body.durationMinutes === undefined ? undefined : (body.durationMinutes ?? null),
-          notes: body.notes === undefined ? undefined : (body.notes ?? null),
-          tags: body.tags === undefined ? undefined : (body.tags ?? null),
-        })
-        .where(eq(workoutLog.id, logId))
-        .returning({
-          id: workoutLog.id,
-        });
-
-      await tx.delete(workoutSet).where(eq(workoutSet.logId, logId));
-
-      await tx.insert(workoutSet).values(
-        await Promise.all(
-          sets.map(async (s: any, idx: number) => {
-            const exerciseName = String(s.exerciseName ?? "").trim();
-            if (!exerciseName) {
-              throw new Error("exerciseName is required for all sets");
-            }
-
-            const submittedExerciseId =
-              typeof s.exerciseId === "string" && s.exerciseId.trim() ? s.exerciseId.trim() : null;
-
-            let exerciseId: string | null = null;
-            if (submittedExerciseId) {
-              if (resolvedById.has(submittedExerciseId)) {
-                exerciseId = resolvedById.get(submittedExerciseId) ?? null;
-              } else {
-                const found = await getExerciseById(submittedExerciseId);
-                exerciseId = found?.id ?? null;
-                resolvedById.set(submittedExerciseId, exerciseId);
-              }
-            } else {
-              const key = exerciseName.toLowerCase();
-              if (resolvedByName.has(key)) {
-                exerciseId = resolvedByName.get(key) ?? null;
-              } else {
-                const found = await resolveExerciseByName(exerciseName);
-                exerciseId = found?.id ?? null;
-                resolvedByName.set(key, exerciseId);
-              }
-            }
-
-            return {
-              logId,
-              exerciseId,
-              exerciseName,
-              sortOrder: s.sortOrder ?? idx,
-              setNumber: s.setNumber ?? 1,
-              reps: s.reps ?? null,
-              weightKg: s.weightKg ?? null,
-              rpe: s.rpe ?? null,
-              isExtra: Boolean(s.isExtra ?? false),
-              meta: s.meta ?? {},
-            };
-          }),
-        ),
-      );
-
-      const progressionOverride =
-        body.progressionOverride === "hold" || body.progressionOverride === "increase" || body.progressionOverride === "reset"
-          ? body.progressionOverride
-          : null;
-      const progressionResult = await applyAutoProgressionFromLog({
-        tx,
-        userId,
-        planId: submittedPlanId,
-        logId,
-        sets,
-        mode: "replay",
-        progressionOverride,
-      });
-      const progressionEvent = await readProgressEventByLog({
-        tx,
-        planId: submittedPlanId,
-        logId,
-      });
-
-      await invalidateStatsCacheForUser(userId, tx);
-
-      return {
-        log,
-        progression: buildProgressionSummary({
-          mode: "replay",
-          applyResult: progressionResult,
-          eventRow: progressionEvent,
-        }),
-      };
+    const updated = await upsertWorkoutLogService({
+      logId,
+      userId,
+      locale,
+      timezone: "UTC", // existing route didn't parse timezone
+      performedAt: body.performedAt ? new Date(body.performedAt) : undefined,
+      durationMinutes: body.durationMinutes,
+      notes: body.notes,
+      tags: body.tags,
+      planId: typeof body.planId === "string" && body.planId.trim() ? body.planId.trim() : undefined,
+      generatedSessionId: typeof body.generatedSessionId === "string" && body.generatedSessionId.trim() ? body.generatedSessionId.trim() : undefined,
+      sets,
+      progressionOverride: body.progressionOverride === "hold" || body.progressionOverride === "increase" || body.progressionOverride === "reset" ? body.progressionOverride : null,
     });
 
     return NextResponse.json(updated, { status: 200 });

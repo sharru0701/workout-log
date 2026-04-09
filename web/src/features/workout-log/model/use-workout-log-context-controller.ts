@@ -41,13 +41,12 @@ type UseWorkoutLogContextControllerInput = {
   ) => WorkoutRecordDraft;
   hasRestoredDraft: () => boolean;
   registerReloadDraftContext: (fn: (() => Promise<void>) | null) => void;
-  setDraft: Dispatch<SetStateAction<WorkoutRecordDraft | null>>;
-  setProgramEntryState: Dispatch<SetStateAction<WorkoutProgramExerciseEntryStateMap>>;
-  setWorkflowState: Dispatch<SetStateAction<WorkoutWorkflowState>>;
-  setSaveError: Dispatch<SetStateAction<string | null>>;
   onNoPlanDetected: () => Promise<void>;
   onBootstrapOpenAddSheet: () => void;
 };
+
+import { useSetAtom, useAtomValue } from "jotai";
+import { draftAtom, programEntryStateAtom, workflowStateAtom, saveErrorAtom, recentLogItemsAtom, lastSessionAtom, workoutPreferencesAtom } from "../store/workout-log-atoms";
 
 export function useWorkoutLogContextController({
   initialPlans,
@@ -61,20 +60,25 @@ export function useWorkoutLogContextController({
   applyWeightRulesToDraft,
   hasRestoredDraft,
   registerReloadDraftContext,
-  setDraft,
-  setProgramEntryState,
-  setWorkflowState,
-  setSaveError,
   onNoPlanDetected,
   onBootstrapOpenAddSheet,
 }: UseWorkoutLogContextControllerInput) {
+  const setDraft = useSetAtom(draftAtom);
+  const setProgramEntryState = useSetAtom(programEntryStateAtom);
+  const setWorkflowState = useSetAtom(workflowStateAtom);
+  const setSaveError = useSetAtom(saveErrorAtom);
+  const setRecentLogItems = useSetAtom(recentLogItemsAtom);
+  const setLastSession = useSetAtom(lastSessionAtom);
+  const setWorkoutPreferences = useSetAtom(workoutPreferencesAtom);
+  
   const [plans, setPlans] = useState<WorkoutLogPlanItem[]>([]);
-  const [recentLogItems, setRecentLogItems] = useState<WorkoutLogRecentLogItem[]>([]);
-  const [lastSession, setLastSession] = useState<WorkoutLogLastSessionSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [plansLoadKey, setPlansLoadKey] = useState("workout-record:init");
   const [error, setError] = useState<string | null>(null);
-  const [workoutPreferences, setWorkoutPreferences] = useState<WorkoutPreferences>(toDefaultWorkoutPreferences);
+  
+  const workoutPreferences = useAtomValue(workoutPreferencesAtom);
+  const recentLogItems = useAtomValue(recentLogItemsAtom);
+  const lastSession = useAtomValue(lastSessionAtom);
 
   const selectedPlan = useMemo(
     () => plans.find((entry) => entry.id === selectedPlanId) ?? null,
