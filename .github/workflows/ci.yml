@@ -5,11 +5,17 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/**"
+      - "deploy/**"
+      - "infra/**"
   push:
     branches: [main]
     paths:
       - "web/**"
       - ".github/workflows/ci.yml"
+      - ".github/workflows/**"
+      - "deploy/**"
+      - "infra/**"
   workflow_dispatch: {}
 
 # PR당 최신 push만 실행 — 이전 실행은 취소
