@@ -34,10 +34,10 @@ export type WheelPickerHandle = {
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
-const DECELERATION = 0.97;
-const MIN_VELOCITY = 0.3;
-const SNAP_DURATION_MS = 280;
-const MOMENTUM_MULTIPLIER = 0.92;
+const DECELERATION = 0.86;
+const MIN_VELOCITY = 2.0;
+const SNAP_DURATION_MS = 160;
+const MOMENTUM_MULTIPLIER = 0.72;
 
 // ── Component ──────────────────────────────────────────────────────────────────
 
@@ -418,10 +418,12 @@ export const WheelPicker = memo(
         <div
           style={{
             position: "absolute",
-            left: 0,
-            right: 0,
+            left: 8,
+            right: 8,
             top: centerOffset,
             height: itemHeight,
+            borderRadius: 8,
+            background: "var(--color-surface-container)",
             pointerEvents: "none",
           }}
         />
