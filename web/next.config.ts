@@ -5,10 +5,11 @@ const nextConfig: NextConfig = {
     // Vercel deployment: use VERCEL_GIT_COMMIT_SHA, fallback to NEXT_PUBLIC_APP_VERSION or dev
     NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
   },
+  // PERF: Node.js 전용 패키지(pg)를 서버 번들에서 외부 모듈로 유지 → 클라이언트 번들 제외
+  serverExternalPackages: ["pg", "pg-native"],
   // PERF: 대용량 패키지의 named import를 자동으로 tree-shake → 번들 크기 감소
-  // drizzle-orm만 유지 (date-fns, lucide-react는 실제 의존성에 없음)
   experimental: {
-    optimizePackageImports: ["drizzle-orm"],
+    optimizePackageImports: ["drizzle-orm", "jotai", "immer", "zustand"],
   },
   // Vercel 환경에서는 output: "standalone"을 사용하지 않으므로 제거 또는 주석 처리
   // output: "standalone",
