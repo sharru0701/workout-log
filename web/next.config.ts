@@ -9,7 +9,20 @@ const nextConfig: NextConfig = {
   serverExternalPackages: ["pg", "pg-native"],
   // PERF: 대용량 패키지의 named import를 자동으로 tree-shake → 번들 크기 감소
   experimental: {
-    optimizePackageImports: ["drizzle-orm", "jotai", "immer", "zustand"],
+    optimizePackageImports: ["drizzle-orm", "jotai", "immer", "zustand", "idb"],
+    // PERF: React 서버 렌더링 최적화 (불필요한 서버 컴포넌트 래퍼 제거)
+    optimizeServerReact: true,
+    // PERF: Partial Prerendering - 정적 쉘을 즉시 서빙하고 동적 콘텐츠를 스트리밍
+    // 각 페이지에서 `export const experimental_ppr = true` 로 opt-in
+    ppr: "incremental",
+    // PERF: 클라이언트 사이드 라우터 캐시 TTL 설정
+    // dynamic: 30s — API 데이터가 포함된 동적 페이지 캐시 (SWR 패턴과 정합)
+    // static: 300s — 정적 페이지 캐시 (5분)
+    // @ts-ignore: staleTimes는 런타임에서 지원되나 타입 정의가 누락된 경우
+    staleTimes: {
+      dynamic: 30,
+      static: 300,
+    },
   },
   // Vercel 환경에서는 output: "standalone"을 사용하지 않으므로 제거 또는 주석 처리
   // output: "standalone",
@@ -37,6 +50,16 @@ const nextConfig: NextConfig = {
       // max-age=1년으로 설정해도 배포 후 새 파일 URL로 버스팅됨
       {
         source: "/_next/static/(.*)",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+      // PERF: 자체 호스팅 폰트 CSS 장기 캐싱 (내용 변경 시 파일명 변경으로 캐시 버스팅)
+      {
+        source: "/fonts/(.*)",
         headers: [
           {
             key: "Cache-Control",

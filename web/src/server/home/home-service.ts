@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, isNotNull, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   exercise,
@@ -277,7 +277,9 @@ export async function getHomeData(params: {
     todayKey,
   });
 
-  await setStatsCache({
+  // PERF: 캐시 쓰기를 fire-and-forget으로 처리 → 응답 지연 없이 캐시 갱신
+  // setStatsCache 실패는 무시 (다음 요청 때 다시 시도)
+  void setStatsCache({
     userId,
     metric: "home_v1",
     params: homeCacheParams,
@@ -464,7 +466,8 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number, loc
     .sort((a, b) => b.best.e1rm - a.best.e1rm)
     .slice(0, limit);
 
-  await setStatsCache({ userId, metric: "prs", params: cacheParams, payload: { items } });
+  // PERF: fire-and-forget 캐시 쓰기
+  void setStatsCache({ userId, metric: "prs", params: cacheParams, payload: { items } });
   return items;
 }
 
@@ -500,7 +503,8 @@ async function fetchVolumeSeries(userId: string) {
     sets: Number(r.sets ?? 0),
   }));
 
-  await setStatsCache({ userId, metric: "volume_series", params: cacheParams, payload: { series } });
+  // PERF: fire-and-forget 캐시 쓰기
+  void setStatsCache({ userId, metric: "volume_series", params: cacheParams, payload: { series } });
   return series;
 }
 

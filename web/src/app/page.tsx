@@ -6,8 +6,9 @@ import { resolveRequestLocale, getAppCopy } from "@/lib/i18n/messages";
 import { HomeDashboard } from "@/components/home/home-dashboard";
 import HomeLoading from "./loading";
 
-// PERF: 완전한 Server Component화로 클라이언트 JS 번들 최소화 및 Waterfall 제거
-// React 19 Streaming + Zero-JS Dashboard (상호작용이 필요 없는 정적 뷰)
+// PERF: PPR (Partial Prerendering) 활성화
+// 레이아웃 쉘은 즉시 정적 HTML로 서빙, 홈 데이터는 스트리밍으로 채워짐
+export const experimental_ppr = true;
 
 async function HomeContent() {
   const userId = getAuthenticatedUserId();

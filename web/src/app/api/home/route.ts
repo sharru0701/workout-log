@@ -34,7 +34,13 @@ async function GETImpl(req: Request) {
       recentLimit,
     });
 
-    return NextResponse.json(homeData);
+    // PERF: home 데이터는 90초 DB 캐시와 정합되는 HTTP 캐시 설정
+    // private: 싱글 유저 앱, CDN 캐시 불필요
+    // max-age=60: 클라이언트 1분 캐시 (DB 캐시 90s보다 짧게 설정해 항상 최신 DB 캐시 반영)
+    // stale-while-revalidate=120: 캐시 만료 후 2분간 stale 반환하며 백그라운드 재검증
+    return NextResponse.json(homeData, {
+      headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=120" },
+    });
   } catch (e: any) {
     logError("api.home.handler_error", { error: e });
     return apiErrorResponse(e);

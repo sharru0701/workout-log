@@ -171,7 +171,10 @@ async function GETImpl() {
     };
   });
 
-  return NextResponse.json({ items });
+  // PERF: 플랜 목록은 자주 변경되지 않으므로 짧은 캐시로 빠른 재탐색 지원
+  return NextResponse.json({ items }, {
+    headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=60" },
+  });
 }
 
 export const POST = withApiLogging(POSTImpl);

@@ -203,7 +203,8 @@ export async function fetchE1rmStats({
     series,
   };
 
-  await setStatsCache({
+  // PERF: fire-and-forget 캐시 쓰기 → 응답 지연 없이 캐시 갱신
+  void setStatsCache({
     userId,
     metric: "e1rm_best",
     params: cacheParams,

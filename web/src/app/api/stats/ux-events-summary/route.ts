@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { uxEventLog } from "@/server/db/schema";
@@ -188,12 +188,13 @@ async function GETImpl(req: Request) {
       trend,
     };
 
-    await setStatsCache({
+    // PERF: after()로 캐시 쓰기를 응답 전송 후 처리 → API 응답 지연 제거
+    after(() => setStatsCache({
       userId,
       metric: "ux_events_summary",
       params: cacheParams,
       payload,
-    });
+    }));
 
     return NextResponse.json(payload);
   } catch (error: unknown) {

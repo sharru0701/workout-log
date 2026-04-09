@@ -63,6 +63,19 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "Workout Log",
   description: "Workout tracking",
+  // PERF: PWA 최적화 - 홈 화면 추가 시 앱 수준 경험 제공
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Workout Log",
+  },
+  formatDetection: {
+    // iOS Safari가 전화번호/이메일을 자동 감지해 링크로 변환하는 것 방지
+    // 이 동작이 레이아웃 계산 비용을 유발할 수 있음
+    telephone: false,
+    email: false,
+    address: false,
+  },
 };
 
 async function resolveInitialLocale(): Promise<AppLocale> {
@@ -87,10 +100,14 @@ export default async function RootLayout({
     <html lang={initialLocale} suppressHydrationWarning className={inter.variable}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: EARLY_THEME_BOOTSTRAP }} />
-        {/* DNS + TCP 핸드셰이크 선점 — FontStylesheetLoader가 삽입하기 전에 미리 연결 */}
+        {/* DNS + TCP 핸드셰이크 선점 */}
+        {/* Pretendard 폰트 파일은 CDN에서 서빙 (CSS는 자체 호스팅) */}
+        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* Material Symbols는 Google Fonts CDN */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://cdn.jsdelivr.net" crossOrigin="anonymous" />
+        {/* PERF: Pretendard CSS는 동일 도메인 자체 호스팅 → HTTP/2 멀티플렉싱 활용 */}
+        <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
       </head>
       <body>
         <FontStylesheetLoader />
