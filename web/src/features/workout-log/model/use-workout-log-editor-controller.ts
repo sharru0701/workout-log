@@ -16,21 +16,15 @@ import {
   resolveWorkoutWeightWithPreferences,
 } from "./weight-rules";
 
-type UseWorkoutLogEditorControllerInput = {
-  visibleExercises: WorkoutExerciseViewModel[];
-  workoutPreferences: WorkoutPreferences;
-  setDraft: Dispatch<SetStateAction<WorkoutRecordDraft | null>>;
-  setProgramEntryState: Dispatch<SetStateAction<WorkoutProgramExerciseEntryStateMap>>;
-  setWorkflowState: Dispatch<SetStateAction<WorkoutWorkflowState>>;
-};
+import { useSetAtom, useAtomValue } from "jotai";
+import { draftAtom, programEntryStateAtom, workflowStateAtom, workoutPreferencesAtom, visibleExercisesAtom } from "../store/workout-log-atoms";
 
-export function useWorkoutLogEditorController({
-  visibleExercises,
-  workoutPreferences,
-  setDraft,
-  setProgramEntryState,
-  setWorkflowState,
-}: UseWorkoutLogEditorControllerInput) {
+export function useWorkoutLogEditorController() {
+  const setDraft = useSetAtom(draftAtom);
+  const setProgramEntryState = useSetAtom(programEntryStateAtom);
+  const setWorkflowState = useSetAtom(workflowStateAtom);
+  const workoutPreferences = useAtomValue(workoutPreferencesAtom);
+  const visibleExercises = useAtomValue(visibleExercisesAtom);
   const visibleExercisesRef = useRef<WorkoutExerciseViewModel[]>(visibleExercises);
   const workoutPreferencesRef = useRef<WorkoutPreferences>(workoutPreferences);
 
@@ -95,12 +89,6 @@ export function useWorkoutLogEditorController({
     },
     [applyEditing],
   );
-
-  useEffect(() => {
-    setDraft((prev) =>
-      prev ? applyWorkoutLogWeightRulesToDraft(prev, workoutPreferences) : prev,
-    );
-  }, [setDraft, workoutPreferences]);
 
   return {
     resolveWeightWithCurrentPreferences,

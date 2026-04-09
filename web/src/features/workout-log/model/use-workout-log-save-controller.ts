@@ -20,10 +20,10 @@ type FailureProtocolSheetState = {
   mode: ProgressionProtocolMode;
 } | null;
 
+import { useStore, useSetAtom } from "jotai";
+import { draftAtom, visibleExercisesAtom, programEntryStateAtom, saveErrorAtom, workflowStateAtom } from "../store/workout-log-atoms";
+
 type UseWorkoutLogSaveControllerInput = {
-  draft: WorkoutRecordDraft | null;
-  visibleExercises: WorkoutExerciseViewModel[];
-  programEntryState: WorkoutProgramExerciseEntryStateMap;
   locale: "ko" | "en";
   selectedPlan: {
     id: string;
@@ -31,23 +31,19 @@ type UseWorkoutLogSaveControllerInput = {
   } | null;
   bodyweightKg: number | null;
   persistenceKey: string | null;
-  setSaveError: (value: string | null) => void;
-  setWorkflowState: (value: WorkoutWorkflowState | ((prev: WorkoutWorkflowState) => WorkoutWorkflowState)) => void;
   onSaved: () => void;
 };
 
 export function useWorkoutLogSaveController({
-  draft,
-  visibleExercises,
-  programEntryState,
   locale,
   selectedPlan,
   bodyweightKg,
   persistenceKey,
-  setSaveError,
-  setWorkflowState,
   onSaved,
 }: UseWorkoutLogSaveControllerInput) {
+  const store = useStore();
+  const setSaveError = useSetAtom(saveErrorAtom);
+  const setWorkflowState = useSetAtom(workflowStateAtom);
   const [failureProtocolSheet, setFailureProtocolSheet] =
     useState<FailureProtocolSheetState>(null);
   const failureProtocolResolveRef =
@@ -74,6 +70,10 @@ export function useWorkoutLogSaveController({
   );
 
   const requestSave = useCallback(async () => {
+    const draft = store.get(draftAtom);
+    const visibleExercises = store.get(visibleExercisesAtom);
+    const programEntryState = store.get(programEntryStateAtom);
+
     if (!draft) return;
 
     const entryErrors = validateWorkoutRecordEntryState(
@@ -137,16 +137,14 @@ export function useWorkoutLogSaveController({
     }
   }, [
     bodyweightKg,
-    draft,
     locale,
     onSaved,
     persistenceKey,
-    programEntryState,
     requestFailureProtocolChoice,
     selectedPlan,
     setSaveError,
     setWorkflowState,
-    visibleExercises,
+    store,
   ]);
 
   return {

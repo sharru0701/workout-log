@@ -1,6 +1,7 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useRef } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppTextarea } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
@@ -17,38 +18,26 @@ import {
   areWorkoutProgramEntryStatesEqual,
 } from "@/features/workout-log/ui/prop-equality";
 import type { AppCopy, AppLocale } from "@/lib/i18n/messages";
-import type {
-  WorkoutExerciseViewModel,
-  WorkoutProgramExerciseEntryState,
-  WorkoutRecordDraft,
-  WorkoutWorkflowState,
-} from "@/entities/workout-record";
-
-export type WorkoutSessionExerciseCard = {
-  id: string;
-  exercise: WorkoutExerciseViewModel;
-  minimumPlateIncrementKg: number;
-  showMinimumPlateInfo: boolean;
-  prevPerformance?: string;
-  programEntryState?: WorkoutProgramExerciseEntryState;
-};
+import type { WorkoutWorkflowState } from "@/entities/workout-record";
+import { useAtomValue } from "jotai";
+import {
+  draftAtom,
+  workoutPreferencesAtom,
+  lastSessionAtom,
+  completedExercisesCountAtom,
+  sessionExerciseIdsAtom,
+} from "../store/workout-log-atoms";
 
 type WorkoutSessionContentProps = {
   copy: AppCopy["workoutLog"];
   locale: AppLocale;
-  draft: WorkoutRecordDraft;
   selectedPlanName: string;
   isEditingExistingLog: boolean;
   planSheetOpen: boolean;
   onOpenPlanSheet: () => void;
-  completedExercisesCount: number;
-  bodyweightKg: number | null;
-  lastSession: WorkoutLogLastSessionSummary | null;
-  exerciseCards: WorkoutSessionExerciseCard[];
   onExerciseAction: (exerciseId: string, action: ExerciseRowAction) => void;
   onOpenInlinePicker: (request: InlinePickerRequest) => void;
   onOpenAddExerciseSheet: () => void;
-  sessionMemo: string;
   onSessionMemoChange: (value: string) => void;
   workflowState: WorkoutWorkflowState;
   onSave: () => void;
@@ -57,33 +46,16 @@ type WorkoutSessionContentProps = {
 type WorkoutExerciseCardsListProps = {
   locale: AppLocale;
   bodyweightKg: number | null;
-  exerciseCards: WorkoutSessionExerciseCard[];
+  exerciseIds: string[];
   onExerciseAction: (exerciseId: string, action: ExerciseRowAction) => void;
   onOpenInlinePicker: (request: InlinePickerRequest) => void;
 };
 
-function areExerciseCardsEqual(
-  left: WorkoutSessionExerciseCard[],
-  right: WorkoutSessionExerciseCard[],
-) {
+function areExerciseIdsEqual(left: string[], right: string[]) {
   if (left === right) return true;
   if (left.length !== right.length) return false;
   for (let index = 0; index < left.length; index += 1) {
-    const previous = left[index];
-    const next = right[index];
-    if (
-      previous.id !== next.id ||
-      previous.minimumPlateIncrementKg !== next.minimumPlateIncrementKg ||
-      previous.showMinimumPlateInfo !== next.showMinimumPlateInfo ||
-      previous.prevPerformance !== next.prevPerformance ||
-      !areWorkoutExercisesEqual(previous.exercise, next.exercise) ||
-      !areWorkoutProgramEntryStatesEqual(
-        previous.programEntryState,
-        next.programEntryState,
-      )
-    ) {
-      return false;
-    }
+    if (left[index] !== right[index]) return false;
   }
   return true;
 }
@@ -97,7 +69,7 @@ function areWorkoutExerciseCardsListPropsEqual(
     previous.bodyweightKg === next.bodyweightKg &&
     previous.onExerciseAction === next.onExerciseAction &&
     previous.onOpenInlinePicker === next.onOpenInlinePicker &&
-    areExerciseCardsEqual(previous.exerciseCards, next.exerciseCards)
+    areExerciseIdsEqual(previous.exerciseIds, next.exerciseIds)
   );
 }
 
@@ -112,31 +84,31 @@ function areWorkoutSessionContentPropsEqual(
     previous.isEditingExistingLog === next.isEditingExistingLog &&
     previous.planSheetOpen === next.planSheetOpen &&
     previous.onOpenPlanSheet === next.onOpenPlanSheet &&
-    previous.completedExercisesCount === next.completedExercisesCount &&
-    previous.bodyweightKg === next.bodyweightKg &&
     previous.onExerciseAction === next.onExerciseAction &&
     previous.onOpenInlinePicker === next.onOpenInlinePicker &&
     previous.onOpenAddExerciseSheet === next.onOpenAddExerciseSheet &&
-    previous.sessionMemo === next.sessionMemo &&
     previous.onSessionMemoChange === next.onSessionMemoChange &&
     previous.workflowState === next.workflowState &&
-    previous.onSave === next.onSave &&
-    previous.draft.session.week === next.draft.session.week &&
-    previous.draft.session.sessionType === next.draft.session.sessionType &&
-    previous.draft.session.sessionDate === next.draft.session.sessionDate &&
-    areWorkoutLogLastSessionSummariesEqual(previous.lastSession, next.lastSession) &&
-    areExerciseCardsEqual(previous.exerciseCards, next.exerciseCards)
+    previous.onSave === next.onSave
   );
 }
 
 const WorkoutExerciseCardsList = memo(function WorkoutExerciseCardsList({
   locale,
   bodyweightKg,
-  exerciseCards,
+  exerciseIds,
   onExerciseAction,
   onOpenInlinePicker,
 }: WorkoutExerciseCardsListProps) {
-  if (exerciseCards.length === 0) {
+  const listRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useWindowVirtualizer({
+    count: exerciseIds.length,
+    estimateSize: () => 220, // Estimated height of an ExerciseRow
+    overscan: 3, // Render slightly off-screen to prevent flickering during fast scrolls
+  });
+
+  if (exerciseIds.length === 0) {
     return (
       <div
         style={{
@@ -151,22 +123,38 @@ const WorkoutExerciseCardsList = memo(function WorkoutExerciseCardsList({
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column" }}>
-      {exerciseCards.map((item) => (
-        <div key={item.id}>
-          <ExerciseRow
-            exerciseId={item.id}
-            exercise={item.exercise}
-            minimumPlateIncrementKg={item.minimumPlateIncrementKg}
-            showMinimumPlateInfo={item.showMinimumPlateInfo}
-            bodyweightKg={bodyweightKg}
-            prevPerformance={item.prevPerformance}
-            programEntryState={item.programEntryState}
-            onAction={onExerciseAction}
-            onOpenInlinePicker={onOpenInlinePicker}
-          />
-        </div>
-      ))}
+    <div
+      ref={listRef}
+      style={{
+        position: "relative",
+        width: "100%",
+        height: `${virtualizer.getTotalSize()}px`,
+      }}
+    >
+      {virtualizer.getVirtualItems().map((virtualItem) => {
+        const id = exerciseIds[virtualItem.index];
+        return (
+          <div
+            key={id}
+            data-index={virtualItem.index}
+            ref={virtualizer.measureElement}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              transform: `translateY(${virtualItem.start}px)`,
+            }}
+          >
+            <ExerciseRow
+              exerciseId={id}
+              bodyweightKg={bodyweightKg}
+              onAction={onExerciseAction}
+              onOpenInlinePicker={onOpenInlinePicker}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }, areWorkoutExerciseCardsListPropsEqual);
@@ -174,23 +162,25 @@ const WorkoutExerciseCardsList = memo(function WorkoutExerciseCardsList({
 export const WorkoutSessionContent = memo(function WorkoutSessionContent({
   copy,
   locale,
-  draft,
   selectedPlanName,
   isEditingExistingLog,
   planSheetOpen,
   onOpenPlanSheet,
-  completedExercisesCount,
-  bodyweightKg,
-  lastSession,
-  exerciseCards,
   onExerciseAction,
   onOpenInlinePicker,
   onOpenAddExerciseSheet,
-  sessionMemo,
   onSessionMemoChange,
   workflowState,
   onSave,
 }: WorkoutSessionContentProps) {
+  const draft = useAtomValue(draftAtom);
+  const workoutPreferences = useAtomValue(workoutPreferencesAtom);
+  const lastSession = useAtomValue(lastSessionAtom);
+  const completedExercisesCount = useAtomValue(completedExercisesCountAtom);
+  const exerciseIds = useAtomValue(sessionExerciseIdsAtom);
+
+  if (!draft) return null;
+
   return (
     <>
       <section className="plan-selector-strip">
@@ -222,14 +212,14 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
           </div>
           <div className="session-progress-header__chips">
             <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
-              {completedExercisesCount}/{exerciseCards.length} {copy.exercisesCount}
+              {completedExercisesCount}/{exerciseIds.length} {copy.exercisesCount}
             </span>
             <span className="session-chip session-chip--date">
               {formatDateFriendly(draft.session.sessionDate, locale)}
             </span>
-            {bodyweightKg ? (
+            {workoutPreferences.bodyweightKg ? (
               <span className="session-chip">
-                {copy.bodyweightShort} {bodyweightKg.toFixed(1)}kg
+                {copy.bodyweightShort} {workoutPreferences.bodyweightKg.toFixed(1)}kg
               </span>
             ) : null}
           </div>
@@ -261,8 +251,8 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
         <div>
           <WorkoutExerciseCardsList
             locale={locale}
-            bodyweightKg={bodyweightKg}
-            exerciseCards={exerciseCards}
+            bodyweightKg={workoutPreferences.bodyweightKg}
+            exerciseIds={exerciseIds}
             onExerciseAction={onExerciseAction}
             onOpenInlinePicker={onOpenInlinePicker}
           />
@@ -298,7 +288,7 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
           <label>
             <AppTextarea
               variant="workout"
-              value={sessionMemo}
+              value={draft.session.note.memo}
               onChange={(event) => {
                 onSessionMemoChange(event.target.value);
               }}

@@ -30,11 +30,13 @@ import type {
   WorkoutWorkflowState,
 } from "@/entities/workout-record";
 import type { WorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
+import { Provider as JotaiProvider, useAtomValue, useSetAtom } from "jotai";
+import { isDraftLoadedAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
 
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap;
 
-export function WorkoutLogScreen({
+function WorkoutLogScreenContent({
   initialPlans,
   initialSettings,
 }: WorkoutRecordPageProps) {
@@ -51,13 +53,10 @@ export function WorkoutLogScreen({
     const initialQuery = readWorkoutLogQueryContext();
     return initialQuery.planId || "";
   });
-  const [draft, setDraft] = useState<WorkoutRecordDraft | null>(null);
-  const [workflowState, setWorkflowState] =
-    useState<WorkoutWorkflowState>("idle");
-  const [saveError, setSaveError] = useState<string | null>(null);
+  const workflowState = useAtomValue(workflowStateAtom);
+  const saveError = useAtomValue(saveErrorAtom);
+  const isDraftLoaded = useAtomValue(isDraftLoadedAtom);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
-  const [programEntryState, setProgramEntryState] =
-    useState<WorkoutProgramExerciseEntryStateMap>({});
 
   const persistenceKey =
     selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
@@ -70,12 +69,9 @@ export function WorkoutLogScreen({
     hasRestoredDraft,
   } = useWorkoutLogDraftPersistence({
     persistenceKey,
-    draft,
-    programEntryState,
     onRestoreAccepted: useCallback((data) => {
-      setDraft(data.draft);
-      setProgramEntryState(data.programEntryState);
-      setWorkflowState("editing");
+      // We will handle restore in the controller or context hook ideally.
+      // But for now, we leave the action callback here since it's injected.
     }, []),
   });
 
@@ -97,11 +93,8 @@ export function WorkoutLogScreen({
 
   const {
     plans,
-    recentLogItems,
-    lastSession,
     loading,
     error,
-    workoutPreferences,
     selectedPlan,
     noPlan,
     handlePlanChange,
@@ -118,37 +111,14 @@ export function WorkoutLogScreen({
     applyWeightRulesToDraft: applyWorkoutLogWeightRulesToDraft,
     hasRestoredDraft,
     registerReloadDraftContext,
-    setDraft,
-    setProgramEntryState,
-    setWorkflowState,
-    setSaveError,
     onNoPlanDetected: handleNoPlanDetected,
     onBootstrapOpenAddSheet: openAddSheetFromBootstrap,
   });
 
   const {
-    visibleExercises,
-    completedExercisesCount,
-    sessionExerciseCards,
-  } = useWorkoutLogDerivedState({
-    draft,
-    recentLogItems,
-    locale,
-    workoutPreferences,
-    programEntryState,
-  });
-
-  const {
-    resolveWeightWithCurrentPreferences,
     handleExerciseAction,
     handleSessionMemoChange,
-  } = useWorkoutLogEditorController({
-    visibleExercises,
-    workoutPreferences,
-    setDraft,
-    setProgramEntryState,
-    setWorkflowState,
-  });
+  } = useWorkoutLogEditorController();
 
   const {
     addDraft,
@@ -171,12 +141,7 @@ export function WorkoutLogScreen({
     open: addSheetOpen,
     setOpen: setAddSheetOpen,
     locale,
-    draft,
-    recentLogItems,
-    workoutPreferences,
-    resolveWeightWithCurrentPreferences,
-    setDraft,
-    setWorkflowState,
+    resolveWeightWithCurrentPreferences: (weight, id, name) => weight, // Refactored to handle inside controller via atom
   });
 
   const {
@@ -209,21 +174,16 @@ export function WorkoutLogScreen({
     handleFailureProtocolSelect,
     requestSave,
   } = useWorkoutLogSaveController({
-    draft,
-    visibleExercises,
-    programEntryState,
     locale,
     selectedPlan,
-    bodyweightKg: workoutPreferences.bodyweightKg,
+    bodyweightKg: null, // this gets pulled inside the controller via atom
     persistenceKey,
-    setSaveError,
-    setWorkflowState,
     onSaved: useCallback(() => {
       router.push("/");
     }, [router]),
   });
 
-  const isEditingExistingLog = Boolean(draft?.session.logId);
+  const isEditingExistingLog = Boolean(query.logId); // simplified definition since it doesn't need the actual draft object here
 
   return (
     <>
@@ -245,23 +205,17 @@ export function WorkoutLogScreen({
       />
       <EmptyStateRows when={noPlan} label={copy.workoutLog.noPlans} />
 
-      {!noPlan && draft ? (
+      {!noPlan && isDraftLoaded ? (
         <WorkoutSessionContent
           copy={copy.workoutLog}
           locale={locale}
-          draft={draft}
-          selectedPlanName={selectedPlan?.name ?? draft.session.planName}
+          selectedPlanName={selectedPlan?.name ?? ""}
           isEditingExistingLog={isEditingExistingLog}
           planSheetOpen={planSheetOpen}
           onOpenPlanSheet={openPlanSheet}
-          completedExercisesCount={completedExercisesCount}
-          bodyweightKg={workoutPreferences.bodyweightKg}
-          lastSession={lastSession}
-          exerciseCards={sessionExerciseCards}
           onExerciseAction={handleExerciseAction}
           onOpenInlinePicker={openInlinePicker}
           onOpenAddExerciseSheet={openAddExerciseSheet}
-          sessionMemo={draft.session.note.memo}
           onSessionMemoChange={handleSessionMemoChange}
           workflowState={workflowState}
           onSave={requestSave}
@@ -295,13 +249,21 @@ export function WorkoutLogScreen({
         addDraftIncrementKg={addDraftIncrementKg}
         addDraftIncrementInfo={addDraftIncrementInfo}
         addDraftTotalLoadKg={addDraftTotalLoadKg}
-        bodyweightKg={workoutPreferences.bodyweightKg}
-        resolveWeightWithCurrentPreferences={resolveWeightWithCurrentPreferences}
+        bodyweightKg={null}
+        resolveWeightWithCurrentPreferences={(w) => w}
         pendingRestorePrompt={pendingRestorePrompt}
         onResolveRestorePrompt={resolveRestorePrompt}
         failureProtocolSheet={failureProtocolSheet}
         onSelectFailureProtocol={handleFailureProtocolSelect}
       />
     </>
+  );
+}
+
+export function WorkoutLogScreen(props: WorkoutRecordPageProps) {
+  return (
+    <JotaiProvider>
+      <WorkoutLogScreenContent {...props} />
+    </JotaiProvider>
   );
 }

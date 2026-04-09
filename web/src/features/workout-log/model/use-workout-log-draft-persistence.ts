@@ -11,19 +11,20 @@ import type {
   WorkoutProgramExerciseEntryStateMap,
 } from "@/entities/workout-record";
 
+import { useAtomValue, useSetAtom } from "jotai";
+import { draftAtom, programEntryStateAtom, workflowStateAtom } from "../store/workout-log-atoms";
+
 type UseWorkoutLogDraftPersistenceInput = {
   persistenceKey: string | null;
-  draft: WorkoutRecordDraft | null;
-  programEntryState: WorkoutProgramExerciseEntryStateMap;
   onRestoreAccepted: (data: WorkoutDraftData) => void;
 };
 
 export function useWorkoutLogDraftPersistence({
   persistenceKey,
-  draft,
-  programEntryState,
   onRestoreAccepted,
 }: UseWorkoutLogDraftPersistenceInput) {
+  const draft = useAtomValue(draftAtom);
+  const programEntryState = useAtomValue(programEntryStateAtom);
   const isRestoredRef = useRef(false);
   const isRestoringRef = useRef(false);
   const persistenceKeyRef = useRef<string | null>(null);

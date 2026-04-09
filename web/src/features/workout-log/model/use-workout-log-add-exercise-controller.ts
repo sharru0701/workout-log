@@ -29,33 +29,31 @@ import {
   type WorkoutLogRecentLogItem,
 } from "./types";
 
+import { useStore, useSetAtom, useAtomValue } from "jotai";
+import { draftAtom, workflowStateAtom, recentLogItemsAtom, workoutPreferencesAtom } from "../store/workout-log-atoms";
+
 type UseWorkoutLogAddExerciseControllerInput = {
   open: boolean;
   setOpen: Dispatch<SetStateAction<boolean>>;
   locale: "ko" | "en";
-  draft: WorkoutRecordDraft | null;
-  recentLogItems: WorkoutLogRecentLogItem[];
-  workoutPreferences: WorkoutPreferences;
   resolveWeightWithCurrentPreferences: (
     weightKg: number,
     exerciseId: string | null | undefined,
     exerciseName: string,
   ) => number;
-  setDraft: Dispatch<SetStateAction<WorkoutRecordDraft | null>>;
-  setWorkflowState: Dispatch<SetStateAction<WorkoutWorkflowState>>;
 };
 
 export function useWorkoutLogAddExerciseController({
   open,
   setOpen,
   locale,
-  draft,
-  recentLogItems,
-  workoutPreferences,
   resolveWeightWithCurrentPreferences,
-  setDraft,
-  setWorkflowState,
 }: UseWorkoutLogAddExerciseControllerInput) {
+  const store = useStore();
+  const setDraft = useSetAtom(draftAtom);
+  const setWorkflowState = useSetAtom(workflowStateAtom);
+  const workoutPreferences = useAtomValue(workoutPreferencesAtom);
+  const recentLogItems = useAtomValue(recentLogItemsAtom);
   const [exerciseQuery, setExerciseQuery] = useState("");
   const deferredExerciseQuery = useDeferredValue(exerciseQuery);
   const [exerciseOptions, setExerciseOptions] = useState<WorkoutLogExerciseOption[]>([]);
@@ -199,6 +197,7 @@ export function useWorkoutLogAddExerciseController({
   );
 
   const handleAddExercise = useCallback(() => {
+    const draft = store.get(draftAtom);
     if (!draft) return;
 
     const result = buildAddExerciseDraftUpdate(
@@ -220,11 +219,11 @@ export function useWorkoutLogAddExerciseController({
   }, [
     addDraft,
     closeAddExerciseSheet,
-    draft,
     locale,
     resolveWeightWithCurrentPreferences,
     setDraft,
     setWorkflowState,
+    store,
   ]);
 
   return {

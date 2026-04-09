@@ -48,9 +48,11 @@
     "dev:turbo": "next dev --turbo"
   },
   "dependencies": {
+    "@tanstack/react-virtual": "^3.13.23",
     "drizzle-orm": "^0.45.1",
     "idb": "^8.0.3",
     "immer": "^11.1.4",
+    "jotai": "^2.19.1",
     "next": "16.1.6",
     "pg": "^8.18.0",
     "react": "19.2.3",

@@ -27,14 +27,13 @@ import {
 } from "@/lib/settings/workout-preferences";
 import type { WorkoutExerciseViewModel, WorkoutProgramExerciseEntryState } from "@/entities/workout-record";
 
+import { useMemo } from "react";
+import { useAtomValue } from "jotai";
+import { makeExerciseCardAtom } from "../store/workout-log-atoms";
+
 type ExerciseRowProps = {
   exerciseId: string;
-  exercise: WorkoutExerciseViewModel;
-  minimumPlateIncrementKg: number;
-  showMinimumPlateInfo: boolean;
   bodyweightKg: number | null;
-  programEntryState?: WorkoutProgramExerciseEntryState;
-  prevPerformance?: string;
   onAction: (exerciseId: string, action: ExerciseRowAction) => void;
   onOpenInlinePicker: (request: InlinePickerRequest) => void;
 };
@@ -45,17 +44,9 @@ function areExerciseRowPropsEqual(
 ) {
   return (
     previous.exerciseId === next.exerciseId &&
-    previous.minimumPlateIncrementKg === next.minimumPlateIncrementKg &&
-    previous.showMinimumPlateInfo === next.showMinimumPlateInfo &&
     previous.bodyweightKg === next.bodyweightKg &&
-    previous.prevPerformance === next.prevPerformance &&
     previous.onAction === next.onAction &&
-    previous.onOpenInlinePicker === next.onOpenInlinePicker &&
-    areWorkoutExercisesEqual(previous.exercise, next.exercise) &&
-    areWorkoutProgramEntryStatesEqual(
-      previous.programEntryState,
-      next.programEntryState,
-    )
+    previous.onOpenInlinePicker === next.onOpenInlinePicker
   );
 }
 
@@ -231,16 +222,22 @@ const ExerciseSetRow = memo(function ExerciseSetRow({
 
 export const ExerciseRow = memo(function ExerciseRow({
   exerciseId,
-  exercise,
-  minimumPlateIncrementKg,
-  showMinimumPlateInfo,
   bodyweightKg,
-  programEntryState,
-  prevPerformance,
   onAction,
   onOpenInlinePicker,
 }: ExerciseRowProps) {
+  const card = useAtomValue(useMemo(() => makeExerciseCardAtom(exerciseId), [exerciseId]));
   const { copy, locale } = useLocale();
+
+  if (!card) return null;
+
+  const {
+    exercise,
+    minimumPlateIncrementKg,
+    showMinimumPlateInfo,
+    programEntryState,
+    prevPerformance,
+  } = card;
   const totalLoadKg = computeBodyweightTotalLoadKg(exercise.exerciseName, exercise.set.weightKg, bodyweightKg);
   const isBodyweightExercise = isBodyweightExerciseName(exercise.exerciseName);
   const badgeMeta = workoutExerciseBadgeMeta(exercise.badge, copy);
@@ -248,7 +245,7 @@ export const ExerciseRow = memo(function ExerciseRow({
   const weightStepMeta = locale === "ko" ? `${formatKgValue(minimumPlateIncrementKg)} 단위` : `${formatKgValue(minimumPlateIncrementKg)} increments`;
   const plannedWeightKgPerSet = exercise.plannedSetMeta?.targetWeightKgPerSet ?? [];
   const firstPlannedWeightKg =
-    plannedWeightKgPerSet.find((value) => typeof value === "number" && Number.isFinite(value) && value >= 0) ?? null;
+    plannedWeightKgPerSet.find((value: any) => typeof value === "number" && Number.isFinite(value) && value >= 0) ?? null;
   const resolvedFirstPlannedWeightKg =
     typeof firstPlannedWeightKg === "number"
       ? snapWeightToIncrementKg(
@@ -264,7 +261,7 @@ export const ExerciseRow = memo(function ExerciseRow({
     typeof resolvedFirstPlannedWeightKg === "number" &&
     Math.abs(exercise.set.weightKg - resolvedFirstPlannedWeightKg) < 0.01;
 
-  const firstIncompleteIndex = exercise.set.repsPerSet.findIndex((setReps, i) => {
+  const firstIncompleteIndex = exercise.set.repsPerSet.findIndex((setReps: number, i: number) => {
     const rawVal = programEntryState?.repsInputs[i]?.trim() ?? "";
     const actual = usesProgramPlaceholders ? Number(rawVal) : setReps;
     return !Number.isFinite(actual) || actual <= 0;
@@ -309,7 +306,7 @@ export const ExerciseRow = memo(function ExerciseRow({
         </div>
 
         <div role="list" aria-label={locale === "ko" ? `${exercise.exerciseName} 세트 편집` : `Edit sets for ${exercise.exerciseName}`}>
-          {exercise.set.repsPerSet.map((setReps, index) => {
+          {exercise.set.repsPerSet.map((setReps: number, index: number) => {
             const rawSetValue = programEntryState?.repsInputs[index]?.trim() ?? "";
             const parsedSetValue = Number(rawSetValue);
             const actualRepsValue = usesProgramPlaceholders ? parsedSetValue : setReps;
