@@ -56,27 +56,50 @@ export async function getStatsPageBootstrap(
     };
   }
 
+  // PERF: exerciseId/exerciseName이 URL에 이미 있으면 3개 fetch를 모두 병렬로 실행 → 왕복 1회 절감
+  if (selectedExerciseId || selectedExerciseName) {
+    const [bundle, filterOptions, initialE1rm] = await Promise.all([
+      fetchStatsBundle({ userId, days: 90 }),
+      fetchStats1RMFilterOptions(userId),
+      fetchE1rmStats({
+        userId,
+        planId: selectedPlanId,
+        exerciseId: selectedExerciseId || null,
+        exerciseName: selectedExerciseName || null,
+        from,
+        to,
+        rangeDays,
+      }),
+    ]);
+    return {
+      initialBundle: bundle,
+      initialExercises: filterOptions.exercises,
+      initialPlans: filterOptions.plans,
+      initialE1rm,
+      initialSelectedExerciseId:
+        initialE1rm?.exerciseId ?? (selectedExerciseId || null),
+      initialSelectedPlanId: selectedPlanId,
+    };
+  }
+
+  // exerciseId/exerciseName 미지정: filterOptions 먼저 가져와서 첫 번째 운동 기본 선택
   const [bundle, filterOptions] = await Promise.all([
     fetchStatsBundle({ userId, days: 90 }),
     fetchStats1RMFilterOptions(userId),
   ]);
 
-  const initialExerciseId =
-    selectedExerciseId ||
-    (!selectedExerciseName ? filterOptions.exercises[0]?.id || "" : "");
-  const initialExerciseName = initialExerciseId ? "" : selectedExerciseName;
-  const initialE1rm =
-    initialExerciseId || initialExerciseName
-      ? await fetchE1rmStats({
-          userId,
-          planId: selectedPlanId,
-          exerciseId: initialExerciseId || null,
-          exerciseName: initialExerciseName || null,
-          from,
-          to,
-          rangeDays,
-        })
-      : null;
+  const initialExerciseId = filterOptions.exercises[0]?.id || "";
+  const initialE1rm = initialExerciseId
+    ? await fetchE1rmStats({
+        userId,
+        planId: selectedPlanId,
+        exerciseId: initialExerciseId,
+        exerciseName: null,
+        from,
+        to,
+        rangeDays,
+      })
+    : null;
 
   return {
     initialBundle: bundle,

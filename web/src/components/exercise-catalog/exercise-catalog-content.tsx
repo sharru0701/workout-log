@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type TouchEvent } from "react";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { useLocale } from "@/components/locale-provider";
 import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
@@ -529,6 +530,22 @@ export function ExerciseCatalogContent() {
   const listQueryKey = `exercise-catalog:${activeLoadQuery}`;
   const isListSettled = useQuerySettled(listQueryKey, loading);
 
+  // ── 가상 스크롤 설정 ─────────────────────────────────────────────────────────
+  // PERF: 최대 200개 아이템을 전부 DOM에 마운트하는 대신 뷰포트 내 아이템만 렌더링
+  const listContainerRef = useRef<HTMLDivElement>(null);
+  const listOffsetRef = useRef(0);
+
+  useLayoutEffect(() => {
+    listOffsetRef.current = listContainerRef.current?.offsetTop ?? 0;
+  });
+
+  const virtualizer = useWindowVirtualizer({
+    count: visibleItems.length,
+    estimateSize: () => 84, // SwipeableExerciseRow 예상 높이 (px)
+    overscan: 4,            // 뷰포트 밖 위아래 4개씩 미리 렌더링
+    scrollMargin: listOffsetRef.current,
+  });
+
   // ── Create ──────────────────────────────────────────────────────────────────
 
   const handleCreate = async () => {
@@ -708,54 +725,71 @@ export function ExerciseCatalogContent() {
         {locale === "ko" ? "활성 카탈로그" : "Active Catalog"}
       </h2>
 
-      {/* Exercise list */}
-      <section style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-        <EmptyStateRows
-          when={isListSettled && !error && visibleItems.length === 0}
-          label={locale === "ko" ? "운동종목이 없습니다" : "No exercises"}
-          description={locale === "ko" ? "상단 버튼으로 운동종목을 추가하세요." : "Add an exercise using the button above."}
-        />
+      {/* Exercise list — useWindowVirtualizer로 뷰포트 내 아이템만 렌더링 */}
+      <EmptyStateRows
+        when={isListSettled && !error && visibleItems.length === 0}
+        label={locale === "ko" ? "운동종목이 없습니다" : "No exercises"}
+        description={locale === "ko" ? "상단 버튼으로 운동종목을 추가하세요." : "Add an exercise using the button above."}
+      />
 
-        {visibleItems.map((item) => {
+      <div
+        ref={listContainerRef}
+        style={{
+          position: "relative",
+          height: `${virtualizer.getTotalSize()}px`,
+        }}
+      >
+        {virtualizer.getVirtualItems().map((virtualItem) => {
+          const item = visibleItems[virtualItem.index];
           const deletingThis = deletingId === item.id;
           const editingThis = editing?.id === item.id;
 
-          if (editingThis && editing) {
-            return (
-              <InlineExerciseForm
-                key={item.id}
-                name={editing.name}
-                onNameChange={(v) => setEditing((p) => p ? { ...p, name: v } : p)}
-                category={editing.category}
-                onCategoryChange={(v) => setEditing((p) => p ? { ...p, category: v } : p)}
-                categories={categories}
-                onSubmit={handleEdit}
-                onCancel={() => setEditing(null)}
-                saving={savingEdit}
-                submitLabel={locale === "ko" ? "수정 저장" : "Save Changes"}
-                locale={locale}
-              />
-            );
-          }
-
           return (
-            <SwipeableExerciseRow
-              key={item.id}
-              onDelete={makeDeleteHandler(item)}
-              deleteLabel={locale === "ko" ? "운동종목 삭제" : "Delete exercise"}
-              disabled={deletingThis}
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={virtualizer.measureElement}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                paddingBottom: "var(--space-sm)",
+                transform: `translateY(${virtualItem.start - virtualizer.options.scrollMargin}px)`,
+              }}
             >
-              <ExerciseRowView
-                item={item}
-                locale={locale}
-                disabled={deletingThis}
-                onEdit={() => setEditing({ id: item.id, name: item.name, category: item.category ?? "" })}
-                onDelete={makeDeleteHandler(item)}
-              />
-            </SwipeableExerciseRow>
+              {editingThis && editing ? (
+                <InlineExerciseForm
+                  name={editing.name}
+                  onNameChange={(v) => setEditing((p) => p ? { ...p, name: v } : p)}
+                  category={editing.category}
+                  onCategoryChange={(v) => setEditing((p) => p ? { ...p, category: v } : p)}
+                  categories={categories}
+                  onSubmit={handleEdit}
+                  onCancel={() => setEditing(null)}
+                  saving={savingEdit}
+                  submitLabel={locale === "ko" ? "수정 저장" : "Save Changes"}
+                  locale={locale}
+                />
+              ) : (
+                <SwipeableExerciseRow
+                  onDelete={makeDeleteHandler(item)}
+                  deleteLabel={locale === "ko" ? "운동종목 삭제" : "Delete exercise"}
+                  disabled={deletingThis}
+                >
+                  <ExerciseRowView
+                    item={item}
+                    locale={locale}
+                    disabled={deletingThis}
+                    onEdit={() => setEditing({ id: item.id, name: item.name, category: item.category ?? "" })}
+                    onDelete={makeDeleteHandler(item)}
+                  />
+                </SwipeableExerciseRow>
+              )}
+            </div>
           );
         })}
-      </section>
+      </div>
     </div>
   );
 }

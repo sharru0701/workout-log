@@ -78,25 +78,28 @@ async function fetchCompliance(userId: string, from: Date, to: Date): Promise<Co
   const planned = plannedKeySet.size;
 
   const plannedIds = plannedRows.map((r) => r.id);
-  const doneRows = await db
-    .select({ generatedSessionId: workoutLog.generatedSessionId })
-    .from(workoutLog)
-    .where(
-      and(
-        eq(workoutLog.userId, userId),
-        gte(workoutLog.performedAt, from),
-        lte(workoutLog.performedAt, to),
-        inArray(workoutLog.generatedSessionId, plannedIds),
+  const uniquePlanIds = Array.from(new Set(plannedRows.map((r) => r.planId)));
+
+  // PERF: plannedRows 조회 후 doneRows와 planRows를 병렬로 실행 → DB 왕복 1회 절감
+  const [doneRows, planRows] = await Promise.all([
+    db
+      .select({ generatedSessionId: workoutLog.generatedSessionId })
+      .from(workoutLog)
+      .where(
+        and(
+          eq(workoutLog.userId, userId),
+          gte(workoutLog.performedAt, from),
+          lte(workoutLog.performedAt, to),
+          inArray(workoutLog.generatedSessionId, plannedIds),
+        ),
       ),
-    );
+    uniquePlanIds.length
+      ? db.select({ id: plan.id, name: plan.name }).from(plan).where(inArray(plan.id, uniquePlanIds))
+      : Promise.resolve([]),
+  ]);
 
   const doneSet = new Set(doneRows.map((r) => r.generatedSessionId).filter(Boolean));
   const done = doneSet.size;
-
-  const uniquePlanIds = Array.from(new Set(plannedRows.map((r) => r.planId)));
-  const planRows = uniquePlanIds.length
-    ? await db.select({ id: plan.id, name: plan.name }).from(plan).where(inArray(plan.id, uniquePlanIds))
-    : [];
   const planNameById = new Map(planRows.map((r) => [r.id, r.name]));
 
   const byPlanMap = new Map<string, { plannedKeys: Set<string>; done: number }>();
