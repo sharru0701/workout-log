@@ -18,7 +18,6 @@ const nextConfig: NextConfig = {
     // PERF: 클라이언트 사이드 라우터 캐시 TTL 설정
     // dynamic: 30s — API 데이터가 포함된 동적 페이지 캐시 (SWR 패턴과 정합)
     // static: 300s — 정적 페이지 캐시 (5분)
-    // @ts-ignore: staleTimes는 런타임에서 지원되나 타입 정의가 누락된 경우
     staleTimes: {
       dynamic: 30,
       static: 300,
