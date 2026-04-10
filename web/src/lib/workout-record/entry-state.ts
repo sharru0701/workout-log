@@ -21,6 +21,17 @@ export function createWorkoutProgramExerciseEntryState(
   };
 }
 
+export function hasProgramEntryStateEdits(
+  programEntryState: WorkoutProgramExerciseEntryStateMap,
+): boolean {
+  return Object.values(programEntryState).some((state) => {
+    if (!state) return false;
+    const hasReps = state.repsInputs?.some((r) => (r ?? "").trim() !== "");
+    const hasMemo = (state.memoInput ?? "").trim() !== "";
+    return hasReps || hasMemo;
+  });
+}
+
 export function prepareWorkoutRecordDraftForEntry(draft: WorkoutRecordDraft): {
   draft: WorkoutRecordDraft;
   programEntryState: WorkoutProgramExerciseEntryStateMap;
