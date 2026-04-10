@@ -20,18 +20,19 @@ export function useWorkoutRecordPersistence(
   const isRestoringRef = useRef(false);
   const lastSavedKeyRef = useRef<string | null>(null);
 
-  // Refs to keep values stable in event listeners
+  // Refs to keep values stable in event listeners / unmount cleanup
   const keyRef = useRef(key);
   const draftRef = useRef(draft);
   const entryStateRef = useRef(programEntryState);
   const enabledRef = useRef(options.enabled);
 
-  useEffect(() => {
-    keyRef.current = key;
-    draftRef.current = draft;
-    entryStateRef.current = programEntryState;
-    enabledRef.current = options.enabled;
-  }, [key, draft, programEntryState, options.enabled]);
+  // Keep refs in sync during render as well.
+  // This closes a race where SPA navigation unmounts the component before the
+  // post-commit effect runs, causing cleanup/save handlers to see stale draft data.
+  keyRef.current = key;
+  draftRef.current = draft;
+  entryStateRef.current = programEntryState;
+  enabledRef.current = options.enabled;
 
   const forceSave = useCallback(() => {
     if (!keyRef.current || !draftRef.current || !enabledRef.current) return;
