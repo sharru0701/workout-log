@@ -31,7 +31,7 @@ import type {
 } from "@/entities/workout-record";
 import type { WorkoutLogInitialContext, WorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
 import { Provider as JotaiProvider, useAtomValue, useSetAtom } from "jotai";
-import { isDraftLoadedAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
+import { draftAtom, isDraftLoadedAtom, programEntryStateAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
 
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
@@ -59,6 +59,8 @@ function WorkoutLogScreenContent({
   const workflowState = useAtomValue(workflowStateAtom);
   const saveError = useAtomValue(saveErrorAtom);
   const isDraftLoaded = useAtomValue(isDraftLoadedAtom);
+  const setDraft = useSetAtom(draftAtom);
+  const setProgramEntryState = useSetAtom(programEntryStateAtom);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
 
   const persistenceKey =
@@ -73,9 +75,9 @@ function WorkoutLogScreenContent({
   } = useWorkoutLogDraftPersistence({
     persistenceKey,
     onRestoreAccepted: useCallback((data) => {
-      // We will handle restore in the controller or context hook ideally.
-      // But for now, we leave the action callback here since it's injected.
-    }, []),
+      setDraft(data.draft);
+      setProgramEntryState(data.programEntryState);
+    }, [setDraft, setProgramEntryState]),
   });
 
   const handleNoPlanDetected = useCallback(async () => {
