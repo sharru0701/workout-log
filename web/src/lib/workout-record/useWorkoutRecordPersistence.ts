@@ -96,13 +96,15 @@ export function useWorkoutRecordPersistence(
 
   // Save on unmount to handle client-side SPA navigation
   // pagehide covers browser-level navigation; this covers Next.js route changes where pagehide doesn't fire
+  // NOTE: Do NOT check enabledRef.current here. During SPA navigation, Next.js updates pathname before
+  // unmount, which flips isWorkoutLogRouteActive → enabled = false → enabledRef = false, causing the
+  // save to be skipped and the draft to be lost. The unmount itself is the signal to save.
   useEffect(() => {
     return () => {
       debouncedSave.cancel(); // Prevent stale async save after remount
       if (
         keyRef.current &&
         draftRef.current &&
-        enabledRef.current &&
         !isRestoringRef.current &&
         hasWorkoutEdits(draftRef.current)
       ) {
