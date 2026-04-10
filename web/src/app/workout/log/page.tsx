@@ -3,16 +3,20 @@ import { WorkoutLogScreen } from "@/widgets/workout-log-screen";
 import { getWorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
 import WorkoutRecordLoading from "./loading";
 
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
-async function WorkoutLogPageContent() {
-  const bootstrap = await getWorkoutLogPageBootstrap();
+async function WorkoutLogPageContent({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams;
+  const bootstrap = await getWorkoutLogPageBootstrap(resolvedParams);
   return <WorkoutLogScreen {...bootstrap} />;
 }
 
-export default function WorkoutLogPage() {
+export default function WorkoutLogPage(props: PageProps) {
   return (
     <Suspense fallback={<WorkoutRecordLoading />}>
-      <WorkoutLogPageContent />
+      <WorkoutLogPageContent searchParams={props.searchParams} />
     </Suspense>
   );
 }

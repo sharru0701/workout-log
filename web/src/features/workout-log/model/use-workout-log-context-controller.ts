@@ -11,24 +11,16 @@ import {
   type WorkoutLogQueryContext,
 } from "@/features/workout-log/model/query-context";
 import type {
-  WorkoutLogLastSessionSummary,
   WorkoutLogPlanItem,
-  WorkoutLogRecentLogItem,
 } from "@/features/workout-log/model/types";
-import type {
-  WorkoutRecordDraft,
-  WorkoutProgramExerciseEntryStateMap,
-  WorkoutWorkflowState,
-} from "@/entities/workout-record";
+import type { WorkoutRecordDraft } from "@/entities/workout-record";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
-import {
-  toDefaultWorkoutPreferences,
-  type WorkoutPreferences,
-} from "@/lib/settings/workout-preferences";
+import type { WorkoutPreferences } from "@/lib/settings/workout-preferences";
 
 type UseWorkoutLogContextControllerInput = {
   initialPlans?: WorkoutLogPlanItem[];
   initialSettings?: import("@/lib/settings/workout-preferences").SettingsSnapshot | null;
+  initialContext?: WorkoutLogInitialContext | null;
   query: WorkoutLogQueryContext;
   setQuery: Dispatch<SetStateAction<WorkoutLogQueryContext>>;
   selectedPlanId: string;
@@ -47,10 +39,12 @@ type UseWorkoutLogContextControllerInput = {
 
 import { useSetAtom, useAtomValue } from "jotai";
 import { draftAtom, programEntryStateAtom, workflowStateAtom, saveErrorAtom, recentLogItemsAtom, lastSessionAtom, workoutPreferencesAtom } from "../store/workout-log-atoms";
+import type { WorkoutLogInitialContext } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
 
 export function useWorkoutLogContextController({
   initialPlans,
   initialSettings,
+  initialContext,
   query,
   setQuery,
   selectedPlanId,
@@ -210,7 +204,35 @@ export function useWorkoutLogContextController({
 
         setPlans(bootstrap.plans);
         setSelectedPlanId(bootstrap.loadInput.planId);
-        await loadWorkoutContext(bootstrap.loadInput);
+
+        // ── SSR initialContext 검증 후 사용 (API 호출 제거) ──────────────
+        const expectedMatchKey = `${bootstrap.loadInput.planId}:${bootstrap.loadInput.dateKey}:${bootstrap.loadInput.logId ?? ""}`;
+        const ssrContext = initialContext?.matchKey === expectedMatchKey ? initialContext : null;
+
+        if (ssrContext) {
+          // SSR 데이터로 즉시 렌더링 — 클라이언트 API 호출 없음
+          if (ssrContext.kind === "blocked") {
+            setDraft(null);
+            setProgramEntryState({});
+            setLastSession(null);
+            setError(ssrContext.message);
+            setWorkflowState("idle");
+          } else {
+            setSelectedPlanId(ssrContext.selectedPlanId);
+            if (!hasRestoredDraft()) {
+              setDraft(ssrContext.draft);
+              setProgramEntryState(ssrContext.programEntryState);
+            }
+            setRecentLogItems(ssrContext.recentLogItems);
+            setLastSession(ssrContext.lastSession);
+            setWorkflowState((prev) => (hasRestoredDraft() ? prev : "idle"));
+            contextHasLoadedRef.current = true;
+          }
+          setLoading(false);
+        } else {
+          // SSR 미스(타임존 불일치 등) → 클라이언트 폴백
+          await loadWorkoutContext(bootstrap.loadInput);
+        }
 
         if (bootstrap.openAdd) {
           onBootstrapOpenAddSheet();
@@ -234,6 +256,7 @@ export function useWorkoutLogContextController({
   }, [
     initialPlans,
     initialSettings,
+    initialContext,
     loadWorkoutContext,
     locale,
     onBootstrapOpenAddSheet,

@@ -901,16 +901,19 @@ export async function generateAndSaveSession(input: {
   sessionDate?: string;
   timezone?: string;
 }) {
-  const pRows = await db.select().from(planTable).where(eq(planTable.id, input.planId)).limit(1);
+  // plan + runtimeState 병렬 조회 (기존 2-round-trip → 1-round-trip)
+  const [pRows, runtimeRows] = await Promise.all([
+    db.select().from(planTable).where(eq(planTable.id, input.planId)).limit(1),
+    db
+      .select({ state: planRuntimeState.state })
+      .from(planRuntimeState)
+      .where(eq(planRuntimeState.planId, input.planId))
+      .limit(1),
+  ]);
   const p = pRows[0];
   if (!p) throw new Error("Plan not found");
   if (p.userId !== input.userId) throw new Error("Forbidden");
 
-  const runtimeRows = await db
-    .select({ state: planRuntimeState.state })
-    .from(planRuntimeState)
-    .where(eq(planRuntimeState.planId, p.id))
-    .limit(1);
   const runtimeState = runtimeRows[0]?.state ?? null;
   const effectivePlanParams = mergePlanParamsWithRuntimeState(p.params ?? {}, runtimeState);
 
@@ -927,17 +930,7 @@ export async function generateAndSaveSession(input: {
   });
   const sessionKey = sessionCtx.sessionKey;
 
-  const overrides = await db
-    .select()
-    .from(planOverride)
-    .where(
-      and(
-        eq(planOverride.planId, p.id),
-        eq(planOverride.scope, "SESSION"),
-        eq(planOverride.sessionKey, sessionKey),
-      ),
-    );
-
+  // overrides + (modules 또는 version/template) 병렬 조회
   let snapshot: any = {
     schemaVersion: 3,
     sessionKey,
@@ -950,7 +943,19 @@ export async function generateAndSaveSession(input: {
   };
 
   if (p.type === "COMPOSITE") {
-    const modules = await db.select().from(planModule).where(eq(planModule.planId, p.id));
+    const [overrides, modules] = await Promise.all([
+      db
+        .select()
+        .from(planOverride)
+        .where(
+          and(
+            eq(planOverride.planId, p.id),
+            eq(planOverride.scope, "SESSION"),
+            eq(planOverride.sessionKey, sessionKey),
+          ),
+        ),
+      db.select().from(planModule).where(eq(planModule.planId, p.id)),
+    ]);
 
     const versionIds = Array.from(new Set(modules.map((m) => m.programVersionId).filter((id): id is string => Boolean(id))));
     const versionsWithTemplates = versionIds.length > 0
@@ -1000,15 +1005,28 @@ export async function generateAndSaveSession(input: {
   } else {
     if (!p.rootProgramVersionId) throw new Error("rootProgramVersionId missing");
 
-    const rows = await db
-      .select({
-        version: programVersion,
-        template: programTemplate,
-      })
-      .from(programVersion)
-      .innerJoin(programTemplate, eq(programVersion.templateId, programTemplate.id))
-      .where(eq(programVersion.id, p.rootProgramVersionId))
-      .limit(1);
+    // overrides + version/template 병렬 조회
+    const [overrides, rows] = await Promise.all([
+      db
+        .select()
+        .from(planOverride)
+        .where(
+          and(
+            eq(planOverride.planId, p.id),
+            eq(planOverride.scope, "SESSION"),
+            eq(planOverride.sessionKey, sessionKey),
+          ),
+        ),
+      db
+        .select({
+          version: programVersion,
+          template: programTemplate,
+        })
+        .from(programVersion)
+        .innerJoin(programTemplate, eq(programVersion.templateId, programTemplate.id))
+        .where(eq(programVersion.id, p.rootProgramVersionId))
+        .limit(1),
+    ]);
     const row = rows[0];
     if (!row) throw new Error("Program version/template not found");
     const { version, template } = row;

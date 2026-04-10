@@ -29,16 +29,19 @@ import type {
   WorkoutRecordDraft,
   WorkoutWorkflowState,
 } from "@/entities/workout-record";
-import type { WorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
+import type { WorkoutLogInitialContext, WorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
 import { Provider as JotaiProvider, useAtomValue, useSetAtom } from "jotai";
 import { isDraftLoadedAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
 
-type WorkoutRecordPageProps = WorkoutLogPageBootstrap;
+type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
+  initialContext?: WorkoutLogInitialContext | null;
+};
 
 function WorkoutLogScreenContent({
   initialPlans,
   initialSettings,
+  initialContext,
 }: WorkoutRecordPageProps) {
   const router = useRouter();
   const { copy, locale } = useLocale();
@@ -102,6 +105,7 @@ function WorkoutLogScreenContent({
   } = useWorkoutLogContextController({
     initialPlans,
     initialSettings,
+    initialContext: initialContext ?? null,
     query,
     setQuery,
     selectedPlanId,

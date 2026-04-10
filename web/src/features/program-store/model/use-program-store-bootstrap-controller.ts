@@ -35,6 +35,9 @@ function replaceAbortController(ref: { current: AbortController | null }) {
 
 type UseProgramStoreBootstrapControllerInput = {
   locale: "ko" | "en";
+  initialTemplates?: ProgramTemplate[] | null;
+  initialPlans?: PlanItem[] | null;
+  initialExercises?: ExerciseOption[] | null;
   setTemplates: React.Dispatch<React.SetStateAction<ProgramTemplate[]>>;
   setPlans: React.Dispatch<React.SetStateAction<PlanItem[]>>;
   setExerciseOptions: React.Dispatch<React.SetStateAction<ExerciseOption[]>>;
@@ -43,12 +46,16 @@ type UseProgramStoreBootstrapControllerInput = {
 
 export function useProgramStoreBootstrapController({
   locale,
+  initialTemplates,
+  initialPlans,
+  initialExercises,
   setTemplates,
   setPlans,
   setExerciseOptions,
   setError,
 }: UseProgramStoreBootstrapControllerInput) {
-  const [loading, setLoading] = useState(true);
+  const hasInitialData = Boolean(initialTemplates && initialPlans && initialExercises);
+  const [loading, setLoading] = useState(!hasInitialData);
   const [storeLoadKey, setStoreLoadKey] = useState("program-store:init");
   const [exerciseOptionsLoading, setExerciseOptionsLoading] = useState(false);
   const [queryState, setQueryState] = useState<ProgramStoreQueryState>(() =>
@@ -56,7 +63,7 @@ export function useProgramStoreBootstrapController({
   );
 
   const storeLoadControllerRef = useRef<AbortController | null>(null);
-  const storeHasLoadedRef = useRef(false);
+  const storeHasLoadedRef = useRef(hasInitialData);
   const exerciseOptionsControllerRef = useRef<AbortController | null>(null);
 
   const loadStore = useCallback(
@@ -125,13 +132,20 @@ export function useProgramStoreBootstrapController({
     }
   }, [setExerciseOptions]);
 
+  // SSR 초기 데이터 적용 (API 호출 불필요)
   useEffect(() => {
+    if (initialTemplates && initialPlans && initialExercises) {
+      setTemplates(initialTemplates);
+      setPlans(initialPlans);
+      setExerciseOptions(initialExercises);
+      setLoading(false);
+      return;
+    }
+    // SSR 데이터 없으면 API 로드
     void loadStore();
-  }, [loadStore]);
-
-  useEffect(() => {
     void loadExerciseOptions();
-  }, [loadExerciseOptions]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // mount-only: initialData는 변경되지 않는 SSR 스냅샷
 
   useEffect(() => {
     return () => {

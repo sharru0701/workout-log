@@ -33,7 +33,17 @@ const ProgramDetailSheet = dynamic(
   { ssr: false },
 );
 
-export function ProgramStoreScreen() {
+type ProgramStoreScreenProps = {
+  initialTemplates?: ProgramTemplate[] | null;
+  initialPlans?: PlanItem[] | null;
+  initialExercises?: ExerciseOption[] | null;
+};
+
+export function ProgramStoreScreen({
+  initialTemplates,
+  initialPlans,
+  initialExercises,
+}: ProgramStoreScreenProps = {}) {
   const { locale, copy } = useLocale();
   const router = useRouter();
   const { confirm } = useAppDialog();
@@ -59,6 +69,9 @@ export function ProgramStoreScreen() {
     loadStore,
   } = useProgramStoreBootstrapController({
     locale,
+    initialTemplates,
+    initialPlans,
+    initialExercises,
     setTemplates,
     setPlans,
     setExerciseOptions,

@@ -1,3 +1,6 @@
+import { asc } from "drizzle-orm";
+import { db } from "@/server/db/client";
+import { exercise } from "@/server/db/schema";
 import { getAuthenticatedUserId } from "@/server/auth/user";
 import { fetchStatsBundle } from "@/server/stats/bundle-service";
 import {
@@ -82,24 +85,30 @@ export async function getStatsPageBootstrap(
     };
   }
 
-  // exerciseId/exerciseName 미지정: filterOptions 먼저 가져와서 첫 번째 운동 기본 선택
-  const [bundle, filterOptions] = await Promise.all([
+  // exerciseId/exerciseName 미지정: 첫 번째 운동 ID를 빠른 쿼리로 먼저 조회한 뒤
+  // bundle + filterOptions + e1rm을 모두 병렬로 실행 → 왕복 2회(직렬) → 2회(1회 초경량 + 1회 병렬)
+  const firstExerciseRows = await db
+    .select({ id: exercise.id })
+    .from(exercise)
+    .orderBy(asc(exercise.name))
+    .limit(1);
+  const initialExerciseId = firstExerciseRows[0]?.id ?? "";
+
+  const [bundle, filterOptions, initialE1rm] = await Promise.all([
     fetchStatsBundle({ userId, days: 90 }),
     fetchStats1RMFilterOptions(userId),
+    initialExerciseId
+      ? fetchE1rmStats({
+          userId,
+          planId: selectedPlanId,
+          exerciseId: initialExerciseId,
+          exerciseName: null,
+          from,
+          to,
+          rangeDays,
+        })
+      : Promise.resolve(null),
   ]);
-
-  const initialExerciseId = filterOptions.exercises[0]?.id || "";
-  const initialE1rm = initialExerciseId
-    ? await fetchE1rmStats({
-        userId,
-        planId: selectedPlanId,
-        exerciseId: initialExerciseId,
-        exerciseName: null,
-        from,
-        to,
-        rangeDays,
-      })
-    : null;
 
   return {
     initialBundle: bundle,
