@@ -17,11 +17,13 @@ import { draftAtom, programEntryStateAtom, workflowStateAtom } from "../store/wo
 type UseWorkoutLogDraftPersistenceInput = {
   persistenceKey: string | null;
   onRestoreAccepted: (data: WorkoutDraftData) => void;
+  enabled?: boolean;
 };
 
 export function useWorkoutLogDraftPersistence({
   persistenceKey,
   onRestoreAccepted,
+  enabled = true,
 }: UseWorkoutLogDraftPersistenceInput) {
   const draft = useAtomValue(draftAtom);
   const programEntryState = useAtomValue(programEntryStateAtom);
@@ -37,7 +39,7 @@ export function useWorkoutLogDraftPersistence({
     isRestoredRef.current = false;
   }, [persistenceKey]);
 
-  useWorkoutRecordPersistence(
+  const { resetRestoreState } = useWorkoutRecordPersistence(
     persistenceKey,
     draft,
     programEntryState,
@@ -75,8 +77,16 @@ export function useWorkoutLogDraftPersistence({
         isRestoringRef.current = false;
       }
     }, [onRestoreAccepted]),
-    { enabled: true },
+    { enabled },
   );
+
+  useEffect(() => {
+    if (enabled) return;
+    restorePromptResolveRef.current?.(false);
+    restorePromptResolveRef.current = null;
+    setPendingRestorePrompt(null);
+    resetRestoreState(persistenceKeyRef.current);
+  }, [enabled, resetRestoreState]);
 
   const resolveRestorePrompt = useCallback((keep: boolean) => {
     restorePromptResolveRef.current?.(keep);

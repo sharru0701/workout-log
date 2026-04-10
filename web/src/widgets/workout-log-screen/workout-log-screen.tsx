@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import {
@@ -44,6 +44,7 @@ function WorkoutLogScreenContent({
   initialContext,
 }: WorkoutRecordPageProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { copy, locale } = useLocale();
   const { alert } = useAppDialog();
   const browserTimezone = useMemo(
@@ -65,6 +66,7 @@ function WorkoutLogScreenContent({
 
   const persistenceKey =
     selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
+  const isWorkoutLogRouteActive = pathname?.startsWith("/workout/log") ?? true;
 
   const {
     pendingRestorePrompt,
@@ -74,6 +76,7 @@ function WorkoutLogScreenContent({
     hasRestoredDraft,
   } = useWorkoutLogDraftPersistence({
     persistenceKey,
+    enabled: isWorkoutLogRouteActive,
     onRestoreAccepted: useCallback((data) => {
       setDraft(data.draft);
       setProgramEntryState(data.programEntryState);
