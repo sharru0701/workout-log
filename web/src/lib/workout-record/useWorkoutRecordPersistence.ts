@@ -50,9 +50,10 @@ export function useWorkoutRecordPersistence(
     }, 1000)
   ).current;
 
-  // Auto-save on change
+  // Auto-save on change - only when user has made edits
+  // Prevents SSR/planned draft from overwriting a persisted user draft in localStorage
   useEffect(() => {
-    if (!key || !draft || isRestoringRef.current) return;
+    if (!key || !draft || isRestoringRef.current || !hasWorkoutEdits(draft)) return;
     debouncedSave(key, draft, programEntryState);
   }, [key, draft, programEntryState, debouncedSave]);
 
