@@ -50,9 +50,10 @@ export function useWorkoutRecordPersistence(
     }, 1000)
   ).current;
 
-  // Auto-save on change
+  // Auto-save on change - only when user has made edits
+  // Prevents SSR/planned draft from overwriting a persisted user draft in localStorage
   useEffect(() => {
-    if (!key || !draft || isRestoringRef.current) return;
+    if (!key || !draft || isRestoringRef.current || !hasWorkoutEdits(draft)) return;
     debouncedSave(key, draft, programEntryState);
   }, [key, draft, programEntryState, debouncedSave]);
 
@@ -92,6 +93,23 @@ export function useWorkoutRecordPersistence(
       isRestoringRef.current = false;
     }
   }, [onRestore]);
+
+  // Save on unmount to handle client-side SPA navigation
+  // pagehide covers browser-level navigation; this covers Next.js route changes where pagehide doesn't fire
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel(); // Prevent stale async save after remount
+      if (
+        keyRef.current &&
+        draftRef.current &&
+        enabledRef.current &&
+        !isRestoringRef.current &&
+        hasWorkoutEdits(draftRef.current)
+      ) {
+        saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
+      }
+    };
+  }, [debouncedSave]);
 
   // Lifecycle events - Keep listeners stable
   useEffect(() => {
