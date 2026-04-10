@@ -98,6 +98,7 @@ export function BottomSheet({
   const openAnimationFrameRef = useRef<number | null>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const lastTouchYRef = useRef<number | null>(null);
+  const prevPresentRef = useRef(open); // initialized to open (= initial present value)
   const closeAnimationMs = 400;
 
   useEffect(() => {
@@ -162,8 +163,18 @@ export function BottomSheet({
   // in the same render), the panel mounts without inert and the CSS entry
   // transition never fires. Detect this case and force the initial off-screen
   // state synchronously, then restore CSS control in the next frame.
+  //
+  // wasPresent guard: prevents re-firing in React Strict Mode, where layout
+  // effects are intentionally double-invoked (run → cleanup → run again).
+  // On the Strict Mode re-run, isTopSheet is already true (set by the first
+  // run's double rAF), so without this guard the safety net would fire a
+  // second animation. wasPresent=true on re-run because prevPresentRef was
+  // already updated to true on the first run.
   useLayoutEffect(() => {
-    if (!present || !isInteractiveSheet) return;
+    const wasPresent = prevPresentRef.current;
+    prevPresentRef.current = present;
+
+    if (!present || !isInteractiveSheet || wasPresent) return;
     const panel = panelRef.current;
     if (!panel) return;
     panel.style.transform = "translateY(100%)";
