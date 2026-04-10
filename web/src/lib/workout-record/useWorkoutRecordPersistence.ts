@@ -5,6 +5,7 @@ import { saveWorkoutDraft, loadWorkoutDraft, saveWorkoutDraftSync, type WorkoutD
 import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
 import { hasWorkoutEdits } from "@/lib/workout-record/model";
 import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
+import { hasProgramEntryStateEdits } from "@/lib/workout-record/entry-state";
 import { debounce } from "@/lib/storage/workoutSession";
 
 const DRAFT_EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6 hours
@@ -53,7 +54,8 @@ export function useWorkoutRecordPersistence(
   // Auto-save on change - only when user has made edits
   // Prevents SSR/planned draft from overwriting a persisted user draft in localStorage
   useEffect(() => {
-    if (!key || !draft || isRestoringRef.current || !hasWorkoutEdits(draft)) return;
+    if (!key || !draft || isRestoringRef.current) return;
+    if (!hasWorkoutEdits(draft) && !hasProgramEntryStateEdits(programEntryState)) return;
     debouncedSave(key, draft, programEntryState);
   }, [key, draft, programEntryState, debouncedSave]);
 
@@ -68,7 +70,7 @@ export function useWorkoutRecordPersistence(
       if (loaded) {
         const isExpired = Date.now() - loaded.updatedAt > DRAFT_EXPIRATION_MS;
         if (!isExpired) {
-          if (!hasWorkoutEdits(loaded.draft)) {
+          if (!hasWorkoutEdits(loaded.draft) && !hasProgramEntryStateEdits(loaded.programEntryState)) {
             console.log(`[Persistence] Draft found but has no user edits, skipping restore`);
             lastSavedKeyRef.current = targetKey;
           } else {
@@ -106,7 +108,7 @@ export function useWorkoutRecordPersistence(
         keyRef.current &&
         draftRef.current &&
         !isRestoringRef.current &&
-        hasWorkoutEdits(draftRef.current)
+        (hasWorkoutEdits(draftRef.current) || hasProgramEntryStateEdits(entryStateRef.current))
       ) {
         saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
       }
