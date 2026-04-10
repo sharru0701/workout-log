@@ -5,6 +5,7 @@ import { BottomNav } from "@/components/bottom-nav";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import type { AppLocale } from "@/lib/i18n/messages";
+import { shouldUseViewTransition } from "@/lib/navigation/view-transition";
 import { useRouter } from "next/navigation";
 
 // PERF: 앱 시작 시 즉시 prefetch할 주요 네비게이션 경로
@@ -53,6 +54,12 @@ export function AppShell({
       e.preventDefault();
       const href = target.getAttribute("href");
       if (!href) return;
+      const nextUrl = new URL(href, window.location.href);
+
+      if (!shouldUseViewTransition(window.location.pathname, nextUrl.pathname)) {
+        router.push(href);
+        return;
+      }
 
       (document as any).startViewTransition(() => {
         router.push(href);
@@ -77,4 +84,3 @@ export function AppShell({
     </AppDialogProvider>
   );
 }
-
