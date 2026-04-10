@@ -243,14 +243,14 @@ export async function getHomeData(params: {
   ]);
 
   // 세션 스냅샷 생성 (highlightedPlan 필요)
-  // PERF: 3초 타임아웃 — 세션 생성이 느려도 SSR을 무한 차단하지 않음.
+  // PERF: 8초 타임아웃 — 세션 생성이 느려도 SSR을 무한 차단하지 않음.
   // 타임아웃 시 snapshot=null로 빌드 → 오늘 계획 운동 목록만 비어있고 나머지 홈 데이터는 정상 표시.
   const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey);
   let snapshot = null;
   if (highlightedPlan) {
     try {
       const timeoutPromise = new Promise<null>((resolve) =>
-        setTimeout(() => resolve(null), 3_000),
+        setTimeout(() => resolve(null), 8_000),
       );
       const generatePromise = generateAndSaveSession({
         userId,

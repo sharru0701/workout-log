@@ -2,6 +2,17 @@ import { desc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { plan, userSetting } from "@/server/db/schema";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
+import { generateAndSaveSession } from "@/server/program-engine/generateSession";
+import { loadWorkoutContextServer } from "./load-workout-log-context";
+import type {
+  WorkoutRecordDraft,
+  WorkoutProgramExerciseEntryStateMap,
+} from "@/entities/workout-record";
+import type {
+  WorkoutLogRecentLogItem,
+  WorkoutLogLastSessionSummary,
+} from "@/features/workout-log/model/types";
 
 export type WorkoutLogPlanListItem = {
   id: string;
@@ -12,14 +23,48 @@ export type WorkoutLogPlanListItem = {
 
 export type WorkoutLogSettingsSnapshot = Record<string, string | number | boolean | null>;
 
+// ─── SSR 컨텍스트 타입 (서버 → 클라이언트 전달, JSON 직렬화 가능) ───────────
+
+export type WorkoutLogInitialContext =
+  | {
+      kind: "loaded";
+      /** 클라이언트가 현재 query와 일치 여부를 검증하는 키 */
+      matchKey: string; // `${planId}:${dateKey}:${logId ?? ""}`
+      selectedPlanId: string;
+      draft: WorkoutRecordDraft;
+      programEntryState: WorkoutProgramExerciseEntryStateMap;
+      recentLogItems: WorkoutLogRecentLogItem[];
+      lastSession: WorkoutLogLastSessionSummary;
+    }
+  | {
+      kind: "blocked";
+      matchKey: string;
+      message: string;
+    };
+
 export type WorkoutLogPageBootstrap = {
   initialPlans: WorkoutLogPlanListItem[];
   initialSettings: WorkoutLogSettingsSnapshot;
+  initialContext?: WorkoutLogInitialContext | null;
 };
 
-export async function getWorkoutLogPageBootstrap(): Promise<WorkoutLogPageBootstrap> {
+const DATE_ONLY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+type RawSearchParams = Record<string, string | string[] | undefined>;
+
+function getString(params: RawSearchParams, key: string): string | null {
+  const v = params[key];
+  if (!v) return null;
+  const s = Array.isArray(v) ? v[0] : v;
+  return s?.trim() || null;
+}
+
+export async function getWorkoutLogPageBootstrap(
+  searchParams: RawSearchParams = {},
+): Promise<WorkoutLogPageBootstrap> {
   const userId = getAuthenticatedUserId();
 
+  // plans + settings 병렬 조회 (기존 동작)
   const [plans, settingRows] = await Promise.all([
     db
       .select({
@@ -53,8 +98,76 @@ export async function getWorkoutLogPageBootstrap(): Promise<WorkoutLogPageBootst
     isArchived: entry.isArchived,
   }));
 
-  return {
+  // ─── SSR 컨텍스트 로딩 ───────────────────────────────────────────────────
+  const initialContext = await resolveInitialContext(
+    userId,
     initialPlans,
     initialSettings,
-  };
+    searchParams,
+  );
+
+  return { initialPlans, initialSettings, initialContext };
+}
+
+async function resolveInitialContext(
+  userId: string,
+  plans: WorkoutLogPlanListItem[],
+  settings: WorkoutLogSettingsSnapshot,
+  searchParams: RawSearchParams,
+): Promise<WorkoutLogInitialContext | null> {
+  try {
+    const rawPlanId = getString(searchParams, "planId");
+    const rawDate = getString(searchParams, "date");
+    const rawLogId = getString(searchParams, "logId");
+
+    // 날짜: 명시된 경우 사용, 아니면 서버 UTC today
+    const dateKey =
+      rawDate && DATE_ONLY_PATTERN.test(rawDate)
+        ? rawDate
+        : new Date().toISOString().slice(0, 10);
+
+    // 플랜 결정
+    const activePlans = plans.filter((p) => !p.isArchived);
+    const plan =
+      (rawPlanId ? activePlans.find((p) => p.id === rawPlanId) : null) ??
+      activePlans[0] ??
+      null;
+    if (!plan) return null;
+
+    const matchKey = `${plan.id}:${dateKey}:${rawLogId ?? ""}`;
+    const preferences = readWorkoutPreferences(settings as any);
+    const planParams = plan.params as Record<string, unknown> | null;
+    const locale = (preferences.locale ?? "ko") as "ko" | "en";
+
+    const input = {
+      planId: plan.id,
+      planName: plan.name,
+      dateKey,
+      preferences,
+      planAutoProgression: planParams?.autoProgression === true,
+      planSchedule: planParams?.schedule,
+      planParams,
+      logId: rawLogId,
+      locale,
+      matchKey,
+    };
+
+    // logId 또는 today 기존 로그: generateAndSaveSession 불필요
+    if (rawLogId) {
+      return loadWorkoutContextServer(userId, input);
+    }
+
+    // 새 세션: generate 후 컨텍스트 구성
+    const sessionData = await generateAndSaveSession({
+      userId,
+      planId: plan.id,
+      sessionDate: dateKey,
+      timezone: "UTC",
+    });
+
+    return loadWorkoutContextServer(userId, input, sessionData);
+  } catch {
+    // 실패하면 클라이언트 폴백 (렌더링은 항상 성공해야 함)
+    return null;
+  }
 }
