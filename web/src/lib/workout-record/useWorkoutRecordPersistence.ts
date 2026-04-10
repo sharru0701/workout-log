@@ -93,6 +93,23 @@ export function useWorkoutRecordPersistence(
     }
   }, [onRestore]);
 
+  // Save on unmount to handle client-side SPA navigation
+  // pagehide covers browser-level navigation; this covers Next.js route changes where pagehide doesn't fire
+  useEffect(() => {
+    return () => {
+      debouncedSave.cancel(); // Prevent stale async save after remount
+      if (
+        keyRef.current &&
+        draftRef.current &&
+        enabledRef.current &&
+        !isRestoringRef.current &&
+        hasWorkoutEdits(draftRef.current)
+      ) {
+        saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
+      }
+    };
+  }, [debouncedSave]);
+
   // Lifecycle events - Keep listeners stable
   useEffect(() => {
     const handleVisibilityChange = () => {
