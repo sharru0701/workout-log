@@ -88,6 +88,14 @@ export function useWorkoutLogDraftPersistence({
     resetRestoreState(persistenceKeyRef.current);
   }, [enabled, resetRestoreState]);
 
+  useEffect(() => {
+    if (!enabled || !persistenceKey) return;
+    // When returning to workout log via SPA navigation, force the same key
+    // to be eligible for restore again. Without this, a stale "already handled"
+    // mark from a previous mount/pass can suppress the modal intermittently.
+    resetRestoreState(persistenceKey);
+  }, [enabled, persistenceKey, resetRestoreState]);
+
   const resolveRestorePrompt = useCallback((keep: boolean) => {
     restorePromptResolveRef.current?.(keep);
     restorePromptResolveRef.current = null;
