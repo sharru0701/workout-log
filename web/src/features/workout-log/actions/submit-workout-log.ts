@@ -4,11 +4,9 @@ import { getAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService, type UpsertWorkoutLogInput } from "@/server/services/workout-log/upsert-log";
 import { logError } from "@/server/observability/logger";
-import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
 
 export async function submitWorkoutLogAction(
-  payload: Omit<UpsertWorkoutLogInput, "userId" | "locale">,
-  persistenceKey: string | null
+  payload: Omit<UpsertWorkoutLogInput, "userId" | "locale">
 ) {
   try {
     const userId = getAuthenticatedUserId();
@@ -19,10 +17,6 @@ export async function submitWorkoutLogAction(
       userId,
       locale,
     });
-
-    if (persistenceKey) {
-      await clearWorkoutDraft(persistenceKey);
-    }
 
     return {
       success: true,
