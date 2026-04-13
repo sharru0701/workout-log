@@ -720,6 +720,7 @@ export function materializeWorkoutExercises(draft: WorkoutRecordDraft): WorkoutE
 }
 
 export function hasWorkoutEdits(draft: WorkoutRecordDraft) {
+  if ((draft.session.note.memo ?? "").trim() !== "") return true;
   if (draft.userExercises.length > 0) return true;
   return Object.values(draft.seedEditLayer).some((patch) => {
     if (!patch) return false;

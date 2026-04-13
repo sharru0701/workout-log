@@ -5,6 +5,7 @@ import {
   createWorkoutRecordDraftFromLog,
   type ExistingWorkoutLogLike,
   type GeneratedSessionLike,
+  hasWorkoutEdits,
 } from "./model";
 
 test("createWorkoutRecordDraft labels operator logic sessions as D1/D2/D3", () => {
@@ -168,4 +169,28 @@ test("createWorkoutRecordDraft uses custom schedule labels for four-day programs
   });
 
   assert.equal(draft.session.sessionType, "D4");
+});
+
+test("hasWorkoutEdits treats session memo as a user edit", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-memo-1",
+    planId: "plan-memo",
+    sessionKey: "2026-03-14",
+    snapshot: {
+      sessionKey: "2026-03-14",
+      sessionDate: "2026-03-14",
+      week: 1,
+      day: 1,
+      exercises: [],
+    },
+  };
+
+  const draft = createWorkoutRecordDraft(session, "Memo Plan", {
+    sessionDate: "2026-03-14",
+    timezone: "Asia/Seoul",
+  });
+
+  draft.session.note.memo = "session memo";
+
+  assert.equal(hasWorkoutEdits(draft), true);
 });
