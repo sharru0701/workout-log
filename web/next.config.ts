@@ -1,6 +1,18 @@
 import type { NextConfig } from "next";
 
+const allowedDevOrigins = Array.from(new Set([
+  "localhost",
+  "127.0.0.1",
+  "0.0.0.0",
+  "100.71.82.104",
+  ...(process.env.NEXT_ALLOWED_DEV_ORIGINS
+    ?.split(",")
+    .map((value) => value.trim())
+    .filter(Boolean) ?? []),
+]));
+
 const nextConfig: NextConfig = {
+  allowedDevOrigins,
   env: {
     // Vercel deployment: use VERCEL_GIT_COMMIT_SHA, fallback to NEXT_PUBLIC_APP_VERSION or dev
     NEXT_PUBLIC_APP_VERSION: process.env.VERCEL_GIT_COMMIT_SHA?.substring(0, 7) ?? process.env.NEXT_PUBLIC_APP_VERSION ?? "dev",
