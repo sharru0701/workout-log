@@ -45,7 +45,6 @@ export type AppCopy = {
       dataExport: { label: string; description: string };
       dataManagement: { label: string; description: string };
       systemStats: { label: string; description: string };
-      deepLinks: { label: string; description: string };
       about: { label: string; description: string };
     };
     modalTitles: {
@@ -520,7 +519,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         dataExport: { label: "데이터 내보내기", description: "전체 훈련 데이터 내보내기" },
         dataManagement: { label: "데이터 관리", description: "내보내기 · 앱 데이터 초기화" },
         systemStats: { label: "시스템 통계", description: "마이그레이션 및 UX 분석 (관리자)" },
-        deepLinks: { label: "딥링크", description: "내부 딥링크 도구" },
         about: { label: "앱 정보", description: "버전 정보" },
       },
       modalTitles: {
@@ -993,7 +991,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         dataExport: { label: "Data Export", description: "Export all training data" },
         dataManagement: { label: "Data Management", description: "Export and reset app data" },
         systemStats: { label: "System Stats", description: "Migration and UX analytics (admin)" },
-        deepLinks: { label: "Deep Links", description: "Internal deep link tools" },
         about: { label: "About", description: "Version info" },
       },
       modalTitles: {

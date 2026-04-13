@@ -266,12 +266,6 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
       icon: "developer_board",
     },
     {
-      href: "/settings/link",
-      label: copy.settings.rows.deepLinks.label,
-      description: copy.settings.rows.deepLinks.description,
-      icon: "link",
-    },
-    {
       href: "/settings/about",
       label: copy.settings.rows.about.label,
       description: `v${process.env.NEXT_PUBLIC_APP_VERSION ?? ""}`,
