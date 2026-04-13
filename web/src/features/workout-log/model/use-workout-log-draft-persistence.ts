@@ -6,13 +6,8 @@ import { useWorkoutRecordPersistence } from "@/lib/workout-record/useWorkoutReco
 import type {
   PendingRestorePrompt,
 } from "@/features/workout-log/model/editor-actions";
-import type {
-  WorkoutRecordDraft,
-  WorkoutProgramExerciseEntryStateMap,
-} from "@/entities/workout-record";
-
-import { useAtomValue, useSetAtom } from "jotai";
-import { draftAtom, programEntryStateAtom, workflowStateAtom } from "../store/workout-log-atoms";
+import { useAtomValue } from "jotai";
+import { draftAtom, programEntryStateAtom } from "../store/workout-log-atoms";
 
 type UseWorkoutLogDraftPersistenceInput = {
   persistenceKey: string | null;
@@ -82,6 +77,8 @@ export function useWorkoutLogDraftPersistence({
 
   useEffect(() => {
     if (enabled) return;
+    isRestoredRef.current = false;
+    isRestoringRef.current = false;
     restorePromptResolveRef.current?.(false);
     restorePromptResolveRef.current = null;
     setPendingRestorePrompt(null);
@@ -93,6 +90,7 @@ export function useWorkoutLogDraftPersistence({
     // When returning to workout log via SPA navigation, force the same key
     // to be eligible for restore again. Without this, a stale "already handled"
     // mark from a previous mount/pass can suppress the modal intermittently.
+    isRestoredRef.current = false;
     resetRestoreState();
   }, [enabled, persistenceKey, resetRestoreState]);
 
