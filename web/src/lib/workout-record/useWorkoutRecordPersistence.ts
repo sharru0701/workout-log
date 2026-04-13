@@ -10,6 +10,10 @@ import { debounce } from "@/lib/storage/workoutSession";
 
 const DRAFT_EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6 hours
 
+function toHandledDraftSignature(key: string, updatedAt: number) {
+  return `${key}:${updatedAt}`;
+}
+
 export function useWorkoutRecordPersistence(
   key: string | null,
   draft: WorkoutRecordDraft | null,
@@ -18,7 +22,7 @@ export function useWorkoutRecordPersistence(
   options: { enabled?: boolean } = { enabled: true }
 ) {
   const isRestoringRef = useRef(false);
-  const lastSavedKeyRef = useRef<string | null>(null);
+  const lastHandledDraftRef = useRef<string | null>(null);
 
   // Refs to keep values stable in event listeners / unmount cleanup
   const keyRef = useRef(key);
@@ -62,7 +66,7 @@ export function useWorkoutRecordPersistence(
 
   // Restoration attempt
   const attemptRestore = useCallback(async (targetKey: string) => {
-    if (!enabledRef.current || isRestoringRef.current || lastSavedKeyRef.current === targetKey) return;
+    if (!enabledRef.current || isRestoringRef.current) return;
     isRestoringRef.current = true;
 
     try {
@@ -71,14 +75,20 @@ export function useWorkoutRecordPersistence(
       if (loaded) {
         const isExpired = Date.now() - loaded.updatedAt > DRAFT_EXPIRATION_MS;
         if (!isExpired) {
+          const handledSignature = toHandledDraftSignature(targetKey, loaded.updatedAt);
+          if (lastHandledDraftRef.current === handledSignature) {
+            console.log(`[Persistence] Draft already handled for key: ${targetKey}`);
+            return;
+          }
+
           if (!hasWorkoutEdits(loaded.draft) && !hasProgramEntryStateEdits(loaded.programEntryState)) {
             console.log(`[Persistence] Draft found but has no user edits, skipping restore`);
-            lastSavedKeyRef.current = targetKey;
+            lastHandledDraftRef.current = handledSignature;
           } else {
             console.log(`[Persistence] Valid draft found (updatedAt: ${loaded.updatedAt}), calling onRestore`);
             const restored = await onRestore(loaded);
             if (restored) {
-              lastSavedKeyRef.current = targetKey;
+              lastHandledDraftRef.current = handledSignature;
               console.log(`[Persistence] onRestore completed for key: ${targetKey}`);
             } else {
               console.log(`[Persistence] onRestore declined for key: ${targetKey}`);
@@ -150,7 +160,7 @@ export function useWorkoutRecordPersistence(
   }, [forceSave, attemptRestore]); // Only stable dependencies
 
   useEffect(() => {
-    if (key && options.enabled && lastSavedKeyRef.current !== key) {
+    if (key && options.enabled) {
       attemptRestore(key);
     }
   }, [key, attemptRestore, options.enabled]);
@@ -160,7 +170,7 @@ export function useWorkoutRecordPersistence(
   }, [debouncedSave]);
 
   const resetRestoreState = useCallback(() => {
-    lastSavedKeyRef.current = null;
+    lastHandledDraftRef.current = null;
   }, []);
 
   return { forceSave: forceSaveSync, cancelPendingSave, resetRestoreState };
