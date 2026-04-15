@@ -1,24 +1,11 @@
 import { db } from "@/server/db/client";
 import { plan, generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, lt, ne } from "drizzle-orm";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
-import { applyAutoProgressionFromLog } from "@/server/progression/autoProgression";
+import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 
-function dateOnlyInTimezone(date: Date, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
-  const month = parts.find((part) => part.type === "month")?.value ?? "01";
-  const day = parts.find((part) => part.type === "day")?.value ?? "01";
-  return `${year}-${month}-${day}`;
-}
 
 export type UpsertWorkoutLogInput = {
   logId?: string;
@@ -122,13 +109,6 @@ export async function upsertWorkoutLogService({
       }
     }
 
-    if ((effectivePlan?.params as { autoProgression?: unknown } | null)?.autoProgression === true) {
-      const performedDate = dateOnlyInTimezone(performedAt!, timezone);
-      const todayDate = dateOnlyInTimezone(new Date(), timezone);
-      if (performedDate < todayDate) {
-        throw new Error(locale === "ko" ? "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록을 수정해 주세요." : "Auto-progression plans cannot create new workout logs for dates before today.");
-      }
-    }
   }
 
   // Resolve Exercises
@@ -220,15 +200,53 @@ export async function upsertWorkoutLogService({
       }),
     );
 
-    const progressionResult = await applyAutoProgressionFromLog({
-      tx,
-      userId,
-      planId: effectivePlanId,
-      logId: log.id,
-      sets,
-      mode: logId ? "replay" : "upsert",
-      progressionOverride,
-    });
+    // Decide: normal progression upsert/replay, or full rebuild?
+    // A full rebuild is needed when date changes affect the chronological order of logs
+    // within an auto-progression plan, to keep the protocol state consistent.
+    let needsRebuild = false;
+    if (effectivePlanId) {
+      if (!logId) {
+        // New log: rebuild if any existing log for this plan has performedAt > this log's performedAt
+        const laterRows = await tx
+          .select({ id: workoutLog.id })
+          .from(workoutLog)
+          .where(and(eq(workoutLog.planId, effectivePlanId), gt(workoutLog.performedAt, performedAt!), ne(workoutLog.id, log.id)))
+          .limit(1);
+        needsRebuild = laterRows.length > 0;
+      } else if (existingLog && existingLog.performedAt.getTime() !== performedAt!.getTime()) {
+        // Existing log with date change: rebuild if any other log falls between old and new dates
+        const oldDate = existingLog.performedAt;
+        const newDate = performedAt!;
+        const minDate = oldDate < newDate ? oldDate : newDate;
+        const maxDate = oldDate < newDate ? newDate : oldDate;
+        const betweenRows = await tx
+          .select({ id: workoutLog.id })
+          .from(workoutLog)
+          .where(and(
+            eq(workoutLog.planId, effectivePlanId),
+            gt(workoutLog.performedAt, minDate),
+            lt(workoutLog.performedAt, maxDate),
+            ne(workoutLog.id, log.id),
+          ))
+          .limit(1);
+        needsRebuild = betweenRows.length > 0;
+      }
+    }
+
+    let progressionResult;
+    if (needsRebuild) {
+      progressionResult = await rebuildAutoProgressionForPlan({ tx, userId, planId: effectivePlanId });
+    } else {
+      progressionResult = await applyAutoProgressionFromLog({
+        tx,
+        userId,
+        planId: effectivePlanId,
+        logId: log.id,
+        sets,
+        mode: logId ? "replay" : "upsert",
+        progressionOverride,
+      });
+    }
 
     const progressionEvent = await readProgressEventByLog({
       tx,
@@ -241,7 +259,7 @@ export async function upsertWorkoutLogService({
     return {
       log,
       progression: buildProgressionSummary({
-        mode: logId ? "replay" : "upsert",
+        mode: needsRebuild ? "upsert" : (logId ? "replay" : "upsert"),
         applyResult: progressionResult,
         eventRow: progressionEvent,
       }),

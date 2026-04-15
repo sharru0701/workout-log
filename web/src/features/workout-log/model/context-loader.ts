@@ -7,7 +7,6 @@ import {
   type WorkoutRecordDraft,
 } from "@/entities/workout-record";
 import { type WorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { toDateKey } from "./query-context";
 import {
   applyRecentWeightsToCustomExercises,
   buildLastSessionSummary,
@@ -129,21 +128,6 @@ export async function loadWorkoutContextData(
         input.preferences.bodyweightKg,
         locale,
       ),
-    };
-  }
-
-  const isPastAutoPlan =
-    input.planAutoProgression === true &&
-    Boolean(input.dateKey) &&
-    input.dateKey < toDateKey(new Date());
-
-  if (isPastAutoPlan) {
-    return {
-      kind: "blocked",
-      message:
-        locale === "ko"
-          ? "자동 진행 플랜은 오늘 이전 날짜에 새 운동기록을 추가할 수 없습니다. 기존 기록만 수정할 수 있습니다."
-          : "Auto-progression plans cannot create new workout logs before today. You can only edit existing logs.",
     };
   }
 

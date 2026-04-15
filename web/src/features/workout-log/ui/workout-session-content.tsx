@@ -38,6 +38,7 @@ type WorkoutSessionContentProps = {
   onOpenInlinePicker: (request: InlinePickerRequest) => void;
   onOpenAddExerciseSheet: () => void;
   onSessionMemoChange: (value: string) => void;
+  onDateChange: (newDateKey: string) => void;
   workflowState: WorkoutWorkflowState;
   onSave: () => void;
 };
@@ -87,6 +88,7 @@ function areWorkoutSessionContentPropsEqual(
     previous.onOpenInlinePicker === next.onOpenInlinePicker &&
     previous.onOpenAddExerciseSheet === next.onOpenAddExerciseSheet &&
     previous.onSessionMemoChange === next.onSessionMemoChange &&
+    previous.onDateChange === next.onDateChange &&
     previous.workflowState === next.workflowState &&
     previous.onSave === next.onSave
   );
@@ -140,6 +142,7 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
   onOpenInlinePicker,
   onOpenAddExerciseSheet,
   onSessionMemoChange,
+  onDateChange,
   workflowState,
   onSave,
 }: WorkoutSessionContentProps) {
@@ -184,8 +187,54 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
             <span className={`session-chip ${completedExercisesCount > 0 ? "session-chip--active" : ""}`}>
               {completedExercisesCount}/{exerciseIds.length} {copy.exercisesCount}
             </span>
-            <span className="session-chip session-chip--date">
-              {formatDateFriendly(draft.session.sessionDate, locale)}
+            <span className="session-chip session-chip--date-nav">
+              <button
+                type="button"
+                className="date-nav-btn"
+                aria-label={copy.dateNavPrev}
+                onClick={() => {
+                  const d = new Date(`${draft.session.sessionDate}T00:00:00`);
+                  d.setDate(d.getDate() - 1);
+                  const y = d.getFullYear();
+                  const m = String(d.getMonth() + 1).padStart(2, "0");
+                  const dd = String(d.getDate()).padStart(2, "0");
+                  onDateChange(`${y}-${m}-${dd}`);
+                }}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>chevron_left</span>
+              </button>
+              <label style={{ position: "relative", display: "flex", alignItems: "center" }}>
+                <span aria-live="polite">{formatDateFriendly(draft.session.sessionDate, locale)}</span>
+                <input
+                  type="date"
+                  aria-label={copy.dateChangeAriaLabel}
+                  value={draft.session.sessionDate}
+                  onChange={(e) => { if (e.target.value) onDateChange(e.target.value); }}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0,
+                    width: "100%",
+                    height: "100%",
+                    cursor: "pointer",
+                  }}
+                />
+              </label>
+              <button
+                type="button"
+                className="date-nav-btn"
+                aria-label={copy.dateNavNext}
+                onClick={() => {
+                  const d = new Date(`${draft.session.sessionDate}T00:00:00`);
+                  d.setDate(d.getDate() + 1);
+                  const y = d.getFullYear();
+                  const m = String(d.getMonth() + 1).padStart(2, "0");
+                  const dd = String(d.getDate()).padStart(2, "0");
+                  onDateChange(`${y}-${m}-${dd}`);
+                }}
+              >
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}>chevron_right</span>
+              </button>
             </span>
             {workoutPreferences.bodyweightKg ? (
               <span className="session-chip">
