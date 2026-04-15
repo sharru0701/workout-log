@@ -90,9 +90,39 @@ export function useWorkoutLogEditorController() {
     [applyEditing],
   );
 
+  // Updates sessionDate and performedAt when user changes the date while editing an existing log
+  const handleSessionDateChange = useCallback(
+    (newDateKey: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newDateKey)) return;
+      applyEditing((prev) => {
+        const [year, month, day] = newDateKey.split("-").map(Number);
+        const prevPerformedAt = new Date(prev.session.performedAt);
+        const newPerformedAt = new Date(
+          year!,
+          (month ?? 1) - 1,
+          day ?? 1,
+          prevPerformedAt.getHours(),
+          prevPerformedAt.getMinutes(),
+          prevPerformedAt.getSeconds(),
+          prevPerformedAt.getMilliseconds(),
+        );
+        return {
+          ...prev,
+          session: {
+            ...prev.session,
+            sessionDate: newDateKey,
+            performedAt: newPerformedAt.toISOString(),
+          },
+        };
+      });
+    },
+    [applyEditing],
+  );
+
   return {
     resolveWeightWithCurrentPreferences,
     handleExerciseAction,
     handleSessionMemoChange,
+    handleSessionDateChange,
   };
 }

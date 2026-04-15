@@ -127,6 +127,7 @@ function WorkoutLogScreenContent({
   const {
     handleExerciseAction,
     handleSessionMemoChange,
+    handleSessionDateChange,
   } = useWorkoutLogEditorController();
 
   const {
@@ -194,6 +195,26 @@ function WorkoutLogScreenContent({
 
   const isEditingExistingLog = Boolean(query.logId); // simplified definition since it doesn't need the actual draft object here
 
+  // Date change handler:
+  // - While editing an existing log: update the draft in-place (date is sent to API on save)
+  // - While creating a new log: navigate the URL to the new date (reloads context for that date)
+  const handleDateChange = useCallback(
+    (newDateKey: string) => {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(newDateKey)) return;
+      if (isEditingExistingLog) {
+        handleSessionDateChange(newDateKey);
+      } else {
+        const url = new URL(window.location.href);
+        url.searchParams.set("date", newDateKey);
+        if (selectedPlan?.id) {
+          url.searchParams.set("planId", selectedPlan.id);
+        }
+        router.push(url.pathname + url.search);
+      }
+    },
+    [isEditingExistingLog, handleSessionDateChange, router, selectedPlan],
+  );
+
   return (
     <>
       {loading && !isRestoreFlowActive && <WorkoutRecordLoading />}
@@ -226,6 +247,7 @@ function WorkoutLogScreenContent({
           onOpenInlinePicker={openInlinePicker}
           onOpenAddExerciseSheet={openAddExerciseSheet}
           onSessionMemoChange={handleSessionMemoChange}
+          onDateChange={handleDateChange}
           workflowState={workflowState}
           onSave={requestSave}
         />

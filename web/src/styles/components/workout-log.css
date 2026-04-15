@@ -386,6 +386,62 @@
   border-color: var(--color-outline-variant);
 }
 
+/* Date navigation chip (prev/date/next inline) */
+.session-chip--date-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  border-radius: 20px;
+  background: var(--color-surface-container-high);
+  border: 1px solid var(--color-outline-variant);
+  overflow: hidden;
+  font-family: var(--font-label-family);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+}
+
+.session-chip--date-nav label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 4px 8px;
+  user-select: none;
+}
+
+.date-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0 2px;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.date-nav-btn:active {
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: var(--color-primary);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .date-nav-btn:hover {
+    background: var(--color-surface-container-highest);
+    color: var(--color-primary);
+  }
+}
+
+.date-nav-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+}
+
 /* ── Compact Last Session Banner ───────────────────── */
 
 .last-session-banner {

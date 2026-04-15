@@ -245,6 +245,10 @@ export type AppCopy = {
     restoreDraftMessage: string;
     restoreDraftConfirm: string;
     restoreDraftDiscard: string;
+    dateNavPrev: string;
+    dateNavNext: string;
+    dateNavToday: string;
+    dateChangeAriaLabel: string;
   };
   programStore: {
     eyebrow: string;
@@ -719,6 +723,10 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       restoreDraftMessage: "이전에 입력 중이던 기록을 불러왔습니다.",
       restoreDraftConfirm: "복구",
       restoreDraftDiscard: "삭제",
+      dateNavPrev: "이전 날",
+      dateNavNext: "다음 날",
+      dateNavToday: "오늘",
+      dateChangeAriaLabel: "날짜 변경",
     },
     programStore: {
       eyebrow: "Program Store",
@@ -1191,6 +1199,10 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       restoreDraftMessage: "A previous in-progress workout draft was found.",
       restoreDraftConfirm: "Restore",
       restoreDraftDiscard: "Discard",
+      dateNavPrev: "Previous Day",
+      dateNavNext: "Next Day",
+      dateNavToday: "Today",
+      dateChangeAriaLabel: "Change date",
     },
     programStore: {
       eyebrow: "Program Store",

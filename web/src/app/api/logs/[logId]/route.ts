@@ -114,7 +114,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
       logId,
       userId,
       locale,
-      timezone: "UTC", // existing route didn't parse timezone
+      timezone: typeof body.timezone === "string" && body.timezone.trim() ? body.timezone.trim() : "UTC",
       performedAt: body.performedAt ? new Date(body.performedAt) : undefined,
       durationMinutes: body.durationMinutes,
       notes: body.notes,
