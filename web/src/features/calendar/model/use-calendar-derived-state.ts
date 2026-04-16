@@ -324,6 +324,26 @@ export function useCalendarDerivedState({
       .slice(0, 5);
   }, [allPlanLogs, timezone, today]);
 
+  // 가장 최신 운동기록인지 여부 (삭제/날짜변경 허용 조건)
+  const isLatestLog = useMemo(
+    () => currentSelectedLog != null && allPlanLogs[0]?.id === currentSelectedLog.id,
+    [currentSelectedLog, allPlanLogs],
+  );
+
+  // 날짜 이동 시 선택 가능한 최소 날짜 (이전 세션 날짜 + 1일)
+  const moveDateMinDate = useMemo(() => {
+    if (!isLatestLog || allPlanLogs.length < 2) return null;
+    // allPlanLogs[0]이 현재 최신 세션, allPlanLogs[1]이 이전 세션
+    const prevLog = allPlanLogs[1]!;
+    const prevDate = dateOnlyInTimezone(new Date(prevLog.performedAt), timezone);
+    const d = new Date(`${prevDate}T00:00:00Z`);
+    d.setUTCDate(d.getUTCDate() + 1);
+    const y = d.getUTCFullYear();
+    const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(d.getUTCDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }, [isLatestLog, allPlanLogs, timezone]);
+
   return {
     generatedById,
     logDates,
@@ -337,5 +357,7 @@ export function useCalendarDerivedState({
     loggedDayLabel,
     selectedSessionWDLabel,
     recentPastLogs,
+    isLatestLog,
+    moveDateMinDate,
   };
 }
