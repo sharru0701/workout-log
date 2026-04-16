@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiGet } from "@/lib/api";
 import type {
   CalendarPlan,
@@ -55,7 +55,11 @@ export function useCalendarDataController({
   const plansLoadedRef = useRef(initialPlans != null);
   const logFetchCacheRef = useRef<Set<string>>(new Set());
   const initialPlanId = initialPlans?.[0]?.id ?? "";
-  const refreshTick = 0;
+  const [refreshTick, setRefreshTick] = useState(0);
+  const refresh = useCallback(() => {
+    logFetchCacheRef.current.clear();
+    setRefreshTick((t) => t + 1);
+  }, []);
 
   const currentLogKey = planId ? `${planId}|${selectedDate}` : "";
   const currentSelectedLog = selectedLogKey === currentLogKey ? selectedLog : null;
@@ -249,5 +253,6 @@ export function useCalendarDataController({
     loading,
     selectedPlan,
     filteredPlans,
+    refresh,
   };
 }

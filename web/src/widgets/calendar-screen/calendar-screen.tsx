@@ -88,6 +88,7 @@ export function CalendarScreen({
     loading,
     selectedPlan,
     filteredPlans,
+    refresh,
   } = useCalendarDataController({
     locale,
     timezone,
@@ -176,10 +177,11 @@ export function CalendarScreen({
         timezone,
       });
       focusDate(newDate);
+      refresh();
     } catch {
-      // error will surface via SWR revalidation
+      // error will surface via data refresh
     }
-  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, setError, copy.calendarMain.moveDateBlockedDescription]);
+  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -197,10 +199,11 @@ export function CalendarScreen({
     try {
       await apiDelete(`/api/logs/${currentSelectedLog.id}`);
     } catch {
-      // error will surface via SWR revalidation
+      // error will surface via data refresh
     }
     setDeleteConfirmOpen(false);
-  }, [currentSelectedLog?.id]);
+    refresh();
+  }, [currentSelectedLog?.id, refresh]);
 
   return (
     <>
