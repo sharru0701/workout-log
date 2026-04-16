@@ -6,6 +6,7 @@ import { getMonth, getYear } from "@/lib/date-utils";
 
 const MonthYearPickerSheet = dynamic(() => import("@/components/ui/month-year-picker-sheet").then(mod => mod.MonthYearPickerSheet), { ssr: false });
 const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
+const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
 
 type CalendarPlanOption = {
   id: string;
