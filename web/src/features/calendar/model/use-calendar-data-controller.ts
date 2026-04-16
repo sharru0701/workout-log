@@ -61,6 +61,34 @@ export function useCalendarDataController({
     setRefreshTick((t) => t + 1);
   }, []);
 
+  // 낙관적 업데이트: 날짜 이동 — API 응답 전에 UI 즉시 반영
+  const applyOptimisticDateMove = useCallback((
+    logId: string,
+    newDate: string,
+    newPerformedAt: string,
+  ) => {
+    setAllPlanLogs((prev) => {
+      const updated = prev.map((log) =>
+        log.id === logId ? { ...log, performedAt: newPerformedAt } : log,
+      );
+      // allPlanLogs는 최신순 정렬 유지
+      return updated.sort((a, b) => b.performedAt.localeCompare(a.performedAt));
+    });
+    setSelectedLog((prev) =>
+      prev?.id === logId ? { ...prev, performedAt: newPerformedAt } : prev,
+    );
+    // selectedLogKey를 새 날짜 키로 갱신 → currentSelectedLog가 새 날짜에서 resolve
+    const newKey = `${planId}|${newDate}`;
+    setSelectedLogKey(newKey);
+    setCompletedLogKey(newKey);
+  }, [planId]);
+
+  // 낙관적 업데이트: 삭제 — API 응답 전에 UI 즉시 반영
+  const applyOptimisticDelete = useCallback((logId: string) => {
+    setAllPlanLogs((prev) => prev.filter((log) => log.id !== logId));
+    setSelectedLog(null);
+  }, []);
+
   const currentLogKey = planId ? `${planId}|${selectedDate}` : "";
   const currentSelectedLog = selectedLogKey === currentLogKey ? selectedLog : null;
 
@@ -254,5 +282,7 @@ export function useCalendarDataController({
     selectedPlan,
     filteredPlans,
     refresh,
+    applyOptimisticDateMove,
+    applyOptimisticDelete,
   };
 }

@@ -89,6 +89,8 @@ export function CalendarScreen({
     selectedPlan,
     filteredPlans,
     refresh,
+    applyOptimisticDateMove,
+    applyOptimisticDelete,
   } = useCalendarDataController({
     locale,
     timezone,
@@ -171,17 +173,22 @@ export function CalendarScreen({
       }
     }
 
+    const newPerformedAt = new Date(`${newDate}T12:00:00Z`).toISOString();
+    // 낙관적 업데이트: API 완료 전 캘린더 즉시 갱신
+    applyOptimisticDateMove(currentSelectedLog.id, newDate, newPerformedAt);
+    focusDate(newDate);
+
     try {
       await apiPatch(`/api/logs/${currentSelectedLog.id}`, {
-        performedAt: new Date(`${newDate}T12:00:00Z`).toISOString(),
+        performedAt: newPerformedAt,
         timezone,
       });
-      focusDate(newDate);
       refresh();
     } catch {
-      // error will surface via data refresh
+      // 실패 시 서버 데이터로 복원
+      refresh();
     }
-  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
+  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -196,14 +203,18 @@ export function CalendarScreen({
 
   const handleConfirmDelete = useCallback(async () => {
     if (!currentSelectedLog?.id) return;
-    try {
-      await apiDelete(`/api/logs/${currentSelectedLog.id}`);
-    } catch {
-      // error will surface via data refresh
-    }
+    const logId = currentSelectedLog.id;
+    // 낙관적 업데이트: API 완료 전 즉시 제거
+    applyOptimisticDelete(logId);
     setDeleteConfirmOpen(false);
-    refresh();
-  }, [currentSelectedLog?.id, refresh]);
+    try {
+      await apiDelete(`/api/logs/${logId}`);
+      refresh();
+    } catch {
+      // 실패 시 서버 데이터로 복원
+      refresh();
+    }
+  }, [currentSelectedLog?.id, applyOptimisticDelete, refresh]);
 
   return (
     <>
