@@ -24,8 +24,6 @@ type CalendarMainCopy = {
   plannedDescription: string;
   immediateDescription: string;
   moveDate: string;
-  moveDateTitle: string;
-  moveDateConfirm: string;
   deleteLog: string;
   deleteLogConfirm: string;
   moveDateBlockedTitle: string;
@@ -57,7 +55,8 @@ type CalendarSelectedDateSectionProps = {
   nextSessionLabel: string | null;
   loggedDayLabel: string | null;
   isLatestLog: boolean;
-  onMoveDate: () => void;
+  moveDateMinDate?: string;
+  onMoveDateCommit: (newDate: string) => void;
   onDeleteLog: () => void;
 };
 
@@ -80,7 +79,8 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   nextSessionLabel,
   loggedDayLabel,
   isLatestLog,
-  onMoveDate,
+  moveDateMinDate,
+  onMoveDateCommit,
   onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
   return (
@@ -277,31 +277,53 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
           </a>
 
           <div style={{ display: "flex", gap: "10px" }}>
-            <button
-              type="button"
-              onClick={isLatestLog ? onMoveDate : undefined}
-              disabled={!isLatestLog}
-              style={{
-                flex: 1,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "6px",
-                padding: "11px 16px",
-                borderRadius: "12px",
-                background: "var(--color-surface-container)",
-                color: isLatestLog ? "var(--color-text)" : "var(--color-text-muted)",
-                border: "none",
-                cursor: isLatestLog ? "pointer" : "not-allowed",
-                fontFamily: "var(--font-label-family)",
-                fontSize: "13px",
-                fontWeight: 700,
-                opacity: isLatestLog ? 1 : 0.45,
-              }}
-            >
-              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
-              {copy.moveDate}
-            </button>
+            <div style={{ flex: 1, position: "relative" }}>
+              <button
+                type="button"
+                disabled={!isLatestLog}
+                style={{
+                  width: "100%",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                  padding: "11px 16px",
+                  borderRadius: "12px",
+                  background: "var(--color-surface-container)",
+                  color: isLatestLog ? "var(--color-text)" : "var(--color-text-muted)",
+                  border: "none",
+                  cursor: isLatestLog ? "pointer" : "not-allowed",
+                  fontFamily: "var(--font-label-family)",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  opacity: isLatestLog ? 1 : 0.45,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
+                {copy.moveDate}
+              </button>
+              {isLatestLog && (
+                <input
+                  type="date"
+                  defaultValue={selectedDate}
+                  min={moveDateMinDate}
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    opacity: 0,
+                    cursor: "pointer",
+                    width: "100%",
+                    height: "100%",
+                    border: "none",
+                  }}
+                  onChange={(e) => {
+                    if (e.target.value && e.target.value !== selectedDate) {
+                      onMoveDateCommit(e.target.value);
+                    }
+                  }}
+                />
+              )}
+            </div>
             <button
               type="button"
               onClick={isLatestLog ? onDeleteLog : undefined}
