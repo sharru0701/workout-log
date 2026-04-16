@@ -56,6 +56,7 @@ type CalendarSelectedDateSectionProps = {
   selectedCtx: { planned: boolean } | null;
   nextSessionLabel: string | null;
   loggedDayLabel: string | null;
+  isLatestLog: boolean;
   onMoveDate: () => void;
   onDeleteLog: () => void;
 };
@@ -78,6 +79,7 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   selectedCtx,
   nextSessionLabel,
   loggedDayLabel,
+  isLatestLog,
   onMoveDate,
   onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
@@ -277,7 +279,8 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
           <div style={{ display: "flex", gap: "10px" }}>
             <button
               type="button"
-              onClick={onMoveDate}
+              onClick={isLatestLog ? onMoveDate : undefined}
+              disabled={!isLatestLog}
               style={{
                 flex: 1,
                 display: "flex",
@@ -287,12 +290,13 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
                 padding: "11px 16px",
                 borderRadius: "12px",
                 background: "var(--color-surface-container)",
-                color: "var(--color-text)",
+                color: isLatestLog ? "var(--color-text)" : "var(--color-text-muted)",
                 border: "none",
-                cursor: "pointer",
+                cursor: isLatestLog ? "pointer" : "not-allowed",
                 fontFamily: "var(--font-label-family)",
                 fontSize: "13px",
                 fontWeight: 700,
+                opacity: isLatestLog ? 1 : 0.45,
               }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
@@ -300,7 +304,8 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
             </button>
             <button
               type="button"
-              onClick={onDeleteLog}
+              onClick={isLatestLog ? onDeleteLog : undefined}
+              disabled={!isLatestLog}
               style={{
                 flex: 1,
                 display: "flex",
@@ -309,13 +314,16 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
                 gap: "6px",
                 padding: "11px 16px",
                 borderRadius: "12px",
-                background: "color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low))",
-                color: "var(--color-danger)",
+                background: isLatestLog
+                  ? "color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low))"
+                  : "var(--color-surface-container)",
+                color: isLatestLog ? "var(--color-danger)" : "var(--color-text-muted)",
                 border: "none",
-                cursor: "pointer",
+                cursor: isLatestLog ? "pointer" : "not-allowed",
                 fontFamily: "var(--font-label-family)",
                 fontSize: "13px",
                 fontWeight: 700,
+                opacity: isLatestLog ? 1 : 0.45,
               }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>

@@ -54,6 +54,7 @@ type CalendarOverlaySheetsProps = {
   onMonthChange: (value: { year: number; month: number }) => void;
   moveDateSheetOpen: boolean;
   moveDateCurrentDate: string;
+  moveDateMinDate?: string;
   moveDateCopy: MoveDateCopy;
   moveDateHasConflict: boolean;
   onCloseMoveDateSheet: () => void;
@@ -68,6 +69,7 @@ type CalendarOverlaySheetsProps = {
 const MoveDateSheet = memo(function MoveDateSheet({
   open,
   currentDate,
+  minDate,
   moveDateCopy,
   hasConflict,
   onClose,
@@ -76,6 +78,7 @@ const MoveDateSheet = memo(function MoveDateSheet({
 }: {
   open: boolean;
   currentDate: string;
+  minDate?: string;
   moveDateCopy: MoveDateCopy;
   hasConflict: boolean;
   onClose: () => void;
@@ -115,6 +118,7 @@ const MoveDateSheet = memo(function MoveDateSheet({
         <input
           type="date"
           value={selectedDate}
+          min={minDate}
           onChange={(e) => {
             if (e.target.value) handleChange(e.target.value);
           }}
@@ -238,6 +242,7 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
   onMonthChange,
   moveDateSheetOpen,
   moveDateCurrentDate,
+  moveDateMinDate,
   moveDateCopy,
   moveDateHasConflict,
   onCloseMoveDateSheet,
@@ -283,6 +288,7 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
       <MoveDateSheet
         open={moveDateSheetOpen}
         currentDate={moveDateCurrentDate}
+        minDate={moveDateMinDate}
         moveDateCopy={moveDateCopy}
         hasConflict={moveDateHasConflict}
         onClose={onCloseMoveDateSheet}

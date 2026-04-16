@@ -122,6 +122,8 @@ export function CalendarScreen({
     loggedDayLabel,
     selectedSessionWDLabel,
     recentPastLogs,
+    isLatestLog,
+    moveDateMinDate,
   } = useCalendarDerivedState({
     selectedPlan,
     selectedDate,
@@ -278,6 +280,7 @@ export function CalendarScreen({
         selectedCtx={selectedCtx}
         nextSessionLabel={nextSessionLabel}
         loggedDayLabel={loggedDayLabel}
+        isLatestLog={isLatestLog}
         onMoveDate={handleOpenMoveDate}
         onDeleteLog={handleOpenDeleteLog}
       />
@@ -309,6 +312,7 @@ export function CalendarScreen({
         onMonthChange={handleMonthPickerChange}
         moveDateSheetOpen={moveDateSheetOpen}
         moveDateCurrentDate={selectedDate}
+        moveDateMinDate={moveDateMinDate ?? undefined}
         moveDateCopy={{
           title: copy.calendarMain.moveDateTitle,
           confirm: copy.calendarMain.moveDateConfirm,
