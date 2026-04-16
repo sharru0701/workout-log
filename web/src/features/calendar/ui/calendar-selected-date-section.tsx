@@ -16,12 +16,20 @@ type CalendarMainCopy = {
   editLog: string;
   blockedTitle: string;
   blockedDescription: string;
+  blockedHasLaterLogs: string;
   beforeStart: string;
   startLogging: string;
   noSession: string;
   canLogImmediately: string;
   plannedDescription: string;
   immediateDescription: string;
+  moveDate: string;
+  moveDateTitle: string;
+  moveDateConfirm: string;
+  deleteLog: string;
+  deleteLogConfirm: string;
+  moveDateBlockedTitle: string;
+  moveDateBlockedDescription: string;
 };
 
 type LoggedSummary = {
@@ -48,6 +56,8 @@ type CalendarSelectedDateSectionProps = {
   selectedCtx: { planned: boolean } | null;
   nextSessionLabel: string | null;
   loggedDayLabel: string | null;
+  onMoveDate: () => void;
+  onDeleteLog: () => void;
 };
 
 export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSection({
@@ -68,6 +78,8 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   selectedCtx,
   nextSessionLabel,
   loggedDayLabel,
+  onMoveDate,
+  onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
@@ -255,11 +267,61 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
               fontFamily: "var(--font-headline-family)",
               fontSize: "15px",
               fontWeight: 700,
+              marginBottom: "10px",
             }}
           >
             {copy.editLog}
             <span className="material-symbols-outlined" style={{ fontSize: "18px" }}>chevron_right</span>
           </a>
+
+          <div style={{ display: "flex", gap: "10px" }}>
+            <button
+              type="button"
+              onClick={onMoveDate}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "11px 16px",
+                borderRadius: "12px",
+                background: "var(--color-surface-container)",
+                color: "var(--color-text)",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
+              {copy.moveDate}
+            </button>
+            <button
+              type="button"
+              onClick={onDeleteLog}
+              style={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "11px 16px",
+                borderRadius: "12px",
+                background: "color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low))",
+                color: "var(--color-danger)",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>
+              {copy.deleteLog}
+            </button>
+          </div>
         </div>
       ) : selectedSession ? (
         isPastDateCreationBlocked ? (
@@ -267,7 +329,7 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
             <span className="material-symbols-outlined" style={{ fontSize: "32px", color: "var(--color-text-muted)", display: "block", marginBottom: "10px" }}>block</span>
             <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)", marginBottom: "6px" }}>{copy.blockedTitle}</div>
             <div style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.5 }}>
-              {copy.blockedDescription}
+              {copy.blockedHasLaterLogs}
             </div>
           </div>
         ) : (
@@ -382,7 +444,7 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
                   lineHeight: 1.5,
                 }}
               >
-                {copy.blockedDescription}
+                {copy.blockedHasLaterLogs}
               </div>
             </>
           ) : (

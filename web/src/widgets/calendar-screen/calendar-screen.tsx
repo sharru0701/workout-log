@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 import {
   dateOnlyInTimezone,
@@ -38,6 +38,7 @@ import {
 } from "@/features/calendar/ui/calendar-selected-date-section";
 import type { CalendarPageBootstrap } from "@/server/services/calendar/get-calendar-page-bootstrap";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { apiDelete, apiPatch } from "@/lib/api";
 
 import { buildTodayLogHref } from "@/lib/workout-links";
 
@@ -115,6 +116,7 @@ export function CalendarScreen({
     selectedCtx,
     selectedSession,
     isPastDateCreationBlocked,
+    hasLaterLogs,
     loggedSummary,
     nextSessionLabel,
     loggedDayLabel,
@@ -146,6 +148,72 @@ export function CalendarScreen({
     : planId
       ? buildTodayLogHref({ planId, date: selectedDate, autoGenerate: false })
       : APP_ROUTES.todayLog;
+
+  const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
+
+  // ── Move date sheet ──────────────────────────────────────────────────────────
+  const [moveDateSheetOpen, setMoveDateSheetOpen] = useState(false);
+  const [moveDatePendingDate, setMoveDatePendingDate] = useState(selectedDate);
+
+  const moveDateHasConflict = useMemo(() => {
+    if (!isAutoProgressionPlan || !currentSelectedLog) return false;
+    const oldDate = selectedDate;
+    const newDate = moveDatePendingDate;
+    if (oldDate === newDate) return false;
+    const [minDate, maxDate] = oldDate < newDate ? [oldDate, newDate] : [newDate, oldDate];
+    return Array.from(logDates).some(
+      (d) => d !== oldDate && d > minDate && d < maxDate,
+    );
+  }, [isAutoProgressionPlan, currentSelectedLog, selectedDate, moveDatePendingDate, logDates]);
+
+  const handleOpenMoveDate = useCallback(() => {
+    setMoveDatePendingDate(selectedDate);
+    setMoveDateSheetOpen(true);
+  }, [selectedDate]);
+
+  const handleCloseMoveDate = useCallback(() => {
+    setMoveDateSheetOpen(false);
+  }, []);
+
+  const handleMoveDateChange = useCallback((newDate: string) => {
+    setMoveDatePendingDate(newDate);
+  }, []);
+
+  const handleConfirmMoveDate = useCallback(async () => {
+    if (!currentSelectedLog?.id || moveDateHasConflict) return;
+    const [year, month, day] = moveDatePendingDate.split("-").map(Number);
+    const newPerformedAt = new Date(year!, (month ?? 1) - 1, day!);
+    try {
+      await apiPatch(`/api/logs/${currentSelectedLog.id}`, {
+        performedAt: newPerformedAt.toISOString(),
+        timezone,
+      });
+    } catch {
+      // error will surface via SWR revalidation
+    }
+    setMoveDateSheetOpen(false);
+  }, [currentSelectedLog?.id, moveDateHasConflict, moveDatePendingDate, timezone]);
+
+  // ── Delete confirm sheet ─────────────────────────────────────────────────────
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
+  const handleOpenDeleteLog = useCallback(() => {
+    setDeleteConfirmOpen(true);
+  }, []);
+
+  const handleCloseDeleteLog = useCallback(() => {
+    setDeleteConfirmOpen(false);
+  }, []);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!currentSelectedLog?.id) return;
+    try {
+      await apiDelete(`/api/logs/${currentSelectedLog.id}`);
+    } catch {
+      // error will surface via SWR revalidation
+    }
+    setDeleteConfirmOpen(false);
+  }, [currentSelectedLog?.id]);
 
   return (
     <>
@@ -210,6 +278,8 @@ export function CalendarScreen({
         selectedCtx={selectedCtx}
         nextSessionLabel={nextSessionLabel}
         loggedDayLabel={loggedDayLabel}
+        onMoveDate={handleOpenMoveDate}
+        onDeleteLog={handleOpenDeleteLog}
       />
 
       <CalendarRecentLogsSection
@@ -237,6 +307,27 @@ export function CalendarScreen({
         today={today}
         onCloseMonthPicker={() => setMonthPickerOpen(false)}
         onMonthChange={handleMonthPickerChange}
+        moveDateSheetOpen={moveDateSheetOpen}
+        moveDateCurrentDate={selectedDate}
+        moveDateCopy={{
+          title: copy.calendarMain.moveDateTitle,
+          confirm: copy.calendarMain.moveDateConfirm,
+          close: locale === "ko" ? "닫기" : "Close",
+          blockedTitle: copy.calendarMain.moveDateBlockedTitle,
+          blockedDescription: copy.calendarMain.moveDateBlockedDescription,
+        }}
+        moveDateHasConflict={moveDateHasConflict}
+        onCloseMoveDateSheet={handleCloseMoveDate}
+        onMoveDateChange={handleMoveDateChange}
+        onConfirmMoveDate={handleConfirmMoveDate}
+        deleteConfirmOpen={deleteConfirmOpen}
+        deleteCopy={{
+          title: copy.calendarMain.deleteLog,
+          confirm: copy.calendarMain.deleteLogConfirm,
+          cancel: locale === "ko" ? "취소" : "Cancel",
+        }}
+        onCloseDeleteConfirm={handleCloseDeleteLog}
+        onConfirmDelete={handleConfirmDelete}
       />
     </>
   );

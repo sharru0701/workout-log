@@ -413,6 +413,14 @@ export type AppCopy = {
     canLogImmediately: string;
     plannedDescription: string;
     immediateDescription: string;
+    moveDate: string;
+    moveDateTitle: string;
+    moveDateConfirm: string;
+    deleteLog: string;
+    deleteLogConfirm: string;
+    blockedHasLaterLogs: string;
+    moveDateBlockedTitle: string;
+    moveDateBlockedDescription: string;
     recentLogs: string;
   };
   templatesManage: {
@@ -891,6 +899,14 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       canLogImmediately: "즉시 기록 가능",
       plannedDescription: "기록하기를 누르면 이 날짜 세션을 준비하고 바로 기록을 시작합니다.",
       immediateDescription: "기록하기를 누르면 이 날짜 기록 화면으로 바로 이동합니다.",
+      moveDate: "날짜 이동",
+      moveDateTitle: "운동 날짜 변경",
+      moveDateConfirm: "이동",
+      deleteLog: "기록 삭제",
+      deleteLogConfirm: "이 운동 기록을 삭제하시겠습니까?",
+      blockedHasLaterLogs: "이 날짜 이후에 기록된 운동이 있습니다. 해당 기록을 먼저 삭제한 후 이 날짜에 기록할 수 있습니다.",
+      moveDateBlockedTitle: "날짜 이동 불가",
+      moveDateBlockedDescription: "이동할 날짜 사이에 다른 기록이 있습니다. 해당 기록을 먼저 삭제해야 합니다.",
       recentLogs: "최근 기록",
     },
     templatesManage: {
@@ -1367,6 +1383,14 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       canLogImmediately: "Can Log Immediately",
       plannedDescription: "Tap Start Logging to prepare this date's session and begin recording right away.",
       immediateDescription: "Tap Start Logging to jump straight into the log screen for this date.",
+      moveDate: "Move Date",
+      moveDateTitle: "Move Workout Date",
+      moveDateConfirm: "Move",
+      deleteLog: "Delete Log",
+      deleteLogConfirm: "Delete this workout log?",
+      blockedHasLaterLogs: "There are logs recorded after this date. Please delete those logs first before logging on this date.",
+      moveDateBlockedTitle: "Cannot Move Date",
+      moveDateBlockedDescription: "There are other logs between the dates. Please delete those logs first.",
       recentLogs: "Recent Logs",
     },
     templatesManage: {
