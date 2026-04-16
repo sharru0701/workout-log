@@ -1,12 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { memo, useEffect, useState } from "react";
+import { memo } from "react";
 import { getMonth, getYear } from "@/lib/date-utils";
 
 const MonthYearPickerSheet = dynamic(() => import("@/components/ui/month-year-picker-sheet").then(mod => mod.MonthYearPickerSheet), { ssr: false });
 const SearchSelectSheet = dynamic(() => import("@/components/ui/search-select-sheet").then(mod => mod.SearchSelectSheet), { ssr: false });
-const BottomSheet = dynamic(() => import("@/components/ui/bottom-sheet").then(mod => mod.BottomSheet), { ssr: false });
 
 type CalendarPlanOption = {
   id: string;
@@ -21,14 +20,6 @@ type CalendarOverlaySheetsCopy = {
   planSearchResults: string;
   noMatchingPlans: string;
   monthPickerTitle: string;
-};
-
-type MoveDateCopy = {
-  title: string;
-  confirm: string;
-  close: string;
-  blockedTitle: string;
-  blockedDescription: string;
 };
 
 type DeleteCopy = {
@@ -52,119 +43,11 @@ type CalendarOverlaySheetsProps = {
   today: string;
   onCloseMonthPicker: () => void;
   onMonthChange: (value: { year: number; month: number }) => void;
-  moveDateSheetOpen: boolean;
-  moveDateCurrentDate: string;
-  moveDateMinDate?: string;
-  moveDateCopy: MoveDateCopy;
-  moveDateHasConflict: boolean;
-  onCloseMoveDateSheet: () => void;
-  onMoveDateChange: (newDate: string) => void;
-  onConfirmMoveDate: () => void;
   deleteConfirmOpen: boolean;
   deleteCopy: DeleteCopy;
   onCloseDeleteConfirm: () => void;
   onConfirmDelete: () => void;
 };
-
-const MoveDateSheet = memo(function MoveDateSheet({
-  open,
-  currentDate,
-  minDate,
-  moveDateCopy,
-  hasConflict,
-  onClose,
-  onDateChange,
-  onConfirm,
-}: {
-  open: boolean;
-  currentDate: string;
-  minDate?: string;
-  moveDateCopy: MoveDateCopy;
-  hasConflict: boolean;
-  onClose: () => void;
-  onDateChange: (newDate: string) => void;
-  onConfirm: () => void;
-}) {
-  const [selectedDate, setSelectedDate] = useState(currentDate);
-
-  useEffect(() => {
-    if (open) {
-      setSelectedDate(currentDate);
-      onDateChange(currentDate);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, currentDate]);
-
-  const handleChange = (value: string) => {
-    setSelectedDate(value);
-    onDateChange(value);
-  };
-
-  const isUnchanged = selectedDate === currentDate;
-
-  return (
-    <BottomSheet
-      open={open}
-      title={moveDateCopy.title}
-      onClose={onClose}
-      closeLabel={moveDateCopy.close}
-      primaryAction={{
-        ariaLabel: moveDateCopy.confirm,
-        onPress: onConfirm,
-        disabled: isUnchanged || hasConflict,
-      }}
-    >
-      <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: "12px" }}>
-        <input
-          type="date"
-          value={selectedDate}
-          min={minDate}
-          onChange={(e) => {
-            if (e.target.value) handleChange(e.target.value);
-          }}
-          style={{
-            width: "100%",
-            padding: "14px 16px",
-            borderRadius: "14px",
-            border: `1px solid ${hasConflict ? "var(--color-danger)" : "var(--color-outline-variant)"}`,
-            background: "var(--color-surface-container-low)",
-            fontFamily: "var(--font-label-family)",
-            fontSize: "16px",
-            color: "var(--color-text)",
-            boxSizing: "border-box",
-          }}
-        />
-        {hasConflict && !isUnchanged ? (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: "8px",
-              padding: "12px 14px",
-              borderRadius: "12px",
-              background: "color-mix(in srgb, var(--color-danger) 8%, var(--color-surface-container-low))",
-            }}
-          >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "16px", color: "var(--color-danger)", flexShrink: 0, marginTop: "1px" }}
-            >
-              warning
-            </span>
-            <div>
-              <div style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", fontWeight: 700, color: "var(--color-danger)", marginBottom: "2px" }}>
-                {moveDateCopy.blockedTitle}
-              </div>
-              <div style={{ fontFamily: "var(--font-label-family)", fontSize: "12px", color: "var(--color-danger)", lineHeight: 1.5, opacity: 0.85 }}>
-                {moveDateCopy.blockedDescription}
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
-    </BottomSheet>
-  );
-});
 
 const DeleteConfirmSheet = memo(function DeleteConfirmSheet({
   open,
@@ -240,14 +123,6 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
   today,
   onCloseMonthPicker,
   onMonthChange,
-  moveDateSheetOpen,
-  moveDateCurrentDate,
-  moveDateMinDate,
-  moveDateCopy,
-  moveDateHasConflict,
-  onCloseMoveDateSheet,
-  onMoveDateChange,
-  onConfirmMoveDate,
   deleteConfirmOpen,
   deleteCopy,
   onCloseDeleteConfirm,
@@ -284,16 +159,6 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
         minYear={getYear(today) - 10}
         maxYear={getYear(today) + 10}
         onChange={onMonthChange}
-      />
-      <MoveDateSheet
-        open={moveDateSheetOpen}
-        currentDate={moveDateCurrentDate}
-        minDate={moveDateMinDate}
-        moveDateCopy={moveDateCopy}
-        hasConflict={moveDateHasConflict}
-        onClose={onCloseMoveDateSheet}
-        onDateChange={onMoveDateChange}
-        onConfirm={onConfirmMoveDate}
       />
       <DeleteConfirmSheet
         open={deleteConfirmOpen}

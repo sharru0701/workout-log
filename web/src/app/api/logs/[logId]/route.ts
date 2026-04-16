@@ -106,8 +106,35 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
     const body = await req.json();
 
     const sets = Array.isArray(body.sets) ? body.sets : [];
+
+    // Date-only move: sets 없이 performedAt만 전달된 경우 날짜만 업데이트
     if (sets.length === 0) {
-      return NextResponse.json({ error: locale === "ko" ? "세트 정보가 필요합니다." : "Sets are required." }, { status: 400 });
+      if (!body.performedAt) {
+        return NextResponse.json({ error: locale === "ko" ? "세트 정보가 필요합니다." : "Sets are required." }, { status: 400 });
+      }
+
+      const existingRows = await db
+        .select({ id: workoutLog.id, userId: workoutLog.userId, planId: workoutLog.planId })
+        .from(workoutLog)
+        .where(eq(workoutLog.id, logId))
+        .limit(1);
+
+      const existing = existingRows[0];
+      if (!existing) return NextResponse.json({ error: locale === "ko" ? "기록을 찾을 수 없습니다." : "Log not found." }, { status: 404 });
+      if (existing.userId !== userId) return NextResponse.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, { status: 403 });
+
+      await db.transaction(async (tx) => {
+        await tx.update(workoutLog)
+          .set({ performedAt: new Date(body.performedAt) })
+          .where(eq(workoutLog.id, logId));
+
+        if (existing.planId) {
+          await rebuildAutoProgressionForPlan({ tx, userId, planId: existing.planId });
+        }
+        await invalidateStatsCacheForUser(userId, tx);
+      });
+
+      return NextResponse.json({ updated: true, logId });
     }
 
     const updated = await upsertWorkoutLogService({
