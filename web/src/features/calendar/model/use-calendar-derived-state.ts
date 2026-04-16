@@ -279,8 +279,9 @@ export function useCalendarDerivedState({
 
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
   const isPastDate = selectedDate < today;
+  const hasLaterLogs = Array.from(logDates).some((d) => d > selectedDate);
   const isPastDateCreationBlocked =
-    isAutoProgressionPlan && isPastDate && !currentSelectedLog;
+    isAutoProgressionPlan && isPastDate && !currentSelectedLog && hasLaterLogs;
 
   const loggedSummary = useMemo(
     () => buildLoggedExercisePreview(currentSelectedLog?.sets ?? []),
@@ -329,6 +330,7 @@ export function useCalendarDerivedState({
     selectedCtx,
     selectedSession,
     isPastDateCreationBlocked,
+    hasLaterLogs,
     loggedSummary,
     selectedDayLabel,
     nextSessionLabel,
