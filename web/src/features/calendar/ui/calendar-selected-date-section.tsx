@@ -54,8 +54,6 @@ type CalendarSelectedDateSectionProps = {
   selectedCtx: { planned: boolean } | null;
   nextSessionLabel: string | null;
   loggedDayLabel: string | null;
-  isLatestLog: boolean;
-  moveDateMinDate?: string;
   onMoveDateCommit: (newDate: string) => void;
   onDeleteLog: () => void;
 };
@@ -78,8 +76,6 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   selectedCtx,
   nextSessionLabel,
   loggedDayLabel,
-  isLatestLog,
-  moveDateMinDate,
   onMoveDateCommit,
   onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
@@ -277,57 +273,36 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
           </a>
 
           <div style={{ display: "flex", gap: "10px" }}>
-            <div style={{ flex: 1, position: "relative" }}>
-              <button
-                type="button"
-                disabled={!isLatestLog}
-                style={{
-                  width: "100%",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "6px",
-                  padding: "11px 16px",
-                  borderRadius: "12px",
-                  background: "var(--color-surface-container)",
-                  color: isLatestLog ? "var(--color-text)" : "var(--color-text-muted)",
-                  border: "none",
-                  cursor: isLatestLog ? "pointer" : "not-allowed",
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "13px",
-                  fontWeight: 700,
-                  opacity: isLatestLog ? 1 : 0.45,
-                }}
-              >
-                <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
-                {copy.moveDate}
-              </button>
-              {isLatestLog && (
-                <input
-                  type="date"
-                  defaultValue={selectedDate}
-                  min={moveDateMinDate}
-                  style={{
-                    position: "absolute",
-                    inset: 0,
-                    opacity: 0,
-                    cursor: "pointer",
-                    width: "100%",
-                    height: "100%",
-                    border: "none",
-                  }}
-                  onChange={(e) => {
-                    if (e.target.value && e.target.value !== selectedDate) {
-                      onMoveDateCommit(e.target.value);
-                    }
-                  }}
-                />
-              )}
-            </div>
+            <label
+              style={{
+                flex: 1,
+                position: "relative",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                padding: "11px 16px",
+                borderRadius: "12px",
+                background: "var(--color-surface-container)",
+                color: "var(--color-text)",
+                cursor: "pointer",
+                fontFamily: "var(--font-label-family)",
+                fontSize: "13px",
+                fontWeight: 700,
+              }}
+            >
+              <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
+              {copy.moveDate}
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => { if (e.target.value) onMoveDateCommit(e.target.value); }}
+                style={{ position: "absolute", inset: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }}
+              />
+            </label>
             <button
               type="button"
-              onClick={isLatestLog ? onDeleteLog : undefined}
-              disabled={!isLatestLog}
+              onClick={onDeleteLog}
               style={{
                 flex: 1,
                 display: "flex",
@@ -336,16 +311,13 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
                 gap: "6px",
                 padding: "11px 16px",
                 borderRadius: "12px",
-                background: isLatestLog
-                  ? "color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low))"
-                  : "var(--color-surface-container)",
-                color: isLatestLog ? "var(--color-danger)" : "var(--color-text-muted)",
+                background: "color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low))",
+                color: "var(--color-danger)",
                 border: "none",
-                cursor: isLatestLog ? "pointer" : "not-allowed",
+                cursor: "pointer",
                 fontFamily: "var(--font-label-family)",
                 fontSize: "13px",
                 fontWeight: 700,
-                opacity: isLatestLog ? 1 : 0.45,
               }}
             >
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>delete</span>

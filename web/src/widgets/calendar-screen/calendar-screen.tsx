@@ -156,7 +156,9 @@ export function CalendarScreen({
 
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
 
-  // ── Move date (직접 날짜 선택) ─────────────────────────────────────────────────
+  // ── Move date (direct picker) ────────────────────────────────────────────────
+  const [moveDateConflictOpen, setMoveDateConflictOpen] = useState(false);
+
   const handleMoveDateCommit = useCallback(async (newDate: string) => {
     if (!currentSelectedLog?.id) return;
 
@@ -168,13 +170,12 @@ export function CalendarScreen({
         (d) => d !== oldDate && d > minDate && d < maxDate,
       );
       if (hasConflict) {
-        setError(copy.calendarMain.moveDateBlockedDescription);
+        setMoveDateConflictOpen(true);
         return;
       }
     }
 
     const newPerformedAt = new Date(`${newDate}T12:00:00Z`).toISOString();
-    // 낙관적 업데이트: API 완료 전 캘린더 즉시 갱신
     applyOptimisticDateMove(currentSelectedLog.id, newDate, newPerformedAt);
     focusDate(newDate);
 
@@ -185,10 +186,9 @@ export function CalendarScreen({
       });
       refresh();
     } catch {
-      // 실패 시 서버 데이터로 복원
       refresh();
     }
-  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
+  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -279,8 +279,6 @@ export function CalendarScreen({
         selectedCtx={selectedCtx}
         nextSessionLabel={nextSessionLabel}
         loggedDayLabel={loggedDayLabel}
-        isLatestLog={isLatestLog}
-        moveDateMinDate={moveDateMinDate ?? undefined}
         onMoveDateCommit={handleMoveDateCommit}
         onDeleteLog={handleOpenDeleteLog}
       />
@@ -310,6 +308,13 @@ export function CalendarScreen({
         today={today}
         onCloseMonthPicker={() => setMonthPickerOpen(false)}
         onMonthChange={handleMonthPickerChange}
+        moveDateConflictOpen={moveDateConflictOpen}
+        moveDateConflictCopy={{
+          title: copy.calendarMain.moveDateBlockedTitle,
+          description: copy.calendarMain.moveDateBlockedDescription,
+          close: locale === "ko" ? "확인" : "OK",
+        }}
+        onCloseMoveDateConflict={() => setMoveDateConflictOpen(false)}
         deleteConfirmOpen={deleteConfirmOpen}
         deleteCopy={{
           title: copy.calendarMain.deleteLog,
