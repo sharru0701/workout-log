@@ -80,15 +80,29 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
   const moveDateOpenValueRef = useRef(selectedDate);
+  const moveDatePendingValueRef = useRef(selectedDate);
 
-  const handleMoveDateFocus = useCallback(() => {
-    moveDateOpenValueRef.current = selectedDate;
-  }, [selectedDate]);
+  const handleMoveDateFocus = useCallback(
+    (event: React.FocusEvent<HTMLInputElement>) => {
+      const currentValue = event.currentTarget.value || selectedDate;
+      moveDateOpenValueRef.current = currentValue;
+      moveDatePendingValueRef.current = currentValue;
+    },
+    [selectedDate],
+  );
+
+  const handleMoveDateChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      moveDatePendingValueRef.current = event.currentTarget.value;
+    },
+    [],
+  );
 
   const handleMoveDateBlur = useCallback(
     (event: React.FocusEvent<HTMLInputElement>) => {
-      const nextDate = event.currentTarget.value;
+      const nextDate = moveDatePendingValueRef.current || event.currentTarget.value;
       const previousDate = moveDateOpenValueRef.current;
+      moveDatePendingValueRef.current = previousDate;
       if (!nextDate || nextDate === previousDate) return;
       onMoveDateCommit(nextDate);
     },
@@ -310,9 +324,11 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
               <span className="material-symbols-outlined" style={{ fontSize: "16px" }}>calendar_clock</span>
               {copy.moveDate}
               <input
+                key={selectedDate}
                 type="date"
-                value={selectedDate}
+                defaultValue={selectedDate}
                 onFocus={handleMoveDateFocus}
+                onChange={handleMoveDateChange}
                 onBlur={handleMoveDateBlur}
                 style={{ position: "absolute", inset: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }}
               />
