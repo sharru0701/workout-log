@@ -1,6 +1,6 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useCallback, useRef } from "react";
 import { formatCalendarDay, formatVolume } from "@/features/calendar/lib/format";
 import type {
   CalendarExercisePreviewItem,
@@ -79,6 +79,22 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
   onMoveDateCommit,
   onDeleteLog,
 }: CalendarSelectedDateSectionProps) {
+  const moveDateOpenValueRef = useRef(selectedDate);
+
+  const handleMoveDateFocus = useCallback(() => {
+    moveDateOpenValueRef.current = selectedDate;
+  }, [selectedDate]);
+
+  const handleMoveDateBlur = useCallback(
+    (event: React.FocusEvent<HTMLInputElement>) => {
+      const nextDate = event.currentTarget.value;
+      const previousDate = moveDateOpenValueRef.current;
+      if (!nextDate || nextDate === previousDate) return;
+      onMoveDateCommit(nextDate);
+    },
+    [onMoveDateCommit],
+  );
+
   return (
     <section style={{ marginBottom: "var(--space-xl)" }}>
       <div
@@ -296,7 +312,8 @@ export const CalendarSelectedDateSection = memo(function CalendarSelectedDateSec
               <input
                 type="date"
                 value={selectedDate}
-                onChange={(e) => { if (e.target.value) onMoveDateCommit(e.target.value); }}
+                onFocus={handleMoveDateFocus}
+                onBlur={handleMoveDateBlur}
                 style={{ position: "absolute", inset: 0, opacity: 0, width: "100%", height: "100%", cursor: "pointer" }}
               />
             </label>
