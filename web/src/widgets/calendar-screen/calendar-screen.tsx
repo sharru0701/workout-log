@@ -157,6 +157,8 @@ export function CalendarScreen({
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
 
   // ── Move date (direct picker) ────────────────────────────────────────────────
+  const [moveDateConflictOpen, setMoveDateConflictOpen] = useState(false);
+
   const handleMoveDateCommit = useCallback(async (newDate: string) => {
     if (!currentSelectedLog?.id) return;
 
@@ -168,7 +170,7 @@ export function CalendarScreen({
         (d) => d !== oldDate && d > minDate && d < maxDate,
       );
       if (hasConflict) {
-        setError(copy.calendarMain.moveDateBlockedDescription);
+        setMoveDateConflictOpen(true);
         return;
       }
     }
@@ -186,7 +188,7 @@ export function CalendarScreen({
     } catch {
       refresh();
     }
-  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
+  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -306,6 +308,13 @@ export function CalendarScreen({
         today={today}
         onCloseMonthPicker={() => setMonthPickerOpen(false)}
         onMonthChange={handleMonthPickerChange}
+        moveDateConflictOpen={moveDateConflictOpen}
+        moveDateConflictCopy={{
+          title: copy.calendarMain.moveDateBlockedTitle,
+          description: copy.calendarMain.moveDateBlockedDescription,
+          close: locale === "ko" ? "확인" : "OK",
+        }}
+        onCloseMoveDateConflict={() => setMoveDateConflictOpen(false)}
         deleteConfirmOpen={deleteConfirmOpen}
         deleteCopy={{
           title: copy.calendarMain.deleteLog,

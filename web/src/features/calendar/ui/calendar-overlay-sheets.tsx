@@ -23,6 +23,12 @@ type CalendarOverlaySheetsCopy = {
   monthPickerTitle: string;
 };
 
+type MoveDateConflictCopy = {
+  title: string;
+  description: string;
+  close: string;
+};
+
 type DeleteCopy = {
   title: string;
   confirm: string;
@@ -44,11 +50,64 @@ type CalendarOverlaySheetsProps = {
   today: string;
   onCloseMonthPicker: () => void;
   onMonthChange: (value: { year: number; month: number }) => void;
+  moveDateConflictOpen: boolean;
+  moveDateConflictCopy: MoveDateConflictCopy;
+  onCloseMoveDateConflict: () => void;
   deleteConfirmOpen: boolean;
   deleteCopy: DeleteCopy;
   onCloseDeleteConfirm: () => void;
   onConfirmDelete: () => void;
 };
+
+const MoveDateConflictSheet = memo(function MoveDateConflictSheet({
+  open,
+  copy,
+  onClose,
+}: {
+  open: boolean;
+  copy: MoveDateConflictCopy;
+  onClose: () => void;
+}) {
+  return (
+    <BottomSheet
+      open={open}
+      title={copy.title}
+      onClose={onClose}
+    >
+      <div style={{ padding: "0 20px 24px", display: "flex", flexDirection: "column", gap: "16px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+          <span
+            className="material-symbols-outlined"
+            style={{ fontSize: "20px", color: "var(--color-danger)", flexShrink: 0, marginTop: "1px" }}
+          >
+            warning
+          </span>
+          <p style={{ fontFamily: "var(--font-label-family)", fontSize: "14px", color: "var(--color-text)", lineHeight: 1.6, margin: 0 }}>
+            {copy.description}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          style={{
+            width: "100%",
+            padding: "15px",
+            borderRadius: "14px",
+            border: "none",
+            background: "var(--color-surface-container)",
+            color: "var(--color-text)",
+            fontFamily: "var(--font-headline-family)",
+            fontSize: "15px",
+            fontWeight: 700,
+            cursor: "pointer",
+          }}
+        >
+          {copy.close}
+        </button>
+      </div>
+    </BottomSheet>
+  );
+});
 
 const DeleteConfirmSheet = memo(function DeleteConfirmSheet({
   open,
@@ -124,6 +183,9 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
   today,
   onCloseMonthPicker,
   onMonthChange,
+  moveDateConflictOpen,
+  moveDateConflictCopy,
+  onCloseMoveDateConflict,
   deleteConfirmOpen,
   deleteCopy,
   onCloseDeleteConfirm,
@@ -160,6 +222,11 @@ export const CalendarOverlaySheets = memo(function CalendarOverlaySheets({
         minYear={getYear(today) - 10}
         maxYear={getYear(today) + 10}
         onChange={onMonthChange}
+      />
+      <MoveDateConflictSheet
+        open={moveDateConflictOpen}
+        copy={moveDateConflictCopy}
+        onClose={onCloseMoveDateConflict}
       />
       <DeleteConfirmSheet
         open={deleteConfirmOpen}
