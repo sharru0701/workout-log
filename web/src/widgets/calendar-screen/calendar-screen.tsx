@@ -156,7 +156,7 @@ export function CalendarScreen({
 
   const isAutoProgressionPlan = selectedPlan?.params?.autoProgression === true;
 
-  // ── Move date (직접 날짜 선택) ─────────────────────────────────────────────────
+  // ── Move date (direct picker) ────────────────────────────────────────────────
   const handleMoveDateCommit = useCallback(async (newDate: string) => {
     if (!currentSelectedLog?.id) return;
 
@@ -174,7 +174,6 @@ export function CalendarScreen({
     }
 
     const newPerformedAt = new Date(`${newDate}T12:00:00Z`).toISOString();
-    // 낙관적 업데이트: API 완료 전 캘린더 즉시 갱신
     applyOptimisticDateMove(currentSelectedLog.id, newDate, newPerformedAt);
     focusDate(newDate);
 
@@ -185,7 +184,6 @@ export function CalendarScreen({
       });
       refresh();
     } catch {
-      // 실패 시 서버 데이터로 복원
       refresh();
     }
   }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh, setError, copy.calendarMain.moveDateBlockedDescription]);
@@ -279,8 +277,6 @@ export function CalendarScreen({
         selectedCtx={selectedCtx}
         nextSessionLabel={nextSessionLabel}
         loggedDayLabel={loggedDayLabel}
-        isLatestLog={isLatestLog}
-        moveDateMinDate={moveDateMinDate ?? undefined}
         onMoveDateCommit={handleMoveDateCommit}
         onDeleteLog={handleOpenDeleteLog}
       />
