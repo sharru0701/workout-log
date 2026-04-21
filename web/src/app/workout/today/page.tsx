@@ -2,6 +2,8 @@ import Link from "next/link";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { NavRow } from "@/components/workout/nav-row";
+import { Button } from "@/components/ui/button";
+import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
 
 type NavItem = {
   href: string;
@@ -66,55 +68,33 @@ export default async function WorkoutTodayIndexPage() {
   ];
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20 px-4">
-      {/* Header */}
-      <header className="flex items-start justify-between mb-8 py-6 border-b border-border">
-        <div>
-          <div className="text-[10px] font-bold uppercase tracking-widest text-primary mb-1 font-label">
-            Workout
-          </div>
-          <h1 className="text-3xl font-black tracking-tight text-text font-headline">
-            {locale === "ko" ? "오늘 운동" : "Today's Workout"}
-          </h1>
-        </div>
-        <Link
-          href={APP_ROUTES.todayLog}
-          className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-primary text-white text-sm font-bold shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all no-underline"
-        >
-          <span
-            className="material-symbols-outlined text-lg"
-            style={{ fontVariationSettings: "'FILL' 1, 'wght' 500" }}
-            aria-hidden="true"
-          >
-            play_arrow
-          </span>
-          {locale === "ko" ? "기록 시작" : "Start Logging"}
-        </Link>
-      </header>
+    <AppPage>
+      <PageHeader
+        eyebrow="Workout"
+        title={locale === "ko" ? "오늘 운동" : "Today's Workout"}
+        description={locale === "ko" ? "오늘 세션을 열고, 준비 흐름과 보조 도구를 같은 구조로 접근합니다." : "Open today's session and reach setup tools from the same consistent page hierarchy."}
+        actions={(
+          <Button as={Link} href={APP_ROUTES.todayLog}>
+            {locale === "ko" ? "기록 시작" : "Start Logging"}
+          </Button>
+        )}
+      />
 
-      {/* Primary Section */}
-      <section className="mb-10">
-        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-text-tertiary mb-4 font-headline ml-1">
-          {locale === "ko" ? "핵심 동선" : "Core Flow"}
-        </h2>
-        <div className="grid gap-3">
+      <PageSection title={locale === "ko" ? "핵심 동선" : "Core Flow"}>
+        <div style={{ display: "grid", gap: "var(--space-sm)" }}>
           {primaryItems.map((item) => (
             <NavRow key={item.href} item={item} />
           ))}
         </div>
-      </section>
+      </PageSection>
 
-      {/* Tools Section */}
-      <section>
-        <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-text-tertiary mb-4 font-headline ml-1">
-          {locale === "ko" ? "보조 도구" : "Tools"}
-        </h2>
-        <div className="grid gap-3">
+      <PageSection title={locale === "ko" ? "보조 도구" : "Tools"}>
+        <div style={{ display: "grid", gap: "var(--space-sm)" }}>
           {toolItems.map((item) => (
             <NavRow key={item.href} item={item} />
           ))}
         </div>
-      </section>
-    </div>
+      </PageSection>
+    </AppPage>
   );
 }

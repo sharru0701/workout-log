@@ -18,12 +18,13 @@ const PREFETCH_ROUTES = ["/", "/workout/log", "/stats", "/calendar", "/plans"];
  * PERF: 주요 경로 prefetch로 즉각적인 네비게이션 응답성 확보.
  */
 export function AppShell({
-  initialLocale: _initialLocale,
+  initialLocale,
   children,
 }: {
   initialLocale: AppLocale;
   children: ReactNode;
 }) {
+  void initialLocale;
   const router = useRouter();
 
   // PERF: 앱 마운트 시 주요 경로 prefetch (300ms 지연 후 → 초기 렌더 차단 방지)
@@ -75,8 +76,10 @@ export function AppShell({
       <ApiCacheWarmer />
       <div className="app-shell flex flex-col min-h-screen bg-surface-base text-text">
         <main className="app-main flex-1 flex flex-col overflow-x-hidden">
-          <div className="container max-w-lg mx-auto w-full flex-1 flex flex-col">
-            {children}
+          <div className="container app-shell__content">
+            <div className="app-shell__page">
+              {children}
+            </div>
           </div>
         </main>
         <BottomNav />

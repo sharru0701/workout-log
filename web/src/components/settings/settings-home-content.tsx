@@ -1,12 +1,11 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-
 import {
   BaseGroupedList,
   NavigationRow,
   SectionFootnote,
 } from "@/components/ui/settings-list";
+import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
 import { useLocale } from "@/components/locale-provider";
 
 
@@ -58,20 +57,7 @@ type RowDef = {
 
 function SettingsSection({ title, rows }: { title: string; rows: RowDef[] }) {
   return (
-    <section style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-      <div
-        style={{
-          fontFamily: "var(--font-label-family)",
-          fontSize: 11,
-          fontWeight: 700,
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: "var(--color-text-muted)",
-          padding: "0 4px",
-        }}
-      >
-        {title}
-      </div>
+    <PageSection title={title}>
       <BaseGroupedList ariaLabel={`${title} settings`}>
         {rows.map((row) => (
           <NavigationRow
@@ -83,7 +69,7 @@ function SettingsSection({ title, rows }: { title: string; rows: RowDef[] }) {
           />
         ))}
       </BaseGroupedList>
-    </section>
+    </PageSection>
   );
 }
 
@@ -184,7 +170,6 @@ function ProfileCard() {
 // ─── Main export ──────────────────────────────────────────────
 
 export function SettingsHomeContent({ className = "" }: { className?: string }) {
-  const router = useRouter();
   const { copy } = useLocale();
 
 
@@ -274,59 +259,20 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
   ];
 
   return (
-    <div className={className || undefined}>
-      {/* ── Editorial header ── */}
-      <div
-        style={{
-          marginBottom: "var(--space-xl)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-primary)",
-            marginBottom: "4px",
-          }}
-        >
-          {copy.settings.headerEyebrow}
-        </div>
-        <h1
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "28px",
-            fontWeight: 800,
-            letterSpacing: "-0.5px",
-            color: "var(--color-text)",
-            margin: 0,
-          }}
-        >
-          {copy.settings.title}
-        </h1>
-      </div>
+    <AppPage className={className || undefined}>
+      <PageHeader
+        eyebrow={copy.settings.headerEyebrow}
+        title={copy.settings.title}
+        description={copy.settings.detailDescription}
+      />
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 24, paddingBottom: 32 }}>
-        {/* ── Profile Card ── */}
-        <ProfileCard />
+      <ProfileCard />
 
-        {/* ── App Preferences ── */}
-        <SettingsSection title={copy.settings.sections.preferences} rows={appPreferenceRows} />
+      <SettingsSection title={copy.settings.sections.preferences} rows={appPreferenceRows} />
+      <SettingsSection title={copy.settings.sections.training} rows={dataTrainingRows} />
+      <SettingsSection title={copy.settings.sections.system} rows={systemRows} />
 
-        {/* ── Data & Training ── */}
-        <SettingsSection title={copy.settings.sections.training} rows={dataTrainingRows} />
-
-        {/* ── System ── */}
-        <SettingsSection title={copy.settings.sections.system} rows={systemRows} />
-
-        <SectionFootnote>
-          {copy.settings.detailDescription}
-        </SectionFootnote>
-      </div>
-    </div>
+      <SectionFootnote>{copy.settings.detailDescription}</SectionFootnote>
+    </AppPage>
   );
 }

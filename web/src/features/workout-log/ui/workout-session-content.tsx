@@ -4,18 +4,13 @@ import { memo } from "react";
 import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { AppTextarea } from "@/components/ui/form-controls";
 import { PrimaryButton } from "@/components/ui/primary-button";
+import { FieldLabel, StickyActionBar } from "@/components/ui/page-layout";
 import type {
   ExerciseRowAction,
   InlinePickerRequest,
 } from "@/features/workout-log/model/editor-actions";
 import { formatDateFriendly } from "@/features/workout-log/model/last-session-summary";
-import type { WorkoutLogLastSessionSummary } from "@/features/workout-log/model/types";
 import { ExerciseRow } from "@/features/workout-log/ui/exercise-row";
-import {
-  areWorkoutExercisesEqual,
-  areWorkoutLogLastSessionSummariesEqual,
-  areWorkoutProgramEntryStatesEqual,
-} from "@/features/workout-log/ui/prop-equality";
 import type { AppCopy, AppLocale } from "@/lib/i18n/messages";
 import type { WorkoutWorkflowState } from "@/entities/workout-record";
 import { useAtomValue } from "jotai";
@@ -291,19 +286,7 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
         </div>
 
         <div style={{ marginBottom: "var(--space-md)" }}>
-          <div
-            style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-              marginBottom: "6px",
-            }}
-          >
-            {locale === "ko" ? "세션 메모" : "Session Memo"}
-          </div>
+          <FieldLabel>{locale === "ko" ? "세션 메모" : "Session Memo"}</FieldLabel>
           <label>
             <AppTextarea
               variant="workout"
@@ -321,7 +304,7 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
           </label>
         </div>
 
-        <div className="finish-workout-cta">
+        <StickyActionBar className="finish-workout-cta">
           <PrimaryButton
             type="button"
             variant="primary"
@@ -336,7 +319,7 @@ export const WorkoutSessionContent = memo(function WorkoutSessionContent({
                 ? copy.saveEdited
                 : copy.saveCreate}
           </PrimaryButton>
-        </div>
+        </StickyActionBar>
       </section>
     </>
   );

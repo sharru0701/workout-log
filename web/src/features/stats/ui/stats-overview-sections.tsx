@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { memo } from "react";
 import { useLocale } from "@/components/locale-provider";
+import { PageHeader, SectionHeading, StateBlock } from "@/components/ui/page-layout";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type { StatsBundleResult } from "@/server/stats/bundle-service";
 
@@ -18,46 +19,15 @@ export function StatsPageHeader() {
   const { locale } = useLocale();
 
   return (
-    <div
-      style={{
-        marginBottom: "var(--space-xl)",
-        paddingBottom: "var(--space-md)",
-      }}
-    >
-      <div
-        style={{
-          ...CAPS_LABEL_STYLE,
-          letterSpacing: "0.14em",
-          color: "var(--color-action)",
-          marginBottom: "4px",
-        }}
-      >
-        {locale === "ko" ? "퍼포먼스" : "Performance"}
-      </div>
-      <h1
-        style={{
-          fontSize: "28px",
-          fontWeight: 800,
-          letterSpacing: "-0.5px",
-          color: "var(--color-text)",
-          margin: 0,
-        }}
-      >
-        {locale === "ko" ? "통계" : "Stats"}
-      </h1>
-      <p
-        style={{
-          fontSize: "13px",
-          color: "var(--color-text-muted)",
-          marginTop: "4px",
-          lineHeight: 1.5,
-        }}
-      >
-        {locale === "ko"
+    <PageHeader
+      eyebrow={locale === "ko" ? "퍼포먼스" : "Performance"}
+      title={locale === "ko" ? "통계" : "Stats"}
+      description={
+        locale === "ko"
           ? "훈련 성과, 볼륨 추이, 종목별 최고 기록을 분석합니다."
-          : "Analyze training performance, volume trends, and exercise-specific records."}
-      </p>
-    </div>
+          : "Analyze training performance, volume trends, and exercise-specific records."
+      }
+    />
   );
 }
 
@@ -70,42 +40,7 @@ export function StatsSectionHeading({
   title: string;
   description?: string;
 }) {
-  return (
-    <div style={{ marginBottom: "var(--space-md)" }}>
-      <div
-        style={{
-          ...CAPS_LABEL_STYLE,
-          letterSpacing: "0.14em",
-          color: "var(--color-action)",
-          marginBottom: "2px",
-        }}
-      >
-        {label}
-      </div>
-      <div
-        style={{
-          fontSize: "17px",
-          fontWeight: 800,
-          letterSpacing: "-0.3px",
-          color: "var(--color-text)",
-        }}
-      >
-        {title}
-      </div>
-      {description ? (
-        <div
-          style={{
-            fontSize: "12px",
-            color: "var(--color-text-muted)",
-            marginTop: "2px",
-            lineHeight: 1.5,
-          }}
-        >
-          {description}
-        </div>
-      ) : null}
-    </div>
-  );
+  return <SectionHeading eyebrow={label} title={title} description={description} />;
 }
 
 const ComplianceRow = memo(function ComplianceRow({
@@ -315,16 +250,15 @@ export function StatsPrSection({
         {items.length > 0 ? (
           items.map((row) => <PrRow key={row.exerciseId ?? row.exerciseName} row={row} />)
         ) : (
-          <div
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              color: "var(--color-text-muted)",
-              fontSize: "13px",
-            }}
-          >
-            {locale === "ko" ? "데이터가 없습니다." : "No data available."}
-          </div>
+          <StateBlock
+            title={locale === "ko" ? "표시할 PR 데이터가 없습니다" : "No PR data yet"}
+            description={
+              locale === "ko"
+                ? "현재 선택한 기간에 개인 최고 기록 추이를 계산할 데이터가 없습니다."
+                : "There is not enough data in the selected range to calculate personal record changes."
+            }
+            tone="accent"
+          />
         )}
       </div>
     </div>
@@ -353,16 +287,15 @@ export function StatsComplianceSection({
         {items.length > 0 ? (
           items.map((row) => <ComplianceRow key={row.planId} row={row} />)
         ) : (
-          <div
-            style={{
-              padding: "20px",
-              textAlign: "center",
-              color: "var(--color-text-muted)",
-              fontSize: "13px",
-            }}
-          >
-            {locale === "ko" ? "데이터가 없습니다." : "No data available."}
-          </div>
+          <StateBlock
+            title={locale === "ko" ? "준수율 데이터가 없습니다" : "No compliance data yet"}
+            description={
+              locale === "ko"
+                ? "선택한 기간의 완료 세션이 없어 플랜 준수율을 계산할 수 없습니다."
+                : "There are no completed sessions in the selected range to calculate plan compliance."
+            }
+            tone="neutral"
+          />
         )}
       </div>
     </div>
