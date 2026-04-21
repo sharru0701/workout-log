@@ -70,6 +70,8 @@ export function useWorkoutLogSaveController({
   );
 
   const requestSave = useCallback(async () => {
+    if (store.get(workflowStateAtom) === "saving") return;
+
     const draft = store.get(draftAtom);
     const visibleExercises = store.get(visibleExercisesAtom);
     const programEntryState = store.get(programEntryStateAtom);
@@ -100,6 +102,9 @@ export function useWorkoutLogSaveController({
       return;
     }
 
+    setWorkflowState("saving");
+    setSaveError(null);
+
     try {
       const progression = await resolveWorkoutLogProgressionOverride({
         selectedPlanId: selectedPlan?.id,
@@ -112,11 +117,9 @@ export function useWorkoutLogSaveController({
         requestChoice: requestFailureProtocolChoice,
       });
       if (progression.cancelled) {
+        setWorkflowState("editing");
         return;
       }
-
-      setWorkflowState("saving");
-      setSaveError(null);
       await submitWorkoutLogDraft({
         draft,
         bodyweightKg,
