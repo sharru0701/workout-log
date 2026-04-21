@@ -302,13 +302,11 @@ function InlineExerciseForm({
 function ExerciseRowView({
   item,
   onEdit,
-  onDelete,
   disabled,
   locale,
 }: {
   item: ExerciseItem;
   onEdit: () => void;
-  onDelete: () => void;
   disabled?: boolean;
   locale: "ko" | "en";
 }) {
@@ -348,15 +346,6 @@ function ExerciseRowView({
           onClick={onEdit}
         >
           <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>edit</span>
-        </button>
-        <button
-          type="button"
-          className="btn btn-icon btn-icon-danger"
-          aria-label={locale === "ko" ? `${item.name} 삭제` : `Delete ${item.name}`}
-          disabled={disabled}
-          onClick={onDelete}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>delete</span>
         </button>
       </div>
     </div>
@@ -782,7 +771,6 @@ export function ExerciseCatalogContent() {
                     locale={locale}
                     disabled={deletingThis}
                     onEdit={() => setEditing({ id: item.id, name: item.name, category: item.category ?? "" })}
-                    onDelete={makeDeleteHandler(item)}
                   />
                 </SwipeableExerciseRow>
               )}
