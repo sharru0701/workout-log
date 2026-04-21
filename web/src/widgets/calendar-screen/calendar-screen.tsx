@@ -24,6 +24,7 @@ import {
 import {
   CalendarOverlaySheets,
 } from "@/features/calendar/ui/calendar-overlay-sheets";
+import { AppPage, PageHeader } from "@/components/ui/page-layout";
 import {
   CalendarFilterBar,
 } from "@/features/calendar/ui/calendar-filter-bar";
@@ -119,14 +120,11 @@ export function CalendarScreen({
     selectedCtx,
     selectedSession,
     isPastDateCreationBlocked,
-    hasLaterLogs,
     loggedSummary,
     nextSessionLabel,
     loggedDayLabel,
     selectedSessionWDLabel,
     recentPastLogs,
-    isLatestLog,
-    moveDateMinDate,
   } = useCalendarDerivedState({
     selectedPlan,
     selectedDate,
@@ -218,80 +216,71 @@ export function CalendarScreen({
 
   return (
     <>
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          paddingTop: "var(--space-sm)",
-          marginBottom: "var(--space-lg)",
-        }}
-      >
-        <h1 style={{
-          fontFamily: "var(--font-headline-family)",
-          fontSize: "20px",
-          fontWeight: 700,
-          letterSpacing: "-0.3px",
-          color: "var(--color-text)",
-          margin: 0,
-        }}>
-          {copy.calendar.title}
-        </h1>
-      </div>
+      <AppPage>
+        <PageHeader
+          eyebrow={locale === "ko" ? "캘린더" : "Calendar"}
+          title={copy.calendar.title}
+          description={
+            locale === "ko"
+              ? "날짜별 기록과 예정 세션을 같은 구조에서 탐색하고 조정합니다."
+              : "Browse logged sessions and planned days from one consistent calendar workspace."
+          }
+        />
 
-      <CalendarFilterBar
-        locale={locale}
-        anchorDate={anchorDate}
-        monthPickerOpen={monthPickerOpen}
-        selectedPlanName={selectedPlan?.name ?? null}
-        onOpenMonthPicker={() => setMonthPickerOpen(true)}
-        onOpenPlanPicker={openPlanPicker}
-      />
+        <CalendarFilterBar
+          locale={locale}
+          anchorDate={anchorDate}
+          monthPickerOpen={monthPickerOpen}
+          selectedPlanName={selectedPlan?.name ?? null}
+          onOpenMonthPicker={() => setMonthPickerOpen(true)}
+          onOpenPlanPicker={openPlanPicker}
+        />
 
-      <CalendarMonthCard
-        locale={locale}
-        anchorDate={anchorDate}
-        selectedDate={selectedDate}
-        today={today}
-        hasSelectedPlan={!!selectedPlan}
-        logDates={logDates}
-        monthNavFeedback={monthNavFeedback}
-        onSelectDate={selectDate}
-        onShiftPrevMonth={() => shiftMonthWithFeedback(-1)}
-        onShiftNextMonth={() => shiftMonthWithFeedback(1)}
-      />
+        <CalendarMonthCard
+          locale={locale}
+          anchorDate={anchorDate}
+          selectedDate={selectedDate}
+          today={today}
+          hasSelectedPlan={!!selectedPlan}
+          logDates={logDates}
+          monthNavFeedback={monthNavFeedback}
+          onSelectDate={selectDate}
+          onShiftPrevMonth={() => shiftMonthWithFeedback(-1)}
+          onShiftNextMonth={() => shiftMonthWithFeedback(1)}
+        />
 
-      <CalendarSelectedDateSection
-        locale={locale}
-        copy={copy.calendarMain}
-        selectedDate={selectedDate}
-        today={today}
-        selectedPlanName={selectedPlan?.name ?? null}
-        error={error}
-        isLoading={loading || selectedLogLoading || (!!planId && completedLogKey !== currentLogKey)}
-        currentSelectedLog={currentSelectedLog}
-        loggedSummary={loggedSummary}
-        workoutHref={workoutHref}
-        selectedSession={selectedSession}
-        selectedSessionWDLabel={selectedSessionWDLabel}
-        plannedExercises={plannedExercises}
-        isPastDateCreationBlocked={isPastDateCreationBlocked}
-        selectedCtx={selectedCtx}
-        nextSessionLabel={nextSessionLabel}
-        loggedDayLabel={loggedDayLabel}
-        onMoveDateCommit={handleMoveDateCommit}
-        onDeleteLog={handleOpenDeleteLog}
-      />
+        <CalendarSelectedDateSection
+          locale={locale}
+          copy={copy.calendarMain}
+          selectedDate={selectedDate}
+          today={today}
+          selectedPlanName={selectedPlan?.name ?? null}
+          error={error}
+          isLoading={loading || selectedLogLoading || (!!planId && completedLogKey !== currentLogKey)}
+          currentSelectedLog={currentSelectedLog}
+          loggedSummary={loggedSummary}
+          workoutHref={workoutHref}
+          selectedSession={selectedSession}
+          selectedSessionWDLabel={selectedSessionWDLabel}
+          plannedExercises={plannedExercises}
+          isPastDateCreationBlocked={isPastDateCreationBlocked}
+          selectedCtx={selectedCtx}
+          nextSessionLabel={nextSessionLabel}
+          loggedDayLabel={loggedDayLabel}
+          onMoveDateCommit={handleMoveDateCommit}
+          onDeleteLog={handleOpenDeleteLog}
+        />
 
-      <CalendarRecentLogsSection
-        locale={locale}
-        title={copy.calendarMain.recentLogs}
-        timezone={timezone}
-        selectedPlanName={selectedPlan?.name ?? null}
-        generatedById={generatedById}
-        recentPastLogs={recentPastLogs}
-        onSelectDate={focusDate}
-      />
+        <CalendarRecentLogsSection
+          locale={locale}
+          title={copy.calendarMain.recentLogs}
+          timezone={timezone}
+          selectedPlanName={selectedPlan?.name ?? null}
+          generatedById={generatedById}
+          recentPastLogs={recentPastLogs}
+          onSelectDate={focusDate}
+        />
+      </AppPage>
 
       <CalendarOverlaySheets
         copy={copy.calendar}

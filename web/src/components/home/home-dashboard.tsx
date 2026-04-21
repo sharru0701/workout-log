@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { NavRow } from "@/components/workout/nav-row";
+import { PageSection } from "@/components/ui/page-layout";
 import type {
   HomeData,
   HomeLastSession,
@@ -261,7 +263,7 @@ function LastEntryBento({ session, copy }: { session: HomeLastSession; copy: App
 
 // ─── Section 5: Logistics Quick Links ────────────────────────────────
 
-function LogisticsSection({ copy }: { copy: AppCopy }) {
+function LogisticsSection({ copy, locale }: { copy: AppCopy; locale: AppLocale }) {
   const links = [
     {
       href: APP_ROUTES.programStore,
@@ -290,31 +292,22 @@ function LogisticsSection({ copy }: { copy: AppCopy }) {
   ];
 
   return (
-    <section className="hd-section">
-      <div className="hd-section__header">
-        <h3 className="hd-section__title">{copy.home.logistics.title}</h3>
-      </div>
-      <div className="hd-logistics">
+    <PageSection title={copy.home.logistics.title}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
         {links.map((link) => (
-          <Link key={link.href} href={link.href} className="hd-logistics-row">
-            <div className="hd-logistics-row__left">
-              <div className="hd-logistics-row__icon-wrap">
-                <span className="material-symbols-outlined hd-logistics-row__icon">
-                  {link.icon}
-                </span>
-              </div>
-              <div>
-                <p className="hd-logistics-row__title">{link.title}</p>
-                <p className="hd-logistics-row__subtitle">{link.subtitle}</p>
-              </div>
-            </div>
-            <span className="material-symbols-outlined hd-logistics-row__arrow">
-              arrow_forward_ios
-            </span>
-          </Link>
+          <NavRow
+            key={link.href}
+            item={{
+              href: link.href,
+              iconSymbol: link.icon,
+              subtitle: locale === "ko" ? "바로가기" : "Shortcut",
+              label: link.title,
+              description: link.subtitle,
+            }}
+          />
         ))}
       </div>
-    </section>
+    </PageSection>
   );
 }
 
@@ -332,7 +325,7 @@ export function HomeDashboard({ data, copy, locale }: { data: HomeData; copy: Ap
         copy={copy}
       />
       {data.lastSession && <LastEntryBento session={data.lastSession} copy={copy} />}
-      <LogisticsSection copy={copy} />
+      <LogisticsSection copy={copy} locale={locale} />
     </div>
   );
 }

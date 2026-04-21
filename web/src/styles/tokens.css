@@ -352,6 +352,21 @@
   --font-heading: var(--font-section-title);
 
   /* ============================
+     LAYOUT + SURFACE SYSTEM
+     ============================ */
+  --layout-max: 42rem;
+  --layout-max-wide: 52rem;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --shadow-elevated: 0 18px 36px color-mix(in srgb, var(--shadow-color-medium) 78%, transparent);
+  --shadow-floating: 0 22px 44px color-mix(in srgb, var(--shadow-color-strong) 78%, transparent);
+  --token-page-bg: var(--color-bg);
+  --color-surface-raised: color-mix(in srgb, var(--color-surface-container-high) 88%, var(--color-surface-container-low));
+  --color-primary-container: var(--color-action);
+  --color-on-primary: var(--color-text-on-action);
+
+  /* ============================
      SPACING SYSTEM
      ============================ */
   --space-xs: 4px;

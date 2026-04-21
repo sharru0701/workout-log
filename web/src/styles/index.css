@@ -3,6 +3,7 @@
 @import "./layout.css";
 
 /* Components */
+@import "./components/app-page.css";
 @import "./components/card.css";
 @import "./components/button.css";
 @import "./components/metric.css";

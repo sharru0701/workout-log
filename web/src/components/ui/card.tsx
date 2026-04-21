@@ -4,7 +4,7 @@ function cx(...classes: Array<string | false | null | undefined>) {
   return classes.filter(Boolean).join(" ");
 }
 
-type CardTone = "default" | "subtle" | "inset" | "accent" | "danger";
+type CardTone = "default" | "subtle" | "inset" | "accent" | "danger" | "success";
 type CardPadding = "none" | "sm" | "md" | "lg";
 
 type CardOwnProps = {
@@ -104,7 +104,7 @@ export function CardContent({ children, className = "", ...props }: CardSectionP
 
 export function CardFooter({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx(className)} {...props}>
       {children}
     </div>
   );
@@ -112,7 +112,7 @@ export function CardFooter({ children, className = "", ...props }: CardSectionPr
 
 export function CardActionGroup({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx(className)} {...props}>
       {children}
     </div>
   );
@@ -120,7 +120,7 @@ export function CardActionGroup({ children, className = "", ...props }: CardSect
 
 export function CardMetaGrid({ children, className = "", ...props }: CardSectionProps) {
   return (
-    <div {...props}>
+    <div className={cx(className)} {...props}>
       {children}
     </div>
   );
@@ -128,7 +128,7 @@ export function CardMetaGrid({ children, className = "", ...props }: CardSection
 
 export function CardMetaItem({ label, value, className = "" }: CardMetaItemProps) {
   return (
-    <div>
+    <div className={cx(className)}>
       <div>{label}</div>
       <div>{value}</div>
     </div>

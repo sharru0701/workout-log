@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
+import { NavRow } from "@/components/workout/nav-row";
+import { Button } from "@/components/ui/button";
+import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
 
 type NavItem = {
   href: string;
@@ -9,82 +12,6 @@ type NavItem = {
   description: string;
   iconSymbol: string;
 };
-
-function NavRow({ item }: { item: NavItem }) {
-  return (
-    <Link
-      href={item.href}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "var(--space-md)",
-        padding: "14px 16px",
-        borderRadius: "14px",
-        background: "var(--color-surface-container-low)",
-        textDecoration: "none",
-        transition: "background 0.12s ease",
-      }}
-    >
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 22,
-          color: "var(--color-primary)",
-          flexShrink: 0,
-          fontVariationSettings: "'FILL' 0, 'wght' 300",
-        }}
-        aria-hidden="true"
-      >
-        {item.iconSymbol}
-      </span>
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--color-primary)",
-            marginBottom: "1px",
-          }}
-        >
-          {item.subtitle}
-        </div>
-        <div
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "15px",
-            fontWeight: 700,
-            color: "var(--color-text)",
-            letterSpacing: "-0.1px",
-            marginBottom: "2px",
-          }}
-        >
-          {item.label}
-        </div>
-        <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.4 }}>
-          {item.description}
-        </div>
-      </div>
-
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 18,
-          color: "var(--color-text-muted)",
-          opacity: 0.5,
-          flexShrink: 0,
-          fontVariationSettings: "'FILL' 0, 'wght' 300",
-        }}
-        aria-hidden="true"
-      >
-        chevron_right
-      </span>
-    </Link>
-  );
-}
 
 export default async function TemplatesIndexPage() {
   const locale = await resolveRequestLocale();
@@ -123,113 +50,33 @@ export default async function TemplatesIndexPage() {
   ];
 
   return (
-    <div>
-      {/* Header */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          marginBottom: "var(--space-xl)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div>
-          <div
-            style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: "10px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              color: "var(--color-primary)",
-              marginBottom: "4px",
-            }}
-          >
-            {copy.templates.headerEyebrow}
-          </div>
-          <h1
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "28px",
-              fontWeight: 800,
-              letterSpacing: "-0.5px",
-              color: "var(--color-text)",
-              margin: 0,
-            }}
-          >
-            {copy.templates.title}
-          </h1>
-        </div>
-        <Link
-          href={APP_ROUTES.templatesManage}
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "14px",
-            fontWeight: 700,
-            color: "var(--color-primary)",
-            textDecoration: "none",
-            marginTop: "4px",
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-          }}
-        >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: 18, fontVariationSettings: "'FILL' 0, 'wght' 300" }}
-            aria-hidden="true"
-          >
-            style
-          </span>
-          {copy.templates.manage}
-        </Link>
-      </div>
+    <AppPage>
+      <PageHeader
+        eyebrow={copy.templates.headerEyebrow}
+        title={copy.templates.title}
+        description={locale === "ko" ? "템플릿 운영 흐름과 프로그램 연동 지점을 같은 방식으로 탐색합니다." : "Browse template workflows and downstream program integration with the same shared navigation pattern."}
+        actions={(
+          <Button as={Link} href={APP_ROUTES.templatesManage} variant="secondary">
+            {copy.templates.manage}
+          </Button>
+        )}
+      />
 
-      {/* Library Section */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "13px",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            color: "var(--color-text-muted)",
-            margin: "0 0 var(--space-sm)",
-          }}
-        >
-          {copy.templates.workSection}
-        </h2>
+      <PageSection title={copy.templates.workSection}>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {libraryItems.map((item) => (
             <NavRow key={`${item.href}-${item.iconSymbol}`} item={item} />
           ))}
         </div>
-      </div>
+      </PageSection>
 
-      {/* Integration Section */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        <h2
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "13px",
-            fontWeight: 700,
-            letterSpacing: "0.06em",
-            textTransform: "uppercase",
-            color: "var(--color-text-muted)",
-            margin: "0 0 var(--space-sm)",
-          }}
-        >
-          {copy.templates.flowSection}
-        </h2>
+      <PageSection title={copy.templates.flowSection}>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
           {integrationItems.map((item) => (
             <NavRow key={item.href} item={item} />
           ))}
         </div>
-      </div>
-    </div>
+      </PageSection>
+    </AppPage>
   );
 }

@@ -19,6 +19,22 @@
   touch-action: pan-y;
 }
 
+.app-shell__content {
+  width: 100%;
+  max-width: var(--layout-max);
+  margin: 0 auto;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
+
+.app-shell__page {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding-bottom: var(--space-xl);
+}
+
 /* Base utility padding container */
 .container {
   padding-left: var(--space-md);

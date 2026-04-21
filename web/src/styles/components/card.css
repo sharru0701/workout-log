@@ -1,10 +1,10 @@
 .card {
   --card-bg: var(--color-surface-container-low);
-  --card-border: var(--color-border);
+  --card-border: color-mix(in srgb, var(--color-border) 18%, transparent);
   --card-text: var(--color-text);
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   overflow: hidden;
   padding: var(--space-md);
   margin-bottom: var(--space-md);
@@ -16,40 +16,42 @@
   text-align: left;
   cursor: inherit;
   font: inherit;
+  box-shadow: 0 10px 22px color-mix(in srgb, var(--shadow-color-soft) 68%, transparent);
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease,
-    color 0.2s ease;
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .card[data-card-tone="default"] {
   --card-bg: var(--color-surface-container-low);
-  --card-border: var(--color-border);
+  --card-border: color-mix(in srgb, var(--color-border) 18%, transparent);
 }
 
 .card[data-card-tone="subtle"] {
   --card-bg: color-mix(in srgb, var(--color-surface-2) 82%, var(--color-surface-container-low));
-  --card-border: color-mix(in srgb, var(--color-border-strong) 18%, var(--color-border));
+  --card-border: color-mix(in srgb, var(--color-border-strong) 16%, transparent);
 }
 
 .card[data-card-tone="inset"] {
   --card-bg: color-mix(in srgb, var(--color-surface-2) 92%, var(--color-bg));
-  --card-border: color-mix(in srgb, var(--color-border-strong) 26%, var(--color-border));
+  --card-border: color-mix(in srgb, var(--color-border-strong) 18%, transparent);
 }
 
 .card[data-card-tone="accent"] {
   --card-bg: color-mix(in srgb, var(--color-action) 10%, var(--color-surface-container-low));
-  --card-border: color-mix(in srgb, var(--color-action) 28%, var(--color-border));
+  --card-border: color-mix(in srgb, var(--color-action) 20%, transparent);
 }
 
 .card[data-card-tone="danger"] {
   --card-bg: color-mix(in srgb, var(--color-danger) 10%, var(--color-surface-container-low));
-  --card-border: color-mix(in srgb, var(--color-danger) 34%, var(--color-border));
+  --card-border: color-mix(in srgb, var(--color-danger) 20%, transparent);
 }
 
 .card[data-card-tone="success"] {
   --card-bg: color-mix(in srgb, var(--color-success) 12%, var(--color-surface-container-low));
-  --card-border: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+  --card-border: color-mix(in srgb, var(--color-success) 22%, transparent);
 }
 
 .card[data-card-interactive="true"] {
@@ -58,6 +60,7 @@
 
 .card[data-card-interactive="true"]:active {
   background-color: color-mix(in srgb, var(--card-bg) 90%, var(--color-surface-active));
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--shadow-color-soft) 64%, transparent);
 }
 
 .card-header {

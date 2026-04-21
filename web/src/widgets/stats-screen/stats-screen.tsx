@@ -9,6 +9,7 @@ import {
   StatsPrSection,
   StatsSectionHeading,
 } from "@/features/stats/ui/stats-overview-sections";
+import { AppPage } from "@/components/ui/page-layout";
 import type { Stats1RMDetailedRef } from "@/features/stats/ui/stats-1rm-detailed";
 import type { StatsPageBootstrap } from "@/server/services/stats/get-stats-page-bootstrap";
 import { useLocale } from "@/components/locale-provider";
@@ -56,7 +57,7 @@ export function StatsScreen({
   }, [searchParams]);
 
   return (
-    <div>
+    <AppPage>
       <StatsPageHeader />
 
       <div style={{ marginBottom: "var(--space-xl)" }} ref={detailedSectionRef}>
@@ -84,6 +85,6 @@ export function StatsScreen({
 
       <StatsPrSection items={initialBundle.prs90d} />
       <StatsComplianceSection items={initialBundle.compliance90d.byPlan} />
-    </div>
+    </AppPage>
   );
 }

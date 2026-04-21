@@ -3,9 +3,7 @@
 import {
   forwardRef,
   useCallback,
-  useEffect,
   useMemo,
-  useState,
   type InputHTMLAttributes,
   type SelectHTMLAttributes,
   type TextareaHTMLAttributes,
@@ -22,18 +20,18 @@ function cx(...values: ClassValue[]) {
 
 function resolveControlClassName(variant: FormControlVariant) {
   if (variant === "workout-number") {
-    return "app-form-control workout-set-input workout-set-input-number workout-record-framed-input";
+    return "app-form-control app-form-control--workout app-form-control--workout-number workout-set-input workout-set-input-number workout-record-framed-input";
   }
   if (variant === "workout") {
-    return "app-form-control workout-set-input workout-set-input-text workout-record-framed-input";
+    return "app-form-control app-form-control--workout workout-set-input workout-set-input-text workout-record-framed-input";
   }
   if (variant === "dense") {
-    return "app-form-control rounded-lg border px-2 py-1 text-sm";
+    return "app-form-control app-form-control--dense";
   }
   if (variant === "compact") {
-    return "app-form-control rounded-lg border px-3 py-2 text-sm";
+    return "app-form-control app-form-control--compact";
   }
-  return "app-form-control rounded-lg border px-3 py-3 text-base";
+  return "app-form-control app-form-control--default";
 }
 
 export function AppPlusMinusIcon({
@@ -61,14 +59,14 @@ export const AppTextInput = forwardRef<
   HTMLInputElement,
   InputHTMLAttributes<HTMLInputElement> & { variant?: FormControlVariant }
 >(function AppTextInput({ variant = "default", className, style, ...props }, ref) {
-  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", ...style }} {...props} />;
+  return <input ref={ref} className={cx(resolveControlClassName(variant), className)} style={style} {...props} />;
 });
 
 export const AppTextarea = forwardRef<
   HTMLTextAreaElement,
   TextareaHTMLAttributes<HTMLTextAreaElement> & { variant?: FormControlVariant }
 >(function AppTextarea({ variant = "default", className, style, ...props }, ref) {
-  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ width: "100%", padding: "var(--space-sm) var(--space-md)", border: "1px solid var(--color-border)", borderRadius: "8px", font: "var(--font-body)", backgroundColor: "var(--color-surface-container-low)", color: "var(--color-text)", outline: "none", boxSizing: "border-box", minHeight: "60px", resize: "vertical", ...style }} {...props} />;
+  return <textarea ref={ref} className={cx(resolveControlClassName(variant), className)} style={{ minHeight: "96px", resize: "vertical", ...style }} {...props} />;
 });
 
 export const AppSelect = forwardRef<
@@ -84,6 +82,7 @@ export const AppSelect = forwardRef<
     variant = "default",
     wrapperClassName,
     className,
+    style,
     children,
     multiple,
     size,
@@ -169,20 +168,12 @@ export const AppSelect = forwardRef<
     className,
   );
   const selectBaseStyle = {
-    width: "100%",
-    padding: "var(--space-sm) var(--space-md)",
-    border: "1px solid var(--color-border)",
-    borderRadius: "8px",
-    font: "var(--font-body)",
-    backgroundColor: "var(--color-surface-container-low)",
-    color: "var(--color-text)",
-    outline: "none",
-    boxSizing: "border-box" as const,
+    style,
   };
 
   if (!supportsSingleChevron) {
     return (
-      <select ref={ref} className={resolvedClassName} style={selectBaseStyle} {...props} multiple={multiple} size={size}>
+      <select ref={ref} className={resolvedClassName} style={selectBaseStyle.style} {...props} multiple={multiple} size={size}>
         {children}
       </select>
     );
@@ -193,7 +184,7 @@ export const AppSelect = forwardRef<
       <select
         ref={ref}
         className={resolvedClassName}
-        style={{ ...selectBaseStyle, paddingRight: "2.25rem", appearance: "none", WebkitAppearance: "none" }}
+        style={{ paddingRight: "2.25rem", appearance: "none", WebkitAppearance: "none", ...selectBaseStyle.style }}
         {...props}
         multiple={multiple}
         size={size}
@@ -252,6 +243,11 @@ export function AppNumberStepper({
   onDisplayValueChange?: (next: string) => void;
   complete?: boolean;
 }) {
+  void _placeholder;
+  void _allowEmpty;
+  void _displayValue;
+  void _onDisplayValueChange;
+
   const stepPrecision = useMemo(() => {
     const raw = String(step);
     if (!raw.includes(".")) return 0;

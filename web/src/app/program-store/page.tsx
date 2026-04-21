@@ -15,7 +15,7 @@ async function ProgramStorePageContent() {
 
 function ProgramStoreLoading() {
   return (
-    <div className="flex min-h-screen flex-col bg-[var(--token-page-bg)]" />
+    <div style={{ minHeight: "100dvh", background: "var(--token-page-bg)" }} />
   );
 }
 

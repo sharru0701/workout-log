@@ -1,11 +1,8 @@
 "use client";
 
 import { SearchInput } from "@/components/ui/search-input";
-import {
-  EmptyStateRows,
-  ErrorStateRows,
-  NoticeStateRows,
-} from "@/components/ui/settings-state";
+import { Button } from "@/components/ui/button";
+import { AppPage, PageHeader, PageSection, StateBlock } from "@/components/ui/page-layout";
 import type { ProgramListItem } from "@/lib/program-store/model";
 import { ProgramListCard } from "./program-list-card";
 
@@ -72,53 +69,31 @@ export function ProgramStoreBrowseContent({
   onOpenCreateSheet,
 }: ProgramStoreBrowseContentProps) {
   return (
-    <>
-      <div
-        style={{
-          marginBottom: "var(--space-xl)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-primary)",
-            marginBottom: "4px",
-          }}
-        >
-          {copy.eyebrow}
-        </div>
-        <h1
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "28px",
-            fontWeight: 800,
-            letterSpacing: "-0.5px",
-            color: "var(--color-text)",
-            margin: "0 0 var(--space-sm)",
-          }}
-        >
-          {copy.title}
-        </h1>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "var(--color-text-muted)",
-            margin: 0,
-            lineHeight: 1.5,
-          }}
-        >
-          {copy.description}
-        </p>
-      </div>
+    <AppPage>
+      <PageHeader eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
 
-      <ErrorStateRows message={error} title={copy.loadError} onRetry={onRetry} />
-      <NoticeStateRows message={notice} label={copy.notice} />
+      {error ? (
+        <StateBlock
+          tone="danger"
+          icon="warning"
+          title={copy.loadError}
+          description={error}
+          action={(
+            <Button variant="secondary" onClick={onRetry}>
+              {locale === "ko" ? "다시 시도" : "Retry"}
+            </Button>
+          )}
+        />
+      ) : null}
+
+      {notice ? (
+        <StateBlock
+          tone="success"
+          icon="check_circle"
+          title={copy.notice}
+          description={notice}
+        />
+      ) : null}
 
       {listItems.length > 0 || hasStoreQuery ? (
         <SearchInput
@@ -136,7 +111,6 @@ export function ProgramStoreBrowseContent({
             gap: "var(--space-sm)",
             overflowX: "auto",
             paddingBottom: "var(--space-xs)",
-            marginBottom: "var(--space-md)",
             scrollbarWidth: "none",
             msOverflowStyle: "none",
           }}
@@ -147,12 +121,9 @@ export function ProgramStoreBrowseContent({
               type="button"
               onClick={() => onChangeCategoryFilter(category.key)}
               style={{
-                padding: "8px 20px",
+                padding: "8px 18px",
                 borderRadius: 9999,
-                border:
-                  categoryFilter === category.key
-                    ? "none"
-                    : "1px solid var(--color-border)",
+                border: "1px solid transparent",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 fontFamily: "var(--font-label-family)",
@@ -169,6 +140,10 @@ export function ProgramStoreBrowseContent({
                   categoryFilter === category.key
                     ? "var(--color-on-primary)"
                     : "var(--color-text-muted)",
+                boxShadow:
+                  categoryFilter === category.key
+                    ? "0 10px 20px color-mix(in srgb, var(--shadow-color-soft) 68%, transparent)"
+                    : "none",
               }}
             >
               {category.label}
@@ -177,52 +152,44 @@ export function ProgramStoreBrowseContent({
         </div>
       ) : null}
 
-      <EmptyStateRows
-        when={isStoreSettled && !error && listItems.length > 0 && filteredListItems.length === 0}
-        label={copy.emptySearch}
-        description={copy.emptySearchDescription}
-      />
+      {isStoreSettled && !error && listItems.length > 0 && filteredListItems.length === 0 ? (
+        <StateBlock
+          title={copy.emptySearch}
+          description={copy.emptySearchDescription}
+          tone="accent"
+          icon="search_off"
+        />
+      ) : null}
 
-      <EmptyStateRows
-        when={
-          isStoreSettled &&
-          !error &&
-          filteredListItems.length > 0 &&
-          categoryFilteredItems.length === 0
-        }
-        label={
-          locale === "ko"
-            ? "해당 카테고리의 프로그램이 없습니다"
-            : "No programs in this category"
-        }
-        description={
-          locale === "ko"
-            ? "다른 카테고리를 선택하거나 전체를 확인해 보세요."
-            : "Try a different category or browse all programs."
-        }
-      />
+      {isStoreSettled &&
+      !error &&
+      filteredListItems.length > 0 &&
+      categoryFilteredItems.length === 0 ? (
+        <StateBlock
+          title={locale === "ko" ? "해당 카테고리의 프로그램이 없습니다" : "No programs in this category"}
+          description={
+            locale === "ko"
+              ? "다른 카테고리를 선택하거나 전체를 확인해 보세요."
+              : "Try a different category or browse all programs."
+          }
+          tone="neutral"
+          icon="playlist_remove"
+        />
+      ) : null}
 
       {!hasStoreQuery || marketListItems.length > 0 || (isStoreSettled && listItems.length === 0) ? (
-        <section style={{ marginBottom: "var(--space-lg)" }}>
-          <div style={{ marginBottom: "var(--space-sm)" }}>
-            <h2
-              style={{
-                fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "var(--color-text-muted)",
-                margin: 0,
-              }}
-            >
-              {locale === "ko" ? "공식 프로그램" : "Official Programs"}
-            </h2>
-          </div>
-          <EmptyStateRows
-            when={isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0}
-            label={locale === "ko" ? "표시할 프로그램이 없습니다" : "No programs to show"}
-          />
+        <PageSection title={locale === "ko" ? "공식 프로그램" : "Official Programs"}>
+          {isStoreSettled && !error && !hasStoreQuery && marketListItems.length === 0 ? (
+            <StateBlock
+              title={locale === "ko" ? "표시할 프로그램이 없습니다" : "No programs to show"}
+              description={
+                locale === "ko"
+                  ? "새 시드나 공개 템플릿이 추가되면 이 영역에 나타납니다."
+                  : "Seeded and public templates will appear here when available."
+              }
+              icon="inventory_2"
+            />
+          ) : null}
           {marketListItems.length > 0 ? (
             <div>
               {marketListItems.map((item) => (
@@ -235,26 +202,11 @@ export function ProgramStoreBrowseContent({
               ))}
             </div>
           ) : null}
-        </section>
+        </PageSection>
       ) : null}
 
       {customListItems.length > 0 || (!hasStoreQuery && customProgramCount > 0) ? (
-        <section style={{ marginBottom: "var(--space-lg)" }}>
-          <div style={{ marginBottom: "var(--space-sm)" }}>
-            <h2
-              style={{
-                fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
-                fontWeight: 700,
-                letterSpacing: "0.06em",
-                textTransform: "uppercase",
-                color: "var(--color-text-muted)",
-                margin: 0,
-              }}
-            >
-              {locale === "ko" ? "내 프로그램" : "My Programs"}
-            </h2>
-          </div>
+        <PageSection title={locale === "ko" ? "내 프로그램" : "My Programs"}>
           <div>
             {customListItems.map((item) => (
               <ProgramListCard
@@ -265,52 +217,33 @@ export function ProgramStoreBrowseContent({
               />
             ))}
           </div>
-        </section>
+        </PageSection>
       ) : null}
 
-      <section style={{ marginBottom: "var(--space-lg)" }}>
-        <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "13px",
-              fontWeight: 700,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--color-text-muted)",
-              margin: 0,
-            }}
-          >
-            {locale === "ko" ? "프로그램 만들기" : "Create Program"}
-          </h2>
-        </div>
-        <button
-          type="button"
-          onClick={onOpenCreateSheet}
-          style={{
-            width: "100%",
-            background: "var(--color-action)",
-            color: "#fff",
-            border: "none",
-            borderRadius: 14,
-            padding: "var(--space-md)",
-            cursor: "pointer",
-            textAlign: "left",
-            display: "flex",
-            flexDirection: "column",
-            gap: "4px",
-          }}
-        >
-          <span style={{ fontSize: "15px", fontWeight: 800, letterSpacing: "-0.2px" }}>
-            {locale === "ko" ? "새 프로그램 만들기" : "Create a New Program"}
-          </span>
-          <span style={{ fontSize: "12px", opacity: 0.82 }}>
-            {locale === "ko"
+      <PageSection
+        title={locale === "ko" ? "프로그램 만들기" : "Create Program"}
+        description={
+          locale === "ko"
+            ? "기존 구조를 복제하거나 새 프로그램을 직접 구성할 수 있습니다."
+            : "Clone an existing structure or build a brand new program from scratch."
+        }
+      >
+        <StateBlock
+          tone="accent"
+          icon="add_circle"
+          title={locale === "ko" ? "새 프로그램 만들기" : "Create a New Program"}
+          description={
+            locale === "ko"
               ? "기존 프로그램을 바탕으로 시작하거나 직접 새 구조를 만드세요."
-              : "Start from an existing program or build a fresh structure from scratch."}
-          </span>
-        </button>
-      </section>
-    </>
+              : "Start from an existing program or build a fresh structure from scratch."
+          }
+          action={(
+            <Button fullWidth onClick={onOpenCreateSheet}>
+              {locale === "ko" ? "프로그램 만들기" : "Create Program"}
+            </Button>
+          )}
+        />
+      </PageSection>
+    </AppPage>
   );
 }
