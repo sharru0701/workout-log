@@ -156,9 +156,10 @@ export function CalendarScreen({
 
   // ── Move date (direct picker) ────────────────────────────────────────────────
   const [moveDateConflictOpen, setMoveDateConflictOpen] = useState(false);
+  const [movingDate, setMovingDate] = useState(false);
 
   const handleMoveDateCommit = useCallback(async (newDate: string) => {
-    if (!currentSelectedLog?.id) return;
+    if (!currentSelectedLog?.id || movingDate) return;
 
     // 오토프로그레션 플랜의 경우 이동 범위 내 다른 기록 충돌 체크
     if (isAutoProgressionPlan) {
@@ -173,6 +174,7 @@ export function CalendarScreen({
       }
     }
 
+    setMovingDate(true);
     const newPerformedAt = new Date(`${newDate}T12:00:00Z`).toISOString();
     applyOptimisticDateMove(currentSelectedLog.id, newDate, newPerformedAt);
     focusDate(newDate);
@@ -185,8 +187,10 @@ export function CalendarScreen({
       refresh();
     } catch {
       refresh();
+    } finally {
+      setMovingDate(false);
     }
-  }, [currentSelectedLog?.id, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh]);
+  }, [currentSelectedLog?.id, movingDate, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -199,9 +203,12 @@ export function CalendarScreen({
     setDeleteConfirmOpen(false);
   }, []);
 
+  const [deletingLog, setDeletingLog] = useState(false);
+
   const handleConfirmDelete = useCallback(async () => {
-    if (!currentSelectedLog?.id) return;
+    if (!currentSelectedLog?.id || deletingLog) return;
     const logId = currentSelectedLog.id;
+    setDeletingLog(true);
     // 낙관적 업데이트: API 완료 전 즉시 제거
     applyOptimisticDelete(logId);
     setDeleteConfirmOpen(false);
@@ -211,8 +218,10 @@ export function CalendarScreen({
     } catch {
       // 실패 시 서버 데이터로 복원
       refresh();
+    } finally {
+      setDeletingLog(false);
     }
-  }, [currentSelectedLog?.id, applyOptimisticDelete, refresh]);
+  }, [currentSelectedLog?.id, deletingLog, applyOptimisticDelete, refresh]);
 
   return (
     <>
