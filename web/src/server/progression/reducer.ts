@@ -421,12 +421,17 @@ export function reduceProgressionState(input: {
     }
 
     if (input.program === "operator" || input.program === "wendler-531") {
-      // 블록 기반 프로그램: LP 진행 로직 없이 스트릭만 누적
+      // 블록 기반 프로그램: LP 진행 로직 없이 스트릭만 누적.
+      // 단, 다음 세션에서 회복하면 failure 스트릭이 리셋되도록 LP 경로와 동일하게
+      // 반대편 스트릭을 0으로 만든다 — 블록 중간에 한 세트만 실패해도
+      // 끝까지 failureStreak이 남아 블록 완료 후 자동 증량을 막던 문제 방지.
       if (success) {
         next.successStreak += 1;
+        next.failureStreak = 0;
         reason = "hold:block-success";
       } else {
         next.failureStreak += 1;
+        next.successStreak = 0;
         reason = "hold:block-failure";
       }
 
