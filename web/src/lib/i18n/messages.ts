@@ -349,9 +349,13 @@ export type AppCopy = {
     noRecord: string;
     planName: string;
     planNamePlaceholder: string;
+    strengthBaselines: string;
+    oneRepMax: string;
+    trainingMax: string;
+    noStrengthBaselines: string;
     viewHistory: string;
     saveInProgress: string;
-    saveName: string;
+    saveChanges: string;
     deleteInProgress: string;
     deletePlan: string;
     notFound: string;
@@ -833,9 +837,13 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       noRecord: "기록 없음",
       planName: "플랜 이름",
       planNamePlaceholder: "플랜 이름",
+      strengthBaselines: "시작 기준 1RM/TM",
+      oneRepMax: "예상 1RM",
+      trainingMax: "TM",
+      noStrengthBaselines: "저장된 시작 기준 1RM/TM이 없습니다.",
       viewHistory: "수행 히스토리 보기",
       saveInProgress: "저장 중...",
-      saveName: "이름 저장",
+      saveChanges: "변경사항 저장",
       deleteInProgress: "삭제 중...",
       deletePlan: "플랜 삭제",
       notFound: "관리할 플랜을 찾을 수 없습니다.",
@@ -1315,9 +1323,13 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       noRecord: "No record",
       planName: "Plan Name",
       planNamePlaceholder: "Plan name",
+      strengthBaselines: "Starting 1RM/TM",
+      oneRepMax: "Estimated 1RM",
+      trainingMax: "TM",
+      noStrengthBaselines: "No starting 1RM/TM values are saved.",
       viewHistory: "View History",
       saveInProgress: "Saving...",
-      saveName: "Save Name",
+      saveChanges: "Save Changes",
       deleteInProgress: "Deleting...",
       deletePlan: "Delete Plan",
       notFound: "Could not find the plan to manage.",
