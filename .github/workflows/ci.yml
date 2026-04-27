@@ -2,12 +2,6 @@ name: CI
 
 on:
   pull_request:
-    paths:
-      - "web/**"
-      - ".github/workflows/ci.yml"
-      - ".github/workflows/**"
-      - "deploy/**"
-      - "infra/**"
   push:
     branches: [main]
     paths:
