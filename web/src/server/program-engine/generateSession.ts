@@ -11,7 +11,7 @@ import {
   programVersion,
 } from "@/server/db/schema";
 import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
-import { roundUpToNearest2p5 } from "./round";
+import { roundToNearest2p5 } from "./round";
 
 type AccessoryPatch = {
   op: "ADD_ACCESSORY";
@@ -153,10 +153,6 @@ function manualExerciseKey(exerciseName: string) {
     .replace(/[^A-Z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .slice(0, 48)}`;
-}
-
-function roundToNearest2p5(v: number) {
-  return Math.round(v / 2.5) * 2.5;
 }
 
 function toDateOnlyInTimezone(date: Date, timezone: string) {
@@ -373,7 +369,7 @@ function buildPercentSets(
   return rows.map((row) => ({
     reps: row.reps,
     percent: row.percent,
-    targetWeightKg: roundUpToNearest2p5(tmKg * row.percent),
+    targetWeightKg: roundToNearest2p5(tmKg * row.percent),
     rpe: row.rpe,
     note: row.note,
   }));
@@ -387,7 +383,7 @@ function buildRepeatedSets(
   return Array.from({ length: count }, () => ({
     reps: row.reps,
     percent: row.percent,
-    targetWeightKg: roundUpToNearest2p5(tmKg * row.percent),
+    targetWeightKg: roundToNearest2p5(tmKg * row.percent),
     rpe: row.rpe,
     note: row.note,
   }));
@@ -486,7 +482,7 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
       sets: Array.from({ length: 5 }, () => ({
         reps: 5,
         percent: firstSetPercent,
-        targetWeightKg: roundUpToNearest2p5(tm * firstSetPercent),
+        targetWeightKg: roundToNearest2p5(tm * firstSetPercent),
         note: "FSL",
       })),
     });
@@ -500,7 +496,7 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
       sets: Array.from({ length: 5 }, () => ({
         reps: 10,
         percent: 0.50,
-        targetWeightKg: roundUpToNearest2p5(tm * 0.50),
+        targetWeightKg: roundToNearest2p5(tm * 0.50),
         note: "BBB",
       })),
     });
