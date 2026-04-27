@@ -34,7 +34,6 @@ export const statsPlanScopeOptions: SelectionOptionSeed[] = [
 export const statsMetricOptions: SelectionOptionSeed[] = [
   { value: "e1rm", label: "e1RM", description: "Estimated one-rep max trend and records." },
   { value: "volume", label: "Volume", description: "Tonnage, set, and rep totals." },
-  { value: "compliance", label: "Compliance", description: "Planned versus completed sessions." },
   { value: "prs", label: "PR Tracking", description: "Best and latest PR deltas." },
 ];
 

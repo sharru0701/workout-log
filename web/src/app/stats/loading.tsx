@@ -74,41 +74,6 @@ export default function StatsLoading() {
         </div>
       </div>
 
-      {/* ── Plan Compliance ── */}
-      <div style={{ marginBottom: "var(--space-xl)" }}>
-        {/* Section Heading */}
-        <div style={{ marginBottom: "var(--space-md)" }}>
-          <div style={{ ...skeletonStyle, height: 12, width: "28%", marginBottom: 6, borderRadius: 4 }} />
-          <div style={{ ...skeletonStyle, height: 20, width: "38%", marginBottom: 6, borderRadius: 6 }} />
-          <div style={{ ...skeletonStyle, height: 14, width: "60%", borderRadius: 4 }} />
-        </div>
-        
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-          {Array.from({ length: 2 }).map((_, i) => (
-            <div
-              key={i}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "var(--space-sm)",
-                padding: "12px 14px",
-                borderRadius: "10px",
-                background: "var(--color-surface-container-low)",
-              }}
-            >
-              <div style={{ flex: 1 }}>
-                <div style={{ ...skeletonStyle, height: 16, width: "50%", marginBottom: "6px" }} />
-                <div style={{ ...skeletonStyle, height: 14, width: "40%", marginBottom: "8px", borderRadius: 4 }} />
-                <div style={{ ...skeletonStyle, height: 4, width: "100%", borderRadius: 2 }} />
-              </div>
-              <div style={{ textAlign: "right", flexShrink: 0 }}>
-                <div style={{ ...skeletonStyle, height: 24, width: 44, borderRadius: 6 }} />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
     </div>
   );
 }

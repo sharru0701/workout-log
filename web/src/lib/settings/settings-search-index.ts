@@ -186,9 +186,9 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     titleEn: "Stats Dashboard",
     path: "/stats/dashboard",
     section: "분석",
-    keywords: ["stats", "volume", "compliance", "pr", "dashboard"],
-    description: "볼륨/준수율/PR 지표",
-    descriptionEn: "Volume, compliance, and PR metrics",
+    keywords: ["stats", "volume", "pr", "dashboard"],
+    description: "볼륨/PR 지표",
+    descriptionEn: "Volume and PR metrics",
   },
   {
     key: "settings.exercise-management",
