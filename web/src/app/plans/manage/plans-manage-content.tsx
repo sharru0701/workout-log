@@ -6,6 +6,7 @@ import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { AppTextInput } from "@/components/ui/form-controls";
+import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { PrimaryButton } from "@/components/ui/primary-button";
 import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
@@ -17,6 +18,74 @@ import type { PlanForManage } from "@/server/services/plans/get-plans-for-manage
 // page.tsx(서버 컴포넌트)에서 initialPlans를 받아 첫 로딩 스피너 없이 즉시 렌더.
 
 type Plan = PlanForManage;
+type StrengthBaselineDraft = Record<string, { oneRepMaxKg: number; trainingMaxKg: number }>;
+
+const TARGET_LABELS: Record<string, string> = {
+  SQUAT: "Squat",
+  BENCH: "Bench",
+  DEADLIFT: "Deadlift",
+  OHP: "OHP",
+  PULL: "Pull",
+};
+
+function toRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return value as Record<string, unknown>;
+}
+
+function readPositiveNumberMap(value: unknown) {
+  const source = toRecord(value);
+  const next: Record<string, number> = {};
+  for (const [rawKey, rawValue] of Object.entries(source)) {
+    const key = rawKey.trim().toUpperCase();
+    const value = Number(rawValue);
+    if (!key || !Number.isFinite(value) || value <= 0) continue;
+    next[key] = Math.round(value * 100) / 100;
+  }
+  return next;
+}
+
+function createStrengthBaselineDraft(params: unknown): StrengthBaselineDraft {
+  const source = toRecord(params);
+  const oneRepMaxKg = readPositiveNumberMap(source.oneRepMaxKg);
+  const trainingMaxKg = readPositiveNumberMap(source.trainingMaxKg);
+  const keys = Array.from(new Set([...Object.keys(oneRepMaxKg), ...Object.keys(trainingMaxKg)])).sort();
+
+  const next: StrengthBaselineDraft = {};
+  for (const key of keys) {
+    next[key] = {
+      oneRepMaxKg: oneRepMaxKg[key] ?? 0,
+      trainingMaxKg: trainingMaxKg[key] ?? 0,
+    };
+  }
+  return next;
+}
+
+function targetLabelFromKey(key: string) {
+  if (TARGET_LABELS[key]) return TARGET_LABELS[key];
+  if (key.startsWith("EX_")) {
+    return key
+      .slice(3)
+      .split("_")
+      .filter(Boolean)
+      .map((part) => part.charAt(0) + part.slice(1).toLowerCase())
+      .join(" ");
+  }
+  return key;
+}
+
+function formatKg(value: number) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function planWithPatchedFields(prevPlan: Plan, updatedPlan: Plan): Plan {
+  return {
+    ...prevPlan,
+    ...updatedPlan,
+    baseProgramName: updatedPlan.baseProgramName ?? prevPlan.baseProgramName,
+    lastPerformedAt: updatedPlan.lastPerformedAt ?? prevPlan.lastPerformedAt,
+  };
+}
 
 function formatDateTime(value: string) {
   const date = new Date(value);
@@ -195,12 +264,23 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
 
   const [managePlanId, setManagePlanId] = useState("");
   const [nameDraft, setNameDraft] = useState("");
+  const [strengthDraft, setStrengthDraft] = useState<StrengthBaselineDraft>({});
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   const managedPlan = useMemo(
     () => plans.find((item) => item.id === managePlanId) ?? null,
     [managePlanId, plans],
+  );
+  const strengthRows = useMemo(
+    () =>
+      Object.entries(strengthDraft).map(([key, value]) => ({
+        key,
+        label: targetLabelFromKey(key),
+        oneRepMaxKg: value.oneRepMaxKg,
+        trainingMaxKg: value.trainingMaxKg,
+      })),
+    [strengthDraft],
   );
   const isSettled = useQuerySettled(loadKey, loading);
   const filteredPlans = useMemo(() => {
@@ -244,10 +324,11 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   function openManageSheet(plan: Plan) {
     setError(null);
     setNameDraft(plan.name);
+    setStrengthDraft(createStrengthBaselineDraft(plan.params));
     setManagePlanId(plan.id);
   }
 
-  async function savePlanName() {
+  async function savePlanChanges() {
     if (!managedPlan) return;
     const nextName = nameDraft.trim();
     if (!nextName) {
@@ -260,31 +341,61 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       return;
     }
 
-    const prevPlanName = managedPlan.name;
+    const oneRepMaxKg: Record<string, number> = {};
+    const trainingMaxKg: Record<string, number> = {};
+    for (const row of strengthRows) {
+      if (row.oneRepMaxKg <= 0 && row.trainingMaxKg <= 0) {
+        await alert({
+          title: "입력 확인 필요",
+          message: `${row.label}의 1RM 또는 TM을 kg 기준으로 입력하세요.`,
+          buttonText: "확인",
+          tone: "danger",
+        });
+        return;
+      }
+      if (row.oneRepMaxKg > 0) oneRepMaxKg[row.key] = row.oneRepMaxKg;
+      if (row.trainingMaxKg > 0) trainingMaxKg[row.key] = row.trainingMaxKg;
+    }
+
+    const prevPlan = managedPlan;
+    const nextParams = {
+      ...toRecord(managedPlan.params),
+      oneRepMaxKg,
+      trainingMaxKg,
+    };
 
     try {
       setSaving(true);
       setError(null);
 
       // Optimistic UI
-      setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? { ...item, name: nextName } : item)));
+      setPlans((prev) =>
+        prev.map((item) =>
+          item.id === managedPlan.id ? { ...item, name: nextName, params: nextParams } : item,
+        ),
+      );
 
       const res = await apiPatch<{ plan: Plan }>(`/api/plans/${encodeURIComponent(managedPlan.id)}`, {
         name: nextName,
+        params: nextParams,
       });
-      setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? res.plan : item)));
+      setPlans((prev) =>
+        prev.map((item) =>
+          item.id === managedPlan.id ? planWithPatchedFields(item, res.plan) : item,
+        ),
+      );
       setManagePlanId("");
       await alert({
         title: "수정 완료",
-        message: `플랜 이름이 변경되었습니다.\n${res.plan.name}`,
+        message: `플랜 정보가 변경되었습니다.\n${res.plan.name}`,
         buttonText: "확인",
       });
     } catch (e: any) {
       // 롤백
       if (managedPlan) {
-        setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? { ...item, name: prevPlanName } : item)));
+        setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? prevPlan : item)));
       }
-      const message = e?.message ?? "플랜 이름 수정에 실패했습니다.";
+      const message = e?.message ?? "플랜 정보 수정에 실패했습니다.";
       setError(message);
       await alert({
         title: "수정 실패",
@@ -526,6 +637,110 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               />
             </label>
 
+            {/* Starting strength baselines */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+              <span
+                style={{
+                  fontFamily: "var(--font-label-family)",
+                  fontSize: "10px",
+                  fontWeight: 700,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  color: "var(--color-text-muted)",
+                }}
+              >
+                {copy.plansManage.strengthBaselines}
+              </span>
+              {strengthRows.length > 0 ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                  {strengthRows.map((row) => (
+                    <div
+                      key={row.key}
+                      style={{
+                        background: "var(--color-surface-container-low)",
+                        borderRadius: "12px",
+                        padding: "var(--space-sm)",
+                        display: "grid",
+                        gridTemplateColumns: "minmax(72px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr)",
+                        gap: "var(--space-sm)",
+                        alignItems: "center",
+                      }}
+                    >
+                      <strong
+                        style={{
+                          minWidth: 0,
+                          fontSize: "13px",
+                          fontWeight: 700,
+                          color: "var(--color-text)",
+                          overflowWrap: "anywhere",
+                        }}
+                      >
+                        {row.label}
+                      </strong>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                        <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--color-text-muted)" }}>
+                          {copy.plansManage.oneRepMax}
+                        </span>
+                        <NumberPickerField
+                          label={`${row.label} ${copy.plansManage.oneRepMax}`}
+                          value={row.oneRepMaxKg}
+                          min={0}
+                          max={500}
+                          step={0.5}
+                          unit="kg"
+                          formatValue={formatKg}
+                          onChange={(value) => {
+                            setStrengthDraft((prev) => ({
+                              ...prev,
+                              [row.key]: {
+                                ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
+                                oneRepMaxKg: value,
+                              },
+                            }));
+                          }}
+                        />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
+                        <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--color-text-muted)" }}>
+                          {copy.plansManage.trainingMax}
+                        </span>
+                        <NumberPickerField
+                          label={`${row.label} ${copy.plansManage.trainingMax}`}
+                          value={row.trainingMaxKg}
+                          min={0}
+                          max={500}
+                          step={0.5}
+                          unit="kg"
+                          formatValue={formatKg}
+                          onChange={(value) => {
+                            setStrengthDraft((prev) => ({
+                              ...prev,
+                              [row.key]: {
+                                ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
+                                trainingMaxKg: value,
+                              },
+                            }));
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div
+                  style={{
+                    background: "var(--color-surface-container-low)",
+                    borderRadius: "12px",
+                    padding: "var(--space-md)",
+                    color: "var(--color-text-muted)",
+                    fontSize: "13px",
+                  }}
+                >
+                  {copy.plansManage.noStrengthBaselines}
+                </div>
+              )}
+            </div>
+
             {/* Actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               <PrimaryButton
@@ -544,10 +759,10 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                 fullWidth
                 disabled={saving || deleting}
                 onClick={() => {
-                  void savePlanName();
+                  void savePlanChanges();
                 }}
               >
-                {saving ? copy.plansManage.saveInProgress : copy.plansManage.saveName}
+                {saving ? copy.plansManage.saveInProgress : copy.plansManage.saveChanges}
               </PrimaryButton>
               <PrimaryButton
                 type="button"
