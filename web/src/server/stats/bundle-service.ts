@@ -1,6 +1,6 @@
 import { db } from "@/server/db/client";
-import { exercise, generatedSession, plan, workoutLog, workoutSet } from "@/server/db/schema";
-import { and, count, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
+import { and, count, eq, gte, lte, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
@@ -23,25 +23,9 @@ export type PrItem = {
   improvement: number;
 };
 
-export type PlanCompliance = {
-  planId: string;
-  planName: string;
-  planned: number;
-  done: number;
-  compliance: number;
-};
-
-export type ComplianceResult = {
-  planned: number;
-  done: number;
-  compliance: number;
-  byPlan: PlanCompliance[];
-};
-
 export type StatsBundleResult = {
   sessions30d: number;
   tonnage30d: number;
-  compliance90d: ComplianceResult;
   prs90d: PrItem[];
 };
 
@@ -62,75 +46,6 @@ async function fetchVolumeTonnage(userId: string, from: Date, to: Date): Promise
     .innerJoin(workoutSet, eq(workoutSet.logId, workoutLog.id))
     .where(and(eq(workoutLog.userId, userId), gte(workoutLog.performedAt, from), lte(workoutLog.performedAt, to)));
   return Number(rows[0]?.tonnage ?? 0);
-}
-
-async function fetchCompliance(userId: string, from: Date, to: Date): Promise<ComplianceResult> {
-  const locale = await resolveRequestLocale();
-  const plannedAtExpr = sql<Date>`coalesce(${generatedSession.scheduledAt}, ${generatedSession.updatedAt})`;
-  const plannedRows = await db
-    .select({ id: generatedSession.id, planId: generatedSession.planId, sessionKey: generatedSession.sessionKey })
-    .from(generatedSession)
-    .where(and(eq(generatedSession.userId, userId), gte(plannedAtExpr, from), lte(plannedAtExpr, to)));
-
-  if (plannedRows.length === 0) return { planned: 0, done: 0, compliance: 0, byPlan: [] };
-
-  const plannedKeySet = new Set(plannedRows.map((r) => `${r.planId}:${r.sessionKey}`));
-  const planned = plannedKeySet.size;
-
-  const plannedIds = plannedRows.map((r) => r.id);
-  const uniquePlanIds = Array.from(new Set(plannedRows.map((r) => r.planId)));
-
-  // PERF: plannedRows 조회 후 doneRows와 planRows를 병렬로 실행 → DB 왕복 1회 절감
-  const [doneRows, planRows] = await Promise.all([
-    db
-      .select({ generatedSessionId: workoutLog.generatedSessionId })
-      .from(workoutLog)
-      .where(
-        and(
-          eq(workoutLog.userId, userId),
-          gte(workoutLog.performedAt, from),
-          lte(workoutLog.performedAt, to),
-          inArray(workoutLog.generatedSessionId, plannedIds),
-        ),
-      ),
-    uniquePlanIds.length
-      ? db.select({ id: plan.id, name: plan.name }).from(plan).where(inArray(plan.id, uniquePlanIds))
-      : Promise.resolve([]),
-  ]);
-
-  const doneSet = new Set(doneRows.map((r) => r.generatedSessionId).filter(Boolean));
-  const done = doneSet.size;
-  const planNameById = new Map(planRows.map((r) => [r.id, r.name]));
-
-  const byPlanMap = new Map<string, { plannedKeys: Set<string>; done: number }>();
-  for (const row of plannedRows) {
-    if (!byPlanMap.has(row.planId)) byPlanMap.set(row.planId, { plannedKeys: new Set(), done: 0 });
-    byPlanMap.get(row.planId)!.plannedKeys.add(`${row.planId}:${row.sessionKey}`);
-  }
-
-  const plannedById = new Map(plannedRows.map((r) => [r.id, r.planId]));
-  for (const doneId of doneSet) {
-    if (!doneId) continue;
-    const pId = plannedById.get(doneId);
-    if (pId) byPlanMap.get(pId)!.done += 1;
-  }
-
-  const byPlan: PlanCompliance[] = Array.from(byPlanMap.entries())
-    .map(([pId, bucket]) => ({
-      planId: pId,
-      planName: planNameById.get(pId) ?? (locale === "ko" ? "알 수 없는 플랜" : "Unknown plan"),
-      planned: bucket.plannedKeys.size,
-      done: bucket.done,
-      compliance: bucket.plannedKeys.size > 0 ? Math.round((bucket.done / bucket.plannedKeys.size) * 1000) / 1000 : 0,
-    }))
-    .sort((a, b) => b.planned - a.planned || b.compliance - a.compliance);
-
-  return {
-    planned,
-    done,
-    compliance: planned > 0 ? Math.round((done / planned) * 1000) / 1000 : 0,
-    byPlan,
-  };
 }
 
 async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Promise<PrItem[]> {
@@ -216,7 +131,7 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Pr
 
 /**
  * stats 번들을 한 번에 가져옵니다.
- * DB 캐시 히트 시 4개 쿼리 전부 생략 (5분 TTL).
+ * DB 캐시 히트 시 모든 쿼리 생략 (5분 TTL).
  */
 export async function fetchStatsBundle({
   userId,
@@ -244,14 +159,13 @@ export async function fetchStatsBundle({
   });
   if (cached) return cached;
 
-  const [sessions30d, tonnage30d, compliance90d, prs90d] = await Promise.all([
+  const [sessions30d, tonnage30d, prs90d] = await Promise.all([
     fetchSavedLogs(userId, from, to),
     fetchVolumeTonnage(userId, from, to),
-    fetchCompliance(userId, from, to),
     fetchPrs(userId, from, to, 10),
   ]);
 
-  const payload: StatsBundleResult = { sessions30d, tonnage30d, compliance90d, prs90d };
+  const payload: StatsBundleResult = { sessions30d, tonnage30d, prs90d };
   // PERF: fire-and-forget 캐시 쓰기 → 응답 지연 없이 캐시 갱신
   void setStatsCache({ userId, metric: "bundle_v2", params: cacheParams, payload, maxAgeSeconds: 300 });
   return payload;

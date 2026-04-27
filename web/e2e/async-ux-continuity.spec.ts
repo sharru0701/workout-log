@@ -253,12 +253,6 @@ const statsDashboardEndpoints: MockEndpoint[] = [
     body: {
       sessions30d: 24,
       tonnage30d: 12500,
-      compliance90d: {
-        planned: 54,
-        done: 49,
-        compliance: 0.9074,
-        byPlan: [{ planId: "plan-1", planName: "Mock Plan", planned: 54, done: 49, compliance: 0.9074 }],
-      },
       prs90d: [
         {
           exerciseId: "sq",
@@ -352,7 +346,7 @@ test.describe("async ux continuity: no empty-state flicker on delayed queries", 
     const emptyStateLabel = page.getByText("운동종목이 없습니다", { exact: true });
     await assertNeverVisibleDuring(emptyStateLabel, 820);
 
-    await expect(page.getByText("플랜별 준수율", { exact: true })).toBeVisible();
+    await expect(page.getByText("PR 기록 추적", { exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "e1RM 상세 추이" })).toBeVisible();
     await expect(emptyStateLabel).toBeHidden();
 

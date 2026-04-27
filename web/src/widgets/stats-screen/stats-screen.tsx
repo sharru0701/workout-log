@@ -4,7 +4,6 @@ import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import {
-  StatsComplianceSection,
   StatsPageHeader,
   StatsPrSection,
   StatsSectionHeading,
@@ -84,7 +83,6 @@ export function StatsScreen({
       </div>
 
       <StatsPrSection items={initialBundle.prs90d} />
-      <StatsComplianceSection items={initialBundle.compliance90d.byPlan} />
     </AppPage>
   );
 }

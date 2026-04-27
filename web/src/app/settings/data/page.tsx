@@ -176,7 +176,7 @@ export default function SettingsDataPage() {
         <BaseGroupedList ariaLabel={locale === "ko" ? "캐시 작업" : "Cache actions"}>
           <InfoRow
             label={locale === "ko" ? "서버 통계 캐시" : "Server Stats Cache"}
-            description={locale === "ko" ? "e1rm, 볼륨, 준수율, PR 등 집계 결과물" : "Aggregated outputs such as e1RM, volume, compliance, and PR stats"}
+            description={locale === "ko" ? "e1rm, 볼륨, PR 등 집계 결과물" : "Aggregated outputs such as e1RM, volume, and PR stats"}
             value="Stats"
             tone="neutral"
           />

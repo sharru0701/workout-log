@@ -124,7 +124,7 @@ test.describe("stats-1rm async continuity", () => {
         id: "stats.bundle",
         method: "GET",
         path: "/api/stats/bundle",
-        body: { sessions30d: 0, tonnage30d: 0, compliance90d: null, prs90d: [] },
+        body: { sessions30d: 0, tonnage30d: 0, prs90d: [] },
       },
       {
         id: "options.exercises",
@@ -195,7 +195,7 @@ test.describe("stats-1rm async continuity", () => {
         method: "GET",
         path: "/api/stats/bundle",
         delayMs: 860,
-        body: { sessions30d: 0, tonnage30d: 0, compliance90d: null, prs90d: [] },
+        body: { sessions30d: 0, tonnage30d: 0, prs90d: [] },
       },
       {
         id: "options.exercises",
