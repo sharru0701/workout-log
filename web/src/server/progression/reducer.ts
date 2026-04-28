@@ -150,10 +150,12 @@ function progressionIdentityForSet(set: LoggedSetInput): {
 
 export function rulesFor(program: ProgressionProgram, target: string) {
   if (program === "operator") {
+    // Tactical Barbell Operator 공식 룰: 블록 완주 시 상체(BENCH/PULL) +5lb(≈2.5kg),
+    // 하체(SQUAT/DEADLIFT) +10lb(≈5kg).
     return {
       increaseEverySuccesses: 3,
       failResetThreshold: 2,
-      increaseKg: target === "DEADLIFT" ? 5 : 2.5,
+      increaseKg: target === "DEADLIFT" || target === "SQUAT" ? 5 : 2.5,
       resetFactor: 0.95,
     };
   }

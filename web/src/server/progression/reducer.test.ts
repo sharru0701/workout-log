@@ -82,7 +82,7 @@ test("operator: increase after successful 6-week block completion", () => {
   assert.equal(result.nextState.cycle, 2);
   assert.equal(result.nextState.week, 1);
   assert.equal(result.nextState.day, 1);
-  assert.equal(result.nextState.targets.SQUAT?.workKg, 152.5);
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 155);
   assert.equal(result.nextState.targets.BENCH?.workKg, 112.5);
   assert.equal(result.nextState.targets.DEADLIFT?.workKg, 195);
   assert.equal(result.nextState.targets.PULL?.workKg, 60);

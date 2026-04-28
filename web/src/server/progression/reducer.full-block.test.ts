@@ -86,7 +86,7 @@ test("operator: full 18-session block with empty meta should still increase TM",
   assert.equal(state.week, 1, "week should reset to 1");
   assert.equal(state.day, 1, "day should reset to 1");
   assert.equal(lastResult?.eventType, "INCREASE", "last event should be INCREASE");
-  assert.equal(state.targets.SQUAT?.workKg, 152.5);
+  assert.equal(state.targets.SQUAT?.workKg, 155);
   assert.equal(state.targets.BENCH?.workKg, 112.5);
   assert.equal(state.targets.DEADLIFT?.workKg, 195);
   assert.equal(state.targets.PULL?.workKg, 60);
@@ -116,7 +116,7 @@ test("operator: mid-block fail with later recovery should still trigger block-en
   assert.equal(state.cycle, 2, "cycle should advance after block completion");
   assert.equal(lastResult?.eventType, "INCREASE", "block-end event should be INCREASE");
   assert.equal(state.targets.PULL?.workKg, 60, "PULL must still bump after recovery");
-  assert.equal(state.targets.SQUAT?.workKg, 152.5);
+  assert.equal(state.targets.SQUAT?.workKg, 155);
   assert.equal(state.targets.BENCH?.workKg, 112.5);
   assert.equal(state.targets.DEADLIFT?.workKg, 195);
 });
