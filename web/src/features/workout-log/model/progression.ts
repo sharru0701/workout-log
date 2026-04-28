@@ -99,7 +99,7 @@ function buildOperatorBlockCompletionMessage(
     for (const [key, t] of Object.entries(state.targets)) {
       if (t.workKg <= 0) continue;
       const label = progressionTargetLabel(key, locale);
-      const increaseKg = key === "DEADLIFT" ? 5 : 2.5;
+      const increaseKg = key === "DEADLIFT" || key === "SQUAT" ? 5 : 2.5;
       const resetKg = Math.round((t.workKg * 0.95) / 2.5) * 2.5;
       lines.push(`• ${label}: ${t.workKg}kg`);
       lines.push(
