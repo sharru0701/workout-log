@@ -7,7 +7,7 @@ import type {
   PendingRestorePrompt,
 } from "@/features/workout-log/model/editor-actions";
 import { useAtomValue } from "jotai";
-import { draftAtom, programEntryStateAtom } from "../store/workout-log-atoms";
+import { draftAtom, programEntryStateAtom, workflowStateAtom } from "../store/workout-log-atoms";
 
 type UseWorkoutLogDraftPersistenceInput = {
   persistenceKey: string | null;
@@ -22,6 +22,8 @@ export function useWorkoutLogDraftPersistence({
 }: UseWorkoutLogDraftPersistenceInput) {
   const draft = useAtomValue(draftAtom);
   const programEntryState = useAtomValue(programEntryStateAtom);
+  const workflowState = useAtomValue(workflowStateAtom);
+  const isUserEditing = workflowState === "editing";
   const isRestoredRef = useRef(false);
   const isRestoringRef = useRef(false);
   const persistenceKeyRef = useRef<string | null>(null);
@@ -72,7 +74,7 @@ export function useWorkoutLogDraftPersistence({
         isRestoringRef.current = false;
       }
     }, [onRestoreAccepted]),
-    { enabled },
+    { enabled, isUserEditing },
   );
 
   useEffect(() => {
