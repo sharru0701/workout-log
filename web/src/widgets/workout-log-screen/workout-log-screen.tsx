@@ -190,6 +190,7 @@ function WorkoutLogScreenContent({
     persistenceKey,
     onSaved: useCallback(() => {
       router.replace("/workout/log");
+      router.refresh();
     }, [router]),
   });
 
