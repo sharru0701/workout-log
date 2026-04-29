@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import {
   dateOnlyInTimezone,
@@ -53,6 +54,7 @@ export function CalendarScreen({
   initialToday,
 }: CalendarScreenProps) {
   const { copy, locale } = useLocale();
+  const router = useRouter();
   const timezone = useMemo(
     () => initialTimezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
     [initialTimezone],
@@ -185,12 +187,13 @@ export function CalendarScreen({
         timezone,
       });
       refresh();
+      router.refresh();
     } catch {
       refresh();
     } finally {
       setMovingDate(false);
     }
-  }, [currentSelectedLog?.id, movingDate, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh]);
+  }, [currentSelectedLog?.id, movingDate, isAutoProgressionPlan, selectedDate, logDates, timezone, focusDate, applyOptimisticDateMove, refresh, router]);
 
   // ── Delete confirm sheet ─────────────────────────────────────────────────────
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -215,13 +218,14 @@ export function CalendarScreen({
     try {
       await apiDelete(`/api/logs/${logId}`);
       refresh();
+      router.refresh();
     } catch {
       // 실패 시 서버 데이터로 복원
       refresh();
     } finally {
       setDeletingLog(false);
     }
-  }, [currentSelectedLog?.id, deletingLog, applyOptimisticDelete, refresh]);
+  }, [currentSelectedLog?.id, deletingLog, applyOptimisticDelete, refresh, router]);
 
   return (
     <>
