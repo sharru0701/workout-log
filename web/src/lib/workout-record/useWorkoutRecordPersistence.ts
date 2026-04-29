@@ -19,7 +19,7 @@ export function useWorkoutRecordPersistence(
   draft: WorkoutRecordDraft | null,
   programEntryState: WorkoutProgramExerciseEntryStateMap,
   onRestore: (data: WorkoutDraftData) => Promise<boolean> | boolean,
-  options: { enabled?: boolean } = { enabled: true }
+  options: { enabled?: boolean; isUserEditing?: boolean } = { enabled: true }
 ) {
   const isRestoringRef = useRef(false);
   const lastHandledDraftRef = useRef<string | null>(null);
@@ -29,6 +29,7 @@ export function useWorkoutRecordPersistence(
   const draftRef = useRef(draft);
   const entryStateRef = useRef(programEntryState);
   const enabledRef = useRef(options.enabled);
+  const isUserEditingRef = useRef(options.isUserEditing);
 
   // Keep refs in sync during render as well.
   // This closes a race where SPA navigation unmounts the component before the
@@ -37,6 +38,7 @@ export function useWorkoutRecordPersistence(
   draftRef.current = draft;
   entryStateRef.current = programEntryState;
   enabledRef.current = options.enabled;
+  isUserEditingRef.current = options.isUserEditing;
 
   const forceSave = useCallback(() => {
     if (!keyRef.current || !draftRef.current || !enabledRef.current) return;
@@ -56,13 +58,26 @@ export function useWorkoutRecordPersistence(
     }, 1000)
   ).current;
 
-  // Auto-save on change - only when user has made edits
-  // Prevents SSR/planned draft from overwriting a persisted user draft in localStorage
+  // Auto-save on change - only when user is actively editing.
+  // Why: a freshly loaded saved log (userExercises populated from the server) looks
+  // structurally identical to a user-edited draft, so hasWorkoutEdits alone can't
+  // distinguish them. Gating on workflow state prevents the loaded log from being
+  // re-persisted as a recoverable draft, which would otherwise cause the recovery
+  // modal to pop up on the next entry.
   useEffect(() => {
     if (!key || !draft || isRestoringRef.current) return;
+    if (!options.isUserEditing) return;
     if (!hasWorkoutEdits(draft) && !hasProgramEntryStateEdits(programEntryState)) return;
     debouncedSave(key, draft, programEntryState);
-  }, [key, draft, programEntryState, debouncedSave]);
+  }, [key, draft, programEntryState, options.isUserEditing, debouncedSave]);
+
+  // Cancel any pending debounced save when the user is no longer editing
+  // (e.g., after a successful save flips state to "done").
+  useEffect(() => {
+    if (!options.isUserEditing) {
+      debouncedSave.cancel();
+    }
+  }, [options.isUserEditing, debouncedSave]);
 
   // Restoration attempt
   const attemptRestore = useCallback(async (targetKey: string) => {
@@ -119,6 +134,7 @@ export function useWorkoutRecordPersistence(
         keyRef.current &&
         draftRef.current &&
         !isRestoringRef.current &&
+        isUserEditingRef.current &&
         (hasWorkoutEdits(draftRef.current) || hasProgramEntryStateEdits(entryStateRef.current))
       ) {
         saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
@@ -129,14 +145,19 @@ export function useWorkoutRecordPersistence(
   // Lifecycle events - Keep listeners stable
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
+      if (document.visibilityState === "hidden" && isUserEditingRef.current) {
         forceSave();
       }
     };
 
     const handlePageHide = () => {
       // Use sync save on pagehide for maximum reliability - NO DYNAMIC IMPORTS
-      if (keyRef.current && draftRef.current && enabledRef.current) {
+      if (
+        keyRef.current &&
+        draftRef.current &&
+        enabledRef.current &&
+        isUserEditingRef.current
+      ) {
         saveWorkoutDraftSync(keyRef.current, draftRef.current, entryStateRef.current);
       }
     };
