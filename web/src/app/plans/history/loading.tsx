@@ -1,6 +1,7 @@
-// PERF: 플랜 히스토리 라우트 loading.tsx - 라우트 전환 시 즉각 피드백
+// PERF: 플랜 히스토리 라우트 loading.tsx — 새 hero + tab strip + log timeline 형태에 맞춘 스켈레톤
 const skeletonStyle: React.CSSProperties = {
-  background: "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
+  background:
+    "linear-gradient(90deg, var(--color-surface-container) 0%, var(--color-surface-container-high) 50%, var(--color-surface-container) 100%)",
   backgroundSize: "200% 100%",
   animation: "skeleton-shimmer 1.4s ease infinite",
   borderRadius: 8,
@@ -16,79 +17,131 @@ export default function PlanHistoryLoading() {
         }
       `}</style>
 
-      {/* ── Page Header ── */}
+      {/* ── Hero header ── */}
       <section>
-        <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-          <div style={{ ...skeletonStyle, height: 12, width: 60, marginBottom: "8px", borderRadius: 4 }} />
-          <div style={{ ...skeletonStyle, height: 34, width: 100, marginBottom: "8px", borderRadius: 6 }} />
-          <div style={{ ...skeletonStyle, height: 16, width: "80%", borderRadius: 4 }} />
+        <div
+          style={{
+            padding: "22px 22px 24px",
+            borderRadius: 24,
+            background: "var(--color-surface-container-low)",
+            marginBottom: "var(--space-md)",
+          }}
+        >
+          <div style={{ ...skeletonStyle, height: 12, width: 100, marginBottom: 8, borderRadius: 4 }} />
+          <div style={{ ...skeletonStyle, height: 28, width: 180, marginBottom: 6, borderRadius: 6 }} />
+          <div style={{ ...skeletonStyle, height: 13, width: "75%", borderRadius: 4 }} />
         </div>
 
-        {/* ── Plan Selector & Summary ── */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-          {/* Dropdown Mock */}
-          <div style={{ ...skeletonStyle, height: 48, width: "100%", borderRadius: 12 }} />
+        {/* ── Plan tab strip ── */}
+        <div style={{ display: "flex", gap: 8, padding: "4px 4px 12px", overflow: "hidden" }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              style={{
+                flex: "0 0 auto",
+                padding: "10px 16px",
+                borderRadius: 14,
+                background: "var(--color-surface-container-low)",
+                minHeight: 52,
+                display: "flex",
+                flexDirection: "column",
+                gap: 4,
+              }}
+            >
+              <div style={{ ...skeletonStyle, height: 13, width: 80, borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 10, width: 50, borderRadius: 4 }} />
+            </div>
+          ))}
+        </div>
 
-          {/* Selected Plan Summary Card */}
-          <div style={{ background: "var(--color-surface-container)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
-            <div style={{ gridColumn: "1 / -1", display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ ...skeletonStyle, height: 12, width: "30%", borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 18, width: "55%", borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 12, width: "40%", borderRadius: 4 }} />
+        {/* ── Summary card ── */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "1.4fr 1fr 1fr 1fr",
+            padding: "16px 18px",
+            borderRadius: 24,
+            background: "var(--color-surface-container-low)",
+          }}
+        >
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} style={{ padding: "0 12px" }}>
+              <div style={{ ...skeletonStyle, height: 10, width: "60%", marginBottom: 6, borderRadius: 4 }} />
+              <div style={{ ...skeletonStyle, height: 17, width: "70%", borderRadius: 4 }} />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <div style={{ ...skeletonStyle, height: 12, width: "40%", borderRadius: 4 }} />
-              <div style={{ ...skeletonStyle, height: 14, width: "80%", borderRadius: 4 }} />
-            </div>
-          </div>
+          ))}
         </div>
       </section>
 
       {/* ── Logs Section ── */}
       <section style={{ marginTop: "var(--space-lg)" }}>
-        <div style={{ marginBottom: "var(--space-sm)" }}>
-          <div style={{ ...skeletonStyle, height: 14, width: 60, borderRadius: 4 }} />
-        </div>
+        <div style={{ ...skeletonStyle, height: 24, width: 110, marginBottom: 14, borderRadius: 999 }} />
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-          {/* Notice Outline State */}
-          <div style={{ ...skeletonStyle, height: 52, width: "100%", borderRadius: 10 }} />
-
-          {/* Log Cards */}
-          {Array.from({ length: 2 }).map((_, i) => (
-            <article key={i} className="card card-inset card-padding-sm card-elevated-false">
-              {/* Top Row: Date & Exercises */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-sm)" }}>
-                <div style={{ flex: 1 }}>
-                  <div style={{ ...skeletonStyle, height: 16, width: "45%", marginBottom: 6, borderRadius: 4 }} />
-                  <div style={{ ...skeletonStyle, height: 14, width: "70%", borderRadius: 4 }} />
-                </div>
-                <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                  <div style={{ ...skeletonStyle, height: 20, width: 44, borderRadius: 6 }} />
-                  <div style={{ ...skeletonStyle, height: 20, width: 60, borderRadius: 6 }} />
-                </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <article
+              key={i}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "56px 1fr",
+                gap: 14,
+                padding: 14,
+                borderRadius: 16,
+                background: "var(--color-surface-container-low)",
+              }}
+            >
+              {/* date box */}
+              <div
+                style={{
+                  width: 56,
+                  height: 56,
+                  borderRadius: 14,
+                  background: "var(--color-surface-container)",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 2,
+                }}
+              >
+                <div style={{ ...skeletonStyle, height: 9, width: 24, borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 18, width: 24, borderRadius: 4 }} />
+                <div style={{ ...skeletonStyle, height: 10, width: 18, borderRadius: 4 }} />
               </div>
 
-              {/* Grid 3 cols */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface-container)", borderRadius: 10, padding: "var(--space-sm)" }}>
-                {Array.from({ length: 3 }).map((_, j) => (
-                  <div key={j} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                    <div style={{ ...skeletonStyle, height: 11, width: "60%", borderRadius: 4 }} />
-                    <div style={{ ...skeletonStyle, height: 18, width: "80%", borderRadius: 4 }} />
-                  </div>
-                ))}
-              </div>
-
-              {/* Action Buttons */}
-              <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                <div style={{ ...skeletonStyle, height: 36, width: 90, borderRadius: 8 }} />
-                <div style={{ ...skeletonStyle, height: 36, width: 70, borderRadius: 8 }} />
+              {/* body */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 0 }}>
+                <div style={{ ...skeletonStyle, height: 15, width: "70%", borderRadius: 4 }} />
+                <div style={{ display: "flex", gap: 4 }}>
+                  <div style={{ ...skeletonStyle, height: 18, width: 60, borderRadius: 999 }} />
+                  <div style={{ ...skeletonStyle, height: 18, width: 80, borderRadius: 999 }} />
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+                    gap: 8,
+                    padding: "8px 10px",
+                    borderRadius: 12,
+                    background: "var(--color-surface-container)",
+                  }}
+                >
+                  {Array.from({ length: 3 }).map((_, j) => (
+                    <div key={j} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      <div style={{ ...skeletonStyle, height: 9, width: "60%", borderRadius: 4 }} />
+                      <div style={{ ...skeletonStyle, height: 15, width: "55%", borderRadius: 4 }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 6 }}>
+                  <div style={{ ...skeletonStyle, height: 36, width: 100, borderRadius: 999 }} />
+                  <div style={{ ...skeletonStyle, height: 36, width: 90, borderRadius: 999 }} />
+                </div>
               </div>
             </article>
           ))}
         </div>
       </section>
-
     </div>
   );
 }

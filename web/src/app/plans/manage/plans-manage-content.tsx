@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 
@@ -12,10 +13,10 @@ import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
+import { APP_ROUTES } from "@/lib/app-routes";
 import type { PlanForManage } from "@/server/services/plans/get-plans-for-manage";
 
-// PERF: Plans manage 페이지의 클라이언트 상호작용 컴포넌트.
-// page.tsx(서버 컴포넌트)에서 initialPlans를 받아 첫 로딩 스피너 없이 즉시 렌더.
+// PERF: SSR로 주입된 initialPlans로 첫 화면 즉시 렌더 (스피너 없음).
 
 type Plan = PlanForManage;
 type StrengthBaselineDraft = Record<string, { oneRepMaxKg: number; trainingMaxKg: number }>;
@@ -28,6 +29,9 @@ const TARGET_LABELS: Record<string, string> = {
   PULL: "Pull",
 };
 
+const TARGET_PRIORITY = ["SQUAT", "BENCH", "DEADLIFT", "OHP", "PULL"];
+const RECENT_THRESHOLD_DAYS = 7;
+
 function toRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return value as Record<string, unknown>;
@@ -38,9 +42,9 @@ function readPositiveNumberMap(value: unknown) {
   const next: Record<string, number> = {};
   for (const [rawKey, rawValue] of Object.entries(source)) {
     const key = rawKey.trim().toUpperCase();
-    const value = Number(rawValue);
-    if (!key || !Number.isFinite(value) || value <= 0) continue;
-    next[key] = Math.round(value * 100) / 100;
+    const parsed = Number(rawValue);
+    if (!key || !Number.isFinite(parsed) || parsed <= 0) continue;
+    next[key] = Math.round(parsed * 100) / 100;
   }
   return next;
 }
@@ -74,6 +78,12 @@ function targetLabelFromKey(key: string) {
   return key;
 }
 
+function shortTargetLabel(key: string) {
+  if (key === "DEADLIFT") return "DL";
+  if (TARGET_LABELS[key]) return TARGET_LABELS[key];
+  return targetLabelFromKey(key);
+}
+
 function formatKg(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
@@ -93,18 +103,29 @@ function formatDateTime(value: string) {
   return date.toLocaleString();
 }
 
-function formatRelativeDate(value: string | null | undefined) {
+function daysSince(value: string | null | undefined) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  const now = Date.now();
-  const diff = now - date.getTime();
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  if (days === 0) return "오늘";
-  if (days === 1) return "어제";
-  if (days < 7) return `${days}일 전`;
-  if (days < 30) return `${Math.floor(days / 7)}주 전`;
-  return date.toLocaleDateString();
+  const diffMs = Date.now() - date.getTime();
+  return Math.floor(diffMs / (1000 * 60 * 60 * 24));
+}
+
+function formatRelativeDays(days: number | null, locale: "ko" | "en") {
+  if (days === null) return null;
+  if (days <= 0) return locale === "ko" ? "오늘" : "Today";
+  if (days === 1) return locale === "ko" ? "어제" : "Yesterday";
+  if (days < 7) return locale === "ko" ? `${days}일 전` : `${days}d ago`;
+  if (days < 30) {
+    const w = Math.floor(days / 7);
+    return locale === "ko" ? `${w}주 전` : `${w}w ago`;
+  }
+  if (days < 365) {
+    const m = Math.floor(days / 30);
+    return locale === "ko" ? `${m}개월 전` : `${m}mo ago`;
+  }
+  const y = Math.floor(days / 365);
+  return locale === "ko" ? `${y}년 전` : `${y}y ago`;
 }
 
 function normalizeSearchText(...values: Array<string | null | undefined>) {
@@ -114,146 +135,140 @@ function normalizeSearchText(...values: Array<string | null | undefined>) {
     .join(" ");
 }
 
-function PlanListCard({
+function readTrainingMaxPreview(params: unknown) {
+  const source = toRecord(params);
+  const tm = readPositiveNumberMap(source.trainingMaxKg);
+  const orm = readPositiveNumberMap(source.oneRepMaxKg);
+  const keys = Object.keys({ ...tm, ...orm });
+  if (keys.length === 0) return [] as Array<{ key: string; label: string; valueKg: number; kind: "TM" | "1RM" }>;
+
+  const sorted = keys.sort((a, b) => {
+    const ai = TARGET_PRIORITY.indexOf(a);
+    const bi = TARGET_PRIORITY.indexOf(b);
+    if (ai === -1 && bi === -1) return a.localeCompare(b);
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  return sorted
+    .map((key) => {
+      const valueKg = tm[key] ?? orm[key] ?? 0;
+      if (valueKg <= 0) return null;
+      return {
+        key,
+        label: shortTargetLabel(key),
+        valueKg,
+        kind: tm[key] ? ("TM" as const) : ("1RM" as const),
+      };
+    })
+    .filter((v): v is { key: string; label: string; valueKg: number; kind: "TM" | "1RM" } => v !== null);
+}
+
+function planTypeTone(type: Plan["type"]): "program" | "composite" | "manual" {
+  if (type === "COMPOSITE") return "composite";
+  if (type === "MANUAL") return "manual";
+  return "program";
+}
+
+function planTypeLabel(type: Plan["type"], locale: "ko" | "en") {
+  if (type === "COMPOSITE") return locale === "ko" ? "복합" : "Composite";
+  if (type === "MANUAL") return locale === "ko" ? "수동" : "Manual";
+  return locale === "ko" ? "프로그램" : "Program";
+}
+
+function PlanCardV2({
   plan,
   onManage,
   copy,
+  locale,
 }: {
   plan: Plan;
   onManage: () => void;
   copy: ReturnType<typeof useLocale>["copy"];
+  locale: "ko" | "en";
 }) {
-  const relativeDate = formatRelativeDate(plan.lastPerformedAt);
+  const days = daysSince(plan.lastPerformedAt);
+  const relText = formatRelativeDays(days, locale);
+  const isFresh = typeof days === "number" && days <= RECENT_THRESHOLD_DAYS;
+  const tmPreview = readTrainingMaxPreview(plan.params).slice(0, 4);
+  const tone = planTypeTone(plan.type);
+  const typeText = planTypeLabel(plan.type, locale);
 
   return (
-    <div
-      style={{
-        background: "var(--color-surface-container-low)",
-        borderRadius: "16px",
-        padding: "20px",
-        marginBottom: "var(--space-sm)",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "flex-start",
-          justifyContent: "space-between",
-          gap: "var(--space-sm)",
-          marginBottom: "12px",
-        }}
-      >
+    <article className="plan-card-v2">
+      <div className="plan-card-v2__head">
         <div style={{ flex: 1, minWidth: 0 }}>
-          <strong
-            style={{
-              fontFamily: "var(--font-headline-family)",
-              fontSize: "17px",
-              fontWeight: 700,
-              color: "var(--color-text)",
-              display: "block",
-              marginBottom: "3px",
-              letterSpacing: "-0.2px",
-            }}
-          >
-            {plan.name}
-          </strong>
-          {plan.baseProgramName ? (
-            <span
-              style={{
-                fontFamily: "var(--font-label-family)",
-                fontSize: "10px",
-                fontWeight: 700,
-                letterSpacing: "0.1em",
-                textTransform: "uppercase",
-                color: "var(--color-primary)",
-                display: "block",
-                marginBottom: "2px",
-              }}
-            >
-              {plan.baseProgramName}
+          <div className="plan-card-v2__chips">
+            <span className="plan-card-v2__type-pill" data-tone={tone}>
+              {typeText}
             </span>
+            {isFresh ? (
+              <span className="plan-card-v2__type-pill" data-tone="composite">
+                {locale === "ko" ? "최근 수행" : "Recent"}
+              </span>
+            ) : null}
+          </div>
+          <h3 className="plan-card-v2__name">{plan.name}</h3>
+          {plan.baseProgramName ? (
+            <div className="plan-card-v2__subhead">{plan.baseProgramName}</div>
           ) : null}
-          <span
-            style={{
-              fontFamily: "var(--font-label-family)",
-              fontSize: "11px",
-              fontWeight: 500,
-              color: "var(--color-text-muted)",
-              display: "block",
-            }}
-            >
-            {relativeDate ? `${copy.plansManage.recentPerformedPrefix} · ${relativeDate}` : copy.plansManage.noPerformedHistory}
-          </span>
+          <div className={`plan-card-v2__meta${isFresh ? " plan-card-v2__meta--fresh" : ""}`}>
+            <span className="plan-card-v2__meta-dot" aria-hidden="true" />
+            {relText
+              ? `${copy.plansManage.recentPerformedPrefix} · ${relText}`
+              : copy.plansManage.noPerformedHistory}
+          </div>
         </div>
+      </div>
 
+      {tmPreview.length > 0 ? (
+        <div className="plan-card-v2__tm-grid">
+          {tmPreview.map((row) => (
+            <div key={row.key} className="plan-card-v2__tm-cell">
+              <span className="plan-card-v2__tm-label">
+                {row.label} · {row.kind}
+              </span>
+              <span className="plan-card-v2__tm-value">{formatKg(row.valueKg)}kg</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="plan-card-v2__tm-empty">
+          {locale === "ko" ? "1RM/TM 미설정 — 관리에서 입력하세요." : "1RM/TM not set — open Manage to enter."}
+        </div>
+      )}
+
+      <div className="plan-card-v2__actions">
+        <Link
+          href={`${APP_ROUTES.plansHistory}?planId=${encodeURIComponent(plan.id)}`}
+          className="plan-card-v2__action plan-card-v2__action--primary"
+          aria-label={`${plan.name} ${copy.plansManage.history}`}
+        >
+          <span className="material-symbols-outlined" aria-hidden="true">
+            history
+          </span>
+          {copy.plansManage.history}
+        </Link>
         <button
           type="button"
+          className="plan-card-v2__action plan-card-v2__action--manage"
           onClick={onManage}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "4px",
-            flexShrink: 0,
-            padding: "6px 12px",
-            borderRadius: "10px",
-            background: "transparent",
-            border: "1px solid var(--color-border)",
-            fontSize: "12px",
-            fontFamily: "var(--font-label-family)",
-            fontWeight: 700,
-            color: "var(--color-text)",
-            cursor: "pointer",
-          }}
           aria-label={`${plan.name} ${copy.plansManage.manage}`}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: 14, fontVariationSettings: "'FILL' 0, 'wght' 300" }}
-            aria-hidden="true"
-          >
-            edit
+          <span className="material-symbols-outlined" aria-hidden="true">
+            tune
           </span>
           {copy.plansManage.manage}
         </button>
       </div>
-
-      <a
-        href={`/plans/history?planId=${encodeURIComponent(plan.id)}`}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "6px",
-          width: "100%",
-          padding: "9px 16px",
-          borderRadius: "10px",
-          background: "var(--color-surface-container-highest)",
-          border: "none",
-          fontSize: "13px",
-          fontFamily: "var(--font-label-family)",
-          fontWeight: 600,
-          color: "var(--color-text-muted)",
-          textDecoration: "none",
-          boxSizing: "border-box",
-        }}
-      >
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: 15, fontVariationSettings: "'FILL' 0, 'wght' 300" }}
-          aria-hidden="true"
-        >
-          history
-        </span>
-        {copy.plansManage.history}
-      </a>
-    </div>
+    </article>
   );
 }
 
 export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
-  const { copy } = useLocale();
+  const { copy, locale } = useLocale();
   const { alert, confirm } = useAppDialog();
-  // PERF: SSR로 주입된 초기 데이터로 상태 초기화 → 첫 화면 로딩 스피너 제거
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [loading, setLoading] = useState(false);
   const [loadKey, setLoadKey] = useState("plans-manage:load:init");
@@ -291,6 +306,21 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     );
   }, [plans, searchQuery]);
 
+  const heroMetrics = useMemo(() => {
+    const total = plans.length;
+    let recent = 0;
+    let untouched = 0;
+    for (const plan of plans) {
+      const days = daysSince(plan.lastPerformedAt);
+      if (days === null) {
+        untouched += 1;
+      } else if (days <= RECENT_THRESHOLD_DAYS) {
+        recent += 1;
+      }
+    }
+    return { total, recent, untouched };
+  }, [plans]);
+
   const loadPlans = useCallback(async (options?: { isRefresh?: boolean }) => {
     try {
       if (!storeHasLoadedRef.current && !options?.isRefresh) setLoading(true);
@@ -306,7 +336,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     }
   }, []);
 
-  // refreshTick > 0 일 때만 갱신 (초기 로드는 SSR 데이터로 대체)
   useEffect(() => {
     if (refreshTick > 0) {
       void loadPlans({ isRefresh: true });
@@ -368,7 +397,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       setSaving(true);
       setError(null);
 
-      // Optimistic UI
       setPlans((prev) =>
         prev.map((item) =>
           item.id === managedPlan.id ? { ...item, name: nextName, params: nextParams } : item,
@@ -391,7 +419,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
         buttonText: "확인",
       });
     } catch (e: any) {
-      // 롤백
       if (managedPlan) {
         setPlans((prev) => prev.map((item) => (item.id === managedPlan.id ? prevPlan : item)));
       }
@@ -423,7 +450,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       setDeleting(true);
       setError(null);
 
-      // Optimistic UI
       const targetId = managedPlan.id;
       setManagePlanId("");
       setPlans((prev) => prev.filter((item) => item.id !== targetId));
@@ -451,91 +477,106 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     }
   }
 
+  const heroDescription = locale === "ko"
+    ? "활성 플랜을 한눈에 보고, 1RM/TM·이름·삭제를 빠르게 정리하세요."
+    : "Browse active plans and quickly tune 1RM/TM, names, or remove obsolete ones.";
+  const totalLabel = locale === "ko" ? "총 플랜" : "Total Plans";
+  const recentLabel = locale === "ko" ? "최근 7일 수행" : "Active 7d";
+  const idleLabel = locale === "ko" ? "미수행" : "Unused";
+  const browseStoreLabel = locale === "ko" ? "프로그램 스토어 둘러보기" : "Browse Program Store";
+
   return (
     <>
-        <section>
-          {/* Page header */}
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              justifyContent: "space-between",
-              marginBottom: "var(--space-lg)",
-            }}
-          >
-            <div>
-              <div
-                style={{
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "var(--color-primary)",
-                  marginBottom: "4px",
-                }}
-              >
-                {copy.plansManage.headerEyebrow}
+      <section>
+        <div className="plans-hero">
+          <div className="plans-hero__eyebrow">{copy.plansManage.headerEyebrow}</div>
+          <h1 className="plans-hero__title">{copy.plansManage.title}</h1>
+          <p className="plans-hero__description">{heroDescription}</p>
+
+          <div className="plans-hero__metrics" role="list">
+            <div className="plans-hero__metric" role="listitem">
+              <div className="plans-hero__metric-label">{totalLabel}</div>
+              <div className="plans-hero__metric-value">
+                {heroMetrics.total}
+                <span className="plans-hero__metric-suffix">
+                  {locale === "ko" ? "개" : ""}
+                </span>
               </div>
-              <h1
-                style={{
-                  fontFamily: "var(--font-headline-family)",
-                  fontSize: "26px",
-                  fontWeight: 800,
-                  letterSpacing: "-0.5px",
-                  color: "var(--color-text)",
-                  margin: 0,
-                }}
-              >
-                {copy.plansManage.title}
-              </h1>
+            </div>
+            <div className="plans-hero__metric" role="listitem">
+              <div className="plans-hero__metric-label">{recentLabel}</div>
+              <div className="plans-hero__metric-value">
+                {heroMetrics.recent}
+                <span className="plans-hero__metric-suffix">
+                  {locale === "ko" ? "개" : ""}
+                </span>
+              </div>
+            </div>
+            <div className="plans-hero__metric" role="listitem">
+              <div className="plans-hero__metric-label">{idleLabel}</div>
+              <div className="plans-hero__metric-value">
+                {heroMetrics.untouched}
+                <span className="plans-hero__metric-suffix">
+                  {locale === "ko" ? "개" : ""}
+                </span>
+              </div>
             </div>
           </div>
 
-          {plans.length > 0 || searchQuery.trim().length > 0 ? (
-            <div style={{ marginBottom: "var(--space-md)" }}>
-              <SearchInput
-                value={searchQuery}
-                onChange={setSearchQuery}
-                placeholder={copy.plansManage.searchPlaceholder}
-                ariaLabel={copy.plansManage.searchAriaLabel}
+          <Link href={APP_ROUTES.programStore} className="plans-hero__cta">
+            <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden="true">
+              add
+            </span>
+            {browseStoreLabel}
+          </Link>
+        </div>
+      </section>
+
+      <section>
+        {plans.length > 0 || searchQuery.trim().length > 0 ? (
+          <div style={{ marginBottom: "var(--space-md)" }}>
+            <SearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={copy.plansManage.searchPlaceholder}
+              ariaLabel={copy.plansManage.searchAriaLabel}
+            />
+          </div>
+        ) : null}
+
+        <LoadingStateRows active={loading} label={locale === "ko" ? "플랜 목록 로딩 중" : "Loading plans"} />
+        <ErrorStateRows
+          message={error}
+          title={copy.plansManage.loadError}
+          onRetry={() => {
+            void loadPlans();
+          }}
+        />
+        <EmptyStateRows
+          when={isSettled && !error && plans.length === 0}
+          label={copy.plansManage.noPlans}
+          description={copy.plansManage.noPlansDescription}
+        />
+        <EmptyStateRows
+          when={isSettled && !error && plans.length > 0 && filteredPlans.length === 0}
+          label={copy.plansManage.noResults}
+          description={copy.plansManage.noResultsDescription}
+        />
+
+        {filteredPlans.length > 0 ? (
+          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            {filteredPlans.map((plan) => (
+              <PlanCardV2
+                key={plan.id}
+                plan={plan}
+                copy={copy}
+                locale={locale}
+                onManage={() => openManageSheet(plan)}
               />
-            </div>
-          ) : null}
-
-          <LoadingStateRows active={loading} label="플랜 목록 로딩 중" />
-          <ErrorStateRows
-            message={error}
-            title={copy.plansManage.loadError}
-            onRetry={() => {
-              void loadPlans();
-            }}
-          />
-          <EmptyStateRows
-            when={isSettled && !error && plans.length === 0}
-            label={copy.plansManage.noPlans}
-            description={copy.plansManage.noPlansDescription}
-          />
-          <EmptyStateRows
-            when={isSettled && !error && plans.length > 0 && filteredPlans.length === 0}
-            label={copy.plansManage.noResults}
-            description={copy.plansManage.noResultsDescription}
-          />
-
-          {filteredPlans.length > 0 ? (
-            <div style={{ marginTop: "var(--space-sm)" }}>
-              {filteredPlans.map((plan) => (
-                <PlanListCard
-                  key={plan.id}
-                  plan={plan}
-                  copy={copy}
-                  onManage={() => openManageSheet(plan)}
-                />
-              ))}
-            </div>
-          ) : null}
-        </section>
-
+            ))}
+          </div>
+        ) : null}
+      </section>
 
       <BottomSheet
         open={Boolean(managePlanId)}
@@ -549,74 +590,33 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       >
         {managedPlan ? (
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            {/* Info grid */}
-            <div
-              style={{
-                background: "var(--color-surface-container-low)",
-                borderRadius: "14px",
-                padding: "var(--space-md)",
-                display: "grid",
-                gridTemplateColumns: "1fr 1fr",
-                gap: "var(--space-md)",
-              }}
-            >
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-label-family)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    marginBottom: "4px",
-                  }}
-                >
-                  {copy.plansManage.baseProgram}
+            <div className="stat-tile-grid">
+              <div className="stat-tile">
+                <div className="stat-tile__label">
+                  {locale === "ko" ? "타입" : "Type"}
                 </div>
-                <div style={{ fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>
-                  {managedPlan.baseProgramName ?? "-"}
+                <div className="stat-tile__value">
+                  {planTypeLabel(managedPlan.type, locale)}
                 </div>
               </div>
-              <div>
-                <div
-                  style={{
-                    fontFamily: "var(--font-label-family)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    marginBottom: "4px",
-                  }}
-                >
-                  {copy.plansManage.createdAt}
-                </div>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>
-                  {formatDateTime(managedPlan.createdAt)}
-                </div>
+              <div className="stat-tile">
+                <div className="stat-tile__label">{copy.plansManage.baseProgram}</div>
+                <div className="stat-tile__value">{managedPlan.baseProgramName ?? "-"}</div>
               </div>
-              <div style={{ gridColumn: "1 / -1" }}>
-                <div
-                  style={{
-                    fontFamily: "var(--font-label-family)",
-                    fontSize: "10px",
-                    fontWeight: 700,
-                    letterSpacing: "0.14em",
-                    textTransform: "uppercase",
-                    color: "var(--color-text-muted)",
-                    marginBottom: "4px",
-                  }}
-                >
-                  {copy.plansManage.lastPerformedAt}
-                </div>
-                <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>
-                  {managedPlan.lastPerformedAt ? formatDateTime(managedPlan.lastPerformedAt) : copy.plansManage.noRecord}
+              <div className="stat-tile">
+                <div className="stat-tile__label">{copy.plansManage.createdAt}</div>
+                <div className="stat-tile__value">{formatDateTime(managedPlan.createdAt)}</div>
+              </div>
+              <div className="stat-tile">
+                <div className="stat-tile__label">{copy.plansManage.lastPerformedAt}</div>
+                <div className="stat-tile__value">
+                  {managedPlan.lastPerformedAt
+                    ? formatDateTime(managedPlan.lastPerformedAt)
+                    : copy.plansManage.noRecord}
                 </div>
               </div>
             </div>
 
-            {/* Name edit */}
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
               <span
                 style={{
@@ -637,7 +637,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               />
             </label>
 
-            {/* Starting strength baselines */}
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
               <span
                 style={{
@@ -654,33 +653,10 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               {strengthRows.length > 0 ? (
                 <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
                   {strengthRows.map((row) => (
-                    <div
-                      key={row.key}
-                      style={{
-                        background: "var(--color-surface-container-low)",
-                        borderRadius: "12px",
-                        padding: "var(--space-sm)",
-                        display: "grid",
-                        gridTemplateColumns: "minmax(72px, 0.8fr) minmax(0, 1fr) minmax(0, 1fr)",
-                        gap: "var(--space-sm)",
-                        alignItems: "center",
-                      }}
-                    >
-                      <strong
-                        style={{
-                          minWidth: 0,
-                          fontSize: "13px",
-                          fontWeight: 700,
-                          color: "var(--color-text)",
-                          overflowWrap: "anywhere",
-                        }}
-                      >
-                        {row.label}
-                      </strong>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--color-text-muted)" }}>
-                          {copy.plansManage.oneRepMax}
-                        </span>
+                    <div key={row.key} className="tm-edit-row">
+                      <strong className="tm-edit-row__label">{row.label}</strong>
+                      <div className="tm-edit-row__field">
+                        <span className="tm-edit-row__field-label">{copy.plansManage.oneRepMax}</span>
                         <NumberPickerField
                           label={`${row.label} ${copy.plansManage.oneRepMax}`}
                           value={row.oneRepMaxKg}
@@ -700,10 +676,8 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                           }}
                         />
                       </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: "4px", minWidth: 0 }}>
-                        <span style={{ fontSize: "10px", fontWeight: 700, color: "var(--color-text-muted)" }}>
-                          {copy.plansManage.trainingMax}
-                        </span>
+                      <div className="tm-edit-row__field">
+                        <span className="tm-edit-row__field-label">{copy.plansManage.trainingMax}</span>
                         <NumberPickerField
                           label={`${row.label} ${copy.plansManage.trainingMax}`}
                           value={row.trainingMaxKg}
@@ -741,17 +715,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               )}
             </div>
 
-            {/* Actions */}
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-              <PrimaryButton
-                as="a"
-                variant="secondary"
-                size="lg"
-                fullWidth
-                href={`/plans/history?planId=${encodeURIComponent(managedPlan.id)}`}
-              >
-                {copy.plansManage.viewHistory}
-              </PrimaryButton>
               <PrimaryButton
                 type="button"
                 variant="primary"
@@ -763,6 +727,15 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                 }}
               >
                 {saving ? copy.plansManage.saveInProgress : copy.plansManage.saveChanges}
+              </PrimaryButton>
+              <PrimaryButton
+                as="a"
+                variant="secondary"
+                size="lg"
+                fullWidth
+                href={`${APP_ROUTES.plansHistory}?planId=${encodeURIComponent(managedPlan.id)}`}
+              >
+                {copy.plansManage.viewHistory}
               </PrimaryButton>
               <PrimaryButton
                 type="button"
@@ -777,7 +750,12 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 15, fontVariationSettings: "'FILL' 0, 'wght' 300", verticalAlign: "middle", marginRight: "4px" }}
+                  style={{
+                    fontSize: 15,
+                    fontVariationSettings: "'FILL' 0, 'wght' 300",
+                    verticalAlign: "middle",
+                    marginRight: "4px",
+                  }}
                   aria-hidden="true"
                 >
                   delete

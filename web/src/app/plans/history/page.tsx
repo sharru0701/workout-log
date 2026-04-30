@@ -1,17 +1,16 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { AppSelect } from "@/components/ui/form-controls";
-import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet } from "@/lib/api";
-import { Card } from "@/components/ui/card";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
-
+import { APP_ROUTES } from "@/lib/app-routes";
 
 type Plan = {
   id: string;
@@ -52,11 +51,25 @@ type LogsResponse = {
   nextCursor: string | null;
 };
 
+const MONTH_ABBR_KO = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
+const MONTH_ABBR_EN = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+const WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
+const WEEKDAY_EN = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
 function formatDateTime(value: string | null | undefined) {
   if (!value) return "-";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleString();
+}
+
+function formatTimeOnly(value: string | null | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const hh = String(date.getHours()).padStart(2, "0");
+  const mm = String(date.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 function formatDuration(value: number | null | undefined) {
@@ -73,7 +86,9 @@ function summarizeExercises(sets: LogSet[], locale: "ko" | "en") {
   }
   if (names.length === 0) return locale === "ko" ? "운동 정보 없음" : "No exercise info";
   if (names.length <= 3) return names.join(", ");
-  return locale === "ko" ? `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}개` : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
+  return locale === "ko"
+    ? `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}개`
+    : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
 }
 
 function countWorkSets(sets: LogSet[]) {
@@ -90,7 +105,7 @@ function estimateVolumeKg(sets: LogSet[]) {
   }, 0);
 }
 
-function shortenText(value: string | null | undefined, limit = 120) {
+function shortenText(value: string | null | undefined, limit = 140) {
   const text = String(value ?? "").trim();
   if (!text) return "";
   if (text.length <= limit) return text;
@@ -106,6 +121,253 @@ function progressionBadgeClass(tone: ReturnType<typeof progressionTone>) {
     default:
       return "label progress-low label-sm";
   }
+}
+
+function daysSince(value: string | null | undefined) {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function formatRelativeDays(days: number | null, locale: "ko" | "en") {
+  if (days === null) return locale === "ko" ? "기록 없음" : "No record";
+  if (days <= 0) return locale === "ko" ? "오늘" : "Today";
+  if (days === 1) return locale === "ko" ? "어제" : "Yesterday";
+  if (days < 7) return locale === "ko" ? `${days}일 전` : `${days}d ago`;
+  if (days < 30) return locale === "ko" ? `${Math.floor(days / 7)}주 전` : `${Math.floor(days / 7)}w ago`;
+  if (days < 365) return locale === "ko" ? `${Math.floor(days / 30)}개월 전` : `${Math.floor(days / 30)}mo ago`;
+  return locale === "ko" ? `${Math.floor(days / 365)}년 전` : `${Math.floor(days / 365)}y ago`;
+}
+
+function formatVolumeShort(kg: number, locale: "ko" | "en") {
+  if (kg <= 0) return "-";
+  if (kg >= 1000) {
+    const t = kg / 1000;
+    return `${t % 1 === 0 ? t.toFixed(0) : t.toFixed(1)}t`;
+  }
+  return locale === "ko" ? `${Math.round(kg)}kg` : `${Math.round(kg)}kg`;
+}
+
+function groupLogsByMonth(logs: LogItem[]) {
+  const groups: Array<{ key: string; year: number; month: number; logs: LogItem[] }> = [];
+  let current: { key: string; year: number; month: number; logs: LogItem[] } | null = null;
+
+  for (const log of logs) {
+    const date = new Date(log.performedAt);
+    if (Number.isNaN(date.getTime())) continue;
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const key = `${year}-${String(month + 1).padStart(2, "0")}`;
+    if (!current || current.key !== key) {
+      current = { key, year, month, logs: [] };
+      groups.push(current);
+    }
+    current.logs.push(log);
+  }
+
+  return groups;
+}
+
+function PlanTabStrip({
+  plans,
+  selectedPlanId,
+  onSelect,
+  locale,
+}: {
+  plans: Plan[];
+  selectedPlanId: string;
+  onSelect: (planId: string) => void;
+  locale: "ko" | "en";
+}) {
+  return (
+    <div className="plan-tab-strip" role="tablist" aria-label={locale === "ko" ? "플랜 선택" : "Select plan"}>
+      {plans.map((plan) => {
+        const days = daysSince(plan.lastPerformedAt);
+        const sub = formatRelativeDays(days, locale);
+        const isActive = plan.id === selectedPlanId;
+        return (
+          <button
+            key={plan.id}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            data-active={isActive ? "true" : "false"}
+            className="plan-tab-strip__item"
+            onClick={() => onSelect(plan.id)}
+          >
+            <span className="plan-tab-strip__name">{plan.name}</span>
+            <span className="plan-tab-strip__sub">{sub}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function HistorySummaryCard({
+  plan,
+  loadedLogCount,
+  loadedSetCount,
+  loadedVolumeKg,
+  locale,
+}: {
+  plan: Plan;
+  loadedLogCount: number;
+  loadedSetCount: number;
+  loadedVolumeKg: number;
+  locale: "ko" | "en";
+}) {
+  const days = daysSince(plan.lastPerformedAt);
+  const recentText = formatRelativeDays(days, locale);
+
+  return (
+    <div className="history-summary">
+      <div className="history-summary__cell history-summary__primary">
+        <div className="history-summary__label">
+          {locale === "ko" ? "선택 플랜" : "Selected Plan"}
+        </div>
+        <div className="history-summary__value">{plan.name}</div>
+        {plan.baseProgramName ? (
+          <div className="history-summary__sub">{plan.baseProgramName}</div>
+        ) : null}
+      </div>
+      <div className="history-summary__cell">
+        <div className="history-summary__label">{locale === "ko" ? "최근 수행" : "Last"}</div>
+        <div className="history-summary__value">{recentText}</div>
+      </div>
+      <div className="history-summary__cell">
+        <div className="history-summary__label">{locale === "ko" ? "로드된 로그" : "Loaded"}</div>
+        <div className="history-summary__value">
+          {loadedLogCount}
+          <span style={{ fontSize: "11px", marginLeft: 4, color: "var(--color-text-muted)", fontWeight: 600 }}>
+            {locale === "ko" ? "건" : ""}
+          </span>
+        </div>
+      </div>
+      <div className="history-summary__cell">
+        <div className="history-summary__label">{locale === "ko" ? "총 볼륨" : "Volume"}</div>
+        <div className="history-summary__value">{formatVolumeShort(loadedVolumeKg, locale)}</div>
+        <div className="history-summary__sub">
+          {locale === "ko" ? `${loadedSetCount}세트` : `${loadedSetCount} sets`}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function LogCard({
+  log,
+  locale,
+  copy,
+  onDelete,
+  isDeleting,
+}: {
+  log: LogItem;
+  locale: "ko" | "en";
+  copy: ReturnType<typeof useLocale>["copy"];
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
+  const date = new Date(log.performedAt);
+  const validDate = !Number.isNaN(date.getTime());
+  const day = validDate ? date.getDate() : "-";
+  const monthIdx = validDate ? date.getMonth() : 0;
+  const monthLabel = locale === "ko" ? MONTH_ABBR_KO[monthIdx] : MONTH_ABBR_EN[monthIdx];
+  const weekdayIdx = validDate ? date.getDay() : 0;
+  const weekday = locale === "ko" ? WEEKDAY_KO[weekdayIdx] : WEEKDAY_EN[weekdayIdx];
+  const isWeekend = weekdayIdx === 0 || weekdayIdx === 6;
+  const time = formatTimeOnly(log.performedAt);
+
+  const workSetCount = countWorkSets(log.sets ?? []);
+  const exerciseSummary = summarizeExercises(log.sets ?? [], locale);
+  const volumeKg = estimateVolumeKg(log.sets ?? []);
+  const noteText = shortenText(log.notes);
+  const progressionText = summarizeProgression(log.progression ?? null, locale);
+  const progressionBadgeTone = progressionTone(log.progression ?? null);
+  const sessionLabel = log.generatedSession?.sessionKey
+    ? formatSessionKeyLabel(log.generatedSession.sessionKey)
+    : null;
+  const duration = formatDuration(log.durationMinutes);
+
+  return (
+    <article className="log-card-v2">
+      <div className="log-card-v2__date" data-weekend={isWeekend ? "true" : "false"}>
+        <span className="log-card-v2__date-month">{monthLabel}</span>
+        <span className="log-card-v2__date-day">{day}</span>
+        <span className="log-card-v2__date-weekday">{weekday}</span>
+      </div>
+
+      <div className="log-card-v2__body">
+        <div className="log-card-v2__head">
+          <div className="log-card-v2__title">{exerciseSummary}</div>
+          {time ? <div className="log-card-v2__time">{time}</div> : null}
+        </div>
+
+        {(sessionLabel || progressionText) ? (
+          <div className="log-card-v2__chips">
+            {sessionLabel ? (
+              <span className="label label-program label-sm">{sessionLabel}</span>
+            ) : null}
+            {progressionText ? (
+              <span className={progressionBadgeClass(progressionBadgeTone)}>
+                {progressionText}
+              </span>
+            ) : null}
+          </div>
+        ) : null}
+
+        <div className="log-card-v2__stats">
+          <div className="log-card-v2__stat" data-kind="sets">
+            <span className="log-card-v2__stat-label">{copy.plansHistory.sets}</span>
+            <span className="log-card-v2__stat-value">{workSetCount}</span>
+          </div>
+          <div className="log-card-v2__stat" data-kind="time">
+            <span className="log-card-v2__stat-label">{copy.plansHistory.time}</span>
+            <span className="log-card-v2__stat-value">
+              {duration === null ? "-" : locale === "ko" ? `${duration}분` : `${duration}m`}
+            </span>
+          </div>
+          <div className="log-card-v2__stat" data-kind="volume">
+            <span className="log-card-v2__stat-label">{copy.plansHistory.volume}</span>
+            <span className="log-card-v2__stat-value">{formatVolumeShort(volumeKg, locale)}</span>
+          </div>
+        </div>
+
+        {noteText ? (
+          <div className="log-card-v2__note">
+            <span className="material-symbols-outlined" aria-hidden="true">
+              format_quote
+            </span>
+            <span>{noteText}</span>
+          </div>
+        ) : null}
+
+        <div className="log-card-v2__actions">
+          <Link
+            className="log-card-v2__action log-card-v2__action--primary"
+            href={`/workout/session/${encodeURIComponent(log.id)}`}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              fitness_center
+            </span>
+            {copy.plansHistory.sessionDetail}
+          </Link>
+          <button
+            type="button"
+            className="log-card-v2__action log-card-v2__action--danger"
+            disabled={isDeleting}
+            onClick={onDelete}
+          >
+            <span className="material-symbols-outlined" aria-hidden="true">
+              delete
+            </span>
+            {isDeleting ? copy.plansHistory.deleting : copy.plansHistory.deleteHistory}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 function PlanHistoryPageContent() {
@@ -125,7 +387,7 @@ function PlanHistoryPageContent() {
   const [logsLoadingMore, setLogsLoadingMore] = useState(false);
   const [logsError, setLogsError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [refreshTick] = useState(0);
   const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
 
   const selectedPlan = useMemo(
@@ -218,7 +480,9 @@ function PlanHistoryPageContent() {
 
   useEffect(() => {
     const currentQueryPlanId = searchParams.get("planId")?.trim() ?? "";
-    const nextHref = selectedPlanId ? `/plans/history?planId=${encodeURIComponent(selectedPlanId)}` : "/plans/history";
+    const nextHref = selectedPlanId
+      ? `${APP_ROUTES.plansHistory}?planId=${encodeURIComponent(selectedPlanId)}`
+      : APP_ROUTES.plansHistory;
     if (selectedPlanId !== currentQueryPlanId) {
       router.replace(nextHref, { scroll: false });
     }
@@ -235,18 +499,24 @@ function PlanHistoryPageContent() {
     void loadLogs(selectedPlanId, null, false);
   }, [loadLogs, selectedPlanId, refreshTick]);
 
-
-
   const loadedLogCount = logs.length;
   const loadedSetCount = useMemo(
     () => logs.reduce((sum, log) => sum + countWorkSets(log.sets ?? []), 0),
     [logs],
   );
+  const loadedVolumeKg = useMemo(
+    () => logs.reduce((sum, log) => sum + estimateVolumeKg(log.sets ?? []), 0),
+    [logs],
+  );
+  const groupedLogs = useMemo(() => groupLogsByMonth(logs), [logs]);
 
   async function deleteLog(log: LogItem) {
     const ok = await confirm({
       title: locale === "ko" ? "히스토리 삭제" : "Delete History",
-      message: locale === "ko" ? `이 수행 로그를 삭제하시겠습니까?\n${formatDateTime(log.performedAt)}\n삭제 후 자동 진행 상태도 남은 로그 기준으로 다시 계산됩니다.` : `Delete this workout log?\n${formatDateTime(log.performedAt)}\nAuto progression will be recalculated from the remaining logs afterward.`,
+      message:
+        locale === "ko"
+          ? `이 수행 로그를 삭제하시겠습니까?\n${formatDateTime(log.performedAt)}\n삭제 후 자동 진행 상태도 남은 로그 기준으로 다시 계산됩니다.`
+          : `Delete this workout log?\n${formatDateTime(log.performedAt)}\nAuto progression will be recalculated from the remaining logs afterward.`,
       confirmText: locale === "ko" ? "삭제" : "Delete",
       cancelText: locale === "ko" ? "취소" : "Cancel",
       tone: "danger",
@@ -257,7 +527,6 @@ function PlanHistoryPageContent() {
       setDeletingLogId(log.id);
       setLogsError(null);
 
-      // Optimistic UI: 삭제된 아이템 즉시 목록에서 제거
       setLogs((prev) => prev.filter((item) => item.id !== log.id));
 
       await apiDelete<{ deleted: boolean }>(`/api/logs/${encodeURIComponent(log.id)}`);
@@ -271,7 +540,6 @@ function PlanHistoryPageContent() {
         buttonText: locale === "ko" ? "확인" : "OK",
       });
     } catch (e: any) {
-      // 에러 발생 시 원래 상태로 복구 (재조회)
       if (selectedPlanId) void loadLogs(selectedPlanId, null, false, true);
       const message = e?.message ?? (locale === "ko" ? "수행 로그 삭제에 실패했습니다." : "Failed to delete the workout log.");
       setLogsError(message);
@@ -288,15 +556,13 @@ function PlanHistoryPageContent() {
 
   return (
     <>
-
       <section>
-        <div style={{ marginBottom: "var(--space-xl)", paddingBottom: "var(--space-md)", borderBottom: "1px solid var(--color-border)" }}>
-          <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-primary)", marginBottom: "4px" }}>{copy.plansHistory.headerEyebrow}</div>
-          <h1 style={{ fontFamily: "var(--font-headline-family)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--color-text)", margin: "0 0 var(--space-sm)" }}>{copy.plansHistory.title}</h1>
-          <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: 0, lineHeight: 1.5 }}>{copy.plansHistory.description}</p>
+        <div className="plans-hero" style={{ marginBottom: "var(--space-md)" }}>
+          <div className="plans-hero__eyebrow">{copy.plansHistory.headerEyebrow}</div>
+          <h1 className="plans-hero__title">{copy.plansHistory.title}</h1>
+          <p className="plans-hero__description">{copy.plansHistory.description}</p>
         </div>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
         <ErrorStateRows
           message={plansError}
           title={copy.plansHistory.plansLoadError}
@@ -309,58 +575,29 @@ function PlanHistoryPageContent() {
           label={copy.plansHistory.noPlans}
           description={copy.plansHistory.noPlansDescription}
         />
+        <LoadingStateRows active={plansLoading && !plansLoadedRef.current} label={locale === "ko" ? "플랜 로딩 중" : "Loading plans"} />
 
         {plans.length > 0 ? (
-          <AppSelect
-            label={copy.plansHistory.selectPlan}
-            value={selectedPlanId}
-            onChange={(event) => setSelectedPlanId(event.target.value)}
-            disabled={plansLoading}
-          >
-            {plans.map((plan) => (
-              <option key={plan.id} value={plan.id}>
-                {plan.name}
-              </option>
-            ))}
-          </AppSelect>
+          <PlanTabStrip
+            plans={plans}
+            selectedPlanId={selectedPlanId}
+            onSelect={setSelectedPlanId}
+            locale={locale}
+          />
         ) : null}
 
         {selectedPlan ? (
-          <div style={{ background: "var(--color-surface-container)", borderRadius: 14, padding: "var(--space-md)", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-sm)" }}>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.selectedPlan}</div>
-              <div style={{ fontSize: "15px", fontWeight: 800, color: "var(--color-text)", letterSpacing: "-0.2px" }}>{selectedPlan.name}</div>
-              {selectedPlan.baseProgramName ? (
-                <div style={{ fontSize: "11px", fontWeight: 600, color: "var(--color-text-muted)", marginTop: "2px", letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                  {selectedPlan.baseProgramName}
-                </div>
-              ) : null}
-            </div>
-            <div>
-              <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.14em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.recentPerformed}</div>
-              <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--color-text)" }}>{formatDateTime(selectedPlan.lastPerformedAt)}</div>
-            </div>
-          </div>
+          <HistorySummaryCard
+            plan={selectedPlan}
+            loadedLogCount={loadedLogCount}
+            loadedSetCount={loadedSetCount}
+            loadedVolumeKg={loadedVolumeKg}
+            locale={locale}
+          />
         ) : null}
-        </div>
       </section>
 
       <section style={{ marginTop: "var(--space-lg)" }}>
-        <div style={{ marginBottom: "var(--space-sm)" }}>
-          <h2 style={{ fontFamily: "var(--font-headline-family)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--color-text-muted)", margin: 0 }}>{copy.plansHistory.logsTitle}</h2>
-        </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-        <NoticeStateRows
-          message={
-            selectedPlan
-              ? copy.plansHistory.summaryWithCounts(loadedLogCount, loadedSetCount)
-              : copy.plansHistory.summarySelectPlan
-          }
-          tone="neutral"
-          label={copy.plansHistory.summaryLabel}
-          preferInline
-        />
-
         <ErrorStateRows
           message={logsError}
           title={copy.plansHistory.logsLoadError}
@@ -369,91 +606,37 @@ function PlanHistoryPageContent() {
             void loadLogs(selectedPlanId, null, false);
           }}
         />
+        <LoadingStateRows active={logsLoading} label={locale === "ko" ? "로그 불러오는 중" : "Loading logs"} />
         <EmptyStateRows
           when={Boolean(selectedPlanId) && !logsLoading && !logsError && logs.length === 0}
           label={copy.plansHistory.noLogs}
           description={copy.plansHistory.noLogsDescription}
         />
 
-        {logs.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-            {logs.map((log) => {
-              const workSetCount = countWorkSets(log.sets ?? []);
-              const exerciseSummary = summarizeExercises(log.sets ?? [], locale);
-              const volumeKg = estimateVolumeKg(log.sets ?? []);
-              const noteText = shortenText(log.notes);
-              const progressionText = summarizeProgression(log.progression ?? null);
-              const progressionBadgeTone = progressionTone(log.progression ?? null);
-              const sessionLabel = log.generatedSession?.sessionKey
-                ? formatSessionKeyLabel(log.generatedSession.sessionKey)
-                : null;
-
+        {groupedLogs.length > 0 ? (
+          <div className="log-timeline">
+            {groupedLogs.map((group) => {
+              const monthLabel = locale === "ko"
+                ? `${group.year} · ${MONTH_ABBR_KO[group.month]}`
+                : `${MONTH_ABBR_EN[group.month]} ${group.year}`;
               return (
-                <Card as="article" key={log.id} tone="inset" padding="sm" elevated={false}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "var(--space-xs)" }}>
-                    <div>
-                      <strong style={{ fontSize: "14px", fontWeight: 800, letterSpacing: "-0.2px", color: "var(--color-text)", display: "block" }}>{formatDateTime(log.performedAt)}</strong>
-                      <span style={{ fontSize: "12px", color: "var(--color-text-muted)", marginTop: "2px", display: "block" }}>{exerciseSummary}</span>
-                    </div>
-                    {sessionLabel || progressionText ? (
-                      <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--space-xs)", justifyContent: "flex-end" }}>
-                        {sessionLabel ? (
-                          <span className="label label-program label-sm">{sessionLabel}</span>
-                        ) : null}
-                        {progressionText ? (
-                          <span className={progressionBadgeClass(progressionBadgeTone)}>{progressionText}</span>
-                        ) : null}
-                      </div>
-                    ) : null}
+                <div key={group.key}>
+                  <div className="log-timeline__group-label">{monthLabel}</div>
+                  <div className="log-timeline__list">
+                    {group.logs.map((log) => (
+                      <LogCard
+                        key={log.id}
+                        log={log}
+                        locale={locale}
+                        copy={copy}
+                        isDeleting={deletingLogId === log.id}
+                        onDelete={() => {
+                          void deleteLog(log);
+                        }}
+                      />
+                    ))}
                   </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: "var(--space-xs)", margin: "var(--space-sm) 0", background: "var(--color-surface-container)", borderRadius: 10, padding: "var(--space-sm)" }}>
-                    <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.sets}</div>
-                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{workSetCount}</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.time}</div>
-                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>
-                        {(() => {
-                          const duration = formatDuration(log.durationMinutes);
-                          if (duration === null) return locale === "ko" ? "기록 없음" : "No record";
-                          return locale === "ko" ? `${duration}분` : `${duration} min`;
-                        })()}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.volume}</div>
-                      <div style={{ fontSize: "16px", fontWeight: 800, letterSpacing: "-0.3px", color: "var(--color-text)" }}>{volumeKg > 0 ? `${Math.round(volumeKg)}kg` : "-"}</div>
-                    </div>
-                  </div>
-
-                  {noteText ? (
-                    <div style={{ borderTop: "1px solid var(--color-border)", paddingTop: "var(--space-xs)", marginBottom: "var(--space-xs)" }}>
-                      <div style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--color-text-muted)", marginBottom: "2px" }}>{copy.plansHistory.note}</div>
-                      <div style={{ fontSize: "13px", color: "var(--color-text)" }}>{noteText}</div>
-                    </div>
-                  ) : null}
-
-                  <div style={{ display: "flex", gap: "var(--space-xs)" }}>
-                    <a
-                      className="btn btn-inline-action btn-inline-action-primary"
-                      href={`/workout/session/${encodeURIComponent(log.id)}`}
-                    >
-                      {copy.plansHistory.sessionDetail}
-                    </a>
-                    <button
-                      type="button"
-                      className="btn btn-inline-action btn-inline-action-danger"
-                      disabled={deletingLogId === log.id}
-                      onClick={() => {
-                        void deleteLog(log);
-                      }}
-                    >
-                      {deletingLogId === log.id ? copy.plansHistory.deleting : copy.plansHistory.deleteHistory}
-                    </button>
-                  </div>
-                </Card>
+                </div>
               );
             })}
 
@@ -472,7 +655,6 @@ function PlanHistoryPageContent() {
             ) : null}
           </div>
         ) : null}
-        </div>
       </section>
     </>
   );
