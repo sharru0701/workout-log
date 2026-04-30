@@ -275,6 +275,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   const [error, setError] = useState<string | null>(null);
   const [refreshTick] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activityFilter, setActivityFilter] = useState<"ALL" | "RECENT" | "IDLE">("ALL");
   const storeHasLoadedRef = useRef(initialPlans.length > 0);
 
   const [managePlanId, setManagePlanId] = useState("");
@@ -300,11 +301,16 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   const isSettled = useQuerySettled(loadKey, loading);
   const filteredPlans = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
-    if (!normalizedQuery) return plans;
-    return plans.filter((plan) =>
-      normalizeSearchText(plan.name, plan.baseProgramName, plan.type).includes(normalizedQuery),
-    );
-  }, [plans, searchQuery]);
+    return plans.filter((plan) => {
+      const days = daysSince(plan.lastPerformedAt);
+      const activityMatched = activityFilter === "ALL"
+        || (activityFilter === "RECENT" && typeof days === "number" && days <= RECENT_THRESHOLD_DAYS)
+        || (activityFilter === "IDLE" && days === null);
+      if (!activityMatched) return false;
+      if (!normalizedQuery) return true;
+      return normalizeSearchText(plan.name, plan.baseProgramName, plan.type).includes(normalizedQuery);
+    });
+  }, [activityFilter, plans, searchQuery]);
 
   const heroMetrics = useMemo(() => {
     const total = plans.length;
@@ -534,14 +540,36 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
 
       <section>
         {plans.length > 0 || searchQuery.trim().length > 0 ? (
-          <div style={{ marginBottom: "var(--space-md)" }}>
+          <>
+            <div className="plans-filter-tabs" role="tablist" aria-label={locale === "ko" ? "플랜 필터" : "Plan filter"}>
+            {[
+              { key: "ALL", label: locale === "ko" ? "전체" : "All", count: heroMetrics.total },
+              { key: "RECENT", label: locale === "ko" ? "최근 수행" : "Recent", count: heroMetrics.recent },
+              { key: "IDLE", label: locale === "ko" ? "미수행" : "Idle", count: heroMetrics.untouched },
+            ].map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                role="tab"
+                aria-selected={activityFilter === item.key}
+                className="plans-filter-tab"
+                data-active={activityFilter === item.key ? "true" : "false"}
+                onClick={() => setActivityFilter(item.key as "ALL" | "RECENT" | "IDLE")}
+              >
+                <span>{item.label}</span><strong>{item.count}</strong>
+              </button>
+            ))}
+          </div>
+
+            <div style={{ marginBottom: "var(--space-md)" }}>
             <SearchInput
               value={searchQuery}
               onChange={setSearchQuery}
               placeholder={copy.plansManage.searchPlaceholder}
               ariaLabel={copy.plansManage.searchAriaLabel}
             />
-          </div>
+            </div>
+          </>
         ) : null}
 
         <LoadingStateRows active={loading} label={locale === "ko" ? "플랜 목록 로딩 중" : "Loading plans"} />
@@ -564,7 +592,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
         />
 
         {filteredPlans.length > 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+          <div className="plan-manage-sheet__stack">
             {filteredPlans.map((plan) => (
               <PlanCardV2
                 key={plan.id}
@@ -589,7 +617,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
         closeLabel={copy.plansManage.close}
       >
         {managedPlan ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div className="plan-manage-sheet">
             <div className="stat-tile-grid">
               <div className="stat-tile">
                 <div className="stat-tile__label">
@@ -617,17 +645,8 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               </div>
             </div>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                }}
-              >
+            <label className="plan-manage-sheet__field">
+              <span className="plan-manage-sheet__label">
                 {copy.plansManage.planName}
               </span>
               <AppTextInput
@@ -637,21 +656,12 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               />
             </label>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                }}
-              >
+            <div className="plan-manage-sheet__field">
+              <span className="plan-manage-sheet__label">
                 {copy.plansManage.strengthBaselines}
               </span>
               {strengthRows.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                <div className="plan-manage-sheet__stack">
                   {strengthRows.map((row) => (
                     <div key={row.key} className="tm-edit-row">
                       <strong className="tm-edit-row__label">{row.label}</strong>
@@ -701,21 +711,13 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   ))}
                 </div>
               ) : (
-                <div
-                  style={{
-                    background: "var(--color-surface-container-low)",
-                    borderRadius: "12px",
-                    padding: "var(--space-md)",
-                    color: "var(--color-text-muted)",
-                    fontSize: "13px",
-                  }}
-                >
+                <div className="plan-manage-sheet__empty">
                   {copy.plansManage.noStrengthBaselines}
                 </div>
               )}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            <div className="plan-manage-sheet__stack">
               <PrimaryButton
                 type="button"
                 variant="primary"
