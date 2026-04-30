@@ -200,7 +200,6 @@ export type AppCopy = {
       title: string;
       links: {
         programStore: { title: string; subtitle: string };
-        templates: { title: string; subtitle: string };
         plans: { title: string; subtitle: string };
         stats: { title: string; subtitle: string };
       };
@@ -272,21 +271,6 @@ export type AppCopy = {
       timezone: { label: string; description: string };
       autoOpen: { label: string; description: string; autoGenerate: string; openOnly: string };
       openTime: { label: string; description: string };
-    };
-  };
-  templates: {
-    headerEyebrow: string;
-    title: string;
-    manage: string;
-    workSection: string;
-    flowSection: string;
-    libraryItems: {
-      browse: { label: string; subtitle: string; description: string };
-      forkEdit: { label: string; subtitle: string; description: string };
-    };
-    integrationItems: {
-      store: { label: string; subtitle: string; description: string };
-      custom: { label: string; subtitle: string; description: string };
     };
   };
   plans: {
@@ -424,74 +408,6 @@ export type AppCopy = {
     moveDateBlockedTitle: string;
     moveDateBlockedDescription: string;
     recentLogs: string;
-  };
-  templatesManage: {
-    searchLabel: string;
-    searchPlaceholder: string;
-    clearSearch: string;
-    tagFilter: string;
-    allTags: string;
-    visibleCount: (filtered: number, total: number) => string;
-    reload: string;
-    plansScreen: string;
-    reloadError: string;
-    done: string;
-    publicTemplates: string;
-    publicTemplatesDescription: string;
-    noPublicTemplates: string;
-    privateTemplates: string;
-    privateTemplatesDescription: string;
-    noPrivateTemplates: string;
-    privateTemplatesHelp: string;
-    latestVersionPrefix: string;
-    forkFailed: string;
-    fork: string;
-    editorEyebrow: string;
-    editorTitle: string;
-    editorEmpty: string;
-    baseVersion: string;
-    manualEditorTitle: string;
-    createVersion: string;
-    createVersionDescription: string;
-    createVersionError: string;
-    readonly: string;
-    readonlyDescription: string;
-    versionHistory: string;
-    versionHistoryDescription: string;
-    noVersions: string;
-    version: string;
-    createdAt: string;
-    changelog: string;
-    loadTemplatesError: string;
-    loadVersionsError: string;
-    forkSuccess: (slug: string) => string;
-    selectTemplateFirst: string;
-    selectBaseVersionFirst: string;
-    basedOnVersion: (version: number) => string;
-    createVersionSuccess: (slug: string, version: number) => string;
-    manualEditorDescription: string;
-    sessions: string;
-    addSession: string;
-    sessionKey: string;
-    removeSession: string;
-    exerciseName: string;
-    removeItem: string;
-    reps: string;
-    weightKg: string;
-    rpe: string;
-    removeSet: string;
-    addSet: string;
-    addItem: string;
-    logicSafeParams: string;
-    logicSafeDescription: string;
-    perWeek: string;
-    tmPercent: string;
-    frequency: string;
-    cycleWeeks: string;
-    exerciseSubstitutions: string;
-    target: string;
-    remove: string;
-    addSubstitution: string;
   };
 };
 
@@ -688,7 +604,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         title: "바로가기",
         links: {
           programStore: { title: "프로그램 스토어", subtitle: "프로토콜 둘러보기" },
-          templates: { title: "템플릿", subtitle: "커스텀 루틴" },
           plans: { title: "내 플랜", subtitle: "관리 및 일정" },
           stats: { title: "통계", subtitle: "진행 추적" },
         },
@@ -760,21 +675,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         timezone: { label: "시간대", description: "날짜 경계 계산 시간대를 설정합니다." },
         autoOpen: { label: "열기 동작", description: "날짜 열기 시 동작을 선택합니다.", autoGenerate: "자동 생성", openOnly: "열기만" },
         openTime: { label: "기본 열기 시간", description: "날짜 열기 기본 시간을 설정합니다." },
-      },
-    },
-    templates: {
-      headerEyebrow: "Templates",
-      title: "프로그램 템플릿",
-      manage: "관리",
-      workSection: "템플릿 작업",
-      flowSection: "연결 흐름",
-      libraryItems: {
-        browse: { label: "템플릿 둘러보기", subtitle: "Library", description: "공개 템플릿과 개인 템플릿을 한곳에서 확인합니다." },
-        forkEdit: { label: "포크 후 수정", subtitle: "Fork & Edit", description: "공개 템플릿을 복사해 내 작업공간에서 수정합니다." },
-      },
-      integrationItems: {
-        store: { label: "프로그램 스토어로 연결", subtitle: "Program Store", description: "템플릿 기반 프로그램을 고르고 플랜 시작 흐름으로 이어갑니다." },
-        custom: { label: "커스텀 프로그램 만들기", subtitle: "Custom", description: "템플릿 대신 내 루틴을 직접 정의하고 싶을 때 같은 시작 흐름으로 이동합니다." },
       },
     },
     plans: {
@@ -912,74 +812,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       moveDateBlockedTitle: "날짜 이동 불가",
       moveDateBlockedDescription: "이동할 날짜 사이에 다른 기록이 있습니다. 해당 기록을 먼저 삭제해야 합니다.",
       recentLogs: "최근 기록",
-    },
-    templatesManage: {
-      searchLabel: "템플릿/프로그램 검색",
-      searchPlaceholder: "이름, slug, 타입, 태그...",
-      clearSearch: "검색어 지우기",
-      tagFilter: "태그 필터",
-      allTags: "전체 태그",
-      visibleCount: (filtered, total) => `${filtered}/${total}개 표시 중`,
-      reload: "다시 불러오기",
-      plansScreen: "플랜 화면",
-      reloadError: "템플릿을 다시 불러오지 못했습니다.",
-      done: "완료",
-      publicTemplates: "공개 템플릿",
-      publicTemplatesDescription: "공식 템플릿을 확인하고 포크합니다.",
-      noPublicTemplates: "표시할 공개 템플릿이 없습니다.",
-      privateTemplates: "내 개인 템플릿",
-      privateTemplatesDescription: "현재 사용자가 편집할 수 있는 템플릿입니다.",
-      noPrivateTemplates: "개인 템플릿이 없습니다.",
-      privateTemplatesHelp: "공개 템플릿을 포크해 편집을 시작하세요.",
-      latestVersionPrefix: "최신",
-      forkFailed: "포크에 실패했습니다.",
-      fork: "포크",
-      editorEyebrow: "Templates",
-      editorTitle: "템플릿 편집기",
-      editorEmpty: "좌측 목록에서 템플릿을 선택하면 버전/편집 설정이 표시됩니다.",
-      baseVersion: "기준 버전",
-      manualEditorTitle: "수동 세션 편집",
-      createVersion: "새 버전 생성",
-      createVersionDescription: "선택한 기준 버전에서 파생합니다.",
-      createVersionError: "버전 생성에 실패했습니다.",
-      readonly: "편집 비활성",
-      readonlyDescription: "이 템플릿은 읽기 전용입니다. 포크 후 개인 템플릿에서 버전을 생성하세요.",
-      versionHistory: "버전 기록",
-      versionHistoryDescription: "시간순 변경 이력을 확인합니다.",
-      noVersions: "선택한 템플릿의 버전 이력이 아직 없습니다.",
-      version: "버전",
-      createdAt: "생성일",
-      changelog: "변경 내역",
-      loadTemplatesError: "템플릿을 불러오지 못했습니다.",
-      loadVersionsError: "버전 목록을 불러오지 못했습니다.",
-      forkSuccess: (slug) => `템플릿을 포크했습니다: ${slug}`,
-      selectTemplateFirst: "템플릿을 먼저 선택하세요.",
-      selectBaseVersionFirst: "기준 버전을 선택하세요.",
-      basedOnVersion: (version) => `v${version} 기반 생성`,
-      createVersionSuccess: (slug, version) => `${slug} v${version} 버전을 생성했습니다.`,
-      manualEditorDescription: "세션, 아이템, 세트 단위로 편집합니다.",
-      sessions: "세션",
-      addSession: "+ 세션",
-      sessionKey: "세션 키",
-      removeSession: "세션 삭제",
-      exerciseName: "운동명",
-      removeItem: "아이템 삭제",
-      reps: "반복수",
-      weightKg: "중량(kg)",
-      rpe: "RPE",
-      removeSet: "세트 삭제",
-      addSet: "+ 세트",
-      addItem: "+ 아이템",
-      logicSafeParams: "로직 안전 파라미터",
-      logicSafeDescription: "스케줄과 대체 규칙을 설정합니다.",
-      perWeek: "/주",
-      tmPercent: "TM %",
-      frequency: "빈도",
-      cycleWeeks: "사이클 주차",
-      exerciseSubstitutions: "운동 대체 규칙",
-      target: "대상",
-      remove: "삭제",
-      addSubstitution: "+ 대체 규칙",
     },
   },
   en: {
@@ -1174,7 +1006,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         title: "Quick Links",
         links: {
           programStore: { title: "Program Store", subtitle: "Browse Protocols" },
-          templates: { title: "Templates", subtitle: "Custom Routines" },
           plans: { title: "My Plans", subtitle: "Manage and Schedule" },
           stats: { title: "Stats", subtitle: "Progress Tracking" },
         },
@@ -1246,21 +1077,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         timezone: { label: "Time Zone", description: "Set the time zone used for date boundary calculations." },
         autoOpen: { label: "Open Behavior", description: "Choose what happens when a date is opened.", autoGenerate: "Auto Generate", openOnly: "Open Only" },
         openTime: { label: "Default Open Time", description: "Set the default time used when opening a date." },
-      },
-    },
-    templates: {
-      headerEyebrow: "Templates",
-      title: "Program Templates",
-      manage: "Manage",
-      workSection: "Template Work",
-      flowSection: "Connected Flows",
-      libraryItems: {
-        browse: { label: "Browse Templates", subtitle: "Library", description: "See public and personal templates in one place." },
-        forkEdit: { label: "Fork and Edit", subtitle: "Fork & Edit", description: "Copy a public template and edit it in your workspace." },
-      },
-      integrationItems: {
-        store: { label: "Open in Program Store", subtitle: "Program Store", description: "Pick a template-based program and continue into the plan start flow." },
-        custom: { label: "Create Custom Program", subtitle: "Custom", description: "Define your own routine directly instead of starting from a template." },
       },
     },
     plans: {
@@ -1398,74 +1214,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       moveDateBlockedTitle: "Cannot Move Date",
       moveDateBlockedDescription: "There are other logs between the dates. Please delete those logs first.",
       recentLogs: "Recent Logs",
-    },
-    templatesManage: {
-      searchLabel: "Search Templates/Programs",
-      searchPlaceholder: "Name, slug, type, tags...",
-      clearSearch: "Clear search",
-      tagFilter: "Tag Filter",
-      allTags: "All Tags",
-      visibleCount: (filtered, total) => `Showing ${filtered}/${total}`,
-      reload: "Reload",
-      plansScreen: "Plans",
-      reloadError: "Could not reload templates.",
-      done: "Done",
-      publicTemplates: "Public Templates",
-      publicTemplatesDescription: "Review official templates and fork them.",
-      noPublicTemplates: "No public templates to display.",
-      privateTemplates: "My Private Templates",
-      privateTemplatesDescription: "Templates this user can edit.",
-      noPrivateTemplates: "No private templates.",
-      privateTemplatesHelp: "Fork a public template to start editing.",
-      latestVersionPrefix: "Latest",
-      forkFailed: "Fork failed.",
-      fork: "Fork",
-      editorEyebrow: "Templates",
-      editorTitle: "Template Editor",
-      editorEmpty: "Select a template from the list to view version and editing settings.",
-      baseVersion: "Base Version",
-      manualEditorTitle: "Manual Session Editor",
-      createVersion: "Create Version",
-      createVersionDescription: "Derive a new version from the selected base version.",
-      createVersionError: "Failed to create a version.",
-      readonly: "Editing Disabled",
-      readonlyDescription: "This template is read-only. Fork it and create versions from your private copy.",
-      versionHistory: "Version History",
-      versionHistoryDescription: "Review the change history in chronological order.",
-      noVersions: "This template does not have version history yet.",
-      version: "Version",
-      createdAt: "Created",
-      changelog: "Changelog",
-      loadTemplatesError: "Could not load templates.",
-      loadVersionsError: "Could not load versions.",
-      forkSuccess: (slug) => `Forked template: ${slug}`,
-      selectTemplateFirst: "Select a template first.",
-      selectBaseVersionFirst: "Select a base version first.",
-      basedOnVersion: (version) => `Based on v${version}`,
-      createVersionSuccess: (slug, version) => `Created ${slug} v${version}.`,
-      manualEditorDescription: "Edit at the session, item, and set level.",
-      sessions: "sessions",
-      addSession: "+ Session",
-      sessionKey: "Session Key",
-      removeSession: "Remove Session",
-      exerciseName: "Exercise Name",
-      removeItem: "Remove Item",
-      reps: "Reps",
-      weightKg: "Weight (kg)",
-      rpe: "RPE",
-      removeSet: "Remove Set",
-      addSet: "+ Set",
-      addItem: "+ Item",
-      logicSafeParams: "Logic Safety Parameters",
-      logicSafeDescription: "Configure schedule and substitution rules.",
-      perWeek: "/week",
-      tmPercent: "TM %",
-      frequency: "Frequency",
-      cycleWeeks: "Cycle Weeks",
-      exerciseSubstitutions: "Exercise Substitutions",
-      target: "Target",
-      remove: "Remove",
-      addSubstitution: "+ Substitution",
     },
   },
 };

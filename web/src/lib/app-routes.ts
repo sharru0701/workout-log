@@ -7,8 +7,6 @@ export const APP_ROUTES = {
   plansHistory: "/plans/history",
   programStore: "/program-store",
   programCreate: "/program-store/create",
-  templatesHome: "/templates",
-  templatesManage: "/templates/manage",
   calendarHome: "/calendar",
   calendarOptions: "/calendar/options",
   todayHome: "/workout/today",

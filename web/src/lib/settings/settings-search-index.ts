@@ -171,16 +171,6 @@ export const settingsSearchIndex: SettingsSearchEntry[] = [
     descriptionEn: "Set the generation day index",
   },
   {
-    key: "templates.manage",
-    title: "템플릿 워크스페이스",
-    titleEn: "Template Workspace",
-    path: "/templates/manage",
-    section: "프로그램",
-    keywords: ["템플릿", "버전", "fork", "template", "version"],
-    description: "템플릿/버전 관리",
-    descriptionEn: "Manage templates and versions",
-  },
-  {
     key: "stats.dashboard",
     title: "통계 대시보드",
     titleEn: "Stats Dashboard",
