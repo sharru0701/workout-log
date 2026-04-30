@@ -7,6 +7,7 @@ import { useLocale } from "@/components/locale-provider";
 
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
+import { SearchInput } from "@/components/ui/search-input";
 import { apiDelete, apiGet } from "@/lib/api";
 import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
 import { formatSessionKeyLabel } from "@/lib/session-key";
@@ -389,6 +390,7 @@ function PlanHistoryPageContent() {
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [refreshTick] = useState(0);
   const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
+  const [logQuery, setLogQuery] = useState("");
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? null,
@@ -508,7 +510,16 @@ function PlanHistoryPageContent() {
     () => logs.reduce((sum, log) => sum + estimateVolumeKg(log.sets ?? []), 0),
     [logs],
   );
-  const groupedLogs = useMemo(() => groupLogsByMonth(logs), [logs]);
+  const filteredLogs = useMemo(() => {
+    const q = logQuery.trim().toLowerCase();
+    if (!q) return logs;
+    return logs.filter((log) => {
+      const note = String(log.notes ?? "").toLowerCase();
+      const ex = (log.sets ?? []).map((set) => String(set.exerciseName ?? "").toLowerCase()).join(" ");
+      return `${note} ${ex}`.includes(q);
+    });
+  }, [logQuery, logs]);
+  const groupedLogs = useMemo(() => groupLogsByMonth(filteredLogs), [filteredLogs]);
 
   async function deleteLog(log: LogItem) {
     const ok = await confirm({
@@ -598,6 +609,14 @@ function PlanHistoryPageContent() {
       </section>
 
       <section style={{ marginTop: "var(--space-lg)" }}>
+        <div style={{ marginBottom: "var(--space-md)" }}>
+          <SearchInput
+            value={logQuery}
+            onChange={setLogQuery}
+            placeholder={locale === "ko" ? "운동명/메모 검색" : "Search exercises/notes"}
+            ariaLabel={locale === "ko" ? "히스토리 검색" : "Search history"}
+          />
+        </div>
         <ErrorStateRows
           message={logsError}
           title={copy.plansHistory.logsLoadError}
@@ -608,7 +627,7 @@ function PlanHistoryPageContent() {
         />
         <LoadingStateRows active={logsLoading} label={locale === "ko" ? "로그 불러오는 중" : "Loading logs"} />
         <EmptyStateRows
-          when={Boolean(selectedPlanId) && !logsLoading && !logsError && logs.length === 0}
+          when={Boolean(selectedPlanId) && !logsLoading && !logsError && filteredLogs.length === 0}
           label={copy.plansHistory.noLogs}
           description={copy.plansHistory.noLogsDescription}
         />

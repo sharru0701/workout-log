@@ -810,3 +810,62 @@
   letter-spacing: -0.2px;
   word-break: break-word;
 }
+
+.plans-filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.plans-filter-tab {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface-container-low);
+  color: var(--color-text-muted);
+  border-radius: 12px;
+  min-height: 42px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+  font-family: var(--font-label-family);
+  font-weight: 700;
+}
+
+.plans-filter-tab[data-active="true"] {
+  border-color: color-mix(in srgb, var(--color-primary) 50%, var(--color-border));
+  color: var(--color-primary);
+  background: color-mix(in srgb, var(--color-primary) 10%, var(--color-surface-container-low));
+}
+
+.plan-manage-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+.plan-manage-sheet__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+.plan-manage-sheet__label {
+  font-family: var(--font-label-family);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+.plan-manage-sheet__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.plan-manage-sheet__empty {
+  background: var(--color-surface-container-low);
+  border-radius: 12px;
+  padding: var(--space-md);
+  color: var(--color-text-muted);
+  font-size: 13px;
+}

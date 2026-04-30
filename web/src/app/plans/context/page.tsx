@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
+import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
+import { Button } from "@/components/ui/button";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -42,81 +44,22 @@ function SettingRow({ item }: { item: SettingItem }) {
         borderRadius: "14px",
         background: "var(--color-surface-container-low)",
         textDecoration: "none",
-        transition: "background 0.12s ease",
-        minHeight: "60px",
       }}
     >
-      <span
-        className="material-symbols-outlined"
-        style={{
-          fontSize: 20,
-          color: "var(--color-primary)",
-          flexShrink: 0,
-          fontVariationSettings: "'FILL' 0, 'wght' 300",
-        }}
-        aria-hidden="true"
-      >
-        {item.iconSymbol}
-      </span>
-
+      <span className="material-symbols-outlined" aria-hidden="true">{item.iconSymbol}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "15px",
-            fontWeight: 600,
-            color: "var(--color-text)",
-            letterSpacing: "-0.1px",
-            marginBottom: "2px",
-          }}
-        >
-          {item.label}
-        </div>
-        <div style={{ fontSize: "12px", color: "var(--color-text-muted)", lineHeight: 1.3 }}>
-          {item.description}
-        </div>
+        <div style={{ fontWeight: 700, fontSize: 14 }}>{item.label}</div>
+        <div style={{ fontSize: 12, color: "var(--color-text-muted)" }}>{item.description}</div>
       </div>
-
-      <div style={{ flexShrink: 0, display: "flex", alignItems: "center", gap: "6px" }}>
-        <span
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "12px",
-            fontWeight: 600,
-            color: "var(--color-text-muted)",
-            maxWidth: "80px",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {item.currentValue}
-        </span>
-        <span
-          className="material-symbols-outlined"
-          style={{
-            fontSize: 16,
-            color: "var(--color-text-muted)",
-            opacity: 0.5,
-            fontVariationSettings: "'FILL' 0, 'wght' 300",
-          }}
-          aria-hidden="true"
-        >
-          chevron_right
-        </span>
-      </div>
+      <div style={{ fontSize: 12, color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{item.currentValue}</div>
     </Link>
   );
 }
 
-export default async function PlanContextPage({
-  searchParams,
-}: {
-  searchParams?: Promise<SearchParams>;
-}) {
+export default async function PlanContextPage({ searchParams }: { searchParams?: SearchParams | Promise<SearchParams> }) {
   const locale = await resolveRequestLocale();
   const copy = getAppCopy(locale);
-  const params = searchParams ? await searchParams : {};
+  const params = searchParams ? await Promise.resolve(searchParams) : {};
   const userId = readString(params, "userId", "dev");
   const startDate = readString(params, "startDate", new Date().toISOString().slice(0, 10));
   const timezone = readString(params, "timezone", "UTC");
@@ -134,149 +77,30 @@ export default async function PlanContextPage({
   const returnTo = `${APP_ROUTES.plansContext}?${returnQuery.toString()}`;
 
   const contextItems: SettingItem[] = [
-    {
-      href: toSelectionHref("/plans/context/select/user-id", returnTo),
-      label: copy.plansContext.fields.userId.label,
-      description: copy.plansContext.fields.userId.description,
-      currentValue: userId,
-      iconSymbol: "person",
-    },
-    {
-      href: toSelectionHref("/plans/context/picker/start-date", returnTo),
-      label: copy.plansContext.fields.startDate.label,
-      description: copy.plansContext.fields.startDate.description,
-      currentValue: startDate,
-      iconSymbol: "calendar_today",
-    },
-    {
-      href: toSelectionHref("/plans/context/select/timezone", returnTo),
-      label: copy.plansContext.fields.timezone.label,
-      description: copy.plansContext.fields.timezone.description,
-      currentValue: timezone,
-      iconSymbol: "schedule",
-    },
-    {
-      href: toSelectionHref("/plans/context/select/session-key-mode", returnTo),
-      label: copy.plansContext.fields.sessionKeyMode.label,
-      description: copy.plansContext.fields.sessionKeyMode.description,
-      currentValue: sessionKeyMode,
-      iconSymbol: "key",
-    },
-    {
-      href: toSelectionHref("/plans/context/picker/week", returnTo),
-      label: copy.plansContext.fields.week.label,
-      description: copy.plansContext.fields.week.description,
-      currentValue: String(week),
-      iconSymbol: "view_week",
-    },
-    {
-      href: toSelectionHref("/plans/context/picker/day", returnTo),
-      label: copy.plansContext.fields.day.label,
-      description: copy.plansContext.fields.day.description,
-      currentValue: String(day),
-      iconSymbol: "today",
-    },
+    { href: toSelectionHref("/plans/context/select/user-id", returnTo), label: copy.plansContext.fields.userId.label, description: copy.plansContext.fields.userId.description, currentValue: userId, iconSymbol: "person" },
+    { href: toSelectionHref("/plans/context/picker/start-date", returnTo), label: copy.plansContext.fields.startDate.label, description: copy.plansContext.fields.startDate.description, currentValue: startDate, iconSymbol: "calendar_today" },
+    { href: toSelectionHref("/plans/context/select/timezone", returnTo), label: copy.plansContext.fields.timezone.label, description: copy.plansContext.fields.timezone.description, currentValue: timezone, iconSymbol: "schedule" },
+    { href: toSelectionHref("/plans/context/select/session-key-mode", returnTo), label: copy.plansContext.fields.sessionKeyMode.label, description: copy.plansContext.fields.sessionKeyMode.description, currentValue: sessionKeyMode, iconSymbol: "key" },
+    { href: toSelectionHref("/plans/context/picker/week", returnTo), label: copy.plansContext.fields.week.label, description: copy.plansContext.fields.week.description, currentValue: String(week), iconSymbol: "view_week" },
+    { href: toSelectionHref("/plans/context/picker/day", returnTo), label: copy.plansContext.fields.day.label, description: copy.plansContext.fields.day.description, currentValue: String(day), iconSymbol: "today" },
   ];
 
   return (
-    <div>
-      {/* Header */}
-      <div
-        style={{
-          marginBottom: "var(--space-xl)",
-          paddingBottom: "var(--space-md)",
-          borderBottom: "1px solid var(--color-border)",
-        }}
-      >
-        <div
-          style={{
-            fontFamily: "var(--font-label-family)",
-            fontSize: "10px",
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "var(--color-primary)",
-            marginBottom: "4px",
-          }}
-        >
-          {copy.plansContext.eyebrow}
+    <AppPage>
+      <PageHeader eyebrow={copy.plansContext.eyebrow} title={copy.plansContext.title} description={copy.plansContext.description} actions={<Button as={Link} href={APP_ROUTES.plansManage} variant="secondary">{copy.plans.manage}</Button>} />
+      <PageSection title={copy.plansContext.sectionTitle}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+          {contextItems.map((item) => <SettingRow key={item.href} item={item} />)}
         </div>
-        <h1
-          style={{
-            fontFamily: "var(--font-headline-family)",
-            fontSize: "28px",
-            fontWeight: 800,
-            letterSpacing: "-0.5px",
-            color: "var(--color-text)",
-            margin: "0 0 var(--space-sm)",
-          }}
-        >
-          {copy.plansContext.title}
-        </h1>
-        <p style={{ fontSize: "13px", color: "var(--color-text-muted)", margin: "0 0 var(--space-md)", lineHeight: 1.5 }}>
-          {copy.plansContext.description}
-        </p>
-        <div style={{ display: "flex", gap: "var(--space-sm)" }}>
-          <Link
-            href={APP_ROUTES.programStore}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "var(--color-primary)",
-              color: "var(--color-text-on-primary)",
-              borderRadius: "22px",
-              padding: "10px 16px",
-              fontFamily: "var(--font-label-family)",
-              fontWeight: 700,
-              fontSize: "13px",
-              textDecoration: "none",
-            }}
-          >
-            {copy.plansContext.pickProgram}
-          </Link>
-          <Link
-            href={APP_ROUTES.programCreate}
-            style={{
-              flex: 1,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "var(--color-surface-container-high)",
-              color: "var(--color-text)",
-              borderRadius: "22px",
-              padding: "10px 16px",
-              fontFamily: "var(--font-label-family)",
-              fontWeight: 600,
-              fontSize: "13px",
-              textDecoration: "none",
-            }}
-          >
-            {copy.plansContext.createCustom}
-          </Link>
+      </PageSection>
+      <PageSection title={copy.plansContext.previewTitle}>
+        <div className="history-summary">
+          <div className="history-summary__cell"><div className="history-summary__label">{locale === "ko" ? "사용자" : "User"}</div><div className="history-summary__value">{userId}</div></div>
+          <div className="history-summary__cell"><div className="history-summary__label">{locale === "ko" ? "시작일" : "Start Date"}</div><div className="history-summary__value">{startDate}</div></div>
+          <div className="history-summary__cell"><div className="history-summary__label">{locale === "ko" ? "시간대" : "Timezone"}</div><div className="history-summary__value">{timezone}</div></div>
+          <div className="history-summary__cell"><div className="history-summary__label">{locale === "ko" ? "주/일" : "Week/Day"}</div><div className="history-summary__value">W{week} · D{day}</div></div>
         </div>
-      </div>
-
-      {/* Context Items */}
-      <h2
-        style={{
-          fontFamily: "var(--font-headline-family)",
-          fontSize: "13px",
-          fontWeight: 700,
-          letterSpacing: "0.06em",
-          textTransform: "uppercase",
-          color: "var(--color-text-muted)",
-          margin: "0 0 var(--space-sm)",
-        }}
-      >
-        {copy.plansContext.sectionTitle}
-      </h2>
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-        {contextItems.map((item) => (
-          <SettingRow key={item.href} item={item} />
-        ))}
-      </div>
-    </div>
+      </PageSection>
+    </AppPage>
   );
 }
