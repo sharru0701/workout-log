@@ -229,12 +229,6 @@ function LogisticsSection({ copy, locale }: { copy: AppCopy; locale: AppLocale }
       subtitle: copy.home.logistics.links.programStore.subtitle,
     },
     {
-      href: APP_ROUTES.templatesHome,
-      icon: "content_copy",
-      title: copy.home.logistics.links.templates.title,
-      subtitle: copy.home.logistics.links.templates.subtitle,
-    },
-    {
       href: APP_ROUTES.plansHome,
       icon: "calendar_month",
       title: copy.home.logistics.links.plans.title,

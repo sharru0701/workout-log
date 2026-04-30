@@ -28,8 +28,6 @@ export const designHarmonizationTargets: DesignHarmonizationTarget[] = [
   { id: "workout-log", title: "운동 기록", path: "/workout/log" },
   { id: "workout-log-add", title: "운동 기록 추가", path: "/workout/log/add-exercise" },
   { id: "workout-log-catalog", title: "운동 기록 카탈로그", path: "/workout/log/exercise-catalog" },
-  { id: "templates", title: "템플릿", path: "/templates" },
-  { id: "templates-manage", title: "템플릿 관리", path: "/templates/manage" },
   { id: "program-store", title: "프로그램 스토어", path: "/program-store" },
   { id: "program-store-create", title: "프로그램 스토어 생성", path: "/program-store/create" },
   { id: "program-store-customize", title: "프로그램 스토어 커스터마이즈", path: "/program-store/customize" },

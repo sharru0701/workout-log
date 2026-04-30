@@ -78,38 +78,6 @@ async function assertNeverVisibleDuring(locator: Locator, durationMs: number, sa
   }
 }
 
-function buildVersionsPayload(slug: string) {
-  return {
-    template: {
-      id: `${slug}-id`,
-      slug,
-      name: `${slug} program`,
-      type: "LOGIC",
-      visibility: slug === "private-template" ? "PRIVATE" : "PUBLIC",
-      ownerUserId: slug === "private-template" ? "dev" : null,
-      tags: ["strength"],
-      latestVersion: {
-        id: `${slug}-v2`,
-        version: 2,
-        definition: { schedule: { weeks: 4, sessionsPerWeek: 4 } },
-        defaults: { tmPercent: 0.9 },
-      },
-    },
-    versions: [
-      {
-        id: `${slug}-v2`,
-        templateId: `${slug}-id`,
-        version: 2,
-        parentVersionId: `${slug}-v1`,
-        definition: { schedule: { weeks: 4, sessionsPerWeek: 4 } },
-        defaults: { tmPercent: 0.9 },
-        changelog: "mock update",
-        createdAt: "2026-02-28T03:00:00.000Z",
-      },
-    ],
-  };
-}
-
 const commonEndpoints: MockEndpoint[] = [
   {
     id: "settings.snapshot",
@@ -121,50 +89,6 @@ const commonEndpoints: MockEndpoint[] = [
 ];
 
 const plansManageEndpoints: MockEndpoint[] = [
-  {
-    id: "templates.list",
-    method: "GET",
-    path: "/api/templates",
-    body: {
-      items: [
-        {
-          id: "tpl-531",
-          slug: "531",
-          name: "5/3/1",
-          type: "LOGIC",
-          visibility: "PUBLIC",
-          tags: ["strength"],
-          latestVersion: {
-            id: "531-v1",
-            version: 1,
-            definition: { schedule: { weeks: 4, sessionsPerWeek: 4 } },
-          },
-        },
-        {
-          id: "tpl-manual",
-          slug: "manual",
-          name: "Manual",
-          type: "MANUAL",
-          visibility: "PUBLIC",
-          tags: ["manual"],
-          latestVersion: {
-            id: "manual-v1",
-            version: 1,
-            definition: { kind: "manual", sessions: [] },
-          },
-        },
-      ],
-    },
-  },
-  {
-    id: "templates.versions",
-    method: "GET",
-    path: /^\/api\/templates\/[^/]+\/versions$/,
-    body: (url: URL) => {
-      const slug = decodeURIComponent(url.pathname.split("/")[3] ?? "program");
-      return buildVersionsPayload(slug);
-    },
-  },
   {
     id: "plans.list",
     method: "GET",
@@ -185,54 +109,6 @@ const plansManageEndpoints: MockEndpoint[] = [
           createdAt: "2026-02-21T01:00:00.000Z",
         },
       ],
-    },
-  },
-];
-
-const templatesManageEndpoints: MockEndpoint[] = [
-  {
-    id: "templates.list",
-    method: "GET",
-    path: "/api/templates",
-    body: {
-      items: [
-        {
-          id: "pub-1",
-          slug: "pub-template",
-          name: "Public Template",
-          type: "LOGIC",
-          visibility: "PUBLIC",
-          tags: ["strength"],
-          latestVersion: {
-            id: "pub-v1",
-            version: 1,
-            definition: { schedule: { weeks: 4, sessionsPerWeek: 4 } },
-          },
-        },
-        {
-          id: "pri-1",
-          slug: "private-template",
-          name: "Private Template",
-          type: "LOGIC",
-          visibility: "PRIVATE",
-          ownerUserId: "dev",
-          tags: ["personal"],
-          latestVersion: {
-            id: "private-v2",
-            version: 2,
-            definition: { schedule: { weeks: 5, sessionsPerWeek: 3 } },
-          },
-        },
-      ],
-    },
-  },
-  {
-    id: "templates.versions",
-    method: "GET",
-    path: /^\/api\/templates\/[^/]+\/versions$/,
-    body: (url: URL) => {
-      const slug = decodeURIComponent(url.pathname.split("/")[3] ?? "template");
-      return buildVersionsPayload(slug);
     },
   },
 ];
@@ -320,22 +196,6 @@ test.describe("async ux continuity: no empty-state flicker on delayed queries", 
 
     apiMocks.assertHit("settings.snapshot");
     apiMocks.assertHit("plans.list");
-  });
-
-  test("templates/manage keeps list/editor empty state hidden until delayed data resolves", async ({ page }) => {
-    const apiMocks = await installApiMocks(page, [...commonEndpoints, ...templatesManageEndpoints]);
-
-    await page.goto("/templates/manage", { waitUntil: "domcontentloaded" });
-
-    const emptyStateLabel = page.getByText("개인 템플릿이 없습니다.", { exact: true });
-    await assertNeverVisibleDuring(emptyStateLabel, 760);
-
-    await expect(page.getByText("Public Template")).toBeVisible();
-    await expect(page.getByText("Private Template")).toBeVisible();
-    await expect(emptyStateLabel).toBeHidden();
-
-    apiMocks.assertHit("settings.snapshot");
-    apiMocks.assertHit("templates.list");
   });
 
   test("stats keeps analytic empty states hidden while delayed queries are in flight", async ({ page }) => {
