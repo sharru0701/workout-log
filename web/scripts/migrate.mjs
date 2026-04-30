@@ -27,6 +27,7 @@ preloadEnvFile(".env.local", originalEnvKeys);
 
 const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0";
 const connectionString = process.env.DATABASE_URL;
+const migrateRequired = process.env.DB_MIGRATE_REQUIRED === "1";
 
 if (!migrateEnabled) {
   console.log("[migrate] DB_MIGRATE_ENABLED=0, skipping migrations");
@@ -34,8 +35,12 @@ if (!migrateEnabled) {
 }
 
 if (!connectionString) {
-  console.error("[migrate] DATABASE_URL is not set");
-  process.exit(1);
+  if (migrateRequired) {
+    console.error("[migrate] DATABASE_URL is not set (required)");
+    process.exit(1);
+  }
+  console.log("[migrate] DATABASE_URL is not set, skipping migrations");
+  process.exit(0);
 }
 
 function parsePositiveInt(raw, fallback) {
