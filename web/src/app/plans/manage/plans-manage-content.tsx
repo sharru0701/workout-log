@@ -567,7 +567,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
           <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
             {filteredPlans.map((plan) => (
               <PlanCardV2
-                key={plan.id}
+          <div className="plan-manage-sheet__stack">
                 plan={plan}
                 copy={copy}
                 locale={locale}
@@ -589,7 +589,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
         closeLabel={copy.plansManage.close}
       >
         {managedPlan ? (
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
+          <div className="plan-manage-sheet">
             <div className="stat-tile-grid">
               <div className="stat-tile">
                 <div className="stat-tile__label">
@@ -617,17 +617,8 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               </div>
             </div>
 
-            <label style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                }}
-              >
+            <label className="plan-manage-sheet__field">
+              <span className="plan-manage-sheet__label">
                 {copy.plansManage.planName}
               </span>
               <AppTextInput
@@ -637,21 +628,12 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               />
             </label>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-label-family)",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                  letterSpacing: "0.14em",
-                  textTransform: "uppercase",
-                  color: "var(--color-text-muted)",
-                }}
-              >
+            <div className="plan-manage-sheet__field">
+              <span className="plan-manage-sheet__label">
                 {copy.plansManage.strengthBaselines}
               </span>
               {strengthRows.length > 0 ? (
-                <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+                <div className="plan-manage-sheet__stack">
                   {strengthRows.map((row) => (
                     <div key={row.key} className="tm-edit-row">
                       <strong className="tm-edit-row__label">{row.label}</strong>
@@ -701,21 +683,13 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   ))}
                 </div>
               ) : (
-                <div
-                  style={{
-                    background: "var(--color-surface-container-low)",
-                    borderRadius: "12px",
-                    padding: "var(--space-md)",
-                    color: "var(--color-text-muted)",
-                    fontSize: "13px",
-                  }}
-                >
+                <div className="plan-manage-sheet__empty">
                   {copy.plansManage.noStrengthBaselines}
                 </div>
               )}
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-sm)" }}>
+            <div className="plan-manage-sheet__stack">
               <PrimaryButton
                 type="button"
                 variant="primary"
