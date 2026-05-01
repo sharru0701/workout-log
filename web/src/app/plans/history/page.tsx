@@ -8,8 +8,6 @@ import { useLocale } from "@/components/locale-provider";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
 import { apiDelete, apiGet } from "@/lib/api";
-import { progressionTone, summarizeProgression, type ProgressionSummaryPayload } from "@/lib/progression/summary";
-import { formatSessionKeyLabel } from "@/lib/session-key";
 import { APP_ROUTES } from "@/lib/app-routes";
 
 type Plan = {
@@ -39,11 +37,6 @@ type LogItem = {
   durationMinutes: number | null;
   notes: string | null;
   sets: LogSet[];
-  generatedSession: {
-    id: string;
-    sessionKey: string;
-  } | null;
-  progression?: ProgressionSummaryPayload | null;
 };
 
 type LogsResponse = {
@@ -72,25 +65,6 @@ function formatTimeOnly(value: string | null | undefined) {
   return `${hh}:${mm}`;
 }
 
-function formatDuration(value: number | null | undefined) {
-  if (typeof value !== "number" || !Number.isFinite(value) || value <= 0) return null;
-  return value;
-}
-
-function summarizeExercises(sets: LogSet[], locale: "ko" | "en") {
-  const names: string[] = [];
-  for (const set of sets) {
-    const name = String(set.exerciseName ?? "").trim();
-    if (!name || names.includes(name)) continue;
-    names.push(name);
-  }
-  if (names.length === 0) return locale === "ko" ? "운동 정보 없음" : "No exercise info";
-  if (names.length <= 3) return names.join(", ");
-  return locale === "ko"
-    ? `${names.slice(0, 3).join(", ")} 외 ${names.length - 3}개`
-    : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
-}
-
 function countWorkSets(sets: LogSet[]) {
   return sets.filter((set) => !set.isExtra).length;
 }
@@ -112,17 +86,6 @@ function shortenText(value: string | null | undefined, limit = 140) {
   return `${text.slice(0, limit - 1)}…`;
 }
 
-function progressionBadgeClass(tone: ReturnType<typeof progressionTone>) {
-  switch (tone) {
-    case "success":
-      return "label progress-medium label-sm";
-    case "warning":
-      return "label progress-high label-sm";
-    default:
-      return "label progress-low label-sm";
-  }
-}
-
 function daysSince(value: string | null | undefined) {
   if (!value) return null;
   const date = new Date(value);
@@ -140,13 +103,39 @@ function formatRelativeDays(days: number | null, locale: "ko" | "en") {
   return locale === "ko" ? `${Math.floor(days / 365)}년 전` : `${Math.floor(days / 365)}y ago`;
 }
 
-function formatVolumeShort(kg: number, locale: "ko" | "en") {
-  if (kg <= 0) return "-";
+function formatVolumeShort(kg: number) {
+  if (kg <= 0) return "—";
   if (kg >= 1000) {
     const t = kg / 1000;
     return `${t % 1 === 0 ? t.toFixed(0) : t.toFixed(1)}t`;
   }
-  return locale === "ko" ? `${Math.round(kg)}kg` : `${Math.round(kg)}kg`;
+  return `${Math.round(kg)}kg`;
+}
+
+function formatDurationLabel(minutes: number | null | undefined, locale: "ko" | "en") {
+  if (typeof minutes !== "number" || !Number.isFinite(minutes) || minutes <= 0) return "—";
+  if (minutes < 60) return locale === "ko" ? `${minutes}분` : `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return locale === "ko" ? `${hours}시간 ${mins}분` : `${hours}h ${mins}m`;
+}
+
+type TopSet = { exerciseName: string; weightKg: number; reps: number };
+
+function topSetsPerExercise(sets: LogSet[]): TopSet[] {
+  const byExercise = new Map<string, TopSet>();
+  for (const set of sets) {
+    if (set.isExtra) continue;
+    const name = String(set.exerciseName ?? "").trim();
+    const reps = Number(set.reps ?? 0);
+    const weightKg = Number(set.weightKg ?? 0);
+    if (!name || !Number.isFinite(reps) || !Number.isFinite(weightKg) || reps <= 0 || weightKg <= 0) continue;
+    const cur = byExercise.get(name);
+    if (!cur || weightKg > cur.weightKg || (weightKg === cur.weightKg && reps > cur.reps)) {
+      byExercise.set(name, { exerciseName: name, weightKg, reps });
+    }
+  }
+  return Array.from(byExercise.values()).sort((a, b) => b.weightKg - a.weightKg);
 }
 
 function groupLogsByMonth(logs: LogItem[]) {
@@ -181,7 +170,7 @@ function PlanTabStrip({
   locale: "ko" | "en";
 }) {
   return (
-    <div className="plan-tab-strip" role="tablist" aria-label={locale === "ko" ? "플랜 선택" : "Select plan"}>
+    <div className="history-tab-strip" role="tablist" aria-label={locale === "ko" ? "플랜 선택" : "Select plan"}>
       {plans.map((plan) => {
         const days = daysSince(plan.lastPerformedAt);
         const sub = formatRelativeDays(days, locale);
@@ -193,11 +182,11 @@ function PlanTabStrip({
             role="tab"
             aria-selected={isActive}
             data-active={isActive ? "true" : "false"}
-            className="plan-tab-strip__item"
+            className="history-tab-strip__item"
             onClick={() => onSelect(plan.id)}
           >
-            <span className="plan-tab-strip__name">{plan.name}</span>
-            <span className="plan-tab-strip__sub">{sub}</span>
+            <span className="history-tab-strip__name">{plan.name}</span>
+            <span className="history-tab-strip__sub">{sub}</span>
           </button>
         );
       })}
@@ -207,49 +196,45 @@ function PlanTabStrip({
 
 function HistorySummaryCard({
   plan,
-  loadedLogCount,
-  loadedSetCount,
-  loadedVolumeKg,
+  logs,
   locale,
 }: {
   plan: Plan;
-  loadedLogCount: number;
-  loadedSetCount: number;
-  loadedVolumeKg: number;
+  logs: LogItem[];
   locale: "ko" | "en";
 }) {
-  const days = daysSince(plan.lastPerformedAt);
-  const recentText = formatRelativeDays(days, locale);
+  const sessionsCount = logs.length;
+  const totalVolumeKg = logs.reduce((sum, log) => sum + estimateVolumeKg(log.sets ?? []), 0);
+  const totalSets = logs.reduce((sum, log) => sum + countWorkSets(log.sets ?? []), 0);
+  const durations = logs.map((l) => l.durationMinutes).filter((d): d is number => typeof d === "number" && d > 0);
+  const avgDuration = durations.length > 0
+    ? Math.round(durations.reduce((a, b) => a + b, 0) / durations.length)
+    : null;
 
   return (
-    <div className="history-summary">
-      <div className="history-summary__cell history-summary__primary">
-        <div className="history-summary__label">
-          {locale === "ko" ? "선택 플랜" : "Selected Plan"}
-        </div>
-        <div className="history-summary__value">{plan.name}</div>
+    <div className="history-summary-v2">
+      <div className="history-summary-v2__plan">
+        <div className="history-summary-v2__plan-name">{plan.name}</div>
         {plan.baseProgramName ? (
-          <div className="history-summary__sub">{plan.baseProgramName}</div>
+          <div className="history-summary-v2__plan-program">{plan.baseProgramName}</div>
         ) : null}
       </div>
-      <div className="history-summary__cell">
-        <div className="history-summary__label">{locale === "ko" ? "최근 수행" : "Last"}</div>
-        <div className="history-summary__value">{recentText}</div>
-      </div>
-      <div className="history-summary__cell">
-        <div className="history-summary__label">{locale === "ko" ? "로드된 로그" : "Loaded"}</div>
-        <div className="history-summary__value">
-          {loadedLogCount}
-          <span style={{ fontSize: "11px", marginLeft: 4, color: "var(--color-text-muted)", fontWeight: 600 }}>
-            {locale === "ko" ? "건" : ""}
-          </span>
+      <div className="history-summary-v2__stats">
+        <div className="history-summary-v2__stat">
+          <span className="history-summary-v2__stat-label">{locale === "ko" ? "세션" : "Sessions"}</span>
+          <span className="history-summary-v2__stat-value">{sessionsCount}</span>
         </div>
-      </div>
-      <div className="history-summary__cell">
-        <div className="history-summary__label">{locale === "ko" ? "총 볼륨" : "Volume"}</div>
-        <div className="history-summary__value">{formatVolumeShort(loadedVolumeKg, locale)}</div>
-        <div className="history-summary__sub">
-          {locale === "ko" ? `${loadedSetCount}세트` : `${loadedSetCount} sets`}
+        <div className="history-summary-v2__stat">
+          <span className="history-summary-v2__stat-label">{locale === "ko" ? "총 볼륨" : "Volume"}</span>
+          <span className="history-summary-v2__stat-value">{formatVolumeShort(totalVolumeKg)}</span>
+        </div>
+        <div className="history-summary-v2__stat">
+          <span className="history-summary-v2__stat-label">{locale === "ko" ? "총 세트" : "Sets"}</span>
+          <span className="history-summary-v2__stat-value">{totalSets}</span>
+        </div>
+        <div className="history-summary-v2__stat">
+          <span className="history-summary-v2__stat-label">{locale === "ko" ? "평균 시간" : "Avg Time"}</span>
+          <span className="history-summary-v2__stat-value">{formatDurationLabel(avgDuration, locale)}</span>
         </div>
       </div>
     </div>
@@ -280,62 +265,73 @@ function LogCard({
   const time = formatTimeOnly(log.performedAt);
 
   const workSetCount = countWorkSets(log.sets ?? []);
-  const exerciseSummary = summarizeExercises(log.sets ?? [], locale);
   const volumeKg = estimateVolumeKg(log.sets ?? []);
   const noteText = shortenText(log.notes);
-  const progressionText = summarizeProgression(log.progression ?? null, locale);
-  const progressionBadgeTone = progressionTone(log.progression ?? null);
-  const sessionLabel = log.generatedSession?.sessionKey
-    ? formatSessionKeyLabel(log.generatedSession.sessionKey)
-    : null;
-  const duration = formatDuration(log.durationMinutes);
+  const topSets = topSetsPerExercise(log.sets ?? []);
+  const visibleTopSets = topSets.slice(0, 4);
+  const remainingExercises = Math.max(0, topSets.length - visibleTopSets.length);
+  const duration = formatDurationLabel(log.durationMinutes, locale);
 
   return (
-    <article className="log-card-v2">
-      <div className="log-card-v2__date" data-weekend={isWeekend ? "true" : "false"}>
-        <span className="log-card-v2__date-month">{monthLabel}</span>
-        <span className="log-card-v2__date-day">{day}</span>
-        <span className="log-card-v2__date-weekday">{weekday}</span>
+    <article className="session-log-card">
+      <div className="session-log-card__date" data-weekend={isWeekend ? "true" : "false"}>
+        <span className="session-log-card__date-month">{monthLabel}</span>
+        <span className="session-log-card__date-day">{day}</span>
+        <span className="session-log-card__date-weekday">{weekday}</span>
       </div>
 
-      <div className="log-card-v2__body">
-        <div className="log-card-v2__head">
-          <div className="log-card-v2__title">{exerciseSummary}</div>
-          {time ? <div className="log-card-v2__time">{time}</div> : null}
-        </div>
-
-        {(sessionLabel || progressionText) ? (
-          <div className="log-card-v2__chips">
-            {sessionLabel ? (
-              <span className="label label-program label-sm">{sessionLabel}</span>
-            ) : null}
-            {progressionText ? (
-              <span className={progressionBadgeClass(progressionBadgeTone)}>
-                {progressionText}
+      <div className="session-log-card__body">
+        <div className="session-log-card__head">
+          <h4 className="session-log-card__title">
+            {topSets.length > 0
+              ? topSets[0].exerciseName
+              : (locale === "ko" ? "기록된 세트 없음" : "No sets recorded")}
+            {topSets.length > 1 ? (
+              <span className="session-log-card__title-suffix">
+                {locale === "ko" ? ` 외 ${topSets.length - 1}` : ` +${topSets.length - 1}`}
               </span>
             ) : null}
-          </div>
+          </h4>
+          {time ? <div className="session-log-card__time">{time}</div> : null}
+        </div>
+
+        {visibleTopSets.length > 0 ? (
+          <ul className="session-log-card__top-sets">
+            {visibleTopSets.map((row) => (
+              <li key={row.exerciseName} className="session-log-card__top-set">
+                <span className="session-log-card__top-set-name">{row.exerciseName}</span>
+                <span className="session-log-card__top-set-value">
+                  <span className="session-log-card__top-set-weight">{row.weightKg}</span>
+                  <span className="session-log-card__top-set-unit">kg</span>
+                  <span className="session-log-card__top-set-reps">×{row.reps}</span>
+                </span>
+              </li>
+            ))}
+            {remainingExercises > 0 ? (
+              <li className="session-log-card__top-set session-log-card__top-set--more">
+                {locale === "ko" ? `+${remainingExercises}개 운동 더` : `+${remainingExercises} more`}
+              </li>
+            ) : null}
+          </ul>
         ) : null}
 
-        <div className="log-card-v2__stats">
-          <div className="log-card-v2__stat" data-kind="sets">
-            <span className="log-card-v2__stat-label">{copy.plansHistory.sets}</span>
-            <span className="log-card-v2__stat-value">{workSetCount}</span>
+        <div className="session-log-card__stats">
+          <div className="session-log-card__stat">
+            <span className="session-log-card__stat-label">{copy.plansHistory.volume}</span>
+            <span className="session-log-card__stat-value">{formatVolumeShort(volumeKg)}</span>
           </div>
-          <div className="log-card-v2__stat" data-kind="time">
-            <span className="log-card-v2__stat-label">{copy.plansHistory.time}</span>
-            <span className="log-card-v2__stat-value">
-              {duration === null ? "-" : locale === "ko" ? `${duration}분` : `${duration}m`}
-            </span>
+          <div className="session-log-card__stat">
+            <span className="session-log-card__stat-label">{copy.plansHistory.sets}</span>
+            <span className="session-log-card__stat-value">{workSetCount}</span>
           </div>
-          <div className="log-card-v2__stat" data-kind="volume">
-            <span className="log-card-v2__stat-label">{copy.plansHistory.volume}</span>
-            <span className="log-card-v2__stat-value">{formatVolumeShort(volumeKg, locale)}</span>
+          <div className="session-log-card__stat">
+            <span className="session-log-card__stat-label">{copy.plansHistory.time}</span>
+            <span className="session-log-card__stat-value">{duration}</span>
           </div>
         </div>
 
         {noteText ? (
-          <div className="log-card-v2__note">
+          <div className="session-log-card__note">
             <span className="material-symbols-outlined" aria-hidden="true">
               format_quote
             </span>
@@ -343,9 +339,9 @@ function LogCard({
           </div>
         ) : null}
 
-        <div className="log-card-v2__actions">
+        <div className="session-log-card__actions">
           <Link
-            className="log-card-v2__action log-card-v2__action--primary"
+            className="session-log-card__action session-log-card__action--primary"
             href={`/workout/session/${encodeURIComponent(log.id)}`}
           >
             <span className="material-symbols-outlined" aria-hidden="true">
@@ -355,14 +351,14 @@ function LogCard({
           </Link>
           <button
             type="button"
-            className="log-card-v2__action log-card-v2__action--danger"
+            className="session-log-card__action session-log-card__action--danger"
             disabled={isDeleting}
             onClick={onDelete}
+            aria-label={copy.plansHistory.deleteHistory}
           >
             <span className="material-symbols-outlined" aria-hidden="true">
               delete
             </span>
-            {isDeleting ? copy.plansHistory.deleting : copy.plansHistory.deleteHistory}
           </button>
         </div>
       </div>
@@ -499,15 +495,6 @@ function PlanHistoryPageContent() {
     void loadLogs(selectedPlanId, null, false);
   }, [loadLogs, selectedPlanId, refreshTick]);
 
-  const loadedLogCount = logs.length;
-  const loadedSetCount = useMemo(
-    () => logs.reduce((sum, log) => sum + countWorkSets(log.sets ?? []), 0),
-    [logs],
-  );
-  const loadedVolumeKg = useMemo(
-    () => logs.reduce((sum, log) => sum + estimateVolumeKg(log.sets ?? []), 0),
-    [logs],
-  );
   const groupedLogs = useMemo(() => groupLogsByMonth(logs), [logs]);
 
   async function deleteLog(log: LogItem) {
@@ -556,13 +543,20 @@ function PlanHistoryPageContent() {
 
   return (
     <>
-      <section>
-        <div className="plans-hero" style={{ marginBottom: "var(--space-md)" }}>
-          <div className="plans-hero__eyebrow">{copy.plansHistory.headerEyebrow}</div>
-          <h1 className="plans-hero__title">{copy.plansHistory.title}</h1>
-          <p className="plans-hero__description">{copy.plansHistory.description}</p>
+      <header className="plans-overview__header">
+        <div className="plans-overview__title-block">
+          <h1 className="plans-overview__title">{copy.plansHistory.title}</h1>
+          <p className="plans-overview__subtitle">{copy.plansHistory.description}</p>
         </div>
+        <Link href={APP_ROUTES.plansHome} className="plans-overview__add plans-overview__add--ghost">
+          <span className="material-symbols-outlined" aria-hidden="true">
+            arrow_back
+          </span>
+          {locale === "ko" ? "내 플랜" : "My Plans"}
+        </Link>
+      </header>
 
+      <section>
         <ErrorStateRows
           message={plansError}
           title={copy.plansHistory.plansLoadError}
@@ -577,7 +571,7 @@ function PlanHistoryPageContent() {
         />
         <LoadingStateRows active={plansLoading && !plansLoadedRef.current} label={locale === "ko" ? "플랜 로딩 중" : "Loading plans"} />
 
-        {plans.length > 0 ? (
+        {plans.length > 1 ? (
           <PlanTabStrip
             plans={plans}
             selectedPlanId={selectedPlanId}
@@ -587,17 +581,11 @@ function PlanHistoryPageContent() {
         ) : null}
 
         {selectedPlan ? (
-          <HistorySummaryCard
-            plan={selectedPlan}
-            loadedLogCount={loadedLogCount}
-            loadedSetCount={loadedSetCount}
-            loadedVolumeKg={loadedVolumeKg}
-            locale={locale}
-          />
+          <HistorySummaryCard plan={selectedPlan} logs={logs} locale={locale} />
         ) : null}
       </section>
 
-      <section style={{ marginTop: "var(--space-lg)" }}>
+      <section style={{ marginTop: "var(--space-md)" }}>
         <ErrorStateRows
           message={logsError}
           title={copy.plansHistory.logsLoadError}
@@ -614,15 +602,20 @@ function PlanHistoryPageContent() {
         />
 
         {groupedLogs.length > 0 ? (
-          <div className="log-timeline">
+          <div className="session-log-timeline">
             {groupedLogs.map((group) => {
               const monthLabel = locale === "ko"
-                ? `${group.year} · ${MONTH_ABBR_KO[group.month]}`
+                ? `${group.year}년 ${MONTH_ABBR_KO[group.month]}`
                 : `${MONTH_ABBR_EN[group.month]} ${group.year}`;
               return (
-                <div key={group.key}>
-                  <div className="log-timeline__group-label">{monthLabel}</div>
-                  <div className="log-timeline__list">
+                <div key={group.key} className="session-log-timeline__group">
+                  <div className="session-log-timeline__label">
+                    <span>{monthLabel}</span>
+                    <span className="session-log-timeline__label-count">
+                      {locale === "ko" ? `${group.logs.length}회` : `${group.logs.length}`}
+                    </span>
+                  </div>
+                  <div className="session-log-timeline__list">
                     {group.logs.map((log) => (
                       <LogCard
                         key={log.id}
@@ -643,7 +636,7 @@ function PlanHistoryPageContent() {
             {nextCursor ? (
               <button
                 type="button"
-                className="btn btn-secondary btn-full"
+                className="session-log-timeline__more"
                 disabled={logsLoadingMore}
                 onClick={() => {
                   if (!selectedPlanId || !nextCursor) return;

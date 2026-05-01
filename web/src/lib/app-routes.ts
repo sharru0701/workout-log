@@ -1,9 +1,6 @@
 export const APP_ROUTES = {
   home: "/",
   plansHome: "/plans",
-  plansManage: "/plans/manage",
-  plansCreateGuide: "/plans/create",
-  plansContext: "/plans/context",
   plansHistory: "/plans/history",
   programStore: "/program-store",
   programCreate: "/program-store/create",

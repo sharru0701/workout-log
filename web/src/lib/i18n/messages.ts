@@ -276,6 +276,7 @@ export type AppCopy = {
   plans: {
     headerEyebrow: string;
     title: string;
+    description: string;
     manage: string;
     managementSection: string;
     setupSection: string;
@@ -285,8 +286,6 @@ export type AppCopy = {
     };
     setupItems: {
       store: { label: string; subtitle: string; description: string };
-      custom: { label: string; subtitle: string; description: string };
-      advanced: { label: string; subtitle: string; description: string };
     };
   };
   calendar: {
@@ -370,22 +369,6 @@ export type AppCopy = {
     deleting: string;
     loadMore: string;
     loadingMore: string;
-  };
-  plansContext: {
-    eyebrow: string;
-    title: string;
-    description: string;
-    pickProgram: string;
-    createCustom: string;
-    sectionTitle: string;
-    fields: {
-      userId: { label: string; description: string };
-      startDate: { label: string; description: string };
-      timezone: { label: string; description: string };
-      sessionKeyMode: { label: string; description: string };
-      week: { label: string; description: string };
-      day: { label: string; description: string };
-    };
   };
   calendarMain: {
     noPlanSelected: string;
@@ -604,7 +587,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         title: "바로가기",
         links: {
           programStore: { title: "프로그램 스토어", subtitle: "프로토콜 둘러보기" },
-          plans: { title: "내 플랜", subtitle: "관리 및 일정" },
+          plans: { title: "내 플랜", subtitle: "1RM/TM 관리 · 수행 히스토리" },
           stats: { title: "통계", subtitle: "진행 추적" },
         },
       },
@@ -678,19 +661,18 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       },
     },
     plans: {
-      headerEyebrow: "Training Plans",
-      title: "플랜 관리",
+      headerEyebrow: "My Plans",
+      title: "내 플랜",
+      description: "활성 플랜을 관리하고 수행 기록을 한눈에 확인합니다.",
       manage: "관리",
-      managementSection: "플랜 운영",
-      setupSection: "새 플랜 시작",
+      managementSection: "플랜",
+      setupSection: "새 플랜 추가",
       managementItems: {
-        active: { label: "보유 플랜 관리", subtitle: "Active Plans", description: "운영 중인 플랜 목록 · 오늘 운동 연결 · 삭제" },
-        history: { label: "수행 히스토리", subtitle: "History", description: "플랜별 수행 로그와 진행 흐름" },
+        active: { label: "플랜 관리", subtitle: "Active", description: "운영 중인 플랜의 1RM/TM, 이름, 삭제 관리" },
+        history: { label: "수행 히스토리", subtitle: "History", description: "플랜별 수행 로그 타임라인" },
       },
       setupItems: {
-        store: { label: "프로그램에서 새 플랜 시작", subtitle: "Program Store", description: "프로그램을 고르고 바로 플랜으로 연결" },
-        custom: { label: "커스텀 프로그램 만들기", subtitle: "Custom", description: "내 루틴을 직접 만들고 플랜으로 시작" },
-        advanced: { label: "생성 기준 확인", subtitle: "Advanced", description: "날짜, 세션 키 규칙 등 고급 생성 기준 점검" },
+        store: { label: "프로그램 스토어 열기", subtitle: "Add Plan", description: "프로그램을 선택해 새 플랜 시작" },
       },
     },
     calendar: {
@@ -774,22 +756,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       deleting: "삭제 중...",
       loadMore: "로그 더 보기",
       loadingMore: "더 불러오는 중...",
-    },
-    plansContext: {
-      eyebrow: "Advanced",
-      title: "생성 기준 확인",
-      description: "날짜, 시간대, 세션 키 기준을 점검하는 화면입니다.",
-      pickProgram: "프로그램 고르기",
-      createCustom: "커스텀 만들기",
-      sectionTitle: "기준 항목",
-      fields: {
-        userId: { label: "사용자 ID", description: "생성 대상 사용자 범위를 선택합니다." },
-        startDate: { label: "시작 날짜", description: "생성 기준 날짜를 설정합니다." },
-        timezone: { label: "시간대", description: "날짜 경계 계산 시간대를 설정합니다." },
-        sessionKeyMode: { label: "세션 키 방식", description: "세션 키 포맷을 선택합니다." },
-        week: { label: "주차", description: "주차 인덱스를 설정합니다." },
-        day: { label: "일차", description: "일차 인덱스를 설정합니다." },
-      },
     },
     calendarMain: {
       noPlanSelected: "플랜을 선택하면 날짜별 세션을 확인할 수 있습니다.",
@@ -1006,7 +972,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         title: "Quick Links",
         links: {
           programStore: { title: "Program Store", subtitle: "Browse Protocols" },
-          plans: { title: "My Plans", subtitle: "Manage and Schedule" },
+          plans: { title: "My Plans", subtitle: "1RM/TM · Workout History" },
           stats: { title: "Stats", subtitle: "Progress Tracking" },
         },
       },
@@ -1080,19 +1046,18 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       },
     },
     plans: {
-      headerEyebrow: "Training Plans",
-      title: "Plans",
+      headerEyebrow: "My Plans",
+      title: "My Plans",
+      description: "Manage active plans and review workout history at a glance.",
       manage: "Manage",
-      managementSection: "Plan Operations",
-      setupSection: "Start New Plan",
+      managementSection: "Plans",
+      setupSection: "Add New Plan",
       managementItems: {
-        active: { label: "Manage Active Plans", subtitle: "Active Plans", description: "View active plans, jump into today's workout, or delete them" },
-        history: { label: "Execution History", subtitle: "History", description: "See workout logs and progression flow by plan" },
+        active: { label: "Manage Plans", subtitle: "Active", description: "Adjust 1RM/TM, rename, or remove active plans" },
+        history: { label: "Workout History", subtitle: "History", description: "Per-plan workout log timeline" },
       },
       setupItems: {
-        store: { label: "Start a Plan from a Program", subtitle: "Program Store", description: "Pick a program and go straight into plan setup" },
-        custom: { label: "Create Custom Program", subtitle: "Custom", description: "Build your own routine and start it as a plan" },
-        advanced: { label: "Review Generation Rules", subtitle: "Advanced", description: "Inspect advanced generation rules like dates and session keys" },
+        store: { label: "Open Program Store", subtitle: "Add Plan", description: "Pick a program to start a new plan" },
       },
     },
     calendar: {
@@ -1176,22 +1141,6 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       deleting: "Deleting...",
       loadMore: "Load More Logs",
       loadingMore: "Loading more...",
-    },
-    plansContext: {
-      eyebrow: "Advanced",
-      title: "Review Generation Context",
-      description: "Inspect the date, time zone, and session key context used for generation.",
-      pickProgram: "Pick Program",
-      createCustom: "Create Custom",
-      sectionTitle: "Context Fields",
-      fields: {
-        userId: { label: "User ID", description: "Select the target user scope for generation." },
-        startDate: { label: "Start Date", description: "Set the base date used for generation." },
-        timezone: { label: "Time Zone", description: "Set the time zone used for date boundaries." },
-        sessionKeyMode: { label: "Session Key Mode", description: "Choose the session key format." },
-        week: { label: "Week", description: "Set the week index." },
-        day: { label: "Day", description: "Set the day index." },
-      },
     },
     calendarMain: {
       noPlanSelected: "Select a plan to view sessions by date.",
