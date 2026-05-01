@@ -92,6 +92,28 @@ function summarizeExercises(sets: LogSet[], locale: "ko" | "en") {
     : `${names.slice(0, 3).join(", ")} +${names.length - 3} more`;
 }
 
+function summarizeExerciseRows(sets: LogSet[]) {
+  const map = new Map<string, { sets: number; reps: number; weightSum: number; weightCount: number }>();
+  for (const set of sets) {
+    const name = String(set.exerciseName ?? "").trim();
+    if (!name) continue;
+    const row = map.get(name) ?? { sets: 0, reps: 0, weightSum: 0, weightCount: 0 };
+    row.sets += 1;
+    row.reps += Number.isFinite(set.reps) ? Number(set.reps) : 0;
+    if (set.weightKg != null && Number.isFinite(set.weightKg)) {
+      row.weightSum += Number(set.weightKg);
+      row.weightCount += 1;
+    }
+    map.set(name, row);
+  }
+  return Array.from(map.entries()).map(([name, row]) => ({
+    name,
+    summary: row.weightCount > 0
+      ? `${row.sets}×${Math.max(1, Math.round(row.reps / Math.max(row.sets, 1)))} @ ${(row.weightSum / row.weightCount).toFixed(1).replace(/\\.0$/, "")}kg`
+      : `${row.sets}×${Math.max(1, Math.round(row.reps / Math.max(row.sets, 1)))}`,
+  }));
+}
+
 function countWorkSets(sets: LogSet[]) {
   return sets.filter((set) => !set.isExtra).length;
 }
@@ -261,6 +283,7 @@ function HistoryExpandableLogCard({
   log,
   locale,
   copy,
+  selectedPlanName,
   onDelete,
   isDeleting,
   isExpanded,
@@ -269,6 +292,7 @@ function HistoryExpandableLogCard({
   log: LogItem;
   locale: "ko" | "en";
   copy: ReturnType<typeof useLocale>["copy"];
+  selectedPlanName: string | null;
   onDelete: () => void;
   isDeleting: boolean;
   isExpanded: boolean;
@@ -285,6 +309,7 @@ function HistoryExpandableLogCard({
 
   const workSetCount = countWorkSets(log.sets ?? []);
   const exerciseSummary = summarizeExercises(log.sets ?? [], locale);
+  const exerciseRows = summarizeExerciseRows(log.sets ?? []);
   const volumeKg = estimateVolumeKg(log.sets ?? []);
   const noteText = shortenText(log.notes);
   const progressionText = summarizeProgression(log.progression ?? null, locale);
@@ -326,9 +351,35 @@ function HistoryExpandableLogCard({
 
       {isExpanded ? (
         <div style={{ background: "var(--color-surface-container-low)", borderRadius: "24px", padding: "24px" }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "16px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--color-success-weak)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                <span className="material-symbols-outlined" style={{ fontSize: "20px", color: "var(--color-success)", fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+              </div>
+              <div>
+                <div style={{ fontFamily: "var(--font-headline-family)", fontSize: "15px", fontWeight: 700, color: "var(--color-text)" }}>
+                  {selectedPlanName ?? (locale === "ko" ? "기록" : "Log")}
+                </div>
+                <div style={{ fontFamily: "var(--font-label-family)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--color-text-muted)", marginTop: "2px" }}>
+                  {copy.calendarMain.completed}
+                </div>
+              </div>
+            </div>
+            {sessionLabel ? <span className="label label-program label-sm">{sessionLabel}</span> : null}
+          </div>
           <div style={{ display: "flex", gap: "8px", marginBottom: "10px", flexWrap: "wrap" }}>
             {progressionText ? <span className={progressionBadgeClass(progressionBadgeTone)}>{progressionText}</span> : null}
           </div>
+          {exerciseRows.length > 0 ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "16px" }}>
+              {exerciseRows.map((exercise) => (
+                <div key={exercise.name} style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontFamily: "var(--font-headline-family)", fontSize: "14px", fontWeight: 700, color: "var(--color-text)" }}>{exercise.name}</span>
+                  <span style={{ fontFamily: "var(--font-label-family)", fontSize: "13px", color: "var(--color-text-muted)", fontVariantNumeric: "tabular-nums" }}>{exercise.summary}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
           <div className="log-card-v2__stats">
             <div className="log-card-v2__stat" data-kind="sets"><span className="log-card-v2__stat-label">{copy.plansHistory.sets}</span><span className="log-card-v2__stat-value">{workSetCount}</span></div>
             <div className="log-card-v2__stat" data-kind="time"><span className="log-card-v2__stat-label">{copy.plansHistory.time}</span><span className="log-card-v2__stat-value">{duration === null ? "-" : locale === "ko" ? `${duration}분` : `${duration}m`}</span></div>
@@ -625,6 +676,7 @@ function PlanHistoryPageContent() {
                         log={log}
                         locale={locale}
                         copy={copy}
+                        selectedPlanName={selectedPlan?.name ?? null}
                         isDeleting={deletingLogId === log.id}
                         onDelete={() => {
                           void deleteLog(log);
