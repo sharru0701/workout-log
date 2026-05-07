@@ -1,16 +1,34 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   BaseGroupedList,
+  InfoRow,
   NavigationRow,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import { apiInvalidateCache } from "@/lib/api";
 
 type ExportFormat = "json" | "csv";
+
+type ImportSummaryItem = {
+  table: string;
+  willDelete: number;
+  willInsert: number;
+};
+
+type ImportResponse = {
+  applied: boolean;
+  mode: "dryRun" | "replace";
+  schemaVersion: number;
+  exportedAt: string;
+  summary: ImportSummaryItem[];
+  warnings: string[];
+};
 
 function buildExportPath(format: ExportFormat) {
   if (format === "csv") {
@@ -68,11 +86,43 @@ async function shareOrDownloadExport(
   return "downloaded";
 }
 
+async function postImport(
+  mode: "dryRun" | "replace",
+  data: unknown,
+): Promise<ImportResponse> {
+  const body: Record<string, unknown> = { mode, data };
+  if (mode === "replace") body.confirmToken = "REPLACE_USER_DATA";
+  const response = await fetch("/api/me/import", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    cache: "no-store",
+    body: JSON.stringify(body),
+  });
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(payload?.error ?? `import failed (${response.status})`);
+  }
+  return payload as ImportResponse;
+}
+
 export default function SettingsDataExportPage() {
-  const { copy } = useLocale();
+  const { copy, locale } = useLocale();
+  const { confirm, alert } = useAppDialog();
   const [exporting, setExporting] = useState<ExportFormat | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const [importBusy, setImportBusy] = useState<"idle" | "loading" | "applying">(
+    "idle",
+  );
+  const [importedFile, setImportedFile] = useState<{
+    name: string;
+    payload: unknown;
+  } | null>(null);
+  const [importPreview, setImportPreview] = useState<ImportResponse | null>(
+    null,
+  );
 
   const exportingLabel = useMemo(() => {
     if (!exporting) return null;
@@ -98,6 +148,88 @@ export default function SettingsDataExportPage() {
       setExporting(null);
     }
   };
+
+  const handleFilePicked = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = ""; // allow picking the same file again
+    if (!file) return;
+    try {
+      setImportBusy("loading");
+      setError(null);
+      setNotice(null);
+      setImportPreview(null);
+      const text = await file.text();
+      const json = JSON.parse(text);
+      setImportedFile({ name: file.name, payload: json });
+      const preview = await postImport("dryRun", json);
+      setImportPreview(preview);
+    } catch (e: any) {
+      setImportedFile(null);
+      setImportPreview(null);
+      setError(
+        e?.message ??
+          (locale === "ko"
+            ? "import 파일을 읽지 못했습니다."
+            : "Failed to read import file."),
+      );
+    } finally {
+      setImportBusy("idle");
+    }
+  };
+
+  const runReplace = async () => {
+    if (!importedFile || !importPreview) return;
+    const confirmed = await confirm({
+      title: locale === "ko" ? "데이터 교체" : "Replace Data",
+      message:
+        locale === "ko"
+          ? "현재 계정의 운동 기록, 세트, 플랜, 커스텀 템플릿이 삭제되고 import 파일 내용으로 교체됩니다.\n\n이 작업은 복구할 수 없습니다. 계속하시겠습니까?"
+          : "Your current logs, sets, plans, and custom templates will be deleted and replaced with the import file contents.\n\nThis action cannot be undone. Continue?",
+      confirmText: locale === "ko" ? "교체" : "Replace",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    try {
+      setImportBusy("applying");
+      setError(null);
+      setNotice(null);
+      const applied = await postImport("replace", importedFile.payload);
+      apiInvalidateCache();
+      setImportPreview(applied);
+      setNotice(
+        locale === "ko"
+          ? "데이터를 import 파일로 교체했습니다."
+          : "Data was replaced with the import file.",
+      );
+      await alert({
+        title: locale === "ko" ? "Import 완료" : "Import Complete",
+        message:
+          locale === "ko"
+            ? "데이터 교체가 완료되었습니다. 화면을 새로고침해 변경 내용을 반영하세요."
+            : "Data replacement is complete. Refresh to see updates across the app.",
+      });
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (locale === "ko" ? "Import 적용에 실패했습니다." : "Failed to apply import."),
+      );
+      await alert({
+        title: locale === "ko" ? "Import 실패" : "Import Failed",
+        message:
+          e?.message ??
+          (locale === "ko" ? "import 적용에 실패했습니다." : "Failed to apply import."),
+        tone: "danger",
+      });
+    } finally {
+      setImportBusy("idle");
+    }
+  };
+
+  const importSummaryRows = importPreview?.summary.filter(
+    (row) => row.willDelete > 0 || row.willInsert > 0,
+  );
 
   return (
     <div>
@@ -140,6 +272,148 @@ export default function SettingsDataExportPage() {
           </div>
         </section>
       ) : null}
+
+      <section>
+        <SectionHeader
+          title={locale === "ko" ? "Import (백업 복원)" : "Import (Restore Backup)"}
+          description={
+            locale === "ko"
+              ? "JSON export 파일을 선택하면 dry-run으로 변경 내역을 미리 보고, 확인 후 교체합니다."
+              : "Pick a JSON export file to preview the change set, then confirm to replace your data."
+          }
+        />
+        <BaseGroupedList
+          ariaLabel={locale === "ko" ? "Import 작업" : "Import actions"}
+        >
+          <NavigationRow
+            label={
+              importedFile
+                ? locale === "ko"
+                  ? `선택된 파일: ${importedFile.name}`
+                  : `Selected file: ${importedFile.name}`
+                : locale === "ko"
+                  ? "JSON 파일 선택"
+                  : "Pick JSON File"
+            }
+            subtitle="Backup"
+            description={
+              locale === "ko"
+                ? "schemaVersion이 호환되지 않으면 거부됩니다."
+                : "Files with an incompatible schemaVersion are rejected."
+            }
+            value={
+              importBusy === "loading"
+                ? locale === "ko"
+                  ? "읽는 중..."
+                  : "Reading..."
+                : locale === "ko"
+                  ? "선택"
+                  : "Pick"
+            }
+            onPress={() => importInputRef.current?.click()}
+            disabled={importBusy !== "idle"}
+          />
+          {importPreview ? (
+            <InfoRow
+              label={
+                locale === "ko"
+                  ? `Schema v${importPreview.schemaVersion}`
+                  : `Schema v${importPreview.schemaVersion}`
+              }
+              description={
+                importPreview.exportedAt
+                  ? locale === "ko"
+                    ? `Export 시각: ${new Date(importPreview.exportedAt).toLocaleString("ko-KR")}`
+                    : `Exported at: ${new Date(importPreview.exportedAt).toLocaleString("en-US")}`
+                  : ""
+              }
+              value={
+                importPreview.applied
+                  ? locale === "ko"
+                    ? "적용됨"
+                    : "Applied"
+                  : locale === "ko"
+                    ? "Dry-run"
+                    : "Dry-run"
+              }
+              tone={importPreview.applied ? "neutral" : "neutral"}
+            />
+          ) : null}
+        </BaseGroupedList>
+        <input
+          ref={importInputRef}
+          type="file"
+          accept="application/json,.json"
+          style={{ display: "none" }}
+          onChange={(e) => {
+            void handleFilePicked(e);
+          }}
+        />
+
+        {importSummaryRows && importSummaryRows.length > 0 ? (
+          <BaseGroupedList
+            ariaLabel={
+              locale === "ko" ? "Import 변경 요약" : "Import change summary"
+            }
+            tokens={undefined}
+          >
+            {importSummaryRows.map((row) => (
+              <InfoRow
+                key={row.table}
+                label={row.table}
+                description={
+                  locale === "ko"
+                    ? `삭제 ${row.willDelete} → 삽입 ${row.willInsert}`
+                    : `delete ${row.willDelete} → insert ${row.willInsert}`
+                }
+                value={
+                  importPreview?.applied
+                    ? locale === "ko"
+                      ? "완료"
+                      : "Done"
+                    : locale === "ko"
+                      ? "예정"
+                      : "Pending"
+                }
+                tone="neutral"
+              />
+            ))}
+          </BaseGroupedList>
+        ) : null}
+
+        {importPreview && importPreview.warnings.length > 0 ? (
+          <SectionFootnote>
+            {locale === "ko" ? "경고: " : "Warnings: "}
+            {importPreview.warnings.join("; ")}
+          </SectionFootnote>
+        ) : null}
+
+        {importPreview && !importPreview.applied ? (
+          <button
+            type="button"
+            className="btn btn-danger btn-full"
+            style={{ marginTop: "var(--space-sm)" }}
+            onClick={() => {
+              void runReplace();
+            }}
+            disabled={importBusy !== "idle"}
+          >
+            {importBusy === "applying"
+              ? locale === "ko"
+                ? "적용 중..."
+                : "Applying..."
+              : locale === "ko"
+                ? "이 파일로 교체"
+                : "Replace With This File"}
+          </button>
+        ) : null}
+
+        <SectionFootnote>
+          {locale === "ko"
+            ? "교체는 현재 계정의 운동 기록, 세트, 플랜, 커스텀 템플릿을 삭제 후 재삽입합니다. 공용 운동 카탈로그와 사용자 설정은 변경되지 않습니다."
+            : "Replace deletes and re-inserts your logs, sets, plans, and custom templates. The shared exercise catalog and user settings are not affected."}
+        </SectionFootnote>
+      </section>
     </div>
   );
 }
