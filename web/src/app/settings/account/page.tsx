@@ -22,6 +22,16 @@ type SessionItem = {
   isExpired: boolean;
 };
 
+type MeResponse = {
+  user: {
+    id: string;
+    email: string | null;
+    displayName: string | null;
+    emailVerifiedAt: string | null;
+    fallback: boolean;
+  } | null;
+};
+
 type SessionListResponse = {
   items: SessionItem[];
 };
@@ -71,8 +81,66 @@ export default function SettingsAccountPage() {
   const [setupPassword, setSetupPassword] = useState("");
   const [setupConfirm, setSetupConfirm] = useState("");
   const [settingUpPassword, setSettingUpPassword] = useState(false);
+  const [me, setMe] = useState<MeResponse["user"] | null>(null);
+  const [resendingVerification, setResendingVerification] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const loadMe = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => ({}))) as MeResponse;
+      setMe(payload.user ?? null);
+    } catch {
+      setMe(null);
+    }
+  }, []);
+
+  const runResendVerification = async () => {
+    try {
+      setResendingVerification(true);
+      setError(null);
+      setNotice(null);
+      const response = await fetch("/api/auth/email/verification/request", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        alreadyVerified?: boolean;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? `failed (${response.status})`);
+      }
+      if (payload.alreadyVerified) {
+        setNotice(
+          locale === "ko"
+            ? "이메일이 이미 인증되어 있습니다."
+            : "Email is already verified.",
+        );
+      } else {
+        setNotice(
+          locale === "ko"
+            ? "인증 메일을 발송했습니다. 메일함을 확인하세요."
+            : "Verification email sent. Check your inbox.",
+        );
+      }
+      void loadMe();
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (locale === "ko"
+            ? "인증 메일 발송에 실패했습니다."
+            : "Failed to send verification email."),
+      );
+    } finally {
+      setResendingVerification(false);
+    }
+  };
 
   const loadOauthAccounts = useCallback(async () => {
     try {
@@ -127,7 +195,8 @@ export default function SettingsAccountPage() {
   useEffect(() => {
     void loadSessions();
     void loadOauthAccounts();
-  }, [loadSessions, loadOauthAccounts]);
+    void loadMe();
+  }, [loadSessions, loadOauthAccounts, loadMe]);
 
   const runSetupPassword = async () => {
     if (setupPassword.length < 8) {
@@ -367,6 +436,71 @@ export default function SettingsAccountPage() {
         tone="warning"
         label={locale === "ko" ? "오류" : "Error"}
       />
+
+      {me && me.email && !me.fallback ? (
+        <section>
+          <SectionHeader
+            title={locale === "ko" ? "이메일 인증" : "Email Verification"}
+            description={
+              locale === "ko"
+                ? "이 계정의 이메일이 인증되어 있는지 확인하고 필요 시 재발송합니다. 인증된 이메일은 비밀번호 재설정 등 복구 흐름에 사용됩니다."
+                : "Check whether this account's email is verified and resend the email if needed. The verified email is used for recovery flows like password reset."
+            }
+          />
+          <BaseGroupedList
+            ariaLabel={
+              locale === "ko" ? "이메일 인증 상태" : "Email verification status"
+            }
+          >
+            <InfoRow
+              label={me.email}
+              description={
+                me.emailVerifiedAt
+                  ? locale === "ko"
+                    ? `인증 완료: ${formatDateTime(me.emailVerifiedAt, locale)}`
+                    : `Verified: ${formatDateTime(me.emailVerifiedAt, locale)}`
+                  : locale === "ko"
+                    ? "아직 인증되지 않았습니다."
+                    : "Not verified yet."
+              }
+              value={
+                me.emailVerifiedAt
+                  ? locale === "ko"
+                    ? "인증됨"
+                    : "Verified"
+                  : locale === "ko"
+                    ? "미인증"
+                    : "Unverified"
+              }
+              tone={me.emailVerifiedAt ? "neutral" : "critical"}
+            />
+          </BaseGroupedList>
+          {!me.emailVerifiedAt ? (
+            <button
+              type="button"
+              className="btn btn-secondary btn-full"
+              style={{ marginTop: "var(--space-sm)" }}
+              onClick={() => {
+                void runResendVerification();
+              }}
+              disabled={resendingVerification}
+            >
+              {resendingVerification
+                ? locale === "ko"
+                  ? "발송 중..."
+                  : "Sending..."
+                : locale === "ko"
+                  ? "인증 메일 재발송"
+                  : "Resend Verification Email"}
+            </button>
+          ) : null}
+          <SectionFootnote>
+            {locale === "ko"
+              ? "메일이 도착하지 않으면 스팸함을 확인하세요. 시간당 최대 3회까지 재발송할 수 있습니다."
+              : "If the email doesn't arrive, check your spam folder. You can request up to 3 resends per hour."}
+          </SectionFootnote>
+        </section>
+      ) : null}
 
       <section>
         <SectionHeader
