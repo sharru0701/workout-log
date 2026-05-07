@@ -34,7 +34,7 @@ async function POSTImpl(req: Request) {
     const userId = await requireAuthenticatedUserId();
 
     const ip = getClientIp(req);
-    const limit = rateLimit({
+    const limit = await rateLimit({
       key: `pw-setup:user:${userId}:${ip}`,
       max: 5,
       windowMs: 60_000,

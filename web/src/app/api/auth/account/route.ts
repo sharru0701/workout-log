@@ -32,7 +32,7 @@ async function DELETEImpl(req: Request) {
     const userId = await requireAuthenticatedUserId();
 
     const ip = getClientIp(req);
-    const limit = rateLimit({
+    const limit = await rateLimit({
       key: `account-delete:user:${userId}:${ip}`,
       max: 3,
       windowMs: 60_000,

@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   const ip = getClientIp(req);
-  const limit = rateLimit({
+  const limit = await rateLimit({
     key: `email-verification-request:${userId}:${ip}`,
     max: 3,
     windowMs: 60 * 60_000,

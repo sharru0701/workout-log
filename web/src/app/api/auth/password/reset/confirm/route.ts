@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   if (originErr) return originErr;
 
   const ip = getClientIp(req);
-  const limit = rateLimit({
+  const limit = await rateLimit({
     key: `pw-reset-confirm:ip:${ip}`,
     max: 10,
     windowMs: 60_000,

@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
   // Rate limit: user당 분당 5회
   const ip = getClientIp(req);
-  const limit = rateLimit({
+  const limit = await rateLimit({
     key: `pw-change:user:${userId}:${ip}`,
     max: 5,
     windowMs: 60_000,

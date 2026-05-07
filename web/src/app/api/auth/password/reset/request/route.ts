@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   if (originErr) return originErr;
 
   const ip = getClientIp(req);
-  const ipLimit = rateLimit({
+  const ipLimit = await rateLimit({
     key: `pw-reset-request:ip:${ip}`,
     max: 3,
     windowMs: 60 * 60_000,
@@ -50,7 +50,7 @@ export async function POST(req: Request) {
   const email = String(body?.email ?? "").trim().toLowerCase();
   if (!EMAIL_RE.test(email)) return genericResponse();
 
-  const emailLimit = rateLimit({
+  const emailLimit = await rateLimit({
     key: `pw-reset-request:email:${email}`,
     max: 3,
     windowMs: 60 * 60_000,

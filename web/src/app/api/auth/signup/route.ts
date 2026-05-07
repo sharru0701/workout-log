@@ -23,7 +23,7 @@ export async function POST(req: Request) {
 
   // Rate limit: signup IP당 시간당 5회
   const ip = getClientIp(req);
-  const ipLimit = rateLimit({
+  const ipLimit = await rateLimit({
     key: `signup:ip:${ip}`,
     max: 5,
     windowMs: 60 * 60_000,
