@@ -1,16 +1,17 @@
 /**
- * 단순 in-memory rate limiter — login/signup brute-force 방어용.
+ * 인증 라우트용 rate limiter.
  *
- * Sliding window: 지난 windowMs 내 시도 횟수가 max를 넘으면 차단.
- * 키별 최대 1024개 entry까지만 보관 (메모리 누수 방지) — 가장 오래된 entry부터 삭제.
+ * - Upstash Redis (REST) 환경변수가 설정되어 있으면 sliding window를
+ *   Redis로 처리 → 멀티 인스턴스/serverless에서도 일관된 카운터.
+ * - 미설정 시 in-memory sliding window로 fallback (단일 인스턴스 가정).
  *
- * 한계:
- * - 단일 인스턴스 메모리 — 멀티 프로세스/노드에서는 분산 저장(Redis) 필요.
- * - 서버 재시작 시 카운터 reset.
- * - Vercel Edge에서는 작동 안 함 (Node runtime 전용).
- *
- * 본 앱은 단일 인스턴스 가정이라 충분.
+ * 호출자가 sync 인터페이스를 기대하지 않도록 모두 async 시그니처를 사용.
  */
+
+import {
+  isRedisRateLimitConfigured,
+  redisRateLimit,
+} from "@/server/auth/rate-limit-redis";
 
 type Bucket = { timestamps: number[] };
 
@@ -19,7 +20,6 @@ const buckets = new Map<string, Bucket>();
 
 function pruneOld(bucket: Bucket, now: number, windowMs: number) {
   const cutoff = now - windowMs;
-  // 시간순 push라 가정 → 앞에서부터 자르기
   let i = 0;
   while (i < bucket.timestamps.length && bucket.timestamps[i] < cutoff) {
     i++;
@@ -29,7 +29,6 @@ function pruneOld(bucket: Bucket, now: number, windowMs: number) {
 
 function evictIfFull() {
   if (buckets.size <= MAX_KEYS) return;
-  // 가장 오래된 키부터 제거
   const overflow = buckets.size - MAX_KEYS;
   let removed = 0;
   for (const key of buckets.keys()) {
@@ -45,11 +44,13 @@ export type RateLimitResult = {
   retryAfterMs: number;
 };
 
-export function rateLimit(input: {
+export type RateLimitInput = {
   key: string;
   max: number;
   windowMs: number;
-}): RateLimitResult {
+};
+
+export function rateLimitInMemory(input: RateLimitInput): RateLimitResult {
   const { key, max, windowMs } = input;
   const now = Date.now();
   let bucket = buckets.get(key);
@@ -75,9 +76,23 @@ export function rateLimit(input: {
 }
 
 /**
- * Request에서 client IP 추출 (proxy 헤더 우선).
- * 정확한 IP가 없으면 "unknown" 반환 (anonymous bucket).
+ * 진입점. Redis가 설정되어 있으면 그쪽을 우선 사용하고, 네트워크 오류 시
+ * in-memory로 graceful fallback (보수적 — 인증 흐름이 외부 의존으로
+ * 무너지지 않도록).
  */
+export async function rateLimit(input: RateLimitInput): Promise<RateLimitResult> {
+  if (isRedisRateLimitConfigured()) {
+    try {
+      return await redisRateLimit(input);
+    } catch {
+      // Network/Upstash error — fall back to in-memory so legitimate
+      // requests are not denied by infrastructure failures.
+      return rateLimitInMemory(input);
+    }
+  }
+  return rateLimitInMemory(input);
+}
+
 export function getClientIp(req: Request): string {
   const xff = req.headers.get("x-forwarded-for");
   if (xff) {

@@ -36,7 +36,7 @@ export async function POST(req: Request) {
 
   // Rate limit: IP당 분당 10회, email당 분당 5회 시도
   const ip = getClientIp(req);
-  const ipLimit = rateLimit({
+  const ipLimit = await rateLimit({
     key: `login:ip:${ip}`,
     max: 10,
     windowMs: 60_000,
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
       },
     );
   }
-  const emailLimit = rateLimit({
+  const emailLimit = await rateLimit({
     key: `login:email:${email}`,
     max: 5,
     windowMs: 60_000,
