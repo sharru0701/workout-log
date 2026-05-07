@@ -6,6 +6,7 @@ import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import {
   BaseGroupedList,
   InfoRow,
+  NavigationRow,
   SectionFootnote,
   SectionHeader,
 } from "@/components/ui/settings-list";
@@ -23,6 +24,24 @@ type SessionItem = {
 
 type SessionListResponse = {
   items: SessionItem[];
+};
+
+type OAuthAccountItem = {
+  id: string;
+  provider: string;
+  providerSubjectMasked: string;
+  email: string | null;
+  emailVerified: boolean;
+  createdAt: string;
+};
+
+type OAuthAccountsResponse = {
+  hasPassword: boolean;
+  items: OAuthAccountItem[];
+};
+
+const PROVIDER_LABEL: Record<string, string> = {
+  google: "Google",
 };
 
 function formatDateTime(value: string, locale: "ko" | "en") {
@@ -44,8 +63,37 @@ export default function SettingsAccountPage() {
   const [revoking, setRevoking] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deletePassword, setDeletePassword] = useState("");
+  const [oauthAccounts, setOauthAccounts] = useState<OAuthAccountItem[] | null>(
+    null,
+  );
+  const [hasPassword, setHasPassword] = useState<boolean>(false);
+  const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const loadOauthAccounts = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/oauth/accounts", {
+        method: "GET",
+        cache: "no-store",
+      });
+      const payload = (await response.json().catch(() => ({}))) as Partial<
+        OAuthAccountsResponse & { error?: string }
+      >;
+      if (!response.ok) {
+        throw new Error(payload.error ?? `failed (${response.status})`);
+      }
+      setOauthAccounts(payload.items ?? []);
+      setHasPassword(Boolean(payload.hasPassword));
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (locale === "ko"
+            ? "연결된 계정을 불러오지 못했습니다."
+            : "Failed to load connected accounts."),
+      );
+    }
+  }, [locale]);
 
   const loadSessions = useCallback(async () => {
     try {
@@ -75,7 +123,65 @@ export default function SettingsAccountPage() {
 
   useEffect(() => {
     void loadSessions();
-  }, [loadSessions]);
+    void loadOauthAccounts();
+  }, [loadSessions, loadOauthAccounts]);
+
+  const runUnlink = async (provider: string) => {
+    if (!hasPassword) {
+      await alert({
+        title: locale === "ko" ? "비밀번호 필요" : "Password Required",
+        message:
+          locale === "ko"
+            ? "연동을 해제하기 전에 먼저 비밀번호를 설정해야 합니다. 비밀번호 재설정 메일을 받아 새 비밀번호를 만든 뒤 다시 시도하세요."
+            : "Set a password before unlinking your only sign-in method. Use the password-reset email flow first.",
+        tone: "danger",
+      });
+      return;
+    }
+    const providerLabel = PROVIDER_LABEL[provider] ?? provider;
+    const confirmed = await confirm({
+      title:
+        locale === "ko" ? `${providerLabel} 연결 해제` : `Disconnect ${providerLabel}`,
+      message:
+        locale === "ko"
+          ? `이 계정에서 ${providerLabel} 로그인을 해제합니다. 이후엔 비밀번호로만 로그인할 수 있습니다.`
+          : `${providerLabel} sign-in will be removed from this account. You can still sign in with your password.`,
+      confirmText: locale === "ko" ? "해제" : "Disconnect",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
+      tone: "danger",
+    });
+    if (!confirmed) return;
+
+    try {
+      setUnlinkingProvider(provider);
+      setError(null);
+      setNotice(null);
+      const response = await fetch(
+        `/api/auth/oauth/accounts/${encodeURIComponent(provider)}`,
+        { method: "DELETE" },
+      );
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? `failed (${response.status})`);
+      }
+      setNotice(
+        locale === "ko"
+          ? `${providerLabel} 연결을 해제했습니다.`
+          : `Disconnected ${providerLabel}.`,
+      );
+      void loadOauthAccounts();
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (locale === "ko" ? "연결 해제에 실패했습니다." : "Failed to disconnect."),
+      );
+    } finally {
+      setUnlinkingProvider(null);
+    }
+  };
 
   const otherSessionCount = sessions
     ? sessions.filter((s) => !s.isCurrent && !s.isExpired).length
@@ -296,6 +402,71 @@ export default function SettingsAccountPage() {
             ? "현재 기기의 세션은 유지되며, 다른 기기에서는 다시 로그인이 필요합니다."
             : "Your current session is preserved; other devices must sign in again."}
         </SectionFootnote>
+      </section>
+
+      <section>
+        <SectionHeader
+          title={locale === "ko" ? "연결된 계정" : "Connected Accounts"}
+          description={
+            locale === "ko"
+              ? "외부 로그인(Google 등)을 이 계정과 연결한 내역입니다. 연결 해제 후에도 비밀번호로 계속 로그인할 수 있습니다."
+              : "External sign-in providers linked to this account. You can still sign in with your password after disconnecting."
+          }
+        />
+        {oauthAccounts && oauthAccounts.length > 0 ? (
+          <BaseGroupedList
+            ariaLabel={
+              locale === "ko" ? "연결된 외부 계정" : "Linked external accounts"
+            }
+          >
+            {oauthAccounts.map((account) => {
+              const providerLabel = PROVIDER_LABEL[account.provider] ?? account.provider;
+              return (
+                <NavigationRow
+                  key={account.id}
+                  label={providerLabel}
+                  description={
+                    [
+                      account.email ?? account.providerSubjectMasked,
+                      locale === "ko"
+                        ? `연결: ${formatDateTime(account.createdAt, locale)}`
+                        : `Linked: ${formatDateTime(account.createdAt, locale)}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")
+                  }
+                  value={
+                    unlinkingProvider === account.provider
+                      ? locale === "ko"
+                        ? "해제 중..."
+                        : "..."
+                      : locale === "ko"
+                        ? "해제"
+                        : "Disconnect"
+                  }
+                  onPress={() => {
+                    void runUnlink(account.provider);
+                  }}
+                  disabled={unlinkingProvider === account.provider}
+                  showChevron={false}
+                />
+              );
+            })}
+          </BaseGroupedList>
+        ) : oauthAccounts && oauthAccounts.length === 0 ? (
+          <SectionFootnote>
+            {locale === "ko"
+              ? "외부 계정으로 연결된 로그인 방법이 없습니다."
+              : "No external sign-in providers are linked."}
+          </SectionFootnote>
+        ) : null}
+        {oauthAccounts && oauthAccounts.length > 0 && !hasPassword ? (
+          <SectionFootnote>
+            {locale === "ko"
+              ? "비밀번호가 설정되어 있지 않습니다. 연결 해제 전에 비밀번호 재설정 메일로 새 비밀번호를 만들어 두세요."
+              : "No password is set. Run password-reset to create one before disconnecting your only sign-in method."}
+          </SectionFootnote>
+        ) : null}
       </section>
 
       <section>
