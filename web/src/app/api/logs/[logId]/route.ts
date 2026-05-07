@@ -1,7 +1,13 @@
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq, inArray, lt, ne } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
+import {
+  exercise,
+  exerciseAlias,
+  generatedSession,
+  workoutLog,
+  workoutSet,
+} from "@/server/db/schema";
 import { rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
@@ -13,6 +19,209 @@ import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
 
 type Ctx = { params: Promise<{ logId: string }> };
+
+function epley(weightKg: number, reps: number): number {
+  if (!Number.isFinite(weightKg) || weightKg <= 0) return 0;
+  const r = Number.isFinite(reps) && reps > 0 ? reps : 1;
+  return weightKg * (1 + r / 30);
+}
+
+type PersonalRecordPayload = {
+  exerciseName: string;
+  topWeightKg: number;
+  topReps: number;
+  estOneRm: number;
+  previousBestE1rm: number | null;
+  deltaE1rm: number;
+};
+
+/**
+ * 운동 매칭 키 — exerciseId가 있으면 'eid:<id>', 없으면 alias 정규화 후 'name:<lower>'.
+ * Alias 정규화: alias 테이블에서 매칭되는 canonical exercise.id를 찾아 'eid:<id>'로 승격.
+ */
+type MatchKey = string;
+
+function nameKey(name: string): MatchKey {
+  return `name:${name.trim().toLowerCase()}`;
+}
+
+function idKey(exerciseId: string): MatchKey {
+  return `eid:${exerciseId}`;
+}
+
+async function detectPersonalRecords(input: {
+  userId: string;
+  logId: string;
+  sets: Array<{
+    exerciseName: string;
+    exerciseId: string | null;
+    reps: number | null;
+    weightKg: number | null;
+    isExtra: boolean | null;
+  }>;
+  performedAt: Date;
+}): Promise<PersonalRecordPayload[]> {
+  const { userId, logId, sets, performedAt } = input;
+
+  // 0) Alias / exerciseId 정규화용 lookup 준비 — 이번 로그에 등장한 모든 운동명에 대해
+  //    alias 테이블에서 canonical exerciseId를 미리 찾아 둔다.
+  //    워크아웃 세트가 이미 exerciseId를 가지고 있으면 그것을 사용.
+  const namesInLog = Array.from(
+    new Set(
+      sets
+        .map((s) => String(s.exerciseName ?? "").trim().toLowerCase())
+        .filter(Boolean),
+    ),
+  );
+  const aliasToId = new Map<string, string>(); // lowercased alias -> exerciseId
+  if (namesInLog.length > 0) {
+    const aliasRows = await db
+      .select({
+        alias: exerciseAlias.alias,
+        exerciseId: exerciseAlias.exerciseId,
+      })
+      .from(exerciseAlias)
+      .where(inArray(exerciseAlias.alias, namesInLog));
+    for (const r of aliasRows) {
+      aliasToId.set(r.alias.trim().toLowerCase(), r.exerciseId);
+    }
+    // 또한 exercise 본명도 함께 매칭
+    const baseRows = await db
+      .select({ id: exercise.id, name: exercise.name })
+      .from(exercise)
+      .where(inArray(exercise.name, namesInLog));
+    for (const r of baseRows) {
+      aliasToId.set(r.name.trim().toLowerCase(), r.id);
+    }
+  }
+
+  function resolveKey(
+    exerciseId: string | null,
+    name: string,
+  ): MatchKey | null {
+    if (exerciseId) return idKey(exerciseId);
+    const lower = name.trim().toLowerCase();
+    if (!lower) return null;
+    const aliased = aliasToId.get(lower);
+    if (aliased) return idKey(aliased);
+    return nameKey(lower);
+  }
+
+  // 1) 이번 로그 운동별 top set (e1RM 기준)
+  type Best = {
+    weightKg: number;
+    reps: number;
+    e1rm: number;
+    displayName: string;
+  };
+  const currentTop = new Map<MatchKey, Best>();
+  for (const s of sets) {
+    if (s.isExtra) continue;
+    const w = Number(s.weightKg ?? 0);
+    const r = Number(s.reps ?? 0);
+    if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(r) || r <= 0)
+      continue;
+    const displayName = String(s.exerciseName ?? "").trim();
+    const key = resolveKey(s.exerciseId, displayName);
+    if (!key) continue;
+    const e = epley(w, r);
+    const cur = currentTop.get(key);
+    if (!cur || e > cur.e1rm) {
+      currentTop.set(key, {
+        weightKg: w,
+        reps: r,
+        e1rm: e,
+        displayName,
+      });
+    }
+  }
+  if (currentTop.size === 0) return [];
+
+  // 2) 사용자의 이전 모든 세트 — exerciseId / name 둘 다 select
+  const priorRows = await db
+    .select({
+      exerciseId: workoutSet.exerciseId,
+      exerciseName: workoutSet.exerciseName,
+      reps: workoutSet.reps,
+      weightKg: workoutSet.weightKg,
+      isExtra: workoutSet.isExtra,
+    })
+    .from(workoutSet)
+    .innerJoin(workoutLog, eq(workoutLog.id, workoutSet.logId))
+    .where(
+      and(
+        eq(workoutLog.userId, userId),
+        ne(workoutLog.id, logId),
+        lt(workoutLog.performedAt, performedAt),
+      ),
+    );
+
+  // 이전 세트의 exerciseName도 alias 매핑 — 누적 lookup 확장
+  const priorNames = new Set<string>();
+  for (const r of priorRows) {
+    if (!r.exerciseId) {
+      const n = String(r.exerciseName ?? "").trim().toLowerCase();
+      if (n && !aliasToId.has(n)) priorNames.add(n);
+    }
+  }
+  if (priorNames.size > 0) {
+    const arr = Array.from(priorNames);
+    const aliasRows = await db
+      .select({
+        alias: exerciseAlias.alias,
+        exerciseId: exerciseAlias.exerciseId,
+      })
+      .from(exerciseAlias)
+      .where(inArray(exerciseAlias.alias, arr));
+    for (const r of aliasRows) {
+      aliasToId.set(r.alias.trim().toLowerCase(), r.exerciseId);
+    }
+    const baseRows = await db
+      .select({ id: exercise.id, name: exercise.name })
+      .from(exercise)
+      .where(inArray(exercise.name, arr));
+    for (const r of baseRows) {
+      aliasToId.set(r.name.trim().toLowerCase(), r.id);
+    }
+  }
+
+  const priorBest = new Map<MatchKey, number>();
+  for (const r of priorRows) {
+    if (r.isExtra) continue;
+    const w = Number(r.weightKg ?? 0);
+    const reps = Number(r.reps ?? 0);
+    if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(reps) || reps <= 0)
+      continue;
+    const key = resolveKey(
+      r.exerciseId,
+      String(r.exerciseName ?? ""),
+    );
+    if (!key) continue;
+    const e = epley(w, reps);
+    const cur = priorBest.get(key);
+    if (cur == null || e > cur) priorBest.set(key, e);
+  }
+
+  // 3) 이번 top이 prior best를 넘으면 PR
+  const out: PersonalRecordPayload[] = [];
+  for (const [key, cur] of currentTop.entries()) {
+    const prev = priorBest.get(key) ?? null;
+    const isPr = prev == null || cur.e1rm > prev + 0.1;
+    if (!isPr) continue;
+    out.push({
+      exerciseName: cur.displayName,
+      topWeightKg: cur.weightKg,
+      topReps: cur.reps,
+      estOneRm: Number(cur.e1rm.toFixed(2)),
+      previousBestE1rm: prev != null ? Number(prev.toFixed(2)) : null,
+      deltaE1rm:
+        prev != null ? Number((cur.e1rm - prev).toFixed(2)) : cur.e1rm,
+    });
+    void key;
+  }
+  out.sort((a, b) => b.deltaE1rm - a.deltaE1rm);
+  return out.slice(0, 3);
+}
 
 async function GETImpl(_req: Request, ctx: Ctx) {
   try {
@@ -84,12 +293,28 @@ async function GETImpl(_req: Request, ctx: Ctx) {
         })
       : null;
 
+    // ── PR 감지 (best e1RM 비교) ─────────────────────────────────
+    // exerciseId 기반 매칭. exerciseId가 없으면 alias 정규화로 canonical exercise.id 찾음.
+    const personalRecords = await detectPersonalRecords({
+      userId,
+      logId,
+      sets: sets.map((s) => ({
+        exerciseName: s.exerciseName,
+        exerciseId: s.exerciseId,
+        reps: s.reps,
+        weightKg: s.weightKg,
+        isExtra: s.isExtra,
+      })),
+      performedAt: log.performedAt,
+    });
+
     return NextResponse.json({
       item: {
         ...log,
         sets,
         generatedSession: generated,
         progression: progressionSummary,
+        personalRecords,
       },
     });
   } catch (e: any) {
