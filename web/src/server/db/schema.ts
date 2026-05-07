@@ -500,3 +500,50 @@ export const migrationRunLog = pgTable(
     index("migration_run_log_status_started_idx").on(t.status, t.startedAt),
   ],
 );
+
+/**
+ * app_user: 인증된 사용자.
+ *
+ * 기존에는 WORKOUT_AUTH_USER_ID 환경변수로 단일 사용자였지만,
+ * 이제 email + password (bcrypt) 기반 멀티유저 인증.
+ *
+ * 기존 모든 도메인 테이블의 user_id (text) 컬럼은 이 테이블의 id (uuid)를
+ * 문자열로 저장한다. id는 string으로 select되어 호환됨.
+ */
+export const appUser = pgTable(
+  "app_user",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    email: text("email").notNull(),
+    passwordHash: text("password_hash").notNull(),
+    displayName: text("display_name"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [uniqueIndex("app_user_email_uq").on(t.email)],
+);
+
+/**
+ * auth_session: 쿠키 기반 세션 토큰.
+ *
+ * - token: opaque random string, 클라이언트 cookie에 저장
+ * - userId: app_user.id 참조 (문자열)
+ * - expiresAt: 만료 시각 (TTL)
+ */
+export const authSession = pgTable(
+  "auth_session",
+  {
+    token: text("token").primaryKey(),
+    userId: text("user_id").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index("auth_session_user_idx").on(t.userId),
+    index("auth_session_expires_idx").on(t.expiresAt),
+  ],
+);
+

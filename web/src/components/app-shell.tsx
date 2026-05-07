@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, type ReactNode } from "react";
-import { BottomNav } from "@/components/bottom-nav";
+import { V2BottomNav } from "@/components/v2/v2-bottom-nav";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { shouldUseViewTransition } from "@/lib/navigation/view-transition";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+const NAV_HIDDEN_PATH_PREFIXES = ["/login", "/signup", "/onboarding"];
 
 // PERF: 앱 시작 시 즉시 prefetch할 주요 네비게이션 경로
 // 사용자가 탭을 클릭하기 전에 미리 JS 청크를 다운로드 → 네비게이션 체감 속도 향상
@@ -26,6 +28,8 @@ export function AppShell({
 }) {
   void initialLocale;
   const router = useRouter();
+  const pathname = usePathname() ?? "";
+  const hideNav = NAV_HIDDEN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
 
   // PERF: 앱 마운트 시 주요 경로 prefetch (300ms 지연 후 → 초기 렌더 차단 방지)
   useEffect(() => {
@@ -74,7 +78,7 @@ export function AppShell({
   return (
     <AppDialogProvider>
       <ApiCacheWarmer />
-      <div className="app-shell flex flex-col min-h-screen bg-surface-base text-text">
+      <div className="app-shell v2-frame flex flex-col min-h-screen">
         <main className="app-main flex-1 flex flex-col overflow-x-hidden">
           <div className="container app-shell__content">
             <div className="app-shell__page">
@@ -82,7 +86,7 @@ export function AppShell({
             </div>
           </div>
         </main>
-        <BottomNav />
+        {!hideNav && <V2BottomNav />}
       </div>
     </AppDialogProvider>
   );

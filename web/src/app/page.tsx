@@ -2,16 +2,16 @@ import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { getHomeData } from "@/server/home/home-service";
 import { getAuthenticatedUserId } from "@/server/auth/user";
-import { resolveRequestLocale, getAppCopy } from "@/lib/i18n/messages";
-import { HomeDashboard } from "@/components/home/home-dashboard";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { V2HomeDashboard } from "@/components/v2/v2-home-dashboard";
+import { V2OnboardingRedirect } from "@/components/v2/v2-onboarding-redirect";
 import HomeLoading from "./loading";
 
 
 async function HomeContent() {
   const userId = getAuthenticatedUserId();
   const locale = await resolveRequestLocale();
-  const copy = getAppCopy(locale);
-  
+
   const cookieStore = await cookies();
   const timezone = cookieStore.get("timezone")?.value ?? "UTC";
 
@@ -22,7 +22,15 @@ async function HomeContent() {
     timezone,
   });
 
-  return <HomeDashboard data={data} copy={copy} locale={locale} />;
+  const hasExistingData =
+    data.quickStats.totalSessions > 0 || data.planOverview.totalPlans > 0;
+
+  return (
+    <>
+      <V2OnboardingRedirect hasExistingData={hasExistingData} />
+      <V2HomeDashboard data={data} />
+    </>
+  );
 }
 
 export default function HomePage() {

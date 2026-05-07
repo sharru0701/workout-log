@@ -34,6 +34,7 @@ import type { WorkoutLogInitialContext, WorkoutLogPageBootstrap } from "@/server
 import { Provider as JotaiProvider, useAtomValue, useSetAtom } from "jotai";
 import { draftAtom, isDraftLoadedAtom, programEntryStateAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
+import { V2KeypadOverlay } from "@/components/v2/v2-keypad-overlay";
 
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
   initialContext?: WorkoutLogInitialContext | null;
@@ -65,6 +66,7 @@ function WorkoutLogScreenContent({
   const setProgramEntryState = useSetAtom(programEntryStateAtom);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [showSaveSuccessToast, setShowSaveSuccessToast] = useState(false);
+  const [keypadOpen, setKeypadOpen] = useState(false);
   const dismissSaveSuccessToast = useCallback(
     () => setShowSaveSuccessToast(false),
     [],
@@ -194,13 +196,22 @@ function WorkoutLogScreenContent({
     selectedPlan,
     bodyweightKg: null, // this gets pulled inside the controller via atom
     persistenceKey,
-    onSaved: useCallback(() => {
-      setShowSaveSuccessToast(true);
-      window.setTimeout(() => {
-        router.replace("/workout/log");
-        router.refresh();
-      }, 900);
-    }, [router]),
+    onSaved: useCallback(
+      (savedLogId: string | null) => {
+        setShowSaveSuccessToast(true);
+        window.setTimeout(() => {
+          if (savedLogId) {
+            router.replace(
+              `/workout/session/${encodeURIComponent(savedLogId)}?fresh=1`,
+            );
+          } else {
+            router.replace("/workout/log");
+          }
+          router.refresh();
+        }, 600);
+      },
+      [router],
+    ),
   });
 
   const isEditingExistingLog = Boolean(query.logId); // simplified definition since it doesn't need the actual draft object here
@@ -269,6 +280,48 @@ function WorkoutLogScreenContent({
           onSave={requestSave}
         />
       ) : null}
+
+      {/* v2: 키패드 빠른 입력 시트 + 트리거 버튼 */}
+      {!noPlan && isDraftLoaded && (
+        <>
+          <button
+            type="button"
+            onClick={() => setKeypadOpen(true)}
+            aria-label={
+              locale === "ko" ? "키패드 빠른 입력" : "Quick reps keypad"
+            }
+            style={{
+              position: "fixed",
+              right: 16,
+              bottom: "calc(110px + env(safe-area-inset-bottom, 0px))",
+              width: 56,
+              height: 56,
+              borderRadius: 28,
+              background: "var(--v2-accent)",
+              color: "var(--v2-ink-on-accent)",
+              border: "none",
+              boxShadow: "var(--v2-elev-3)",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              zIndex: 30,
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 28, fontVariationSettings: "'FILL' 1, 'wght' 500" }}
+              aria-hidden
+            >
+              dialpad
+            </span>
+          </button>
+          <V2KeypadOverlay
+            open={keypadOpen}
+            onClose={() => setKeypadOpen(false)}
+          />
+        </>
+      )}
 
       <WorkoutLogOverlaySheets
         locale={locale}

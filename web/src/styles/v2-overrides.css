@@ -1,0 +1,172 @@
+/*
+  v2 overrides — 기존 --color-* / --label-* / --metric-* 토큰을
+  v2 paper/violet 톤으로 리매핑합니다.
+  이 파일은 v2-tokens.css 로드 이후 마지막에 임포트되어야 합니다.
+
+  목적: 페이지/컴포넌트 코드를 건드리지 않고 전체 앱이 v2 색감을 입도록.
+*/
+
+:root {
+  /* surfaces */
+  --color-bg: var(--v2-bg);
+  --color-surface: var(--v2-paper);
+  --color-surface-2: var(--v2-paper-2);
+  --color-surface-secondary: var(--v2-paper-2);
+  --color-surface-hover: var(--v2-paper-2);
+  --color-surface-active: var(--v2-paper-3);
+  --color-surface-container-lowest: var(--v2-paper);
+  --color-surface-container-low: var(--v2-paper);
+  --color-surface-container: var(--v2-paper-2);
+  --color-surface-container-high: var(--v2-paper-3);
+  --color-surface-container-highest: var(--v2-paper-4);
+  --color-surface-raised: var(--v2-paper);
+  --color-outline-variant: var(--v2-paper-4);
+  --color-border: color-mix(in srgb, var(--v2-paper-4) 80%, transparent);
+  --color-border-strong: var(--v2-ink-3);
+  --token-page-bg: var(--v2-bg);
+
+  /* text */
+  --color-text: var(--v2-ink);
+  --color-text-muted: var(--v2-ink-2);
+  --color-text-subtle: var(--v2-ink-3);
+  --color-text-on-primary: var(--v2-ink-on-accent);
+
+  /* CTA → v2 accent (violet) */
+  --color-cta: var(--v2-accent);
+  --color-cta-strong: var(--v2-accent-2);
+  --color-cta-weak: var(--v2-accent-weak);
+  --color-cta-on: var(--v2-ink-on-accent);
+
+  /* Brand & semantic */
+  --color-primary: var(--v2-accent);
+  --color-primary-strong: var(--v2-accent-2);
+  --color-primary-weak: var(--v2-accent-weak);
+
+  --color-success: var(--v2-c-success);
+  --color-success-weak: color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper));
+  --color-success-strong: color-mix(in srgb, var(--v2-c-success) 80%, var(--v2-ink));
+  --color-warning: var(--v2-c-warning);
+  --color-warning-weak: color-mix(in srgb, var(--v2-c-warning) 16%, var(--v2-paper));
+  --color-warning-strong: color-mix(in srgb, var(--v2-c-warning) 80%, var(--v2-ink));
+  --color-danger: var(--v2-c-danger);
+  --color-danger-weak: color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper));
+  --color-danger-strong: color-mix(in srgb, var(--v2-c-danger) 80%, var(--v2-ink));
+  --color-info: var(--v2-c-info);
+  --color-info-weak: color-mix(in srgb, var(--v2-c-info) 14%, var(--v2-paper));
+  --color-info-strong: color-mix(in srgb, var(--v2-c-info) 80%, var(--v2-ink));
+  --color-accent: var(--v2-c-weight);
+  --color-accent-weak: color-mix(in srgb, var(--v2-c-weight) 14%, var(--v2-paper));
+  --color-accent-strong: color-mix(in srgb, var(--v2-c-weight) 80%, var(--v2-ink));
+  --color-action: var(--v2-accent);
+  --color-action-strong: var(--v2-accent-2);
+  --color-action-weak: var(--v2-accent-weak);
+  --color-text-on-action: var(--v2-ink-on-accent);
+  --color-selected-bg: var(--v2-accent);
+  --color-selected-text: var(--v2-ink-on-accent);
+  --color-selected-weak: var(--v2-accent-weak);
+  --color-selected-border: color-mix(in srgb, var(--v2-accent) 40%, transparent);
+  --color-icon-button-bg: var(--v2-paper-2);
+  --color-icon-button-border: color-mix(in srgb, var(--v2-paper-4) 40%, transparent);
+  --color-icon-button-text: var(--v2-ink-2);
+  --color-icon-button-active: var(--v2-paper-3);
+
+  --color-focus-ring: var(--v2-focus);
+  --color-link: var(--v2-accent);
+  --color-link-hover: var(--v2-accent-2);
+  --color-highlight: color-mix(in srgb, var(--v2-c-pr) 16%, transparent);
+  --color-highlight-strong: var(--v2-c-pr);
+  --color-selection: color-mix(in srgb, var(--v2-accent) 18%, transparent);
+  --color-overlay: var(--v2-overlay);
+
+  --shadow-color-soft: var(--v2-shadow-soft);
+  --shadow-color-medium: var(--v2-shadow-med);
+  --shadow-color-strong: var(--v2-shadow-strong);
+  --shadow-color-inset: var(--v2-shadow-med);
+
+  /* radii */
+  --radius-sm: var(--v2-r-1);
+  --radius-md: var(--v2-r-3);
+  --radius-lg: var(--v2-r-4);
+
+  /* metric system */
+  --metric-weight-color: var(--v2-c-weight);
+  --metric-reps-color: var(--v2-c-reps);
+  --metric-volume-color: var(--v2-c-volume);
+  --metric-1rm-color: var(--v2-c-onerm);
+  --metric-progress-color: var(--v2-c-progress);
+  --metric-trend-up: var(--v2-c-success);
+  --metric-trend-down: var(--v2-c-danger);
+  --metric-trend-flat: var(--v2-ink-3);
+
+  /* font: v2 numeric stack */
+  --font-numeric-metric: 700 28px/1 var(--v2-f-num);
+
+  /* font weight axes — v2 sharper */
+  --fvs-extrabold: "wght" 760;
+}
+
+/* 다크 모드도 자동 매핑 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme-preference="light"]) {
+    --color-bg: var(--v2-bg);
+    --color-surface: var(--v2-paper);
+    --color-surface-2: var(--v2-paper-2);
+    --color-surface-secondary: var(--v2-paper-2);
+    --color-surface-hover: var(--v2-paper-2);
+    --color-surface-active: var(--v2-paper-3);
+    --color-surface-container-lowest: var(--v2-paper);
+    --color-surface-container-low: var(--v2-paper);
+    --color-surface-container: var(--v2-paper-2);
+    --color-surface-container-high: var(--v2-paper-3);
+    --color-surface-container-highest: var(--v2-paper-4);
+    --color-surface-raised: var(--v2-paper);
+    --color-outline-variant: var(--v2-paper-4);
+    --color-border: color-mix(in srgb, var(--v2-paper-4) 80%, transparent);
+    --color-border-strong: var(--v2-ink-3);
+
+    --color-text: var(--v2-ink);
+    --color-text-muted: var(--v2-ink-2);
+    --color-text-subtle: var(--v2-ink-3);
+    --color-text-on-primary: var(--v2-ink-on-accent);
+
+    --color-primary: var(--v2-accent);
+    --color-primary-strong: var(--v2-accent-2);
+    --color-primary-weak: var(--v2-accent-weak);
+    --color-cta: var(--v2-accent);
+    --color-cta-strong: var(--v2-accent-2);
+    --color-cta-weak: var(--v2-accent-weak);
+
+    --color-action: var(--v2-accent);
+    --color-action-strong: var(--v2-accent-2);
+    --color-action-weak: var(--v2-accent-weak);
+  }
+}
+
+:root[data-theme-preference="dark"] {
+  --color-bg: var(--v2-bg);
+  --color-surface: var(--v2-paper);
+  --color-surface-2: var(--v2-paper-2);
+  --color-surface-secondary: var(--v2-paper-2);
+  --color-surface-hover: var(--v2-paper-2);
+  --color-surface-active: var(--v2-paper-3);
+  --color-text: var(--v2-ink);
+  --color-text-muted: var(--v2-ink-2);
+  --color-text-subtle: var(--v2-ink-3);
+  --color-primary: var(--v2-accent);
+  --color-primary-strong: var(--v2-accent-2);
+  --color-primary-weak: var(--v2-accent-weak);
+  --color-cta: var(--v2-accent);
+  --color-cta-strong: var(--v2-accent-2);
+  --color-cta-weak: var(--v2-accent-weak);
+  --color-action: var(--v2-accent);
+  --color-action-strong: var(--v2-accent-2);
+  --color-action-weak: var(--v2-accent-weak);
+}
+
+/* 본문 한글 줄바꿈 — v2 접근성 */
+body {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* v2 frame 안의 페이지에서는 카드 등이 v2 paper를 inheritance via mapped tokens */

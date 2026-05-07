@@ -37,7 +37,7 @@ const EARLY_THEME_BOOTSTRAP = `
 
     const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     const resolvedDark = preference === "dark" || (preference !== "light" && prefersDark);
-    const backgroundColor = resolvedDark ? "#10141a" : "#fdf6e3";
+    const backgroundColor = resolvedDark ? "#0e0d12" : "#f6f1e8";
 
     document.documentElement.setAttribute("data-theme-preference", preference);
     document.documentElement.style.backgroundColor = backgroundColor;

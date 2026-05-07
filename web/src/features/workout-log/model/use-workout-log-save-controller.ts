@@ -31,7 +31,7 @@ type UseWorkoutLogSaveControllerInput = {
   } | null;
   bodyweightKg: number | null;
   persistenceKey: string | null;
-  onSaved: () => void;
+  onSaved: (savedLogId: string | null) => void;
 };
 
 export function useWorkoutLogSaveController({
@@ -120,15 +120,20 @@ export function useWorkoutLogSaveController({
         setWorkflowState("editing");
         return;
       }
-      await submitWorkoutLogDraft({
+      const saved = await submitWorkoutLogDraft({
         draft,
         bodyweightKg,
         progressionOverride: progression.override,
         persistenceKey,
       });
 
+      const savedLogId =
+        saved && typeof (saved as any).log?.id === "string"
+          ? ((saved as any).log.id as string)
+          : null;
+
       setWorkflowState("done");
-      onSaved();
+      onSaved(savedLogId);
     } catch (error: any) {
       setSaveError(
         error?.message ??

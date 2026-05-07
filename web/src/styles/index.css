@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./v2-tokens.css";
 @import "./base.css";
 @import "./layout.css";
 
@@ -14,3 +15,6 @@
 @import "./components/dashboard.css";
 @import "./components/workout-log.css";
 @import "./components/plans-screen.css";
+
+/* v2 design system overrides — 마지막에 로드되어 모든 토큰을 v2 톤으로 매핑 */
+@import "./v2-overrides.css";
