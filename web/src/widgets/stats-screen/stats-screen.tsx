@@ -415,12 +415,30 @@ export function StatsScreen({
                   : "Review recent 90-day best lifts and improvement by exercise."
               }
             />
-            {latestPoint ? (
-              <V2Chip tone="accent" icon="bolt">
-                {locale === "ko" ? "최근 " : "Latest "}
-                {formatDate(latestPoint.date, locale)}
-              </V2Chip>
-            ) : null}
+            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+              {latestPoint ? (
+                <V2Chip tone="accent" icon="bolt">
+                  {locale === "ko" ? "최근 " : "Latest "}
+                  {formatDate(latestPoint.date, locale)}
+                </V2Chip>
+              ) : null}
+              <Link
+                href={APP_ROUTES.prHistory}
+                style={{
+                  fontFamily: "var(--v2-f-display)",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  letterSpacing: "0.04em",
+                  color: "var(--v2-accent-ink)",
+                  textDecoration: "none",
+                  padding: "6px 10px",
+                  borderRadius: 9999,
+                  background: "var(--v2-accent-weak)",
+                }}
+              >
+                {locale === "ko" ? "전체 보기" : "View all"}
+              </Link>
+            </div>
           </div>
           <V2Hairline />
           <PrList items={initialBundle.prs90d} locale={locale} />
