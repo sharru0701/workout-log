@@ -68,6 +68,9 @@ export default function SettingsAccountPage() {
   );
   const [hasPassword, setHasPassword] = useState<boolean>(false);
   const [unlinkingProvider, setUnlinkingProvider] = useState<string | null>(null);
+  const [setupPassword, setSetupPassword] = useState("");
+  const [setupConfirm, setSetupConfirm] = useState("");
+  const [settingUpPassword, setSettingUpPassword] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -125,6 +128,58 @@ export default function SettingsAccountPage() {
     void loadSessions();
     void loadOauthAccounts();
   }, [loadSessions, loadOauthAccounts]);
+
+  const runSetupPassword = async () => {
+    if (setupPassword.length < 8) {
+      setError(
+        locale === "ko"
+          ? "비밀번호는 최소 8자 이상이어야 합니다."
+          : "Password must be at least 8 characters.",
+      );
+      return;
+    }
+    if (setupPassword !== setupConfirm) {
+      setError(
+        locale === "ko"
+          ? "비밀번호 확인이 일치하지 않습니다."
+          : "Password confirmation does not match.",
+      );
+      return;
+    }
+    try {
+      setSettingUpPassword(true);
+      setError(null);
+      setNotice(null);
+      const response = await fetch("/api/auth/password/setup", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ newPassword: setupPassword }),
+      });
+      const payload = (await response.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+        code?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error ?? `failed (${response.status})`);
+      }
+      setNotice(
+        locale === "ko"
+          ? "비밀번호를 설정했습니다. 이제 비밀번호로도 로그인할 수 있습니다."
+          : "Password is set. You can now sign in with your password.",
+      );
+      setSetupPassword("");
+      setSetupConfirm("");
+      void loadOauthAccounts();
+    } catch (e: any) {
+      setError(
+        e?.message ??
+          (locale === "ko" ? "비밀번호 설정에 실패했습니다." : "Failed to set password."),
+      );
+    } finally {
+      setSettingUpPassword(false);
+    }
+  };
 
   const runUnlink = async (provider: string) => {
     if (!hasPassword) {
@@ -403,6 +458,107 @@ export default function SettingsAccountPage() {
             : "Your current session is preserved; other devices must sign in again."}
         </SectionFootnote>
       </section>
+
+      {oauthAccounts && oauthAccounts.length > 0 && !hasPassword ? (
+        <section>
+          <SectionHeader
+            title={locale === "ko" ? "비밀번호 설정" : "Set Password"}
+            description={
+              locale === "ko"
+                ? "현재는 외부 로그인(Google 등)으로만 접속할 수 있습니다. 비밀번호를 추가하면 이메일/비밀번호 로그인도 사용할 수 있고, 외부 계정 연결 해제도 가능해집니다."
+                : "You currently can sign in only via external providers. Add a password to unlock email/password sign-in and to allow disconnecting external accounts."
+            }
+          />
+          <div
+            style={{
+              display: "grid",
+              gap: 10,
+              padding: "12px 0",
+            }}
+          >
+            <label
+              style={{
+                display: "block",
+                fontFamily: "var(--font-label-family)",
+                fontSize: 13,
+                color: "var(--color-text-muted)",
+              }}
+            >
+              {locale === "ko" ? "새 비밀번호 (최소 8자)" : "New password (min 8 chars)"}
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={setupPassword}
+                onChange={(e) => setSetupPassword(e.target.value)}
+                minLength={8}
+                placeholder={locale === "ko" ? "비밀번호" : "Password"}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  marginTop: 6,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-surface-container)",
+                  color: "var(--color-text)",
+                  font: "inherit",
+                  boxSizing: "border-box",
+                }}
+              />
+            </label>
+            <label
+              style={{
+                display: "block",
+                fontFamily: "var(--font-label-family)",
+                fontSize: 13,
+                color: "var(--color-text-muted)",
+              }}
+            >
+              {locale === "ko" ? "비밀번호 확인" : "Confirm password"}
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={setupConfirm}
+                onChange={(e) => setSetupConfirm(e.target.value)}
+                minLength={8}
+                placeholder={locale === "ko" ? "비밀번호 다시 입력" : "Repeat password"}
+                style={{
+                  display: "block",
+                  width: "100%",
+                  marginTop: 6,
+                  padding: "10px 12px",
+                  borderRadius: 12,
+                  border: "1px solid var(--color-border)",
+                  background: "var(--color-surface-container)",
+                  color: "var(--color-text)",
+                  font: "inherit",
+                  boxSizing: "border-box",
+                }}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn btn-primary btn-full"
+              onClick={() => {
+                void runSetupPassword();
+              }}
+              disabled={
+                settingUpPassword ||
+                setupPassword.length < 8 ||
+                setupPassword !== setupConfirm
+              }
+            >
+              {settingUpPassword
+                ? locale === "ko"
+                  ? "설정 중..."
+                  : "Setting..."
+                : locale === "ko"
+                  ? "비밀번호 설정"
+                  : "Set password"}
+            </button>
+          </div>
+        </section>
+      ) : null}
 
       <section>
         <SectionHeader
