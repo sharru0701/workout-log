@@ -14,6 +14,7 @@ import {
 } from "@/server/db/schema";
 import type { UserDataExport } from "@/server/export/userExport";
 import { validateExportShape } from "@/server/import/validateExportShape";
+import { deleteUserDomainData } from "@/server/data/deleteUserData";
 
 export { validateExportShape };
 
@@ -258,37 +259,7 @@ export async function importUserData(
       return row;
     });
 
-    if (existing.logIds.length > 0) {
-      await tx
-        .delete(workoutSet)
-        .where(inArray(workoutSet.logId, existing.logIds));
-    }
-    await tx.delete(workoutLog).where(eq(workoutLog.userId, userId));
-
-    if (existing.planIds.length > 0) {
-      await tx
-        .delete(planRuntimeState)
-        .where(inArray(planRuntimeState.planId, existing.planIds));
-      await tx
-        .delete(planModule)
-        .where(inArray(planModule.planId, existing.planIds));
-      await tx
-        .delete(planOverride)
-        .where(inArray(planOverride.planId, existing.planIds));
-      await tx
-        .delete(generatedSession)
-        .where(inArray(generatedSession.planId, existing.planIds));
-    }
-    await tx.delete(plan).where(eq(plan.userId, userId));
-
-    if (existing.templateIds.length > 0) {
-      await tx
-        .delete(programVersion)
-        .where(inArray(programVersion.templateId, existing.templateIds));
-    }
-    await tx
-      .delete(programTemplate)
-      .where(eq(programTemplate.ownerUserId, userId));
+    await deleteUserDomainData(tx, userId);
 
     if (templates.length > 0) {
       await tx.insert(programTemplate).values(

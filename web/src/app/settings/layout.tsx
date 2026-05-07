@@ -23,6 +23,7 @@ function modalTitleFromPathname(
   if (pathname.startsWith("/settings/exercise-management")) return titles.exerciseManagement;
   if (pathname.startsWith("/settings/data-export")) return titles.dataExport;
   if (pathname.startsWith("/settings/data")) return titles.data;
+  if (pathname.startsWith("/settings/account")) return titles.account;
   if (pathname.startsWith("/settings/about")) return titles.about;
   if (pathname.startsWith("/settings/save-policy")) return titles.savePolicy;
   if (pathname.startsWith("/settings/selection-template")) return titles.selectionTemplate;

@@ -44,6 +44,7 @@ export type AppCopy = {
       selectionTemplate: { label: string; description: string };
       dataExport: { label: string; description: string };
       dataManagement: { label: string; description: string };
+      account: { label: string; description: string };
       systemStats: { label: string; description: string };
       about: { label: string; description: string };
     };
@@ -55,6 +56,7 @@ export type AppCopy = {
       exerciseManagement: string;
       dataExport: string;
       data: string;
+      account: string;
       about: string;
       savePolicy: string;
       selectionTemplate: string;
@@ -452,6 +454,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         selectionTemplate: { label: "선택 템플릿", description: "기본 세트 선택 패턴" },
         dataExport: { label: "데이터 내보내기", description: "전체 훈련 데이터 내보내기" },
         dataManagement: { label: "데이터 관리", description: "내보내기 · 앱 데이터 초기화" },
+        account: { label: "계정", description: "활성 세션 관리 · 계정 삭제" },
         systemStats: { label: "시스템 통계", description: "마이그레이션 및 UX 분석 (관리자)" },
         about: { label: "앱 정보", description: "버전 정보" },
       },
@@ -463,6 +466,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         exerciseManagement: "운동종목 관리",
         dataExport: "데이터 내보내기",
         data: "데이터 관리",
+        account: "계정",
         about: "앱 정보",
         savePolicy: "저장 정책",
         selectionTemplate: "선택 템플릿",
@@ -858,6 +862,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         selectionTemplate: { label: "Selection Template", description: "Default set selection pattern" },
         dataExport: { label: "Data Export", description: "Export all training data" },
         dataManagement: { label: "Data Management", description: "Export and reset app data" },
+        account: { label: "Account", description: "Manage active sessions and delete account" },
         systemStats: { label: "System Stats", description: "Migration and UX analytics (admin)" },
         about: { label: "About", description: "Version info" },
       },
@@ -869,6 +874,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         exerciseManagement: "Exercise Management",
         dataExport: "Data Export",
         data: "Data Management",
+        account: "Account",
         about: "About",
         savePolicy: "Save Policy",
         selectionTemplate: "Selection Template",

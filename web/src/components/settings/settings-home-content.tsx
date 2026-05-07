@@ -241,6 +241,12 @@ export function SettingsHomeContent({ className = "" }: { className?: string }) 
       description: copy.settings.rows.dataManagement.description,
       icon: "storage",
     },
+    {
+      href: "/settings/account",
+      label: copy.settings.rows.account.label,
+      description: copy.settings.rows.account.description,
+      icon: "manage_accounts",
+    },
   ];
 
   const systemRows: RowDef[] = [

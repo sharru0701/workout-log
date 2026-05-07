@@ -11,7 +11,9 @@ export type AuthEventType =
   | "PASSWORD_RESET_REQUEST"
   | "PASSWORD_RESET_CONFIRM"
   | "EMAIL_VERIFICATION_REQUEST"
-  | "EMAIL_VERIFICATION_CONFIRM";
+  | "EMAIL_VERIFICATION_CONFIRM"
+  | "SESSION_REVOKE_OTHERS"
+  | "ACCOUNT_DELETE";
 
 export type AuthEventInput = {
   userId?: string | null;
