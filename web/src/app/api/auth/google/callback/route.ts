@@ -7,6 +7,8 @@ import {
   exchangeGoogleCode,
   fetchGoogleUserInfo,
   resolveGoogleOAuthConfig,
+  verifyGoogleIdToken,
+  type GoogleUserInfo,
 } from "@/server/auth/oauth-google";
 import { findOrCreateUserFromOAuth } from "@/server/auth/oauth-link";
 import { createSession, SESSION_COOKIE_NAME } from "@/server/auth/session";
@@ -85,12 +87,27 @@ async function GETImpl(req: Request) {
     });
     if (!tokens) return redirectWithError(req, "token_exchange_failed");
 
-    const profile = await fetchGoogleUserInfo(tokens.access_token).catch(
-      (err: Error) => {
-        logError("oauth.userinfo_failed", { error: err });
+    // Prefer signed ID token verification (RS256 + JWKS). Falls back to
+    // userinfo endpoint only when ID token is missing — Google always
+    // returns one for the openid scope, so this should be the hot path.
+    let profile: GoogleUserInfo | null = null;
+    if (tokens.id_token) {
+      profile = await verifyGoogleIdToken({
+        idToken: tokens.id_token,
+        clientId: config.clientId,
+      }).catch((err: Error) => {
+        logError("oauth.id_token_verify_failed", { error: err });
         return null;
-      },
-    );
+      });
+    }
+    if (!profile) {
+      profile = await fetchGoogleUserInfo(tokens.access_token).catch(
+        (err: Error) => {
+          logError("oauth.userinfo_failed", { error: err });
+          return null;
+        },
+      );
+    }
     if (!profile) return redirectWithError(req, "userinfo_failed");
 
     const linkResult = await findOrCreateUserFromOAuth({

@@ -15,6 +15,11 @@
 const AUTHORIZE_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
+const JWKS_URL = "https://www.googleapis.com/oauth2/v3/certs";
+const ALLOWED_ISSUERS = new Set([
+  "https://accounts.google.com",
+  "accounts.google.com",
+]);
 
 export type GoogleOAuthConfig = {
   clientId: string;
@@ -118,6 +123,67 @@ export type GoogleUserInfo = {
   name?: string;
   picture?: string;
 };
+
+/**
+ * Google ID token (JWT)을 RS256 서명 검증하고 클레임을 반환한다.
+ *
+ * - JWKS는 1시간 메모리 캐시
+ * - iss / aud / exp 검증
+ * - 검증된 sub/email/email_verified/name을 반환해 userinfo 호출을 대체할 수
+ *   있게 한다 (callback 라우트에서 fallback 패턴으로 사용)
+ */
+export async function verifyGoogleIdToken({
+  idToken,
+  clientId,
+}: {
+  idToken: string;
+  clientId: string;
+}): Promise<GoogleUserInfo> {
+  const { fetchJwks, findJwk } = await import("@/server/auth/jwks");
+  const { verifyJwtRs256, importRsaPublicKeyFromJwk, decodeJwt } = await import(
+    "@/server/auth/jwt-verify"
+  );
+
+  // Pre-decode header to find kid
+  const decoded = decodeJwt(idToken);
+  const kid = decoded.header.kid;
+  if (!kid) throw new Error("google id token missing kid");
+
+  const jwks = await fetchJwks({ url: JWKS_URL });
+  const jwk = findJwk(
+    jwks,
+    (k) => k.kid === kid && (k.alg ?? "RS256") === "RS256",
+  );
+  if (!jwk) throw new Error(`google id token: no matching JWK for kid=${kid}`);
+  const key = await importRsaPublicKeyFromJwk(jwk);
+
+  const payload = await verifyJwtRs256(idToken, async () => key);
+
+  // Claim checks
+  if (typeof payload.iss !== "string" || !ALLOWED_ISSUERS.has(payload.iss)) {
+    throw new Error(`google id token: bad issuer ${String(payload.iss)}`);
+  }
+  const aud = Array.isArray(payload.aud) ? payload.aud : [payload.aud];
+  if (!aud.includes(clientId)) {
+    throw new Error("google id token: aud mismatch");
+  }
+  const sub = String(payload.sub ?? "");
+  if (!sub) throw new Error("google id token: missing sub");
+
+  return {
+    sub,
+    email: typeof payload.email === "string" ? payload.email : undefined,
+    email_verified:
+      typeof payload.email_verified === "boolean"
+        ? payload.email_verified
+        : undefined,
+    name: typeof payload.name === "string" ? payload.name : undefined,
+    picture:
+      typeof payload.picture === "string"
+        ? (payload.picture as string)
+        : undefined,
+  };
+}
 
 export async function fetchGoogleUserInfo(
   accessToken: string,
