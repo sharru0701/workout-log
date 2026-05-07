@@ -120,6 +120,13 @@
       "when": 1778120793105,
       "tag": "0016_lucky_millenium_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1778138734431,
+      "tag": "0017_add-oauth-account",
+      "breakpoints": true
     }
   ]
 }

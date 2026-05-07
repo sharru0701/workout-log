@@ -13,7 +13,11 @@ export type AuthEventType =
   | "EMAIL_VERIFICATION_REQUEST"
   | "EMAIL_VERIFICATION_CONFIRM"
   | "SESSION_REVOKE_OTHERS"
-  | "ACCOUNT_DELETE";
+  | "ACCOUNT_DELETE"
+  | "OAUTH_LOGIN"
+  | "OAUTH_LOGIN_FAIL"
+  | "OAUTH_LINK"
+  | "OAUTH_SIGNUP";
 
 export type AuthEventInput = {
   userId?: string | null;

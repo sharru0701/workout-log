@@ -601,3 +601,32 @@ export const authEventLog = pgTable(
     index("auth_event_log_type_created_idx").on(t.eventType, t.createdAt),
   ],
 );
+
+/**
+ * auth_oauth_account: federated identity link (e.g., Google sign-in).
+ *
+ * - One row per (provider, providerSubject) pair
+ * - userId references app_user.id (text)
+ * - email/emailVerified are snapshots from the provider; refreshed on each login
+ */
+export const authOauthAccount = pgTable(
+  "auth_oauth_account",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull(),
+    provider: text("provider").notNull(),
+    providerSubject: text("provider_subject").notNull(),
+    email: text("email"),
+    emailVerified: boolean("email_verified").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => [
+    uniqueIndex("auth_oauth_provider_subject_uq").on(t.provider, t.providerSubject),
+    index("auth_oauth_user_idx").on(t.userId),
+  ],
+);
