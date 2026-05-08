@@ -92,6 +92,7 @@ const SwipeableExerciseRow = memo(function SwipeableExerciseRow({
 
       {/* Draggable content */}
       <div
+        data-no-swipe="true"
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}

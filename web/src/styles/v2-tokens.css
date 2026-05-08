@@ -106,10 +106,6 @@
   --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 60%, transparent);
 }
 
-.v2-action-dock::-webkit-scrollbar {
-  display: none;
-}
-
 /* ─── 다크 (시스템 다크 + light 강제 아닐 때) ─── */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme-preference="light"]) {

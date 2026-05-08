@@ -463,21 +463,15 @@ export function V2ActionDock({
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
         border: "1px solid var(--v2-hairline)",
         borderRadius: "var(--v2-r-pill)",
-        padding: 8,
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        overflowX: "auto",
-        overflowY: "hidden",
-        scrollSnapType: "x proximity",
-        overscrollBehaviorX: "contain",
-        WebkitOverflowScrolling: "touch",
-        scrollbarWidth: "none",
+        padding: 6,
+        display: "grid",
+        gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
+        gap: 2,
+        overflow: "hidden",
         boxShadow: "var(--v2-elev-2)",
         zIndex: 40,
         margin: "0 auto",
         maxWidth: 480,
-        touchAction: "pan-x",
       }}
     >
       {items.map((it) => {
@@ -486,7 +480,7 @@ export function V2ActionDock({
             <span
               className="material-symbols-outlined"
               style={{
-                fontSize: it.primary ? 26 : 22,
+                fontSize: it.primary ? 22 : 20,
                 fontVariationSettings:
                   it.primary || it.active
                     ? "'FILL' 1, 'wght' 500"
@@ -496,13 +490,23 @@ export function V2ActionDock({
             >
               {it.icon}
             </span>
-            <span>{it.label}</span>
+            <span
+              style={{
+                maxWidth: "100%",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                fontSize: 9,
+                lineHeight: 1.1,
+              }}
+            >
+              {it.label}
+            </span>
           </>
         );
         const isSelected = Boolean(it.active);
         const styleCommon: CSSProperties = {
           flex: "0 0 auto",
-          minWidth: it.primary ? 92 : 82,
+          minWidth: 0,
           background: it.primary
             ? "var(--v2-accent)"
             : isSelected
@@ -514,19 +518,19 @@ export function V2ActionDock({
           border: "none",
           cursor: "pointer",
           borderRadius: "var(--v2-r-pill)",
-          padding: "10px 14px",
+          padding: "6px 2px",
           display: "flex",
-          flexDirection: "row",
+          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 6,
-          minHeight: 44,
+          gap: 2,
+          minHeight: 48,
           textDecoration: "none",
           fontFamily: "var(--v2-f-display)",
-          fontSize: 12,
+          fontSize: 10,
           fontWeight: 700,
           whiteSpace: "nowrap",
-          scrollSnapAlign: "center",
+          overflow: "hidden",
           WebkitTapHighlightColor: "transparent",
           transition:
             "background var(--v2-d-1) var(--v2-e-out), color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
