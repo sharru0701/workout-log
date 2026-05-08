@@ -3,10 +3,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
+import { APP_ROUTES } from "@/lib/app-routes";
 import { useV2BottomDockRegistration } from "./v2-bottom-dock-context";
 import { V2ActionDock, type V2ActionDockItem } from "./primitives";
 import { V2MoreSheet } from "./v2-more-sheet";
-import { V2PlanSheet } from "./v2-plan-sheet";
 import { V2LibrarySheet, type LibraryTab } from "./v2-library-sheet";
 
 function isActive(pathname: string, href: string): boolean {
@@ -14,9 +14,8 @@ function isActive(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-type SheetKey = "plan" | "library" | "more" | null;
+type SheetKey = "library" | "more" | null;
 
-const PLAN_SHEET_ID = "v2-sheet-plan";
 const LIBRARY_SHEET_ID = "v2-sheet-library";
 const MORE_SHEET_ID = "v2-sheet-more";
 
@@ -79,10 +78,8 @@ export function V2BottomNav() {
         key: "plan",
         icon: "event_note",
         label: locale === "ko" ? "계획" : "Plan",
-        onClick: () => setSheet(sheet === "plan" ? null : "plan"),
-        active: sheet === "plan" || isActive(pathname, "/calendar"),
-        expanded: sheet === "plan",
-        controls: PLAN_SHEET_ID,
+        href: APP_ROUTES.calendarHome,
+        active: isActive(pathname, APP_ROUTES.calendarHome),
       },
       {
         key: "library",
@@ -197,11 +194,6 @@ export function V2BottomNav() {
   return (
     <>
       <V2ActionDock items={items} />
-      <V2PlanSheet
-        open={sheet === "plan"}
-        onClose={close}
-        controlsId={PLAN_SHEET_ID}
-      />
       <V2LibrarySheet
         open={sheet === "library"}
         onClose={close}

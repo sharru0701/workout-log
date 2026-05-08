@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
@@ -41,6 +42,7 @@ import {
 import type { CalendarPageBootstrap } from "@/server/services/calendar/get-calendar-page-bootstrap";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { apiDelete, apiPatch } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 import { buildTodayLogHref } from "@/lib/workout-links";
 
@@ -238,6 +240,11 @@ export function CalendarScreen({
               ? "날짜별 기록과 예정 세션을 같은 구조에서 탐색하고 조정합니다."
               : "Browse logged sessions and planned days from one consistent calendar workspace."
           }
+          actions={(
+            <Button as={Link} href={APP_ROUTES.plansManage} variant="secondary">
+              {locale === "ko" ? "플랜 관리" : "Manage plans"}
+            </Button>
+          )}
         />
 
         <CalendarFilterBar
