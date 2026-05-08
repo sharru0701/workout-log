@@ -4,6 +4,7 @@ import {
   type CSSProperties,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -25,6 +26,7 @@ import {
   V2Chip,
   V2PrimaryBtn,
 } from "./primitives";
+import { useV2BottomDockTabs } from "./v2-bottom-dock-context";
 
 /* ─────────────────────────── helpers ────────────────────────────── */
 
@@ -980,107 +982,11 @@ function HistoryDeck({
 
 /* ─────────────────────────── Deck container ─────────────────────── */
 
-const DECKS: { key: string; label: string; labelEn: string }[] = [
-  { key: "today", label: "오늘", labelEn: "Today" },
-  { key: "progress", label: "진행", labelEn: "Progress" },
-  { key: "history", label: "히스토리", labelEn: "History" },
+const DECKS: { key: string; icon: string; label: string; labelEn: string }[] = [
+  { key: "today", icon: "today", label: "오늘", labelEn: "Today" },
+  { key: "progress", icon: "trending_up", label: "진행", labelEn: "Progress" },
+  { key: "history", icon: "history", label: "히스토리", labelEn: "History" },
 ];
-
-function DeckSwitcher({
-  index,
-  setIndex,
-  locale,
-}: {
-  index: number;
-  setIndex: (i: number) => void;
-  locale: AppLocale;
-}) {
-  return (
-    <div
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 10,
-        paddingTop: "calc(env(safe-area-inset-top, 0px) + 12px)",
-        paddingBottom: 6,
-        background:
-          "color-mix(in srgb, var(--v2-bg) 92%, transparent)",
-        backdropFilter: "blur(12px)",
-        WebkitBackdropFilter: "blur(12px)",
-      }}
-    >
-      <div
-        role="tablist"
-        aria-label="Home decks"
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 6,
-          margin: "0 auto",
-          padding: "6px 10px",
-          borderRadius: 9999,
-          background:
-            "color-mix(in srgb, var(--v2-paper) 70%, transparent)",
-          backdropFilter: "blur(12px)",
-          WebkitBackdropFilter: "blur(12px)",
-          width: "fit-content",
-        }}
-      >
-        {DECKS.map((d, i) => (
-          <button
-            key={d.key}
-            type="button"
-            role="tab"
-            aria-selected={i === index}
-            onClick={() => setIndex(i)}
-            style={{
-              minHeight: 32,
-              padding: "6px 14px",
-              borderRadius: 9999,
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--v2-f-display)",
-              fontWeight: 700,
-              fontSize: 12,
-              background: i === index ? "var(--v2-ink)" : "transparent",
-              color:
-                i === index
-                  ? "var(--v2-ink-on-accent)"
-                  : "var(--v2-ink-2)",
-              transition: "background var(--v2-d-1) var(--v2-e-out)",
-            }}
-          >
-            {locale === "ko" ? d.label : d.labelEn}
-          </button>
-        ))}
-      </div>
-      {/* dots */}
-      <div
-        aria-hidden
-        style={{
-          display: "flex",
-          justifyContent: "center",
-          gap: 6,
-          marginTop: 8,
-        }}
-      >
-        {DECKS.map((d, i) => (
-          <span
-            key={d.key}
-            style={{
-              width: i === index ? 18 : 6,
-              height: 6,
-              borderRadius: 9999,
-              background:
-                i === index ? "var(--v2-accent)" : "var(--v2-paper-4)",
-              transition: "all var(--v2-d-2) var(--v2-e-out)",
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
 
 /* ─────────────────────────── Public API ─────────────────────────── */
 
@@ -1125,6 +1031,22 @@ export function V2HomeDashboard({ data }: { data: HomeData }) {
     data.today.totalPlannedSets > 0 &&
     data.today.completedSets >= data.today.totalPlannedSets;
 
+  const bottomDockTabs = useMemo(
+    () => ({
+      id: "home-decks",
+      items: DECKS.map((d, i) => ({
+        key: `home-${d.key}`,
+        icon: d.icon,
+        label: locale === "ko" ? d.label : d.labelEn,
+        onClick: () => handleSetDeck(i),
+        active: i === deck,
+      })),
+    }),
+    [deck, handleSetDeck, locale],
+  );
+
+  useV2BottomDockTabs(bottomDockTabs);
+
   const slideStyle: CSSProperties = {
     flex: "0 0 100%",
     scrollSnapAlign: "start",
@@ -1136,8 +1058,6 @@ export function V2HomeDashboard({ data }: { data: HomeData }) {
 
   return (
     <div style={{ width: "100%" }}>
-      <DeckSwitcher index={deck} setIndex={handleSetDeck} locale={locale} />
-
       <div
         ref={trackRef}
         onScroll={handleScroll}
@@ -1184,4 +1104,3 @@ export function V2HomeDashboard({ data }: { data: HomeData }) {
     </div>
   );
 }
-

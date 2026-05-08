@@ -455,23 +455,29 @@ export function V2ActionDock({
       aria-label="Main navigation"
       style={{
         position: "fixed",
-        left: 12,
-        right: 12,
-        bottom: "calc(14px + env(safe-area-inset-bottom))",
+        left: "max(12px, env(safe-area-inset-left))",
+        right: "max(12px, env(safe-area-inset-right))",
+        bottom: "calc(12px + env(safe-area-inset-bottom))",
         background: "color-mix(in srgb, var(--v2-paper) 88%, transparent)",
         backdropFilter: "blur(20px) saturate(160%)",
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
-        borderRadius: 26,
-        padding: 10,
-        display: "grid",
-        gridTemplateColumns: items
-          .map((it) => (it.primary ? "1.4fr" : "1fr"))
-          .join(" "),
-        gap: 4,
+        border: "1px solid var(--v2-hairline)",
+        borderRadius: "var(--v2-r-pill)",
+        padding: 8,
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        overflowX: "auto",
+        overflowY: "hidden",
+        scrollSnapType: "x proximity",
+        overscrollBehaviorX: "contain",
+        WebkitOverflowScrolling: "touch",
+        scrollbarWidth: "none",
         boxShadow: "var(--v2-elev-2)",
         zIndex: 40,
         margin: "0 auto",
         maxWidth: 480,
+        touchAction: "pan-x",
       }}
     >
       {items.map((it) => {
@@ -493,28 +499,37 @@ export function V2ActionDock({
             <span>{it.label}</span>
           </>
         );
+        const isSelected = Boolean(it.active);
         const styleCommon: CSSProperties = {
-          background: it.primary ? "var(--v2-accent)" : "transparent",
-          color: it.primary
+          flex: "0 0 auto",
+          minWidth: it.primary ? 92 : 82,
+          background: it.primary
+            ? "var(--v2-accent)"
+            : isSelected
+              ? "var(--v2-ink)"
+              : "transparent",
+          color: it.primary || isSelected
             ? "var(--v2-ink-on-accent)"
-            : it.active
-              ? "var(--v2-accent)"
-              : "var(--v2-ink-2)",
+            : "var(--v2-ink-2)",
           border: "none",
           cursor: "pointer",
-          borderRadius: 18,
-          padding: "12px 8px",
+          borderRadius: "var(--v2-r-pill)",
+          padding: "10px 14px",
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           alignItems: "center",
           justifyContent: "center",
-          gap: 2,
-          minHeight: 56,
+          gap: 6,
+          minHeight: 44,
           textDecoration: "none",
           fontFamily: "var(--v2-f-display)",
-          fontSize: 11,
+          fontSize: 12,
           fontWeight: 700,
-          transition: "transform var(--v2-d-1) var(--v2-e-out)",
+          whiteSpace: "nowrap",
+          scrollSnapAlign: "center",
+          WebkitTapHighlightColor: "transparent",
+          transition:
+            "background var(--v2-d-1) var(--v2-e-out), color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
         };
         if (it.href) {
           return (
@@ -535,7 +550,7 @@ export function V2ActionDock({
             type="button"
             onClick={it.onClick}
             aria-label={it.label}
-            aria-current={it.active ? "page" : undefined}
+            aria-pressed={it.controls ? undefined : Boolean(it.active)}
             aria-expanded={
               it.controls != null || it.expanded != null
                 ? Boolean(it.expanded)
