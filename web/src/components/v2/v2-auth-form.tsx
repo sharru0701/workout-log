@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { V2PrimaryBtn } from "./primitives";
 
@@ -35,6 +35,44 @@ const OAUTH_ERROR_TO_MESSAGE: Record<string, { ko: string; en: string }> = {
   },
 };
 
+function passwordStrength(password: string): number {
+  if (!password) return 0;
+  let score = password.length >= 8 ? 1 : 0;
+  if (password.length >= 12) score += 1;
+  if (/[0-9]/.test(password) && /[A-Za-z]/.test(password)) score += 1;
+  if (/[^A-Za-z0-9]/.test(password)) score += 1;
+  return Math.min(4, score);
+}
+
+function strengthLabel(score: number, locale: "ko" | "en") {
+  const ko = ["", "약함", "중간", "강함", "매우 강함"];
+  const en = ["", "Weak", "Medium", "Strong", "Very strong"];
+  return locale === "ko" ? ko[score] : en[score];
+}
+
+function friendlyAuthError(
+  message: string,
+  isSignup: boolean,
+  locale: "ko" | "en",
+) {
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes("invalid") ||
+    normalized.includes("credential") ||
+    normalized.includes("password")
+  ) {
+    return locale === "ko"
+      ? "이메일 또는 비밀번호가 일치하지 않아요."
+      : "Email or password does not match.";
+  }
+  if (isSignup && normalized.includes("already")) {
+    return locale === "ko"
+      ? "이미 가입된 이메일입니다. 로그인으로 이어가세요."
+      : "This email is already registered. Sign in instead.";
+  }
+  return message;
+}
+
 export function V2AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -46,11 +84,14 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [claimDevData, setClaimDevData] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [googleAvailable, setGoogleAvailable] = useState<boolean | null>(null);
 
   const isSignup = mode === "signup";
+  const strength = useMemo(() => passwordStrength(password), [password]);
 
   useEffect(() => {
     let cancelled = false;
@@ -92,8 +133,9 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
     try {
       const endpoint = isSignup ? "/api/auth/signup" : "/api/auth/login";
       const payload: Record<string, unknown> = { email, password };
-      if (isSignup && displayName.trim())
+      if (isSignup && displayName.trim()) {
         payload.displayName = displayName.trim();
+      }
       if (isSignup && claimDevData) payload.claimDevData = true;
 
       const res = await fetch(endpoint, {
@@ -103,10 +145,11 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        setError(body?.error ?? "Failed");
+        const raw = String(body?.error ?? "Failed");
+        setError(friendlyAuthError(raw, isSignup, locale));
         return;
       }
-      // 성공 → next로 이동
+      void remember;
       router.replace(next);
       router.refresh();
     } catch (err: any) {
@@ -133,63 +176,98 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           flex: 1,
           overflowY: "auto",
           padding:
-            "calc(env(safe-area-inset-top, 0px) + 32px) 24px 24px",
+            "calc(env(safe-area-inset-top, 0px) + 40px) 24px 28px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          maxWidth: 480,
+          maxWidth: 440,
           margin: "0 auto",
           width: "100%",
         }}
       >
         <div
           style={{
-            width: 56,
-            height: 56,
-            borderRadius: 18,
-            background: "var(--v2-accent-weak)",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            marginBottom: 20,
+            gap: 10,
+            marginBottom: 32,
           }}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{
-              fontSize: 30,
-              color: "var(--v2-accent)",
-              fontVariationSettings: "'FILL' 1, 'wght' 600",
-            }}
+          <div
             aria-hidden
+            style={{
+              width: 36,
+              height: 36,
+              borderRadius: 12,
+              background: "var(--v2-accent)",
+              color: "var(--v2-ink-on-accent)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily: "var(--v2-f-display)",
+              fontWeight: 800,
+              fontSize: 16,
+              letterSpacing: "-0.05em",
+            }}
           >
-            fitness_center
-          </span>
+            IG
+          </div>
+          <div
+            style={{
+              fontFamily: "var(--v2-f-display)",
+              fontWeight: 760,
+              fontSize: 18,
+              letterSpacing: "-0.02em",
+            }}
+          >
+            IronGraph
+          </div>
         </div>
-        <h1 className="v2-display" style={{ fontSize: 40 }}>
-          {isSignup
-            ? locale === "ko"
-              ? "시작하기"
-              : "Get started"
-            : locale === "ko"
-              ? "다시 만나요"
-              : "Welcome back"}
+
+        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
+          {isSignup ? (
+            locale === "ko" ? (
+              <>
+                1RM부터
+                <br />
+                그래프까지.
+              </>
+            ) : (
+              <>
+                From 1RM
+                <br />
+                to graphs.
+              </>
+            )
+          ) : locale === "ko" ? (
+            <>
+              다시 만나서
+              <br />
+              반가워요.
+            </>
+          ) : (
+            <>
+              Welcome
+              <br />
+              back.
+            </>
+          )}
         </h1>
         <p
           className="v2-body"
           style={{
             marginTop: 10,
             color: "var(--v2-ink-2)",
-            fontSize: 15,
+            fontSize: 14,
           }}
         >
           {isSignup
             ? locale === "ko"
-              ? "이메일과 비밀번호로 계정을 만들어 운동 기록을 시작하세요."
-              : "Create an account with your email to start logging workouts."
+              ? "이메일 하나면 충분해요. 첫 세션은 1분 안에 시작할 수 있어요."
+              : "One email is enough. Start the first session in under a minute."
             : locale === "ko"
-              ? "이메일과 비밀번호로 로그인하세요."
-              : "Sign in with your email and password."}
+              ? "계속 기록을 이어가요. 어제 했던 운동이 기다리고 있어요."
+              : "Keep the log moving. Yesterday's work is waiting."}
         </p>
 
         {googleAvailable ? (
@@ -202,75 +280,44 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 10,
-                minHeight: 48,
+                minHeight: 52,
                 padding: "12px 14px",
-                borderRadius: 12,
+                borderRadius: 14,
                 background: "var(--v2-paper)",
                 color: "var(--v2-ink)",
-                border: "1px solid var(--v2-hairline)",
+                border: "none",
+                boxShadow:
+                  "inset 0 0 0 1px color-mix(in srgb, var(--v2-paper-4) 45%, transparent)",
                 fontFamily: "var(--v2-f-display)",
                 fontSize: 15,
                 fontWeight: 700,
                 cursor: "pointer",
               }}
               aria-label={
-                locale === "ko" ? "Google 계정으로 로그인" : "Continue with Google"
+                locale === "ko"
+                  ? "Google 계정으로 로그인"
+                  : "Continue with Google"
               }
             >
-              <svg
-                viewBox="0 0 18 18"
-                width={18}
-                height={18}
-                aria-hidden
-                style={{ flexShrink: 0 }}
-              >
-                <path
-                  fill="#4285F4"
-                  d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961l3.007 2.332C4.672 5.166 6.656 3.58 9 3.58z"
-                />
-              </svg>
+              <GoogleIcon />
               {locale === "ko" ? "Google로 계속하기" : "Continue with Google"}
             </button>
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                color: "var(--v2-ink-3)",
-                fontSize: 12,
-                fontFamily: "var(--v2-f-display)",
-              }}
-            >
-              <div style={{ flex: 1, height: 1, background: "var(--v2-hairline)" }} />
-              {locale === "ko" ? "또는" : "OR"}
-              <div style={{ flex: 1, height: 1, background: "var(--v2-hairline)" }} />
-            </div>
+            <Divider label={locale === "ko" ? "또는" : "OR"}/>
           </div>
         ) : null}
 
         <form
           onSubmit={onSubmit}
           style={{
-            marginTop: googleAvailable ? 12 : 28,
+            marginTop: googleAvailable ? 14 : 28,
             display: "flex",
             flexDirection: "column",
-            gap: 10,
+            gap: 14,
           }}
         >
           <Field
             label={locale === "ko" ? "이메일" : "Email"}
+            icon="mail"
             type="email"
             autoComplete="email"
             value={email}
@@ -279,126 +326,152 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           />
           <Field
             label={locale === "ko" ? "비밀번호" : "Password"}
-            type="password"
+            icon="lock"
+            type={showPassword ? "text" : "password"}
             autoComplete={isSignup ? "new-password" : "current-password"}
             value={password}
             onChange={setPassword}
             required
             minLength={8}
-            help={
-              isSignup
-                ? locale === "ko"
-                  ? "최소 8자"
-                  : "At least 8 characters"
-                : undefined
-            }
+            trailing={(
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={
+                  showPassword
+                    ? locale === "ko"
+                      ? "비밀번호 숨기기"
+                      : "Hide password"
+                    : locale === "ko"
+                      ? "비밀번호 보기"
+                      : "Show password"
+                }
+                style={{
+                  width: 36,
+                  height: 36,
+                  border: "none",
+                  borderRadius: 12,
+                  background: "transparent",
+                  color: "var(--v2-ink-3)",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  padding: 0,
+                }}
+              >
+                <span className="material-symbols-outlined" style={{ fontSize: 19 }} aria-hidden>
+                  {showPassword ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            )}
           />
-          {isSignup && (
-            <Field
-              label={locale === "ko" ? "이름 (선택)" : "Display name (optional)"}
-              type="text"
-              autoComplete="name"
-              value={displayName}
-              onChange={setDisplayName}
-            />
-          )}
 
-          {isSignup && (
-            <label
+          {isSignup ? (
+            <>
+              <StrengthMeter
+                score={strength}
+                label={
+                  strength > 0
+                    ? strengthLabel(strength, locale)
+                    : locale === "ko"
+                      ? "8자 이상, 숫자·기호 포함 권장"
+                      : "8+ characters with numbers and symbols recommended"
+                }
+              />
+              <Field
+                label={locale === "ko" ? "이름 (선택)" : "Display name (optional)"}
+                icon="badge"
+                type="text"
+                autoComplete="name"
+                value={displayName}
+                onChange={setDisplayName}
+              />
+              <CheckboxRow
+                checked={claimDevData}
+                onChange={setClaimDevData}
+                title={
+                  locale === "ko"
+                    ? "기존 dev 데이터 가져오기"
+                    : "Import existing dev data"
+                }
+                description={
+                  locale === "ko"
+                    ? "WORKOUT_AUTH_USER_ID 데이터를 이 계정으로 옮김"
+                    : "Move WORKOUT_AUTH_USER_ID data into this account"
+                }
+              />
+            </>
+          ) : (
+            <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 10,
-                marginTop: 8,
-                padding: "10px 14px",
-                background: "var(--v2-paper-2)",
-                borderRadius: 12,
-                cursor: "pointer",
+                justifyContent: "space-between",
+                gap: 12,
+                marginTop: -4,
               }}
             >
-              <input
-                type="checkbox"
-                checked={claimDevData}
-                onChange={(e) => setClaimDevData(e.target.checked)}
-                style={{
-                  width: 18,
-                  height: 18,
-                  accentColor: "var(--v2-accent)",
-                  cursor: "pointer",
-                }}
+              <CheckboxRow
+                compact
+                checked={remember}
+                onChange={setRemember}
+                title={locale === "ko" ? "로그인 유지" : "Keep me signed in"}
               />
-              <span style={{ flex: 1 }}>
-                <div
-                  style={{
-                    fontFamily: "var(--v2-f-display)",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    color: "var(--v2-ink)",
-                  }}
-                >
-                  {locale === "ko"
-                    ? "기존 dev 데이터 가져오기"
-                    : "Import existing dev data"}
-                </div>
-                <div
-                  className="v2-mono-label"
-                  style={{ color: "var(--v2-ink-3)", marginTop: 2 }}
-                >
-                  {locale === "ko"
-                    ? "WORKOUT_AUTH_USER_ID 데이터를 이 계정으로 옮김"
-                    : "Move WORKOUT_AUTH_USER_ID data into this account"}
-                </div>
-              </span>
-            </label>
+              <Link
+                href="/forgot-password"
+                style={{
+                  color: "var(--v2-accent-ink)",
+                  fontFamily: "var(--v2-f-display)",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  padding: "8px 0",
+                  flexShrink: 0,
+                }}
+              >
+                {locale === "ko" ? "비밀번호 잊음" : "Forgot password"}
+              </Link>
+            </div>
           )}
 
           {error && (
             <div
               role="alert"
               style={{
-                marginTop: 8,
-                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                marginTop: 2,
+                padding: "11px 14px",
                 borderRadius: 12,
                 background:
                   "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
                 color: "var(--v2-c-danger)",
                 fontSize: 13,
                 fontFamily: "var(--v2-f-display)",
-                fontWeight: 600,
+                fontWeight: 700,
               }}
             >
+              <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden>
+                error
+              </span>
               {error}
             </div>
           )}
 
-          {!isSignup && (
-            <Link
-              href="/forgot-password"
-              style={{
-                alignSelf: "flex-end",
-                color: "var(--v2-accent)",
-                fontFamily: "var(--v2-f-display)",
-                fontSize: 13,
-                fontWeight: 700,
-                textDecoration: "none",
-                marginTop: 4,
-              }}
-            >
-              {locale === "ko" ? "비밀번호를 잊으셨나요?" : "Forgot password?"}
-            </Link>
-          )}
-
-          <div style={{ marginTop: 18 }}>
+          <div style={{ marginTop: 6 }}>
             <V2PrimaryBtn
               full
               type="submit"
-              icon={isSignup ? "rocket_launch" : "login"}
+              icon={isSignup ? "arrow_forward" : "arrow_forward"}
               disabled={submitting}
+              style={{ borderRadius: 14, minHeight: 52 }}
             >
               {submitting
                 ? locale === "ko"
-                  ? "처리 중…"
-                  : "Working…"
+                  ? "처리 중..."
+                  : "Working..."
                 : isSignup
                   ? locale === "ko"
                     ? "계정 만들기"
@@ -420,31 +493,17 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
         >
           {isSignup ? (
             <>
-              {locale === "ko" ? "이미 계정이 있나요? " : "Already have an account? "}
-              <Link
-                href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-                style={{
-                  color: "var(--v2-accent)",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                }}
-              >
+              {locale === "ko" ? "이미 계정이 있으세요? " : "Already have an account? "}
+              <AuthLink href={`/login${next ? `?next=${encodeURIComponent(next)}` : ""}`}>
                 {locale === "ko" ? "로그인" : "Sign in"}
-              </Link>
+              </AuthLink>
             </>
           ) : (
             <>
-              {locale === "ko" ? "계정이 없나요? " : "Don't have an account? "}
-              <Link
-                href={`/signup${next ? `?next=${encodeURIComponent(next)}` : ""}`}
-                style={{
-                  color: "var(--v2-accent)",
-                  fontWeight: 700,
-                  textDecoration: "none",
-                }}
-              >
-                {locale === "ko" ? "가입하기" : "Sign up"}
-              </Link>
+              {locale === "ko" ? "처음이세요? " : "New here? "}
+              <AuthLink href={`/signup${next ? `?next=${encodeURIComponent(next)}` : ""}`}>
+                {locale === "ko" ? "회원가입" : "Sign up"}
+              </AuthLink>
             </>
           )}
         </p>
@@ -453,61 +512,254 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
   );
 }
 
+function AuthLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      style={{
+        color: "var(--v2-accent-ink)",
+        fontWeight: 800,
+        textDecoration: "none",
+      }}
+    >
+      {children}
+    </Link>
+  );
+}
+
 function Field({
   label,
+  icon,
   type,
   value,
   onChange,
   autoComplete,
   required,
   minLength,
-  help,
+  trailing,
 }: {
   label: string;
+  icon: string;
   type: "email" | "password" | "text";
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
   required?: boolean;
   minLength?: number;
-  help?: string;
+  trailing?: ReactNode;
+}) {
+  return (
+    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <span className="v2-label">{label}</span>
+      <span
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 10,
+          minHeight: 52,
+          padding: "8px 12px 8px 14px",
+          borderRadius: 14,
+          background: "var(--v2-paper-2)",
+          boxShadow:
+            "inset 0 0 0 0 transparent",
+          transition:
+            "box-shadow var(--v2-d-1) var(--v2-e-out), background var(--v2-d-1) var(--v2-e-out)",
+        }}
+      >
+        <span
+          className="material-symbols-outlined"
+          style={{ color: "var(--v2-ink-3)", fontSize: 20 }}
+          aria-hidden
+        >
+          {icon}
+        </span>
+        <input
+          type={type}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          autoComplete={autoComplete}
+          required={required}
+          minLength={minLength}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            border: "none",
+            outline: "none",
+            background: "transparent",
+            fontFamily: "var(--v2-f-text)",
+            fontSize: 16,
+            color: "var(--v2-ink)",
+          }}
+        />
+        {trailing}
+      </span>
+    </label>
+  );
+}
+
+function StrengthMeter({ score, label }: { score: number; label: string }) {
+  return (
+    <div style={{ display: "grid", gap: 7, marginTop: -4 }}>
+      <div style={{ display: "flex", gap: 4 }}>
+        {[1, 2, 3, 4].map((i) => (
+          <span
+            key={i}
+            aria-hidden
+            style={{
+              flex: 1,
+              height: 3,
+              borderRadius: 9999,
+              background:
+                score >= i
+                  ? score <= 1
+                    ? "var(--v2-c-danger)"
+                    : score === 2
+                      ? "var(--v2-c-warning)"
+                      : "var(--v2-c-success)"
+                  : "var(--v2-paper-3)",
+            }}
+          />
+        ))}
+      </div>
+      <div className="v2-mono-label" style={{ color: "var(--v2-ink-3)" }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+function CheckboxRow({
+  checked,
+  onChange,
+  title,
+  description,
+  compact = false,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  title: string;
+  description?: string;
+  compact?: boolean;
 }) {
   return (
     <label
       style={{
         display: "flex",
-        flexDirection: "column",
-        gap: 6,
+        alignItems: "flex-start",
+        gap: 10,
+        minHeight: compact ? 36 : 44,
+        padding: compact ? "6px 4px" : "10px 4px",
+        cursor: "pointer",
       }}
     >
-      <span className="v2-label">{label}</span>
       <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        autoComplete={autoComplete}
-        required={required}
-        minLength={minLength}
-        style={{
-          minHeight: 48,
-          padding: "12px 14px",
-          borderRadius: 12,
-          background: "var(--v2-paper-2)",
-          border: "none",
-          outline: "none",
-          fontFamily: "var(--v2-f-text)",
-          fontSize: 16,
-          color: "var(--v2-ink)",
-        }}
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="sr-only"
       />
-      {help && (
+      <span
+        aria-hidden
+        style={{
+          width: 20,
+          height: 20,
+          marginTop: 1,
+          borderRadius: 6,
+          background: checked ? "var(--v2-accent)" : "transparent",
+          boxShadow: checked
+            ? "none"
+            : "inset 0 0 0 2px var(--v2-paper-4)",
+          color: "var(--v2-ink-on-accent)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        {checked ? (
+          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+            check
+          </span>
+        ) : null}
+      </span>
+      <span style={{ flex: 1, minWidth: 0 }}>
         <span
-          className="v2-mono-label"
-          style={{ color: "var(--v2-ink-3)" }}
+          style={{
+            display: "block",
+            fontFamily: "var(--v2-f-text)",
+            fontSize: compact ? 12 : 13,
+            fontWeight: compact ? 600 : 500,
+            lineHeight: 1.45,
+            color: "var(--v2-ink-2)",
+          }}
         >
-          {help}
+          {title}
         </span>
-      )}
+        {description ? (
+          <span
+            className="v2-mono-label"
+            style={{ display: "block", color: "var(--v2-ink-3)", marginTop: 2 }}
+          >
+            {description}
+          </span>
+        ) : null}
+      </span>
     </label>
+  );
+}
+
+function Divider({ label }: { label: string }) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        color: "var(--v2-ink-3)",
+        fontSize: 11,
+        fontFamily: "var(--v2-f-num)",
+        fontWeight: 700,
+        letterSpacing: "0.08em",
+      }}
+    >
+      <div style={{ flex: 1, height: 1, background: "var(--v2-hairline)" }} />
+      {label}
+      <div style={{ flex: 1, height: 1, background: "var(--v2-hairline)" }} />
+    </div>
+  );
+}
+
+function GoogleIcon() {
+  return (
+    <svg
+      viewBox="0 0 18 18"
+      width={18}
+      height={18}
+      aria-hidden
+      style={{ flexShrink: 0 }}
+    >
+      <path
+        fill="#4285F4"
+        d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.616z"
+      />
+      <path
+        fill="#34A853"
+        d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"
+      />
+      <path
+        fill="#EA4335"
+        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.961l3.007 2.332C4.672 5.166 6.656 3.58 9 3.58z"
+      />
+    </svg>
   );
 }

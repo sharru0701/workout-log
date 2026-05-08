@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { V2PrimaryBtn } from "../primitives";
-import { FooterLink, Status, inputStyle } from "./v2-forgot-password-form";
+import { FooterLink, Status, inputShellStyle, inputStyle } from "./v2-forgot-password-form";
 
 export function V2ResetPasswordForm() {
   const { locale } = useLocale();
@@ -65,24 +65,52 @@ export function V2ResetPasswordForm() {
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "calc(env(safe-area-inset-top, 0px) + 32px) 24px 24px",
+          padding: "calc(env(safe-area-inset-top, 0px) + 40px) 24px 28px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          maxWidth: 480,
+          maxWidth: 440,
           margin: "0 auto",
           width: "100%",
         }}
       >
-        <h1 className="v2-display" style={{ fontSize: 40 }}>
-          {locale === "ko" ? "새 비밀번호" : "New password"}
+        <div
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 18,
+            background: "var(--v2-accent-weak)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 20,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: 30, color: "var(--v2-accent)" }} aria-hidden>
+            lock_reset
+          </span>
+        </div>
+        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
+          {locale === "ko" ? (
+            <>
+              새 비밀번호
+              <br />
+              설정.
+            </>
+          ) : (
+            <>
+              Set new
+              <br />
+              password.
+            </>
+          )}
         </h1>
-        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 15 }}>
+        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 14 }}>
           {locale === "ko"
-            ? "새 비밀번호를 설정하면 기존 세션은 모두 종료됩니다."
-            : "Set a new password and sign out all previous sessions."}
+            ? "앞으로 이 비밀번호로 로그인할 수 있어요. 다른 사이트와 다르게 만드세요."
+            : "Use this password from now on. Make it different from other sites."}
         </p>
-        <form onSubmit={onSubmit} style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 10 }}>
+        <form onSubmit={onSubmit} style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 14 }}>
           <PwField
             label={locale === "ko" ? "새 비밀번호" : "New password"}
             value={password}
@@ -126,15 +154,20 @@ function PwField({
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <span className="v2-label">{label}</span>
-      <input
-        type="password"
-        autoComplete="new-password"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required
-        minLength={8}
-        style={inputStyle}
-      />
+      <span style={inputShellStyle}>
+        <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>
+          lock
+        </span>
+        <input
+          type="password"
+          autoComplete="new-password"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          required
+          minLength={8}
+          style={inputStyle}
+        />
+      </span>
     </label>
   );
 }
