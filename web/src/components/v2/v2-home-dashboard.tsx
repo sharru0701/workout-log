@@ -1,14 +1,13 @@
 "use client";
 
 import {
-  type CSSProperties,
   useCallback,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { resolveStartHref } from "@/lib/workout/start-href";
 import { useLocale } from "@/components/locale-provider";
@@ -992,39 +991,22 @@ const DECKS: { key: string; icon: string; label: string; labelEn: string }[] = [
 
 export function V2HomeDashboard({ data }: { data: HomeData }) {
   const { copy, locale } = useLocale();
+  const searchParams = useSearchParams();
+  const requestedDeck = searchParams.get("deck");
   const [deck, setDeck] = useState(0);
-  const trackRef = useRef<HTMLDivElement>(null);
-
-  const handleScroll = useCallback(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    const i = Math.round(el.scrollLeft / el.clientWidth);
-    if (i !== deck) setDeck(i);
-  }, [deck]);
 
   const handleSetDeck = useCallback(
     (i: number) => {
-      const el = trackRef.current;
-      if (!el) {
-        setDeck(i);
-        return;
-      }
-      el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
       setDeck(i);
     },
     [],
   );
 
-  // resize 시 현재 deck 위치 유지
   useEffect(() => {
-    const el = trackRef.current;
-    if (!el) return;
-    const onResize = () => {
-      el.scrollTo({ left: deck * el.clientWidth, behavior: "auto" });
-    };
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
-  }, [deck]);
+    if (!requestedDeck) return;
+    const nextDeck = DECKS.findIndex((d) => d.key === requestedDeck);
+    if (nextDeck >= 0) setDeck(nextDeck);
+  }, [requestedDeck]);
 
   const hasPlan = data.planOverview.totalPlans > 0;
   const isComplete =
@@ -1047,60 +1029,37 @@ export function V2HomeDashboard({ data }: { data: HomeData }) {
 
   useV2BottomDockTabs(bottomDockTabs);
 
-  const slideStyle: CSSProperties = {
-    flex: "0 0 100%",
-    scrollSnapAlign: "start",
-    overflowY: "auto",
-    overflowX: "hidden",
-    overscrollBehavior: "contain",
-    WebkitOverflowScrolling: "touch",
-  };
-
   return (
     <div style={{ width: "100%" }}>
-      <div
-        ref={trackRef}
-        onScroll={handleScroll}
-        style={{
-          display: "flex",
-          overflowX: "auto",
-          overflowY: "hidden",
-          scrollSnapType: "x mandatory",
-          scrollbarWidth: "none",
-          // height for swipe area; outer .app-shell__page handles bottom space.
-          // each child fills the viewport-equivalent height of the page area.
-        }}
-      >
-        <div style={slideStyle}>
-          <TodayDeck
-            today={data.today}
-            weekly={data.weeklySummary}
-            strength={data.strengthProgress}
-            copy={copy}
-            locale={locale}
-            isComplete={isComplete}
-            hasPlan={hasPlan}
-          />
-        </div>
-        <div style={slideStyle}>
-          <ProgressDeck
-            trend={data.volumeTrend}
-            strength={data.strengthProgress}
-            copy={copy}
-            locale={locale}
-          />
-        </div>
-        <div style={slideStyle}>
-          <HistoryDeck
-            recent={data.recentSessions}
-            copy={copy}
-            locale={locale}
-            totalSessions={data.quickStats.totalSessions}
-            totalVolume={data.quickStats.totalVolume}
-            thisMonthSessions={data.quickStats.thisMonthSessions}
-          />
-        </div>
-      </div>
+      {deck === 0 && (
+        <TodayDeck
+          today={data.today}
+          weekly={data.weeklySummary}
+          strength={data.strengthProgress}
+          copy={copy}
+          locale={locale}
+          isComplete={isComplete}
+          hasPlan={hasPlan}
+        />
+      )}
+      {deck === 1 && (
+        <ProgressDeck
+          trend={data.volumeTrend}
+          strength={data.strengthProgress}
+          copy={copy}
+          locale={locale}
+        />
+      )}
+      {deck === 2 && (
+        <HistoryDeck
+          recent={data.recentSessions}
+          copy={copy}
+          locale={locale}
+          totalSessions={data.quickStats.totalSessions}
+          totalVolume={data.quickStats.totalVolume}
+          thisMonthSessions={data.quickStats.thisMonthSessions}
+        />
+      )}
     </div>
   );
 }

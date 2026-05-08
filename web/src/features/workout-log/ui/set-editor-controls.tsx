@@ -219,6 +219,7 @@ export function SwipeableSetRow({
         </button>
       </div>
       <div
+        data-no-swipe="true"
         ref={rowRef}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
