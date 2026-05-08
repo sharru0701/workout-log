@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { V2BottomNav } from "@/components/v2/v2-bottom-nav";
+import { V2BottomDockProvider } from "@/components/v2/v2-bottom-dock-context";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import { V2EmailVerificationBanner } from "@/components/v2/auth/v2-email-verification-banner";
@@ -84,18 +85,20 @@ export function AppShell({
 
   return (
     <AppDialogProvider>
-      <ApiCacheWarmer />
-      <div className="app-shell v2-frame flex flex-col min-h-screen">
-        {!hideNav && <V2EmailVerificationBanner />}
-        <main className="app-main flex-1 flex flex-col overflow-x-hidden">
-          <div className="container app-shell__content">
-            <div className="app-shell__page">
-              {children}
+      <V2BottomDockProvider>
+        <ApiCacheWarmer />
+        <div className="app-shell v2-frame flex flex-col min-h-screen">
+          {!hideNav && <V2EmailVerificationBanner />}
+          <main className="app-main flex-1 flex flex-col overflow-x-hidden">
+            <div className="container app-shell__content">
+              <div className="app-shell__page">
+                {children}
+              </div>
             </div>
-          </div>
-        </main>
-        {!hideNav && <V2BottomNav />}
-      </div>
+          </main>
+          {!hideNav && <V2BottomNav />}
+        </div>
+      </V2BottomDockProvider>
     </AppDialogProvider>
   );
 }

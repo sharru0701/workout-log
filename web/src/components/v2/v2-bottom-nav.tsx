@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
+import { useV2BottomDockRegistration } from "./v2-bottom-dock-context";
 import { V2ActionDock, type V2ActionDockItem } from "./primitives";
 import { V2MoreSheet } from "./v2-more-sheet";
 import { V2PlanSheet } from "./v2-plan-sheet";
@@ -28,6 +29,7 @@ function libraryTabForPath(pathname: string): LibraryTab {
 export function V2BottomNav() {
   const pathname = usePathname() ?? "";
   const { locale } = useLocale();
+  const bottomDockRegistration = useV2BottomDockRegistration();
   const [sheet, setSheet] = useState<SheetKey>(null);
   const [libraryTab, setLibraryTab] = useState<LibraryTab>("exercises");
 
@@ -35,63 +37,74 @@ export function V2BottomNav() {
   // 라우트 진입 시 시트를 자동으로 덮지 않아 레거시/신규 화면이 겹쳐 보이는 혼선을 막는다.
   const close = () => setSheet(null);
 
-  const items: V2ActionDockItem[] = [
-    {
-      key: "start",
-      icon: "play_arrow",
-      label: locale === "ko" ? "시작" : "Start",
-      href: "/workout/log",
-      primary: true,
-      active: isActive(pathname, "/workout/log"),
+  const startItem: V2ActionDockItem = {
+    key: "start",
+    icon: "play_arrow",
+    label: locale === "ko" ? "시작" : "Start",
+    href: "/workout/log",
+    primary: true,
+    active: isActive(pathname, "/workout/log"),
+  };
+
+  const todayItem: V2ActionDockItem = {
+    key: "today",
+    icon: "today",
+    label: locale === "ko" ? "오늘" : "Today",
+    href: "/",
+    active: isActive(pathname, "/"),
+  };
+
+  const planItem: V2ActionDockItem = {
+    key: "plan",
+    icon: "event_note",
+    label: locale === "ko" ? "계획" : "Plan",
+    onClick: () => setSheet(sheet === "plan" ? null : "plan"),
+    active: sheet === "plan" || isActive(pathname, "/calendar"),
+    expanded: sheet === "plan",
+    controls: PLAN_SHEET_ID,
+  };
+
+  const libraryItem: V2ActionDockItem = {
+    key: "library",
+    icon: "inventory_2",
+    label: locale === "ko" ? "라이브러리" : "Library",
+    onClick: () => {
+      if (sheet === "library") setSheet(null);
+      else {
+        setLibraryTab(libraryTabForPath(pathname));
+        setSheet("library");
+      }
     },
-    {
-      key: "today",
-      icon: "today",
-      label: locale === "ko" ? "오늘" : "Today",
-      href: "/",
-      active: isActive(pathname, "/"),
-    },
-    {
-      key: "plan",
-      icon: "event_note",
-      label: locale === "ko" ? "계획" : "Plan",
-      onClick: () => setSheet(sheet === "plan" ? null : "plan"),
-      active: sheet === "plan" || isActive(pathname, "/calendar"),
-      expanded: sheet === "plan",
-      controls: PLAN_SHEET_ID,
-    },
-    {
-      key: "library",
-      icon: "inventory_2",
-      label: locale === "ko" ? "라이브러리" : "Library",
-      onClick: () => {
-        if (sheet === "library") setSheet(null);
-        else {
-          setLibraryTab(libraryTabForPath(pathname));
-          setSheet("library");
-        }
-      },
-      active:
-        sheet === "library" ||
-        isActive(pathname, "/exercises") ||
-        isActive(pathname, "/plans") ||
-        isActive(pathname, "/program-store"),
-      expanded: sheet === "library",
-      controls: LIBRARY_SHEET_ID,
-    },
-    {
-      key: "more",
-      icon: "more_horiz",
-      label: locale === "ko" ? "더보기" : "More",
-      onClick: () => setSheet(sheet === "more" ? null : "more"),
-      active:
-        sheet === "more" ||
-        isActive(pathname, "/settings") ||
-        isActive(pathname, "/stats"),
-      expanded: sheet === "more",
-      controls: MORE_SHEET_ID,
-    },
-  ];
+    active:
+      sheet === "library" ||
+      isActive(pathname, "/exercises") ||
+      isActive(pathname, "/plans") ||
+      isActive(pathname, "/program-store"),
+    expanded: sheet === "library",
+    controls: LIBRARY_SHEET_ID,
+  };
+
+  const moreItem: V2ActionDockItem = {
+    key: "more",
+    icon: "more_horiz",
+    label: locale === "ko" ? "더보기" : "More",
+    onClick: () => setSheet(sheet === "more" ? null : "more"),
+    active:
+      sheet === "more" ||
+      isActive(pathname, "/settings") ||
+      isActive(pathname, "/stats"),
+    expanded: sheet === "more",
+    controls: MORE_SHEET_ID,
+  };
+
+  const homeDeckItems =
+    pathname === "/" && bottomDockRegistration
+      ? bottomDockRegistration.items
+      : null;
+
+  const items: V2ActionDockItem[] = homeDeckItems
+    ? [startItem, ...homeDeckItems, planItem, libraryItem, moreItem]
+    : [startItem, todayItem, planItem, libraryItem, moreItem];
 
   return (
     <>
