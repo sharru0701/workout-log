@@ -39,24 +39,43 @@ export function V2ForgotPasswordForm() {
 
   return (
     <AuthFrame
-      title={locale === "ko" ? "비밀번호 재설정" : "Reset password"}
+      title={
+        locale === "ko" ? (
+          <>
+            비밀번호를
+            <br />
+            잊으셨어요?
+          </>
+        ) : (
+          <>
+            Forgot
+            <br />
+            password?
+          </>
+        )
+      }
       subtitle={
         locale === "ko"
-          ? "계정 이메일로 1시간 동안 유효한 재설정 링크를 보냅니다."
-          : "Send a reset link that is valid for 1 hour."
+          ? "가입하신 이메일로 재설정 링크를 보내드릴게요. 5분 안에 도착해요."
+          : "Send a reset link to the email used for this account."
       }
     >
-      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
         <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
           <span className="v2-label">{locale === "ko" ? "이메일" : "Email"}</span>
-          <input
-            type="email"
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            style={inputStyle}
-          />
+          <span style={inputShellStyle}>
+            <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>
+              mail
+            </span>
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              style={inputStyle}
+            />
+          </span>
         </label>
         {error && <Status tone="danger">{error}</Status>}
         {done && (
@@ -90,7 +109,7 @@ function AuthFrame({
   subtitle,
   children,
 }: {
-  title: string;
+  title: ReactNode;
   subtitle: string;
   children: ReactNode;
 }) {
@@ -110,11 +129,11 @@ function AuthFrame({
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "calc(env(safe-area-inset-top, 0px) + 32px) 24px 24px",
+          padding: "calc(env(safe-area-inset-top, 0px) + 40px) 24px 28px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
-          maxWidth: 480,
+          maxWidth: 440,
           margin: "0 auto",
           width: "100%",
         }}
@@ -135,10 +154,10 @@ function AuthFrame({
             lock_reset
           </span>
         </div>
-        <h1 className="v2-display" style={{ fontSize: 40 }}>
+        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
           {title}
         </h1>
-        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 15 }}>
+        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 14 }}>
           {subtitle}
         </p>
         <div style={{ marginTop: 28 }}>{children}</div>
@@ -198,13 +217,22 @@ export function Status({
 }
 
 export const inputStyle: CSSProperties = {
-  minHeight: 48,
-  padding: "12px 14px",
-  borderRadius: 12,
-  background: "var(--v2-paper-2)",
+  flex: 1,
+  minWidth: 0,
   border: "none",
   outline: "none",
+  background: "transparent",
   fontFamily: "var(--v2-f-text)",
   fontSize: 16,
   color: "var(--v2-ink)",
+};
+
+export const inputShellStyle: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  minHeight: 52,
+  padding: "8px 14px",
+  borderRadius: 14,
+  background: "var(--v2-paper-2)",
 };

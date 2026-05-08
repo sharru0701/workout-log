@@ -66,17 +66,9 @@ export function V2MoreSheet({
 
   const sections: Section[] = [
     {
-      key: "browse",
-      title: locale === "ko" ? "둘러보기" : "Browse",
+      key: "progress",
+      title: locale === "ko" ? "진행" : "Progress",
       items: [
-        {
-          key: "calendar",
-          icon: "calendar_month",
-          href: "/calendar",
-          title: locale === "ko" ? "캘린더" : "Calendar",
-          subtitle:
-            locale === "ko" ? "월별 활동 보기" : "Month view",
-        },
         {
           key: "stats",
           icon: "insights",
@@ -96,32 +88,29 @@ export function V2MoreSheet({
       ],
     },
     {
-      key: "library",
-      title: locale === "ko" ? "라이브러리" : "Library",
+      key: "account",
+      title: locale === "ko" ? "계정" : "Account",
       items: [
         {
-          key: "program-store",
-          icon: "library_books",
-          href: APP_ROUTES.programStore,
-          title: locale === "ko" ? "프로그램 스토어" : "Program Store",
-          subtitle:
-            locale === "ko"
-              ? "프리셋 프로그램 살펴보기"
-              : "Browse preset programs",
+          key: "account-settings",
+          icon: "manage_accounts",
+          href: "/settings/account",
+          title: locale === "ko" ? "계정 설정" : "Account Settings",
+          subtitle: locale === "ko" ? "이메일 · 연결 계정" : "Email · linked accounts",
         },
         {
-          key: "plans",
-          icon: "event_note",
-          href: APP_ROUTES.plansHome,
-          title: locale === "ko" ? "내 플랜" : "My Plans",
+          key: "data",
+          icon: "cloud_sync",
+          href: "/settings/data",
+          title: locale === "ko" ? "데이터" : "Data",
           subtitle:
-            locale === "ko" ? "활성 / 보관 플랜 관리" : "Active / archived",
+            locale === "ko" ? "내보내기 / 동기화" : "Export / sync",
         },
       ],
     },
     {
-      key: "exercises",
-      title: locale === "ko" ? "운동" : "Exercises",
+      key: "training",
+      title: locale === "ko" ? "운동 설정" : "Training Settings",
       items: [
         {
           key: "exercise-management",
@@ -156,8 +145,8 @@ export function V2MoreSheet({
       ],
     },
     {
-      key: "appearance",
-      title: locale === "ko" ? "외관 / 데이터" : "Appearance / Data",
+      key: "app",
+      title: locale === "ko" ? "앱" : "App",
       items: [
         {
           key: "theme",
@@ -173,14 +162,6 @@ export function V2MoreSheet({
           href: "/settings/language",
           title: locale === "ko" ? "언어" : "Language",
           subtitle: locale === "ko" ? "한국어 / English" : "한국어 / English",
-        },
-        {
-          key: "data",
-          icon: "cloud_sync",
-          href: "/settings/data",
-          title: locale === "ko" ? "데이터" : "Data",
-          subtitle:
-            locale === "ko" ? "내보내기 / 동기화" : "Export / sync",
         },
         {
           key: "about",
@@ -228,15 +209,15 @@ export function V2MoreSheet({
       <div style={{ padding: "8px 24px 12px" }}>
         <p className="v2-eyebrow">{locale === "ko" ? "더보기" : "MORE"}</p>
         <h1 id={headingId} className="v2-h1" style={{ marginTop: 6 }}>
-          {locale === "ko" ? "라이브러리 · 설정" : "Library · Settings"}
+          {locale === "ko" ? "계정 · 설정" : "Account · Settings"}
         </h1>
         <p
           className="v2-small"
           style={{ marginTop: 4, color: "var(--v2-ink-2)" }}
         >
           {locale === "ko"
-            ? "프로그램, 플랜, 운동, 외관 등 모든 설정으로 빠르게 이동."
-            : "Quick links to programs, plans, exercises, and preferences."}
+            ? "통계, 계정, 단위, 테마처럼 자주 쓰는 보조 기능만 모았습니다."
+            : "Stats, account, units, theme, and supporting app controls."}
         </p>
       </div>
 

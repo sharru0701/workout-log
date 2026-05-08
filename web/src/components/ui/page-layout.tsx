@@ -86,8 +86,26 @@ export function AppPage({
 }
 
 export function PageHeader(props: PageHeaderProps) {
-  void props;
-  return null;
+  const {
+    eyebrow,
+    title,
+    description,
+    actions,
+    className = "",
+  } = props;
+
+  return (
+    <header className={cx("page-header", className)}>
+      <div className="page-header__body">
+        {eyebrow ? <p className="page-header__eyebrow">{eyebrow}</p> : null}
+        <h1 className="page-header__title">{title}</h1>
+        {description ? (
+          <p className="page-header__description">{description}</p>
+        ) : null}
+      </div>
+      {actions ? <div className="page-header__actions">{actions}</div> : null}
+    </header>
+  );
 }
 
 export function SectionHeading({

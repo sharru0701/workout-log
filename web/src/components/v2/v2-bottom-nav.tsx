@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { V2ActionDock, type V2ActionDockItem } from "./primitives";
 import { V2MoreSheet } from "./v2-more-sheet";
@@ -19,58 +19,27 @@ const PLAN_SHEET_ID = "v2-sheet-plan";
 const LIBRARY_SHEET_ID = "v2-sheet-library";
 const MORE_SHEET_ID = "v2-sheet-more";
 
-/**
- * 라우트 → 자동으로 펼칠 시트 / 라이브러리 탭 매핑.
- * /calendar, /exercises, /plans, /program-store, /stats 진입 시
- * 적절한 시트를 자동으로 띄운다 (migration UI-1).
- */
-function deriveSheetFromPath(
-  pathname: string,
-): { sheet: SheetKey; libraryTab?: LibraryTab } {
-  if (isActive(pathname, "/calendar")) return { sheet: "plan" };
-  if (isActive(pathname, "/exercises"))
-    return { sheet: "library", libraryTab: "exercises" };
-  if (isActive(pathname, "/plans"))
-    return { sheet: "library", libraryTab: "plans" };
-  if (isActive(pathname, "/program-store"))
-    return { sheet: "library", libraryTab: "programs" };
-  if (isActive(pathname, "/stats")) return { sheet: "more" };
-  return { sheet: null };
+function libraryTabForPath(pathname: string): LibraryTab {
+  if (isActive(pathname, "/plans")) return "plans";
+  if (isActive(pathname, "/program-store")) return "programs";
+  return "exercises";
 }
 
 export function V2BottomNav() {
   const pathname = usePathname() ?? "";
-  const router = useRouter();
-  const { copy, locale } = useLocale();
+  const { locale } = useLocale();
   const [sheet, setSheet] = useState<SheetKey>(null);
   const [libraryTab, setLibraryTab] = useState<LibraryTab>("exercises");
 
-  // 라우트 변경 시 자동으로 시트 열기/닫기
-  useEffect(() => {
-    const derived = deriveSheetFromPath(pathname);
-    setSheet(derived.sheet);
-    if (derived.libraryTab) setLibraryTab(derived.libraryTab);
-  }, [pathname]);
-
-  // UI-2: 시트와 라우트의 상태 일치.
-  // 라우트가 자동으로 띄운 시트라면, 닫을 때 라우트도 함께 정리한다 — 같은 컨텐츠가
-  // 페이지와 시트 양쪽에 남아 있는 혼선을 방지. 수동 오픈은 단순 dismiss.
-  const close = () => {
-    const routeOpened = deriveSheetFromPath(pathname).sheet === sheet;
-    setSheet(null);
-    if (!routeOpened) return;
-    if (typeof window !== "undefined" && window.history.length > 1) {
-      router.back();
-    } else {
-      router.push("/");
-    }
-  };
+  // 메뉴 정책: 액션 독 버튼은 시트, URL 라우트는 화면.
+  // 라우트 진입 시 시트를 자동으로 덮지 않아 레거시/신규 화면이 겹쳐 보이는 혼선을 막는다.
+  const close = () => setSheet(null);
 
   const items: V2ActionDockItem[] = [
     {
       key: "start",
       icon: "play_arrow",
-      label: copy.nav.log,
+      label: locale === "ko" ? "시작" : "Start",
       href: "/workout/log",
       primary: true,
       active: isActive(pathname, "/workout/log"),
@@ -78,7 +47,7 @@ export function V2BottomNav() {
     {
       key: "today",
       icon: "today",
-      label: copy.nav.home,
+      label: locale === "ko" ? "오늘" : "Today",
       href: "/",
       active: isActive(pathname, "/"),
     },
@@ -98,7 +67,7 @@ export function V2BottomNav() {
       onClick: () => {
         if (sheet === "library") setSheet(null);
         else {
-          setLibraryTab("exercises");
+          setLibraryTab(libraryTabForPath(pathname));
           setSheet("library");
         }
       },
