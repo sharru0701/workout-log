@@ -726,14 +726,6 @@ export function V2SessionSummary({
             {locale === "ko" ? "홈으로" : "Home"}
           </V2PrimaryBtn>
         </Link>
-        <Link
-          href={`/plans/history?logId=${encodeURIComponent(log.id)}`}
-          style={{ flex: 1, textDecoration: "none" }}
-        >
-          <V2SecondaryBtn full icon="history">
-            {locale === "ko" ? "히스토리" : "History"}
-          </V2SecondaryBtn>
-        </Link>
       </div>
     </div>
   );

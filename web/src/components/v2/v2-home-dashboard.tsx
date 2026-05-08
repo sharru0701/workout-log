@@ -984,7 +984,6 @@ function HistoryDeck({
 const DECKS: { key: string; icon: string; label: string; labelEn: string }[] = [
   { key: "today", icon: "today", label: "오늘", labelEn: "Today" },
   { key: "progress", icon: "trending_up", label: "진행", labelEn: "Progress" },
-  { key: "history", icon: "history", label: "히스토리", labelEn: "History" },
 ];
 
 /* ─────────────────────────── Public API ─────────────────────────── */

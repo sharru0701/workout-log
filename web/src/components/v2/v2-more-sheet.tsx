@@ -77,14 +77,6 @@ export function V2MoreSheet({
           subtitle:
             locale === "ko" ? "1RM · 볼륨 추이" : "1RM · volume trends",
         },
-        {
-          key: "history",
-          icon: "history",
-          href: APP_ROUTES.plansHistory,
-          title: locale === "ko" ? "수행 히스토리" : "Workout History",
-          subtitle:
-            locale === "ko" ? "지난 세션 모아보기" : "All past sessions",
-        },
       ],
     },
     {
