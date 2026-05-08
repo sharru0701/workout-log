@@ -26,7 +26,6 @@ function libraryTabForPath(pathname: string): LibraryTab {
 const HOME_DECKS = [
   { key: "today", icon: "today", labelKo: "오늘", labelEn: "Today" },
   { key: "progress", icon: "trending_up", labelKo: "진행", labelEn: "Progress" },
-  { key: "history", icon: "history", labelKo: "히스토리", labelEn: "History" },
 ];
 
 export function V2BottomNav() {

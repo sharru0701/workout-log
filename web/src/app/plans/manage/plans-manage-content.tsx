@@ -240,16 +240,6 @@ function PlanCardV2({
       )}
 
       <div className="plan-card-v2__actions">
-        <Link
-          href={`${APP_ROUTES.plansHistory}?planId=${encodeURIComponent(plan.id)}`}
-          className="plan-card-v2__action plan-card-v2__action--primary"
-          aria-label={`${plan.name} ${copy.plansManage.history}`}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true">
-            history
-          </span>
-          {copy.plansManage.history}
-        </Link>
         <button
           type="button"
           className="plan-card-v2__action plan-card-v2__action--manage"
@@ -729,15 +719,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                 }}
               >
                 {saving ? copy.plansManage.saveInProgress : copy.plansManage.saveChanges}
-              </PrimaryButton>
-              <PrimaryButton
-                as="a"
-                variant="secondary"
-                size="lg"
-                fullWidth
-                href={`${APP_ROUTES.plansHistory}?planId=${encodeURIComponent(managedPlan.id)}`}
-              >
-                {copy.plansManage.viewHistory}
               </PrimaryButton>
               <PrimaryButton
                 type="button"
