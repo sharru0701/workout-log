@@ -482,7 +482,7 @@ export function V2ActionDock({
               style={{
                 fontSize: it.primary ? 22 : 20,
                 fontVariationSettings:
-                  it.primary || it.active
+                  it.active
                     ? "'FILL' 1, 'wght' 500"
                     : "'FILL' 0, 'wght' 400",
               }}
@@ -507,14 +507,8 @@ export function V2ActionDock({
         const styleCommon: CSSProperties = {
           flex: "0 0 auto",
           minWidth: 0,
-          background: it.primary
-            ? "var(--v2-accent)"
-            : isSelected
-              ? "var(--v2-ink)"
-              : "transparent",
-          color: it.primary || isSelected
-            ? "var(--v2-ink-on-accent)"
-            : "var(--v2-ink-2)",
+          background: isSelected ? "var(--v2-accent)" : "transparent",
+          color: isSelected ? "var(--v2-ink-on-accent)" : "var(--v2-ink-2)",
           border: "none",
           cursor: "pointer",
           borderRadius: "var(--v2-r-pill)",
