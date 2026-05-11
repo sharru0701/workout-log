@@ -70,21 +70,6 @@ export function WorkoutLogKeypadPanel({
     [visibleExercises],
   );
 
-  const firstEmptyTarget = useMemo(() => {
-    for (const ex of allExercises) {
-      if (ex.source === "PROGRAM") {
-        const inputs = programEntryState[ex.id]?.repsInputs ?? [];
-        for (let i = 0; i < ex.set.repsPerSet.length; i++) {
-          const v = (inputs[i] ?? "").trim();
-          if (!v) return { exerciseId: ex.id, setIndex: i };
-        }
-      }
-    }
-    return allExercises[0]
-      ? { exerciseId: allExercises[0].id, setIndex: 0 }
-      : null;
-  }, [allExercises, programEntryState]);
-
   const [activeExerciseId, setActiveExerciseId] = useState<string | null>(null);
   const [activeSetIndex, setActiveSetIndex] = useState<number>(0);
   const [activeField, setActiveField] = useState<Field>("reps");
@@ -105,12 +90,30 @@ export function WorkoutLogKeypadPanel({
   // 최초 마운트 시 첫 빈 슬롯 자동 포커싱
   useEffect(() => {
     if (initializedRef.current) return;
+    let firstEmptyTarget: { exerciseId: string; setIndex: number } | null =
+      null;
+    for (const ex of allExercises) {
+      if (ex.source === "PROGRAM") {
+        const inputs = programEntryState[ex.id]?.repsInputs ?? [];
+        for (let i = 0; i < ex.set.repsPerSet.length; i++) {
+          const v = (inputs[i] ?? "").trim();
+          if (!v) {
+            firstEmptyTarget = { exerciseId: ex.id, setIndex: i };
+            break;
+          }
+        }
+      }
+      if (firstEmptyTarget) break;
+    }
+    if (!firstEmptyTarget && allExercises[0]) {
+      firstEmptyTarget = { exerciseId: allExercises[0].id, setIndex: 0 };
+    }
     if (!firstEmptyTarget) return;
     setActiveExerciseId(firstEmptyTarget.exerciseId);
     setActiveSetIndex(firstEmptyTarget.setIndex);
     setActiveField("reps");
     initializedRef.current = true;
-  }, [firstEmptyTarget]);
+  }, [allExercises, programEntryState]);
 
   // 휴식 타이머
   const [restingFrom, setRestingFrom] = useState<number | null>(null);
@@ -131,7 +134,7 @@ export function WorkoutLogKeypadPanel({
   const isUser = activeExercise?.source === "USER";
 
   // 활성 운동의 가장 최근 세션 기록 (현재 draft 제외)
-  const previousSessionForActive = useMemo(() => {
+  const previousSessionForActive = (() => {
     if (!activeExercise) return null;
     const targetName = activeExercise.exerciseName.trim().toLowerCase();
     if (!targetName) return null;
@@ -150,7 +153,7 @@ export function WorkoutLogKeypadPanel({
       }
     }
     return null;
-  }, [activeExercise, recentLogItems]);
+  })();
 
   const repsValue = useMemo(() => {
     if (!activeExercise) return "";
