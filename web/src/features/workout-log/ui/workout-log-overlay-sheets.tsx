@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import type { Dispatch, SetStateAction } from "react";
 import type { FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
 import type { PendingRestorePrompt } from "@/features/workout-log/model/editor-actions";
-import type { InlinePickerRequest } from "@/features/workout-log/model/editor-actions";
 import type { AddExerciseDraft, WorkoutLogExerciseOption } from "@/features/workout-log/model/types";
 import {
   areAddExerciseDraftsEqual,
@@ -26,20 +25,9 @@ const FailureProtocolSheet = dynamic(
   { ssr: false },
 );
 
-const NumberPickerSheet = dynamic(
-  () =>
-    import("@/components/ui/number-picker-sheet").then(
-      (mod) => mod.NumberPickerSheet,
-    ),
-  { ssr: false },
-);
-
 type WorkoutLogOverlaySheetsProps = {
   locale: AppLocale;
   copy: AppCopy["workoutLog"];
-  inlinePickerRequest: InlinePickerRequest | null;
-  onCloseInlinePicker: () => void;
-  onChangeInlinePicker: (value: number) => void;
   planSheetOpen: boolean;
   planQuery: string;
   onChangePlanQuery: (value: string) => void;
@@ -85,30 +73,6 @@ type WorkoutLogOverlaySheetsProps = {
   onSelectFailureProtocol: (choice: FailureProtocolChoice) => void;
 };
 
-function areInlinePickerRequestsEqual(
-  left: InlinePickerRequest | null,
-  right: InlinePickerRequest | null,
-) {
-  if (left === right) return true;
-  if (!left || !right) return false;
-  return (
-    left.type === right.type &&
-    left.exerciseId === right.exerciseId &&
-    left.title === right.title &&
-    left.value === right.value &&
-    left.min === right.min &&
-    left.max === right.max &&
-    left.step === right.step &&
-    left.formatValue === right.formatValue &&
-    (left.type === "CHANGE_SET_REPS" || left.type === "CHANGE_SET_RPE"
-      ? left.setIndex
-      : -1) ===
-      (right.type === "CHANGE_SET_REPS" || right.type === "CHANGE_SET_RPE"
-        ? right.setIndex
-        : -1)
-  );
-}
-
 function areSelectedExerciseOptionsEqual(
   left: WorkoutLogExerciseOption | null,
   right: WorkoutLogExerciseOption | null,
@@ -142,8 +106,6 @@ function areWorkoutLogOverlaySheetsPropsEqual(
   return (
     previous.locale === next.locale &&
     previous.copy === next.copy &&
-    previous.onCloseInlinePicker === next.onCloseInlinePicker &&
-    previous.onChangeInlinePicker === next.onChangeInlinePicker &&
     previous.planSheetOpen === next.planSheetOpen &&
     previous.planQuery === next.planQuery &&
     previous.onChangePlanQuery === next.onChangePlanQuery &&
@@ -166,10 +128,6 @@ function areWorkoutLogOverlaySheetsPropsEqual(
       next.resolveWeightWithCurrentPreferences &&
     previous.onResolveRestorePrompt === next.onResolveRestorePrompt &&
     previous.onSelectFailureProtocol === next.onSelectFailureProtocol &&
-    areInlinePickerRequestsEqual(
-      previous.inlinePickerRequest,
-      next.inlinePickerRequest,
-    ) &&
     areSearchSelectOptionsEqual(previous.planSheetOptions, next.planSheetOptions) &&
     areAddExerciseDraftsEqual(previous.addDraft, next.addDraft) &&
     areWorkoutLogExerciseOptionsEqual(
@@ -194,9 +152,6 @@ function areWorkoutLogOverlaySheetsPropsEqual(
 export const WorkoutLogOverlaySheets = memo(function WorkoutLogOverlaySheets({
   locale,
   copy,
-  inlinePickerRequest,
-  onCloseInlinePicker,
-  onChangeInlinePicker,
   planSheetOpen,
   planQuery,
   onChangePlanQuery,
@@ -227,18 +182,6 @@ export const WorkoutLogOverlaySheets = memo(function WorkoutLogOverlaySheets({
 }: WorkoutLogOverlaySheetsProps) {
   return (
     <>
-      <NumberPickerSheet
-        open={inlinePickerRequest !== null}
-        onClose={onCloseInlinePicker}
-        title={inlinePickerRequest?.title ?? (locale === "ko" ? "숫자 선택" : "Select Number")}
-        value={inlinePickerRequest?.value ?? 0}
-        min={inlinePickerRequest?.min ?? 0}
-        max={inlinePickerRequest?.max ?? 100}
-        step={inlinePickerRequest?.step ?? 1}
-        onChange={onChangeInlinePicker}
-        formatValue={inlinePickerRequest?.formatValue}
-      />
-
       <PlanSelectorSheet
         open={planSheetOpen}
         copy={copy}

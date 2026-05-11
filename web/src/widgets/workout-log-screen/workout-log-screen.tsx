@@ -8,33 +8,43 @@ import {
   ErrorStateRows,
   NoticeStateRows,
 } from "@/components/ui/settings-state";
+import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { Toast } from "@/components/ui/toast";
 import { useLocale } from "@/components/locale-provider";
 import {
   useWorkoutLogAddExerciseController,
 } from "@/features/workout-log/model/use-workout-log-add-exercise-controller";
 import { useWorkoutLogContextController } from "@/features/workout-log/model/use-workout-log-context-controller";
-import { useWorkoutLogDerivedState } from "@/features/workout-log/model/use-workout-log-derived-state";
 import { useWorkoutLogDraftPersistence } from "@/features/workout-log/model/use-workout-log-draft-persistence";
 import { useWorkoutLogEditorController } from "@/features/workout-log/model/use-workout-log-editor-controller";
-import { useWorkoutLogInlinePickerController } from "@/features/workout-log/model/use-workout-log-inline-picker-controller";
 import { useWorkoutLogKeyboardOpenEffect } from "@/features/workout-log/model/use-workout-log-keyboard-open-effect";
 import { useWorkoutLogPlanSheetController } from "@/features/workout-log/model/use-workout-log-plan-sheet-controller";
 import { readWorkoutLogQueryContext } from "@/features/workout-log/model/query-context";
 import { useWorkoutLogSaveController } from "@/features/workout-log/model/use-workout-log-save-controller";
 import { applyWorkoutLogWeightRulesToDraft } from "@/features/workout-log/model/weight-rules";
+import { formatDateFriendly } from "@/features/workout-log/model/last-session-summary";
+import { parseSessionKey } from "@/lib/session-key";
 import { WorkoutLogOverlaySheets } from "@/features/workout-log/ui/workout-log-overlay-sheets";
-import { WorkoutSessionContent } from "@/features/workout-log/ui/workout-session-content";
+import {
+  WorkoutLogKeypadPanel,
+  type KeypadInitialFocus,
+} from "@/features/workout-log/ui/workout-log-keypad-panel";
+import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
 import type {
-  WorkoutProgramExerciseEntryStateMap,
-  WorkoutRecordDraft,
-  WorkoutWorkflowState,
-} from "@/entities/workout-record";
-import type { WorkoutLogInitialContext, WorkoutLogPageBootstrap } from "@/server/services/workout-log/get-workout-log-page-bootstrap";
+  WorkoutLogInitialContext,
+  WorkoutLogPageBootstrap,
+} from "@/server/services/workout-log/get-workout-log-page-bootstrap";
 import { Provider as JotaiProvider, useAtomValue, useSetAtom } from "jotai";
-import { draftAtom, isDraftLoadedAtom, programEntryStateAtom, saveErrorAtom, workflowStateAtom } from "@/features/workout-log/store/workout-log-atoms";
+import {
+  draftAtom,
+  isDraftLoadedAtom,
+  programEntryStateAtom,
+  saveErrorAtom,
+  sessionExerciseIdsAtom,
+  completedExercisesCountAtom,
+  workflowStateAtom,
+} from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
-import { V2KeypadOverlay } from "@/components/v2/v2-keypad-overlay";
 
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
   initialContext?: WorkoutLogInitialContext | null;
@@ -62,15 +72,25 @@ function WorkoutLogScreenContent({
   const workflowState = useAtomValue(workflowStateAtom);
   const saveError = useAtomValue(saveErrorAtom);
   const isDraftLoaded = useAtomValue(isDraftLoadedAtom);
+  const draft = useAtomValue(draftAtom);
+  const exerciseIds = useAtomValue(sessionExerciseIdsAtom);
+  const completedExercisesCount = useAtomValue(completedExercisesCountAtom);
   const setDraft = useSetAtom(draftAtom);
   const setProgramEntryState = useSetAtom(programEntryStateAtom);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [showSaveSuccessToast, setShowSaveSuccessToast] = useState(false);
-  const [keypadOpen, setKeypadOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const [keypadInitialFocus, setKeypadInitialFocus] =
+    useState<KeypadInitialFocus | null>(null);
+
   const dismissSaveSuccessToast = useCallback(
     () => setShowSaveSuccessToast(false),
     [],
   );
+
+  const jumpKeypadToExercise = useCallback((focus: KeypadInitialFocus) => {
+    setKeypadInitialFocus(focus);
+  }, []);
 
   const persistenceKey =
     selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
@@ -85,15 +105,19 @@ function WorkoutLogScreenContent({
   } = useWorkoutLogDraftPersistence({
     persistenceKey,
     enabled: isWorkoutLogRouteActive,
-    onRestoreAccepted: useCallback((data) => {
-      setDraft(data.draft);
-      setProgramEntryState(data.programEntryState);
-    }, [setDraft, setProgramEntryState]),
+    onRestoreAccepted: useCallback(
+      (data) => {
+        setDraft(data.draft);
+        setProgramEntryState(data.programEntryState);
+      },
+      [setDraft, setProgramEntryState],
+    ),
   });
 
   const handleNoPlanDetected = useCallback(async () => {
     await alert({
-      title: locale === "ko" ? "프로그램 선택 필요" : "Program Selection Required",
+      title:
+        locale === "ko" ? "프로그램 선택 필요" : "Program Selection Required",
       message:
         locale === "ko"
           ? "선택된 플랜이 없습니다.\n프로그램 스토어로 이동합니다."
@@ -132,11 +156,8 @@ function WorkoutLogScreenContent({
     onBootstrapOpenAddSheet: openAddSheetFromBootstrap,
   });
 
-  const {
-    handleExerciseAction,
-    handleSessionMemoChange,
-    handleSessionDateChange,
-  } = useWorkoutLogEditorController();
+  const { handleExerciseAction, handleSessionDateChange } =
+    useWorkoutLogEditorController();
 
   const {
     addDraft,
@@ -159,7 +180,7 @@ function WorkoutLogScreenContent({
     open: addSheetOpen,
     setOpen: setAddSheetOpen,
     locale,
-    resolveWeightWithCurrentPreferences: (weight, id, name) => weight, // Refactored to handle inside controller via atom
+    resolveWeightWithCurrentPreferences: (weight, _id, _name) => weight,
   });
 
   const {
@@ -176,49 +197,34 @@ function WorkoutLogScreenContent({
     onPlanChange: handlePlanChange,
   });
 
-  const {
-    inlinePickerRequest,
-    openInlinePicker,
-    closeInlinePicker,
-    handleInlinePickerChange,
-  } = useWorkoutLogInlinePickerController({
-    onExerciseAction: handleExerciseAction,
-  });
-
   useWorkoutLogKeyboardOpenEffect();
 
-  const {
-    failureProtocolSheet,
-    handleFailureProtocolSelect,
-    requestSave,
-  } = useWorkoutLogSaveController({
-    locale,
-    selectedPlan,
-    bodyweightKg: null, // this gets pulled inside the controller via atom
-    persistenceKey,
-    onSaved: useCallback(
-      (savedLogId: string | null) => {
-        setShowSaveSuccessToast(true);
-        window.setTimeout(() => {
-          if (savedLogId) {
-            router.replace(
-              `/workout/session/${encodeURIComponent(savedLogId)}?fresh=1`,
-            );
-          } else {
-            router.replace("/workout/log");
-          }
-          router.refresh();
-        }, 600);
-      },
-      [router],
-    ),
-  });
+  const { failureProtocolSheet, handleFailureProtocolSelect, requestSave } =
+    useWorkoutLogSaveController({
+      locale,
+      selectedPlan,
+      bodyweightKg: null,
+      persistenceKey,
+      onSaved: useCallback(
+        (savedLogId: string | null) => {
+          setShowSaveSuccessToast(true);
+          window.setTimeout(() => {
+            if (savedLogId) {
+              router.replace(
+                `/workout/session/${encodeURIComponent(savedLogId)}?fresh=1`,
+              );
+            } else {
+              router.replace("/workout/log");
+            }
+            router.refresh();
+          }, 600);
+        },
+        [router],
+      ),
+    });
 
-  const isEditingExistingLog = Boolean(query.logId); // simplified definition since it doesn't need the actual draft object here
+  const isEditingExistingLog = Boolean(query.logId);
 
-  // Date change handler:
-  // - While editing an existing log: update the draft in-place (date is sent to API on save)
-  // - While creating a new log: navigate the URL to the new date (reloads context for that date)
   const handleDateChange = useCallback(
     (newDateKey: string) => {
       if (!/^\d{4}-\d{2}-\d{2}$/.test(newDateKey)) return;
@@ -234,6 +240,40 @@ function WorkoutLogScreenContent({
       }
     },
     [isEditingExistingLog, handleSessionDateChange, router, selectedPlan],
+  );
+
+  const sessionDate = draft?.session.sessionDate ?? "";
+  const sessionLabel = useMemo(() => {
+    const key = draft?.session.sessionKey;
+    if (!key) return null;
+    const parsed = parseSessionKey(key);
+    if (!parsed) return null;
+    if (parsed.kind === "cycle-wave" || parsed.kind === "date-progression") {
+      return `C${parsed.cycle}W${parsed.week}D${parsed.day}`;
+    }
+    if (parsed.kind === "wave") {
+      return `W${parsed.week}D${parsed.day}`;
+    }
+    return null;
+  }, [draft?.session.sessionKey]);
+  const sessionTypeLabel = useMemo(() => {
+    const t = draft?.session.sessionType?.trim();
+    if (!t) return null;
+    if (sessionLabel && t === sessionLabel) return null;
+    if (sessionLabel && t.endsWith(`D${draft?.session.day ?? ""}`)) return null;
+    return t;
+  }, [draft?.session.sessionType, draft?.session.day, sessionLabel]);
+  const shiftDate = useCallback(
+    (delta: number) => {
+      if (!sessionDate) return;
+      const d = new Date(`${sessionDate}T00:00:00`);
+      d.setDate(d.getDate() + delta);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, "0");
+      const dd = String(d.getDate()).padStart(2, "0");
+      handleDateChange(`${y}-${m}-${dd}`);
+    },
+    [sessionDate, handleDateChange],
   );
 
   return (
@@ -263,72 +303,217 @@ function WorkoutLogScreenContent({
       />
       <EmptyStateRows when={noPlan} label={copy.workoutLog.noPlans} />
 
-      {!noPlan && isDraftLoaded ? (
-        <WorkoutSessionContent
-          copy={copy.workoutLog}
-          locale={locale}
-          selectedPlanName={selectedPlan?.name ?? ""}
-          isEditingExistingLog={isEditingExistingLog}
-          planSheetOpen={planSheetOpen}
-          onOpenPlanSheet={openPlanSheet}
-          onExerciseAction={handleExerciseAction}
-          onOpenInlinePicker={openInlinePicker}
-          onOpenAddExerciseSheet={openAddExerciseSheet}
-          onSessionMemoChange={handleSessionMemoChange}
-          onDateChange={handleDateChange}
-          workflowState={workflowState}
-          onSave={requestSave}
-        />
-      ) : null}
-
-      {/* v2: 키패드 빠른 입력 시트 + 트리거 버튼 */}
-      {!noPlan && isDraftLoaded && (
-        <>
-          <button
-            type="button"
-            onClick={() => setKeypadOpen(true)}
-            aria-label={
-              locale === "ko" ? "키패드 빠른 입력" : "Quick reps keypad"
-            }
+      {!noPlan && isDraftLoaded && draft ? (
+        <div
+          style={{
+            display: "flex",
+            flex: 1,
+            flexDirection: "column",
+            minHeight: 0,
+            gap: 6,
+            overflow: "hidden",
+            marginBottom: "calc((var(--space-xl) + 32px) * -1)",
+          }}
+        >
+          {/* 컴팩트 상단 바 */}
+          <section
             style={{
-              position: "fixed",
-              right: 16,
-              bottom: "calc(110px + env(safe-area-inset-bottom, 0px))",
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              background: "var(--v2-accent)",
-              color: "var(--v2-ink-on-accent)",
-              border: "none",
-              boxShadow: "var(--v2-elev-3)",
-              cursor: "pointer",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              zIndex: 30,
+              flexDirection: "column",
+              gap: 8,
+              flexShrink: 0,
             }}
           >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: 28, fontVariationSettings: "'FILL' 1, 'wght' 500" }}
-              aria-hidden
+            <div className="plan-selector-strip" style={{ marginBottom: 0 }}>
+              <div className="plan-selector-strip__label">
+                {copy.workoutLog.activePlanLabel}
+              </div>
+              <PlanSelectorButton
+                planName={selectedPlan?.name ?? ""}
+                aria-expanded={isEditingExistingLog ? false : planSheetOpen}
+                onClick={isEditingExistingLog ? undefined : openPlanSheet}
+                disabled={isEditingExistingLog}
+              />
+              {isEditingExistingLog ? (
+                <p
+                  style={{
+                    marginTop: "var(--space-xs)",
+                    fontSize: 12,
+                    color: "var(--text-hint)",
+                  }}
+                >
+                  {copy.workoutLog.planLockedWhileEditing}
+                </p>
+              ) : null}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 4,
+                alignItems: "stretch",
+              }}
             >
-              dialpad
-            </span>
-          </button>
-          <V2KeypadOverlay
-            open={keypadOpen}
-            onClose={() => setKeypadOpen(false)}
+              {sessionLabel && (
+                <span
+                  className="v2-mono-label"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 4,
+                    padding: "6px 10px",
+                    borderRadius: 12,
+                    background:
+                      "color-mix(in srgb, var(--v2-accent) 14%, var(--v2-paper))",
+                    color: "var(--v2-accent-ink)",
+                    fontFamily: "var(--v2-f-display)",
+                    fontWeight: 700,
+                    fontSize: 12,
+                    letterSpacing: "0.04em",
+                    minHeight: 36,
+                    flexShrink: 0,
+                  }}
+                  aria-label={
+                    locale === "ko" ? `세션 ${sessionLabel}` : `Session ${sessionLabel}`
+                  }
+                >
+                  {sessionLabel}
+                  {sessionTypeLabel && (
+                    <span
+                      style={{
+                        marginLeft: 4,
+                        color: "var(--v2-ink-3)",
+                        fontWeight: 600,
+                        fontSize: 10,
+                      }}
+                    >
+                      · {sessionTypeLabel}
+                    </span>
+                  )}
+                </span>
+              )}
+              <DateNav
+                dateKey={sessionDate}
+                label={formatDateFriendly(sessionDate, locale)}
+                onPrev={() => shiftDate(-1)}
+                onNext={() => shiftDate(1)}
+                onPick={handleDateChange}
+                ariaLabel={copy.workoutLog.dateChangeAriaLabel}
+                prevLabel={copy.workoutLog.dateNavPrev}
+                nextLabel={copy.workoutLog.dateNavNext}
+                style={{ flex: 1, minWidth: 0 }}
+              />
+              <button
+                type="button"
+                onClick={() => setSummaryOpen(true)}
+                aria-label={
+                  locale === "ko" ? "오늘의 운동 보기" : "View today's workout"
+                }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "8px 12px",
+                  borderRadius: 12,
+                  background: "var(--v2-paper-2)",
+                  color: "var(--v2-ink)",
+                  border: "none",
+                  cursor: "pointer",
+                  fontFamily: "var(--v2-f-display)",
+                  fontWeight: 700,
+                  fontSize: 12,
+                  minHeight: 36,
+                  flexShrink: 0,
+                }}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  style={{ fontSize: 16 }}
+                  aria-hidden
+                >
+                  list_alt
+                </span>
+                {locale === "ko" ? "운동" : "Plan"}
+                <span
+                  className="v2-mono-label"
+                  style={{
+                    color:
+                      completedExercisesCount > 0
+                        ? "var(--v2-c-success)"
+                        : "var(--v2-ink-3)",
+                    fontSize: 10,
+                  }}
+                >
+                  {completedExercisesCount}/{exerciseIds.length}
+                </span>
+              </button>
+            </div>
+
+            <button
+              type="button"
+              onClick={requestSave}
+              disabled={workflowState === "saving"}
+              style={{
+                width: "100%",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 12,
+                background:
+                  workflowState === "saving"
+                    ? "var(--v2-paper-2)"
+                    : "var(--v2-c-success)",
+                color:
+                  workflowState === "saving"
+                    ? "var(--v2-ink-3)"
+                    : "var(--v2-ink-on-accent)",
+                border: "none",
+                cursor:
+                  workflowState === "saving" ? "not-allowed" : "pointer",
+                fontFamily: "var(--v2-f-display)",
+                fontWeight: 700,
+                fontSize: 12,
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                minHeight: 38,
+              }}
+            >
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: 16 }}
+                aria-hidden
+              >
+                done_all
+              </span>
+              {workflowState === "saving"
+                ? copy.workoutLog.saveInProgress
+                : isEditingExistingLog
+                  ? copy.workoutLog.saveEdited
+                  : copy.workoutLog.saveCreate}
+            </button>
+          </section>
+
+          {/* 인라인 키패드 패널 — 메인 영역 */}
+          <WorkoutLogKeypadPanel
+            initialFocus={keypadInitialFocus}
+            onExerciseAction={handleExerciseAction}
+            onOpenAddExerciseSheet={openAddExerciseSheet}
           />
-        </>
-      )}
+        </div>
+      ) : null}
+
+      <WorkoutLogSummarySheet
+        open={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        onJumpToExercise={jumpKeypadToExercise}
+      />
 
       <WorkoutLogOverlaySheets
         locale={locale}
         copy={copy.workoutLog}
-        inlinePickerRequest={inlinePickerRequest}
-        onCloseInlinePicker={closeInlinePicker}
-        onChangeInlinePicker={handleInlinePickerChange}
         planSheetOpen={planSheetOpen}
         planQuery={planQuery}
         onChangePlanQuery={setPlanQuery}
@@ -358,6 +543,102 @@ function WorkoutLogScreenContent({
         onSelectFailureProtocol={handleFailureProtocolSelect}
       />
     </>
+  );
+}
+
+function DateNav({
+  dateKey,
+  label,
+  onPrev,
+  onNext,
+  onPick,
+  ariaLabel,
+  prevLabel,
+  nextLabel,
+  style,
+}: {
+  dateKey: string;
+  label: string;
+  onPrev: () => void;
+  onNext: () => void;
+  onPick: (newDate: string) => void;
+  ariaLabel: string;
+  prevLabel: string;
+  nextLabel: string;
+  style?: React.CSSProperties;
+}) {
+  return (
+    <span
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 6,
+        padding: "4px 10px",
+        borderRadius: 12,
+        background: "var(--v2-paper-2)",
+        minHeight: 36,
+        ...style,
+      }}
+    >
+      <button
+        type="button"
+        className="date-nav-btn"
+        aria-label={prevLabel}
+        onClick={onPrev}
+      >
+        <span
+          className="material-symbols-outlined"
+          aria-hidden="true"
+          style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}
+        >
+          chevron_left
+        </span>
+      </button>
+      <label
+        style={{
+          position: "relative",
+          display: "flex",
+          alignItems: "center",
+          fontFamily: "var(--v2-f-display)",
+          fontWeight: 700,
+          fontSize: 12,
+          color: "var(--v2-ink)",
+        }}
+      >
+        <span aria-live="polite">{label}</span>
+        <input
+          type="date"
+          aria-label={ariaLabel}
+          value={dateKey}
+          onChange={(e) => {
+            if (e.target.value) onPick(e.target.value);
+          }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: 0,
+            width: "100%",
+            height: "100%",
+            cursor: "pointer",
+          }}
+        />
+      </label>
+      <button
+        type="button"
+        className="date-nav-btn"
+        aria-label={nextLabel}
+        onClick={onNext}
+      >
+        <span
+          className="material-symbols-outlined"
+          aria-hidden="true"
+          style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}
+        >
+          chevron_right
+        </span>
+      </button>
+    </span>
   );
 }
 
