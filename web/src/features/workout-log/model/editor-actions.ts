@@ -34,40 +34,6 @@ export type ExerciseRowAction =
   | { type: "CHANGE_MEMO"; value: string }
   | { type: "DELETE" };
 
-export type InlinePickerRequest =
-  | {
-      type: "CHANGE_WEIGHT";
-      exerciseId: string;
-      title: string;
-      value: number;
-      min: number;
-      max: number;
-      step: number;
-      formatValue?: (value: number) => string;
-    }
-  | {
-      type: "CHANGE_SET_REPS";
-      exerciseId: string;
-      setIndex: number;
-      title: string;
-      value: number;
-      min: number;
-      max: number;
-      step: number;
-      formatValue?: (value: number) => string;
-    }
-  | {
-      type: "CHANGE_SET_RPE";
-      exerciseId: string;
-      setIndex: number;
-      title: string;
-      value: number;
-      min: number;
-      max: number;
-      step: number;
-      formatValue?: (value: number) => string;
-    };
-
 export type PendingRestorePrompt = {
   capturedKey: string | null;
   data: WorkoutDraftData;

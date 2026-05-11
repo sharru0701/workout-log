@@ -3,7 +3,6 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/locale-provider";
-import { APP_ROUTES } from "@/lib/app-routes";
 import { V2Sheet } from "./primitives";
 import { V2PasswordSheet } from "./v2-password-sheet";
 
@@ -171,19 +170,6 @@ export function V2MoreSheet({
             locale === "ko"
               ? "단위·목표·프로그램 추천"
               : "Units, goals, recommended program",
-        },
-        {
-          key: "quick-log",
-          icon: "dialpad",
-          href: "/workout/log/keypad",
-          title:
-            locale === "ko"
-              ? "빠른 기록 (키패드)"
-              : "Quick log (keypad)",
-          subtitle:
-            locale === "ko"
-              ? "한 운동 빠르게 · 자동 저장"
-              : "One exercise · auto-saved",
         },
       ],
     },
