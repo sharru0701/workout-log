@@ -771,7 +771,7 @@ export function WorkoutLogKeypadPanel({
 
       {/* 빅 넘버 디스플레이 */}
       <div style={{ padding: "4px 12px 0", flexShrink: 0 }}>
-        <V2Card padding="12px 14px">
+        <V2Card padding="10px 14px">
           <FieldDisplay
             label={locale === "ko" ? "중량" : "Weight"}
             unit="kg"
@@ -784,52 +784,60 @@ export function WorkoutLogKeypadPanel({
             }}
             size="md"
           />
-          <V2Hairline style={{ marginTop: 8, marginBottom: 8 }} />
-          <FieldDisplay
-            label={
-              locale === "ko"
-                ? `반복 · 세트 ${activeSetIndex + 1}`
-                : `Reps · Set ${activeSetIndex + 1}`
-            }
-            unit={locale === "ko" ? "회" : "reps"}
-            value={repsValue || "—"}
-            color="var(--v2-c-reps)"
-            active={activeField === "reps" && !memoMode}
-            onSelect={() => {
-              setActiveField("reps");
-              setMemoMode(false);
+          <V2Hairline style={{ marginTop: 6, marginBottom: 6 }} />
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1fr 1fr",
+              gap: 12,
+              alignItems: "center",
             }}
-            size="md"
-            extra={
-              activeExercise?.source === "PROGRAM" &&
-              plannedReps != null &&
-              plannedReps > 0 ? (
-                <span
-                  className="v2-mono-label"
-                  style={{ marginLeft: "auto", color: "var(--v2-ink-3)" }}
-                >
-                  {locale === "ko" ? "계획" : "PLAN"} {plannedReps}
-                </span>
-              ) : null
-            }
-          />
-          <V2Hairline style={{ marginTop: 8, marginBottom: 8 }} />
-          <FieldDisplay
-            label="RPE"
-            value={rpeValue || "—"}
-            color="var(--v2-c-warning)"
-            active={activeField === "rpe" && !memoMode}
-            onSelect={() => {
-              setActiveField("rpe");
-              setMemoMode(false);
-            }}
-            size="sm"
-          />
+          >
+            <FieldDisplay
+              label={
+                locale === "ko"
+                  ? `반복 · 세트 ${activeSetIndex + 1}`
+                  : `Reps · Set ${activeSetIndex + 1}`
+              }
+              unit={locale === "ko" ? "회" : "reps"}
+              value={repsValue || "—"}
+              color="var(--v2-c-reps)"
+              active={activeField === "reps" && !memoMode}
+              onSelect={() => {
+                setActiveField("reps");
+                setMemoMode(false);
+              }}
+              size="sm"
+              extra={
+                activeExercise?.source === "PROGRAM" &&
+                plannedReps != null &&
+                plannedReps > 0 ? (
+                  <span
+                    className="v2-mono-label"
+                    style={{ marginLeft: "auto", color: "var(--v2-ink-3)" }}
+                  >
+                    {locale === "ko" ? "계획" : "PLAN"} {plannedReps}
+                  </span>
+                ) : null
+              }
+            />
+            <FieldDisplay
+              label="RPE"
+              value={rpeValue || "—"}
+              color="var(--v2-c-warning)"
+              active={activeField === "rpe" && !memoMode}
+              onSelect={() => {
+                setActiveField("rpe");
+                setMemoMode(false);
+              }}
+              size="sm"
+            />
+          </div>
           {isUser && (
             <p
               className="v2-mono-label"
               style={{
-                marginTop: 8,
+                marginTop: 6,
                 color: "var(--v2-ink-3)",
                 fontSize: 9,
               }}

@@ -8,7 +8,6 @@ import {
   ErrorStateRows,
   NoticeStateRows,
 } from "@/components/ui/settings-state";
-import { PlanSelectorButton } from "@/components/ui/plan-selector-button";
 import { Toast } from "@/components/ui/toast";
 import { useLocale } from "@/components/locale-provider";
 import {
@@ -320,32 +319,62 @@ function WorkoutLogScreenContent({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 8,
+              gap: 6,
               flexShrink: 0,
             }}
           >
-            <div className="plan-selector-strip" style={{ marginBottom: 0 }}>
-              <div className="plan-selector-strip__label">
-                {copy.workoutLog.activePlanLabel}
-              </div>
-              <PlanSelectorButton
-                planName={selectedPlan?.name ?? ""}
-                aria-expanded={isEditingExistingLog ? false : planSheetOpen}
-                onClick={isEditingExistingLog ? undefined : openPlanSheet}
-                disabled={isEditingExistingLog}
-              />
-              {isEditingExistingLog ? (
-                <p
+            <button
+              type="button"
+              onClick={isEditingExistingLog ? undefined : openPlanSheet}
+              disabled={isEditingExistingLog}
+              aria-expanded={isEditingExistingLog ? false : planSheetOpen}
+              aria-haspopup="dialog"
+              aria-label={
+                locale === "ko" ? "플랜 선택 열기" : "Open plan selector"
+              }
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                padding: "6px 10px",
+                borderRadius: 12,
+                background: "var(--v2-paper-2)",
+                color: "var(--v2-ink)",
+                border: "none",
+                cursor: isEditingExistingLog ? "default" : "pointer",
+                fontFamily: "var(--v2-f-display)",
+                fontWeight: 700,
+                fontSize: 12,
+                minHeight: 36,
+                width: "100%",
+                textAlign: "left",
+                justifyContent: "space-between",
+              }}
+            >
+              <span
+                style={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  minWidth: 0,
+                }}
+              >
+                {selectedPlan?.name ?? ""}
+              </span>
+              {!isEditingExistingLog && (
+                <span
+                  className="material-symbols-outlined"
+                  aria-hidden
                   style={{
-                    marginTop: "var(--space-xs)",
-                    fontSize: 12,
-                    color: "var(--text-hint)",
+                    fontSize: 16,
+                    color: "var(--v2-ink-3)",
+                    flexShrink: 0,
                   }}
                 >
-                  {copy.workoutLog.planLockedWhileEditing}
-                </p>
-              ) : null}
-            </div>
+                  unfold_more
+                </span>
+              )}
+            </button>
 
             <div
               style={{
@@ -414,7 +443,7 @@ function WorkoutLogScreenContent({
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "8px 12px",
+                  padding: "8px 10px",
                   borderRadius: 12,
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
@@ -434,7 +463,6 @@ function WorkoutLogScreenContent({
                 >
                   list_alt
                 </span>
-                {locale === "ko" ? "운동" : "Plan"}
                 <span
                   className="v2-mono-label"
                   style={{
@@ -450,50 +478,17 @@ function WorkoutLogScreenContent({
               </button>
             </div>
 
-            <button
-              type="button"
-              onClick={requestSave}
-              disabled={workflowState === "saving"}
-              style={{
-                width: "100%",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 6,
-                padding: "8px 14px",
-                borderRadius: 12,
-                background:
-                  workflowState === "saving"
-                    ? "var(--v2-paper-2)"
-                    : "var(--v2-c-success)",
-                color:
-                  workflowState === "saving"
-                    ? "var(--v2-ink-3)"
-                    : "var(--v2-ink-on-accent)",
-                border: "none",
-                cursor:
-                  workflowState === "saving" ? "not-allowed" : "pointer",
-                fontFamily: "var(--v2-f-display)",
-                fontWeight: 700,
-                fontSize: 12,
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                minHeight: 38,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: 16 }}
-                aria-hidden
+            {isEditingExistingLog ? (
+              <p
+                style={{
+                  fontSize: 11,
+                  color: "var(--text-hint)",
+                  margin: 0,
+                }}
               >
-                done_all
-              </span>
-              {workflowState === "saving"
-                ? copy.workoutLog.saveInProgress
-                : isEditingExistingLog
-                  ? copy.workoutLog.saveEdited
-                  : copy.workoutLog.saveCreate}
-            </button>
+                {copy.workoutLog.planLockedWhileEditing}
+              </p>
+            ) : null}
           </section>
 
           {/* 인라인 키패드 패널 — 메인 영역 */}
@@ -502,6 +497,52 @@ function WorkoutLogScreenContent({
             onExerciseAction={handleExerciseAction}
             onOpenAddExerciseSheet={openAddExerciseSheet}
           />
+
+          <button
+            type="button"
+            onClick={requestSave}
+            disabled={workflowState === "saving"}
+            style={{
+              width: "100%",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+              padding: "8px 14px",
+              borderRadius: 12,
+              background:
+                workflowState === "saving"
+                  ? "var(--v2-paper-2)"
+                  : "var(--v2-c-success)",
+              color:
+                workflowState === "saving"
+                  ? "var(--v2-ink-3)"
+                  : "var(--v2-ink-on-accent)",
+              border: "none",
+              cursor:
+                workflowState === "saving" ? "not-allowed" : "pointer",
+              fontFamily: "var(--v2-f-display)",
+              fontWeight: 700,
+              fontSize: 12,
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              minHeight: 38,
+              flexShrink: 0,
+            }}
+          >
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: 16 }}
+              aria-hidden
+            >
+              done_all
+            </span>
+            {workflowState === "saving"
+              ? copy.workoutLog.saveInProgress
+              : isEditingExistingLog
+                ? copy.workoutLog.saveEdited
+                : copy.workoutLog.saveCreate}
+          </button>
         </div>
       ) : null}
 
