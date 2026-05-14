@@ -126,7 +126,7 @@ export function E1RMInteractiveChart({
                 dominantBaseline="middle"
                 style={{
                   fill: "var(--v2-ink-3)",
-                  fontSize: 14,
+                  fontSize: "var(--v2-t-14)",
                   fontVariantNumeric: "tabular-nums",
                 }}
               >
@@ -171,7 +171,7 @@ export function E1RMInteractiveChart({
                     y={pos.y + 4.5}
                     textAnchor="middle"
                     style={{
-                      fontSize: 11,
+                      fontSize: "var(--v2-t-label)",
                       fontWeight: 800,
                       fill: "var(--v2-ink-on-accent)",
                     }}

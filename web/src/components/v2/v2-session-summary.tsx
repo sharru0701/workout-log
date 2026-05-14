@@ -194,7 +194,7 @@ function BigStat({
 }) {
   return (
     <V2Card padding="18px">
-      <div className="v2-label" style={{ fontSize: 9 }}>
+      <div className="v2-label" style={{ fontSize: "var(--v2-t-eyebrow)" }}>
         {label}
       </div>
       <div
@@ -207,7 +207,7 @@ function BigStat({
       >
         <span
           className="v2-num-md"
-          style={{ fontSize: 30, color: color ?? "var(--v2-ink)" }}
+          style={{ fontSize: "var(--v2-t-h1)", color: color ?? "var(--v2-ink)" }}
         >
           {value}
         </span>
@@ -518,7 +518,7 @@ export function V2SessionSummary({
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: 32,
+                      fontSize: "var(--v2-t-h1)",
                       color: "var(--v2-c-pr)",
                       fontVariationSettings: "'FILL' 1, 'wght' 600",
                     }}
@@ -529,14 +529,14 @@ export function V2SessionSummary({
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div
                       className="v2-label"
-                      style={{ color: "var(--v2-c-pr)", fontSize: 9 }}
+                      style={{ color: "var(--v2-c-pr)", fontSize: "var(--v2-t-eyebrow)" }}
                     >
                       {eyebrow}
                     </div>
                     <div
                       className="v2-h2"
                       style={{
-                        fontSize: 20,
+                        fontSize: "var(--v2-t-20)",
                         marginTop: 2,
                         whiteSpace: "nowrap",
                         overflow: "hidden",
@@ -624,7 +624,7 @@ export function V2SessionSummary({
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 700,
-                        fontSize: 12,
+                        fontSize: "var(--v2-t-12)",
                         flexShrink: 0,
                       }}
                     >
@@ -641,7 +641,7 @@ export function V2SessionSummary({
                         <span
                           className="v2-h3"
                           style={{
-                            fontSize: 14,
+                            fontSize: "var(--v2-t-14)",
                             whiteSpace: "nowrap",
                             overflow: "hidden",
                             textOverflow: "ellipsis",
@@ -677,7 +677,7 @@ export function V2SessionSummary({
                       <div
                         className="v2-mono-label"
                         style={{
-                          fontSize: 9,
+                          fontSize: "var(--v2-t-eyebrow)",
                           color: "var(--v2-ink-3)",
                           marginTop: 2,
                         }}
@@ -759,7 +759,7 @@ export function V2PRCard({
           <span
             className="material-symbols-outlined"
             style={{
-              fontSize: 32,
+              fontSize: "var(--v2-t-h1)",
               color: "var(--v2-c-pr)",
               fontVariationSettings: "'FILL' 1, 'wght' 600",
             }}
@@ -770,11 +770,11 @@ export function V2PRCard({
           <div style={{ flex: 1 }}>
             <div
               className="v2-label"
-              style={{ color: "var(--v2-c-pr)", fontSize: 9 }}
+              style={{ color: "var(--v2-c-pr)", fontSize: "var(--v2-t-eyebrow)" }}
             >
               {locale === "ko" ? "새 PR" : "NEW PR"}
             </div>
-            <div className="v2-h2" style={{ fontSize: 20, marginTop: 2 }}>
+            <div className="v2-h2" style={{ fontSize: "var(--v2-t-20)", marginTop: 2 }}>
               {exerciseName} ·{" "}
               <span style={{ color: "var(--v2-c-pr)" }}>
                 {topWeightKg.toFixed(1)} kg

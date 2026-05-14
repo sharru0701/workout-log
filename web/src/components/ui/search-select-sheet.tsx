@@ -85,9 +85,9 @@ export function SearchSelectCombobox({
             style={{ display: "flex", flexDirection: "column", gap: "2px", height: "300px", overflowY: "auto", marginTop: "var(--v2-s-2)" }}
           >
             {loading ? (
-              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "13px" }}>{resolvedLoadingText}</span>
+              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{resolvedLoadingText}</span>
             ) : options.length === 0 ? (
-              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "13px" }}>{emptyText}</span>
+              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{emptyText}</span>
             ) : (
               options.map((option) => (
                 <button
@@ -107,7 +107,7 @@ export function SearchSelectCombobox({
                     color: option.active ? "var(--v2-accent-ink)" : "var(--v2-ink)",
                     cursor: "pointer",
                     textAlign: "left",
-                    fontSize: "14px",
+                    fontSize: "var(--v2-t-14)",
                     fontWeight: option.active ? 700 : 500,
                     letterSpacing: option.active ? "-0.1px" : "0",
                     transition: "background-color 0.12s ease",
@@ -115,7 +115,7 @@ export function SearchSelectCombobox({
                 >
                   <span style={{ flex: 1 }}>{option.label}</span>
                   {option.active && (
-                    <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'FILL' 1, 'wght' 500", flexShrink: 0, color: "var(--v2-accent)" }}>check</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'FILL' 1, 'wght' 500", flexShrink: 0, color: "var(--v2-accent)" }}>check</span>
                   )}
                 </button>
               ))

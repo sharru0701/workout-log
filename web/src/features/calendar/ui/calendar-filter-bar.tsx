@@ -19,7 +19,7 @@ const PILL_STYLE = {
   borderRadius: "var(--v2-r-2)",
   padding: "var(--v2-s-2) var(--v2-s-4)",
   cursor: "pointer",
-  fontSize: 12,
+  fontSize: "var(--v2-t-12)",
   fontWeight: 700,
   letterSpacing: "0.06em",
   textTransform: "uppercase" as const,
@@ -73,7 +73,7 @@ export const CalendarFilterBar = memo(function CalendarFilterBar({
         </span>
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 16, flexShrink: 0 }}
+          style={{ fontSize: "var(--v2-t-16)", flexShrink: 0 }}
         >
           filter_list
         </span>
@@ -85,7 +85,7 @@ export const CalendarFilterBar = memo(function CalendarFilterBar({
         className="v2-pressable"
         style={{ ...PILL_STYLE, flexShrink: 0 }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+        <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)" }}>
           tune
         </span>
         <span>{locale === "ko" ? "관리" : "Manage"}</span>

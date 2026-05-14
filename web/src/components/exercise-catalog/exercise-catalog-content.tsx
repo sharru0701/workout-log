@@ -196,7 +196,7 @@ function FieldLabel({ children }: { children: ReactNode }) {
   return (
     <span style={{
       fontFamily: "var(--font-label-family)",
-      fontSize: "11px",
+      fontSize: "var(--v2-t-label)",
       fontWeight: 700,
       letterSpacing: "0.08em",
       textTransform: "uppercase" as const,
@@ -381,7 +381,7 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
       }}>
         <span style={{
           fontFamily: "var(--font-label-family)",
-          fontSize: "10px", fontWeight: 700,
+          fontSize: "var(--v2-t-eyebrow)", fontWeight: 700,
           letterSpacing: "0.15em", textTransform: "uppercase" as const,
           color: "var(--v2-ink-3)",
         }}>
@@ -390,14 +390,14 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
         <div style={{ display: "flex", alignItems: "baseline", gap: "4px" }}>
           <span style={{
             fontFamily: "var(--font-label-family)",
-            fontSize: "36px", fontWeight: 700, lineHeight: 1,
+            fontSize: "var(--v2-t-h1)", fontWeight: 700, lineHeight: 1,
             color: "var(--v2-accent)",
           }}>
             {total}
           </span>
           <span style={{
             fontFamily: "var(--font-label-family)",
-            fontSize: "11px",
+            fontSize: "var(--v2-t-label)",
             color: "var(--v2-ink-3)",
           }}>
             {locale === "ko" ? "종목" : "items"}
@@ -415,7 +415,7 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
       }}>
         <span style={{
           fontFamily: "var(--font-label-family)",
-          fontSize: "10px", fontWeight: 700,
+          fontSize: "var(--v2-t-eyebrow)", fontWeight: 700,
           letterSpacing: "0.15em", textTransform: "uppercase" as const,
           color: "var(--v2-ink-2)",
         }}>
@@ -430,7 +430,7 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
                 border: "2px solid var(--v2-paper)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontFamily: "var(--font-label-family)",
-                fontSize: "10px", fontWeight: 700,
+                fontSize: "var(--v2-t-eyebrow)", fontWeight: 700,
                 color: "var(--v2-ink)",
                 marginLeft: i > 0 ? "-8px" : "0",
                 position: "relative" as const,
@@ -627,7 +627,7 @@ export function ExerciseCatalogContent() {
       }}>
         <div style={{
           fontFamily: "var(--font-label-family)",
-          fontSize: "10px", fontWeight: 700,
+          fontSize: "var(--v2-t-eyebrow)", fontWeight: 700,
           letterSpacing: "0.12em", textTransform: "uppercase" as const,
           color: "var(--v2-accent)",
           marginBottom: "4px",
@@ -636,13 +636,13 @@ export function ExerciseCatalogContent() {
         </div>
         <h1 style={{
           fontFamily: "var(--font-headline-family)",
-          fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px",
+          fontSize: "var(--v2-t-28)", fontWeight: 800, letterSpacing: "-0.5px",
           color: "var(--v2-ink)",
           margin: "0 0 var(--v2-s-2)",
         }}>
           {locale === "ko" ? "운동 종목 관리" : "Exercise Management"}
         </h1>
-        <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
           {locale === "ko" ? "종목을 추가·수정하거나 카테고리와 별칭을 관리합니다." : "Add and edit exercises, categories, and aliases."}
         </p>
       </div>
@@ -701,7 +701,7 @@ export function ExerciseCatalogContent() {
       {/* Section header */}
       <h2 style={{
         fontFamily: "var(--font-headline-family)",
-        fontSize: "13px", fontWeight: 700,
+        fontSize: "var(--v2-t-small)", fontWeight: 700,
         letterSpacing: "0.06em", textTransform: "uppercase" as const,
         color: "var(--v2-ink-2)",
         margin: "0 0 var(--v2-s-2)",

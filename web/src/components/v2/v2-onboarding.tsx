@@ -203,7 +203,7 @@ export function V2Onboarding() {
                 border: "none",
                 cursor: "pointer",
                 color: "var(--v2-ink-2)",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 600,
                 minHeight: "var(--v2-s-8)",
                 padding: "var(--v2-s-2) var(--v2-s-3)",
@@ -317,7 +317,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
         <span
           className="material-symbols-outlined"
           style={{
-            fontSize: 38,
+            fontSize: "var(--v2-t-display)",
             color: "var(--v2-accent)",
             fontVariationSettings: "'FILL' 1, 'wght' 600",
           }}
@@ -326,7 +326,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
           fitness_center
         </span>
       </div>
-      <h1 className="v2-display" style={{ fontSize: 44 }}>
+      <h1 className="v2-display" style={{ fontSize: "var(--v2-t-display)" }}>
         {locale === "ko" ? (
           <>
             매번
@@ -349,7 +349,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
         className="v2-body"
         style={{
           marginTop: 18,
-          fontSize: 16,
+          fontSize: "var(--v2-t-16)",
           color: "var(--v2-ink-2)",
         }}
       >
@@ -374,7 +374,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
             <span
               className="material-symbols-outlined"
               style={{
-                fontSize: 22,
+                fontSize: "var(--v2-t-h2)",
                 color: "var(--v2-accent)",
                 marginTop: 1,
                 fontVariationSettings: "'FILL' 1, 'wght' 500",
@@ -384,7 +384,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
               {ic}
             </span>
             <div>
-              <div className="v2-h3" style={{ fontSize: 15 }}>
+              <div className="v2-h3" style={{ fontSize: "var(--v2-t-body)" }}>
                 {t}
               </div>
               <div
@@ -658,7 +658,7 @@ function ProgramPick({
                 <span
                   className="v2-h2"
                   style={{
-                    fontSize: 19,
+                    fontSize: "var(--v2-t-18)",
                     color: sel ? "var(--v2-accent-ink)" : "var(--v2-ink)",
                   }}
                 >
@@ -686,7 +686,7 @@ function RecommendedChip({ locale }: { locale: "ko" | "en" }) {
     alignItems: "center",
     padding: "var(--v2-s-1) var(--v2-s-2)",
     borderRadius: "var(--v2-r-pill)",
-    fontSize: 10,
+    fontSize: "var(--v2-t-eyebrow)",
     fontWeight: 700,
     letterSpacing: "0.06em",
     background: "var(--v2-accent)",

@@ -19,14 +19,14 @@ export default function ExerciseDetailNotFound() {
       >
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 32, color: "var(--v2-ink-3)" }}
+          style={{ fontSize: "var(--v2-t-h1)", color: "var(--v2-ink-3)" }}
           aria-hidden
         >
           search_off
         </span>
         <h1
           className="v2-h2"
-          style={{ fontSize: 20, letterSpacing: 0, margin: 0 }}
+          style={{ fontSize: "var(--v2-t-20)", letterSpacing: 0, margin: 0 }}
         >
           운동을 찾을 수 없습니다
         </h1>
@@ -44,7 +44,7 @@ export default function ExerciseDetailNotFound() {
             background: "var(--v2-accent)",
             color: "var(--v2-ink-on-accent)",
             fontWeight: 700,
-            fontSize: 14,
+            fontSize: "var(--v2-t-14)",
             textDecoration: "none",
             margin: "0 auto",
           }}

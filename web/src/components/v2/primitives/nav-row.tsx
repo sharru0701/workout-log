@@ -124,7 +124,7 @@ export function V2NavRow(
       ) : icon ? (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22, color: "var(--v2-ink-2)" }}
+          style={{ fontSize: "var(--v2-t-h2)", color: "var(--v2-ink-2)" }}
           aria-hidden
         >
           {icon}
@@ -160,7 +160,7 @@ export function V2NavRow(
         <span
           className="material-symbols-outlined"
           style={{
-            fontSize: 18,
+            fontSize: "var(--v2-t-18)",
             color: "var(--v2-ink-3)",
             flexShrink: 0,
             transition: "transform var(--v2-d-1) var(--v2-e-out)",

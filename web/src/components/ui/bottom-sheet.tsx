@@ -525,7 +525,7 @@ export function BottomSheet({
                 {hasDescription ? <p>{description}</p> : null}
               </div>
               <button type="button" className="mobile-bottom-sheet-btn" onClick={handleClose} aria-label={closeLabel}>
-                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'wght' 500" }}>close</span>
+                <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 500" }}>close</span>
               </button>
             </header>
           ))}

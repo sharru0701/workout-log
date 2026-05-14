@@ -77,7 +77,7 @@ export function V2Chip({
         gap: "var(--v2-s-1)",
         padding: "var(--v2-s-1) var(--v2-s-3)",
         borderRadius: "var(--v2-r-pill)",
-        fontSize: 11,
+        fontSize: "var(--v2-t-label)",
         fontWeight: 700,
         letterSpacing: "0.04em",
         background: solid ? t.fg : t.bg,
@@ -87,7 +87,7 @@ export function V2Chip({
       {icon && (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 13 }}
+          style={{ fontSize: "var(--v2-t-small)" }}
           aria-hidden
         >
           {icon}

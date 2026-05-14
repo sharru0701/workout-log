@@ -121,7 +121,7 @@ export function V2MorePage() {
                 alignItems: "center",
                 justifyContent: "center",
                 fontWeight: 700,
-                fontSize: 16,
+                fontSize: "var(--v2-t-16)",
                 flexShrink: 0,
               }}
             >
@@ -131,7 +131,7 @@ export function V2MorePage() {
               <div
                 style={{
                   fontWeight: 700,
-                  fontSize: 14,
+                  fontSize: "var(--v2-t-14)",
                   color: "var(--v2-ink)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -182,7 +182,7 @@ export function V2MorePage() {
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 18 }}
+                  style={{ fontSize: "var(--v2-t-18)" }}
                   aria-hidden
                 >
                   lock
@@ -316,12 +316,12 @@ export function V2MorePage() {
             border: "none",
             cursor: "pointer",
             fontWeight: 600,
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
           }}
         >
           <span
             className="material-symbols-outlined"
-            style={{ fontSize: 18 }}
+            style={{ fontSize: "var(--v2-t-18)" }}
             aria-hidden
           >
             logout
@@ -666,7 +666,7 @@ function OptionList<T extends string>({
               borderRadius: "var(--v2-r-2)",
               cursor: disabled ? "not-allowed" : "pointer",
               opacity: disabled ? 0.6 : 1,
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               fontWeight: 600,
               textAlign: "left",
             }}
@@ -676,7 +676,7 @@ function OptionList<T extends string>({
               <span
                 className="material-symbols-outlined"
                 style={{
-                  fontSize: 18,
+                  fontSize: "var(--v2-t-18)",
                   color: "var(--v2-accent)",
                   fontVariationSettings: "'FILL' 1, 'wght' 600",
                 }}
@@ -717,7 +717,7 @@ function AppInfoFooter() {
           color: "var(--v2-ink-3)",
           textDecoration: "underline",
           textUnderlineOffset: 3,
-          fontSize: 12,
+          fontSize: "var(--v2-t-12)",
         }}
       >
         {locale === "ko" ? "환영 투어 다시 보기" : "Replay welcome tour"}

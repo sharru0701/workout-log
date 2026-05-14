@@ -62,6 +62,14 @@
   --v2-t-label: 11px;
   --v2-t-eyebrow: 10px;
 
+  /* numeric size tokens (icon sizes / intermediate text — Rule 3 token coverage) */
+  --v2-t-12: 12px;
+  --v2-t-14: 14px;
+  --v2-t-16: 16px;
+  --v2-t-18: 18px;
+  --v2-t-20: 20px;
+  --v2-t-28: 28px;
+
   /* spacing */
   --v2-s-1: 4px;
   --v2-s-2: 8px;

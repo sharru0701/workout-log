@@ -30,7 +30,7 @@ export function V2EmptyState({
         <span
           className="material-symbols-outlined"
           style={{
-            fontSize: 32,
+            fontSize: "var(--v2-t-h1)",
             color: "var(--v2-ink-3)",
           }}
           aria-hidden

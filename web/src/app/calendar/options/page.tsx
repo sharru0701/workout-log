@@ -113,7 +113,7 @@ export default async function CalendarOptionsPage({
             minHeight: "var(--v2-s-8)",
             padding: "var(--v2-s-2) var(--v2-s-5)",
             borderRadius: "var(--v2-r-pill)",
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
           }}
         >
           {copy.calendarOptions.backToCalendar}

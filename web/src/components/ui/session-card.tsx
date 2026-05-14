@@ -159,14 +159,14 @@ function TodayCard({
               background: "var(--v2-accent)",
               color: "var(--v2-ink-on-accent)",
               fontWeight: 700,
-              fontSize: 16,
+              fontSize: "var(--v2-t-16)",
               letterSpacing: "-0.01em",
               boxShadow: "var(--v2-elev-2)",
               marginTop: "var(--v2-s-4)",
             }}
           >
             <span>{ctaLabel}</span>
-            <span className="material-symbols-outlined" style={{ fontSize: 20, fontVariationSettings: "'wght' 400" }} aria-hidden>chevron_right</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 400" }} aria-hidden>chevron_right</span>
           </div>
         ) : ctaHref ? (
           <V2PrimaryBtn as="a" href={ctaHref} icon="chevron_right" full style={{ marginTop: "var(--v2-s-4)" }}>

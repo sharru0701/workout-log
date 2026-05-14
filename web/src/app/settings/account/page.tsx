@@ -604,7 +604,7 @@ export default function SettingsAccountPage() {
             <label
               style={{
                 display: "block",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 color: "var(--v2-ink-2)",
               }}
             >
@@ -633,7 +633,7 @@ export default function SettingsAccountPage() {
             <label
               style={{
                 display: "block",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 color: "var(--v2-ink-2)",
               }}
             >
@@ -784,7 +784,7 @@ export default function SettingsAccountPage() {
           style={{
             display: "block",
             marginTop: "var(--v2-s-2)",
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
             color: "var(--v2-ink-2)",
           }}
         >

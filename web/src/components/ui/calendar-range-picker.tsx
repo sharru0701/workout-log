@@ -125,7 +125,7 @@ export function CalendarRangePicker({
             background: "none",
             border: "none",
             color: "var(--v2-ink-2)",
-            fontSize: 12,
+            fontSize: "var(--v2-t-12)",
             textDecoration: "underline",
             cursor: "pointer",
             minHeight: "var(--v2-s-8)",
@@ -230,7 +230,7 @@ export function CalendarRangePicker({
                 color: dayColor,
                 borderRadius,
                 cursor: "pointer",
-                fontSize: 14,
+                fontSize: "var(--v2-t-14)",
                 fontWeight: isToday || selected ? 700 : 400,
                 fontVariantNumeric: "tabular-nums",
                 display: "flex",
@@ -288,7 +288,7 @@ function RangeChip({
       >
         {label}
       </div>
-      <div className="v2-body" style={{ fontSize: 14, fontWeight: 700 }}>
+      <div className="v2-body" style={{ fontSize: "var(--v2-t-14)", fontWeight: 700 }}>
         {value}
       </div>
     </div>

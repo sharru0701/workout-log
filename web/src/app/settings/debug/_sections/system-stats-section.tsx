@@ -230,20 +230,20 @@ export function SystemStatsSection() {
     <>
       <div>
         <div style={{ marginBottom: "var(--v2-s-7)", paddingBottom: "var(--v2-s-4)" }}>
-          <div className="v2-font-display" style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--v2-accent)", marginBottom: "4px" }}>
+          <div className="v2-font-display" style={{ fontSize: "var(--v2-t-eyebrow)", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--v2-accent)", marginBottom: "4px" }}>
             {locale === "ko" ? "관리 도구" : "Admin Tools"}
           </div>
-          <h1 className="v2-font-display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--v2-ink)", margin: "0 0 var(--v2-s-2)" }}>
+          <h1 className="v2-font-display" style={{ fontSize: "var(--v2-t-28)", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--v2-ink)", margin: "0 0 var(--v2-s-2)" }}>
             {locale === "ko" ? "시스템 통계" : "System Stats"}
           </h1>
-          <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
             {locale === "ko" ? "앱 운영 상태와 UX 퍼널 지표를 모니터링합니다." : "Monitor app health and UX funnel signals."}
           </p>
         </div>
 
         {loading ? (
           <div style={{ background: "var(--v2-paper)", borderRadius: "var(--v2-r-4)", padding: "var(--v2-s-4)", marginBottom: "var(--v2-s-5)" }}>
-            <div style={{ fontSize: "13px", color: "var(--v2-ink-2)" }}>
+            <div style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)" }}>
               {locale === "ko" ? "시스템 통계를 불러오는 중..." : "Loading system stats..."}
             </div>
           </div>
@@ -251,7 +251,7 @@ export function SystemStatsSection() {
 
         <section style={{ marginBottom: "var(--v2-s-5)" }}>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "var(--v2-t-small)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "마이그레이션" : "Migrations"}
             </h2>
           </div>
@@ -264,14 +264,14 @@ export function SystemStatsSection() {
               ))}
             </div>
             {migrationTelemetry && (
-              <div style={{ fontSize: "14px", display: "grid", gap: "var(--v2-s-1)" }}>
+              <div style={{ fontSize: "var(--v2-t-14)", display: "grid", gap: "var(--v2-s-1)" }}>
                 <div>{locale === "ko" ? "상태" : "Status"}: <span className={`label ${migrationTelemetry.status === "ok" ? "label-complete" : "label-danger"}`}>{migrationTelemetry.status.toUpperCase()}</span></div>
                 <div>{locale === "ko" ? "적용" : "Applied"}: {formatIntegerByLocale(migrationTelemetry.checks.migrations.appliedCount, locale)} / {formatIntegerByLocale(migrationTelemetry.checks.migrations.localCount, locale)} ({locale === "ko" ? "대기" : "Pending"}: {formatIntegerByLocale(migrationTelemetry.checks.migrations.pending, locale)})</div>
                 <div>{locale === "ko" ? "최근 실패" : "Latest failure"}: {formatDateTimeLocal(migrationTelemetry.checks.telemetry.alerts.latestFailureAt, locale)}</div>
               </div>
             )}
             {!migrationTelemetry && !loading ? (
-              <div style={{ fontSize: "13px", color: "var(--v2-ink-2)" }}>
+              <div style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)" }}>
                 {locale === "ko" ? "마이그레이션 텔레메트리가 아직 없습니다." : "No migration telemetry is available yet."}
               </div>
             ) : null}
@@ -280,7 +280,7 @@ export function SystemStatsSection() {
 
         <section style={{ marginBottom: "var(--v2-s-5)" }}>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "var(--v2-t-small)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "UX 퍼널 분석" : "UX Funnel"}
             </h2>
           </div>
@@ -293,7 +293,7 @@ export function SystemStatsSection() {
                     <span className="metric-value">{formatIntegerByLocale(step.count, locale)}</span>
                   </div>
                   {step.conversionFromPrevious !== null && (
-                    <div style={{ fontSize: "12px", color: "var(--v2-ink-2)" }}>
+                    <div style={{ fontSize: "var(--v2-t-12)", color: "var(--v2-ink-2)" }}>
                       {locale === "ko" ? "전 단계 대비" : "From previous step"} {Math.round(step.conversionFromPrevious * 100)}%
                     </div>
                   )}
@@ -303,7 +303,7 @@ export function SystemStatsSection() {
           )}
           {!uxSnapshot?.funnel && !loading ? (
             <div style={{ background: "var(--v2-paper)", borderRadius: "var(--v2-r-3)", padding: "var(--v2-s-4)" }}>
-              <div style={{ fontSize: "13px", color: "var(--v2-ink-2)" }}>
+              <div style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)" }}>
                 {locale === "ko" ? "UX 퍼널 데이터가 아직 없습니다." : "No UX funnel data is available yet."}
               </div>
             </div>
@@ -312,7 +312,7 @@ export function SystemStatsSection() {
 
         <section>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "var(--v2-t-small)", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "주요 지표 기준치" : "Metric Thresholds"}
             </h2>
           </div>
@@ -320,7 +320,7 @@ export function SystemStatsSection() {
             {uxSnapshot?.thresholds.map(t => (
               <div key={t.id} style={{ background: "var(--v2-paper)", borderRadius: "var(--v2-r-3)", padding: "var(--v2-s-2) var(--v2-s-4)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ fontSize: "14px" }}>{t.label}</span>
+                  <span style={{ fontSize: "var(--v2-t-14)" }}>{t.label}</span>
                   <span className={`label ${t.status === "ok" ? "label-complete" : "label-warning"}`}>
                     {Math.round(t.value * 100)}% / {locale === "ko" ? "목표" : "Target"} {Math.round(t.target * 100)}%
                   </span>
@@ -329,7 +329,7 @@ export function SystemStatsSection() {
             ))}
             {!uxSnapshot?.thresholds?.length && !loading ? (
               <div style={{ background: "var(--v2-paper)", borderRadius: "var(--v2-r-3)", padding: "var(--v2-s-4)" }}>
-                <div style={{ fontSize: "13px", color: "var(--v2-ink-2)" }}>
+                <div style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)" }}>
                   {locale === "ko" ? "기준치 데이터가 아직 없습니다." : "No threshold data is available yet."}
                 </div>
               </div>

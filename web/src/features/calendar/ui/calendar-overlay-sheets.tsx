@@ -104,7 +104,7 @@ const MoveDateConflictSheet = memo(function MoveDateConflictSheet({
           <span
             className="material-symbols-outlined"
             style={{
-              fontSize: 20,
+              fontSize: "var(--v2-t-20)",
               color: "var(--v2-c-danger)",
               flexShrink: 0,
               marginTop: 1,

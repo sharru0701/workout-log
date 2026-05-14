@@ -83,7 +83,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
               <strong
                 style={{
                   fontFamily: "var(--font-headline-family)",
-                  fontSize: "15px",
+                  fontSize: "var(--v2-t-body)",
                   fontWeight: 700,
                   color: "var(--v2-ink)",
                 }}
@@ -98,7 +98,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
           {draft.recommendationStatus === "loading" ? (
             <p
               style={{
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 color: "var(--v2-ink-2)",
                 margin: 0,
               }}
@@ -111,7 +111,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
           {draft.recommendationMessage ? (
             <p
               style={{
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 color: "var(--v2-ink-2)",
                 margin: 0,
               }}
@@ -127,7 +127,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
               <span
                 style={{
                   fontFamily: "var(--font-label-family)",
-                  fontSize: "11px",
+                  fontSize: "var(--v2-t-label)",
                   fontWeight: 700,
                   letterSpacing: "0.08em",
                   textTransform: "uppercase",

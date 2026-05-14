@@ -52,7 +52,7 @@ export function TopBackButton() {
           aria-label={locale === "ko" ? "설정" : "Settings"}
           aria-current={isSettingsRoute ? "page" : undefined}
         >
-          <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}>settings</span>
+          <span aria-hidden="true" className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-h2)", fontVariationSettings: "'wght' 400" }}>settings</span>
         </Link>
       </div>
     </div>

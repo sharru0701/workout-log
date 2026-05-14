@@ -148,7 +148,7 @@ function StrengthCard({
           style={{
             color: "var(--v2-ink-2)",
             fontWeight: 500,
-            fontSize: 12,
+            fontSize: "var(--v2-t-12)",
           }}
         >
           {item.exerciseName}
@@ -178,7 +178,7 @@ function StrengthCard({
           {item.current.e1rm.toFixed(1)}
           <span
             style={{
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               marginLeft: 2,
               color: "var(--v2-ink-3)",
               fontWeight: 400,
@@ -200,7 +200,7 @@ function StrengthCard({
         >
           <span
             className="v2-mono-label"
-            style={{ color: "var(--v2-ink-3)", fontSize: 11 }}
+            style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-label)" }}
           >
             {locale === "ko" ? "최고" : "Best"}: {item.best.e1rm.toFixed(1)}kg
           </span>
@@ -209,7 +209,7 @@ function StrengthCard({
               className="v2-mono-label"
               style={{
                 color: trendColor,
-                fontSize: 11,
+                fontSize: "var(--v2-t-label)",
               }}
             >
               {item.improvement > 0 ? "+" : ""}

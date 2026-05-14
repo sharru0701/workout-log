@@ -176,7 +176,7 @@ export function ProgramListCard({
           <span
             className="v2-mono-label"
             style={{
-              fontSize: 10,
+              fontSize: "var(--v2-t-eyebrow)",
               letterSpacing: "0.1em",
               padding: "2px var(--v2-s-2)",
               borderRadius: "var(--v2-r-0)",
@@ -192,7 +192,7 @@ export function ProgramListCard({
           <h2
             className="v2-h2"
             style={{
-              fontSize: 20,
+              fontSize: "var(--v2-t-20)",
               margin: "var(--v2-s-1) 0 2px",
               lineHeight: 1.2,
             }}
@@ -274,7 +274,7 @@ export function ProgramListCard({
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 14 }}
+                  style={{ fontSize: "var(--v2-t-14)" }}
                 >
                   {meta.icon}
                 </span>
@@ -327,7 +327,7 @@ export function ProgramListCard({
               style={{
                 padding: "var(--v2-s-3) var(--v2-s-5)",
                 minHeight: "var(--v2-s-8)",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
               }}
             >
               {locale === "ko" ? "시작하기" : "Start"}
@@ -338,7 +338,7 @@ export function ProgramListCard({
               style={{
                 padding: "var(--v2-s-3) var(--v2-s-5)",
                 minHeight: "var(--v2-s-8)",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
               }}
             >
               {locale === "ko" ? "편집" : "Edit"}

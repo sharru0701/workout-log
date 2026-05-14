@@ -133,7 +133,7 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
       <V2SettingsSection title={locale === "ko" ? "검색" : "Search"} />
       <div>
         <span aria-hidden="true">
-          <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}>search</span>
         </span>
         <input
           type="search"

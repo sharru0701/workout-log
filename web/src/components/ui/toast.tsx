@@ -59,12 +59,12 @@ export const Toast = memo(function Toast({
       >
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: "20px", fontVariationSettings: "'FILL' 1" }}
+          style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'FILL' 1" }}
           aria-hidden="true"
         >
           {ICON_BY_TONE[tone]}
         </span>
-        <span style={{ fontSize: "14px", lineHeight: 1.3 }}>{message}</span>
+        <span style={{ fontSize: "var(--v2-t-14)", lineHeight: 1.3 }}>{message}</span>
       </div>
     </div>
   );

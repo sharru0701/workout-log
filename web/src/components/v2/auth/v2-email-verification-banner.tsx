@@ -81,13 +81,13 @@ export function V2EmailVerificationBanner() {
     >
       <span
         className="material-symbols-outlined"
-        style={{ color: "var(--v2-c-warning)", fontSize: 20, marginTop: 1 }}
+        style={{ color: "var(--v2-c-warning)", fontSize: "var(--v2-t-20)", marginTop: 1 }}
         aria-hidden
       >
         mark_email_unread
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="v2-font-display" style={{ fontSize: 13, fontWeight: 700 }}>
+        <div className="v2-font-display" style={{ fontSize: "var(--v2-t-small)", fontWeight: 700 }}>
           {locale === "ko" ? "이메일 인증을 완료해 주세요" : "Complete email verification"}
         </div>
         <div
@@ -95,7 +95,7 @@ export function V2EmailVerificationBanner() {
           style={{
             color: error ? "var(--v2-c-danger)" : "var(--v2-ink-2)",
             marginTop: 2,
-            fontSize: 12,
+            fontSize: "var(--v2-t-12)",
           }}
         >
           {error ? (
@@ -142,7 +142,7 @@ export function V2EmailVerificationBanner() {
           flexShrink: 0,
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: 18 }} aria-hidden>
+        <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)" }} aria-hidden>
           close
         </span>
       </button>
@@ -170,7 +170,7 @@ function InlineAction({
         background: "transparent",
         color: "var(--v2-accent-ink)",
         padding: 0,
-        fontSize: 12,
+        fontSize: "var(--v2-t-12)",
         fontWeight: 800,
         cursor: disabled ? "default" : "pointer",
       }}

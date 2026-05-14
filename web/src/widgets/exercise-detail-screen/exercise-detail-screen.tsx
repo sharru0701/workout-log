@@ -78,7 +78,7 @@ function MetricCard({
         </p>
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 18, color }}
+          style={{ fontSize: "var(--v2-t-18)", color }}
           aria-hidden="true"
         >
           {icon}
@@ -95,7 +95,7 @@ function MetricCard({
           {unit ? (
             <span
               style={{
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 color: "var(--v2-ink-2)",
               }}
@@ -124,7 +124,7 @@ function SectionTitle({
   return (
     <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
       <p className="v2-label">{label}</p>
-      <h2 className="v2-h2" style={{ fontSize: 22, letterSpacing: 0 }}>
+      <h2 className="v2-h2" style={{ fontSize: "var(--v2-t-h2)", letterSpacing: 0 }}>
         {title}
       </h2>
       {description ? (
@@ -150,7 +150,7 @@ function PrHistory({
         padding="18px"
         radius="var(--v2-r-1)"
       >
-        <p className="v2-h3" style={{ fontSize: 16 }}>
+        <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
           {locale === "ko" ? "PR 기록이 아직 없습니다" : "No PR history yet"}
         </p>
         <p className="v2-small" style={{ marginTop: 6 }}>
@@ -181,7 +181,7 @@ function PrHistory({
             <div
               style={{
                 fontWeight: 800,
-                fontSize: 15,
+                fontSize: "var(--v2-t-body)",
                 color: "var(--v2-ink)",
               }}
             >
@@ -189,7 +189,7 @@ function PrHistory({
               <span
                 style={{
                   fontWeight: 600,
-                  fontSize: 12,
+                  fontSize: "var(--v2-t-12)",
                   color: "var(--v2-ink-2)",
                   marginLeft: 8,
                 }}
@@ -201,7 +201,7 @@ function PrHistory({
             <div
               style={{
                 marginTop: 4,
-                fontSize: 12,
+                fontSize: "var(--v2-t-12)",
                 color: "var(--v2-ink-2)",
                 fontVariantNumeric: "tabular-nums",
               }}
@@ -243,7 +243,7 @@ function RecentSets({
         padding="18px"
         radius="var(--v2-r-1)"
       >
-        <p className="v2-h3" style={{ fontSize: 16 }}>
+        <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
           {locale === "ko" ? "최근 세트 기록이 없습니다" : "No recent sets"}
         </p>
         <p className="v2-small" style={{ marginTop: 6 }}>
@@ -275,7 +275,7 @@ function RecentSets({
             <span
               style={{
                 fontWeight: 800,
-                fontSize: 14,
+                fontSize: "var(--v2-t-14)",
                 color: "var(--v2-ink)",
               }}
             >
@@ -295,7 +295,7 @@ function RecentSets({
                   gridTemplateColumns: "auto 1fr auto",
                   alignItems: "baseline",
                   gap: "var(--v2-s-3)",
-                  fontSize: 13,
+                  fontSize: "var(--v2-t-small)",
                   color: "var(--v2-ink)",
                   fontVariantNumeric: "tabular-nums",
                 }}
@@ -401,7 +401,7 @@ export function ExerciseDetailScreen({
           <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <h1
               className="v2-h1"
-              style={{ letterSpacing: 0, fontSize: 28 }}
+              style={{ letterSpacing: 0, fontSize: "var(--v2-t-28)" }}
             >
               {exercise.name}
             </h1>
@@ -500,7 +500,7 @@ export function ExerciseDetailScreen({
               padding="18px"
               radius="var(--v2-r-1)"
                   >
-              <p className="v2-h3" style={{ fontSize: 16 }}>
+              <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
                 {locale === "ko" ? "표시할 차트 데이터가 없습니다" : "No chart data"}
               </p>
               <p className="v2-small" style={{ marginTop: 6 }}>

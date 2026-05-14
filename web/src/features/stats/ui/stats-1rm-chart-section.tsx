@@ -43,7 +43,7 @@ export const Stats1RMChartSection = memo(function Stats1RMChartSection({
             <div>
               <h2
                 style={{
-                  fontSize: "18px",
+                  fontSize: "var(--v2-t-18)",
                   fontWeight: 700,
                   letterSpacing: 0,
                   color: "var(--v2-ink)",
@@ -53,15 +53,15 @@ export const Stats1RMChartSection = memo(function Stats1RMChartSection({
                 {locale === "ko" ? "e1RM 상세 추이" : "Detailed e1RM Trend"}
               </h2>
               {stats ? (
-                <div style={{ fontSize: "12px", color: "var(--v2-ink-2)" }}>
+                <div style={{ fontSize: "var(--v2-t-12)", color: "var(--v2-ink-2)" }}>
                   {formatPointDate(stats.from, locale)} ~ {formatPointDate(stats.to, locale)}
                 </div>
               ) : null}
             </div>
             <div className="metric-1rm" style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-              <span className="metric-value" style={{ fontSize: "24px" }}>
+              <span className="metric-value" style={{ fontSize: "var(--v2-t-h2)" }}>
                 {activePoint ? `${activePoint.e1rm.toFixed(1)}` : "-"}
-                <span style={{ fontSize: "14px", marginLeft: "2px", fontWeight: 400 }}>kg</span>
+                <span style={{ fontSize: "var(--v2-t-14)", marginLeft: "2px", fontWeight: 400 }}>kg</span>
               </span>
               <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)" }}>
                 {activePoint ? formatPointDate(activePoint.date, locale) : "-"}
@@ -101,13 +101,13 @@ export const Stats1RMChartSection = memo(function Stats1RMChartSection({
             <span className="metric-label" style={{ display: "block", marginBottom: "2px" }}>
               {locale === "ko" ? "최고 e1RM" : "Best e1RM"}
             </span>
-            <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)", fontSize: "13px" }}>
+            <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>
               {stats?.best ? formatPointDate(stats.best.date, locale) : "-"}
             </span>
           </div>
-          <div className="metric-value" style={{ fontSize: "24px", textAlign: "right" }}>
+          <div className="metric-value" style={{ fontSize: "var(--v2-t-h2)", textAlign: "right" }}>
             {stats?.best ? stats.best.e1rm.toFixed(1) : "-"}
-            <span style={{ fontSize: "14px", marginLeft: "2px", fontWeight: 400 }}>kg</span>
+            <span style={{ fontSize: "var(--v2-t-14)", marginLeft: "2px", fontWeight: 400 }}>kg</span>
           </div>
         </div>
       </div>

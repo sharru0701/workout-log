@@ -134,7 +134,7 @@ function StatBentoCell({
         <span
           className="material-symbols-outlined"
           style={{
-            fontSize: 22,
+            fontSize: "var(--v2-t-h2)",
             color: "var(--v2-accent)",
             marginBottom: 2,
           }}
@@ -147,7 +147,7 @@ function StatBentoCell({
         <span
           className="v2-num-sm"
           style={{
-            fontSize: 20,
+            fontSize: "var(--v2-t-20)",
             color: "var(--v2-ink)",
           }}
         >
@@ -195,7 +195,7 @@ function ArchitectureGrid({ items }: { items: ArchItem[] }) {
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 20, color: "var(--v2-accent)" }}
+              style={{ fontSize: "var(--v2-t-20)", color: "var(--v2-accent)" }}
             >
               {item.icon}
             </span>
@@ -204,7 +204,7 @@ function ArchitectureGrid({ items }: { items: ArchItem[] }) {
             <p
               className="v2-body"
               style={{
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 marginBottom: 3,
               }}
@@ -214,7 +214,7 @@ function ArchitectureGrid({ items }: { items: ArchItem[] }) {
             <p
               className="v2-small"
               style={{
-                fontSize: 11,
+                fontSize: "var(--v2-t-label)",
                 color: "var(--v2-ink-2)",
                 lineHeight: 1.5,
               }}
@@ -407,7 +407,7 @@ export function ProgramDetailSheet({
           <span
             className="v2-mono-label"
             style={{
-              fontSize: 10,
+              fontSize: "var(--v2-t-eyebrow)",
               letterSpacing: "0.12em",
               color: levelBadge.color,
               textTransform: "uppercase",
@@ -513,7 +513,7 @@ export function ProgramDetailSheet({
             <span
               className="v2-body"
               style={{
-                fontSize: 16,
+                fontSize: "var(--v2-t-16)",
                 fontWeight: 700,
                 color: "var(--v2-ink)",
                 lineHeight: 1,
@@ -534,7 +534,7 @@ export function ProgramDetailSheet({
             <p
               className="v2-body"
               style={{
-                fontSize: 14,
+                fontSize: "var(--v2-t-14)",
                 color: "var(--v2-ink)",
                 lineHeight: 1.65,
               }}
@@ -612,7 +612,7 @@ export function ProgramDetailSheet({
                       >
                         <span
                           className="v2-body"
-                          style={{ fontSize: 13, color: "var(--v2-ink)" }}
+                          style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink)" }}
                         >
                           {ex.name}
                         </span>
@@ -620,7 +620,7 @@ export function ProgramDetailSheet({
                           <span
                             className="v2-mono-label"
                             style={{
-                              fontSize: 12,
+                              fontSize: "var(--v2-t-12)",
                               color: "var(--v2-ink-2)",
                               whiteSpace: "nowrap",
                             }}
@@ -658,7 +658,7 @@ export function ProgramDetailSheet({
             </span>
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 16, color: "var(--v2-ink-3)" }}
+              style={{ fontSize: "var(--v2-t-16)", color: "var(--v2-ink-3)" }}
             >
               info
             </span>

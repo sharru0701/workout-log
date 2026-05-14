@@ -337,7 +337,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-4)" }}>
           <div style={{ background: "var(--v2-paper)", borderRadius: "var(--v2-r-4)", padding: "var(--v2-s-4)", display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
-              <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: 13 }}>{locale === "ko" ? "운동종목 드롭다운 검색/선택" : "Search and select an exercise"}</span>
+              <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{locale === "ko" ? "운동종목 드롭다운 검색/선택" : "Search and select an exercise"}</span>
               <div data-no-swipe="true">
                 <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                   <span
@@ -356,7 +356,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                       justifyContent: "center",
                     }}
                   >
-                    <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
+                    <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}>search</span>
                   </span>
                   <AppTextInput
                     type="text"
@@ -409,7 +409,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                         setSheetError(null);
                       }}
                     >
-                      <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'wght' 500" }}>close</span>
+                      <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-14)", fontVariationSettings: "'wght' 500" }}>close</span>
                     </button>
                   ) : null}
                 </div>
@@ -455,7 +455,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                     }}
                   >
                     {visibleExercises.length === 0 ? (
-                      <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: 13 }}>{locale === "ko" ? "검색 조건에 맞는 운동종목이 없습니다." : "No exercises match the current search."}</span>
+                      <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{locale === "ko" ? "검색 조건에 맞는 운동종목이 없습니다." : "No exercises match the current search."}</span>
                     ) : (
                       visibleExercises.map((exercise) => (
                         <button
@@ -471,7 +471,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                             border: "none",
                             borderRadius: "var(--v2-r-2)",
                             textAlign: "left",
-                            fontSize: 14,
+                            fontSize: "var(--v2-t-14)",
                             color: "var(--v2-ink)",
                             cursor: "pointer",
                             WebkitTapHighlightColor: "transparent",
@@ -507,7 +507,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
             />
           </div>
 
-          {sheetError ? <p className="v2-font-text" style={{ margin: 0, color: "var(--v2-c-danger)", fontSize: 13 }}>{sheetError}</p> : null}
+          {sheetError ? <p className="v2-font-text" style={{ margin: 0, color: "var(--v2-c-danger)", fontSize: "var(--v2-t-small)" }}>{sheetError}</p> : null}
         </div>
       </BottomSheet>
     </div>

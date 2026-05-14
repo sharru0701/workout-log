@@ -99,7 +99,7 @@ export const CalendarRecentLogsSection = memo(function CalendarRecentLogsSection
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: 18,
+                      fontSize: "var(--v2-t-18)",
                       color: "var(--v2-c-success)",
                       fontVariationSettings: "'FILL' 1",
                     }}
@@ -111,7 +111,7 @@ export const CalendarRecentLogsSection = memo(function CalendarRecentLogsSection
                   <div
                     className="v2-body"
                     style={{
-                      fontSize: 14,
+                      fontSize: "var(--v2-t-14)",
                       fontWeight: 700,
                       display: "flex",
                       alignItems: "center",
@@ -134,7 +134,7 @@ export const CalendarRecentLogsSection = memo(function CalendarRecentLogsSection
               <span
                 className="material-symbols-outlined"
                 style={{
-                  fontSize: 18,
+                  fontSize: "var(--v2-t-18)",
                   color: "var(--v2-ink-3)",
                   flexShrink: 0,
                 }}

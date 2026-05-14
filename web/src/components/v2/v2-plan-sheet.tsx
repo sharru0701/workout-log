@@ -94,7 +94,7 @@ function MiniCalendar({
           <span
             key={d}
             className="v2-mono-label"
-            style={{ fontSize: 9, color: "var(--v2-ink-3)" }}
+            style={{ fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
           >
             {d}
           </span>
@@ -137,7 +137,7 @@ function MiniCalendar({
                 : "var(--v2-ink-4)",
             opacity: valid ? 1 : 0.3,
             fontWeight: 700 as const,
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
             border: "none",
             padding: 0,
             cursor: clickable ? "pointer" : "default",
@@ -395,7 +395,7 @@ export function V2PlanSheet({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 20 }}
+              style={{ fontSize: "var(--v2-t-20)" }}
               aria-hidden
             >
               chevron_left
@@ -423,7 +423,7 @@ export function V2PlanSheet({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 20 }}
+              style={{ fontSize: "var(--v2-t-20)" }}
               aria-hidden
             >
               chevron_right
@@ -441,7 +441,7 @@ export function V2PlanSheet({
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink-2)",
                 fontWeight: 700,
-                fontSize: 11,
+                fontSize: "var(--v2-t-label)",
                 cursor: "pointer",
                 marginRight: -4,
               }}
@@ -556,7 +556,7 @@ export function V2PlanSheet({
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: 22,
+                      fontSize: "var(--v2-t-h2)",
                       color: "var(--v2-accent)",
                     }}
                     aria-hidden
@@ -568,7 +568,7 @@ export function V2PlanSheet({
                   <div
                     className="v2-h3"
                     style={{
-                      fontSize: 15,
+                      fontSize: "var(--v2-t-body)",
                       whiteSpace: "nowrap",
                       overflow: "hidden",
                       textOverflow: "ellipsis",
@@ -590,7 +590,7 @@ export function V2PlanSheet({
                 </div>
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 20, color: "var(--v2-ink-3)" }}
+                  style={{ fontSize: "var(--v2-t-20)", color: "var(--v2-ink-3)" }}
                   aria-hidden
                 >
                   chevron_right
@@ -619,7 +619,7 @@ export function V2PlanSheet({
               border: "none",
               cursor: "pointer",
               fontWeight: 600,
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -628,7 +628,7 @@ export function V2PlanSheet({
           >
             <span
               className="material-symbols-outlined v2-font-display"
-              style={{ fontSize: 18 }}
+              style={{ fontSize: "var(--v2-t-18)" }}
               aria-hidden
             >
               calendar_month
@@ -653,7 +653,7 @@ export function V2PlanSheet({
               border: "none",
               cursor: "pointer",
               fontWeight: 700,
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
@@ -662,7 +662,7 @@ export function V2PlanSheet({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 18 }}
+              style={{ fontSize: "var(--v2-t-18)" }}
               aria-hidden
             >
               event_note

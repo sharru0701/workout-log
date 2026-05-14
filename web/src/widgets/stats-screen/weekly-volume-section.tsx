@@ -105,7 +105,7 @@ function VolumeBarChart({
               y={height - padY + 14}
               textAnchor="middle"
               style={{
-                fontSize: 9,
+                fontSize: "var(--v2-t-eyebrow)",
                 fontWeight: 700,
                 fill: "var(--v2-ink-3)",
                 fontVariantNumeric: "tabular-nums",
@@ -172,7 +172,7 @@ export function WeeklyVolumeSection({
         <p className="v2-label">
           {locale === "ko" ? "볼륨 트렌드" : "Volume Trend"}
         </p>
-        <h2 className="v2-h2" style={{ fontSize: 22, letterSpacing: 0 }}>
+        <h2 className="v2-h2" style={{ fontSize: "var(--v2-t-h2)", letterSpacing: 0 }}>
           {locale === "ko" ? "주간 볼륨 (최근 8주)" : "Weekly Volume (Last 8 Weeks)"}
         </h2>
         <p className="v2-small" style={{ maxWidth: 560 }}>

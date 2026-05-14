@@ -333,7 +333,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: 18,
+                      fontSize: "var(--v2-t-18)",
                       color: "var(--v2-accent)",
                       fontVariationSettings: "'FILL' 1",
                       flexShrink: 0,
@@ -360,7 +360,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontSize: 12,
+                      fontSize: "var(--v2-t-12)",
                       fontWeight: 700,
                       color: "var(--v2-accent)",
                       padding: "var(--v2-s-1) var(--v2-s-2)",
@@ -453,7 +453,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
               alignItems: "center",
               justifyContent: "center",
               gap: "var(--v2-s-2)",
-              fontSize: 13,
+              fontSize: "var(--v2-t-small)",
               fontWeight: 700,
               cursor: "pointer",
             }}
@@ -534,12 +534,12 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
             background: "var(--v2-paper-2)",
             color: "var(--v2-ink-2)",
             textDecoration: "none",
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
             fontWeight: 700,
             letterSpacing: "0.02em",
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)" }}>
             tune
           </span>
           {locale === "ko" ? "운동종목 관리" : "Manage Exercises"}

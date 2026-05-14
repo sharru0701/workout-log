@@ -408,7 +408,7 @@ export function WorkoutLogKeypadPanel({
                 background: "var(--v2-accent)",
                 color: "var(--v2-ink-on-accent)",
                 fontWeight: 700,
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 cursor: "pointer",
                 minHeight: "var(--v2-s-8)",
               }}
@@ -476,7 +476,7 @@ export function WorkoutLogKeypadPanel({
                   ? "var(--v2-ink-on-accent)"
                   : "var(--v2-ink-2)",
                 fontWeight: 700,
-                fontSize: 12,
+                fontSize: "var(--v2-t-12)",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-start",
@@ -501,7 +501,7 @@ export function WorkoutLogKeypadPanel({
                 {isUserEx && (
                   <span
                     style={{
-                      fontSize: 8,
+                      fontSize: "var(--v2-t-eyebrow)",
                       padding: "1px var(--v2-s-1)",
                       borderRadius: "var(--v2-r-0)",
                       background: isActive
@@ -519,7 +519,7 @@ export function WorkoutLogKeypadPanel({
               <span
                 className="v2-mono-label"
                 style={{
-                  fontSize: 9,
+                  fontSize: "var(--v2-t-eyebrow)",
                   opacity: 0.8,
                   color: isActive
                     ? "var(--v2-ink-on-accent)"
@@ -553,7 +553,7 @@ export function WorkoutLogKeypadPanel({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 22, fontVariationSettings: "'wght' 500" }}
+              style={{ fontSize: "var(--v2-t-h2)", fontVariationSettings: "'wght' 500" }}
               aria-hidden
             >
               add
@@ -618,7 +618,7 @@ export function WorkoutLogKeypadPanel({
           <span
             className="material-symbols-outlined"
             style={{
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               color: "var(--v2-ink-3)",
               flexShrink: 0,
             }}
@@ -629,7 +629,7 @@ export function WorkoutLogKeypadPanel({
           <span
             className="v2-mono-label"
             style={{
-              fontSize: 10,
+              fontSize: "var(--v2-t-eyebrow)",
               color: "var(--v2-ink-3)",
               flexShrink: 0,
             }}
@@ -657,7 +657,7 @@ export function WorkoutLogKeypadPanel({
                   borderRadius: "var(--v2-r-0)",
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink-2)",
-                  fontSize: 10,
+                  fontSize: "var(--v2-t-eyebrow)",
                   fontWeight: 700,
                 }}
               >
@@ -746,7 +746,7 @@ export function WorkoutLogKeypadPanel({
               style={{
                 marginTop: 6,
                 color: "var(--v2-ink-3)",
-                fontSize: 9,
+                fontSize: "var(--v2-t-eyebrow)",
               }}
             >
               {locale === "ko"
@@ -782,7 +782,7 @@ export function WorkoutLogKeypadPanel({
               background: "var(--v2-paper-2)",
               color: canRemoveSet ? "var(--v2-ink-2)" : "var(--v2-paper-3)",
               fontWeight: 600,
-              fontSize: 12,
+              fontSize: "var(--v2-t-12)",
               cursor: canRemoveSet ? "pointer" : "not-allowed",
               minHeight: "var(--v2-s-7)",
               display: "inline-flex",
@@ -793,7 +793,7 @@ export function WorkoutLogKeypadPanel({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 16 }}
+              style={{ fontSize: "var(--v2-t-16)" }}
               aria-hidden
             >
               remove
@@ -813,7 +813,7 @@ export function WorkoutLogKeypadPanel({
               background: "var(--v2-paper-2)",
               color: "var(--v2-ink)",
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: "var(--v2-t-12)",
               cursor: "pointer",
               minHeight: "var(--v2-s-7)",
               display: "inline-flex",
@@ -824,7 +824,7 @@ export function WorkoutLogKeypadPanel({
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 16 }}
+              style={{ fontSize: "var(--v2-t-16)" }}
               aria-hidden
             >
               add
@@ -854,13 +854,13 @@ export function WorkoutLogKeypadPanel({
                 justifyContent: "center",
                 gap: "var(--v2-s-1)",
                 fontWeight: 700,
-                fontSize: 12,
+                fontSize: "var(--v2-t-12)",
                 minHeight: "var(--v2-s-7)",
               }}
             >
               <span
                 className="material-symbols-outlined"
-                style={{ fontSize: 16, color: "var(--v2-accent)" }}
+                style={{ fontSize: "var(--v2-t-16)", color: "var(--v2-accent)" }}
                 aria-hidden
               >
                 restart_alt
@@ -895,13 +895,13 @@ export function WorkoutLogKeypadPanel({
               justifyContent: "center",
               gap: "var(--v2-s-1)",
               fontWeight: 700,
-              fontSize: 12,
+              fontSize: "var(--v2-t-12)",
               minHeight: "var(--v2-s-7)",
             }}
           >
             <span
               className="material-symbols-outlined"
-              style={{ fontSize: 16 }}
+              style={{ fontSize: "var(--v2-t-16)" }}
               aria-hidden
             >
               edit_note
@@ -926,7 +926,7 @@ export function WorkoutLogKeypadPanel({
         >
           <p
             className="v2-label"
-            style={{ marginBottom: 8, fontSize: 9, color: "var(--v2-ink-3)" }}
+            style={{ marginBottom: 8, fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
           >
             {locale === "ko"
               ? `${activeExercise.exerciseName} · 메모`
@@ -942,7 +942,7 @@ export function WorkoutLogKeypadPanel({
               border: "none",
               borderRadius: "var(--v2-r-2)",
               background: "var(--v2-paper)",
-              fontSize: 14,
+              fontSize: "var(--v2-t-14)",
               minHeight: "var(--v2-s-9)",
               width: "100%",
             }}
@@ -1056,7 +1056,7 @@ function FieldDisplay({
         {unit && (
           <span
             className="v2-h3"
-            style={{ color: "var(--v2-ink-3)", fontSize: 12 }}
+            style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-12)" }}
           >
             {unit}
           </span>
@@ -1185,7 +1185,7 @@ function Key({
       {isBack ? (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22 }}
+          style={{ fontSize: "var(--v2-t-h2)" }}
           aria-hidden
         >
           backspace
@@ -1193,7 +1193,7 @@ function Key({
       ) : isNext ? (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22, color: "var(--v2-ink-on-accent)" }}
+          style={{ fontSize: "var(--v2-t-h2)", color: "var(--v2-ink-on-accent)" }}
           aria-hidden
         >
           arrow_forward
@@ -1201,7 +1201,7 @@ function Key({
       ) : isDone ? (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22, color: "var(--v2-ink-on-accent)" }}
+          style={{ fontSize: "var(--v2-t-h2)", color: "var(--v2-ink-on-accent)" }}
           aria-hidden
         >
           check

@@ -78,7 +78,7 @@ export function V2MetricCard({
                   : "var(--v2-ink-3)",
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }} aria-hidden>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-14)" }} aria-hidden>
             {trend.direction === "up"
               ? "trending_up"
               : trend.direction === "down"

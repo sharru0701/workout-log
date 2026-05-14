@@ -46,7 +46,7 @@ export function SearchInputRow({
           color: "var(--v2-ink-2)",
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
+        <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}>search</span>
       </span>
 
       {/* bare input — card provides the visual container */}
@@ -88,7 +88,7 @@ export function SearchInputRow({
             flexShrink: 0,
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 500" }}>close</span>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)", fontVariationSettings: "'wght' 500" }}>close</span>
         </button>
       ) : null}
     </div>

@@ -78,7 +78,7 @@ export function WorkoutLogSummarySheet({
             {completedSets}/{totalSets}
           </span>
         </p>
-        <h1 className="v2-h2" style={{ marginTop: 4, fontSize: 18 }}>
+        <h1 className="v2-h2" style={{ marginTop: 4, fontSize: "var(--v2-t-18)" }}>
           {locale === "ko"
             ? `${allExercises.length}개 운동`
             : `${allExercises.length} exercises`}
@@ -167,7 +167,7 @@ export function WorkoutLogSummarySheet({
                       <span
                         className="v2-h3"
                         style={{
-                          fontSize: 14,
+                          fontSize: "var(--v2-t-14)",
                           fontWeight: 700,
                           color: "var(--v2-ink)",
                           whiteSpace: "nowrap",
@@ -184,7 +184,7 @@ export function WorkoutLogSummarySheet({
                       style={{
                         marginTop: 2,
                         color: "var(--v2-ink-3)",
-                        fontSize: 10,
+                        fontSize: "var(--v2-t-eyebrow)",
                       }}
                     >
                       {planSummary}
@@ -235,7 +235,7 @@ export function WorkoutLogSummarySheet({
                         borderRadius: "var(--v2-r-1)",
                         background: "var(--v2-paper)",
                         color: "var(--v2-ink-2)",
-                        fontSize: 12,
+                        fontSize: "var(--v2-t-12)",
                         whiteSpace: "pre-wrap",
                       }}
                     >
@@ -258,7 +258,7 @@ function ProgressBadge({ filled, total }: { filled: number; total: number }) {
     <span
       className="v2-mono-label"
       style={{
-        fontSize: 10,
+        fontSize: "var(--v2-t-eyebrow)",
         padding: "2px var(--v2-s-2)",
         borderRadius: "var(--v2-r-pill)",
         background: isComplete
@@ -302,7 +302,7 @@ function SetDetailTable({
           display: "grid",
           gridTemplateColumns: "24px 1fr 1fr 1fr 24px",
           gap: "var(--v2-s-2)",
-          fontSize: 9,
+          fontSize: "var(--v2-t-eyebrow)",
           color: "var(--v2-ink-3)",
           padding: "0px var(--v2-s-2)",
         }}
@@ -362,12 +362,12 @@ function SetDetailTable({
                 : isFailure
                   ? "color-mix(in srgb, var(--v2-c-danger) 12%, var(--v2-paper))"
                   : "var(--v2-paper)",
-              fontSize: 12,
+              fontSize: "var(--v2-t-12)",
             }}
           >
             <span
               className="v2-mono-label"
-              style={{ color: "var(--v2-ink-3)", fontSize: 10 }}
+              style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-eyebrow)" }}
             >
               {i + 1}
             </span>
@@ -396,7 +396,7 @@ function SetDetailTable({
                   style={{
                     marginLeft: 4,
                     color: "var(--v2-ink-3)",
-                    fontSize: 9,
+                    fontSize: "var(--v2-t-eyebrow)",
                   }}
                 >
                   /{plannedReps}
@@ -426,7 +426,7 @@ function SetDetailTable({
               {isFailure ? (
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 16 }}
+                  style={{ fontSize: "var(--v2-t-16)" }}
                   aria-hidden
                 >
                   close
@@ -434,7 +434,7 @@ function SetDetailTable({
               ) : isSetComplete ? (
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 16 }}
+                  style={{ fontSize: "var(--v2-t-16)" }}
                   aria-hidden
                 >
                   check

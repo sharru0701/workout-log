@@ -67,7 +67,7 @@ const PrRow = memo(function PrRow({
         <p
           className="v2-body v2-font-num"
           style={{
-            fontSize: 13,
+            fontSize: "var(--v2-t-small)",
             fontWeight: 700,
             marginBottom: 3,
             overflow: "hidden",
@@ -81,7 +81,7 @@ const PrRow = memo(function PrRow({
           style={{
             display: "flex",
             gap: "var(--v2-s-3)",
-            fontSize: 11,
+            fontSize: "var(--v2-t-label)",
             color: "var(--v2-ink-3)",
             fontVariantNumeric: "tabular-nums",
           }}
@@ -136,7 +136,7 @@ const PrRow = memo(function PrRow({
       <span
         className="material-symbols-outlined"
         style={{
-          fontSize: 16,
+          fontSize: "var(--v2-t-16)",
           color: "var(--v2-ink-3)",
           opacity: 0.5,
           flexShrink: 0,

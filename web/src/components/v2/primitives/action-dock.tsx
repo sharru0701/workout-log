@@ -65,7 +65,7 @@ export function V2ActionDock({
                 maxWidth: "100%",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                fontSize: 9,
+                fontSize: "var(--v2-t-eyebrow)",
                 lineHeight: 1.1,
               }}
             >
@@ -90,7 +90,7 @@ export function V2ActionDock({
           gap: 2,
           minHeight: "var(--v2-s-8)",
           textDecoration: "none",
-          fontSize: 10,
+          fontSize: "var(--v2-t-eyebrow)",
           fontWeight: 700,
           whiteSpace: "nowrap",
           overflow: "hidden",

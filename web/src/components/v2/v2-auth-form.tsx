@@ -206,7 +206,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
               alignItems: "center",
               justifyContent: "center",
               fontWeight: 800,
-              fontSize: 16,
+              fontSize: "var(--v2-t-16)",
               letterSpacing: "-0.05em",
             }}
           >
@@ -216,7 +216,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
             className="v2-font-display"
             style={{
               fontWeight: 760,
-              fontSize: 18,
+              fontSize: "var(--v2-t-18)",
               letterSpacing: "-0.02em",
             }}
           >
@@ -224,7 +224,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           </div>
         </div>
 
-        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
+        <h1 className="v2-display" style={{ fontSize: "var(--v2-t-h1)", lineHeight: 1.08 }}>
           {isSignup ? (
             locale === "ko" ? (
               <>
@@ -258,7 +258,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           style={{
             marginTop: 10,
             color: "var(--v2-ink-2)",
-            fontSize: 14,
+            fontSize: "var(--v2-t-14)",
           }}
         >
           {isSignup
@@ -336,7 +336,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                   padding: 0,
                 }}
               >
-                <span className="material-symbols-outlined" style={{ fontSize: 19 }} aria-hidden>
+                <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)" }} aria-hidden>
                   {showPassword ? "visibility_off" : "visibility"}
                 </span>
               </button>
@@ -399,7 +399,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                 className="v2-font-display"
                 style={{
                   color: "var(--v2-accent-ink)",
-                  fontSize: 13,
+                  fontSize: "var(--v2-t-small)",
                   fontWeight: 700,
                   textDecoration: "none",
                   padding: "var(--v2-s-2) 0px",
@@ -425,11 +425,11 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                 background:
                   "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
                 color: "var(--v2-c-danger)",
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
               }}
             >
-              <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden>
+              <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)" }} aria-hidden>
                 error
               </span>
               {error}
@@ -625,7 +625,7 @@ function CheckboxRow({
         }}
       >
         {checked ? (
-          <span className="material-symbols-outlined" style={{ fontSize: 14 }}>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-14)" }}>
             check
           </span>
         ) : null}
@@ -665,7 +665,7 @@ function Divider({ label }: { label: string }) {
         alignItems: "center",
         gap: "var(--v2-s-3)",
         color: "var(--v2-ink-3)",
-        fontSize: 11,
+        fontSize: "var(--v2-t-label)",
         fontWeight: 700,
         letterSpacing: "0.08em",
       }}

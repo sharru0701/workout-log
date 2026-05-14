@@ -154,7 +154,7 @@ export const AppSelect = forwardRef<
               flexShrink: 0,
             }}
           >
-            <span className="material-symbols-outlined" style={{ fontSize: 16, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>unfold_more</span>
+            <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)", fontVariationSettings: "'wght' 400", lineHeight: 1 }}>unfold_more</span>
           </span>
         </span>
       </WrapperTag>
@@ -205,7 +205,7 @@ export const AppSelect = forwardRef<
           justifyContent: "center",
         }}
       >
-        <span className="material-symbols-outlined" style={{ fontSize: 14, fontVariationSettings: "'wght' 400", lineHeight: 1 }}>expand_more</span>
+        <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-14)", fontVariationSettings: "'wght' 400", lineHeight: 1 }}>expand_more</span>
       </span>
     </div>
   );

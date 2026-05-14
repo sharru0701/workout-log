@@ -513,7 +513,7 @@ export function DesignSystemCatalog() {
                               border: "none",
                               borderRadius: "var(--v2-r-2)",
                               cursor: "pointer",
-                              fontSize: 14,
+                              fontSize: "var(--v2-t-14)",
                               fontWeight: 600,
                               textAlign: "left",
                             }}
@@ -523,7 +523,7 @@ export function DesignSystemCatalog() {
                               <span
                                 className="material-symbols-outlined"
                                 style={{
-                                  fontSize: 18,
+                                  fontSize: "var(--v2-t-18)",
                                   color: "var(--v2-accent)",
                                   fontVariationSettings: "'FILL' 1, 'wght' 600",
                                 }}
