@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
@@ -9,6 +10,7 @@ import {
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { APP_ROUTES } from "@/lib/app-routes";
+import { V2Hairline } from "@/components/v2/primitives";
 import { resolveStartHref } from "@/lib/workout/start-href";
 import { useLocale } from "@/components/locale-provider";
 import type { AppCopy, AppLocale } from "@/lib/i18n/messages";
@@ -136,71 +138,69 @@ function TodayDeck({
               style={{ background: "var(--v2-paper-2)", padding: "14px 22px" }}
             >
               {today.plannedExercises.slice(0, 4).map((ex, i, arr) => (
-                <div
-                  key={`${ex.name}-${i}`}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 12,
-                    padding: "10px 0",
-                    borderBottom:
-                      i < arr.length - 1
-                        ? "1px solid var(--v2-hairline)"
-                        : "none",
-                  }}
-                >
+                <Fragment key={`${ex.name}-${i}`}>
                   <div
                     style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 8,
-                      background:
-                        ex.role === "MAIN"
-                          ? "var(--v2-accent)"
-                          : "var(--v2-paper-3)",
-                      color:
-                        ex.role === "MAIN"
-                          ? "var(--v2-ink-on-accent)"
-                          : "var(--v2-ink-3)",
                       display: "flex",
                       alignItems: "center",
-                      justifyContent: "center",
-                      fontFamily: "var(--v2-f-num)",
-                      fontWeight: 700,
-                      fontSize: 13,
-                      flexShrink: 0,
+                      gap: 12,
+                      padding: "10px 0",
                     }}
                   >
-                    {i + 1}
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
                     <div
-                      className="v2-h3"
                       style={{
-                        fontSize: 15,
-                        whiteSpace: "nowrap",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
+                        width: 28,
+                        height: 28,
+                        borderRadius: 8,
+                        background:
+                          ex.role === "MAIN"
+                            ? "var(--v2-accent)"
+                            : "var(--v2-paper-3)",
+                        color:
+                          ex.role === "MAIN"
+                            ? "var(--v2-ink-on-accent)"
+                            : "var(--v2-ink-3)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontFamily: "var(--v2-f-num)",
+                        fontWeight: 700,
+                        fontSize: 13,
+                        flexShrink: 0,
                       }}
                     >
-                      {ex.name}
+                      {i + 1}
                     </div>
-                    <div
-                      className="v2-mono-label"
-                      style={{ color: "var(--v2-ink-3)", marginTop: 2 }}
-                    >
-                      {ex.summary || `${ex.totalSets} ${locale === "ko" ? "세트" : "sets"}`}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div
+                        className="v2-h3"
+                        style={{
+                          fontSize: 15,
+                          whiteSpace: "nowrap",
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                        }}
+                      >
+                        {ex.name}
+                      </div>
+                      <div
+                        className="v2-mono-label"
+                        style={{ color: "var(--v2-ink-3)", marginTop: 2 }}
+                      >
+                        {ex.summary || `${ex.totalSets} ${locale === "ko" ? "세트" : "sets"}`}
+                      </div>
                     </div>
+                    {ex.role === "MAIN" && (
+                      <span
+                        className="v2-mono-label"
+                        style={{ color: "var(--v2-accent)" }}
+                      >
+                        {locale === "ko" ? "메인" : "MAIN"}
+                      </span>
+                    )}
                   </div>
-                  {ex.role === "MAIN" && (
-                    <span
-                      className="v2-mono-label"
-                      style={{ color: "var(--v2-accent)" }}
-                    >
-                      {locale === "ko" ? "메인" : "MAIN"}
-                    </span>
-                  )}
-                </div>
+                  {i < arr.length - 1 ? <V2Hairline /> : null}
+                </Fragment>
               ))}
             </div>
           )}

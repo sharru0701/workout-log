@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { V2PrimaryBtn } from "./primitives";
+import { V2PrimaryBtn, V2SecondaryBtn, V2TextField } from "./primitives";
 
 type Mode = "login" | "signup";
 
@@ -271,37 +271,13 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
         </p>
 
         {googleAvailable ? (
-          <div style={{ marginTop: 24, display: "grid", gap: 10 }}>
-            <button
-              type="button"
-              onClick={onGoogleSignIn}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                minHeight: 52,
-                padding: "12px 14px",
-                borderRadius: 14,
-                background: "var(--v2-paper)",
-                color: "var(--v2-ink)",
-                border: "none",
-                boxShadow:
-                  "inset 0 0 0 1px color-mix(in srgb, var(--v2-paper-4) 45%, transparent)",
-                fontFamily: "var(--v2-f-display)",
-                fontSize: 15,
-                fontWeight: 700,
-                cursor: "pointer",
-              }}
-              aria-label={
-                locale === "ko"
-                  ? "Google 계정으로 로그인"
-                  : "Continue with Google"
-              }
-            >
+          <div style={{ marginTop: "var(--v2-s-6)", display: "grid", gap: "var(--v2-s-2)" }}>
+            <V2SecondaryBtn full onClick={onGoogleSignIn}>
               <GoogleIcon />
-              {locale === "ko" ? "Google로 계속하기" : "Continue with Google"}
-            </button>
+              <span>
+                {locale === "ko" ? "Google로 계속하기" : "Continue with Google"}
+              </span>
+            </V2SecondaryBtn>
             <Divider label={locale === "ko" ? "또는" : "OR"}/>
           </div>
         ) : null}
@@ -555,51 +531,17 @@ function Field({
   trailing?: ReactNode;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span className="v2-label">{label}</span>
-      <span
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-          minHeight: 52,
-          padding: "8px 12px 8px 14px",
-          borderRadius: 14,
-          background: "var(--v2-paper-2)",
-          boxShadow:
-            "inset 0 0 0 0 transparent",
-          transition:
-            "box-shadow var(--v2-d-1) var(--v2-e-out), background var(--v2-d-1) var(--v2-e-out)",
-        }}
-      >
-        <span
-          className="material-symbols-outlined"
-          style={{ color: "var(--v2-ink-3)", fontSize: 20 }}
-          aria-hidden
-        >
-          {icon}
-        </span>
-        <input
-          type={type}
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          autoComplete={autoComplete}
-          required={required}
-          minLength={minLength}
-          style={{
-            flex: 1,
-            minWidth: 0,
-            border: "none",
-            outline: "none",
-            background: "transparent",
-            fontFamily: "var(--v2-f-text)",
-            fontSize: 16,
-            color: "var(--v2-ink)",
-          }}
-        />
-        {trailing}
-      </span>
-    </label>
+    <V2TextField
+      label={label}
+      icon={icon}
+      type={type}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      autoComplete={autoComplete}
+      required={required}
+      minLength={minLength}
+      trailing={trailing}
+    />
   );
 }
 

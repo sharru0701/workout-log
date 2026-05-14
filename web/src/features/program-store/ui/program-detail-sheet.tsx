@@ -3,7 +3,12 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { V2PrimaryBtn, V2SecondaryBtn } from "@/components/v2/primitives";
+import {
+  V2Chip,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+  type V2ChipTone,
+} from "@/components/v2/primitives";
 import {
   getProgramDescription,
   getProgramDetailInfo,
@@ -22,40 +27,38 @@ function formatName(name: string): string {
     .trim();
 }
 
-function tagLabelClass(tag: string): string {
+function tagChipTone(tag: string): V2ChipTone {
   const t = tag.toLowerCase().trim();
   if (["manual", "fixed", "custom"].some((k) => t.includes(k))) {
-    return "label label-tag-custom label-sm";
+    return "neutral";
   }
   if (
     ["beginner", "novice", "starter", "입문", "초보"].some((k) => t.includes(k))
   ) {
-    return "label label-tag-beginner label-sm";
+    return "info";
   }
   if (
     ["amrap", "top-set", "topset", "top set", "rpe", "rir"].some((k) =>
       t.includes(k),
     )
   ) {
-    return t.includes("amrap")
-      ? "label label-tag-amrap label-sm"
-      : "label label-tag-top-set label-sm";
+    return t.includes("amrap") ? "warning" : "onerm";
   }
   if (
     ["strength", "power", "hypertrophy", "근력", "파워", "근비대"].some((k) =>
       t.includes(k),
     )
   ) {
-    return "label label-tag-session label-sm";
+    return "accent";
   }
   if (
     ["linear", "progression", "wave", "periodization", "선형", "주기화"].some(
       (k) => t.includes(k),
     )
   ) {
-    return "label label-tag-progression label-sm";
+    return "weight";
   }
-  return "label label-tag-custom label-sm";
+  return "neutral";
 }
 
 const INTENSITY_MAP: Record<string, number> = {
@@ -388,9 +391,9 @@ export function ProgramDetailSheet({
       >
         <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
           {tags.slice(0, 3).map((tag) => (
-            <span key={tag} className={tagLabelClass(tag)}>
+            <V2Chip key={tag} tone={tagChipTone(tag)}>
               {tag}
-            </span>
+            </V2Chip>
           ))}
         </div>
         <div
@@ -398,7 +401,7 @@ export function ProgramDetailSheet({
             padding: "3px 10px",
             borderRadius: 6,
             background: `color-mix(in srgb, ${levelBadge.color} 14%, var(--v2-paper-2))`,
-            border: `1px solid color-mix(in srgb, ${levelBadge.color} 28%, transparent)`,
+            boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${levelBadge.color} 28%, transparent)`,
             flexShrink: 0,
           }}
         >
@@ -430,9 +433,9 @@ export function ProgramDetailSheet({
           }}
         >
           {tags.slice(3).map((tag) => (
-            <span key={tag} className={tagLabelClass(tag)}>
+            <V2Chip key={tag} tone={tagChipTone(tag)}>
               {tag}
-            </span>
+            </V2Chip>
           ))}
         </div>
       )}

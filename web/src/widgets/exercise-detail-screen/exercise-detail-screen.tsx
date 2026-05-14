@@ -70,7 +70,6 @@ function MetricCard({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        border: "1px solid var(--v2-hairline)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
@@ -151,7 +150,6 @@ function PrHistory({
         tone="inset"
         padding="18px"
         radius="var(--v2-r-1)"
-        style={{ border: "1px solid var(--v2-hairline)" }}
       >
         <p className="v2-h3" style={{ fontSize: 16 }}>
           {locale === "ko" ? "PR 기록이 아직 없습니다" : "No PR history yet"}
@@ -174,7 +172,6 @@ function PrHistory({
           padding="14px 16px"
           radius="var(--v2-r-1)"
           style={{
-            border: "1px solid var(--v2-hairline)",
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) auto",
             alignItems: "center",
@@ -247,7 +244,6 @@ function RecentSets({
         tone="inset"
         padding="18px"
         radius="var(--v2-r-1)"
-        style={{ border: "1px solid var(--v2-hairline)" }}
       >
         <p className="v2-h3" style={{ fontSize: 16 }}>
           {locale === "ko" ? "최근 세트 기록이 없습니다" : "No recent sets"}
@@ -269,8 +265,7 @@ function RecentSets({
           tone="inset"
           padding="14px 16px"
           radius="var(--v2-r-1)"
-          style={{ border: "1px solid var(--v2-hairline)" }}
-        >
+          >
           <div
             style={{
               display: "flex",
@@ -507,8 +502,7 @@ export function ExerciseDetailScreen({
               tone="inset"
               padding="18px"
               radius="var(--v2-r-1)"
-              style={{ border: "1px solid var(--v2-hairline)" }}
-            >
+                  >
               <p className="v2-h3" style={{ fontSize: 16 }}>
                 {locale === "ko" ? "표시할 차트 데이터가 없습니다" : "No chart data"}
               </p>

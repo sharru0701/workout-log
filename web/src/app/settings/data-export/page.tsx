@@ -1,16 +1,17 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
+import { V2NavRow } from "@/components/v2/primitives";
 import {
-  BaseGroupedList,
-  InfoRow,
-  NavigationRow,
-  SectionFootnote,
-  SectionHeader,
-} from "@/components/ui/settings-list";
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+  mergeRowSubtitle,
+} from "@/components/v2/settings/section";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import { V2SecondaryBtn } from "@/components/v2/primitives";
 import { apiInvalidateCache } from "@/lib/api";
 
 type ExportFormat = "json" | "csv";
@@ -237,32 +238,36 @@ export default function SettingsDataExportPage() {
       <NoticeStateRows message={error} tone="warning" label={copy.settings.dataExportPage.noticeError} />
 
       <section>
-        <SectionHeader title={copy.settings.dataExportPage.title} description={copy.settings.dataExportPage.description} />
-        <BaseGroupedList ariaLabel={copy.settings.dataExportPage.ariaLabel}>
-          <NavigationRow
+        <V2SettingsSection title={copy.settings.dataExportPage.title} description={copy.settings.dataExportPage.description} />
+        <V2SettingsGroup ariaLabel={copy.settings.dataExportPage.ariaLabel}>
+          <V2NavRow
             label={copy.settings.dataExportPage.json.label}
-            subtitle={copy.settings.dataExportPage.json.subtitle}
-            description={copy.settings.dataExportPage.json.description}
+            description={mergeRowSubtitle(
+              copy.settings.dataExportPage.json.subtitle,
+              copy.settings.dataExportPage.json.description,
+            )}
             value={exporting === "json" ? copy.settings.dataExportPage.actionInProgress : copy.settings.dataExportPage.actionShare}
-            onPress={() => {
+            onClick={() => {
               void runExport("json");
             }}
             disabled={Boolean(exporting)}
           />
-          <NavigationRow
+          <V2NavRow
             label={copy.settings.dataExportPage.csv.label}
-            subtitle={copy.settings.dataExportPage.csv.subtitle}
-            description={copy.settings.dataExportPage.csv.description}
+            description={mergeRowSubtitle(
+              copy.settings.dataExportPage.csv.subtitle,
+              copy.settings.dataExportPage.csv.description,
+            )}
             value={exporting === "csv" ? copy.settings.dataExportPage.actionInProgress : copy.settings.dataExportPage.actionShare}
-            onPress={() => {
+            onClick={() => {
               void runExport("csv");
             }}
             disabled={Boolean(exporting)}
           />
-        </BaseGroupedList>
-        <SectionFootnote>
+        </V2SettingsGroup>
+        <V2SettingsFootnote>
           {copy.settings.dataExportPage.footnote}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
 
       {exportingLabel ? (
@@ -274,7 +279,7 @@ export default function SettingsDataExportPage() {
       ) : null}
 
       <section>
-        <SectionHeader
+        <V2SettingsSection
           title={locale === "ko" ? "Import (백업 복원)" : "Import (Restore Backup)"}
           description={
             locale === "ko"
@@ -282,10 +287,10 @@ export default function SettingsDataExportPage() {
               : "Pick a JSON export file to preview the change set, then confirm to replace your data."
           }
         />
-        <BaseGroupedList
+        <V2SettingsGroup
           ariaLabel={locale === "ko" ? "Import 작업" : "Import actions"}
         >
-          <NavigationRow
+          <V2NavRow
             label={
               importedFile
                 ? locale === "ko"
@@ -295,12 +300,12 @@ export default function SettingsDataExportPage() {
                   ? "JSON 파일 선택"
                   : "Pick JSON File"
             }
-            subtitle="Backup"
-            description={
+            description={mergeRowSubtitle(
+              "Backup",
               locale === "ko"
                 ? "schemaVersion이 호환되지 않으면 거부됩니다."
-                : "Files with an incompatible schemaVersion are rejected."
-            }
+                : "Files with an incompatible schemaVersion are rejected.",
+            )}
             value={
               importBusy === "loading"
                 ? locale === "ko"
@@ -310,11 +315,12 @@ export default function SettingsDataExportPage() {
                   ? "선택"
                   : "Pick"
             }
-            onPress={() => importInputRef.current?.click()}
+            onClick={() => importInputRef.current?.click()}
             disabled={importBusy !== "idle"}
           />
           {importPreview ? (
-            <InfoRow
+            <V2NavRow
+              as="div"
               label={
                 locale === "ko"
                   ? `Schema v${importPreview.schemaVersion}`
@@ -336,10 +342,10 @@ export default function SettingsDataExportPage() {
                     ? "Dry-run"
                     : "Dry-run"
               }
-              tone={importPreview.applied ? "neutral" : "neutral"}
+              trailing="none"
             />
           ) : null}
-        </BaseGroupedList>
+        </V2SettingsGroup>
         <input
           ref={importInputRef}
           type="file"
@@ -351,14 +357,14 @@ export default function SettingsDataExportPage() {
         />
 
         {importSummaryRows && importSummaryRows.length > 0 ? (
-          <BaseGroupedList
+          <V2SettingsGroup
             ariaLabel={
               locale === "ko" ? "Import 변경 요약" : "Import change summary"
             }
-            tokens={undefined}
+            
           >
             {importSummaryRows.map((row) => (
-              <InfoRow
+              <V2NavRow
                 key={row.table}
                 label={row.table}
                 description={
@@ -375,23 +381,23 @@ export default function SettingsDataExportPage() {
                       ? "예정"
                       : "Pending"
                 }
-                tone="neutral"
+            trailing="none"
               />
             ))}
-          </BaseGroupedList>
+          </V2SettingsGroup>
         ) : null}
 
         {importPreview && importPreview.warnings.length > 0 ? (
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko" ? "경고: " : "Warnings: "}
             {importPreview.warnings.join("; ")}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         ) : null}
 
         {importPreview && !importPreview.applied ? (
-          <button
-            type="button"
-            className="btn btn-danger btn-full"
+          <V2SecondaryBtn
+            full
+            tone="danger"
             style={{ marginTop: "var(--v2-s-2)" }}
             onClick={() => {
               void runReplace();
@@ -405,14 +411,14 @@ export default function SettingsDataExportPage() {
               : locale === "ko"
                 ? "이 파일로 교체"
                 : "Replace With This File"}
-          </button>
+          </V2SecondaryBtn>
         ) : null}
 
-        <SectionFootnote>
+        <V2SettingsFootnote>
           {locale === "ko"
             ? "교체는 현재 계정의 운동 기록, 세트, 플랜, 커스텀 템플릿을 삭제 후 재삽입합니다. 공용 운동 카탈로그와 사용자 설정은 변경되지 않습니다."
             : "Replace deletes and re-inserts your logs, sets, plans, and custom templates. The shared exercise catalog and user settings are not affected."}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
     </div>
   );

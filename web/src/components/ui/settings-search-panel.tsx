@@ -5,7 +5,14 @@ import { useLocale } from "@/components/locale-provider";
 import { toSettingsDeepLinkHref } from "@/lib/settings/settings-deeplink";
 import type { SettingsSearchEntry } from "@/lib/settings/settings-search-index";
 import { searchSettingsIndex, splitSearchTokens } from "@/lib/settings/settings-search";
-import { BaseGroupedList, InfoRow, NavigationRow, RowIcon, SectionFootnote, SectionHeader } from "./settings-list";
+import { V2NavRow } from "@/components/v2/primitives";
+import {
+  V2RowIcon,
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+  mergeRowSubtitle,
+} from "@/components/v2/settings/section";
 type SettingsSearchPanelProps = {
   index: SettingsSearchEntry[];
 };
@@ -123,7 +130,7 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
 
   return (
     <section>
-      <SectionHeader title={locale === "ko" ? "검색" : "Search"} />
+      <V2SettingsSection title={locale === "ko" ? "검색" : "Search"} />
       <div>
         <span aria-hidden="true">
           <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
@@ -148,37 +155,41 @@ export function SettingsSearchPanel({ index }: SettingsSearchPanelProps) {
       </div>
 
       {!hasQuery ? (
-        <SectionFootnote>{locale === "ko" ? "설정 이름이나 기능 키워드로 검색하세요." : "Search by setting name or feature keyword."}</SectionFootnote>
+        <V2SettingsFootnote>{locale === "ko" ? "설정 이름이나 기능 키워드로 검색하세요." : "Search by setting name or feature keyword."}</V2SettingsFootnote>
       ) : (
         <>
-          <SectionHeader title={locale === "ko" ? `검색 결과 ${results.length}개` : `${results.length} Results`} />
+          <V2SettingsSection title={locale === "ko" ? `검색 결과 ${results.length}개` : `${results.length} Results`} />
           {results.length > 0 ? (
-            <BaseGroupedList ariaLabel={locale === "ko" ? "설정 검색 결과" : "Settings search results"}>
+            <V2SettingsGroup ariaLabel={locale === "ko" ? "설정 검색 결과" : "Settings search results"}>
               {results.map((result) => {
                 const icon = sectionIcon(result.entry.section);
                 return (
-                  <NavigationRow
+                  <V2NavRow
+                    as="a"
                     key={result.entry.key}
                     href={toSettingsDeepLinkHref({ key: result.entry.key, source: "search" })}
                     label={<HighlightText text={locale === "ko" ? result.entry.title : result.entry.titleEn ?? result.entry.title} tokens={tokens} />}
-                    subtitle={sectionLabel(result.entry.section)}
-                    description={resultDescription(result.entry, result.matchedKeywords, tokens, locale)}
-                    leading={<RowIcon symbol={icon.symbol} tone={icon.tone} />}
+                    description={mergeRowSubtitle(
+                      sectionLabel(result.entry.section),
+                      resultDescription(result.entry, result.matchedKeywords, tokens, locale),
+                    )}
+                    leading={<V2RowIcon symbol={icon.symbol} tone={icon.tone} />}
                   />
                 );
               })}
-            </BaseGroupedList>
+            </V2SettingsGroup>
           ) : (
-            <BaseGroupedList ariaLabel={locale === "ko" ? "설정 검색 결과 없음" : "No settings search results"}>
-              <InfoRow
+            <V2SettingsGroup ariaLabel={locale === "ko" ? "설정 검색 결과 없음" : "No settings search results"}>
+              <V2NavRow
+                as="div"
+                trailing="none"
                 label={locale === "ko" ? "검색 결과 없음" : "No results"}
                 description={locale === "ko" ? `"${query.trim()}"와 일치하는 설정이 없습니다.` : `No settings match "${query.trim()}".`}
-                tone="neutral"
-                leading={<RowIcon symbol="NO" tone="neutral" />}
+                leading={<V2RowIcon symbol="NO" tone="neutral" />}
               />
-            </BaseGroupedList>
+            </V2SettingsGroup>
           )}
-          <SectionFootnote>{locale === "ko" ? "결과를 탭하면 해당 설정 화면으로 이동합니다." : "Tap a result to open that settings screen."}</SectionFootnote>
+          <V2SettingsFootnote>{locale === "ko" ? "결과를 탭하면 해당 설정 화면으로 이동합니다." : "Tap a result to open that settings screen."}</V2SettingsFootnote>
         </>
       )}
     </section>

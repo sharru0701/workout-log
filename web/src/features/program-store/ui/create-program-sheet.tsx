@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import ExerciseEditorRow from "@/features/program-store/ui/program-exercise-editor-row";
-import { V2Card } from "@/components/v2/primitives";
+import { V2Card, V2SecondaryBtn, V2Segmented } from "@/components/v2/primitives";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { formatProgramDisplayName } from "@/features/program-store/model/view";
@@ -108,8 +108,8 @@ export function CreateProgramSheet({
             <div
               role="alert"
               style={{
-                border: "1px solid color-mix(in srgb, var(--v2-c-danger) 34%, var(--v2-hairline))",
-                borderRadius: "8px",
+                boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--v2-c-danger) 34%, var(--v2-hairline))",
+                borderRadius: "var(--v2-r-1)",
                 background: "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
                 color: "var(--v2-c-danger)",
                 padding: "var(--v2-s-2) var(--v2-s-4)",
@@ -146,22 +146,21 @@ export function CreateProgramSheet({
             />
           </label>
 
-          <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
-            <button
-              type="button"
-              className={`btn btn-inline-action${draft.mode === "MARKET_BASED" ? " btn-inline-action-primary" : ""}`}
-              onClick={() => onChangeMode("MARKET_BASED")}
-            >
-              {locale === "ko" ? "공식 기반" : "Start from Official"}
-            </button>
-            <button
-              type="button"
-              className={`btn btn-inline-action${draft.mode === "FULL_MANUAL" ? " btn-inline-action-primary" : ""}`}
-              onClick={() => onChangeMode("FULL_MANUAL")}
-            >
-              {locale === "ko" ? "직접 구성" : "Build from Scratch"}
-            </button>
-          </div>
+          <V2Segmented
+            options={[
+              {
+                value: "MARKET_BASED",
+                label: locale === "ko" ? "공식 기반" : "Start from Official",
+              },
+              {
+                value: "FULL_MANUAL",
+                label: locale === "ko" ? "직접 구성" : "Build from Scratch",
+              },
+            ]}
+            value={draft.mode}
+            onChange={(v) => onChangeMode(v as "MARKET_BASED" | "FULL_MANUAL")}
+            size="sm"
+          />
 
           {draft.mode === "MARKET_BASED" ? (
             <AppSelect
@@ -192,21 +191,22 @@ export function CreateProgramSheet({
             >
               {locale === "ko" ? "세션 규칙" : "Session Rules"}
             </h2>
-            <div style={{ display: "flex", gap: "var(--v2-s-1)", marginBottom: "var(--v2-s-2)" }}>
-              <button
-                type="button"
-                className={`btn btn-inline-action${draft.rule.type === "AB" ? " btn-inline-action-primary" : ""}`}
-                onClick={() => onChangeRuleType("AB")}
-              >
-                {locale === "ko" ? "A/B 분할" : "A/B Split"}
-              </button>
-              <button
-                type="button"
-                className={`btn btn-inline-action${draft.rule.type === "NUMERIC" ? " btn-inline-action-primary" : ""}`}
-                onClick={() => onChangeRuleType("NUMERIC")}
-              >
-                {locale === "ko" ? "숫자 분할" : "Numeric Split"}
-              </button>
+            <div style={{ marginBottom: "var(--v2-s-2)" }}>
+              <V2Segmented
+                options={[
+                  {
+                    value: "AB",
+                    label: locale === "ko" ? "A/B 분할" : "A/B Split",
+                  },
+                  {
+                    value: "NUMERIC",
+                    label: locale === "ko" ? "숫자 분할" : "Numeric Split",
+                  },
+                ]}
+                value={draft.rule.type}
+                onChange={(v) => onChangeRuleType(v as "AB" | "NUMERIC")}
+                size="sm"
+              />
             </div>
             {draft.rule.type === "NUMERIC" ? (
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
@@ -295,21 +295,14 @@ export function CreateProgramSheet({
                   />
                 ))}
 
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-full"
+                <V2SecondaryBtn
+                  full
+                  icon="add"
                   style={{ marginTop: "var(--v2-s-2)" }}
                   onClick={() => onAddExercise(session.id)}
                 >
-                  <span
-                    className="material-symbols-outlined"
-                    aria-hidden="true"
-                    style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}
-                  >
-                    add
-                  </span>
-                  <span>{locale === "ko" ? "운동 추가" : "Add Exercise"}</span>
-                </button>
+                  {locale === "ko" ? "운동 추가" : "Add Exercise"}
+                </V2SecondaryBtn>
               </div>
             ))}
           </div>

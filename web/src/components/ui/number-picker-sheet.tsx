@@ -162,8 +162,8 @@ export function NumberPickerField({
             ? "var(--v2-c-success)"
             : "var(--v2-ink)"
           : "var(--v2-ink-2)",
-        border: complete && isReps
-          ? "1px solid color-mix(in srgb, var(--v2-c-success) 35%, var(--v2-hairline))"
+        boxShadow: complete && isReps
+          ? "inset 0 0 0 1px color-mix(in srgb, var(--v2-c-success) 35%, var(--v2-hairline))"
           : undefined,
         fontWeight: complete && isReps ? "600" : undefined,
         font: "var(--font-secondary)",
@@ -189,7 +189,7 @@ export function NumberPickerField({
         className={[className, isCompletedReps ? "reps-complete" : ""].join(" ").trim()}
         style={{
           width: "100%",
-          border: "1px solid var(--v2-hairline)",
+          border: "none",
           display: "inline-flex",
           alignItems: "center",
           gap: "6px",

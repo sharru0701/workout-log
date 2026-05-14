@@ -3,15 +3,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import {
-  BaseGroupedList,
-  InfoRow,
-  NavigationRow,
-  SectionFootnote,
-  SectionHeader,
-} from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import {
+  V2NavRow,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+} from "@/components/v2/primitives";
+import {
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+} from "@/components/v2/settings/section";
 import { apiInvalidateCache } from "@/lib/api";
 
 type SessionItem = {
@@ -428,18 +431,16 @@ export default function SettingsAccountPage() {
     <div>
       <NoticeStateRows
         message={notice}
-        tone="success"
         label={locale === "ko" ? "완료" : "Done"}
       />
       <NoticeStateRows
         message={error}
-        tone="warning"
         label={locale === "ko" ? "오류" : "Error"}
       />
 
       {me && me.email && !me.fallback ? (
         <section>
-          <SectionHeader
+          <V2SettingsSection
             title={locale === "ko" ? "이메일 인증" : "Email Verification"}
             description={
               locale === "ko"
@@ -447,12 +448,12 @@ export default function SettingsAccountPage() {
                 : "Check whether this account's email is verified and resend the email if needed. The verified email is used for recovery flows like password reset."
             }
           />
-          <BaseGroupedList
+          <V2SettingsGroup
             ariaLabel={
               locale === "ko" ? "이메일 인증 상태" : "Email verification status"
             }
           >
-            <InfoRow
+            <V2NavRow
               label={me.email}
               description={
                 me.emailVerifiedAt
@@ -472,13 +473,11 @@ export default function SettingsAccountPage() {
                     ? "미인증"
                     : "Unverified"
               }
-              tone={me.emailVerifiedAt ? "neutral" : "critical"}
             />
-          </BaseGroupedList>
+          </V2SettingsGroup>
           {!me.emailVerifiedAt ? (
-            <button
-              type="button"
-              className="btn btn-secondary btn-full"
+            <V2SecondaryBtn
+              full
               style={{ marginTop: "var(--v2-s-2)" }}
               onClick={() => {
                 void runResendVerification();
@@ -492,18 +491,18 @@ export default function SettingsAccountPage() {
                 : locale === "ko"
                   ? "인증 메일 재발송"
                   : "Resend Verification Email"}
-            </button>
+            </V2SecondaryBtn>
           ) : null}
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko"
               ? "메일이 도착하지 않으면 스팸함을 확인하세요. 시간당 최대 3회까지 재발송할 수 있습니다."
               : "If the email doesn't arrive, check your spam folder. You can request up to 3 resends per hour."}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         </section>
       ) : null}
 
       <section>
-        <SectionHeader
+        <V2SettingsSection
           title={locale === "ko" ? "활성 세션" : "Active Sessions"}
           description={
             locale === "ko"
@@ -512,16 +511,16 @@ export default function SettingsAccountPage() {
           }
         />
         {loading && !sessions ? (
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko" ? "불러오는 중..." : "Loading..."}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         ) : null}
         {sessions && sessions.length > 0 ? (
-          <BaseGroupedList
+          <V2SettingsGroup
             ariaLabel={locale === "ko" ? "세션 목록" : "Session list"}
           >
             {sessions.map((session) => (
-              <InfoRow
+              <V2NavRow
                 key={session.tokenMask + session.createdAt}
                 label={
                   session.isCurrent
@@ -548,26 +547,18 @@ export default function SettingsAccountPage() {
                         ? "활성"
                         : "Active"
                 }
-                tone={
-                  session.isCurrent
-                    ? "neutral"
-                    : session.isExpired
-                      ? "neutral"
-                      : "neutral"
-                }
               />
             ))}
-          </BaseGroupedList>
+          </V2SettingsGroup>
         ) : sessions && sessions.length === 0 ? (
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko"
               ? "활성 세션이 없습니다."
               : "No active sessions."}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         ) : null}
-        <button
-          type="button"
-          className="btn btn-secondary btn-full"
+        <V2SecondaryBtn
+          full
           style={{ marginTop: "var(--v2-s-2)" }}
           onClick={() => {
             void runRevokeOthers();
@@ -585,17 +576,17 @@ export default function SettingsAccountPage() {
               : locale === "ko"
                 ? "다른 세션 없음"
                 : "No Other Sessions"}
-        </button>
-        <SectionFootnote>
+        </V2SecondaryBtn>
+        <V2SettingsFootnote>
           {locale === "ko"
             ? "현재 기기의 세션은 유지되며, 다른 기기에서는 다시 로그인이 필요합니다."
             : "Your current session is preserved; other devices must sign in again."}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
 
       {oauthAccounts && oauthAccounts.length > 0 && !hasPassword ? (
         <section>
-          <SectionHeader
+          <V2SettingsSection
             title={locale === "ko" ? "비밀번호 설정" : "Set Password"}
             description={
               locale === "ko"
@@ -632,7 +623,7 @@ export default function SettingsAccountPage() {
                   marginTop: 6,
                   padding: "10px 12px",
                   borderRadius: 12,
-                  border: "1px solid var(--v2-hairline)",
+                  border: "none",
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
                   font: "inherit",
@@ -662,7 +653,7 @@ export default function SettingsAccountPage() {
                   marginTop: 6,
                   padding: "10px 12px",
                   borderRadius: 12,
-                  border: "1px solid var(--v2-hairline)",
+                  border: "none",
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
                   font: "inherit",
@@ -670,9 +661,8 @@ export default function SettingsAccountPage() {
                 }}
               />
             </label>
-            <button
-              type="button"
-              className="btn btn-primary btn-full"
+            <V2PrimaryBtn
+              full
               onClick={() => {
                 void runSetupPassword();
               }}
@@ -689,13 +679,13 @@ export default function SettingsAccountPage() {
                 : locale === "ko"
                   ? "비밀번호 설정"
                   : "Set password"}
-            </button>
+            </V2PrimaryBtn>
           </div>
         </section>
       ) : null}
 
       <section>
-        <SectionHeader
+        <V2SettingsSection
           title={locale === "ko" ? "연결된 계정" : "Connected Accounts"}
           description={
             locale === "ko"
@@ -704,7 +694,7 @@ export default function SettingsAccountPage() {
           }
         />
         {oauthAccounts && oauthAccounts.length > 0 ? (
-          <BaseGroupedList
+          <V2SettingsGroup
             ariaLabel={
               locale === "ko" ? "연결된 외부 계정" : "Linked external accounts"
             }
@@ -712,7 +702,7 @@ export default function SettingsAccountPage() {
             {oauthAccounts.map((account) => {
               const providerLabel = PROVIDER_LABEL[account.provider] ?? account.provider;
               return (
-                <NavigationRow
+                <V2NavRow
                   key={account.id}
                   label={providerLabel}
                   description={
@@ -734,33 +724,33 @@ export default function SettingsAccountPage() {
                         ? "해제"
                         : "Disconnect"
                   }
-                  onPress={() => {
+                  onClick={() => {
                     void runUnlink(account.provider);
                   }}
                   disabled={unlinkingProvider === account.provider}
-                  showChevron={false}
+                  trailing="none"
                 />
               );
             })}
-          </BaseGroupedList>
+          </V2SettingsGroup>
         ) : oauthAccounts && oauthAccounts.length === 0 ? (
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko"
               ? "외부 계정으로 연결된 로그인 방법이 없습니다."
               : "No external sign-in providers are linked."}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         ) : null}
         {oauthAccounts && oauthAccounts.length > 0 && !hasPassword ? (
-          <SectionFootnote>
+          <V2SettingsFootnote>
             {locale === "ko"
               ? "비밀번호가 설정되어 있지 않습니다. 연결 해제 전에 비밀번호 재설정 메일로 새 비밀번호를 만들어 두세요."
               : "No password is set. Run password-reset to create one before disconnecting your only sign-in method."}
-          </SectionFootnote>
+          </V2SettingsFootnote>
         ) : null}
       </section>
 
       <section>
-        <SectionHeader
+        <V2SettingsSection
           title={locale === "ko" ? "계정 삭제" : "Delete Account"}
           description={
             locale === "ko"
@@ -768,10 +758,10 @@ export default function SettingsAccountPage() {
               : "Permanently delete your account and personal data. The shared exercise catalog is preserved."
           }
         />
-        <BaseGroupedList
+        <V2SettingsGroup
           ariaLabel={locale === "ko" ? "삭제 범위" : "Deletion scope"}
         >
-          <InfoRow
+          <V2NavRow
             label={
               locale === "ko" ? "삭제되는 데이터" : "Data Removed"
             }
@@ -781,9 +771,8 @@ export default function SettingsAccountPage() {
                 : "Workout logs, sets, plans, custom templates, auth sessions, reset and verification tokens"
             }
             value={locale === "ko" ? "전체" : "All"}
-            tone="critical"
           />
-          <InfoRow
+          <V2NavRow
             label={locale === "ko" ? "보존되는 데이터" : "Data Preserved"}
             description={
               locale === "ko"
@@ -791,9 +780,8 @@ export default function SettingsAccountPage() {
                 : "Shared exercise catalog, other users' data"
             }
             value={locale === "ko" ? "공용" : "Shared"}
-            tone="neutral"
           />
-        </BaseGroupedList>
+        </V2SettingsGroup>
         <label
           style={{
             display: "block",
@@ -818,7 +806,7 @@ export default function SettingsAccountPage() {
               marginTop: 6,
               padding: "10px 12px",
               borderRadius: 12,
-              border: "1px solid var(--v2-hairline)",
+              border: "none",
               background: "var(--v2-paper-2)",
               color: "var(--v2-ink)",
               font: "inherit",
@@ -826,9 +814,9 @@ export default function SettingsAccountPage() {
             }}
           />
         </label>
-        <button
-          type="button"
-          className="btn btn-danger btn-full"
+        <V2SecondaryBtn
+          full
+          tone="danger"
           style={{ marginTop: "var(--v2-s-2)" }}
           onClick={() => {
             void runDeleteAccount();
@@ -842,12 +830,12 @@ export default function SettingsAccountPage() {
             : locale === "ko"
               ? "계정 삭제"
               : "Delete Account"}
-        </button>
-        <SectionFootnote>
+        </V2SecondaryBtn>
+        <V2SettingsFootnote>
           {locale === "ko"
             ? "이 작업은 복구할 수 없습니다. 비밀번호 재확인 후에만 진행됩니다."
             : "This action cannot be undone. You will be asked to re-enter your password."}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
     </div>
   );

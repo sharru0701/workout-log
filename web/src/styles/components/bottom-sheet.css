@@ -37,7 +37,7 @@
   background-color: var(--color-surface-container-low);
   border-top-left-radius: 32px;
   border-top-right-radius: 32px;
-  border-top: 1px solid color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
+  box-shadow: inset 0 1px 0 0 color-mix(in srgb, var(--color-outline-variant) 15%, transparent);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -106,7 +106,7 @@
   justify-content: space-between;
   margin-bottom: var(--space-md);
   padding-bottom: var(--space-sm);
-  border-bottom: 1px solid color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
+  box-shadow: inset 0 -1px 0 0 color-mix(in srgb, var(--color-outline-variant) 20%, transparent);
   min-height: 44px;
   cursor: grab;
   user-select: none;

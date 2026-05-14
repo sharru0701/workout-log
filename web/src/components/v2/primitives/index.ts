@@ -26,3 +26,24 @@ export { V2EmptyState } from "./empty-state";
 export { V2NavRow } from "./nav-row";
 export { V2Stack, V2Inline } from "./stack";
 export { V2DotsLoader } from "./dots-loader";
+
+export { V2TextField } from "./text-field";
+export type { V2TextFieldProps, V2TextFieldSize } from "./text-field";
+export { V2Textarea } from "./textarea";
+export type { V2TextareaProps } from "./textarea";
+
+export { V2Segmented } from "./segmented";
+export type {
+  V2SegmentedOption,
+  V2SegmentedProps,
+  V2SegmentedSize,
+} from "./segmented";
+
+export { V2SelectableRow } from "./selectable-row";
+export type { V2SelectableRowProps } from "./selectable-row";
+
+export { V2Skeleton } from "./skeleton";
+export type { V2SkeletonProps, V2SkeletonShape } from "./skeleton";
+
+export { V2Switch } from "./switch";
+export type { V2SwitchProps } from "./switch";

@@ -9,7 +9,12 @@ import {
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { APP_ROUTES } from "@/lib/app-routes";
-import { V2PrimaryBtn } from "./primitives";
+import {
+  V2PrimaryBtn,
+  V2Segmented,
+  V2SelectableRow,
+  V2TextField,
+} from "./primitives";
 
 const ONBOARDING_DONE_KEY = "workout-log.v2.onboarding.done";
 
@@ -451,172 +456,56 @@ function UnitGoals({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 8,
-          marginTop: 24,
+          gap: "var(--v2-s-2)",
+          marginTop: "var(--v2-s-6)",
         }}
       >
-        {opts.map(([k, l, s]) => {
-          const sel = goals.includes(k);
-          return (
-            <button
-              key={k}
-              type="button"
-              onClick={() => toggle(k)}
-              style={{
-                textAlign: "left",
-                cursor: "pointer",
-                border: "none",
-                padding: "16px 18px",
-                borderRadius: 16,
-                background: sel ? "var(--v2-accent-weak)" : "var(--v2-paper)",
-                boxShadow: sel
-                  ? "inset 0 0 0 2px var(--v2-accent)"
-                  : "var(--v2-elev-1)",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                transition: "all var(--v2-d-2) var(--v2-e-out)",
-                minHeight: 64,
-              }}
-            >
-              <span
-                style={{
-                  width: 22,
-                  height: 22,
-                  borderRadius: 8,
-                  border: `2px solid ${sel ? "var(--v2-accent)" : "var(--v2-paper-4)"}`,
-                  background: sel ? "var(--v2-accent)" : "transparent",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                }}
-                aria-hidden
-              >
-                {sel && (
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      fontSize: 16,
-                      color: "var(--v2-ink-on-accent)",
-                    }}
-                  >
-                    check
-                  </span>
-                )}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div
-                  className="v2-h3"
-                  style={{
-                    fontSize: 15,
-                    color: sel ? "var(--v2-accent-ink)" : "var(--v2-ink)",
-                  }}
-                >
-                  {l}
-                </div>
-                <div
-                  className="v2-small"
-                  style={{ marginTop: 2, fontSize: 12 }}
-                >
-                  {s}
-                </div>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="v2-label" style={{ marginTop: 32 }}>
-        {locale === "ko" ? "단위 / 체중" : "Unit / Bodyweight"}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          gap: 8,
-          marginTop: 10,
-          padding: 4,
-          background: "var(--v2-paper-2)",
-          borderRadius: 14,
-        }}
-      >
-        {(
-          [
-            ["kg", "kg"],
-            ["lb", "lb"],
-          ] as const
-        ).map(([k, l]) => (
-          <button
+        {opts.map(([k, l, s]) => (
+          <V2SelectableRow
             key={k}
-            type="button"
-            onClick={() => setUnit(k)}
-            style={{
-              flex: 1,
-              minHeight: 44,
-              padding: "12px 0",
-              borderRadius: 11,
-              background: unit === k ? "var(--v2-paper)" : "transparent",
-              color: unit === k ? "var(--v2-ink)" : "var(--v2-ink-3)",
-              border: "none",
-              cursor: "pointer",
-              fontFamily: "var(--v2-f-num)",
-              fontWeight: 700,
-              fontSize: 14,
-              boxShadow: unit === k ? "var(--v2-elev-1)" : "none",
-            }}
-          >
-            {l}
-          </button>
+            mode="multi"
+            selected={goals.includes(k)}
+            onClick={() => toggle(k)}
+            title={l}
+            description={s}
+          />
         ))}
       </div>
 
-      <label
-        style={{
-          display: "flex",
-          alignItems: "center",
-          padding: "12px 16px",
-          marginTop: 10,
-          background: "var(--v2-paper-2)",
-          borderRadius: 14,
-          gap: 12,
-        }}
-      >
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: 20, color: "var(--v2-ink-3)" }}
-          aria-hidden
-        >
-          monitor_weight
-        </span>
-        <span
-          className="v2-mono-label"
-          style={{ flex: 1, color: "var(--v2-ink-2)" }}
-        >
-          {locale === "ko" ? "체중" : "Bodyweight"}
-        </span>
-        <input
+      <div className="v2-label" style={{ marginTop: "var(--v2-s-7)" }}>
+        {locale === "ko" ? "단위 / 체중" : "Unit / Bodyweight"}
+      </div>
+      <div style={{ marginTop: "var(--v2-s-2)" }}>
+        <V2Segmented
+          options={[
+            { value: "kg", label: "kg" },
+            { value: "lb", label: "lb" },
+          ]}
+          value={unit}
+          onChange={setUnit}
+          ariaLabel={locale === "ko" ? "단위" : "Unit"}
+          style={{ display: "flex", width: "100%" }}
+        />
+      </div>
+
+      <div style={{ marginTop: "var(--v2-s-2)" }}>
+        <V2TextField
+          label={locale === "ko" ? "체중" : "Bodyweight"}
+          icon="monitor_weight"
+          type="text"
           inputMode="decimal"
           value={bodyweight}
           onChange={(e) =>
             setBodyweight(e.target.value.replace(/[^0-9.]/g, ""))
           }
           placeholder="—"
-          style={{
-            width: 80,
-            border: "none",
-            background: "transparent",
-            textAlign: "right",
-            outline: "none",
-            fontFamily: "var(--v2-f-num)",
-            fontWeight: 700,
-            fontSize: 18,
-            color: "var(--v2-ink)",
-          }}
+          trailing={
+            <span className="v2-mono-label" style={{ color: "var(--v2-ink-3)" }}>
+              {unit}
+            </span>
+          }
         />
-        <span className="v2-mono-label" style={{ color: "var(--v2-ink-3)" }}>
-          {unit}
-        </span>
-      </label>
+      </div>
     </div>
   );
 }
@@ -675,74 +564,21 @@ function Experience({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 8,
-          marginTop: 24,
+          gap: "var(--v2-s-2)",
+          marginTop: "var(--v2-s-6)",
         }}
       >
-        {opts.map(([k, l, s, ic]) => {
-          const sel = exp === k;
-          return (
-            <button
-              key={k}
-              type="button"
-              onClick={() => setExp(k)}
-              style={{
-                textAlign: "left",
-                cursor: "pointer",
-                border: "none",
-                padding: "16px 18px",
-                borderRadius: 16,
-                background: sel ? "var(--v2-accent-weak)" : "var(--v2-paper)",
-                boxShadow: sel
-                  ? "inset 0 0 0 2px var(--v2-accent)"
-                  : "var(--v2-elev-1)",
-                display: "flex",
-                alignItems: "center",
-                gap: 14,
-                transition: "all var(--v2-d-2) var(--v2-e-out)",
-                minHeight: 64,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{
-                  fontSize: 26,
-                  color: sel ? "var(--v2-accent)" : "var(--v2-ink-3)",
-                  fontVariationSettings: "'FILL' 1, 'wght' 500",
-                }}
-                aria-hidden
-              >
-                {ic}
-              </span>
-              <div style={{ flex: 1 }}>
-                <div
-                  className="v2-h3"
-                  style={{
-                    fontSize: 15,
-                    color: sel ? "var(--v2-accent-ink)" : "var(--v2-ink)",
-                  }}
-                >
-                  {l}
-                </div>
-                <div
-                  className="v2-small"
-                  style={{ marginTop: 2, fontSize: 12 }}
-                >
-                  {s}
-                </div>
-              </div>
-              {sel && (
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 22, color: "var(--v2-accent)" }}
-                  aria-hidden
-                >
-                  check_circle
-                </span>
-              )}
-            </button>
-          );
-        })}
+        {opts.map(([k, l, s, ic]) => (
+          <V2SelectableRow
+            key={k}
+            mode="single"
+            selected={exp === k}
+            onClick={() => setExp(k)}
+            icon={ic}
+            title={l}
+            description={s}
+          />
+        ))}
       </div>
     </div>
   );

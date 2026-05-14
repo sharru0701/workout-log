@@ -4,7 +4,7 @@ import Link from "next/link";
 import { memo } from "react";
 import type { ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { V2Card, V2PrimaryBtn } from "@/components/v2/primitives";
+import { V2Card, V2Chip, V2Hairline, V2PrimaryBtn } from "@/components/v2/primitives";
 
 export type SessionCardExercise = {
   name: string;
@@ -44,7 +44,9 @@ const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { e
         </div>
       )}
       {assist.length > 0 && (
-        <div style={{ marginTop: "var(--v2-s-2)", paddingTop: "var(--v2-s-2)", borderTop: "1px dashed var(--v2-hairline)" }}>
+        <>
+          <V2Hairline style={{ marginTop: "var(--v2-s-2)", marginBottom: "var(--v2-s-2)" }} />
+          <div>
           {assist.slice(0, 3).map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--v2-s-1)" }}>
               {/* INFO COLOR: exercise-name (assist) — 보조 운동은 muted 컨텍스트톤으로 위계 조정 */}
@@ -57,7 +59,8 @@ const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { e
               {locale === "ko" ? `+보조 ${assist.length - 3}개 더` : `+${assist.length - 3} more assist`}
             </div>
           )}
-        </div>
+          </div>
+        </>
       )}
     </div>
   );
@@ -127,7 +130,7 @@ function TodayCard({
           <div className="card-title" style={{ color: "var(--text-session-name)", font: "var(--font-card-title)", fontWeight: 700 }}>{title}</div>
           {meta && <p style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)", margin: 0, marginTop: "2px" }}>{meta}</p>}
         </div>
-        {badge && <span className="label label-tag-session">{badge}</span>}
+        {badge && <V2Chip tone="accent">{badge}</V2Chip>}
       </div>
 
       {hasGrouped ? (

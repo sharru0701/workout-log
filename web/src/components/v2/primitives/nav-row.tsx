@@ -4,11 +4,15 @@ import type { CSSProperties, ReactNode } from "react";
 
 type CommonProps = {
   label: ReactNode;
+  /** Material Symbols icon name (used when `leading` is not provided). */
   icon?: string;
+  /** Arbitrary leading element (e.g. tinted icon badge). Overrides `icon`. */
+  leading?: ReactNode;
   value?: ReactNode;
   badge?: ReactNode;
   description?: ReactNode;
-  trailing?: "chevron" | "none";
+  /** "chevron" (default for interactive), "none" (hide indicator), or any ReactNode to render in trailing slot (e.g. toggle, custom indicator). */
+  trailing?: "chevron" | "none" | ReactNode;
   className?: string;
   style?: CSSProperties;
 };
@@ -68,6 +72,7 @@ export function V2NavRow(
   const {
     label,
     icon,
+    leading,
     value,
     badge,
     description,
@@ -100,17 +105,23 @@ export function V2NavRow(
     .filter(Boolean)
     .join(" ");
 
+  const useCustomTrailing =
+    trailing !== undefined && trailing !== "chevron" && trailing !== "none";
   const trailingIcon = isExpandable
     ? props.expanded
       ? "expand_less"
       : "expand_more"
-    : trailing === "chevron"
-      ? "chevron_right"
-      : null;
+    : useCustomTrailing || trailing === "none"
+      ? null
+      : "chevron_right";
 
   const inner = (
     <>
-      {icon ? (
+      {leading ? (
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+          {leading}
+        </div>
+      ) : icon ? (
         <span
           className="material-symbols-outlined"
           style={{ fontSize: 22, color: "var(--v2-ink-2)" }}
@@ -141,7 +152,11 @@ export function V2NavRow(
           {value}
         </span>
       ) : null}
-      {interactive && trailingIcon ? (
+      {useCustomTrailing ? (
+        <div style={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
+          {trailing as ReactNode}
+        </div>
+      ) : interactive && trailingIcon ? (
         <span
           className="material-symbols-outlined"
           style={{

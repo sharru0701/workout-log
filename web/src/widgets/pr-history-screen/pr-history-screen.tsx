@@ -235,7 +235,6 @@ export function PrHistoryScreen({
               tone="inset"
               padding="20px"
               radius="var(--v2-r-1)"
-              style={{ border: "1px solid var(--v2-hairline)" }}
             >
               <p className="v2-h3" style={{ fontSize: 16 }}>
                 {locale === "ko" ? "표시할 PR이 없습니다" : "No PRs to show"}
@@ -257,7 +256,6 @@ export function PrHistoryScreen({
                     padding="14px 16px"
                     radius="var(--v2-r-1)"
                     style={{
-                      border: "1px solid var(--v2-hairline)",
                       display: "grid",
                       gridTemplateColumns: "minmax(0, 1fr) auto auto",
                       alignItems: "center",

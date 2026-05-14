@@ -229,7 +229,7 @@ export function SystemStatsSection() {
   return (
     <>
       <div>
-        <div style={{ marginBottom: "var(--v2-s-7)", paddingBottom: "var(--v2-s-4)", borderBottom: "1px solid var(--v2-hairline)" }}>
+        <div style={{ marginBottom: "var(--v2-s-7)", paddingBottom: "var(--v2-s-4)" }}>
           <div style={{ fontFamily: "var(--v2-f-display)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--v2-accent)", marginBottom: "4px" }}>
             {locale === "ko" ? "관리 도구" : "Admin Tools"}
           </div>

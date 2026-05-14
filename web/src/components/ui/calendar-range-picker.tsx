@@ -195,7 +195,6 @@ export function CalendarRangePicker({
           const selectionStyle: React.CSSProperties = selected
             ? {
                 background: "var(--v2-accent)",
-                border: "1px solid var(--v2-accent)",
                 color: "var(--v2-ink-on-accent)",
                 zIndex: 2,
               }
@@ -227,7 +226,6 @@ export function CalendarRangePicker({
               className="v2-pressable"
               style={{
                 aspectRatio: "1",
-                border: "1px solid transparent",
                 background: "transparent",
                 color: dayColor,
                 borderRadius,
@@ -282,9 +280,7 @@ function RangeChip({
         background: "var(--v2-paper-2)",
         borderRadius: "var(--v2-r-2)",
         textAlign: "center",
-        border: active
-          ? "1px solid var(--v2-accent)"
-          : "1px solid transparent",
+        boxShadow: active ? "inset 0 0 0 2px var(--v2-accent)" : "none",
       }}
     >
       <div

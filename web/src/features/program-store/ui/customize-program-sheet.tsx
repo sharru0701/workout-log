@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 import ExerciseEditorRow from "@/features/program-store/ui/program-exercise-editor-row";
-import { V2Card } from "@/components/v2/primitives";
+import { V2Card, V2SecondaryBtn } from "@/components/v2/primitives";
 import { AppTextInput } from "@/components/ui/form-controls";
 import type { ExerciseOption } from "@/features/program-store/model/types";
 import type { ProgramStoreCustomizeDraft } from "@/features/program-store/model/use-program-store-sheet-entry-controller";
@@ -134,8 +134,8 @@ export function CustomizeProgramSheet({
             <div
               role="alert"
               style={{
-                border: "1px solid color-mix(in srgb, var(--v2-c-danger) 34%, var(--v2-hairline))",
-                borderRadius: "8px",
+                boxShadow: "inset 0 0 0 1px color-mix(in srgb, var(--v2-c-danger) 34%, var(--v2-hairline))",
+                borderRadius: "var(--v2-r-1)",
                 background: "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
                 color: "var(--v2-c-danger)",
                 padding: "var(--v2-s-2) var(--v2-s-4)",
@@ -276,21 +276,14 @@ export function CustomizeProgramSheet({
                       </div>
                     ))}
 
-                    <button
-                      type="button"
-                      className="btn btn-secondary btn-full"
+                    <V2SecondaryBtn
+                      full
+                      icon="add"
                       style={{ marginTop: "var(--v2-s-2)" }}
                       onClick={() => onAddExercise(session.id)}
                     >
-                      <span
-                        className="material-symbols-outlined"
-                        aria-hidden="true"
-                        style={{ fontSize: 16, fontVariationSettings: "'wght' 400" }}
-                      >
-                        add
-                      </span>
-                      <span>{locale === "ko" ? "운동 추가" : "Add Exercise"}</span>
-                    </button>
+                      {locale === "ko" ? "운동 추가" : "Add Exercise"}
+                    </V2SecondaryBtn>
                   </div>
                 );
               })}

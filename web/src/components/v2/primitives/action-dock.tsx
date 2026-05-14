@@ -33,7 +33,6 @@ export function V2ActionDock({
         background: "color-mix(in srgb, var(--v2-paper) 88%, transparent)",
         backdropFilter: "blur(20px) saturate(160%)",
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
-        border: "1px solid var(--v2-hairline)",
         borderRadius: "var(--v2-r-pill)",
         padding: 6,
         display: "grid",

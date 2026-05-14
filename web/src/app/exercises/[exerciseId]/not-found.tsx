@@ -7,7 +7,7 @@ export default function ExerciseDetailNotFound() {
       <div
         style={{
           background: "var(--v2-paper)",
-          border: "1px solid var(--v2-hairline)",
+          boxShadow: "var(--v2-elev-1)",
           borderRadius: "var(--v2-r-1)",
           padding: "var(--v2-s-5)",
           maxWidth: 480,

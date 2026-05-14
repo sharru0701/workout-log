@@ -28,7 +28,108 @@
 
 ---
 
-## 1. 색상 시스템
+## 0.5. Hard Rules — 디자인 통일 5계명
+
+화면 간 시각 어휘 통일을 강제하는 5개 규칙. 모든 새 코드는 이 규칙을 준수하고, 기존 코드는 점진적으로 마이그레이션한다. 위반은 `web/scripts/design-lint.mjs`와 ESLint `no-restricted-syntax`로 자동 차단된다.
+
+### Rule 1 — Primitive-First Assembly
+
+카드 · 버튼 · 네비행은 [`components/v2/primitives/*`](../src/components/v2/primitives/) 의 V2 primitive 조합으로만 조립한다. 페이지/feature 컴포넌트에서 inline `<div style={...}>` 또는 `<button style={...}>` 로 같은 역할을 재구현하지 않는다.
+
+```tsx
+// ✅ OK
+<V2Card tone="paper" padding="var(--v2-s-5)">
+  <V2PrimaryBtn full onClick={start}>운동 시작</V2PrimaryBtn>
+</V2Card>
+
+// ❌ NG
+<div style={{ background: "var(--v2-paper)", borderRadius: 16, padding: 20 }}>
+  <button style={{ background: "var(--v2-accent)", color: "white", padding: "12px 20px" }}>
+    운동 시작
+  </button>
+</div>
+```
+
+**예외**: 차트 · 캘린더 셀 · 키패드 등 그리드/좌표 기반 동적 UI는 inline 조립 허용. 단 모든 값은 토큰만 (Rule 3 준수).
+
+### Rule 2 — No-Line Rule
+
+`border: "1px solid …"` 일절 금지. divider는 `<V2Hairline />`, 계층은 paper 톤 전환(`--v2-paper` → `--v2-paper-2` → `--v2-paper-3`), 선택/포커스 표시는 `boxShadow` inset로 표현한다.
+
+```tsx
+// ✅ OK — 계층은 톤 전환
+<V2Card tone="paper">
+  <div style={{ background: "var(--v2-paper-2)", padding: "var(--v2-s-3)" }}>
+    중첩 영역
+  </div>
+</V2Card>
+
+// ✅ OK — 선택 상태는 inset shadow
+<button style={{
+  background: "var(--v2-paper-2)",
+  boxShadow: selected ? "inset 0 0 0 2px var(--v2-accent)" : "none",
+}}>옵션</button>
+
+// ✅ OK — divider
+<V2Hairline />
+
+// ❌ NG
+<div style={{ border: "1px solid var(--v2-hairline)" }} />
+<div style={{ borderTop: "1px dashed var(--v2-hairline)" }} />
+```
+
+**예외**: 차트 축선 (semantic 의미 있음).
+
+### Rule 3 — Token-Only Values
+
+`padding · margin · gap · borderRadius · fontSize · minHeight · minWidth` 등 시각 값은 `var(--v2-*)` 토큰만 사용. 하드코딩 숫자 금지.
+
+| 카테고리 | 토큰 |
+|---|---|
+| spacing | `--v2-s-1` (4) ~ `--v2-s-9` (64) |
+| radius | `--v2-r-1` (8) ~ `--v2-r-4` (20), `--v2-r-pill` |
+| typography | `--v2-t-display`, `--v2-t-h1` ~ `--v2-t-h3`, `--v2-t-body`, `--v2-t-small`, `--v2-t-label`, `--v2-t-eyebrow` |
+
+```tsx
+// ✅ OK
+<div style={{ padding: "var(--v2-s-4)", borderRadius: "var(--v2-r-3)" }}>
+
+// ❌ NG
+<div style={{ padding: 16, borderRadius: 12 }}>
+<div style={{ padding: "14px 22px", borderRadius: 14 }}>
+```
+
+**예외**: `0` · `1` · `2` 같은 zero-or-hair 값, `flex: 1`, `width: "100%"`, `width: "auto"`.
+
+### Rule 4 — Typography via Class, Override 금지
+
+타이포는 type 클래스만 사용한다. inline `fontSize` · `fontWeight` · `fontFamily` override 금지. 새 변형이 필요하면 토큰/클래스를 추가하고 override 하지 않는다.
+
+```tsx
+// ✅ OK
+<h1 className="v2-display">제목</h1>
+<h2 className="v2-h2">섹션</h2>
+<p className="v2-body">본문</p>
+<span className="v2-mono-label">RPE 8.5</span>
+
+// ❌ NG
+<h1 className="v2-display" style={{ fontSize: 44 }}>제목</h1>
+<span style={{ fontSize: 15, fontWeight: 500 }}>본문</span>
+<span style={{ fontFamily: "var(--v2-f-display)" }}>숫자</span>
+```
+
+### Rule 5 — Single Source per Component Role
+
+같은 역할의 컴포넌트가 둘 이상 공존하지 않는다. 중복이 발견되면 `deprecated 표시 → shim wrapper → 삭제` 3단계로 정리한다.
+
+| 정식 | 정리 대상 |
+|---|---|
+| `V2PrimaryBtn` / `V2SecondaryBtn` | `.btn.btn-primary` · `.hd-cta-btn` 등 CSS 클래스 버튼 |
+| `V2NavRow` | `NavigationRow` · `ToggleRow` · `ValueRow` (`ui/settings-list.tsx`) |
+| `V2TextField` (예정) | `Field` (`v2-auth-form.tsx`) · onboarding inline input · `AppTextInput` |
+| `V2Chip` | `.label-tag-*` CSS 클래스 |
+
+---
 
 ### 1-1. 다크 테마 (GitHub Dark 영감)
 

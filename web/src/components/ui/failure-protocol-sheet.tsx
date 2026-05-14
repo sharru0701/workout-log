@@ -1,7 +1,11 @@
 "use client";
 
 import { useLocale } from "@/components/locale-provider";
-import { V2Card } from "@/components/v2/primitives";
+import {
+  V2Card,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+} from "@/components/v2/primitives";
 import { BottomSheet } from "./bottom-sheet";
 
 export type FailureProtocolChoice = "cancel" | "hold" | "reset" | "increase";
@@ -43,32 +47,32 @@ export function FailureProtocolSheet({
         >
           {isBlockCompletion ? (
             <>
-              <button type="button" className="btn btn-primary btn-full" onClick={() => onSelect("increase")}>
+              <V2PrimaryBtn full onClick={() => onSelect("increase")}>
                 {locale === "ko" ? "증량하여 저장" : "Increase and Save"}
-              </button>
-              <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("hold")}>
+              </V2PrimaryBtn>
+              <V2SecondaryBtn full onClick={() => onSelect("hold")}>
                 {locale === "ko" ? "유지하여 저장" : "Keep and Save"}
-              </button>
-              <button type="button" className="btn btn-danger btn-full" onClick={() => onSelect("reset")}>
+              </V2SecondaryBtn>
+              <V2SecondaryBtn full tone="danger" onClick={() => onSelect("reset")}>
                 {locale === "ko" ? "감소하여 저장" : "Reduce and Save"}
-              </button>
+              </V2SecondaryBtn>
             </>
           ) : (
             <>
-              <button type="button" className="btn btn-danger btn-full" onClick={() => onSelect("reset")}>
+              <V2SecondaryBtn full tone="danger" onClick={() => onSelect("reset")}>
                 {locale === "ko" ? "감소 적용하여 저장" : "Apply Reduction and Save"}
-              </button>
-              <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("hold")}>
+              </V2SecondaryBtn>
+              <V2SecondaryBtn full onClick={() => onSelect("hold")}>
                 {locale === "ko" ? "무게 유지하여 저장" : "Keep Weight and Save"}
-              </button>
-              <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("increase")}>
+              </V2SecondaryBtn>
+              <V2SecondaryBtn full onClick={() => onSelect("increase")}>
                 {locale === "ko" ? "무게 증가하여 저장" : "Increase Weight and Save"}
-              </button>
+              </V2SecondaryBtn>
             </>
           )}
-          <button type="button" className="btn btn-secondary btn-full" onClick={() => onSelect("cancel")}>
+          <V2SecondaryBtn full onClick={() => onSelect("cancel")}>
             {locale === "ko" ? "취소" : "Cancel"}
-          </button>
+          </V2SecondaryBtn>
         </div>
       }
     >

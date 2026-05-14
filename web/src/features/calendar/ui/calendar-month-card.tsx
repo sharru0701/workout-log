@@ -204,8 +204,8 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
                 : isSelected
                   ? "var(--v2-accent)"
                   : "transparent";
-              const cellBorder = isToday
-                ? "1px solid color-mix(in srgb, var(--v2-accent) 30%, transparent)"
+              const cellBoxShadow = isToday
+                ? "inset 0 0 0 1px color-mix(in srgb, var(--v2-accent) 30%, transparent)"
                 : "none";
               const cellColor = isToday
                 ? "var(--v2-accent-ink)"
@@ -236,7 +236,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
                     height: 36,
                     margin: "4px auto",
                     padding: 0,
-                    border: cellBorder,
+                    boxShadow: cellBoxShadow,
                     background: cellBg,
                     color: cellColor,
                     borderRadius: cellRadius,

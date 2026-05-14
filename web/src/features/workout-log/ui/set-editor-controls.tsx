@@ -91,7 +91,7 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
         style={{
           width: "100%",
           padding: "6px 4px",
-          border: "1px solid var(--v2-hairline)",
+          border: "none",
           borderRadius: "var(--v2-r-1)",
           backgroundColor: bg,
           color: fg,

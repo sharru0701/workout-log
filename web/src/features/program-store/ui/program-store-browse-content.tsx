@@ -123,7 +123,6 @@ export function ProgramStoreBrowseContent({
               style={{
                 padding: "8px 18px",
                 borderRadius: 9999,
-                border: "1px solid transparent",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 fontFamily: "var(--font-label-family)",

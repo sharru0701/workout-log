@@ -86,7 +86,6 @@ function MetricCard({
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
-        border: "1px solid var(--v2-hairline)",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
@@ -143,7 +142,6 @@ function PrList({
         tone="inset"
         padding="18px"
         radius="var(--v2-r-1)"
-        style={{ border: "1px solid var(--v2-hairline)" }}
       >
         <p className="v2-h3" style={{ fontSize: 16 }}>
           {locale === "ko" ? "표시할 PR 데이터가 없습니다" : "No PR data yet"}
@@ -168,7 +166,6 @@ function PrList({
               padding="14px 16px"
               radius="var(--v2-r-1)"
               style={{
-                border: "1px solid var(--v2-hairline)",
                 display: "grid",
                 gridTemplateColumns: "minmax(0, 1fr) auto auto",
                 alignItems: "center",
@@ -387,7 +384,6 @@ export function StatsScreen({
             tone="inset"
             padding="var(--v2-s-3)"
             radius="var(--v2-r-1)"
-            style={{ border: "1px solid var(--v2-hairline)" }}
           >
             <Stats1RMDetailed
               ref={detailedRef}

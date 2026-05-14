@@ -2,7 +2,7 @@
 
 import { memo } from "react";
 import dynamic from "next/dynamic";
-import { V2Card } from "@/components/v2/primitives";
+import { V2Card, V2Chip, V2SecondaryBtn } from "@/components/v2/primitives";
 import { NumberPickerField } from "@/components/ui/number-picker-sheet";
 import { formatProgramDisplayName } from "@/features/program-store/model/view";
 import type { StartProgramDraft } from "@/features/program-store/model/use-program-store-start-program-controller";
@@ -90,9 +90,9 @@ export const StartProgramSheet = memo(function StartProgramSheet({
               >
                 {formatProgramDisplayName(draft.template.name)}
               </strong>
-              <span className="label label-tag-progression label-sm">
+              <V2Chip tone="weight">
                 TM {Math.round(draft.tmPercent * 100)}%
-              </span>
+              </V2Chip>
             </div>
           </V2Card>
           {draft.recommendationStatus === "loading" ? (
@@ -164,13 +164,9 @@ export const StartProgramSheet = memo(function StartProgramSheet({
                     {locale === "ko" ? "최근 e1RM" : "Latest e1RM"}{" "}
                     {formatKg(draft.recommendations[target.key].latestE1rmKg)}kg
                   </span>
-                  <button
-                    type="button"
-                    className="btn btn-inline-action btn-inline-action-primary"
-                    onClick={() => onApplyRecommendation(target.key)}
-                  >
+                  <V2SecondaryBtn onClick={() => onApplyRecommendation(target.key)}>
                     {locale === "ko" ? "추천값 적용" : "Apply Recommendation"}
-                  </button>
+                  </V2SecondaryBtn>
                 </div>
               ) : null}
             </div>

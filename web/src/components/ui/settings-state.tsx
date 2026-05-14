@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { useApiNetworkBusy } from "@/lib/ui/use-api-network-busy";
-import { BaseGroupedList, InfoRow, NavigationRow, RowIcon } from "./settings-list";
+import { V2NavRow } from "@/components/v2/primitives";
+import { V2RowIcon, V2SettingsGroup } from "@/components/v2/settings/section";
 import { useMaybeAppDialog } from "./app-dialog-provider";
 
 type LoadingStateRowsProps = {
@@ -131,9 +132,9 @@ export function LoadingStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
-      <InfoRow label={resolvedLabel} leading={<RowIcon symbol="LD" tone="info" />} />
-    </BaseGroupedList>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+      <V2NavRow as="div" trailing="none" label={resolvedLabel} leading={<V2RowIcon symbol="LD" tone="info" />} />
+    </V2SettingsGroup>
   );
 }
 
@@ -174,9 +175,9 @@ export function EmptyStateRows({
   if (!visible) return null;
 
   return (
-    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
-      <InfoRow label={resolvedLabel} />
-    </BaseGroupedList>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+      <V2NavRow as="div" trailing="none" label={resolvedLabel} />
+    </V2SettingsGroup>
   );
 }
 
@@ -226,16 +227,16 @@ export function ErrorStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
-      <InfoRow tone="warning" label={message} leading={<RowIcon symbol="ER" tone="warning" />} />
-      <NavigationRow
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+      <V2NavRow as="div" trailing="none" label={message} leading={<V2RowIcon symbol="ER" />} />
+      <V2NavRow
         label={resolvedRetryLabel}
-        onPress={onRetry}
+        onClick={onRetry}
         disabled={retryDisabled || !onRetry}
-        showChevron={Boolean(onRetry && !retryDisabled)}
-        leading={<RowIcon symbol="RT" tone="neutral" />}
+        trailing="chevron"
+        leading={<V2RowIcon symbol="RT" tone="neutral" />}
       />
-    </BaseGroupedList>
+    </V2SettingsGroup>
   );
 }
 
@@ -251,9 +252,9 @@ export function DisabledStateRows({
   if (!when) return null;
 
   return (
-    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
-      <InfoRow tone="disabled" label={resolvedLabel} leading={<RowIcon symbol="DS" tone="neutral" />} />
-    </BaseGroupedList>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+      <V2NavRow as="div" trailing="none" label={resolvedLabel} leading={<V2RowIcon symbol="DS" tone="neutral" />} />
+    </V2SettingsGroup>
   );
 }
 
@@ -299,9 +300,9 @@ export function NoticeStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <BaseGroupedList ariaLabel={resolvedAriaLabel}>
-      <InfoRow tone={tone} label={message} leading={<RowIcon symbol="NT" tone="surface" />} />
-    </BaseGroupedList>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+      <V2NavRow as="div" trailing="none" label={message} leading={<V2RowIcon symbol="NT" tone="surface" />} />
+    </V2SettingsGroup>
   );
 }
 
