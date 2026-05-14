@@ -501,7 +501,7 @@ export function DesignSystemCatalog() {
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "space-between",
-                              padding: "10px 12px",
+                              padding: "var(--v2-s-3) var(--v2-s-3)",
                               background:
                                 demoTheme === opt.value
                                   ? "var(--v2-accent-weak)"

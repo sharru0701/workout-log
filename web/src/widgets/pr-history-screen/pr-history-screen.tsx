@@ -75,7 +75,7 @@ export function PrHistoryScreen({
             paddingTop: "var(--v2-s-2)",
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-3)" }}>
             <V2IconBtn
               icon="arrow_back"
               onClick={() => router.back()}
@@ -86,7 +86,7 @@ export function PrHistoryScreen({
               {locale === "ko" ? "퍼포먼스" : "Performance"}
             </p>
           </div>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <h1
               className="v2-h1"
               style={{ letterSpacing: 0, fontSize: 28 }}
@@ -111,9 +111,9 @@ export function PrHistoryScreen({
         </header>
 
         <section style={{ display: "grid", gap: "var(--v2-s-3)" }}>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <p className="v2-label">{locale === "ko" ? "기간" : "Range"}</p>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "var(--v2-s-2)", flexWrap: "wrap" }}>
               {DAYS_PRESETS.map((preset) => {
                 const active = selected.days === preset;
                 return (
@@ -128,7 +128,7 @@ export function PrHistoryScreen({
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
-                        padding: "8px 14px",
+                        padding: "var(--v2-s-2) var(--v2-s-4)",
                         borderRadius: "var(--v2-r-pill)",
                         fontWeight: 700,
                         fontSize: 12,
@@ -149,14 +149,14 @@ export function PrHistoryScreen({
             </div>
           </div>
 
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <p className="v2-label v2-font-display">
               {locale === "ko" ? "운동" : "Exercise"}
             </p>
             <div
               style={{
                 display: "flex",
-                gap: 8,
+                gap: "var(--v2-s-2)",
                 overflowX: "auto",
                 paddingBottom: 4,
                 WebkitOverflowScrolling: "touch",
@@ -170,7 +170,7 @@ export function PrHistoryScreen({
                 <span
                   style={{
                     display: "inline-flex",
-                    padding: "8px 14px",
+                    padding: "var(--v2-s-2) var(--v2-s-4)",
                     borderRadius: "var(--v2-r-pill)",
                     fontWeight: 700,
                     fontSize: 12,
@@ -203,7 +203,7 @@ export function PrHistoryScreen({
                       className="v2-font-display"
                       style={{
                         display: "inline-flex",
-                        padding: "8px 14px",
+                        padding: "var(--v2-s-2) var(--v2-s-4)",
                         borderRadius: "var(--v2-r-pill)",
                         fontWeight: 700,
                         fontSize: 12,
@@ -245,7 +245,7 @@ export function PrHistoryScreen({
               </p>
             </V2Card>
           ) : (
-            <div style={{ display: "grid", gap: 8 }}>
+            <div style={{ display: "grid", gap: "var(--v2-s-2)" }}>
               {prs.map((row) => {
                 const improvement = row.improvement;
                 const tone = improvement > 0 ? "success" : "neutral";
@@ -258,7 +258,7 @@ export function PrHistoryScreen({
                       display: "grid",
                       gridTemplateColumns: "minmax(0, 1fr) auto auto",
                       alignItems: "center",
-                      gap: 12,
+                      gap: "var(--v2-s-3)",
                     }}
                   >
                     <div className="v2-font-display" style={{ minWidth: 0 }}>

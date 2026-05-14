@@ -71,7 +71,7 @@ export function WorkoutLogSummarySheet({
       height="92%"
       ariaLabel={locale === "ko" ? "오늘의 운동" : "Today's workout"}
     >
-      <div style={{ padding: "8px 24px 12px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">
           {locale === "ko" ? "오늘의 운동" : "TODAY"} ·{" "}
           <span style={{ color: "var(--v2-c-success)" }}>
@@ -101,16 +101,16 @@ export function WorkoutLogSummarySheet({
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "0 16px 24px",
+          padding: "0px var(--v2-s-4) var(--v2-s-6)",
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: "var(--v2-s-2)",
         }}
       >
         {allExercises.length === 0 ? (
           <div
             style={{
-              padding: "32px 16px",
+              padding: "var(--v2-s-7) var(--v2-s-4)",
               textAlign: "center",
               color: "var(--v2-ink-3)",
             }}
@@ -152,8 +152,8 @@ export function WorkoutLogSummarySheet({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 10,
-                    padding: "12px 14px",
+                    gap: "var(--v2-s-3)",
+                    padding: "var(--v2-s-3) var(--v2-s-4)",
                   }}
                 >
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -161,7 +161,7 @@ export function WorkoutLogSummarySheet({
                       style={{
                         display: "flex",
                         alignItems: "center",
-                        gap: 6,
+                        gap: "var(--v2-s-1)",
                       }}
                     >
                       <span
@@ -220,7 +220,7 @@ export function WorkoutLogSummarySheet({
                     style={{ borderRadius: "var(--v2-r-2)", flexShrink: 0 }}
                   />
                 </header>
-                <div style={{ padding: "0 14px 14px" }}>
+                <div style={{ padding: "0px var(--v2-s-4) var(--v2-s-4)" }}>
                   <V2Hairline />
                   <SetDetailTable
                     exercise={ex}
@@ -231,7 +231,7 @@ export function WorkoutLogSummarySheet({
                     <div
                       style={{
                         marginTop: 10,
-                        padding: "10px 12px",
+                        padding: "var(--v2-s-3) var(--v2-s-3)",
                         borderRadius: "var(--v2-r-1)",
                         background: "var(--v2-paper)",
                         color: "var(--v2-ink-2)",
@@ -259,7 +259,7 @@ function ProgressBadge({ filled, total }: { filled: number; total: number }) {
       className="v2-mono-label"
       style={{
         fontSize: 10,
-        padding: "2px 8px",
+        padding: "2px var(--v2-s-2)",
         borderRadius: "var(--v2-r-pill)",
         background: isComplete
           ? "color-mix(in srgb, var(--v2-c-success) 18%, var(--v2-paper))"
@@ -293,7 +293,7 @@ function SetDetailTable({
         marginTop: 10,
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: "var(--v2-s-1)",
       }}
     >
       <div
@@ -301,10 +301,10 @@ function SetDetailTable({
         style={{
           display: "grid",
           gridTemplateColumns: "24px 1fr 1fr 1fr 24px",
-          gap: 8,
+          gap: "var(--v2-s-2)",
           fontSize: 9,
           color: "var(--v2-ink-3)",
-          padding: "0 8px",
+          padding: "0px var(--v2-s-2)",
         }}
       >
         <span>#</span>
@@ -353,9 +353,9 @@ function SetDetailTable({
             style={{
               display: "grid",
               gridTemplateColumns: "24px 1fr 1fr 1fr 24px",
-              gap: 8,
+              gap: "var(--v2-s-2)",
               alignItems: "center",
-              padding: "6px 8px",
+              padding: "var(--v2-s-1) var(--v2-s-2)",
               borderRadius: "var(--v2-r-1)",
               background: isSetComplete
                 ? "color-mix(in srgb, var(--v2-c-success) 8%, var(--v2-paper))"

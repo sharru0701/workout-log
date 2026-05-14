@@ -126,7 +126,7 @@ export default function CalendarLoading() {
             style={{
               display: "flex",
               gap: "var(--v2-s-4)",
-              padding: "12px 16px",
+              padding: "var(--v2-s-3) var(--v2-s-4)",
               marginBottom: "var(--v2-s-2)",
               borderRadius: "var(--v2-r-3)",
               background: "var(--v2-paper)",
@@ -136,7 +136,7 @@ export default function CalendarLoading() {
               style={{
                 display: "flex",
                 flexDirection: "column",
-                gap: 6,
+                gap: "var(--v2-s-1)",
                 flex: 1,
               }}
             >

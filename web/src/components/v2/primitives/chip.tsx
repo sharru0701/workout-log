@@ -74,8 +74,8 @@ export function V2Chip({
       style={{
         display: "inline-flex",
         alignItems: "center",
-        gap: 4,
-        padding: "4px 10px",
+        gap: "var(--v2-s-1)",
+        padding: "var(--v2-s-1) var(--v2-s-3)",
         borderRadius: "var(--v2-r-pill)",
         fontSize: 11,
         fontWeight: 700,

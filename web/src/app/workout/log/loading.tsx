@@ -46,7 +46,7 @@ export default function WorkoutRecordLoading() {
           <div className="session-progress-header__top-row">
             <div
               className="session-progress-header__title-group"
-              style={{ display: "flex", flexDirection: "column", gap: 6 }}
+              style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}
             >
               <div
                 style={{
@@ -115,7 +115,7 @@ export default function WorkoutRecordLoading() {
           />
           <div
             className="last-session-banner__body"
-            style={{ display: "flex", flexDirection: "column", gap: 4 }}
+            style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}
           >
             <div
               style={{
@@ -147,7 +147,7 @@ export default function WorkoutRecordLoading() {
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               alignItems: "center",
             }}
           >
@@ -180,7 +180,7 @@ export default function WorkoutRecordLoading() {
               <div className="exercise-card__header">
                 <div
                   className="exercise-card__name-row"
-                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                  style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)" }}
                 >
                   <div
                     style={{
@@ -217,7 +217,7 @@ export default function WorkoutRecordLoading() {
                     display: "grid",
                     gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr",
                     gap: "var(--v2-s-1)",
-                    padding: "8px 16px",
+                    padding: "var(--v2-s-2) var(--v2-s-4)",
                   }}
                 >
                   <div
@@ -243,7 +243,7 @@ export default function WorkoutRecordLoading() {
                         gridTemplateColumns: "1fr 1.5fr 2fr 1.5fr",
                         gap: "var(--v2-s-1)",
                         alignItems: "center",
-                        padding: "4px 16px",
+                        padding: "var(--v2-s-1) var(--v2-s-4)",
                         marginBottom: "var(--v2-s-1)",
                       }}
                     >
@@ -288,7 +288,7 @@ export default function WorkoutRecordLoading() {
                 style={{
                   display: "flex",
                   justifyContent: "center",
-                  padding: "12px",
+                  padding: "var(--v2-s-3)",
                   background: "var(--v2-paper)",
                 }}
               >

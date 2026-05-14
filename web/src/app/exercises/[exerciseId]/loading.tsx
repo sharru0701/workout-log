@@ -19,14 +19,14 @@ export default function ExerciseDetailLoading() {
 
       <div style={{ display: "grid", gap: "var(--v2-s-5)", paddingBottom: "var(--v2-s-8)" }}>
         <header style={{ display: "grid", gap: "var(--v2-s-4)", paddingTop: "var(--v2-s-2)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-3)" }}>
             <div style={{ ...skeletonStyle, width: 36, height: 36, borderRadius: "50%" }} />
             <div style={{ ...skeletonStyle, height: 12, width: 80, borderRadius: "var(--v2-r-0)" }} />
           </div>
 
-          <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-2)" }}>
             <div style={{ ...skeletonStyle, height: 36, width: "55%", borderRadius: "var(--v2-r-0)" }} />
-            <div style={{ display: "flex", gap: 8 }}>
+            <div style={{ display: "flex", gap: "var(--v2-s-2)" }}>
               <div style={{ ...skeletonStyle, height: 22, width: 84, borderRadius: "var(--v2-r-pill)" }} />
               <div style={{ ...skeletonStyle, height: 22, width: 100, borderRadius: "var(--v2-r-pill)" }} />
             </div>
@@ -43,9 +43,9 @@ export default function ExerciseDetailLoading() {
               <div
                 key={i}
                 style={{
-                  minHeight: 132,
+                  minHeight: "var(--v2-s-9)",
                   borderRadius: "var(--v2-r-1)",
-                  padding: 16,
+                  padding: "var(--v2-s-4)",
                   background: "var(--v2-paper)",
                   boxShadow: "var(--v2-elev-1)",
                   display: "flex",
@@ -64,7 +64,7 @@ export default function ExerciseDetailLoading() {
         </header>
 
         <section style={{ display: "grid", gap: "var(--v2-s-3)" }}>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <div style={{ ...skeletonStyle, height: 12, width: "25%", borderRadius: "var(--v2-r-0)" }} />
             <div style={{ ...skeletonStyle, height: 24, width: "45%", borderRadius: "var(--v2-r-0)" }} />
             <div style={{ ...skeletonStyle, height: 16, width: "65%", borderRadius: "var(--v2-r-0)" }} />
@@ -81,13 +81,13 @@ export default function ExerciseDetailLoading() {
         </section>
 
         <section style={{ display: "grid", gap: "var(--v2-s-3)" }}>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <div style={{ ...skeletonStyle, height: 12, width: "30%", borderRadius: "var(--v2-r-0)" }} />
             <div style={{ ...skeletonStyle, height: 24, width: "40%", borderRadius: "var(--v2-r-0)" }} />
             <div style={{ ...skeletonStyle, height: 16, width: "70%", borderRadius: "var(--v2-r-0)" }} />
           </div>
           <div style={{ height: 1, background: "var(--v2-hairline)" }} />
-          <div style={{ display: "grid", gap: 8 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-2)" }}>
             {Array.from({ length: 3 }).map((_, i) => (
               <div
                 key={i}
@@ -95,8 +95,8 @@ export default function ExerciseDetailLoading() {
                   display: "grid",
                   gridTemplateColumns: "minmax(0, 1fr) auto",
                   alignItems: "center",
-                  gap: 12,
-                  padding: "14px 16px",
+                  gap: "var(--v2-s-3)",
+                  padding: "var(--v2-s-4) var(--v2-s-4)",
                   borderRadius: "var(--v2-r-1)",
                   background: "var(--v2-paper)",
                   boxShadow: "var(--v2-elev-1)",

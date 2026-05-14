@@ -44,7 +44,7 @@ export default function ProgramStoreLoading() {
                   <div style={{ ...skeletonStyle, height: 24, width: "70%", borderRadius: "var(--v2-r-0)", marginBottom: 8 }} />
                   <div style={{ ...skeletonStyle, height: 14, width: "50%", borderRadius: "var(--v2-r-0)" }} />
                 </div>
-                <div style={{ display: "flex", gap: 4, marginLeft: "var(--v2-s-2)" }}>
+                <div style={{ display: "flex", gap: "var(--v2-s-1)", marginLeft: "var(--v2-s-2)" }}>
                   <div style={{ ...skeletonStyle, height: 20, width: 40, borderRadius: "var(--v2-r-1)" }} />
                   <div style={{ ...skeletonStyle, height: 20, width: 50, borderRadius: "var(--v2-r-1)" }} />
                 </div>
@@ -57,9 +57,9 @@ export default function ProgramStoreLoading() {
               {/* Meta items */}
               <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--v2-s-4)", marginBottom: "var(--v2-s-4)", background: "var(--v2-paper)", padding: "var(--v2-s-2) var(--v2-s-4)", borderRadius: "var(--v2-r-1)" }}>
                 {Array.from({ length: 3 }).map((_, j) => (
-                  <div key={j} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <div key={j} style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
                     <div style={{ ...skeletonStyle, height: 10, width: 30, borderRadius: 2 }} />
-                    <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                    <div style={{ display: "flex", gap: "var(--v2-s-1)", alignItems: "center" }}>
                       <div style={{ ...skeletonStyle, height: 14, width: 14, borderRadius: "50%" }} />
                       <div style={{ ...skeletonStyle, height: 14, width: 40, borderRadius: "var(--v2-r-0)" }} />
                     </div>
@@ -71,7 +71,7 @@ export default function ProgramStoreLoading() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "var(--v2-s-2)" }}>
                 <div style={{ flex: 1 }}>
                   <div style={{ ...skeletonStyle, height: 10, width: 40, borderRadius: 2, marginBottom: 6 }} />
-                  <div style={{ display: "flex", gap: 3 }}>
+                  <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
                     {[1, 2, 3, 4, 5].map((_, barIdx) => (
                       <div key={barIdx} style={{ ...skeletonStyle, height: 6, flex: 1, borderRadius: "var(--v2-r-pill)" }} />
                     ))}

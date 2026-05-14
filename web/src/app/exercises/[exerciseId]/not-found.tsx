@@ -14,7 +14,7 @@ export default function ExerciseDetailNotFound() {
           margin: "0 auto",
           textAlign: "center",
           display: "grid",
-          gap: 12,
+          gap: "var(--v2-s-3)",
         }}
       >
         <span
@@ -39,7 +39,7 @@ export default function ExerciseDetailNotFound() {
           style={{
             display: "inline-flex",
             justifyContent: "center",
-            padding: "10px 16px",
+            padding: "var(--v2-s-3) var(--v2-s-4)",
             borderRadius: "var(--v2-r-1)",
             background: "var(--v2-accent)",
             color: "var(--v2-ink-on-accent)",

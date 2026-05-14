@@ -61,7 +61,7 @@ export default function WorkoutSessionDetailPage() {
 
   if (loading && !item && !error) {
     return (
-      <div style={{ padding: "32px 16px", textAlign: "center" }}>
+      <div style={{ padding: "var(--v2-s-7) var(--v2-s-4)", textAlign: "center" }}>
         <span
           className="v2-mono-label"
           style={{ color: "var(--v2-ink-3)" }}

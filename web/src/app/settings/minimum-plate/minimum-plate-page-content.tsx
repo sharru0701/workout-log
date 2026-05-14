@@ -466,7 +466,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                             alignItems: "center",
                             width: "100%",
                             minHeight: "44px",
-                            padding: "10px 14px",
+                            padding: "var(--v2-s-3) var(--v2-s-4)",
                             background: "var(--v2-paper-2)",
                             border: "none",
                             borderRadius: "var(--v2-r-2)",

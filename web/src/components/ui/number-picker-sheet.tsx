@@ -139,7 +139,7 @@ export function NumberPickerField({
         justifyContent: "space-between" as const,
         borderRadius: "8px",
         minHeight: "44px",
-        padding: "8px 12px",
+        padding: "var(--v2-s-2) var(--v2-s-3)",
         backgroundColor: complete ? "var(--v2-paper-2)" : "var(--v2-paper)",
         color: complete ? "var(--v2-ink)" : "var(--v2-ink-2)",
         font: "var(--font-body)",
@@ -151,7 +151,7 @@ export function NumberPickerField({
         justifyContent: "center" as const,
         borderRadius: "6px",
         minHeight: "36px",
-        padding: "4px 8px",
+        padding: "var(--v2-s-1) var(--v2-s-2)",
         backgroundColor: complete
           ? isReps
             ? "color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper))"
@@ -173,7 +173,7 @@ export function NumberPickerField({
       justifyContent: "space-between" as const,
       borderRadius: "8px",
       minHeight: "44px",
-      padding: "10px 12px",
+      padding: "var(--v2-s-3) var(--v2-s-3)",
       backgroundColor: complete ? "var(--v2-paper-2)" : "var(--v2-paper)",
       color: complete ? "var(--v2-ink)" : "var(--v2-ink)",
       font: "var(--font-body)",

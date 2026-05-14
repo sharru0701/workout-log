@@ -86,7 +86,7 @@ export function V2PasswordSheet({
       height="78%"
       ariaLabel={locale === "ko" ? "비밀번호 변경" : "Change password"}
     >
-      <div style={{ padding: "8px 24px 12px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">
           {locale === "ko" ? "보안" : "SECURITY"}
         </p>
@@ -106,10 +106,10 @@ export function V2PasswordSheet({
       <form
         onSubmit={onSubmit}
         style={{
-          padding: "0 16px",
+          padding: "0px var(--v2-s-4)",
           display: "flex",
           flexDirection: "column",
-          gap: 10,
+          gap: "var(--v2-s-3)",
         }}
       >
         <PwField
@@ -139,7 +139,7 @@ export function V2PasswordSheet({
             role="alert"
             style={{
               marginTop: 8,
-              padding: "10px 14px",
+              padding: "var(--v2-s-3) var(--v2-s-4)",
               borderRadius: "var(--v2-r-2)",
               background:
                 "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
@@ -156,7 +156,7 @@ export function V2PasswordSheet({
             role="status"
             style={{
               marginTop: 8,
-              padding: "10px 14px",
+              padding: "var(--v2-s-3) var(--v2-s-4)",
               borderRadius: "var(--v2-r-2)",
               background:
                 "color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper))",
@@ -171,7 +171,7 @@ export function V2PasswordSheet({
           </div>
         )}
 
-        <div style={{ marginTop: 18, display: "flex", gap: 8 }}>
+        <div style={{ marginTop: 18, display: "flex", gap: "var(--v2-s-2)" }}>
           <V2PrimaryBtn
             full
             type="submit"
@@ -206,7 +206,7 @@ function PwField({
   help?: string;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
       <span className="v2-label v2-font-text">{label}</span>
       <input
         type="password"
@@ -216,8 +216,8 @@ function PwField({
         required
         minLength={8}
         style={{
-          minHeight: 48,
-          padding: "12px 14px",
+          minHeight: "var(--v2-s-8)",
+          padding: "var(--v2-s-3) var(--v2-s-4)",
           borderRadius: "var(--v2-r-2)",
           background: "var(--v2-paper-2)",
           border: "none",

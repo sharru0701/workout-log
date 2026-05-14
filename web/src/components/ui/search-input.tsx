@@ -83,7 +83,7 @@ export function SearchInputRow({
             background: "none",
             border: "none",
             cursor: "pointer",
-            padding: 4,
+            padding: "var(--v2-s-1)",
             color: "var(--v2-ink-2)",
             flexShrink: 0,
           }}

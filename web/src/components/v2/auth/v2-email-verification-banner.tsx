@@ -70,13 +70,13 @@ export function V2EmailVerificationBanner() {
       role="status"
       style={{
         margin: "12px 12px 0",
-        padding: "12px 14px",
+        padding: "var(--v2-s-3) var(--v2-s-4)",
         borderRadius: "var(--v2-r-2)",
         background: "color-mix(in srgb, var(--v2-c-warning) 14%, var(--v2-paper))",
         color: "var(--v2-ink)",
         display: "flex",
         alignItems: "flex-start",
-        gap: 10,
+        gap: "var(--v2-s-3)",
       }}
     >
       <span

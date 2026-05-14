@@ -311,7 +311,7 @@ export function UxThresholdsSection({
           </V2SettingsGroup>
 
           {selectedPlan && (
-            <div className="v2-font-display" style={{ padding: "10px 6px 2px", fontSize: 11, color: "var(--v2-ink-3)" }}>
+            <div className="v2-font-display" style={{ padding: "var(--v2-s-3) var(--v2-s-1) 2px", fontSize: 11, color: "var(--v2-ink-3)" }}>
               {locale === "ko" ? "현재 플랜" : "Current Plan"}: {selectedPlan.name} [{selectedPlan.type}]
             </div>
           )}

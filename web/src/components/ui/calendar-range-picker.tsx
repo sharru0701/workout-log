@@ -128,9 +128,9 @@ export function CalendarRangePicker({
             fontSize: 12,
             textDecoration: "underline",
             cursor: "pointer",
-            minHeight: 44,
+            minHeight: "var(--v2-s-8)",
             minWidth: 44,
-            padding: "10px 12px",
+            padding: "var(--v2-s-3) var(--v2-s-3)",
           }}
         >
           {locale === "ko" ? "초기화" : "Reset"}
@@ -143,7 +143,7 @@ export function CalendarRangePicker({
           justifyContent: "space-between",
           alignItems: "center",
           marginBottom: "var(--v2-s-2)",
-          padding: "0 4px",
+          padding: "0px var(--v2-s-1)",
         }}
       >
         <V2IconBtn

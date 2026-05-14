@@ -88,7 +88,7 @@ export function V2NavRow(
     alignItems: "center",
     gap: "var(--v2-s-3)",
     width: "100%",
-    minHeight: 56,
+    minHeight: "var(--v2-s-9)",
     padding: "var(--v2-s-3) var(--v2-s-4)",
     background: "var(--v2-paper)",
     color: "var(--v2-ink)",

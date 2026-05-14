@@ -40,7 +40,7 @@ function SettingRow({ item }: { item: SettingItem }) {
         display: "flex",
         alignItems: "center",
         gap: "var(--v2-s-4)",
-        padding: "14px 16px",
+        padding: "var(--v2-s-4) var(--v2-s-4)",
         borderRadius: "14px",
         background: "var(--v2-paper)",
         textDecoration: "none",

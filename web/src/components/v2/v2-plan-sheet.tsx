@@ -104,7 +104,7 @@ function MiniCalendar({
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
-          gap: 4,
+          gap: "var(--v2-s-1)",
         }}
       >
         {cells.map((d, i) => {
@@ -363,7 +363,7 @@ export function V2PlanSheet({
       ariaLabel={locale === "ko" ? "계획" : "Plan"}
       id={controlsId}
     >
-      <div style={{ padding: "8px 24px 16px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-4)" }}>
         <p className="v2-eyebrow">
           {locale === "ko" ? "계획" : "PLAN"}
         </p>
@@ -371,7 +371,7 @@ export function V2PlanSheet({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: "var(--v2-s-1)",
             marginTop: 6,
           }}
         >
@@ -434,8 +434,8 @@ export function V2PlanSheet({
               type="button"
               onClick={goToday}
               style={{
-                minHeight: 36,
-                padding: "6px 12px",
+                minHeight: "var(--v2-s-7)",
+                padding: "var(--v2-s-1) var(--v2-s-3)",
                 borderRadius: "var(--v2-r-pill)",
                 border: "none",
                 background: "var(--v2-paper-2)",
@@ -457,7 +457,7 @@ export function V2PlanSheet({
             color: "var(--v2-ink-2)",
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: "var(--v2-s-1)",
           }}
         >
           <span>
@@ -476,7 +476,7 @@ export function V2PlanSheet({
         </p>
       </div>
 
-      <div style={{ padding: "0 16px 16px" }}>
+      <div style={{ padding: "0px var(--v2-s-4) var(--v2-s-4)" }}>
         <MiniCalendar
           year={viewYear}
           month={viewMonth}
@@ -488,12 +488,12 @@ export function V2PlanSheet({
         />
       </div>
 
-      <div style={{ padding: "8px 24px 8px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-2)" }}>
         <div className="v2-label">
           {locale === "ko" ? "내 플랜" : "My Plans"}
         </div>
       </div>
-      <div style={{ padding: "0 16px" }}>
+      <div style={{ padding: "0px var(--v2-s-4)" }}>
         {plansLoading && (
           <V2Card tone="inset">
             <p
@@ -538,7 +538,7 @@ export function V2PlanSheet({
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 14,
+                  gap: "var(--v2-s-4)",
                 }}
               >
                 <div
@@ -601,7 +601,7 @@ export function V2PlanSheet({
         ))}
       </div>
 
-      <div className="v2-font-display" style={{ padding: "16px 16px 24px", display: "flex", gap: 8 }}>
+      <div className="v2-font-display" style={{ padding: "var(--v2-s-4) var(--v2-s-4) var(--v2-s-6)", display: "flex", gap: "var(--v2-s-2)" }}>
         <Link
           href="/calendar"
           onClick={onClose}
@@ -611,8 +611,8 @@ export function V2PlanSheet({
             type="button"
             style={{
               width: "100%",
-              minHeight: 44,
-              padding: "10px 18px",
+              minHeight: "var(--v2-s-8)",
+              padding: "var(--v2-s-3) var(--v2-s-5)",
               borderRadius: "var(--v2-r-2)",
               background: "var(--v2-paper-2)",
               color: "var(--v2-ink)",
@@ -623,7 +623,7 @@ export function V2PlanSheet({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 6,
+              gap: "var(--v2-s-1)",
             }}
           >
             <span
@@ -645,8 +645,8 @@ export function V2PlanSheet({
             type="button"
             style={{
               width: "100%",
-              minHeight: 44,
-              padding: "10px 18px",
+              minHeight: "var(--v2-s-8)",
+              padding: "var(--v2-s-3) var(--v2-s-5)",
               borderRadius: "var(--v2-r-2)",
               background: "var(--v2-accent)",
               color: "var(--v2-ink-on-accent)",
@@ -657,7 +657,7 @@ export function V2PlanSheet({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 6,
+              gap: "var(--v2-s-1)",
             }}
           >
             <span

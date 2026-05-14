@@ -24,7 +24,7 @@ function NavRow({ item }: { item: NavItem }) {
         borderRadius: "var(--v2-r-3)",
         background: "var(--v2-paper-2)",
         textDecoration: "none",
-        minHeight: 64,
+        minHeight: "var(--v2-s-9)",
       }}
     >
       <span
@@ -96,8 +96,8 @@ export default async function WorkoutLogOverridesPage() {
   ];
 
   return (
-    <div style={{ padding: "16px 16px 32px" }}>
-      <div style={{ padding: "0 8px 16px" }}>
+    <div style={{ padding: "var(--v2-s-4) var(--v2-s-4) var(--v2-s-7)" }}>
+      <div style={{ padding: "0px var(--v2-s-2) var(--v2-s-4)" }}>
         <p className="v2-eyebrow">
           {locale === "ko" ? "세션 조정" : "SESSION ADJUSTMENTS"}
         </p>
@@ -118,8 +118,8 @@ export default async function WorkoutLogOverridesPage() {
             href={APP_ROUTES.todayLog}
             icon="arrow_back"
             style={{
-              minHeight: 44,
-              padding: "10px 18px",
+              minHeight: "var(--v2-s-8)",
+              padding: "var(--v2-s-3) var(--v2-s-5)",
               borderRadius: "var(--v2-r-pill)",
               fontSize: 13,
             }}
@@ -129,13 +129,13 @@ export default async function WorkoutLogOverridesPage() {
         </div>
       </div>
 
-      <div style={{ padding: "8px 8px 8px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-2) var(--v2-s-2)" }}>
         <div className="v2-label">
           {locale === "ko" ? "오버라이드 동작" : "Override Actions"}
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
         {overrideItems.map((item) => (
           <NavRow key={`${item.href}-${item.iconSymbol}`} item={item} />
         ))}

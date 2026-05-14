@@ -385,9 +385,9 @@ export function WorkoutLogKeypadPanel({
             flexDirection: "column",
             alignItems: "center",
             justifyContent: "center",
-            padding: "32px 24px",
+            padding: "var(--v2-s-7) var(--v2-s-6)",
             textAlign: "center",
-            gap: 12,
+            gap: "var(--v2-s-3)",
           }}
         >
           <p className="v2-small" style={{ color: "var(--v2-ink-3)" }}>
@@ -402,7 +402,7 @@ export function WorkoutLogKeypadPanel({
               className="v2-font-display"
               style={{
                 marginTop: 8,
-                padding: "12px 18px",
+                padding: "var(--v2-s-3) var(--v2-s-5)",
                 borderRadius: "var(--v2-r-2)",
                 border: "none",
                 background: "var(--v2-accent)",
@@ -410,7 +410,7 @@ export function WorkoutLogKeypadPanel({
                 fontWeight: 700,
                 fontSize: 13,
                 cursor: "pointer",
-                minHeight: 44,
+                minHeight: "var(--v2-s-8)",
               }}
             >
               {locale === "ko" ? "운동 추가" : "Add exercise"}
@@ -432,9 +432,9 @@ export function WorkoutLogKeypadPanel({
       {/* 운동 picker (+ 운동 추가 타일) */}
       <div
         style={{
-          padding: "6px 12px",
+          padding: "var(--v2-s-1) var(--v2-s-3)",
           display: "flex",
-          gap: 4,
+          gap: "var(--v2-s-1)",
           overflowX: "auto",
           scrollbarWidth: "none",
           flexShrink: 0,
@@ -467,7 +467,7 @@ export function WorkoutLogKeypadPanel({
               className="v2-font-display"
               style={{
                 flex: "1 0 auto",
-                padding: "8px 12px",
+                padding: "var(--v2-s-2) var(--v2-s-3)",
                 borderRadius: "var(--v2-r-2)",
                 border: "none",
                 cursor: "pointer",
@@ -482,7 +482,7 @@ export function WorkoutLogKeypadPanel({
                 alignItems: "flex-start",
                 gap: 2,
                 minWidth: 100,
-                minHeight: 40,
+                minHeight: "var(--v2-s-8)",
                 textAlign: "left",
               }}
             >
@@ -494,7 +494,7 @@ export function WorkoutLogKeypadPanel({
                   width: "100%",
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: "var(--v2-s-1)",
                 }}
               >
                 {ex.exerciseName}
@@ -502,7 +502,7 @@ export function WorkoutLogKeypadPanel({
                   <span
                     style={{
                       fontSize: 8,
-                      padding: "1px 4px",
+                      padding: "1px var(--v2-s-1)",
                       borderRadius: "var(--v2-r-0)",
                       background: isActive
                         ? "rgba(255,255,255,0.16)"
@@ -538,14 +538,14 @@ export function WorkoutLogKeypadPanel({
             aria-label={locale === "ko" ? "운동 추가" : "Add exercise"}
             style={{
               flexShrink: 0,
-              padding: "8px 12px",
+              padding: "var(--v2-s-2) var(--v2-s-3)",
               borderRadius: "var(--v2-r-2)",
               border: "none",
               cursor: "pointer",
               background: "var(--v2-paper-2)",
               color: "var(--v2-accent)",
               minWidth: 48,
-              minHeight: 40,
+              minHeight: "var(--v2-s-8)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -564,8 +564,8 @@ export function WorkoutLogKeypadPanel({
 
       {/* 세트 진행 dot */}
       {activeExercise && (
-        <div style={{ padding: "0 16px 6px", flexShrink: 0 }}>
-          <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ padding: "0px var(--v2-s-4) var(--v2-s-1)", flexShrink: 0 }}>
+          <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
             {activeExercise.set.repsPerSet.map((_, i) => {
               let filled = false;
               if (activeExercise.source === "PROGRAM") {
@@ -607,10 +607,10 @@ export function WorkoutLogKeypadPanel({
       {previousSessionForActive && (
         <div
           style={{
-            padding: "0 16px 6px",
+            padding: "0px var(--v2-s-4) var(--v2-s-1)",
             display: "flex",
             alignItems: "center",
-            gap: 8,
+            gap: "var(--v2-s-2)",
             flexShrink: 0,
             overflow: "hidden",
           }}
@@ -640,7 +640,7 @@ export function WorkoutLogKeypadPanel({
           <div
             style={{
               display: "flex",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               overflowX: "auto",
               scrollbarWidth: "none",
               flex: 1,
@@ -653,7 +653,7 @@ export function WorkoutLogKeypadPanel({
                 className="v2-mono-label"
                 style={{
                   flexShrink: 0,
-                  padding: "2px 6px",
+                  padding: "2px var(--v2-s-1)",
                   borderRadius: "var(--v2-r-0)",
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink-2)",
@@ -677,7 +677,7 @@ export function WorkoutLogKeypadPanel({
       )}
 
       {/* 빅 넘버 디스플레이 */}
-      <div style={{ padding: "4px 12px 0", flexShrink: 0 }}>
+      <div style={{ padding: "var(--v2-s-1) var(--v2-s-3) 0px", flexShrink: 0 }}>
         <V2Card padding="10px 14px">
           <FieldDisplay
             label={locale === "ko" ? "중량" : "Weight"}
@@ -696,7 +696,7 @@ export function WorkoutLogKeypadPanel({
             style={{
               display: "grid",
               gridTemplateColumns: "1fr 1fr",
-              gap: 12,
+              gap: "var(--v2-s-3)",
               alignItems: "center",
             }}
           >
@@ -761,9 +761,9 @@ export function WorkoutLogKeypadPanel({
       {activeExercise && onExerciseAction && (
         <div
           style={{
-            padding: "6px 12px 0",
+            padding: "var(--v2-s-1) var(--v2-s-3) 0px",
             display: "flex",
-            gap: 6,
+            gap: "var(--v2-s-1)",
             alignItems: "stretch",
             flexWrap: "wrap",
             flexShrink: 0,
@@ -776,7 +776,7 @@ export function WorkoutLogKeypadPanel({
             aria-label={locale === "ko" ? "현재 세트 삭제" : "Remove set"}
             className="v2-font-display"
             style={{
-              padding: "8px 10px",
+              padding: "var(--v2-s-2) var(--v2-s-3)",
               borderRadius: "var(--v2-r-2)",
               border: "none",
               background: "var(--v2-paper-2)",
@@ -784,11 +784,11 @@ export function WorkoutLogKeypadPanel({
               fontWeight: 600,
               fontSize: 12,
               cursor: canRemoveSet ? "pointer" : "not-allowed",
-              minHeight: 38,
+              minHeight: "var(--v2-s-7)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
+              gap: "var(--v2-s-1)",
             }}
           >
             <span
@@ -807,7 +807,7 @@ export function WorkoutLogKeypadPanel({
             aria-label={locale === "ko" ? "세트 추가" : "Add set"}
             className="v2-font-display"
             style={{
-              padding: "8px 10px",
+              padding: "var(--v2-s-2) var(--v2-s-3)",
               borderRadius: "var(--v2-r-2)",
               border: "none",
               background: "var(--v2-paper-2)",
@@ -815,11 +815,11 @@ export function WorkoutLogKeypadPanel({
               fontWeight: 700,
               fontSize: 12,
               cursor: "pointer",
-              minHeight: 38,
+              minHeight: "var(--v2-s-7)",
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
+              gap: "var(--v2-s-1)",
             }}
           >
             <span
@@ -843,7 +843,7 @@ export function WorkoutLogKeypadPanel({
               }
               className="v2-font-display"
               style={{
-                padding: "8px 10px",
+                padding: "var(--v2-s-2) var(--v2-s-3)",
                 borderRadius: "var(--v2-r-2)",
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink)",
@@ -852,10 +852,10 @@ export function WorkoutLogKeypadPanel({
                 display: "inline-flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: 4,
+                gap: "var(--v2-s-1)",
                 fontWeight: 700,
                 fontSize: 12,
-                minHeight: 38,
+                minHeight: "var(--v2-s-7)",
               }}
             >
               <span
@@ -882,7 +882,7 @@ export function WorkoutLogKeypadPanel({
             aria-label={locale === "ko" ? "메모" : "Memo"}
             className="v2-font-display"
             style={{
-              padding: "8px 10px",
+              padding: "var(--v2-s-2) var(--v2-s-3)",
               borderRadius: "var(--v2-r-2)",
               background: memoMode ? "var(--v2-accent)" : "var(--v2-paper-2)",
               color: memoMode
@@ -893,10 +893,10 @@ export function WorkoutLogKeypadPanel({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               fontWeight: 700,
               fontSize: 12,
-              minHeight: 38,
+              minHeight: "var(--v2-s-7)",
             }}
           >
             <span
@@ -919,7 +919,7 @@ export function WorkoutLogKeypadPanel({
             background: "var(--v2-paper-2)",
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            padding: "12px 12px 16px",
+            padding: "var(--v2-s-3) var(--v2-s-3) var(--v2-s-4)",
             marginTop: 8,
             flexShrink: 0,
           }}
@@ -943,7 +943,7 @@ export function WorkoutLogKeypadPanel({
               borderRadius: "var(--v2-r-2)",
               background: "var(--v2-paper)",
               fontSize: 14,
-              minHeight: 100,
+              minHeight: "var(--v2-s-9)",
               width: "100%",
             }}
           />
@@ -954,7 +954,7 @@ export function WorkoutLogKeypadPanel({
             background: "var(--v2-paper-2)",
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            padding: "8px 10px 12px",
+            padding: "var(--v2-s-2) var(--v2-s-3) var(--v2-s-3)",
             marginTop: 8,
             flexShrink: 0,
           }}
@@ -963,7 +963,7 @@ export function WorkoutLogKeypadPanel({
             style={{
               display: "grid",
               gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 4,
+              gap: "var(--v2-s-1)",
             }}
           >
             {keysFor(activeField).map((k, i) => (
@@ -1022,9 +1022,9 @@ function FieldDisplay({
         display: "flex",
         alignItems: "baseline",
         justifyContent: "space-between",
-        gap: 8,
+        gap: "var(--v2-s-2)",
         cursor: "pointer",
-        padding: "2px 0",
+        padding: "2px 0px",
         opacity: active ? 1 : 0.5,
         background: "transparent",
         border: "none",
@@ -1042,7 +1042,7 @@ function FieldDisplay({
         style={{
           display: "inline-flex",
           alignItems: "baseline",
-          gap: 6,
+          gap: "var(--v2-s-1)",
           flex: 1,
           justifyContent: "flex-end",
         }}

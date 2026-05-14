@@ -60,8 +60,8 @@ export function V2ForgotPasswordForm() {
           : "Send a reset link to the email used for this account."
       }
     >
-      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-        <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <form onSubmit={onSubmit} style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-4)" }}>
+        <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
           <span className="v2-label">{locale === "ko" ? "이메일" : "Email"}</span>
           <span style={inputShellStyle}>
             <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>
@@ -204,7 +204,7 @@ export function Status({
       className="v2-font-display"
       style={{
         marginTop: 8,
-        padding: "10px 14px",
+        padding: "var(--v2-s-3) var(--v2-s-4)",
         borderRadius: "var(--v2-r-2)",
         background: `color-mix(in srgb, ${color} 14%, var(--v2-paper))`,
         color,
@@ -230,9 +230,9 @@ export const inputStyle: CSSProperties = {
 export const inputShellStyle: CSSProperties = {
   display: "flex",
   alignItems: "center",
-  gap: 10,
-  minHeight: 52,
-  padding: "8px 14px",
+  gap: "var(--v2-s-3)",
+  minHeight: "var(--v2-s-8)",
+  padding: "var(--v2-s-2) var(--v2-s-4)",
   borderRadius: "var(--v2-r-2)",
   background: "var(--v2-paper-2)",
 };

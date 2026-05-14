@@ -110,7 +110,7 @@ export function V2ResetPasswordForm() {
             ? "앞으로 이 비밀번호로 로그인할 수 있어요. 다른 사이트와 다르게 만드세요."
             : "Use this password from now on. Make it different from other sites."}
         </p>
-        <form onSubmit={onSubmit} style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 14 }}>
+        <form onSubmit={onSubmit} style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: "var(--v2-s-4)" }}>
           <PwField
             label={locale === "ko" ? "새 비밀번호" : "New password"}
             value={password}
@@ -152,7 +152,7 @@ function PwField({
   onChange: (v: string) => void;
 }) {
   return (
-    <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+    <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
       <span className="v2-label">{label}</span>
       <span style={inputShellStyle}>
         <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>

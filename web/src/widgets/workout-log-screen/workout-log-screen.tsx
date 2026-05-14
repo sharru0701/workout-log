@@ -309,7 +309,7 @@ function WorkoutLogScreenContent({
             flex: 1,
             flexDirection: "column",
             minHeight: 0,
-            gap: 6,
+            gap: "var(--v2-s-1)",
             overflow: "hidden",
             marginBottom: "calc((var(--v2-s-7) + 32px) * -1)",
           }}
@@ -319,7 +319,7 @@ function WorkoutLogScreenContent({
             style={{
               display: "flex",
               flexDirection: "column",
-              gap: 6,
+              gap: "var(--v2-s-1)",
               flexShrink: 0,
             }}
           >
@@ -335,8 +335,8 @@ function WorkoutLogScreenContent({
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: 4,
-                padding: "6px 10px",
+                gap: "var(--v2-s-1)",
+                padding: "var(--v2-s-1) var(--v2-s-3)",
                 borderRadius: "var(--v2-r-2)",
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink)",
@@ -344,7 +344,7 @@ function WorkoutLogScreenContent({
                 cursor: isEditingExistingLog ? "default" : "pointer",
                 fontWeight: 700,
                 fontSize: 12,
-                minHeight: 36,
+                minHeight: "var(--v2-s-7)",
                 width: "100%",
                 textAlign: "left",
                 justifyContent: "space-between",
@@ -378,7 +378,7 @@ function WorkoutLogScreenContent({
             <div
               style={{
                 display: "flex",
-                gap: 4,
+                gap: "var(--v2-s-1)",
                 alignItems: "stretch",
               }}
             >
@@ -389,8 +389,8 @@ function WorkoutLogScreenContent({
                     display: "inline-flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    gap: 4,
-                    padding: "6px 10px",
+                    gap: "var(--v2-s-1)",
+                    padding: "var(--v2-s-1) var(--v2-s-3)",
                     borderRadius: "var(--v2-r-2)",
                     background:
                       "color-mix(in srgb, var(--v2-accent) 14%, var(--v2-paper))",
@@ -398,7 +398,7 @@ function WorkoutLogScreenContent({
                     fontWeight: 700,
                     fontSize: 12,
                     letterSpacing: "0.04em",
-                    minHeight: 36,
+                    minHeight: "var(--v2-s-7)",
                     flexShrink: 0,
                   }}
                   aria-label={
@@ -440,8 +440,8 @@ function WorkoutLogScreenContent({
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: 6,
-                  padding: "8px 10px",
+                  gap: "var(--v2-s-1)",
+                  padding: "var(--v2-s-2) var(--v2-s-3)",
                   borderRadius: "var(--v2-r-2)",
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
@@ -449,7 +449,7 @@ function WorkoutLogScreenContent({
                   cursor: "pointer",
                   fontWeight: 700,
                   fontSize: 12,
-                  minHeight: 36,
+                  minHeight: "var(--v2-s-7)",
                   flexShrink: 0,
                 }}
               >
@@ -505,8 +505,8 @@ function WorkoutLogScreenContent({
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              gap: 6,
-              padding: "8px 14px",
+              gap: "var(--v2-s-1)",
+              padding: "var(--v2-s-2) var(--v2-s-4)",
               borderRadius: "var(--v2-r-2)",
               background:
                 workflowState === "saving"
@@ -523,7 +523,7 @@ function WorkoutLogScreenContent({
               fontSize: 12,
               textTransform: "uppercase",
               letterSpacing: "0.06em",
-              minHeight: 38,
+              minHeight: "var(--v2-s-7)",
               flexShrink: 0,
             }}
           >
@@ -611,11 +611,11 @@ function DateNav({
         display: "inline-flex",
         alignItems: "center",
         justifyContent: "space-between",
-        gap: 6,
-        padding: "4px 10px",
+        gap: "var(--v2-s-1)",
+        padding: "var(--v2-s-1) var(--v2-s-3)",
         borderRadius: "var(--v2-r-2)",
         background: "var(--v2-paper-2)",
-        minHeight: 36,
+        minHeight: "var(--v2-s-7)",
         ...style,
       }}
     >

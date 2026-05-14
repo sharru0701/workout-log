@@ -47,7 +47,7 @@ function SectionTitle({
   description?: string;
 }) {
   return (
-    <div style={{ display: "grid", gap: 4 }}>
+    <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
       <p className="v2-label">{label}</p>
       <h2 className="v2-h2" style={{ fontSize: 22, letterSpacing: 0 }}>
         {title}
@@ -82,13 +82,13 @@ function MetricCard({
       padding="16px"
       radius="var(--v2-r-1)"
       style={{
-        minHeight: 132,
+        minHeight: "var(--v2-s-9)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--v2-s-3)" }}>
         <p className="v2-label" style={{ color: "var(--v2-ink-2)" }}>
           {label}
         </p>
@@ -101,7 +101,7 @@ function MetricCard({
         </span>
       </div>
       <div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "var(--v2-s-1)" }}>
           <span
             className="v2-num-md v2-font-display"
             style={{ color: "var(--v2-ink)", letterSpacing: 0 }}
@@ -155,7 +155,7 @@ function PrList({
   }
 
   return (
-    <div style={{ display: "grid", gap: 8 }}>
+    <div style={{ display: "grid", gap: "var(--v2-s-2)" }}>
       {items.slice(0, 8).map((row) => {
         const improvement = row.improvement;
         const tone = improvement > 0 ? "success" : "neutral";
@@ -168,7 +168,7 @@ function PrList({
                 display: "grid",
                 gridTemplateColumns: "minmax(0, 1fr) auto auto",
                 alignItems: "center",
-                gap: 12,
+                gap: "var(--v2-s-3)",
               }}
             >
               <div className="v2-font-display" style={{ minWidth: 0 }}>
@@ -300,7 +300,7 @@ export function StatsScreen({
             paddingTop: "var(--v2-s-2)",
           }}
         >
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <p className="v2-label">{locale === "ko" ? "퍼포먼스" : "Performance"}</p>
             <h1 className="v2-h1" style={{ letterSpacing: 0 }}>
               {locale === "ko" ? "통계" : "Stats"}
@@ -400,7 +400,7 @@ export function StatsScreen({
             style={{
               display: "grid",
               gridTemplateColumns: "minmax(0, 1fr) auto",
-              gap: 12,
+              gap: "var(--v2-s-3)",
               alignItems: "end",
             }}
           >
@@ -413,7 +413,7 @@ export function StatsScreen({
                   : "Review recent 90-day best lifts and improvement by exercise."
               }
             />
-            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: "var(--v2-s-2)", alignItems: "center" }}>
               {latestPoint ? (
                 <V2Chip tone="accent" icon="bolt">
                   {locale === "ko" ? "최근 " : "Latest "}
@@ -428,7 +428,7 @@ export function StatsScreen({
                   letterSpacing: "0.04em",
                   color: "var(--v2-accent-ink)",
                   textDecoration: "none",
-                  padding: "6px 10px",
+                  padding: "var(--v2-s-1) var(--v2-s-3)",
                   borderRadius: "var(--v2-r-pill)",
                   background: "var(--v2-accent-weak)",
                 }}

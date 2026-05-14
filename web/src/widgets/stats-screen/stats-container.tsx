@@ -51,7 +51,7 @@ export function StatsContainer() {
 
   if (error) {
     return (
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: "var(--v2-s-6)" }}>
         <p className="v2-small" style={{ color: "var(--v2-c-danger)" }}>
           {error}
         </p>
@@ -61,7 +61,7 @@ export function StatsContainer() {
 
   if (!bootstrap) {
     return (
-      <div style={{ padding: 24 }}>
+      <div style={{ padding: "var(--v2-s-6)" }}>
         <p className="v2-small" style={{ color: "var(--v2-ink-2)" }}>
           {locale === "ko" ? "통계 데이터를 불러오는 중…" : "Loading stats…"}
         </p>

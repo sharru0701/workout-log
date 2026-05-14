@@ -325,7 +325,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                     alignItems: "center",
                     gap: "var(--v2-s-2)",
                     marginBottom: "var(--v2-s-3)",
-                    padding: "10px 14px",
+                    padding: "var(--v2-s-3) var(--v2-s-4)",
                     background: "var(--v2-accent-weak)",
                     borderRadius: "var(--v2-r-2)",
                   }}
@@ -363,7 +363,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                       fontSize: 12,
                       fontWeight: 700,
                       color: "var(--v2-accent)",
-                      padding: "4px 8px",
+                      padding: "var(--v2-s-1) var(--v2-s-2)",
                       borderRadius: "var(--v2-r-1)",
                       flexShrink: 0,
                     }}
@@ -444,7 +444,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
             style={{
               width: "100%",
               marginTop: "var(--v2-s-3)",
-              padding: "10px",
+              padding: "var(--v2-s-3)",
               background: "var(--v2-paper-3)",
               border: "none",
               borderRadius: "var(--v2-r-2)",
@@ -474,10 +474,10 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
             style={{
               background: "var(--v2-paper-2)",
               borderRadius: "var(--v2-r-2)",
-              padding: "10px 14px",
+              padding: "var(--v2-s-3) var(--v2-s-4)",
               display: "flex",
               flexDirection: "column",
-              gap: 4,
+              gap: "var(--v2-s-1)",
             }}
           >
             {showRuleInfo ? (
@@ -507,7 +507,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: 6,
+            gap: "var(--v2-s-1)",
           }}
         >
           <span className="v2-eyebrow v2-font-display">

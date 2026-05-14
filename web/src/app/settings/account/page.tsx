@@ -597,8 +597,8 @@ export default function SettingsAccountPage() {
           <div
             style={{
               display: "grid",
-              gap: 10,
-              padding: "12px 0",
+              gap: "var(--v2-s-3)",
+              padding: "var(--v2-s-3) 0px",
             }}
           >
             <label
@@ -620,7 +620,7 @@ export default function SettingsAccountPage() {
                   display: "block",
                   width: "100%",
                   marginTop: 6,
-                  padding: "10px 12px",
+                  padding: "var(--v2-s-3) var(--v2-s-3)",
                   borderRadius: "var(--v2-r-2)",
                   border: "none",
                   background: "var(--v2-paper-2)",
@@ -649,7 +649,7 @@ export default function SettingsAccountPage() {
                   display: "block",
                   width: "100%",
                   marginTop: 6,
-                  padding: "10px 12px",
+                  padding: "var(--v2-s-3) var(--v2-s-3)",
                   borderRadius: "var(--v2-r-2)",
                   border: "none",
                   background: "var(--v2-paper-2)",
@@ -801,7 +801,7 @@ export default function SettingsAccountPage() {
               display: "block",
               width: "100%",
               marginTop: 6,
-              padding: "10px 12px",
+              padding: "var(--v2-s-3) var(--v2-s-3)",
               borderRadius: "var(--v2-r-2)",
               border: "none",
               background: "var(--v2-paper-2)",

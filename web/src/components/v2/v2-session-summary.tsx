@@ -201,7 +201,7 @@ function BigStat({
         style={{
           display: "flex",
           alignItems: "baseline",
-          gap: 4,
+          gap: "var(--v2-s-1)",
           marginTop: 8,
         }}
       >
@@ -225,7 +225,7 @@ function BigStat({
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 6,
+            gap: "var(--v2-s-1)",
             marginTop: 6,
           }}
         >
@@ -379,7 +379,7 @@ export function V2SessionSummary({
   return (
     <div
       style={{
-        padding: "8px 0 16px",
+        padding: "var(--v2-s-2) 0px var(--v2-s-4)",
         display: "flex",
         flexDirection: "column",
         gap: 0,
@@ -388,7 +388,7 @@ export function V2SessionSummary({
       {/* ── 히어로 ── */}
       <div
         style={{
-          padding: "20px 24px 24px",
+          padding: "var(--v2-s-5) var(--v2-s-6) var(--v2-s-6)",
           textAlign: "center",
           position: "relative",
           overflow: "hidden",
@@ -442,10 +442,10 @@ export function V2SessionSummary({
       {/* ── BigStats ── */}
       <div
         style={{
-          padding: "0 16px",
+          padding: "0px var(--v2-s-4)",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: 8,
+          gap: "var(--v2-s-2)",
         }}
       >
         <BigStat
@@ -484,10 +484,10 @@ export function V2SessionSummary({
       {summary.prCards.length > 0 && (
         <div
           style={{
-            padding: "12px 16px 0",
+            padding: "var(--v2-s-3) var(--v2-s-4) 0px",
             display: "flex",
             flexDirection: "column",
-            gap: 8,
+            gap: "var(--v2-s-2)",
           }}
         >
           {summary.prCards.map((p) => {
@@ -512,7 +512,7 @@ export function V2SessionSummary({
                   style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 12,
+                    gap: "var(--v2-s-3)",
                   }}
                 >
                   <span
@@ -585,12 +585,12 @@ export function V2SessionSummary({
       {/* ── 운동별 요약 ── */}
       {summary.exerciseSummaries.length > 0 && (
         <>
-          <div style={{ padding: "24px 24px 8px" }}>
+          <div style={{ padding: "var(--v2-s-6) var(--v2-s-6) var(--v2-s-2)" }}>
             <div className="v2-label">
               {locale === "ko" ? "운동별" : "By exercise"}
             </div>
           </div>
-          <div style={{ padding: "0 16px" }}>
+          <div style={{ padding: "0px var(--v2-s-4)" }}>
             {summary.exerciseSummaries.map((ex, i) => {
               const isPr = summary.prKeys.has(
                 ex.name.trim().toLowerCase(),
@@ -599,13 +599,13 @@ export function V2SessionSummary({
                 <V2Card
                   key={`${ex.name}-${i}`}
                   tone="paper"
-                  style={{ marginBottom: 6, padding: "14px 16px" }}
+                  style={{ marginBottom: 6, padding: "var(--v2-s-4) var(--v2-s-4)" }}
                 >
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 12,
+                      gap: "var(--v2-s-3)",
                     }}
                   >
                     <div
@@ -635,7 +635,7 @@ export function V2SessionSummary({
                         style={{
                           display: "flex",
                           alignItems: "center",
-                          gap: 6,
+                          gap: "var(--v2-s-1)",
                         }}
                       >
                         <span
@@ -695,7 +695,7 @@ export function V2SessionSummary({
 
       {/* ── 노트 ── */}
       {log.notes && log.notes.trim().length > 0 && (
-        <div style={{ padding: "16px 16px 0" }}>
+        <div style={{ padding: "var(--v2-s-4) var(--v2-s-4) 0px" }}>
           <V2Card>
             <div className="v2-label">
               {locale === "ko" ? "노트" : "Notes"}
@@ -713,9 +713,9 @@ export function V2SessionSummary({
       {/* ── 액션 ── */}
       <div
         style={{
-          padding: "20px 16px 8px",
+          padding: "var(--v2-s-5) var(--v2-s-4) var(--v2-s-2)",
           display: "flex",
-          gap: 8,
+          gap: "var(--v2-s-2)",
         }}
       >
         <Link
@@ -747,7 +747,7 @@ export function V2PRCard({
   const delta = previousBestKg ? topWeightKg - previousBestKg : null;
 
   return (
-    <div style={{ padding: "8px 16px 0" }}>
+    <div style={{ padding: "var(--v2-s-2) var(--v2-s-4) 0px" }}>
       <V2Card
         padding="20px"
         style={{
@@ -755,7 +755,7 @@ export function V2PRCard({
             "color-mix(in srgb, var(--v2-c-pr) 12%, var(--v2-paper))",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-3)" }}>
           <span
             className="material-symbols-outlined"
             style={{
@@ -791,7 +791,7 @@ export function V2PRCard({
             </div>
           </div>
         </div>
-        <div style={{ display: "flex", gap: 6, marginTop: 12 }}>
+        <div style={{ display: "flex", gap: "var(--v2-s-1)", marginTop: 12 }}>
           <V2Chip tone="pr" icon="trending_up">
             {locale === "ko" ? "기록" : "Record"}
           </V2Chip>

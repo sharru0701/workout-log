@@ -189,7 +189,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
+            gap: "var(--v2-s-3)",
             marginBottom: 32,
           }}
         >
@@ -288,7 +288,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
             marginTop: googleAvailable ? 14 : 28,
             display: "flex",
             flexDirection: "column",
-            gap: 14,
+            gap: "var(--v2-s-4)",
           }}
         >
           <Field
@@ -384,7 +384,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                gap: 12,
+                gap: "var(--v2-s-3)",
                 marginTop: -4,
               }}
             >
@@ -402,7 +402,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                   fontSize: 13,
                   fontWeight: 700,
                   textDecoration: "none",
-                  padding: "8px 0",
+                  padding: "var(--v2-s-2) 0px",
                   flexShrink: 0,
                 }}
               >
@@ -418,9 +418,9 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
+                gap: "var(--v2-s-1)",
                 marginTop: 2,
-                padding: "11px 14px",
+                padding: "var(--v2-s-3) var(--v2-s-4)",
                 borderRadius: "var(--v2-r-2)",
                 background:
                   "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
@@ -442,7 +442,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
               type="submit"
               icon={isSignup ? "arrow_forward" : "arrow_forward"}
               disabled={submitting}
-              style={{ borderRadius: "var(--v2-r-2)", minHeight: 52 }}
+              style={{ borderRadius: "var(--v2-r-2)", minHeight: "var(--v2-s-8)" }}
             >
               {submitting
                 ? locale === "ko"
@@ -547,8 +547,8 @@ function Field({
 
 function StrengthMeter({ score, label }: { score: number; label: string }) {
   return (
-    <div style={{ display: "grid", gap: 7, marginTop: -4 }}>
-      <div style={{ display: "flex", gap: 4 }}>
+    <div style={{ display: "grid", gap: "var(--v2-s-2)", marginTop: -4 }}>
+      <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
         {[1, 2, 3, 4].map((i) => (
           <span
             key={i}
@@ -594,7 +594,7 @@ function CheckboxRow({
       style={{
         display: "flex",
         alignItems: "flex-start",
-        gap: 10,
+        gap: "var(--v2-s-3)",
         minHeight: compact ? 36 : 44,
         padding: compact ? "6px 4px" : "10px 4px",
         cursor: "pointer",
@@ -663,7 +663,7 @@ function Divider({ label }: { label: string }) {
       style={{
         display: "flex",
         alignItems: "center",
-        gap: 10,
+        gap: "var(--v2-s-3)",
         color: "var(--v2-ink-3)",
         fontSize: 11,
         fontWeight: 700,
