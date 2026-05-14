@@ -323,7 +323,7 @@ export const CalendarSelectedDateSection = memo(
               }}
             >
               <label
-                className="v2-pressable"
+                className="v2-pressable v2-font-display"
                 style={{
                   flex: 1,
                   position: "relative",
@@ -336,7 +336,6 @@ export const CalendarSelectedDateSection = memo(
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
                   cursor: "pointer",
-                  fontFamily: "var(--v2-f-display)",
                   fontSize: 13,
                   fontWeight: 700,
                 }}

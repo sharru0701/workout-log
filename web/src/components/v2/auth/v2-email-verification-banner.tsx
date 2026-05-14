@@ -87,7 +87,7 @@ export function V2EmailVerificationBanner() {
         mark_email_unread
       </span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontFamily: "var(--v2-f-display)", fontSize: 13, fontWeight: 700 }}>
+        <div className="v2-font-display" style={{ fontSize: 13, fontWeight: 700 }}>
           {locale === "ko" ? "이메일 인증을 완료해 주세요" : "Complete email verification"}
         </div>
         <div
@@ -164,12 +164,12 @@ function InlineAction({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      className="v2-font-display"
       style={{
         border: "none",
         background: "transparent",
         color: "var(--v2-accent-ink)",
         padding: 0,
-        fontFamily: "var(--v2-f-display)",
         fontSize: 12,
         fontWeight: 800,
         cursor: disabled ? "default" : "pointer",

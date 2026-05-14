@@ -19,7 +19,6 @@ const PILL_STYLE = {
   borderRadius: "var(--v2-r-2)",
   padding: "8px 14px",
   cursor: "pointer",
-  fontFamily: "var(--v2-f-display)",
   fontSize: 12,
   fontWeight: 700,
   letterSpacing: "0.06em",
@@ -54,7 +53,7 @@ export const CalendarFilterBar = memo(function CalendarFilterBar({
               ? "플랜 선택"
               : "Select plan"
         }
-        className="v2-pressable"
+        className="v2-pressable v2-font-display"
         style={{
           ...PILL_STYLE,
           justifyContent: "space-between",

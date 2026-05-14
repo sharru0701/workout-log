@@ -77,7 +77,7 @@ export function AppLaunchSplash() {
           style={{ borderRadius: "20%" }}
           priority
         />
-        <p style={{ fontFamily: "var(--v2-f-display)", fontSize: 22, fontWeight: 700, color: "var(--v2-ink)", margin: 0 }}>
+        <p className="v2-font-display" style={{ fontSize: 22, fontWeight: 700, color: "var(--v2-ink)", margin: 0 }}>
           Workout Log
         </p>
         <div aria-hidden="true" style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)", color: "var(--v2-ink-2)" }}>

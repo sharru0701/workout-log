@@ -109,7 +109,7 @@ export function E1RMInteractiveChart({
           const y = padY + drawHeight * ratio;
           const value = chartGeometry.max - chartGeometry.span * ratio;
           return (
-            <g key={ratio} style={{ color: "var(--v2-hairline)" }}>
+            <g className="v2-font-num" key={ratio} style={{ color: "var(--v2-hairline)" }}>
               <line
                 x1={padX}
                 y1={y}
@@ -128,7 +128,6 @@ export function E1RMInteractiveChart({
                   fill: "var(--v2-ink-3)",
                   fontSize: 14,
                   fontVariantNumeric: "tabular-nums",
-                  fontFamily: "var(--v2-f-num)",
                 }}
               >
                 {value.toFixed(0)}
@@ -157,7 +156,7 @@ export function E1RMInteractiveChart({
               const pos = chartGeometry.points[index];
               if (!pos) return null;
               return (
-                <g key={`pr-${point.date}`} aria-hidden>
+                <g className="v2-font-display" key={`pr-${point.date}`} aria-hidden>
                   <circle
                     cx={pos.x}
                     cy={pos.y}
@@ -172,7 +171,6 @@ export function E1RMInteractiveChart({
                     y={pos.y + 4.5}
                     textAnchor="middle"
                     style={{
-                      fontFamily: "var(--v2-f-display)",
                       fontSize: 11,
                       fontWeight: 800,
                       fill: "var(--v2-ink-on-accent)",

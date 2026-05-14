@@ -90,7 +90,6 @@ export function V2ActionDock({
           gap: 2,
           minHeight: 48,
           textDecoration: "none",
-          fontFamily: "var(--v2-f-display)",
           fontSize: 10,
           fontWeight: 700,
           whiteSpace: "nowrap",
@@ -106,6 +105,7 @@ export function V2ActionDock({
               href={it.href}
               aria-label={it.label}
               aria-current={it.active ? "page" : undefined}
+              className="v2-font-display"
               style={styleCommon}
             >
               {inner}
@@ -125,6 +125,7 @@ export function V2ActionDock({
                 : undefined
             }
             aria-controls={it.controls}
+            className="v2-font-display"
             style={styleCommon}
           >
             {inner}

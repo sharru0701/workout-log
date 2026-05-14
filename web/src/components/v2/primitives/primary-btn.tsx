@@ -41,7 +41,6 @@ export function V2PrimaryBtn(props: ButtonProps | AnchorProps) {
     color: "var(--v2-ink-on-accent)",
     border: "none",
     cursor: "pointer",
-    fontFamily: "var(--v2-f-display)",
     fontWeight: 700,
     fontSize: 16,
     letterSpacing: "-0.01em",
@@ -51,7 +50,12 @@ export function V2PrimaryBtn(props: ButtonProps | AnchorProps) {
       "transform var(--v2-d-1) var(--v2-e-out), box-shadow var(--v2-d-1) var(--v2-e-out)",
     ...style,
   };
-  const cls = ["v2-pressable", "v2-btn-primary", className]
+  const cls = [
+    "v2-pressable",
+    "v2-btn-primary",
+    "v2-font-display",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
   const inner = (

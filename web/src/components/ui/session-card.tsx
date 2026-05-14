@@ -158,7 +158,6 @@ function TodayCard({
               borderRadius: "var(--v2-r-3)",
               background: "var(--v2-accent)",
               color: "var(--v2-ink-on-accent)",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 700,
               fontSize: 16,
               letterSpacing: "-0.01em",

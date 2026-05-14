@@ -337,7 +337,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-4)" }}>
           <div style={{ background: "var(--v2-paper)", borderRadius: 20, padding: "var(--v2-s-4)", display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
             <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
-              <span style={{ color: "var(--v2-ink-2)", fontFamily: "var(--v2-f-text)", fontSize: 13 }}>{locale === "ko" ? "운동종목 드롭다운 검색/선택" : "Search and select an exercise"}</span>
+              <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: 13 }}>{locale === "ko" ? "운동종목 드롭다운 검색/선택" : "Search and select an exercise"}</span>
               <div data-no-swipe="true">
                 <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
                   <span
@@ -435,7 +435,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                         ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
                         : selectedExerciseOption.name}
                     </strong>
-                    <V2SecondaryBtn onClick={() => selectExerciseOption(null)}>
+                    <V2SecondaryBtn className="v2-font-display" onClick={() => selectExerciseOption(null)}>
                       {locale === "ko" ? "선택 변경" : "Change Selection"}
                     </V2SecondaryBtn>
                   </div>
@@ -455,7 +455,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                     }}
                   >
                     {visibleExercises.length === 0 ? (
-                      <span style={{ color: "var(--v2-ink-2)", fontFamily: "var(--v2-f-text)", fontSize: 13 }}>{locale === "ko" ? "검색 조건에 맞는 운동종목이 없습니다." : "No exercises match the current search."}</span>
+                      <span className="v2-font-text" style={{ color: "var(--v2-ink-2)", fontSize: 13 }}>{locale === "ko" ? "검색 조건에 맞는 운동종목이 없습니다." : "No exercises match the current search."}</span>
                     ) : (
                       visibleExercises.map((exercise) => (
                         <button
@@ -471,7 +471,6 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                             border: "none",
                             borderRadius: 12,
                             textAlign: "left",
-                            fontFamily: "var(--v2-f-display)",
                             fontSize: 14,
                             color: "var(--v2-ink)",
                             cursor: "pointer",
@@ -508,7 +507,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
             />
           </div>
 
-          {sheetError ? <p style={{ margin: 0, color: "var(--v2-c-danger)", fontFamily: "var(--v2-f-text)", fontSize: 13 }}>{sheetError}</p> : null}
+          {sheetError ? <p className="v2-font-text" style={{ margin: 0, color: "var(--v2-c-danger)", fontSize: 13 }}>{sheetError}</p> : null}
         </div>
       </BottomSheet>
     </div>

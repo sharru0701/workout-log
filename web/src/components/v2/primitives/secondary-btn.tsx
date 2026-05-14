@@ -47,7 +47,6 @@ export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
     color: fg,
     border: "none",
     cursor: "pointer",
-    fontFamily: "var(--v2-f-display)",
     fontWeight: 600,
     fontSize: 14,
     textDecoration: "none",
@@ -55,7 +54,12 @@ export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
       "transform var(--v2-d-1) var(--v2-e-out), background var(--v2-d-1) var(--v2-e-out)",
     ...style,
   };
-  const cls = ["v2-pressable", "v2-btn-secondary", className]
+  const cls = [
+    "v2-pressable",
+    "v2-btn-secondary",
+    "v2-font-display",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
   const inner = (

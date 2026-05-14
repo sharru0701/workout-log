@@ -73,6 +73,7 @@ export function V2ForgotPasswordForm() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              className="v2-font-text"
               style={inputStyle}
             />
           </span>
@@ -200,6 +201,7 @@ export function Status({
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
+      className="v2-font-display"
       style={{
         marginTop: 8,
         padding: "10px 14px",
@@ -207,7 +209,6 @@ export function Status({
         background: `color-mix(in srgb, ${color} 14%, var(--v2-paper))`,
         color,
         fontSize: 13,
-        fontFamily: "var(--v2-f-display)",
         fontWeight: 600,
       }}
     >
@@ -222,7 +223,6 @@ export const inputStyle: CSSProperties = {
   border: "none",
   outline: "none",
   background: "transparent",
-  fontFamily: "var(--v2-f-text)",
   fontSize: 16,
   color: "var(--v2-ink)",
 };

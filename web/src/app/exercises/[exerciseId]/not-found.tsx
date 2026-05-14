@@ -30,7 +30,7 @@ export default function ExerciseDetailNotFound() {
         >
           운동을 찾을 수 없습니다
         </h1>
-        <p className="v2-small" style={{ color: "var(--v2-ink-2)" }}>
+        <p className="v2-small v2-font-display" style={{ color: "var(--v2-ink-2)" }}>
           존재하지 않거나 접근할 수 없는 운동입니다. 통계 페이지로 돌아가
           다른 운동을 확인하세요.
         </p>
@@ -43,7 +43,6 @@ export default function ExerciseDetailNotFound() {
             borderRadius: "var(--v2-r-1)",
             background: "var(--v2-accent)",
             color: "var(--v2-ink-on-accent)",
-            fontFamily: "var(--v2-f-display)",
             fontWeight: 700,
             fontSize: 14,
             textDecoration: "none",

@@ -148,6 +148,7 @@ function TodayDeck({
                     }}
                   >
                     <div
+                      className="v2-font-num"
                       style={{
                         width: 28,
                         height: 28,
@@ -163,7 +164,6 @@ function TodayDeck({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontFamily: "var(--v2-f-num)",
                         fontWeight: 700,
                         fontSize: 13,
                         flexShrink: 0,

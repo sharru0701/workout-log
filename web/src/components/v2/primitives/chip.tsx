@@ -70,14 +70,13 @@ export function V2Chip({
   const t = CHIP_TONES[tone];
   return (
     <span
-      className="v2-chip"
+      className="v2-chip v2-font-display"
       style={{
         display: "inline-flex",
         alignItems: "center",
         gap: 4,
         padding: "4px 10px",
         borderRadius: 9999,
-        fontFamily: "var(--v2-f-display)",
         fontSize: 11,
         fontWeight: 700,
         letterSpacing: "0.04em",

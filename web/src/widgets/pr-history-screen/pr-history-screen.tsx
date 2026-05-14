@@ -124,12 +124,12 @@ export function PrHistoryScreen({
                     aria-current={active ? "true" : undefined}
                   >
                     <span
+                      className="v2-font-display"
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
                         padding: "8px 14px",
                         borderRadius: 9999,
-                        fontFamily: "var(--v2-f-display)",
                         fontWeight: 700,
                         fontSize: 12,
                         letterSpacing: "0.04em",
@@ -150,7 +150,7 @@ export function PrHistoryScreen({
           </div>
 
           <div style={{ display: "grid", gap: 6 }}>
-            <p className="v2-label">
+            <p className="v2-label v2-font-display">
               {locale === "ko" ? "운동" : "Exercise"}
             </p>
             <div
@@ -172,7 +172,6 @@ export function PrHistoryScreen({
                     display: "inline-flex",
                     padding: "8px 14px",
                     borderRadius: 9999,
-                    fontFamily: "var(--v2-f-display)",
                     fontWeight: 700,
                     fontSize: 12,
                     letterSpacing: "0.04em",
@@ -201,11 +200,11 @@ export function PrHistoryScreen({
                     aria-current={active ? "true" : undefined}
                   >
                     <span
+                      className="v2-font-display"
                       style={{
                         display: "inline-flex",
                         padding: "8px 14px",
                         borderRadius: 9999,
-                        fontFamily: "var(--v2-f-display)",
                         fontWeight: 700,
                         fontSize: 12,
                         letterSpacing: "0.04em",
@@ -262,10 +261,9 @@ export function PrHistoryScreen({
                       gap: 12,
                     }}
                   >
-                    <div style={{ minWidth: 0 }}>
+                    <div className="v2-font-display" style={{ minWidth: 0 }}>
                       <div
                         style={{
-                          fontFamily: "var(--v2-f-display)",
                           fontWeight: 800,
                           fontSize: 15,
                           color: "var(--v2-ink)",

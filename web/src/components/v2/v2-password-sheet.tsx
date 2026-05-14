@@ -90,7 +90,7 @@ export function V2PasswordSheet({
         <p className="v2-eyebrow">
           {locale === "ko" ? "보안" : "SECURITY"}
         </p>
-        <h1 className="v2-h1" style={{ marginTop: 6 }}>
+        <h1 className="v2-h1 v2-font-display" style={{ marginTop: 6 }}>
           {locale === "ko" ? "비밀번호 변경" : "Change password"}
         </h1>
         <p
@@ -145,7 +145,6 @@ export function V2PasswordSheet({
                 "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
               color: "var(--v2-c-danger)",
               fontSize: 13,
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 600,
             }}
           >
@@ -163,7 +162,6 @@ export function V2PasswordSheet({
                 "color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper))",
               color: "var(--v2-c-success)",
               fontSize: 13,
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 600,
             }}
           >
@@ -209,7 +207,7 @@ function PwField({
 }) {
   return (
     <label style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-      <span className="v2-label">{label}</span>
+      <span className="v2-label v2-font-text">{label}</span>
       <input
         type="password"
         autoComplete={autoComplete}
@@ -224,7 +222,6 @@ function PwField({
           background: "var(--v2-paper-2)",
           border: "none",
           outline: "none",
-          fontFamily: "var(--v2-f-text)",
           fontSize: 16,
           color: "var(--v2-ink)",
         }}

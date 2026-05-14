@@ -230,10 +230,10 @@ export function SystemStatsSection() {
     <>
       <div>
         <div style={{ marginBottom: "var(--v2-s-7)", paddingBottom: "var(--v2-s-4)" }}>
-          <div style={{ fontFamily: "var(--v2-f-display)", fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--v2-accent)", marginBottom: "4px" }}>
+          <div className="v2-font-display" style={{ fontSize: "10px", fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--v2-accent)", marginBottom: "4px" }}>
             {locale === "ko" ? "관리 도구" : "Admin Tools"}
           </div>
-          <h1 style={{ fontFamily: "var(--v2-f-display)", fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--v2-ink)", margin: "0 0 var(--v2-s-2)" }}>
+          <h1 className="v2-font-display" style={{ fontSize: "28px", fontWeight: 800, letterSpacing: "-0.5px", color: "var(--v2-ink)", margin: "0 0 var(--v2-s-2)" }}>
             {locale === "ko" ? "시스템 통계" : "System Stats"}
           </h1>
           <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
@@ -251,7 +251,7 @@ export function SystemStatsSection() {
 
         <section style={{ marginBottom: "var(--v2-s-5)" }}>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 style={{ fontFamily: "var(--v2-f-display)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "마이그레이션" : "Migrations"}
             </h2>
           </div>
@@ -280,7 +280,7 @@ export function SystemStatsSection() {
 
         <section style={{ marginBottom: "var(--v2-s-5)" }}>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 style={{ fontFamily: "var(--v2-f-display)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "UX 퍼널 분석" : "UX Funnel"}
             </h2>
           </div>
@@ -312,7 +312,7 @@ export function SystemStatsSection() {
 
         <section>
           <div style={{ marginBottom: "var(--v2-s-2)" }}>
-            <h2 style={{ fontFamily: "var(--v2-f-display)", fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
+            <h2 className="v2-font-display" style={{ fontSize: "13px", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--v2-ink-2)", margin: 0 }}>
               {locale === "ko" ? "주요 지표 기준치" : "Metric Thresholds"}
             </h2>
           </div>

@@ -26,12 +26,11 @@ export function V2Anchor({
   return (
     <a
       href={href}
-      className={["v2-anchor", className].filter(Boolean).join(" ")}
+      className={["v2-anchor", "v2-font-text", className].filter(Boolean).join(" ")}
       style={{
         color,
         textDecoration: underline ? "underline" : "none",
         textUnderlineOffset: 3,
-        fontFamily: "var(--v2-f-text)",
         ...style,
       }}
     >
