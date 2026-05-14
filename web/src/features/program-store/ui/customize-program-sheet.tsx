@@ -162,7 +162,7 @@ export function CustomizeProgramSheet({
             <h2
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -174,19 +174,19 @@ export function CustomizeProgramSheet({
             </h2>
             {isOperatorCustomization ? (
               <>
-                <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: "0 0 4px", lineHeight: 1.5 }}>
+                <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: "0 0 4px", lineHeight: 1.5 }}>
                   {locale === "ko"
                     ? "D1/D2는 스쿼트 + 벤치프레스 + 풀업, D3는 스쿼트 + 벤치프레스 + 데드리프트 구성을 기준으로 시작합니다."
                     : "D1/D2 start from Squat + Bench + Pull-Up, and D3 starts from Squat + Bench + Deadlift."}
                 </p>
-                <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
                   {locale === "ko"
                     ? "세션 순서는 유지되고, 각 day 안에서 종목만 교체·추가·삭제할 수 있습니다."
                     : "Session order stays fixed, and you can swap, add, or remove exercises inside each day."}
                 </p>
               </>
             ) : (
-              <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: 0, lineHeight: 1.5 }}>
                 {locale === "ko"
                   ? "기존 세션 구성을 기반으로 시작합니다. 각 세션의 종목을 교체/추가/삭제할 수 있습니다."
                   : "Start from the current session structure. You can swap, add, or remove exercises in each session."}
@@ -198,7 +198,7 @@ export function CustomizeProgramSheet({
             <h2
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -246,7 +246,7 @@ export function CustomizeProgramSheet({
                     </header>
 
                     {session.exercises.length === 0 ? (
-                      <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: "var(--v2-s-1) 0" }}>
+                      <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: "var(--v2-s-1) 0" }}>
                         {locale === "ko" ? "아직 추가된 운동이 없습니다." : "No exercises added yet."}
                       </p>
                     ) : null}

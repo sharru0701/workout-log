@@ -30,7 +30,7 @@ function NavRow({ item }: { item: NavItem }) {
       <span
         className="material-symbols-outlined"
         style={{
-          fontSize: 22,
+          fontSize: "var(--v2-t-h2)",
           color: "var(--v2-accent)",
           flexShrink: 0,
           fontVariationSettings: "'FILL' 0, 'wght' 500",
@@ -44,7 +44,7 @@ function NavRow({ item }: { item: NavItem }) {
         <div className="v2-mono-label" style={{ color: "var(--v2-accent)" }}>
           {item.subtitle}
         </div>
-        <div className="v2-h3" style={{ fontSize: 15, marginTop: 2 }}>
+        <div className="v2-h3" style={{ fontSize: "var(--v2-t-body)", marginTop: 2 }}>
           {item.label}
         </div>
         <div
@@ -58,7 +58,7 @@ function NavRow({ item }: { item: NavItem }) {
       <span
         className="material-symbols-outlined"
         style={{
-          fontSize: 18,
+          fontSize: "var(--v2-t-18)",
           color: "var(--v2-ink-3)",
           flexShrink: 0,
         }}
@@ -121,7 +121,7 @@ export default async function WorkoutLogOverridesPage() {
               minHeight: "var(--v2-s-8)",
               padding: "var(--v2-s-3) var(--v2-s-5)",
               borderRadius: "var(--v2-r-pill)",
-              fontSize: 13,
+              fontSize: "var(--v2-t-small)",
             }}
           >
             {locale === "ko" ? "오늘 기록으로 돌아가기" : "Back to Today's Log"}

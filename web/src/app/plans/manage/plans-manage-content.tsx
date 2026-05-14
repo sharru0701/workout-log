@@ -520,7 +520,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
           </div>
 
           <Link href={APP_ROUTES.programStore} className="plans-hero__cta">
-            <span className="material-symbols-outlined" style={{ fontSize: 16 }} aria-hidden="true">
+            <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-16)" }} aria-hidden="true">
               add
             </span>
             {browseStoreLabel}
@@ -741,7 +741,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               borderRadius: "12px",
               padding: "var(--v2-s-4)",
               color: "var(--v2-ink-2)",
-              fontSize: "14px",
+              fontSize: "var(--v2-t-14)",
             }}
           >
             {copy.plansManage.notFound}

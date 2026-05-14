@@ -125,7 +125,7 @@ export function CreateProgramSheet({
             <span
               style={{
                 fontFamily: "var(--font-label-family)",
-                fontSize: "11px",
+                fontSize: "var(--v2-t-label)",
                 fontWeight: 700,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
@@ -181,7 +181,7 @@ export function CreateProgramSheet({
             <h2
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -213,7 +213,7 @@ export function CreateProgramSheet({
                 <span
                   style={{
                     fontFamily: "var(--font-label-family)",
-                    fontSize: "11px",
+                    fontSize: "var(--v2-t-label)",
                     fontWeight: 700,
                     letterSpacing: "0.08em",
                     textTransform: "uppercase",
@@ -239,7 +239,7 @@ export function CreateProgramSheet({
             <h2
               style={{
                 fontFamily: "var(--font-headline-family)",
-                fontSize: "13px",
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 letterSpacing: "0.06em",
                 textTransform: "uppercase",
@@ -272,7 +272,7 @@ export function CreateProgramSheet({
                 </header>
 
                 {session.exercises.length === 0 ? (
-                  <p style={{ fontSize: "13px", color: "var(--v2-ink-2)", margin: "var(--v2-s-1) 0" }}>
+                  <p style={{ fontSize: "var(--v2-t-small)", color: "var(--v2-ink-2)", margin: "var(--v2-s-1) 0" }}>
                     {locale === "ko" ? "아직 추가된 운동이 없습니다." : "No exercises added yet."}
                   </p>
                 ) : null}

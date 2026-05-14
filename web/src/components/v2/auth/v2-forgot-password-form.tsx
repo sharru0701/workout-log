@@ -64,7 +64,7 @@ export function V2ForgotPasswordForm() {
         <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
           <span className="v2-label">{locale === "ko" ? "이메일" : "Email"}</span>
           <span style={inputShellStyle}>
-            <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>
+            <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-20)" }} aria-hidden>
               mail
             </span>
             <input
@@ -151,14 +151,14 @@ function AuthFrame({
             marginBottom: 20,
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 30, color: "var(--v2-accent)" }} aria-hidden>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-h1)", color: "var(--v2-accent)" }} aria-hidden>
             lock_reset
           </span>
         </div>
-        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
+        <h1 className="v2-display" style={{ fontSize: "var(--v2-t-h1)", lineHeight: 1.08 }}>
           {title}
         </h1>
-        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 14 }}>
+        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: "var(--v2-t-14)" }}>
           {subtitle}
         </p>
         <div style={{ marginTop: 28 }}>{children}</div>
@@ -208,7 +208,7 @@ export function Status({
         borderRadius: "var(--v2-r-2)",
         background: `color-mix(in srgb, ${color} 14%, var(--v2-paper))`,
         color,
-        fontSize: 13,
+        fontSize: "var(--v2-t-small)",
         fontWeight: 600,
       }}
     >
@@ -223,7 +223,7 @@ export const inputStyle: CSSProperties = {
   border: "none",
   outline: "none",
   background: "transparent",
-  fontSize: 16,
+  fontSize: "var(--v2-t-16)",
   color: "var(--v2-ink)",
 };
 

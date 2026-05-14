@@ -226,7 +226,7 @@ export const CalendarSelectedDateSection = memo(
                   <span
                     className="material-symbols-outlined"
                     style={{
-                      fontSize: 20,
+                      fontSize: "var(--v2-t-20)",
                       color: "var(--v2-c-success)",
                       fontVariationSettings: "'FILL' 1",
                     }}
@@ -238,7 +238,7 @@ export const CalendarSelectedDateSection = memo(
                 <div>
                   <p
                     className="v2-h3"
-                    style={{ fontSize: 15, fontWeight: 700 }}
+                    style={{ fontSize: "var(--v2-t-body)", fontWeight: 700 }}
                   >
                     {selectedPlanName}
                   </p>
@@ -272,7 +272,7 @@ export const CalendarSelectedDateSection = memo(
                   >
                     <span
                       className="v2-body"
-                      style={{ fontSize: 14, fontWeight: 700 }}
+                      style={{ fontSize: "var(--v2-t-14)", fontWeight: 700 }}
                     >
                       {exercise.name}
                     </span>
@@ -336,13 +336,13 @@ export const CalendarSelectedDateSection = memo(
                   background: "var(--v2-paper-2)",
                   color: "var(--v2-ink)",
                   cursor: "pointer",
-                  fontSize: 13,
+                  fontSize: "var(--v2-t-small)",
                   fontWeight: 700,
                 }}
               >
                 <span
                   className="material-symbols-outlined"
-                  style={{ fontSize: 16 }}
+                  style={{ fontSize: "var(--v2-t-16)" }}
                   aria-hidden
                 >
                   calendar_clock
@@ -418,7 +418,7 @@ export const CalendarSelectedDateSection = memo(
                     <span
                       className="material-symbols-outlined"
                       style={{
-                        fontSize: 20,
+                        fontSize: "var(--v2-t-20)",
                         color: "var(--v2-accent)",
                       }}
                       aria-hidden
@@ -430,7 +430,7 @@ export const CalendarSelectedDateSection = memo(
                     <p
                       className="v2-h3"
                       style={{
-                        fontSize: 15,
+                        fontSize: "var(--v2-t-body)",
                         fontWeight: 700,
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -461,7 +461,7 @@ export const CalendarSelectedDateSection = memo(
                     marginLeft: "var(--v2-s-3)",
                     padding: "var(--v2-s-3) var(--v2-s-5)",
                     minHeight: "var(--v2-s-8)",
-                    fontSize: 14,
+                    fontSize: "var(--v2-t-14)",
                   }}
                 >
                   {copy.startLogging}
@@ -541,7 +541,7 @@ export const CalendarSelectedDateSection = memo(
                   minHeight: "var(--v2-s-8)",
                   padding: "var(--v2-s-3) var(--v2-s-5)",
                   borderRadius: "var(--v2-r-2)",
-                  fontSize: 13,
+                  fontSize: "var(--v2-t-small)",
                 }}
               >
                 {copy.startLogging}

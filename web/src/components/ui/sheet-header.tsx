@@ -10,11 +10,11 @@ export type SheetPrimaryAction = {
 };
 
 function CloseIcon() {
-  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'wght' 500" }}>close</span>;
+  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 500" }}>close</span>;
 }
 
 function CheckIcon() {
-  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'FILL' 0, 'wght' 600" }}>check</span>;
+  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'FILL' 0, 'wght' 600" }}>check</span>;
 }
 
 export function SheetHeader({

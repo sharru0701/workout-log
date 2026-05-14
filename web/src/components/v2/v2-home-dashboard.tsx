@@ -124,7 +124,7 @@ function TodayDeck({
             </div>
             <div
               className="v2-h1"
-              style={{ letterSpacing: "-0.025em", fontSize: 26 }}
+              style={{ letterSpacing: "-0.025em", fontSize: "var(--v2-t-h2)" }}
             >
               {hasPlan
                 ? today.headline
@@ -165,7 +165,7 @@ function TodayDeck({
                         alignItems: "center",
                         justifyContent: "center",
                         fontWeight: 700,
-                        fontSize: 13,
+                        fontSize: "var(--v2-t-small)",
                         flexShrink: 0,
                       }}
                     >
@@ -175,7 +175,7 @@ function TodayDeck({
                       <div
                         className="v2-h3"
                         style={{
-                          fontSize: 15,
+                          fontSize: "var(--v2-t-body)",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -394,7 +394,7 @@ function TodayDeck({
                       <span
                         className="material-symbols-outlined"
                         style={{
-                          fontSize: 22,
+                          fontSize: "var(--v2-t-h2)",
                           fontVariationSettings:
                             "'FILL' 1, 'wght' 500",
                         }}
@@ -407,7 +407,7 @@ function TodayDeck({
                       <div
                         className="v2-h3"
                         style={{
-                          fontSize: 15,
+                          fontSize: "var(--v2-t-body)",
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",

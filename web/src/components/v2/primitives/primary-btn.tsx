@@ -42,7 +42,7 @@ export function V2PrimaryBtn(props: ButtonProps | AnchorProps) {
     border: "none",
     cursor: "pointer",
     fontWeight: 700,
-    fontSize: 16,
+    fontSize: "var(--v2-t-16)",
     letterSpacing: "-0.01em",
     textDecoration: "none",
     boxShadow: "var(--v2-elev-2)",
@@ -63,7 +63,7 @@ export function V2PrimaryBtn(props: ButtonProps | AnchorProps) {
       {icon && (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 22 }}
+          style={{ fontSize: "var(--v2-t-h2)" }}
           aria-hidden
         >
           {icon}

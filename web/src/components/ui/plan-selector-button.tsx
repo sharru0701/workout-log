@@ -31,7 +31,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
       <div>
         <div style={{
           fontFamily: "var(--font-label-family)",
-          fontSize: "10px",
+          fontSize: "var(--v2-t-eyebrow)",
           fontWeight: 700,
           letterSpacing: "0.08em",
           textTransform: "uppercase",
@@ -42,7 +42,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
         </div>
         <div style={{
           fontFamily: "var(--font-headline-family)",
-          fontSize: "15px",
+          fontSize: "var(--v2-t-body)",
           fontWeight: 700,
           color: "var(--v2-ink)",
         }}>
@@ -51,7 +51,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
       </div>
       {!disabled && (
         <span aria-hidden="true" style={{ color: "var(--v2-ink-2)", flexShrink: 0 }}>
-          <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>unfold_more</span>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}>unfold_more</span>
         </span>
       )}
     </button>

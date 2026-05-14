@@ -10,7 +10,7 @@ export type BottomSheetPrimaryAction = {
 };
 
 function DefaultCheckIcon() {
-  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'FILL' 0, 'wght' 600" }}>check</span>;
+  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'FILL' 0, 'wght' 600" }}>check</span>;
 }
 
 export function BottomSheetActionHeader({
@@ -36,7 +36,7 @@ export function BottomSheetActionHeader({
         onClick={onClose}
         aria-label={closeLabel}
       >
-        <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20, fontVariationSettings: "'wght' 500" }}>close</span>
+        <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 500" }}>close</span>
       </button>
       <div className="mobile-bottom-sheet-title">
         <h2>{title}</h2>

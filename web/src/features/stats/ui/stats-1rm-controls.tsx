@@ -44,7 +44,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
           }}
         >
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: "11px", color: "var(--v2-ink-2)", marginBottom: "2px", fontWeight: 600 }}>
+            <div style={{ fontSize: "var(--v2-t-label)", color: "var(--v2-ink-2)", marginBottom: "2px", fontWeight: 600 }}>
               {locale === "ko" ? "운동종목" : "Exercise"}
             </div>
             <div
@@ -64,7 +64,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
           <span
             className="material-symbols-outlined"
             aria-hidden="true"
-            style={{ color: "var(--v2-ink-2)", flexShrink: 0, marginLeft: "4px", fontSize: 18 }}
+            style={{ color: "var(--v2-ink-2)", flexShrink: 0, marginLeft: "4px", fontSize: "var(--v2-t-18)" }}
           >
             expand_more
           </span>
@@ -87,7 +87,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
           }}
         >
           <div style={{ overflow: "hidden" }}>
-            <div style={{ fontSize: "11px", color: "var(--v2-ink-2)", marginBottom: "2px", fontWeight: 600 }}>
+            <div style={{ fontSize: "var(--v2-t-label)", color: "var(--v2-ink-2)", marginBottom: "2px", fontWeight: 600 }}>
               {locale === "ko" ? "필터링" : "Filter"}
             </div>
             <div
@@ -107,7 +107,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
           <span
             className="material-symbols-outlined"
             aria-hidden="true"
-            style={{ color: "var(--v2-ink-2)", flexShrink: 0, marginLeft: "4px", fontSize: 18 }}
+            style={{ color: "var(--v2-ink-2)", flexShrink: 0, marginLeft: "4px", fontSize: "var(--v2-t-18)" }}
           >
             expand_more
           </span>
@@ -133,7 +133,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
                     padding: "var(--v2-s-1) 0px",
                     border: "none",
                     borderRadius: "var(--v2-r-1)",
-                    fontSize: "12px",
+                    fontSize: "var(--v2-t-12)",
                     fontWeight: isActive ? 700 : 500,
                     cursor: "pointer",
                     background: isActive ? "var(--v2-paper)" : "transparent",
@@ -165,7 +165,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
             >
               <span
                 className="material-symbols-outlined"
-                style={{ fontSize: 20, fontVariationSettings: "'wght' 400", lineHeight: 1 }}
+                style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 400", lineHeight: 1 }}
                 aria-hidden="true"
               >
                 calendar_today

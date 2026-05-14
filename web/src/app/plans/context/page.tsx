@@ -48,10 +48,10 @@ function SettingRow({ item }: { item: SettingItem }) {
     >
       <span className="material-symbols-outlined" aria-hidden="true">{item.iconSymbol}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontWeight: 700, fontSize: 14 }}>{item.label}</div>
-        <div style={{ fontSize: 12, color: "var(--v2-ink-2)" }}>{item.description}</div>
+        <div style={{ fontWeight: 700, fontSize: "var(--v2-t-14)" }}>{item.label}</div>
+        <div style={{ fontSize: "var(--v2-t-12)", color: "var(--v2-ink-2)" }}>{item.description}</div>
       </div>
-      <div style={{ fontSize: 12, color: "var(--v2-ink-2)", whiteSpace: "nowrap" }}>{item.currentValue}</div>
+      <div style={{ fontSize: "var(--v2-t-12)", color: "var(--v2-ink-2)", whiteSpace: "nowrap" }}>{item.currentValue}</div>
     </Link>
   );
 }

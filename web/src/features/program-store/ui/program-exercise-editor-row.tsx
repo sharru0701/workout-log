@@ -312,7 +312,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                     justifyContent: "center",
                   }}
                 >
-                  <span className="material-symbols-outlined" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>search</span>
+                  <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}>search</span>
                 </span>
                 <AppTextInput
                   ref={exerciseInputRef}
@@ -364,7 +364,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                       setExercisePickerOpen(true);
                     }}
                   >
-                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 14, fontVariationSettings: "'wght' 500" }}>close</span>
+                    <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-14)", fontVariationSettings: "'wght' 500" }}>close</span>
                   </button>
                 ) : null}
               </div>

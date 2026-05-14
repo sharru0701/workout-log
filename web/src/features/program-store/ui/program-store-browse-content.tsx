@@ -126,7 +126,7 @@ export function ProgramStoreBrowseContent({
                 cursor: "pointer",
                 whiteSpace: "nowrap",
                 fontFamily: "var(--font-label-family)",
-                fontSize: "11px",
+                fontSize: "var(--v2-t-label)",
                 fontWeight: 700,
                 letterSpacing: "0.1em",
                 textTransform: "uppercase",

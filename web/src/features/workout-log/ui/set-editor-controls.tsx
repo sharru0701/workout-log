@@ -98,7 +98,7 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          fontSize: 22,
+          fontSize: "var(--v2-t-h2)",
           fontWeight: 700,
           letterSpacing: "-0.5px",
           lineHeight: 1,
@@ -247,7 +247,7 @@ export function SwipeableSetRow({
         >
           <span
             className="material-symbols-outlined"
-            style={{ fontSize: 22, fontVariationSettings: "'wght' 400" }}
+            style={{ fontSize: "var(--v2-t-h2)", fontVariationSettings: "'wght' 400" }}
           >
             delete
           </span>

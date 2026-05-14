@@ -49,7 +49,7 @@ function SectionTitle({
   return (
     <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
       <p className="v2-label">{label}</p>
-      <h2 className="v2-h2" style={{ fontSize: 22, letterSpacing: 0 }}>
+      <h2 className="v2-h2" style={{ fontSize: "var(--v2-t-h2)", letterSpacing: 0 }}>
         {title}
       </h2>
       {description ? (
@@ -94,7 +94,7 @@ function MetricCard({
         </p>
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: 18, color }}
+          style={{ fontSize: "var(--v2-t-18)", color }}
           aria-hidden="true"
         >
           {icon}
@@ -111,7 +111,7 @@ function MetricCard({
           {unit ? (
             <span
               style={{
-                fontSize: 13,
+                fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
                 color: "var(--v2-ink-2)",
               }}
@@ -142,7 +142,7 @@ function PrList({
         padding="18px"
         radius="var(--v2-r-1)"
       >
-        <p className="v2-h3" style={{ fontSize: 16 }}>
+        <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
           {locale === "ko" ? "표시할 PR 데이터가 없습니다" : "No PR data yet"}
         </p>
         <p className="v2-small" style={{ marginTop: 6 }}>
@@ -175,7 +175,7 @@ function PrList({
                 <div
                   style={{
                     fontWeight: 800,
-                    fontSize: 15,
+                    fontSize: "var(--v2-t-body)",
                     color: "var(--v2-ink)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -190,7 +190,7 @@ function PrList({
                     flexWrap: "wrap",
                     gap: "4px 10px",
                     marginTop: 4,
-                    fontSize: 12,
+                    fontSize: "var(--v2-t-12)",
                     color: "var(--v2-ink-2)",
                     fontVariantNumeric: "tabular-nums",
                   }}
@@ -216,7 +216,7 @@ function PrList({
               </V2Chip>
               <span
                 className="material-symbols-outlined"
-                style={{ color: "var(--v2-ink-3)", fontSize: 18 }}
+                style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-18)" }}
                 aria-hidden="true"
               >
                 chevron_right
@@ -424,7 +424,7 @@ export function StatsScreen({
                 href={APP_ROUTES.prHistory}
                 style={{
                   fontWeight: 700,
-                  fontSize: 12,
+                  fontSize: "var(--v2-t-12)",
                   letterSpacing: "0.04em",
                   color: "var(--v2-accent-ink)",
                   textDecoration: "none",

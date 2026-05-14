@@ -89,7 +89,7 @@ export function PrHistoryScreen({
           <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <h1
               className="v2-h1"
-              style={{ letterSpacing: 0, fontSize: 28 }}
+              style={{ letterSpacing: 0, fontSize: "var(--v2-t-28)" }}
             >
               {locale === "ko" ? "PR 이력" : "PR History"}
             </h1>
@@ -131,7 +131,7 @@ export function PrHistoryScreen({
                         padding: "var(--v2-s-2) var(--v2-s-4)",
                         borderRadius: "var(--v2-r-pill)",
                         fontWeight: 700,
-                        fontSize: 12,
+                        fontSize: "var(--v2-t-12)",
                         letterSpacing: "0.04em",
                         background: active
                           ? "var(--v2-accent)"
@@ -173,7 +173,7 @@ export function PrHistoryScreen({
                     padding: "var(--v2-s-2) var(--v2-s-4)",
                     borderRadius: "var(--v2-r-pill)",
                     fontWeight: 700,
-                    fontSize: 12,
+                    fontSize: "var(--v2-t-12)",
                     letterSpacing: "0.04em",
                     background:
                       selected.exerciseId === null
@@ -206,7 +206,7 @@ export function PrHistoryScreen({
                         padding: "var(--v2-s-2) var(--v2-s-4)",
                         borderRadius: "var(--v2-r-pill)",
                         fontWeight: 700,
-                        fontSize: 12,
+                        fontSize: "var(--v2-t-12)",
                         letterSpacing: "0.04em",
                         background: active
                           ? "var(--v2-accent)"
@@ -235,7 +235,7 @@ export function PrHistoryScreen({
               padding="20px"
               radius="var(--v2-r-1)"
             >
-              <p className="v2-h3" style={{ fontSize: 16 }}>
+              <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
                 {locale === "ko" ? "표시할 PR이 없습니다" : "No PRs to show"}
               </p>
               <p className="v2-small" style={{ marginTop: 6 }}>
@@ -265,7 +265,7 @@ export function PrHistoryScreen({
                       <div
                         style={{
                           fontWeight: 800,
-                          fontSize: 15,
+                          fontSize: "var(--v2-t-body)",
                           color: "var(--v2-ink)",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -280,7 +280,7 @@ export function PrHistoryScreen({
                           flexWrap: "wrap",
                           gap: "4px 10px",
                           marginTop: 4,
-                          fontSize: 12,
+                          fontSize: "var(--v2-t-12)",
                           color: "var(--v2-ink-2)",
                           fontVariantNumeric: "tabular-nums",
                         }}
@@ -305,7 +305,7 @@ export function PrHistoryScreen({
                     </V2Chip>
                     <span
                       className="material-symbols-outlined"
-                      style={{ color: "var(--v2-ink-3)", fontSize: 18 }}
+                      style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-18)" }}
                       aria-hidden="true"
                     >
                       chevron_right

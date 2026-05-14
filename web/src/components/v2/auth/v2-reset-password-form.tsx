@@ -86,11 +86,11 @@ export function V2ResetPasswordForm() {
             marginBottom: 20,
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: 30, color: "var(--v2-accent)" }} aria-hidden>
+          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-h1)", color: "var(--v2-accent)" }} aria-hidden>
             lock_reset
           </span>
         </div>
-        <h1 className="v2-display" style={{ fontSize: 34, lineHeight: 1.08 }}>
+        <h1 className="v2-display" style={{ fontSize: "var(--v2-t-h1)", lineHeight: 1.08 }}>
           {locale === "ko" ? (
             <>
               새 비밀번호
@@ -105,7 +105,7 @@ export function V2ResetPasswordForm() {
             </>
           )}
         </h1>
-        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: 14 }}>
+        <p className="v2-body" style={{ marginTop: 10, color: "var(--v2-ink-2)", fontSize: "var(--v2-t-14)" }}>
           {locale === "ko"
             ? "앞으로 이 비밀번호로 로그인할 수 있어요. 다른 사이트와 다르게 만드세요."
             : "Use this password from now on. Make it different from other sites."}
@@ -155,7 +155,7 @@ function PwField({
     <label style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
       <span className="v2-label">{label}</span>
       <span style={inputShellStyle}>
-        <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: 20 }} aria-hidden>
+        <span className="material-symbols-outlined" style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-20)" }} aria-hidden>
           lock
         </span>
         <input

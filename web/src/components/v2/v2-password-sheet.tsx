@@ -144,7 +144,7 @@ export function V2PasswordSheet({
               background:
                 "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
               color: "var(--v2-c-danger)",
-              fontSize: 13,
+              fontSize: "var(--v2-t-small)",
               fontWeight: 600,
             }}
           >
@@ -161,7 +161,7 @@ export function V2PasswordSheet({
               background:
                 "color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper))",
               color: "var(--v2-c-success)",
-              fontSize: 13,
+              fontSize: "var(--v2-t-small)",
               fontWeight: 600,
             }}
           >
@@ -222,7 +222,7 @@ function PwField({
           background: "var(--v2-paper-2)",
           border: "none",
           outline: "none",
-          fontSize: 16,
+          fontSize: "var(--v2-t-16)",
           color: "var(--v2-ink)",
         }}
       />
