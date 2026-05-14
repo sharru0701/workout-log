@@ -1,16 +1,19 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
-import {
-  BaseGroupedList,
-  InfoRow,
-  SectionFootnote,
-  SectionHeader,
-  ToggleRow,
-  ValueRow,
-} from "@/components/ui/settings-list";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import {
+  V2Chip,
+  V2NavRow,
+  V2Switch,
+} from "@/components/v2/primitives";
+import {
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+  mergeRowSubtitle,
+} from "@/components/v2/settings/section";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 
@@ -68,28 +71,35 @@ export function SavePolicySection() {
 
   return (
     <div>
-
       <section>
-        <SectionHeader title={copy.settings.savePolicyPage.failureSimulation.title} />
-        <BaseGroupedList ariaLabel={copy.settings.savePolicyPage.failureSimulation.ariaLabel}>
-          <ToggleRow
-            rowId="row-fail-next-save"
+        <V2SettingsSection title={copy.settings.savePolicyPage.failureSimulation.title} />
+        <V2SettingsGroup ariaLabel={copy.settings.savePolicyPage.failureSimulation.ariaLabel}>
+          <V2NavRow
+            as="div"
             label={copy.settings.savePolicyPage.failureSimulation.nextSaveFailure}
             description={copy.settings.savePolicyPage.failureSimulation.description}
-            checked={simulateFailureOnNextSave}
-            onCheckedChange={setSimulateFailureOnNextSave}
-            badge={simulateFailureOnNextSave ? "!" : undefined}
-            badgeTone="warning"
+            badge={
+              simulateFailureOnNextSave ? (
+                <V2Chip tone="warning">!</V2Chip>
+              ) : undefined
+            }
+            trailing={
+              <V2Switch
+                checked={simulateFailureOnNextSave}
+                onCheckedChange={setSimulateFailureOnNextSave}
+                aria-label={copy.settings.savePolicyPage.failureSimulation.nextSaveFailure}
+              />
+            }
           />
-        </BaseGroupedList>
-        <SectionFootnote>{copy.settings.savePolicyPage.failureSimulation.footnote}</SectionFootnote>
+        </V2SettingsGroup>
+        <V2SettingsFootnote>{copy.settings.savePolicyPage.failureSimulation.footnote}</V2SettingsFootnote>
       </section>
 
       <section>
-        <SectionHeader title={copy.settings.savePolicyPage.optimistic.title} />
-        <BaseGroupedList ariaLabel={copy.settings.savePolicyPage.optimistic.ariaLabel}>
-          <ToggleRow
-            rowId="row-auto-sync"
+        <V2SettingsSection title={copy.settings.savePolicyPage.optimistic.title} />
+        <V2SettingsGroup ariaLabel={copy.settings.savePolicyPage.optimistic.ariaLabel}>
+          <V2NavRow
+            as="div"
             label={copy.settings.savePolicyPage.optimistic.autoSync}
             description={
               autoSync.pending
@@ -98,48 +108,52 @@ export function SavePolicySection() {
                   ? `${autoSync.error} ${copy.settings.savePolicyPage.optimistic.autoSyncErrorSuffix}`
                   : copy.settings.savePolicyPage.optimistic.autoSyncDescription
             }
-            checked={Boolean(autoSync.value)}
-            onCheckedChange={(next) => {
-              void autoSync.commit(next);
-            }}
-            disabled={autoSync.pending}
+            trailing={
+              <V2Switch
+                checked={Boolean(autoSync.value)}
+                onCheckedChange={(next) => {
+                  void autoSync.commit(next);
+                }}
+                disabled={autoSync.pending}
+                aria-label={copy.settings.savePolicyPage.optimistic.autoSync}
+              />
+            }
           />
-          <ValueRow
-            rowId="row-timezone"
+          <V2NavRow
             label={copy.settings.savePolicyPage.optimistic.timezone}
-            subtitle={copy.settings.savePolicyPage.optimistic.timezoneSubtitle}
-            description={
+            description={mergeRowSubtitle(
+              copy.settings.savePolicyPage.optimistic.timezoneSubtitle,
               timezone.pending
                 ? copy.settings.savePolicyPage.optimistic.timezonePending
                 : timezone.error
                   ? `${timezone.error} ${copy.settings.savePolicyPage.optimistic.timezoneErrorSuffix}`
-                  : copy.settings.savePolicyPage.optimistic.timezoneDescription
-            }
+                  : copy.settings.savePolicyPage.optimistic.timezoneDescription,
+            )}
             value={timezone.value}
-            onPress={() => {
+            onClick={() => {
               void timezone.commit(nextTimezone(String(timezone.value)));
             }}
             disabled={timezone.pending}
           />
-          <InfoRow
-            rowId="row-policy"
+          <V2NavRow
+            as="div"
             label={copy.settings.savePolicyPage.optimistic.policy}
             description={copy.settings.savePolicyPage.optimistic.policyDescription}
             value={copy.settings.savePolicyPage.optimistic.standardized}
-            tone="success"
+            trailing="none"
           />
-        </BaseGroupedList>
-        <SectionFootnote>{copy.settings.savePolicyPage.optimistic.footnote}</SectionFootnote>
+        </V2SettingsGroup>
+        <V2SettingsFootnote>{copy.settings.savePolicyPage.optimistic.footnote}</V2SettingsFootnote>
       </section>
 
       <section>
-        <SectionHeader title={copy.settings.savePolicyPage.notice.title} />
+        <V2SettingsSection title={copy.settings.savePolicyPage.notice.title} />
         <NoticeStateRows
           message={latestNotice}
           tone={autoSync.error || timezone.error ? "warning" : "success"}
           label={autoSync.error || timezone.error ? copy.settings.savePolicyPage.notice.error : copy.settings.savePolicyPage.notice.success}
         />
-        <SectionFootnote>{copy.settings.savePolicyPage.notice.footnote}</SectionFootnote>
+        <V2SettingsFootnote>{copy.settings.savePolicyPage.notice.footnote}</V2SettingsFootnote>
       </section>
     </div>
   );

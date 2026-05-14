@@ -289,7 +289,6 @@ export default function WorkoutRecordLoading() {
                   display: "flex",
                   justifyContent: "center",
                   padding: "12px",
-                  borderTop: "1px dashed var(--v2-hairline)",
                   background: "var(--v2-paper)",
                 }}
               >
@@ -313,8 +312,7 @@ export default function WorkoutRecordLoading() {
             justifyContent: "center",
             padding: "var(--v2-s-4)",
             borderRadius: "var(--v2-r-3)",
-            background: "var(--v2-paper)",
-            border: "1px dashed var(--v2-hairline)",
+            background: "var(--v2-paper-2)",
           }}
         >
           <div

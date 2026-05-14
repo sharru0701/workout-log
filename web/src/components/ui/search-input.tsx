@@ -147,9 +147,8 @@ export function SearchInput({
           alignItems: "center",
           width: "100%",
           padding: "var(--v2-s-2) var(--v2-s-4)",
-          border: "1px solid var(--v2-hairline)",
-          borderRadius: "8px",
-          backgroundColor: "var(--v2-paper)",
+          borderRadius: "var(--v2-r-1)",
+          backgroundColor: "var(--v2-paper-2)",
           boxSizing: "border-box",
         }}
       >

@@ -31,14 +31,12 @@ export const Stats1RMChartSection = memo(function Stats1RMChartSection({
           background: "var(--v2-paper)",
           borderRadius: "var(--v2-r-1)",
           overflow: "hidden",
-          border: "1px solid var(--v2-hairline)",
           boxShadow: "var(--v2-elev-1)",
         }}
       >
         <header
           style={{
             padding: "var(--v2-s-4)",
-            borderBottom: "1px solid var(--v2-hairline)",
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -95,7 +93,6 @@ export const Stats1RMChartSection = memo(function Stats1RMChartSection({
           background: "var(--v2-paper)",
           borderRadius: "var(--v2-r-1)",
           padding: "var(--v2-s-4)",
-          border: "1px solid var(--v2-hairline)",
           boxShadow: "var(--v2-elev-1)",
         }}
       >

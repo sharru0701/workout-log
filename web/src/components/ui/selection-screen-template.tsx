@@ -2,7 +2,12 @@
 
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { BaseGroupedList, NavigationRow, SectionFootnote, SectionHeader } from "./settings-list";
+import { V2NavRow } from "@/components/v2/primitives";
+import {
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+} from "@/components/v2/settings/section";
 import { EmptyStateRows } from "./settings-state";
 import { SearchInput } from "./search-input";
 
@@ -120,25 +125,25 @@ export function SingleSelectionScreen({
     <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={resolvedSearchPlaceholder} ariaLabel={String(resolvedSearchPlaceholder)} /> : null}
       <section>
-        <SectionHeader title={resolvedSectionTitle} />
+        <V2SettingsSection title={resolvedSectionTitle} />
         {filtered.length === 0 ? (
           <EmptyStateRows when description={resolvedEmptyDescription} />
         ) : (
-          <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+          <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
             {filtered.map((option) => (
-              <NavigationRow
+              <V2NavRow
                 key={option.value}
                 label={option.label}
                 description={option.disabled ? option.disabledDescription ?? option.description : option.description}
                 value={selectedValue === option.value ? "✓" : undefined}
-                onPress={() => onSelect(option.value)}
-                showChevron={false}
+                onClick={() => onSelect(option.value)}
+                trailing="none"
                 disabled={option.disabled}
               />
             ))}
-          </BaseGroupedList>
+          </V2SettingsGroup>
         )}
-        {sectionFootnote ? <SectionFootnote>{sectionFootnote}</SectionFootnote> : null}
+        {sectionFootnote ? <V2SettingsFootnote>{sectionFootnote}</V2SettingsFootnote> : null}
       </section>
     </SelectionLayout>
   );
@@ -171,36 +176,36 @@ export function MultiSelectionScreen({
     <SelectionLayout>
       {searchable ? <SearchInput value={query} onChange={setQuery} placeholder={resolvedSearchPlaceholder} ariaLabel={String(resolvedSearchPlaceholder)} /> : null}
       <section>
-        <SectionHeader title={resolvedSectionTitle} />
+        <V2SettingsSection title={resolvedSectionTitle} />
         {filtered.length === 0 ? (
           <EmptyStateRows when description={resolvedEmptyDescription} />
         ) : (
-          <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+          <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
             {filtered.map((option) => (
-              <NavigationRow
+              <V2NavRow
                 key={option.value}
                 label={option.label}
                 description={option.disabled ? option.disabledDescription ?? option.description : option.description}
                 value={selectedSet.has(option.value) ? "✓" : undefined}
-                onPress={() => onToggle(option.value)}
-                showChevron={false}
+                onClick={() => onToggle(option.value)}
+                trailing="none"
                 disabled={option.disabled}
               />
             ))}
-          </BaseGroupedList>
+          </V2SettingsGroup>
         )}
-        {sectionFootnote ? <SectionFootnote>{sectionFootnote}</SectionFootnote> : null}
+        {sectionFootnote ? <V2SettingsFootnote>{sectionFootnote}</V2SettingsFootnote> : null}
       </section>
       <section>
-        <SectionHeader title={locale === "ko" ? "적용" : "Apply"} />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "다중 선택 적용" : "Apply multi-selection"}>
-          <NavigationRow
+        <V2SettingsSection title={locale === "ko" ? "적용" : "Apply"} />
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "다중 선택 적용" : "Apply multi-selection"}>
+          <V2NavRow
             label={locale === "ko" ? "적용 후 돌아가기" : "Apply and Go Back"}
-            onPress={onApply}
+            onClick={onApply}
             description={locale === "ko" ? "선택값을 바로 반영합니다." : "Apply the selected values immediately."}
           />
-        </BaseGroupedList>
-        <SectionFootnote>{locale === "ko" ? "적용을 누르면 이전 화면에 즉시 반영됩니다." : "Applying updates the previous screen immediately."}</SectionFootnote>
+        </V2SettingsGroup>
+        <V2SettingsFootnote>{locale === "ko" ? "적용을 누르면 이전 화면에 즉시 반영됩니다." : "Applying updates the previous screen immediately."}</V2SettingsFootnote>
       </section>
     </SelectionLayout>
   );
@@ -233,8 +238,8 @@ export function PickerSelectionScreen({
   return (
     <SelectionLayout>
       <section>
-        <SectionHeader title={resolvedSectionTitle} />
-        <BaseGroupedList ariaLabel={resolvedAriaLabel}>
+        <V2SettingsSection title={resolvedSectionTitle} />
+        <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
           <li>
             <div>
               <label htmlFor={inputId}>
@@ -251,15 +256,15 @@ export function PickerSelectionScreen({
               />
             </div>
           </li>
-        </BaseGroupedList>
-        {sectionFootnote ? <SectionFootnote>{sectionFootnote}</SectionFootnote> : null}
+        </V2SettingsGroup>
+        {sectionFootnote ? <V2SettingsFootnote>{sectionFootnote}</V2SettingsFootnote> : null}
       </section>
       <section>
-        <SectionHeader title={locale === "ko" ? "적용" : "Apply"} />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "입력 값 적용" : "Apply value"}>
-          <NavigationRow label={resolvedApplyLabel} description={resolvedApplyDescription} onPress={onApply} />
-        </BaseGroupedList>
-        <SectionFootnote>{locale === "ko" ? "적용을 누르면 이전 화면에 즉시 반영됩니다." : "Applying updates the previous screen immediately."}</SectionFootnote>
+        <V2SettingsSection title={locale === "ko" ? "적용" : "Apply"} />
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "입력 값 적용" : "Apply value"}>
+          <V2NavRow label={resolvedApplyLabel} description={resolvedApplyDescription} onClick={onApply} />
+        </V2SettingsGroup>
+        <V2SettingsFootnote>{locale === "ko" ? "적용을 누르면 이전 화면에 즉시 반영됩니다." : "Applying updates the previous screen immediately."}</V2SettingsFootnote>
       </section>
     </SelectionLayout>
   );

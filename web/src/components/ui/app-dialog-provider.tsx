@@ -3,7 +3,11 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { V2Card } from "@/components/v2/primitives";
+import {
+  V2Card,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+} from "@/components/v2/primitives";
 
 type DialogTone = "default" | "danger";
 
@@ -217,21 +221,13 @@ export function AppDialogProvider({ children }: { children: ReactNode }) {
                 width: "100%",
               }}
             >
-              <button
-                type="button"
-                className="btn btn-primary btn-full"
-                onClick={closeActiveAsAccept}
-              >
+              <V2PrimaryBtn full onClick={closeActiveAsAccept}>
                 {active.kind === "confirm" ? active.confirmText : active.buttonText}
-              </button>
+              </V2PrimaryBtn>
               {active.kind === "confirm" ? (
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-full"
-                  onClick={closeActiveAsCancelButton}
-                >
+                <V2SecondaryBtn full onClick={closeActiveAsCancelButton}>
                   {active.cancelText}
-                </button>
+                </V2SecondaryBtn>
               ) : null}
             </div>
           ) : null

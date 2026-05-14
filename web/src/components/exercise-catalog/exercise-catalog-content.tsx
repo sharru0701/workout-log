@@ -7,7 +7,12 @@ import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows, NoticeStateRows } from "@/components/ui/settings-state";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { V2Card } from "@/components/v2/primitives";
+import {
+  V2Card,
+  V2IconBtn,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+} from "@/components/v2/primitives";
 import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
 import { SearchInput } from "@/components/ui/search-input";
 
@@ -80,14 +85,15 @@ const SwipeableExerciseRow = memo(function SwipeableExerciseRow({
           display: "flex", alignItems: "center", justifyContent: "center",
         }}
       >
-        <button
-          type="button"
-          className="btn btn-icon btn-icon-danger"
-          onClick={() => { setOffsetX(0); onDelete(); }}
-          aria-label={deleteLabel}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 20 }}>delete</span>
-        </button>
+        <V2IconBtn
+          icon="delete"
+          label={deleteLabel}
+          tone="neutral"
+          onClick={() => {
+            setOffsetX(0);
+            onDelete();
+          }}
+        />
       </div>
 
       {/* Draggable content */}
@@ -273,24 +279,20 @@ function InlineExerciseForm({
 
           {/* Actions */}
           <div style={{ display: "flex", gap: "var(--v2-s-2)" }}>
-            <button
-              type="button"
-              className="btn btn-secondary"
+            <V2SecondaryBtn
               style={{ flex: 1 }}
               onClick={onCancel}
               disabled={saving}
             >
               {locale === "ko" ? "취소" : "Cancel"}
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
+            </V2SecondaryBtn>
+            <V2PrimaryBtn
               style={{ flex: 2 }}
               onClick={onSubmit}
               disabled={saving || !name.trim()}
             >
               {saving ? (locale === "ko" ? `${submitLabel} 중...` : `${submitLabel}...`) : submitLabel}
-            </button>
+            </V2PrimaryBtn>
           </div>
         </div>
       </>
@@ -317,9 +319,8 @@ function ExerciseRowView({
       alignItems: "center",
       justifyContent: "space-between",
       padding: "var(--v2-s-4)",
-      backgroundColor: "var(--v2-paper)",
-      border: "1px solid var(--v2-hairline)",
-      borderRadius: "12px",
+      backgroundColor: "var(--v2-paper-2)",
+      borderRadius: "var(--v2-r-2)",
       gap: "var(--v2-s-2)",
     }}>
       {/* Left content */}
@@ -339,15 +340,12 @@ function ExerciseRowView({
 
       {/* Action buttons */}
       <div style={{ display: "flex", gap: "2px", flexShrink: 0 }}>
-        <button
-          type="button"
-          className="btn btn-icon"
-          aria-label={locale === "ko" ? `${item.name} 수정` : `Edit ${item.name}`}
+        <V2IconBtn
+          icon="edit"
+          label={locale === "ko" ? `${item.name} 수정` : `Edit ${item.name}`}
           disabled={disabled}
           onClick={onEdit}
-        >
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>edit</span>
-        </button>
+        />
       </div>
     </div>
   );
@@ -375,9 +373,8 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
     }}>
       {/* Total count tile */}
       <div style={{
-        backgroundColor: "var(--v2-paper)",
-        border: "1px solid var(--v2-hairline)",
-        borderRadius: "12px",
+        backgroundColor: "var(--v2-paper-2)",
+        borderRadius: "var(--v2-r-2)",
         padding: "var(--v2-s-4)",
         display: "flex", flexDirection: "column", justifyContent: "space-between",
         minHeight: "96px",
@@ -411,8 +408,7 @@ function StatsGrid({ total, items, locale }: { total: number; items: ExerciseIte
       {/* Recent exercises tile */}
       <div style={{
         backgroundColor: "var(--v2-accent-weak)",
-        border: "1px solid color-mix(in srgb, var(--v2-accent) 20%, var(--v2-hairline))",
-        borderRadius: "12px",
+        borderRadius: "var(--v2-r-2)",
         padding: "var(--v2-s-4)",
         display: "flex", flexDirection: "column", justifyContent: "space-between",
         minHeight: "96px",
@@ -628,7 +624,6 @@ export function ExerciseCatalogContent() {
       <div style={{
         marginBottom: "var(--v2-s-7)",
         paddingBottom: "var(--v2-s-4)",
-        borderBottom: "1px solid var(--v2-hairline)",
       }}>
         <div style={{
           fontFamily: "var(--font-label-family)",
@@ -693,15 +688,14 @@ export function ExerciseCatalogContent() {
 
       {/* Add button (hidden while form is open) */}
       {!createOpen && (
-        <button
-          type="button"
-          className="btn btn-secondary btn-full"
-          style={{ marginBottom: "var(--v2-s-5)", display: "flex", alignItems: "center", justifyContent: "center", gap: "var(--v2-s-1)" }}
+        <V2SecondaryBtn
+          full
+          icon="add"
+          style={{ marginBottom: "var(--v2-s-5)" }}
           onClick={() => setCreateOpen(true)}
         >
-          <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18 }}>add</span>
           {locale === "ko" ? "운동종목 추가" : "Add Exercise"}
-        </button>
+        </V2SecondaryBtn>
       )}
 
       {/* Section header */}

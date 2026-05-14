@@ -2,6 +2,7 @@ import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { NavRow } from "@/components/workout/nav-row";
 import { PageSection } from "@/components/ui/page-layout";
+import { V2PrimaryBtn } from "@/components/v2/primitives";
 import type {
   HomeData,
   HomeLastSession,
@@ -90,15 +91,14 @@ function TodayProtocolCard({
             <p className="hd-protocol__empty-desc">
               {copy.home.protocol.emptyDescription}
             </p>
-            <Link href={APP_ROUTES.programStore} className="hd-cta-btn">
-              <span
-                className="material-symbols-outlined"
-                style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
-              >
-                library_books
-              </span>
-              <span>{copy.home.protocol.browsePrograms}</span>
-            </Link>
+            <V2PrimaryBtn
+              as="a"
+              href={APP_ROUTES.programStore}
+              icon="library_books"
+              full
+            >
+              {copy.home.protocol.browsePrograms}
+            </V2PrimaryBtn>
           </div>
         </div>
       </section>
@@ -163,15 +163,9 @@ function TodayProtocolCard({
             </div>
           )}
 
-          <Link href={ctaHref} className="hd-cta-btn">
-            <span
-              className="material-symbols-outlined"
-              style={{ fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }}
-            >
-              {ctaIcon}
-            </span>
-            <span>{ctaLabel}</span>
-          </Link>
+          <V2PrimaryBtn as="a" href={ctaHref} icon={ctaIcon} full>
+            {ctaLabel}
+          </V2PrimaryBtn>
         </div>
       </div>
     </section>

@@ -1,0 +1,16 @@
+{
+  "note": "design-lint baseline — Hard Rules (design-guide.md §0.5) 위반 카운트. 줄이는 변경만 허용, --update로 갱신.",
+  "generatedAt": "2026-05-14T05:41:11.564Z",
+  "totals": {
+    "onePxSolid": 0,
+    "hardcodedBorderRadius": 220,
+    "hardcodedFontSize": 264,
+    "hardcodedPadding": 158,
+    "hardcodedGap": 173,
+    "hardcodedMinHeight": 41,
+    "legacyBtnClass": 0,
+    "legacyHdCtaClass": 0,
+    "legacyLabelTagClass": 0,
+    "inlineFontFamilyOverride": 87
+  }
+}

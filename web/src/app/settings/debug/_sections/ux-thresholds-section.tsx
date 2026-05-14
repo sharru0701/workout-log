@@ -2,14 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import {
-  BaseGroupedList,
-  InfoRow,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
 import { NoticeStateRows } from "@/components/ui/settings-state";
+import { V2NavRow } from "@/components/v2/primitives";
+import {
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+  mergeRowSubtitle,
+} from "@/components/v2/settings/section";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import { AppSelect } from "@/components/ui/form-controls";
@@ -212,61 +212,57 @@ export function UxThresholdsSection({
   return (
     <div>
       <section>
-        <SectionHeader title={locale === "ko" ? "글로벌 기준치" : "Global Thresholds"} />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "UX 기준치 설정" : "UX threshold settings"}>
-          <ValueRow
-            rowId="row-target-save-from-generate"
+        <V2SettingsSection title={locale === "ko" ? "글로벌 기준치" : "Global Thresholds"} />
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "UX 기준치 설정" : "UX threshold settings"}>
+          <V2NavRow
             label={locale === "ko" ? "세션 생성→저장 전환율 목표" : "Session Generate→Save Target"}
-            subtitle={locale === "ko" ? "탭해서 순환" : "Tap to cycle"}
-            description={
+            description={mergeRowSubtitle(
+              locale === "ko" ? "탭해서 순환" : "Tap to cycle",
               saveFromGenerate.pending ? (locale === "ko" ? "저장 중..." : "Saving...")
                 : saveFromGenerate.error ? `${saveFromGenerate.error} ${locale === "ko" ? "이전 값으로 복구됨." : "Restored to the previous value."}`
-                : (locale === "ko" ? "생성 후 저장 전환 최소 기준치" : "Minimum threshold for generate-to-save conversion")
-            }
+                : (locale === "ko" ? "생성 후 저장 전환 최소 기준치" : "Minimum threshold for generate-to-save conversion"),
+            )}
             value={formatPercentRatio(Number(saveFromGenerate.value))}
-            onPress={() => void saveFromGenerate.commit(nextOption(Number(saveFromGenerate.value), SAVE_FROM_GENERATE_OPTIONS, DEFAULT_TARGETS.saveFromGenerate))}
+            onClick={() => void saveFromGenerate.commit(nextOption(Number(saveFromGenerate.value), SAVE_FROM_GENERATE_OPTIONS, DEFAULT_TARGETS.saveFromGenerate))}
             disabled={saveFromGenerate.pending}
           />
-          <ValueRow
-            rowId="row-target-save-success-clicks-7d"
+          <V2NavRow
             label={locale === "ko" ? "7일 저장 클릭→성공율 목표" : "7-Day Save Click→Success Target"}
-            subtitle={locale === "ko" ? "탭해서 순환" : "Tap to cycle"}
-            description={
+            description={mergeRowSubtitle(
+              locale === "ko" ? "탭해서 순환" : "Tap to cycle",
               saveSuccessFromClicks7d.pending ? (locale === "ko" ? "저장 중..." : "Saving...")
                 : saveSuccessFromClicks7d.error ? `${saveSuccessFromClicks7d.error} ${locale === "ko" ? "이전 값으로 복구됨." : "Restored to the previous value."}`
-                : (locale === "ko" ? "7일 저장 성공 안정성 기준치" : "Reliability threshold for save success over 7 days")
-            }
+                : (locale === "ko" ? "7일 저장 성공 안정성 기준치" : "Reliability threshold for save success over 7 days"),
+            )}
             value={formatPercentRatio(Number(saveSuccessFromClicks7d.value))}
-            onPress={() => void saveSuccessFromClicks7d.commit(nextOption(Number(saveSuccessFromClicks7d.value), SAVE_SUCCESS_FROM_CLICKS_7D_OPTIONS, DEFAULT_TARGETS.saveSuccessFromClicks7d))}
+            onClick={() => void saveSuccessFromClicks7d.commit(nextOption(Number(saveSuccessFromClicks7d.value), SAVE_SUCCESS_FROM_CLICKS_7D_OPTIONS, DEFAULT_TARGETS.saveSuccessFromClicks7d))}
             disabled={saveSuccessFromClicks7d.pending}
           />
-          <ValueRow
-            rowId="row-target-add-after-sheet-open-14d"
+          <V2NavRow
             label={locale === "ko" ? "14일 시트 오픈→운동 추가율 목표" : "14-Day Sheet Open→Add Exercise Target"}
-            subtitle={locale === "ko" ? "탭해서 순환" : "Tap to cycle"}
-            description={
+            description={mergeRowSubtitle(
+              locale === "ko" ? "탭해서 순환" : "Tap to cycle",
               addAfterSheetOpen14d.pending ? (locale === "ko" ? "저장 중..." : "Saving...")
                 : addAfterSheetOpen14d.error ? `${addAfterSheetOpen14d.error} ${locale === "ko" ? "이전 값으로 복구됨." : "Restored to the previous value."}`
-                : (locale === "ko" ? "운동 추가 플로우 전환 기준치" : "Conversion threshold for the add-exercise flow")
-            }
+                : (locale === "ko" ? "운동 추가 플로우 전환 기준치" : "Conversion threshold for the add-exercise flow"),
+            )}
             value={formatPercentRatio(Number(addAfterSheetOpen14d.value))}
-            onPress={() => void addAfterSheetOpen14d.commit(nextOption(Number(addAfterSheetOpen14d.value), ADD_AFTER_SHEET_OPEN_14D_OPTIONS, DEFAULT_TARGETS.addAfterSheetOpen14d))}
+            onClick={() => void addAfterSheetOpen14d.commit(nextOption(Number(addAfterSheetOpen14d.value), ADD_AFTER_SHEET_OPEN_14D_OPTIONS, DEFAULT_TARGETS.addAfterSheetOpen14d))}
             disabled={addAfterSheetOpen14d.pending}
           />
-          <ValueRow
-            rowId="row-target-reset-default"
+          <V2NavRow
             label={locale === "ko" ? "기본값 복원" : "Restore Defaults"}
             description={locale === "ko" ? "권장 기본 기준치(65%, 60%, 35%)로 되돌립니다." : "Restore the recommended default thresholds (65%, 60%, 35%)."}
             value={isAnyGlobalPending ? (locale === "ko" ? "저장 중..." : "Saving...") : (locale === "ko" ? "복원" : "Restore")}
-            onPress={() => void resetDefaults()}
+            onClick={() => void resetDefaults()}
             disabled={isAnyGlobalPending}
           />
-        </BaseGroupedList>
-        <SectionFootnote>{locale === "ko" ? "글로벌 기준치는 모든 플랜에 기본으로 적용됩니다." : "Global thresholds are used by default for every plan."}</SectionFootnote>
+        </V2SettingsGroup>
+        <V2SettingsFootnote>{locale === "ko" ? "글로벌 기준치는 모든 플랜에 기본으로 적용됩니다." : "Global thresholds are used by default for every plan."}</V2SettingsFootnote>
       </section>
 
       <section>
-        <SectionHeader title={locale === "ko" ? "플랜별 기준치 프로필(선택)" : "Plan-Specific Threshold Profile (Optional)"} />
+        <V2SettingsSection title={locale === "ko" ? "플랜별 기준치 프로필(선택)" : "Plan-Specific Threshold Profile (Optional)"} />
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
           <div style={{ background: "var(--v2-paper)", borderRadius: 20, padding: "var(--v2-s-4)", boxShadow: "0 1px 3px var(--shadow-color-soft)" }}>
             <AppSelect
@@ -283,40 +279,36 @@ export function UxThresholdsSection({
             </AppSelect>
           </div>
 
-          <BaseGroupedList ariaLabel={locale === "ko" ? "플랜별 기준치 설정" : "Plan threshold settings"}>
-            <ValueRow
-              rowId="row-plan-target-save-from-generate"
+          <V2SettingsGroup ariaLabel={locale === "ko" ? "플랜별 기준치 설정" : "Plan threshold settings"}>
+            <V2NavRow
               label={locale === "ko" ? "생성→저장 전환율" : "Generate→Save Conversion"}
               description={locale === "ko" ? "선택된 플랜에만 적용되는 목표" : "A target applied only to the selected plan"}
               value={formatPercentRatio(planTargets.saveFromGenerate)}
-              onPress={() => void commitPlanTarget("saveFromGenerate", nextOption(planTargets.saveFromGenerate, SAVE_FROM_GENERATE_OPTIONS, globalTargets.saveFromGenerate))}
+              onClick={() => void commitPlanTarget("saveFromGenerate", nextOption(planTargets.saveFromGenerate, SAVE_FROM_GENERATE_OPTIONS, globalTargets.saveFromGenerate))}
               disabled={!selectedPlanId || Boolean(planPendingField)}
             />
-            <ValueRow
-              rowId="row-plan-target-save-success-clicks-7d"
+            <V2NavRow
               label={locale === "ko" ? "7일 저장 클릭→성공율" : "7-Day Save Click→Success Rate"}
               description={locale === "ko" ? "선택된 플랜에만 적용되는 목표" : "A target applied only to the selected plan"}
               value={formatPercentRatio(planTargets.saveSuccessFromClicks7d)}
-              onPress={() => void commitPlanTarget("saveSuccessFromClicks7d", nextOption(planTargets.saveSuccessFromClicks7d, SAVE_SUCCESS_FROM_CLICKS_7D_OPTIONS, globalTargets.saveSuccessFromClicks7d))}
+              onClick={() => void commitPlanTarget("saveSuccessFromClicks7d", nextOption(planTargets.saveSuccessFromClicks7d, SAVE_SUCCESS_FROM_CLICKS_7D_OPTIONS, globalTargets.saveSuccessFromClicks7d))}
               disabled={!selectedPlanId || Boolean(planPendingField)}
             />
-            <ValueRow
-              rowId="row-plan-target-add-after-sheet-open-14d"
+            <V2NavRow
               label={locale === "ko" ? "14일 시트→운동 추가율" : "14-Day Sheet→Add Exercise Rate"}
               description={locale === "ko" ? "선택된 플랜에만 적용되는 목표" : "A target applied only to the selected plan"}
               value={formatPercentRatio(planTargets.addAfterSheetOpen14d)}
-              onPress={() => void commitPlanTarget("addAfterSheetOpen14d", nextOption(planTargets.addAfterSheetOpen14d, ADD_AFTER_SHEET_OPEN_14D_OPTIONS, globalTargets.addAfterSheetOpen14d))}
+              onClick={() => void commitPlanTarget("addAfterSheetOpen14d", nextOption(planTargets.addAfterSheetOpen14d, ADD_AFTER_SHEET_OPEN_14D_OPTIONS, globalTargets.addAfterSheetOpen14d))}
               disabled={!selectedPlanId || Boolean(planPendingField)}
             />
-            <ValueRow
-              rowId="row-plan-target-clear"
+            <V2NavRow
               label={locale === "ko" ? "플랜 오버라이드 해제" : "Clear Plan Override"}
               description={locale === "ko" ? "선택된 플랜을 글로벌 기준치로 되돌립니다." : "Return the selected plan to the global thresholds."}
               value={planPendingField === "clear" ? (locale === "ko" ? "해제 중..." : "Clearing...") : (locale === "ko" ? "해제" : "Clear")}
-              onPress={() => void clearPlanOverrides()}
+              onClick={() => void clearPlanOverrides()}
               disabled={!selectedPlanId || Boolean(planPendingField)}
             />
-          </BaseGroupedList>
+          </V2SettingsGroup>
 
           {selectedPlan && (
             <div style={{ padding: "10px 6px 2px", fontFamily: "var(--v2-f-display)", fontSize: 11, color: "var(--v2-ink-3)" }}>
@@ -324,27 +316,27 @@ export function UxThresholdsSection({
             </div>
           )}
         </div>
-        <SectionFootnote>
+        <V2SettingsFootnote>
           {locale === "ko" ? "플랜별 값을 저장하면 해당 플랜으로 통계 조회할 때만 임계치가 덮어써집니다." : "When you save a plan-specific value, it overrides the threshold only when viewing stats for that plan."}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
 
       <section>
-        <SectionHeader title={locale === "ko" ? "적용 안내" : "Usage Notes"} />
+        <V2SettingsSection title={locale === "ko" ? "적용 안내" : "Usage Notes"} />
         <NoticeStateRows
           message={latestNotice}
           tone={hasError ? "warning" : "success"}
           label={hasError ? (locale === "ko" ? "저장 실패" : "Save Failed") : (locale === "ko" ? "저장 완료" : "Saved")}
         />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "UX 기준치 안내" : "UX threshold notes"}>
-          <InfoRow
-            rowId="row-threshold-note"
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "UX 기준치 안내" : "UX threshold notes"}>
+          <V2NavRow
+            as="div"
             label={locale === "ko" ? "대상 화면" : "Target Screen"}
             description={locale === "ko" ? "통계 대시보드 > UX 행동 요약" : "Stats Dashboard > UX Behavior Summary"}
             value={locale === "ko" ? "연동됨" : "Connected"}
-            tone="neutral"
+            trailing="none"
           />
-        </BaseGroupedList>
+        </V2SettingsGroup>
       </section>
     </div>
   );

@@ -50,6 +50,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Design lint (Hard Rules baseline)
+        run: pnpm lint:design
+
       - name: Typecheck
         run: pnpm typecheck
 

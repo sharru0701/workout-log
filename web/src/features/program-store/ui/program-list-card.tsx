@@ -1,55 +1,58 @@
 "use client";
 
-import { V2PrimaryBtn, V2SecondaryBtn } from "@/components/v2/primitives";
+import {
+  V2Chip,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+  type V2ChipTone,
+} from "@/components/v2/primitives";
 import { formatProgramDisplayName } from "@/features/program-store/model/view";
 import {
   getProgramDetailInfo,
   type ProgramListItem,
 } from "@/lib/program-store/model";
 
-function tagLabelClass(tag: string): string {
+function tagChipTone(tag: string): V2ChipTone {
   const normalized = tag.toLowerCase().trim();
   if (["manual", "fixed", "custom"].some((k) => normalized.includes(k))) {
-    return "label label-tag-manual label-sm";
+    return "neutral";
   }
   if (
     ["beginner", "novice", "starter", "입문", "초보"].some((k) =>
       normalized.includes(k),
     )
   ) {
-    return "label label-tag-beginner label-sm";
+    return "info";
   }
   if (
     ["amrap", "top-set", "topset", "top set", "rpe", "rir"].some((k) =>
       normalized.includes(k),
     )
   ) {
-    return normalized.includes("amrap")
-      ? "label label-tag-amrap label-sm"
-      : "label label-tag-top-set label-sm";
+    return normalized.includes("amrap") ? "warning" : "onerm";
   }
   if (
     ["strength", "power", "hypertrophy", "근력", "파워", "근비대"].some((k) =>
       normalized.includes(k),
     )
   ) {
-    return "label label-tag-session label-sm";
+    return "accent";
   }
   if (
     ["linear", "progression", "wave", "periodization", "선형", "주기화"].some(
       (k) => normalized.includes(k),
     )
   ) {
-    return "label label-tag-progression label-sm";
+    return "weight";
   }
   if (
     ["base", "variant", "template", "library", "operator"].some((k) =>
       normalized.includes(k),
     )
   ) {
-    return "label label-tag-identity label-sm";
+    return "accent";
   }
-  return "label label-tag-custom label-sm";
+  return "neutral";
 }
 
 function programCardBadge(item: ProgramListItem, locale: "ko" | "en") {
@@ -181,7 +184,7 @@ export function ProgramListCard({
               textTransform: "uppercase",
               color: badge.color,
               background: `color-mix(in srgb, ${badge.color} 15%, transparent)`,
-              border: `1px solid color-mix(in srgb, ${badge.color} 20%, transparent)`,
+              boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${badge.color} 20%, transparent)`,
             }}
           >
             {badge.label}
@@ -217,9 +220,9 @@ export function ProgramListCard({
             }}
           >
             {tags.slice(0, 2).map((tag) => (
-              <span key={tag} className={tagLabelClass(tag)}>
+              <V2Chip key={tag} tone={tagChipTone(tag)}>
                 {tag}
-              </span>
+              </V2Chip>
             ))}
           </div>
         ) : null}

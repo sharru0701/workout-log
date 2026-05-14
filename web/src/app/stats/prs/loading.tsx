@@ -63,7 +63,6 @@ export default function PrHistoryLoading() {
                 padding: "14px 16px",
                 borderRadius: "var(--v2-r-1)",
                 background: "var(--v2-paper)",
-                border: "1px solid var(--v2-hairline)",
                 boxShadow: "var(--v2-elev-1)",
               }}
             >

@@ -213,33 +213,7 @@
   outline-offset: 2px;
 }
 
-/* CTA Button — shared between protocol card and empty state */
-.hd-cta-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  width: 100%;
-  padding: 14px var(--space-md);
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 16px;
-  text-decoration: none;
-  transition: opacity 0.15s, transform 0.1s;
-  border: none;
-  cursor: pointer;
-  box-sizing: border-box;
-}
-
-.hd-cta-btn:active {
-  opacity: 0.9;
-  transform: scale(0.98);
-}
+/* R2-1: .hd-cta-btn 룰 제거. V2PrimaryBtn 사용. */
 
 .hd-protocol__done-badge {
   display: inline-flex;

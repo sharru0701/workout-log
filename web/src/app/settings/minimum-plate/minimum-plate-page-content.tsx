@@ -3,14 +3,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { AppNumberStepper, AppTextInput } from "@/components/ui/form-controls";
-import {
-  BaseGroupedList,
-  NavigationRow,
-  SectionFootnote,
-  SectionHeader,
-  ValueRow,
-} from "@/components/ui/settings-list";
 import { EmptyStateRows, NoticeStateRows } from "@/components/ui/settings-state";
+import {
+  V2NavRow,
+  V2PrimaryBtn,
+  V2SecondaryBtn,
+} from "@/components/v2/primitives";
+import {
+  V2SettingsFootnote,
+  V2SettingsGroup,
+  V2SettingsSection,
+  mergeRowSubtitle,
+} from "@/components/v2/settings/section";
 import { useLocale } from "@/components/locale-provider";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -230,19 +234,20 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
       <NoticeStateRows message={latestNotice} tone={hasSaveError ? "warning" : "success"} label={locale === "ko" ? "최소 원판 안내" : "Minimum Plate Notice"} />
 
       <section>
-        <SectionHeader title={locale === "ko" ? "기본 최소 원판 무게" : "Default Minimum Plate Increment"} description={locale === "ko" ? "기본값은 규칙이 없는 모든 종목에 적용됩니다." : "The default applies to any exercise without a specific rule."} />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "기본 최소 원판 설정" : "Default minimum plate setting"}>
-          <ValueRow
+        <V2SettingsSection title={locale === "ko" ? "기본 최소 원판 무게" : "Default Minimum Plate Increment"} description={locale === "ko" ? "기본값은 규칙이 없는 모든 종목에 적용됩니다." : "The default applies to any exercise without a specific rule."} />
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "기본 최소 원판 설정" : "Default minimum plate setting"}>
+          <V2NavRow
+            as="div"
             label={locale === "ko" ? "기본 Increment" : "Default Increment"}
             description={locale === "ko" ? "운동종목별 규칙이 없을 때 사용" : "Used when no exercise-specific rule exists"}
             value={`${normalizeIncrementKg(defaultIncrement.value).toFixed(2)} kg`}
-            showChevron={false}
+            trailing="none"
           />
-        </BaseGroupedList>
+        </V2SettingsGroup>
       </section>
 
       <section>
-        <SectionHeader title={locale === "ko" ? "기본값 조절" : "Adjust Default"} description={locale === "ko" ? "스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." : "Adjust it with the stepper, then save the change."} />
+        <V2SettingsSection title={locale === "ko" ? "기본값 조절" : "Adjust Default"} description={locale === "ko" ? "스테퍼로 조절한 뒤 저장 버튼으로 반영합니다." : "Adjust it with the stepper, then save the change."} />
         <div style={{ background: "var(--v2-paper)", borderRadius: 20, padding: "var(--v2-s-4)", display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
           <AppNumberStepper
             label={locale === "ko" ? "기본 최소 원판 (kg)" : "Default Minimum Plate (kg)"}
@@ -253,49 +258,52 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
             inputMode="decimal"
             onChange={(next) => setDefaultDraftKg(normalizeIncrementKg(next, DEFAULT_MINIMUM_PLATE_KG))}
           />
-          <button
-            type="button"
-            className="btn btn-primary btn-full"
+          <V2PrimaryBtn
+            full
             onClick={() => {
               void saveDefaultIncrement();
             }}
             disabled={!canSaveDefault}
           >
             {defaultIncrement.pending ? (locale === "ko" ? "저장 중..." : "Saving...") : (locale === "ko" ? "기본값 저장" : "Save Default")}
-          </button>
+          </V2PrimaryBtn>
         </div>
       </section>
 
       <section>
-        <SectionHeader title={locale === "ko" ? "종목별 최소 원판 규칙" : "Per-Exercise Minimum Plate Rules"} description={locale === "ko" ? "예: Pull-up 1.25kg, 나머지 2.5kg" : "Example: Pull-Up 1.25 kg, everything else 2.5 kg"} />
-        <BaseGroupedList ariaLabel={locale === "ko" ? "운동별 최소 원판 규칙" : "Per exercise minimum plate rules"}>
+        <V2SettingsSection title={locale === "ko" ? "종목별 최소 원판 규칙" : "Per-Exercise Minimum Plate Rules"} description={locale === "ko" ? "예: Pull-up 1.25kg, 나머지 2.5kg" : "Example: Pull-Up 1.25 kg, everything else 2.5 kg"} />
+        <V2SettingsGroup ariaLabel={locale === "ko" ? "운동별 최소 원판 규칙" : "Per exercise minimum plate rules"}>
           {rules.map((rule) => (
-            <NavigationRow
+            <V2NavRow
               key={toRuleKey(rule)}
               label={rule.exerciseName}
-              subtitle={rule.exerciseId ? (locale === "ko" ? "DB 종목 연결" : "Linked to DB exercise") : (locale === "ko" ? "이름 기반 규칙" : "Name-based rule")}
-              description={locale === "ko" ? "탭해서 increment 수정/삭제" : "Tap to edit or delete the increment"}
+              description={mergeRowSubtitle(
+                rule.exerciseId ? (locale === "ko" ? "DB 종목 연결" : "Linked to DB exercise") : (locale === "ko" ? "이름 기반 규칙" : "Name-based rule"),
+                locale === "ko" ? "탭해서 increment 수정/삭제" : "Tap to edit or delete the increment",
+              )}
               value={`${rule.incrementKg.toFixed(2)}kg`}
-              onPress={() => openEditSheet(rule)}
+              onClick={() => openEditSheet(rule)}
             />
           ))}
-          <NavigationRow
+          <V2NavRow
             label={locale === "ko" ? "종목별 규칙 추가" : "Add Exercise Rule"}
-            subtitle="Add Rule"
-            description={locale === "ko" ? "운동종목을 선택하고 최소 원판 무게를 지정합니다." : "Select an exercise and set its minimum plate increment."}
-            onPress={openCreateSheet}
+            description={mergeRowSubtitle(
+              "Add Rule",
+              locale === "ko" ? "운동종목을 선택하고 최소 원판 무게를 지정합니다." : "Select an exercise and set its minimum plate increment.",
+            )}
+            onClick={openCreateSheet}
             value={locale === "ko" ? "추가" : "Add"}
           />
-        </BaseGroupedList>
+        </V2SettingsGroup>
         <EmptyStateRows
           when={isSettingsSettled && rules.length === 0}
           label={locale === "ko" ? "종목별 규칙이 없습니다" : "No exercise-specific rules"}
           description={locale === "ko" ? "기본값만 사용 중입니다. 필요하면 규칙을 추가하세요." : "Only the default increment is in use. Add a rule if needed."}
           ariaLabel={locale === "ko" ? "최소 원판 규칙 빈 상태" : "Minimum plate rule empty state"}
         />
-        <SectionFootnote>
+        <V2SettingsFootnote>
           {locale === "ko" ? "저장된 규칙은 기록 화면의 무게 입력 시 자동으로 스냅되어 적용됩니다." : "Saved rules are applied automatically when weight inputs snap on the logging screen."}
-        </SectionFootnote>
+        </V2SettingsFootnote>
       </section>
 
       <BottomSheet
@@ -314,14 +322,14 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
         footer={
           editingRuleKey ? (
             <div>
-              <button
-                type="button"
-                className="btn btn-danger btn-full"
+              <V2SecondaryBtn
+                full
+                tone="danger"
                 onClick={() => void deleteRule()}
                 disabled={rulesSetting.pending}
               >
                 {locale === "ko" ? "규칙 삭제" : "Delete Rule"}
-              </button>
+              </V2SecondaryBtn>
             </div>
           ) : null
         }
@@ -388,8 +396,7 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                         height: "24px",
                         minHeight: "24px",
                         borderRadius: "999px",
-                        border: "1px solid var(--v2-hairline)",
-                        background: "var(--v2-paper-2)",
+                        background: "var(--v2-paper-3)",
                         color: "var(--v2-ink-2)",
                         display: "inline-flex",
                         alignItems: "center",
@@ -414,8 +421,8 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                     style={{
                       marginTop: "var(--v2-s-2)",
                       padding: "var(--v2-s-2)",
-                      border: "1px solid var(--v2-accent)",
-                      borderRadius: "8px",
+                      boxShadow: "inset 0 0 0 2px var(--v2-accent)",
+                      borderRadius: "var(--v2-r-1)",
                       background: "color-mix(in srgb, var(--v2-accent) 14%, var(--v2-paper))",
                       display: "flex",
                       alignItems: "center",
@@ -428,13 +435,9 @@ export function MinimumPlatePageContent({ initialSnapshot, initialExercises }: M
                         ? `${selectedExerciseOption.name} · ${selectedExerciseOption.category}`
                         : selectedExerciseOption.name}
                     </strong>
-                    <button
-                      type="button"
-                      className="btn btn-inline-action"
-                      onClick={() => selectExerciseOption(null)}
-                    >
+                    <V2SecondaryBtn onClick={() => selectExerciseOption(null)}>
                       {locale === "ko" ? "선택 변경" : "Change Selection"}
-                    </button>
+                    </V2SecondaryBtn>
                   </div>
                 ) : null}
 

@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { AppNumberStepper, AppPlusMinusIcon, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { V2IconBtn, V2SecondaryBtn } from "@/components/v2/primitives";
 import {
   inferProgressionTargetFromExerciseName,
   isOperatorAutoRowType,
@@ -221,14 +222,14 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         onDrop(sessionId, exercise.id);
       }}
       style={{
-        border: highlighted ? "1px solid var(--v2-accent)" : "1px solid var(--v2-hairline)",
-        borderRadius: "10px",
+        boxShadow: highlighted ? "inset 0 0 0 2px var(--v2-accent)" : "none",
+        borderRadius: "var(--v2-r-2)",
         padding: "var(--v2-s-2)",
-        background: highlighted ? "var(--v2-accent-weak)" : "var(--v2-paper)",
+        background: highlighted ? "var(--v2-accent-weak)" : "var(--v2-paper-2)",
         display: "flex",
         flexDirection: "column",
         gap: "var(--v2-s-4)",
-        transition: "border-color 200ms ease, background-color 200ms ease",
+        transition: "box-shadow 200ms ease, background-color 200ms ease",
       }}
     >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "var(--v2-s-2)" }}>
@@ -245,35 +246,23 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
           ) : null}
         </div>
         <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
-          <button
-            type="button"
-            className="btn btn-icon"
-            aria-label={locale === "ko" ? "운동 위로 이동" : "Move exercise up"}
-            title={locale === "ko" ? "운동 위로 이동" : "Move exercise up"}
+          <V2IconBtn
+            icon="expand_less"
+            label={locale === "ko" ? "운동 위로 이동" : "Move exercise up"}
             onClick={() => onMove(sessionId, exercise.id, "up")}
             disabled={!canMoveUp}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>expand_less</span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-icon"
-            aria-label={locale === "ko" ? "운동 아래로 이동" : "Move exercise down"}
-            title={locale === "ko" ? "운동 아래로 이동" : "Move exercise down"}
+          />
+          <V2IconBtn
+            icon="expand_more"
+            label={locale === "ko" ? "운동 아래로 이동" : "Move exercise down"}
             onClick={() => onMove(sessionId, exercise.id, "down")}
             disabled={!canMoveDown}
-          >
-            <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: 18, fontVariationSettings: "'wght' 400" }}>expand_more</span>
-          </button>
-          <button
-            type="button"
-            className="btn btn-icon btn-icon-danger"
-            aria-label={locale === "ko" ? "운동 삭제" : "Delete exercise"}
-            title={locale === "ko" ? "운동 삭제" : "Delete exercise"}
+          />
+          <V2IconBtn
+            icon="remove"
+            label={locale === "ko" ? "운동 삭제" : "Delete exercise"}
             onClick={() => onDelete(sessionId, exercise.id)}
-          >
-            <AppPlusMinusIcon kind="minus" />
-          </button>
+          />
         </div>
       </div>
 
@@ -283,9 +272,8 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
         </span>
         <div data-no-swipe="true">
           {selectedExerciseOption && !exercisePickerOpen ? (
-            <button
-              type="button"
-              className="btn btn-secondary btn-full"
+            <V2SecondaryBtn
+              full
               style={{ justifyContent: "space-between" }}
               onClick={() => {
                 setExerciseQuery(selectedExerciseOption.name);
@@ -298,7 +286,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
               <span>
                 {copy.programExerciseEditor.change}
               </span>
-            </button>
+            </V2SecondaryBtn>
           ) : (
             <>
               <div
@@ -362,8 +350,7 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                       height: "24px",
                       minHeight: "24px",
                       borderRadius: "999px",
-                      border: "1px solid var(--v2-hairline)",
-                      background: "var(--v2-paper-2)",
+                      background: "var(--v2-paper-3)",
                       color: "var(--v2-ink-2)",
                       display: "inline-flex",
                       alignItems: "center",
@@ -400,20 +387,16 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
                   <span style={{ color: "var(--v2-ink-2)", font: "var(--font-secondary)" }}>{copy.programExerciseEditor.noMatchingExercises}</span>
                 ) : (
                   filteredExerciseOptions.map((option) => (
-                    <button
+                    <V2SecondaryBtn
                       key={option.id}
-                      type="button"
-                      className="btn btn-secondary btn-full"
+                      full
                       style={{ justifyContent: "flex-start", minHeight: "40px" }}
-                      onMouseDown={(event) => {
-                        event.preventDefault();
-                      }}
                       onClick={() => {
                         selectExerciseOption(option);
                       }}
                     >
                       {formatExerciseOptionLabel(option)}
-                    </button>
+                    </V2SecondaryBtn>
                   ))
                 )}
               </div>

@@ -108,10 +108,9 @@ export const AppSelect = forwardRef<
           gap: "var(--v2-s-2)",
           width: "100%",
           minHeight: "44px",
-          border: "1px solid var(--v2-hairline)",
-          borderRadius: "8px",
+          borderRadius: "var(--v2-r-1)",
           padding: "var(--v2-s-2) var(--v2-s-4)",
-          backgroundColor: "var(--v2-paper)",
+          backgroundColor: "var(--v2-paper-2)",
           boxSizing: "border-box",
         }}
       >

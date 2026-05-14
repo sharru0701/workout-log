@@ -15,8 +15,13 @@ import {
   V2PrimaryBtn,
   V2SecondaryBtn,
   V2SectionHeader,
+  V2Segmented,
+  V2SelectableRow,
   V2Sheet,
+  V2Skeleton,
   V2Stack,
+  V2TextField,
+  V2Textarea,
 } from "@/components/v2/primitives";
 
 const CARD_TONES = ["paper", "inset", "strong", "accent", "danger", "success"] as const;
@@ -94,6 +99,16 @@ export function DesignSystemCatalog() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [demoTheme, setDemoTheme] = useState("SYSTEM");
+  const [demoEmail, setDemoEmail] = useState("");
+  const [demoPassword, setDemoPassword] = useState("");
+  const [demoNote, setDemoNote] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [demoUnit, setDemoUnit] = useState<"kg" | "lb">("kg");
+  const [demoRange, setDemoRange] = useState<"1w" | "1m" | "3m" | "1y">("1m");
+  const [demoExp, setDemoExp] = useState<"novice" | "intermediate" | "advanced">(
+    "intermediate",
+  );
+  const [demoGoals, setDemoGoals] = useState<Set<string>>(new Set(["strength"]));
 
   return (
     <div
@@ -572,7 +587,207 @@ export function DesignSystemCatalog() {
             </V2Card>
           </Section>
 
-          <Section eyebrow="12" title="Pattern · 운동 카드 sample">
+          <Section eyebrow="12" title="V2TextField / V2Textarea">
+            <V2Stack gap={4}>
+              <V2Card tone="paper">
+                <V2Stack gap={4}>
+                  <V2TextField
+                    label="이메일"
+                    icon="mail"
+                    type="email"
+                    value={demoEmail}
+                    onChange={(e) => setDemoEmail(e.target.value)}
+                    placeholder="you@example.com"
+                    autoComplete="email"
+                    required
+                  />
+                  <V2TextField
+                    label="비밀번호"
+                    icon="lock"
+                    type={showPassword ? "text" : "password"}
+                    value={demoPassword}
+                    onChange={(e) => setDemoPassword(e.target.value)}
+                    placeholder="8자 이상"
+                    autoComplete="current-password"
+                    trailing={
+                      <V2IconBtn
+                        icon={showPassword ? "visibility_off" : "visibility"}
+                        label={showPassword ? "비밀번호 숨기기" : "비밀번호 표시"}
+                        tone="ghost"
+                        onClick={() => setShowPassword((v) => !v)}
+                      />
+                    }
+                  />
+                  <V2TextField
+                    label="에러 상태"
+                    icon="error"
+                    value="invalid@"
+                    onChange={() => {}}
+                    error="이메일 형식이 올바르지 않습니다"
+                  />
+                  <V2TextField
+                    label="힌트 표시"
+                    value=""
+                    onChange={() => {}}
+                    placeholder="아이콘 없는 변형"
+                    hint="아이콘 없이도 사용 가능합니다"
+                  />
+                  <V2TextField
+                    label="작은 사이즈 (sm)"
+                    icon="search"
+                    size="sm"
+                    value=""
+                    onChange={() => {}}
+                    placeholder="검색어 입력"
+                  />
+                  <V2TextField
+                    label="비활성"
+                    icon="lock"
+                    value="locked@example.com"
+                    onChange={() => {}}
+                    disabled
+                  />
+                  <V2Textarea
+                    label="메모 (Textarea)"
+                    value={demoNote}
+                    onChange={(e) => setDemoNote(e.target.value)}
+                    placeholder="자유롭게 입력하세요"
+                    rows={4}
+                    hint="최소 높이 + 수직 리사이즈 가능"
+                  />
+                </V2Stack>
+              </V2Card>
+            </V2Stack>
+          </Section>
+
+          <Section eyebrow="13" title="V2Segmented (single-select)">
+            <V2Card tone="paper">
+              <V2Stack gap={4}>
+                <V2Stack gap={2}>
+                  <p className="v2-label">단위 (md)</p>
+                  <V2Segmented
+                    options={[
+                      { value: "kg", label: "kg" },
+                      { value: "lb", label: "lb" },
+                    ]}
+                    value={demoUnit}
+                    onChange={setDemoUnit}
+                    ariaLabel="단위"
+                  />
+                </V2Stack>
+                <V2Stack gap={2}>
+                  <p className="v2-label">기간 필터 (md, full width)</p>
+                  <V2Segmented
+                    options={[
+                      { value: "1w", label: "1주" },
+                      { value: "1m", label: "1개월" },
+                      { value: "3m", label: "3개월" },
+                      { value: "1y", label: "1년" },
+                    ]}
+                    value={demoRange}
+                    onChange={setDemoRange}
+                    ariaLabel="기간"
+                    style={{ display: "flex", width: "100%" }}
+                  />
+                </V2Stack>
+                <V2Stack gap={2}>
+                  <p className="v2-label">Sm 사이즈</p>
+                  <V2Segmented
+                    options={[
+                      { value: "kg", label: "kg" },
+                      { value: "lb", label: "lb" },
+                    ]}
+                    value={demoUnit}
+                    onChange={setDemoUnit}
+                    size="sm"
+                    ariaLabel="단위 (sm)"
+                  />
+                </V2Stack>
+              </V2Stack>
+            </V2Card>
+          </Section>
+
+          <Section eyebrow="14" title="V2SelectableRow">
+            <V2Stack gap={4}>
+              <V2Card tone="paper">
+                <V2Stack gap={3}>
+                  <p className="v2-label">Single-select (radio)</p>
+                  <V2SelectableRow
+                    selected={demoExp === "novice"}
+                    onClick={() => setDemoExp("novice")}
+                    icon="auto_awesome"
+                    title="초급"
+                    description="< 6개월 · 매주 무게가 늘어남"
+                  />
+                  <V2SelectableRow
+                    selected={demoExp === "intermediate"}
+                    onClick={() => setDemoExp("intermediate")}
+                    icon="trending_up"
+                    title="중급"
+                    description="6개월~2년 · 주기적 진행"
+                  />
+                  <V2SelectableRow
+                    selected={demoExp === "advanced"}
+                    onClick={() => setDemoExp("advanced")}
+                    icon="shield"
+                    title="고급"
+                    description="2년+ · 분기 단위 진행"
+                  />
+                </V2Stack>
+              </V2Card>
+              <V2Card tone="paper">
+                <V2Stack gap={3}>
+                  <p className="v2-label">Multi-select (checkbox)</p>
+                  {(
+                    [
+                      ["strength", "fitness_center", "근력 향상"],
+                      ["hypertrophy", "exercise", "근비대"],
+                      ["endurance", "directions_run", "근지구력"],
+                      ["weight-loss", "monitor_weight", "체중 감량"],
+                    ] as const
+                  ).map(([k, ic, label]) => (
+                    <V2SelectableRow
+                      key={k}
+                      mode="multi"
+                      selected={demoGoals.has(k)}
+                      onClick={() => {
+                        setDemoGoals((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(k)) next.delete(k);
+                          else next.add(k);
+                          return next;
+                        });
+                      }}
+                      icon={ic}
+                      title={label}
+                    />
+                  ))}
+                </V2Stack>
+              </V2Card>
+            </V2Stack>
+          </Section>
+
+          <Section eyebrow="15" title="V2Skeleton">
+            <V2Card tone="paper">
+              <V2Stack gap={4}>
+                <V2Stack gap={2}>
+                  <p className="v2-label">Text + rect</p>
+                  <V2Skeleton shape="text" width="60%" />
+                  <V2Skeleton shape="text" width="40%" />
+                  <V2Skeleton shape="rect" height="var(--v2-s-8)" />
+                </V2Stack>
+                <V2Inline gap={3} align="center">
+                  <V2Skeleton shape="circle" />
+                  <V2Stack gap={2} style={{ flex: 1 }}>
+                    <V2Skeleton shape="text" width="50%" />
+                    <V2Skeleton shape="text" width="80%" />
+                  </V2Stack>
+                </V2Inline>
+              </V2Stack>
+            </V2Card>
+          </Section>
+
+          <Section eyebrow="16" title="Pattern · 운동 카드 sample">
             <V2Card tone="paper">
               <V2SectionHeader
                 eyebrow="TODAY'S SESSION"

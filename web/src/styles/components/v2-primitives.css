@@ -68,3 +68,154 @@
     animation: none !important;
   }
 }
+
+/* TextField / Textarea — shell focus ring (No-Line: boxShadow inset only) */
+.v2-textfield-shell {
+  background: var(--v2-paper-2);
+  transition:
+    box-shadow var(--v2-d-1) var(--v2-e-out),
+    background var(--v2-d-1) var(--v2-e-out);
+  box-shadow: inset 0 0 0 0 transparent;
+}
+
+.v2-textfield-shell:focus-within {
+  background: var(--v2-paper);
+  box-shadow: inset 0 0 0 2px var(--v2-accent);
+}
+
+.v2-textfield-shell[data-invalid]:focus-within,
+.v2-textfield-shell[data-invalid] {
+  box-shadow: inset 0 0 0 2px var(--v2-c-danger);
+}
+
+.v2-textfield-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--v2-ink);
+  font-family: var(--v2-f-text);
+}
+
+.v2-textfield-input::placeholder {
+  color: var(--v2-ink-4);
+  opacity: 1;
+}
+
+.v2-textfield-input:disabled {
+  cursor: not-allowed;
+  color: var(--v2-ink-3);
+}
+
+.v2-textarea-input {
+  display: block;
+  resize: vertical;
+  min-height: calc(var(--v2-s-8) + var(--v2-s-7));
+  font-family: var(--v2-f-text);
+  line-height: 1.5;
+}
+
+/* Segmented — pressable pill override (selected pill has elev, no transform on press) */
+.v2-segmented-pill {
+  font-family: var(--v2-f-text);
+}
+
+.v2-segmented-pill[data-selected]:active {
+  transform: none;
+}
+
+/* SelectableRow — keep press feedback subtle when selected */
+.v2-selectable-row {
+  font-family: var(--v2-f-text);
+}
+
+/* Skeleton — shimmer animation */
+@keyframes v2-skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.v2-skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--v2-paper-2) 0%,
+    var(--v2-paper-3) 50%,
+    var(--v2-paper-2) 100%
+  );
+  background-size: 200% 100%;
+  animation: v2-skeleton-shimmer 1.4s ease infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-skeleton {
+    animation: none;
+    background: var(--v2-paper-2);
+  }
+}
+
+/* Switch — iOS-style toggle (No-Line: paper tone transition + accent fill) */
+.v2-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.v2-switch > input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  cursor: pointer;
+}
+
+.v2-switch > input[type="checkbox"]:disabled {
+  cursor: not-allowed;
+}
+
+.v2-switch-track {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+  border-radius: var(--v2-r-pill);
+  background-color: var(--v2-paper-4);
+  transition: background-color var(--v2-d-2) var(--v2-e-out);
+  flex-shrink: 0;
+}
+
+.v2-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--v2-r-pill);
+  background-color: var(--v2-paper);
+  box-shadow: var(--v2-elev-1);
+  transition: transform var(--v2-d-2) cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.v2-switch > input[type="checkbox"]:checked ~ .v2-switch-track {
+  background-color: var(--v2-accent);
+}
+
+.v2-switch > input[type="checkbox"]:checked ~ .v2-switch-track .v2-switch-thumb {
+  transform: translateX(20px);
+}
+
+.v2-switch > input[type="checkbox"]:disabled ~ .v2-switch-track {
+  opacity: 0.45;
+}
+
+.v2-switch > input[type="checkbox"]:focus-visible ~ .v2-switch-track {
+  outline: 2px solid var(--v2-focus);
+  outline-offset: 2px;
+}

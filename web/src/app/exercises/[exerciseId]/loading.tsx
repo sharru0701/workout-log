@@ -47,7 +47,6 @@ export default function ExerciseDetailLoading() {
                   borderRadius: "var(--v2-r-1)",
                   padding: 16,
                   background: "var(--v2-paper)",
-                  border: "1px solid var(--v2-hairline)",
                   boxShadow: "var(--v2-elev-1)",
                   display: "flex",
                   flexDirection: "column",
@@ -75,7 +74,6 @@ export default function ExerciseDetailLoading() {
               borderRadius: "var(--v2-r-1)",
               padding: "var(--v2-s-3)",
               background: "var(--v2-paper-2)",
-              border: "1px solid var(--v2-hairline)",
             }}
           >
             <div style={{ ...skeletonStyle, height: 280, width: "100%", borderRadius: 8 }} />
@@ -101,7 +99,6 @@ export default function ExerciseDetailLoading() {
                   padding: "14px 16px",
                   borderRadius: "var(--v2-r-1)",
                   background: "var(--v2-paper)",
-                  border: "1px solid var(--v2-hairline)",
                   boxShadow: "var(--v2-elev-1)",
                 }}
               >

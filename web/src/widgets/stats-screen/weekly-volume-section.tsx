@@ -187,7 +187,6 @@ export function WeeklyVolumeSection({
         tone="paper"
         padding="var(--v2-s-4)"
         radius="var(--v2-r-1)"
-        style={{ border: "1px solid var(--v2-hairline)" }}
       >
         <div
           style={{
