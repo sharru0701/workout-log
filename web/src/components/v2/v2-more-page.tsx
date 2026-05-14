@@ -99,7 +99,7 @@ export function V2MorePage() {
       </div>
 
       {me && (
-        <div style={{ padding: "0 16px 4px" }}>
+        <div className="v2-font-display" style={{ padding: "0 16px 4px" }}>
           <div
             style={{
               display: "flex",
@@ -120,7 +120,6 @@ export function V2MorePage() {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 16,
                 flexShrink: 0,
@@ -128,10 +127,9 @@ export function V2MorePage() {
             >
               {(me.displayName?.[0] ?? me.email?.[0] ?? "?").toUpperCase()}
             </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="v2-font-display" style={{ flex: 1, minWidth: 0 }}>
               <div
                 style={{
-                  fontFamily: "var(--v2-f-display)",
                   fontWeight: 700,
                   fontSize: 14,
                   color: "var(--v2-ink)",
@@ -305,7 +303,7 @@ export function V2MorePage() {
             }
             window.location.href = "/login";
           }}
-          className="v2-pressable"
+          className="v2-pressable v2-font-display"
           style={{
             display: "flex",
             alignItems: "center",
@@ -317,7 +315,6 @@ export function V2MorePage() {
             borderRadius: 12,
             border: "none",
             cursor: "pointer",
-            fontFamily: "var(--v2-f-display)",
             fontWeight: 600,
             fontSize: 13,
           }}
@@ -656,7 +653,7 @@ function OptionList<T extends string>({
             aria-checked={active}
             disabled={disabled}
             onClick={() => onSelect(option.value)}
-            className="v2-pressable"
+            className="v2-pressable v2-font-display"
             style={{
               display: "flex",
               alignItems: "center",
@@ -669,7 +666,6 @@ function OptionList<T extends string>({
               borderRadius: "var(--v2-r-2)",
               cursor: disabled ? "not-allowed" : "pointer",
               opacity: disabled ? 0.6 : 1,
-              fontFamily: "var(--v2-f-display)",
               fontSize: 14,
               fontWeight: 600,
               textAlign: "left",
@@ -715,13 +711,12 @@ function AppInfoFooter() {
       <p className="v2-mono-label">Workout Log · v{version} · Next.js</p>
       <a
         href="/onboarding"
-        className="v2-anchor"
+        className="v2-anchor v2-font-text"
         style={{
           display: "inline-block",
           color: "var(--v2-ink-3)",
           textDecoration: "underline",
           textUnderlineOffset: 3,
-          fontFamily: "var(--v2-f-text)",
           fontSize: 12,
         }}
       >

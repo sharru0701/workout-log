@@ -99,7 +99,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           }
           aria-haspopup="dialog"
           aria-expanded={monthPickerOpen}
-          className="v2-pressable"
+          className="v2-pressable v2-font-display"
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -108,7 +108,6 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
             border: "none",
             padding: "4px 6px",
             cursor: "pointer",
-            fontFamily: "var(--v2-f-display)",
             fontSize: 16,
             fontWeight: 700,
             color: "var(--v2-ink)",
@@ -226,7 +225,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
                   onClick={() => onSelectDate(dateOnly)}
                   aria-label={formatCalendarDateAria(dateOnly, locale)}
                   aria-selected={isSelected}
-                  className="v2-pressable"
+                  className="v2-pressable v2-font-num"
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -244,9 +243,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
                     fontWeight: isToday || isSelected ? 700 : 400,
                     cursor: "pointer",
                     position: "relative",
-                    fontFamily: "var(--v2-f-num)",
                     fontSize: 14,
-                    fontVariantNumeric: "tabular-nums",
                   }}
                 >
                   <span>{dayOfMonth(dateOnly)}</span>

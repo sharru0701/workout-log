@@ -87,7 +87,7 @@ function MetricCard({
       <div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span
-            className="v2-num-md"
+            className="v2-num-md v2-font-display"
             style={{ color: "var(--v2-ink)", letterSpacing: 0 }}
           >
             {value}
@@ -95,7 +95,6 @@ function MetricCard({
           {unit ? (
             <span
               style={{
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 13,
                 fontWeight: 700,
                 color: "var(--v2-ink-2)",
@@ -178,10 +177,9 @@ function PrHistory({
             gap: 12,
           }}
         >
-          <div style={{ minWidth: 0 }}>
+          <div className="v2-font-display" style={{ minWidth: 0 }}>
             <div
               style={{
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 800,
                 fontSize: 15,
                 color: "var(--v2-ink)",
@@ -258,7 +256,7 @@ function RecentSets({
   }
 
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div className="v2-font-display" style={{ display: "grid", gap: 12 }}>
       {grouped.map(([day, sets]) => (
         <V2Card
           key={day}
@@ -276,7 +274,6 @@ function RecentSets({
           >
             <span
               style={{
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 800,
                 fontSize: 14,
                 color: "var(--v2-ink)",

@@ -197,12 +197,12 @@ export function V2Onboarding() {
             <button
               type="button"
               onClick={goNext}
+              className="v2-font-display"
               style={{
                 background: "transparent",
                 border: "none",
                 cursor: "pointer",
                 color: "var(--v2-ink-2)",
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 13,
                 fontWeight: 600,
                 minHeight: 44,
@@ -686,7 +686,6 @@ function RecommendedChip({ locale }: { locale: "ko" | "en" }) {
     alignItems: "center",
     padding: "3px 8px",
     borderRadius: 9999,
-    fontFamily: "var(--v2-f-display)",
     fontSize: 10,
     fontWeight: 700,
     letterSpacing: "0.06em",
@@ -694,7 +693,7 @@ function RecommendedChip({ locale }: { locale: "ko" | "en" }) {
     color: "var(--v2-ink-on-accent)",
   };
   return (
-    <span style={style}>{locale === "ko" ? "추천" : "RECOMMENDED"}</span>
+    <span className="v2-font-display" style={style}>{locale === "ko" ? "추천" : "RECOMMENDED"}</span>
   );
 }
 

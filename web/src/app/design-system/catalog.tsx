@@ -113,11 +113,11 @@ export function DesignSystemCatalog() {
   return (
     <div
       data-theme-preference={theme}
+      className="v2-font-text"
       style={{
         background: "var(--v2-bg)",
         minHeight: "100vh",
         color: "var(--v2-ink)",
-        fontFamily: "var(--v2-f-text)",
         padding: "var(--v2-s-6)",
       }}
     >
@@ -496,7 +496,7 @@ export function DesignSystemCatalog() {
                             key={opt.value}
                             type="button"
                             onClick={() => setDemoTheme(opt.value)}
-                            className="v2-pressable"
+                            className="v2-pressable v2-font-display"
                             style={{
                               display: "flex",
                               alignItems: "center",
@@ -513,7 +513,6 @@ export function DesignSystemCatalog() {
                               border: "none",
                               borderRadius: "var(--v2-r-2)",
                               cursor: "pointer",
-                              fontFamily: "var(--v2-f-display)",
                               fontSize: 14,
                               fontWeight: 600,
                               textAlign: "left",

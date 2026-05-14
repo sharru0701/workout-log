@@ -195,6 +195,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
         >
           <div
             aria-hidden
+            className="v2-font-display"
             style={{
               width: 36,
               height: 36,
@@ -204,7 +205,6 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 800,
               fontSize: 16,
               letterSpacing: "-0.05em",
@@ -213,8 +213,8 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
             IG
           </div>
           <div
+            className="v2-font-display"
             style={{
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 760,
               fontSize: 18,
               letterSpacing: "-0.02em",
@@ -396,9 +396,9 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
               />
               <Link
                 href="/forgot-password"
+                className="v2-font-display"
                 style={{
                   color: "var(--v2-accent-ink)",
-                  fontFamily: "var(--v2-f-display)",
                   fontSize: 13,
                   fontWeight: 700,
                   textDecoration: "none",
@@ -414,6 +414,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           {error && (
             <div
               role="alert"
+              className="v2-font-display"
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -425,7 +426,6 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
                   "color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper))",
                 color: "var(--v2-c-danger)",
                 fontSize: 13,
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
               }}
             >
@@ -632,9 +632,9 @@ function CheckboxRow({
       </span>
       <span style={{ flex: 1, minWidth: 0 }}>
         <span
+          className="v2-font-text"
           style={{
             display: "block",
-            fontFamily: "var(--v2-f-text)",
             fontSize: compact ? 12 : 13,
             fontWeight: compact ? 600 : 500,
             lineHeight: 1.45,
@@ -659,13 +659,13 @@ function CheckboxRow({
 function Divider({ label }: { label: string }) {
   return (
     <div
+      className="v2-font-num"
       style={{
         display: "flex",
         alignItems: "center",
         gap: 10,
         color: "var(--v2-ink-3)",
         fontSize: 11,
-        fontFamily: "var(--v2-f-num)",
         fontWeight: 700,
         letterSpacing: "0.08em",
       }}

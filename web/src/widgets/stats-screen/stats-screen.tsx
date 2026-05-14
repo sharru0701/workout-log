@@ -103,7 +103,7 @@ function MetricCard({
       <div>
         <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
           <span
-            className="v2-num-md"
+            className="v2-num-md v2-font-display"
             style={{ color: "var(--v2-ink)", letterSpacing: 0 }}
           >
             {value}
@@ -111,7 +111,6 @@ function MetricCard({
           {unit ? (
             <span
               style={{
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 13,
                 fontWeight: 700,
                 color: "var(--v2-ink-2)",
@@ -172,10 +171,9 @@ function PrList({
                 gap: 12,
               }}
             >
-              <div style={{ minWidth: 0 }}>
+              <div className="v2-font-display" style={{ minWidth: 0 }}>
                 <div
                   style={{
-                    fontFamily: "var(--v2-f-display)",
                     fontWeight: 800,
                     fontSize: 15,
                     color: "var(--v2-ink)",
@@ -425,7 +423,6 @@ export function StatsScreen({
               <Link
                 href={APP_ROUTES.prHistory}
                 style={{
-                  fontFamily: "var(--v2-f-display)",
                   fontWeight: 700,
                   fontSize: 12,
                   letterSpacing: "0.04em",

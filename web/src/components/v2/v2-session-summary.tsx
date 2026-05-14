@@ -609,6 +609,7 @@ export function V2SessionSummary({
                     }}
                   >
                     <div
+                      className="v2-font-num"
                       style={{
                         width: 32,
                         height: 32,
@@ -622,7 +623,6 @@ export function V2SessionSummary({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontFamily: "var(--v2-f-num)",
                         fontWeight: 700,
                         fontSize: 12,
                         flexShrink: 0,

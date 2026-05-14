@@ -355,12 +355,11 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
                   <button
                     type="button"
                     onClick={() => onSelectExerciseOption(null)}
-                    className="v2-pressable"
+                    className="v2-pressable v2-font-display"
                     style={{
                       background: "none",
                       border: "none",
                       cursor: "pointer",
-                      fontFamily: "var(--v2-f-display)",
                       fontSize: 12,
                       fontWeight: 700,
                       color: "var(--v2-accent)",
@@ -441,7 +440,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
 
           <button
             type="button"
-            className="v2-pressable"
+            className="v2-pressable v2-font-display"
             style={{
               width: "100%",
               marginTop: "var(--v2-s-3)",
@@ -454,7 +453,6 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
               alignItems: "center",
               justifyContent: "center",
               gap: "var(--v2-s-2)",
-              fontFamily: "var(--v2-f-display)",
               fontSize: 13,
               fontWeight: 700,
               cursor: "pointer",
@@ -512,7 +510,7 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
             gap: 6,
           }}
         >
-          <span className="v2-eyebrow">
+          <span className="v2-eyebrow v2-font-display">
             {locale === "ko" ? "메모" : "Memo"}
           </span>
           <AppTextarea
@@ -536,7 +534,6 @@ export const AddExerciseSheet = memo(function AddExerciseSheet({
             background: "var(--v2-paper-2)",
             color: "var(--v2-ink-2)",
             textDecoration: "none",
-            fontFamily: "var(--v2-f-display)",
             fontSize: 13,
             fontWeight: 700,
             letterSpacing: "0.02em",

@@ -165,6 +165,7 @@ function PwField({
           onChange={(e) => onChange(e.target.value)}
           required
           minLength={8}
+          className="v2-font-text"
           style={inputStyle}
         />
       </span>

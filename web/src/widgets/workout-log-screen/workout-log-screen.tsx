@@ -300,7 +300,7 @@ function WorkoutLogScreenContent({
         label={copy.workoutLog.validationLabel}
         ariaLabel={copy.workoutLog.validationAriaLabel}
       />
-      <EmptyStateRows when={noPlan} label={copy.workoutLog.noPlans} />
+      <EmptyStateRows className="v2-font-display" when={noPlan} label={copy.workoutLog.noPlans} />
 
       {!noPlan && isDraftLoaded && draft ? (
         <div
@@ -342,7 +342,6 @@ function WorkoutLogScreenContent({
                 color: "var(--v2-ink)",
                 border: "none",
                 cursor: isEditingExistingLog ? "default" : "pointer",
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 12,
                 minHeight: 36,
@@ -363,7 +362,7 @@ function WorkoutLogScreenContent({
               </span>
               {!isEditingExistingLog && (
                 <span
-                  className="material-symbols-outlined"
+                  className="material-symbols-outlined v2-font-display"
                   aria-hidden
                   style={{
                     fontSize: 16,
@@ -396,7 +395,6 @@ function WorkoutLogScreenContent({
                     background:
                       "color-mix(in srgb, var(--v2-accent) 14%, var(--v2-paper))",
                     color: "var(--v2-accent-ink)",
-                    fontFamily: "var(--v2-f-display)",
                     fontWeight: 700,
                     fontSize: 12,
                     letterSpacing: "0.04em",
@@ -449,7 +447,6 @@ function WorkoutLogScreenContent({
                   color: "var(--v2-ink)",
                   border: "none",
                   cursor: "pointer",
-                  fontFamily: "var(--v2-f-display)",
                   fontWeight: 700,
                   fontSize: 12,
                   minHeight: 36,
@@ -522,7 +519,6 @@ function WorkoutLogScreenContent({
               border: "none",
               cursor:
                 workflowState === "saving" ? "not-allowed" : "pointer",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 700,
               fontSize: 12,
               textTransform: "uppercase",
@@ -638,11 +634,11 @@ function DateNav({
         </span>
       </button>
       <label
+        className="v2-font-display"
         style={{
           position: "relative",
           display: "flex",
           alignItems: "center",
-          fontFamily: "var(--v2-f-display)",
           fontWeight: 700,
           fontSize: 12,
           color: "var(--v2-ink)",

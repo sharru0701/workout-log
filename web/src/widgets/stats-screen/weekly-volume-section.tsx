@@ -86,7 +86,7 @@ function VolumeBarChart({
         const y = height - padY - barHeight;
         const isLast = index === series.length - 1;
         return (
-          <g key={point.period}>
+          <g className="v2-font-display" key={point.period}>
             <rect
               x={x}
               y={y}
@@ -105,7 +105,6 @@ function VolumeBarChart({
               y={height - padY + 14}
               textAnchor="middle"
               style={{
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 9,
                 fontWeight: 700,
                 fill: "var(--v2-ink-3)",

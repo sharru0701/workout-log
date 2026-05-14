@@ -399,6 +399,7 @@ export function WorkoutLogKeypadPanel({
             <button
               type="button"
               onClick={onOpenAddExerciseSheet}
+              className="v2-font-display"
               style={{
                 marginTop: 8,
                 padding: "12px 18px",
@@ -406,7 +407,6 @@ export function WorkoutLogKeypadPanel({
                 border: "none",
                 background: "var(--v2-accent)",
                 color: "var(--v2-ink-on-accent)",
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 13,
                 cursor: "pointer",
@@ -464,6 +464,7 @@ export function WorkoutLogKeypadPanel({
                 setActiveField("reps");
                 setMemoMode(false);
               }}
+              className="v2-font-display"
               style={{
                 flex: "1 0 auto",
                 padding: "8px 12px",
@@ -474,7 +475,6 @@ export function WorkoutLogKeypadPanel({
                 color: isActive
                   ? "var(--v2-ink-on-accent)"
                   : "var(--v2-ink-2)",
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 12,
                 display: "flex",
@@ -774,13 +774,13 @@ export function WorkoutLogKeypadPanel({
             onClick={handleRemoveSet}
             disabled={!canRemoveSet}
             aria-label={locale === "ko" ? "현재 세트 삭제" : "Remove set"}
+            className="v2-font-display"
             style={{
               padding: "8px 10px",
               borderRadius: 12,
               border: "none",
               background: "var(--v2-paper-2)",
               color: canRemoveSet ? "var(--v2-ink-2)" : "var(--v2-paper-3)",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 600,
               fontSize: 12,
               cursor: canRemoveSet ? "pointer" : "not-allowed",
@@ -805,13 +805,13 @@ export function WorkoutLogKeypadPanel({
             type="button"
             onClick={handleAddSet}
             aria-label={locale === "ko" ? "세트 추가" : "Add set"}
+            className="v2-font-display"
             style={{
               padding: "8px 10px",
               borderRadius: 12,
               border: "none",
               background: "var(--v2-paper-2)",
               color: "var(--v2-ink)",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 700,
               fontSize: 12,
               cursor: "pointer",
@@ -841,6 +841,7 @@ export function WorkoutLogKeypadPanel({
                   ? `계획 무게 ${recommendedWeightKg}kg 복원`
                   : `Restore planned ${recommendedWeightKg}kg`
               }
+              className="v2-font-display"
               style={{
                 padding: "8px 10px",
                 borderRadius: 12,
@@ -852,7 +853,6 @@ export function WorkoutLogKeypadPanel({
                 alignItems: "center",
                 justifyContent: "center",
                 gap: 4,
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 12,
                 minHeight: 38,
@@ -880,6 +880,7 @@ export function WorkoutLogKeypadPanel({
             onClick={() => setMemoMode((v) => !v)}
             aria-pressed={memoMode}
             aria-label={locale === "ko" ? "메모" : "Memo"}
+            className="v2-font-display"
             style={{
               padding: "8px 10px",
               borderRadius: 12,
@@ -893,7 +894,6 @@ export function WorkoutLogKeypadPanel({
               alignItems: "center",
               justifyContent: "center",
               gap: 4,
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 700,
               fontSize: 12,
               minHeight: 38,
@@ -1162,7 +1162,6 @@ function Key({
           : "var(--v2-ink)",
     border: "none",
     cursor: "pointer",
-    fontFamily: "var(--v2-f-num)",
     fontWeight: 700,
     fontSize: isOp ? 14 : 20,
     boxShadow: "var(--v2-elev-1)",
@@ -1179,6 +1178,7 @@ function Key({
         if (isNext || isDone) onAdvance();
         else onPress(k);
       }}
+      className="v2-font-num"
       style={display}
       aria-label={k}
     >

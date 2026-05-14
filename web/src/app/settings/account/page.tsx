@@ -585,7 +585,7 @@ export default function SettingsAccountPage() {
       </section>
 
       {oauthAccounts && oauthAccounts.length > 0 && !hasPassword ? (
-        <section>
+        <section className="v2-font-display">
           <V2SettingsSection
             title={locale === "ko" ? "비밀번호 설정" : "Set Password"}
             description={
@@ -604,7 +604,6 @@ export default function SettingsAccountPage() {
             <label
               style={{
                 display: "block",
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 13,
                 color: "var(--v2-ink-2)",
               }}
@@ -634,7 +633,6 @@ export default function SettingsAccountPage() {
             <label
               style={{
                 display: "block",
-                fontFamily: "var(--v2-f-display)",
                 fontSize: 13,
                 color: "var(--v2-ink-2)",
               }}
@@ -749,7 +747,7 @@ export default function SettingsAccountPage() {
         ) : null}
       </section>
 
-      <section>
+      <section className="v2-font-display">
         <V2SettingsSection
           title={locale === "ko" ? "계정 삭제" : "Delete Account"}
           description={
@@ -786,7 +784,6 @@ export default function SettingsAccountPage() {
           style={{
             display: "block",
             marginTop: "var(--v2-s-2)",
-            fontFamily: "var(--v2-f-display)",
             fontSize: 13,
             color: "var(--v2-ink-2)",
           }}

@@ -223,14 +223,13 @@ export function CalendarRangePicker({
               type="button"
               key={dateStr}
               onClick={() => handleDateClick(dateStr)}
-              className="v2-pressable"
+              className="v2-pressable v2-font-num"
               style={{
                 aspectRatio: "1",
                 background: "transparent",
                 color: dayColor,
                 borderRadius,
                 cursor: "pointer",
-                fontFamily: "var(--v2-f-num)",
                 fontSize: 14,
                 fontWeight: isToday || selected ? 700 : 400,
                 fontVariantNumeric: "tabular-nums",

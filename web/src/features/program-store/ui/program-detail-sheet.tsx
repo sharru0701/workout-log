@@ -149,7 +149,6 @@ function StatBentoCell({
           style={{
             fontSize: 20,
             color: "var(--v2-ink)",
-            fontFamily: "var(--v2-f-num)",
           }}
         >
           {value}

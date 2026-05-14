@@ -136,7 +136,6 @@ function MiniCalendar({
                 ? "var(--v2-ink)"
                 : "var(--v2-ink-4)",
             opacity: valid ? 1 : 0.3,
-            fontFamily: "var(--v2-f-num)",
             fontWeight: 700 as const,
             fontSize: 13,
             border: "none",
@@ -164,6 +163,7 @@ function MiniCalendar({
                 key={i}
                 type="button"
                 onClick={() => onDayClick!(d)}
+                className="v2-font-num"
                 style={commonStyle}
               >
                 {inner}
@@ -171,7 +171,7 @@ function MiniCalendar({
             );
           }
           return (
-            <div key={i} style={commonStyle}>
+            <div key={i} className="v2-font-num" style={commonStyle}>
               {inner}
             </div>
           );
@@ -401,7 +401,7 @@ export function V2PlanSheet({
               chevron_left
             </span>
           </button>
-          <h1 id={headingId} className="v2-h1" style={{ flex: 1 }}>
+          <h1 id={headingId} className="v2-h1 v2-font-display" style={{ flex: 1 }}>
             {monthLabel}
           </h1>
           <button
@@ -440,7 +440,6 @@ export function V2PlanSheet({
                 border: "none",
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink-2)",
-                fontFamily: "var(--v2-f-display)",
                 fontWeight: 700,
                 fontSize: 11,
                 cursor: "pointer",
@@ -602,7 +601,7 @@ export function V2PlanSheet({
         ))}
       </div>
 
-      <div style={{ padding: "16px 16px 24px", display: "flex", gap: 8 }}>
+      <div className="v2-font-display" style={{ padding: "16px 16px 24px", display: "flex", gap: 8 }}>
         <Link
           href="/calendar"
           onClick={onClose}
@@ -619,7 +618,6 @@ export function V2PlanSheet({
               color: "var(--v2-ink)",
               border: "none",
               cursor: "pointer",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 600,
               fontSize: 14,
               display: "inline-flex",
@@ -629,7 +627,7 @@ export function V2PlanSheet({
             }}
           >
             <span
-              className="material-symbols-outlined"
+              className="material-symbols-outlined v2-font-display"
               style={{ fontSize: 18 }}
               aria-hidden
             >
@@ -654,7 +652,6 @@ export function V2PlanSheet({
               color: "var(--v2-ink-on-accent)",
               border: "none",
               cursor: "pointer",
-              fontFamily: "var(--v2-f-display)",
               fontWeight: 700,
               fontSize: 14,
               display: "inline-flex",

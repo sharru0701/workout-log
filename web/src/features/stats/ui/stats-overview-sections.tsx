@@ -65,7 +65,7 @@ const PrRow = memo(function PrRow({
     >
       <div style={{ flex: 1, minWidth: 0 }}>
         <p
-          className="v2-body"
+          className="v2-body v2-font-num"
           style={{
             fontSize: 13,
             fontWeight: 700,
@@ -83,7 +83,6 @@ const PrRow = memo(function PrRow({
             gap: "var(--v2-s-3)",
             fontSize: 11,
             color: "var(--v2-ink-3)",
-            fontFamily: "var(--v2-f-num)",
             fontVariantNumeric: "tabular-nums",
           }}
         >

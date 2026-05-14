@@ -292,6 +292,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ─── 폰트 패밀리 유틸리티 (Rule 4: inline override 대체) ─── */
+.v2-font-display { font-family: var(--v2-f-display); }
+.v2-font-text { font-family: var(--v2-f-text); }
+.v2-font-num { font-family: var(--v2-f-num); font-variant-numeric: tabular-nums; }
+
 /* 한글 줄바꿈 보정 */
 .v2-body, .v2-small, .v2-frame p {
   word-break: keep-all;

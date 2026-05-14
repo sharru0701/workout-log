@@ -87,7 +87,7 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
     <div style={{ display: "flex", width: "100%", justifyContent: "center" }}>
       <button
         type="button"
-        className="workout-record-picker-btn v2-pressable"
+        className="workout-record-picker-btn v2-pressable v2-font-num"
         style={{
           width: "100%",
           padding: "6px 4px",
@@ -98,7 +98,6 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
           display: "flex",
           justifyContent: "center",
           alignItems: "center",
-          fontFamily: "var(--v2-f-num)",
           fontSize: 22,
           fontWeight: 700,
           letterSpacing: "-0.5px",
