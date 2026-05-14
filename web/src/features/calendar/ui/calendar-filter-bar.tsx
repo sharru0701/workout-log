@@ -13,11 +13,11 @@ type CalendarFilterBarProps = {
 const PILL_STYLE = {
   display: "flex",
   alignItems: "center",
-  gap: 6,
+  gap: "var(--v2-s-1)",
   background: "var(--v2-paper)",
   border: "none",
   borderRadius: "var(--v2-r-2)",
-  padding: "8px 14px",
+  padding: "var(--v2-s-2) var(--v2-s-4)",
   cursor: "pointer",
   fontSize: 12,
   fontWeight: 700,

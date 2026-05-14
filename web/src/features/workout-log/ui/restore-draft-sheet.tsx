@@ -250,7 +250,7 @@ export const RestoreDraftSheet = memo(function RestoreDraftSheet({
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            padding: "12px 0 8px",
+            padding: "var(--v2-s-3) 0px var(--v2-s-2)",
             margin: "-4px calc(-1 * var(--v2-s-4)) 0",
             cursor: "grab",
             userSelect: "none",

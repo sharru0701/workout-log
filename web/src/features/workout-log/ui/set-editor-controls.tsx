@@ -90,7 +90,7 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
         className="workout-record-picker-btn v2-pressable v2-font-num"
         style={{
           width: "100%",
-          padding: "6px 4px",
+          padding: "var(--v2-s-1) var(--v2-s-1)",
           border: "none",
           borderRadius: "var(--v2-r-1)",
           backgroundColor: bg,
@@ -103,7 +103,7 @@ export const WorkoutRecordInlinePicker = memo(function WorkoutRecordInlinePicker
           letterSpacing: "-0.5px",
           lineHeight: 1,
           fontVariantNumeric: "tabular-nums",
-          minHeight: 44,
+          minHeight: "var(--v2-s-8)",
           cursor: "pointer",
         }}
         onClick={() => {
@@ -266,7 +266,7 @@ export function SwipeableSetRow({
           backgroundColor: "var(--v2-paper)",
           borderRadius: "var(--v2-r-0)",
           touchAction: "pan-y",
-          padding: "2px 0",
+          padding: "2px 0px",
         }}
       >
         {children}

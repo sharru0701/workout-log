@@ -83,7 +83,7 @@ export function V2MorePage() {
         minHeight: "100%",
       }}
     >
-      <div style={{ padding: "8px 24px 12px" }}>
+      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">{locale === "ko" ? "더보기" : "MORE"}</p>
         <h1 id={headingId} className="v2-h1" style={{ marginTop: 6 }}>
           {locale === "ko" ? "계정 · 설정" : "Account · Settings"}
@@ -99,13 +99,13 @@ export function V2MorePage() {
       </div>
 
       {me && (
-        <div className="v2-font-display" style={{ padding: "0 16px 4px" }}>
+        <div className="v2-font-display" style={{ padding: "0px var(--v2-s-4) var(--v2-s-1)" }}>
           <div
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
-              padding: "14px 16px",
+              gap: "var(--v2-s-3)",
+              padding: "var(--v2-s-4) var(--v2-s-4)",
               background: "var(--v2-paper-2)",
               borderRadius: "var(--v2-r-3)",
             }}
@@ -287,10 +287,10 @@ export function V2MorePage() {
       {/* ── FOOTER (App info + logout + onboarding replay) ── */}
       <div
         style={{
-          padding: "20px 16px 24px",
+          padding: "var(--v2-s-5) var(--v2-s-4) var(--v2-s-6)",
           display: "flex",
           flexDirection: "column",
-          gap: 12,
+          gap: "var(--v2-s-3)",
         }}
       >
         <button
@@ -308,8 +308,8 @@ export function V2MorePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            gap: 6,
-            padding: "12px 18px",
+            gap: "var(--v2-s-1)",
+            padding: "var(--v2-s-3) var(--v2-s-5)",
             background: "transparent",
             color: "var(--v2-ink-3)",
             borderRadius: "var(--v2-r-2)",
@@ -347,8 +347,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ padding: "12px 16px 0" }}>
-      <div className="v2-label" style={{ padding: "0 8px 6px" }}>
+    <div style={{ padding: "var(--v2-s-3) var(--v2-s-4) 0px" }}>
+      <div className="v2-label" style={{ padding: "0px var(--v2-s-2) var(--v2-s-1)" }}>
         {title}
       </div>
       <div
@@ -658,8 +658,8 @@ function OptionList<T extends string>({
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              padding: "10px 12px",
-              minHeight: 44,
+              padding: "var(--v2-s-3) var(--v2-s-3)",
+              minHeight: "var(--v2-s-8)",
               background: active ? "var(--v2-accent-weak)" : "transparent",
               color: active ? "var(--v2-accent-ink)" : "var(--v2-ink)",
               border: "none",
@@ -704,7 +704,7 @@ function AppInfoFooter() {
         color: "var(--v2-ink-3)",
         display: "flex",
         flexDirection: "column",
-        gap: 4,
+        gap: "var(--v2-s-1)",
         marginTop: 12,
       }}
     >

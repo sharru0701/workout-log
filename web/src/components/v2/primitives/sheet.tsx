@@ -73,7 +73,7 @@ export function V2Sheet({
         <div
           style={{
             flexShrink: 0,
-            padding: "10px 0 6px",
+            padding: "var(--v2-s-3) 0px var(--v2-s-1)",
             display: "flex",
             justifyContent: "center",
           }}

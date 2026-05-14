@@ -115,7 +115,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
       </div>
 
       <div style={{ marginTop: "2px" }}>
-        <div style={{ background: "var(--v2-paper-3)", borderRadius: "var(--v2-r-1)", overflow: "hidden", padding: "3px" }}>
+        <div style={{ background: "var(--v2-paper-3)", borderRadius: "var(--v2-r-1)", overflow: "hidden", padding: "var(--v2-s-1)" }}>
           <div style={{ display: "flex", gap: "2px" }}>
             {[
               { label: "7D", value: 7 },
@@ -130,7 +130,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
                   onClick={() => onSelectPreset(option.value as 7 | 30 | 90 | 365)}
                   style={{
                     flex: 1,
-                    padding: "6px 0",
+                    padding: "var(--v2-s-1) 0px",
                     border: "none",
                     borderRadius: "var(--v2-r-1)",
                     fontSize: "12px",

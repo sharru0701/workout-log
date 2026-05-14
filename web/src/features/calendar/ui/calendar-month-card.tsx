@@ -103,10 +103,10 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 6,
+            gap: "var(--v2-s-1)",
             background: "transparent",
             border: "none",
-            padding: "4px 6px",
+            padding: "var(--v2-s-1) var(--v2-s-1)",
             cursor: "pointer",
             fontSize: 16,
             fontWeight: 700,
@@ -123,7 +123,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           </span>
         </button>
 
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
           <button
             type="button"
             onClick={onShiftPrevMonth}
@@ -168,7 +168,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           <div
             key={name}
             className="v2-eyebrow"
-            style={{ padding: "4px 0", color: "var(--v2-ink-3)" }}
+            style={{ padding: "var(--v2-s-1) 0px", color: "var(--v2-ink-3)" }}
           >
             {name}
           </div>

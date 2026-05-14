@@ -19,7 +19,7 @@ export function PlanSelectorButton({ planName, disabled, ...props }: PlanSelecto
         justifyContent: "space-between",
         alignItems: "center",
         textAlign: "left",
-        padding: "14px 18px",
+        padding: "var(--v2-s-4) var(--v2-s-5)",
         background: "var(--v2-paper)",
         border: "none",
         borderRadius: "20px",

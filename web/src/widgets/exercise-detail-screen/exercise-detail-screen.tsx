@@ -66,13 +66,13 @@ function MetricCard({
       padding="16px"
       radius="var(--v2-r-1)"
       style={{
-        minHeight: 132,
+        minHeight: "var(--v2-s-9)",
         display: "flex",
         flexDirection: "column",
         justifyContent: "space-between",
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12 }}>
+      <div style={{ display: "flex", justifyContent: "space-between", gap: "var(--v2-s-3)" }}>
         <p className="v2-label" style={{ color: "var(--v2-ink-2)" }}>
           {label}
         </p>
@@ -85,7 +85,7 @@ function MetricCard({
         </span>
       </div>
       <div>
-        <div style={{ display: "flex", alignItems: "baseline", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: "var(--v2-s-1)" }}>
           <span
             className="v2-num-md v2-font-display"
             style={{ color: "var(--v2-ink)", letterSpacing: 0 }}
@@ -122,7 +122,7 @@ function SectionTitle({
   description?: string;
 }) {
   return (
-    <div style={{ display: "grid", gap: 4 }}>
+    <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
       <p className="v2-label">{label}</p>
       <h2 className="v2-h2" style={{ fontSize: 22, letterSpacing: 0 }}>
         {title}
@@ -163,7 +163,7 @@ function PrHistory({
   }
 
   return (
-    <div style={{ display: "grid", gap: 8 }}>
+    <div style={{ display: "grid", gap: "var(--v2-s-2)" }}>
       {items.map((row) => (
         <V2Card
           key={`${row.date}-${row.e1rm}`}
@@ -174,7 +174,7 @@ function PrHistory({
             display: "grid",
             gridTemplateColumns: "minmax(0, 1fr) auto",
             alignItems: "center",
-            gap: 12,
+            gap: "var(--v2-s-3)",
           }}
         >
           <div className="v2-font-display" style={{ minWidth: 0 }}>
@@ -256,7 +256,7 @@ function RecentSets({
   }
 
   return (
-    <div className="v2-font-display" style={{ display: "grid", gap: 12 }}>
+    <div className="v2-font-display" style={{ display: "grid", gap: "var(--v2-s-3)" }}>
       {grouped.map(([day, sets]) => (
         <V2Card
           key={day}
@@ -286,7 +286,7 @@ function RecentSets({
               {locale === "ko" ? " 세트" : " sets"}
             </span>
           </div>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             {sets.map((set, idx) => (
               <div
                 key={`${set.logId}-${idx}`}
@@ -294,7 +294,7 @@ function RecentSets({
                   display: "grid",
                   gridTemplateColumns: "auto 1fr auto",
                   alignItems: "baseline",
-                  gap: 12,
+                  gap: "var(--v2-s-3)",
                   fontSize: 13,
                   color: "var(--v2-ink)",
                   fontVariantNumeric: "tabular-nums",
@@ -385,7 +385,7 @@ export function ExerciseDetailScreen({
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 12,
+              gap: "var(--v2-s-3)",
             }}
           >
             <V2IconBtn
@@ -398,14 +398,14 @@ export function ExerciseDetailScreen({
               {locale === "ko" ? "운동 상세" : "Exercise detail"}
             </p>
           </div>
-          <div style={{ display: "grid", gap: 6 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <h1
               className="v2-h1"
               style={{ letterSpacing: 0, fontSize: 28 }}
             >
               {exercise.name}
             </h1>
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "var(--v2-s-2)", flexWrap: "wrap" }}>
               {exercise.category ? (
                 <V2Chip tone="neutral">{exercise.category}</V2Chip>
               ) : null}

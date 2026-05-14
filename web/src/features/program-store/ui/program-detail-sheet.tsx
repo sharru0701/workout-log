@@ -87,7 +87,7 @@ function moduleName(module: string, locale: ProgramStoreLocale) {
 function IntensityBars({ level }: { level: string }) {
   const filled = INTENSITY_MAP[level] ?? 3;
   return (
-    <div style={{ display: "flex", gap: 3, alignItems: "flex-end" }}>
+    <div style={{ display: "flex", gap: "var(--v2-s-1)", alignItems: "flex-end" }}>
       {[1, 2, 3, 4, 5].map((i) => (
         <div
           key={i}
@@ -126,7 +126,7 @@ function StatBentoCell({
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
-        gap: 4,
+        gap: "var(--v2-s-1)",
         textAlign: "center",
       }}
     >
@@ -388,7 +388,7 @@ export function ProgramDetailSheet({
           marginBottom: "var(--v2-s-1)",
         }}
       >
-        <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+        <div style={{ display: "flex", gap: "var(--v2-s-1)", flexWrap: "wrap" }}>
           {tags.slice(0, 3).map((tag) => (
             <V2Chip key={tag} tone={tagChipTone(tag)}>
               {tag}
@@ -397,7 +397,7 @@ export function ProgramDetailSheet({
         </div>
         <div
           style={{
-            padding: "3px 10px",
+            padding: "var(--v2-s-1) var(--v2-s-3)",
             borderRadius: "var(--v2-r-0)",
             background: `color-mix(in srgb, ${levelBadge.color} 14%, var(--v2-paper-2))`,
             boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${levelBadge.color} 28%, transparent)`,
@@ -426,7 +426,7 @@ export function ProgramDetailSheet({
         <div
           style={{
             display: "flex",
-            gap: 4,
+            gap: "var(--v2-s-1)",
             flexWrap: "wrap",
             marginTop: "var(--v2-s-1)",
           }}
@@ -607,7 +607,7 @@ export function ProgramDetailSheet({
                           display: "flex",
                           justifyContent: "space-between",
                           gap: "var(--v2-s-2)",
-                          padding: "3px 0",
+                          padding: "var(--v2-s-1) 0px",
                         }}
                       >
                         <span
@@ -671,7 +671,7 @@ export function ProgramDetailSheet({
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "baseline",
-                  padding: "8px 0",
+                  padding: "var(--v2-s-2) 0px",
                 }}
               >
                 <span

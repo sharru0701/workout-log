@@ -178,7 +178,7 @@ export function ProgramListCard({
             style={{
               fontSize: 10,
               letterSpacing: "0.1em",
-              padding: "2px 8px",
+              padding: "2px var(--v2-s-2)",
               borderRadius: "var(--v2-r-0)",
               display: "inline-block",
               textTransform: "uppercase",
@@ -213,7 +213,7 @@ export function ProgramListCard({
             style={{
               display: "flex",
               flexWrap: "wrap",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               justifyContent: "flex-end",
               flexShrink: 0,
               marginLeft: "var(--v2-s-2)",
@@ -269,7 +269,7 @@ export function ProgramListCard({
                   color: "var(--v2-ink)",
                   display: "flex",
                   alignItems: "center",
-                  gap: 4,
+                  gap: "var(--v2-s-1)",
                 }}
               >
                 <span
@@ -300,7 +300,7 @@ export function ProgramListCard({
           >
             {locale === "ko" ? "강도" : "Intensity"}
           </span>
-          <div style={{ display: "flex", gap: 3 }}>
+          <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
             {[1, 2, 3, 4, 5].map((index) => (
               <div
                 key={index}
@@ -325,8 +325,8 @@ export function ProgramListCard({
             <V2PrimaryBtn
               onClick={onPress}
               style={{
-                padding: "10px 20px",
-                minHeight: 44,
+                padding: "var(--v2-s-3) var(--v2-s-5)",
+                minHeight: "var(--v2-s-8)",
                 fontSize: 13,
               }}
             >
@@ -336,8 +336,8 @@ export function ProgramListCard({
             <V2SecondaryBtn
               onClick={onPress}
               style={{
-                padding: "10px 20px",
-                minHeight: 44,
+                padding: "var(--v2-s-3) var(--v2-s-5)",
+                minHeight: "var(--v2-s-8)",
                 fontSize: 13,
               }}
             >

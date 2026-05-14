@@ -128,7 +128,7 @@ function StrengthCard({
         flexDirection: "column",
         gap: "var(--v2-s-1)",
         cursor: onClick ? "pointer" : "default",
-        minHeight: 124,
+        minHeight: "var(--v2-s-9)",
         padding: "var(--v2-s-4)",
         background: "var(--v2-paper)",
         borderRadius: "var(--v2-r-4)",

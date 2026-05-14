@@ -48,7 +48,7 @@ export function V2MetricCard({
       <p className="v2-label" style={{ marginBottom: 6 }}>
         {label}
       </p>
-      <div style={{ display: "inline-flex", alignItems: "baseline", gap: 6 }}>
+      <div style={{ display: "inline-flex", alignItems: "baseline", gap: "var(--v2-s-1)" }}>
         <span className={numClass} style={{ color: fg }}>
           {value}
         </span>
@@ -68,7 +68,7 @@ export function V2MetricCard({
           style={{
             display: "inline-flex",
             alignItems: "center",
-            gap: 4,
+            gap: "var(--v2-s-1)",
             marginTop: 6,
             color:
               trend.direction === "up"

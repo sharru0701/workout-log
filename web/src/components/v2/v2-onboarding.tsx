@@ -144,7 +144,7 @@ export function V2Onboarding() {
           padding: "calc(env(safe-area-inset-top, 0px) + 16px) 20px 0",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)" }}>
           <button
             type="button"
             onClick={step === 0 ? skip : goBack}
@@ -178,7 +178,7 @@ export function V2Onboarding() {
               {step === 0 ? "close" : "arrow_back"}
             </span>
           </button>
-          <div style={{ flex: 1, display: "flex", gap: 4 }}>
+          <div style={{ flex: 1, display: "flex", gap: "var(--v2-s-1)" }}>
             {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
               <div
                 key={i}
@@ -205,8 +205,8 @@ export function V2Onboarding() {
                 color: "var(--v2-ink-2)",
                 fontSize: 13,
                 fontWeight: 600,
-                minHeight: 44,
-                padding: "8px 12px",
+                minHeight: "var(--v2-s-8)",
+                padding: "var(--v2-s-2) var(--v2-s-3)",
                 borderRadius: "var(--v2-r-2)",
                 marginRight: -8,
               }}
@@ -222,7 +222,7 @@ export function V2Onboarding() {
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "32px 24px 16px",
+          padding: "var(--v2-s-7) var(--v2-s-6) var(--v2-s-4)",
           animation: "v2-fadeUp 320ms var(--v2-e-out) both",
         }}
         key={step}
@@ -363,13 +363,13 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
           marginTop: 28,
           display: "flex",
           flexDirection: "column",
-          gap: 14,
+          gap: "var(--v2-s-4)",
         }}
       >
         {features.map(([ic, t, s]) => (
           <div
             key={t}
-            style={{ display: "flex", gap: 14, alignItems: "flex-start" }}
+            style={{ display: "flex", gap: "var(--v2-s-4)", alignItems: "flex-start" }}
           >
             <span
               className="material-symbols-outlined"
@@ -620,7 +620,7 @@ function ProgramPick({
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 8,
+          gap: "var(--v2-s-2)",
           marginTop: 24,
         }}
       >
@@ -635,7 +635,7 @@ function ProgramPick({
                 textAlign: "left",
                 cursor: "pointer",
                 border: "none",
-                padding: "16px 18px",
+                padding: "var(--v2-s-4) var(--v2-s-5)",
                 borderRadius: "var(--v2-r-3)",
                 background: sel ? "var(--v2-accent-weak)" : "var(--v2-paper)",
                 boxShadow: sel
@@ -643,16 +643,16 @@ function ProgramPick({
                   : "var(--v2-elev-1)",
                 display: "flex",
                 flexDirection: "column",
-                gap: 6,
+                gap: "var(--v2-s-1)",
                 transition: "all var(--v2-d-2) var(--v2-e-out)",
-                minHeight: 64,
+                minHeight: "var(--v2-s-9)",
               }}
             >
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  gap: 8,
+                  gap: "var(--v2-s-2)",
                 }}
               >
                 <span
@@ -684,7 +684,7 @@ function RecommendedChip({ locale }: { locale: "ko" | "en" }) {
   const style: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
-    padding: "3px 8px",
+    padding: "var(--v2-s-1) var(--v2-s-2)",
     borderRadius: "var(--v2-r-pill)",
     fontSize: 10,
     fontWeight: 700,

@@ -50,7 +50,7 @@ function VolumeBarChart({
 
   if (series.length === 0) {
     return (
-      <p className="v2-small" style={{ color: "var(--v2-ink-2)", padding: 12 }}>
+      <p className="v2-small" style={{ color: "var(--v2-ink-2)", padding: "var(--v2-s-3)" }}>
         {locale === "ko"
           ? "최근 8주 동안의 볼륨 데이터가 없습니다."
           : "No volume data for the last 8 weeks."}
@@ -168,7 +168,7 @@ export function WeeklyVolumeSection({
 
   return (
     <section style={{ display: "grid", gap: "var(--v2-s-3)" }}>
-      <div style={{ display: "grid", gap: 4 }}>
+      <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
         <p className="v2-label">
           {locale === "ko" ? "볼륨 트렌드" : "Volume Trend"}
         </p>
@@ -192,12 +192,12 @@ export function WeeklyVolumeSection({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "flex-end",
-            gap: 16,
+            gap: "var(--v2-s-4)",
             flexWrap: "wrap",
             marginBottom: "var(--v2-s-3)",
           }}
         >
-          <div style={{ display: "grid", gap: 4 }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
             <span
               className="v2-num-md"
               style={{
@@ -212,7 +212,7 @@ export function WeeklyVolumeSection({
               {locale === "ko" ? "최근 4주 합계" : "Recent 4 weeks total"}
             </span>
           </div>
-          <div style={{ display: "grid", gap: 4, alignItems: "flex-end" }}>
+          <div style={{ display: "grid", gap: "var(--v2-s-1)", alignItems: "flex-end" }}>
             <V2Chip tone={deltaTone} icon={
               deltaPct == null
                 ? "remove"

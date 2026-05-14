@@ -110,8 +110,8 @@ export default async function CalendarOptionsPage({
           href={APP_ROUTES.calendarHome}
           icon="arrow_back"
           style={{
-            minHeight: 44,
-            padding: "9px 18px",
+            minHeight: "var(--v2-s-8)",
+            padding: "var(--v2-s-2) var(--v2-s-5)",
             borderRadius: "var(--v2-r-pill)",
             fontSize: 13,
           }}

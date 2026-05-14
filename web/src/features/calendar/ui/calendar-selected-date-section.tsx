@@ -182,7 +182,7 @@ export const CalendarSelectedDateSection = memo(
           <div
             style={{
               display: "flex",
-              gap: 6,
+              gap: "var(--v2-s-1)",
               justifyContent: "center",
               padding: "var(--v2-s-7)",
             }}
@@ -459,8 +459,8 @@ export const CalendarSelectedDateSection = memo(
                   href={workoutHref}
                   style={{
                     marginLeft: "var(--v2-s-3)",
-                    padding: "10px 18px",
-                    minHeight: 44,
+                    padding: "var(--v2-s-3) var(--v2-s-5)",
+                    minHeight: "var(--v2-s-8)",
                     fontSize: 14,
                   }}
                 >
@@ -538,8 +538,8 @@ export const CalendarSelectedDateSection = memo(
                 href={workoutHref}
                 icon="add"
                 style={{
-                  minHeight: 44,
-                  padding: "10px 22px",
+                  minHeight: "var(--v2-s-8)",
+                  padding: "var(--v2-s-3) var(--v2-s-5)",
                   borderRadius: "var(--v2-r-2)",
                   fontSize: 13,
                 }}
@@ -570,7 +570,7 @@ function Dot() {
 
 function Metric({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
       <span className="v2-eyebrow">{label}</span>
       <span className="v2-num-sm" style={{ color: "var(--v2-ink)" }}>
         {value}

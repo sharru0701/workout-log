@@ -76,7 +76,7 @@ function TodayDeck({
   return (
     <div style={{ paddingTop: 16, paddingBottom: 24 }}>
       {/* eyebrow */}
-      <div style={{ padding: "0 24px 8px" }}>
+      <div style={{ padding: "0px var(--v2-s-6) var(--v2-s-2)" }}>
         <p className="v2-eyebrow">{formatDateEyebrow(locale)}</p>
         <h1 className="v2-h1" style={{ marginTop: 6 }}>
           {today.headline || (locale === "ko" ? "오늘" : "Today")}
@@ -92,14 +92,14 @@ function TodayDeck({
       </div>
 
       {/* hero card — 오늘의 세션 */}
-      <div style={{ padding: "14px 16px 0" }}>
+      <div style={{ padding: "var(--v2-s-4) var(--v2-s-4) 0px" }}>
         <V2Card padding={0} radius="var(--v2-r-4)">
-          <div style={{ padding: "20px 22px 16px" }}>
+          <div style={{ padding: "var(--v2-s-5) var(--v2-s-5) var(--v2-s-4)" }}>
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: "var(--v2-s-2)",
                 marginBottom: 10,
               }}
             >
@@ -135,7 +135,7 @@ function TodayDeck({
           {/* 운동 목록 */}
           {hasPlan && today.plannedExercises.length > 0 && (
             <div
-              style={{ background: "var(--v2-paper-2)", padding: "14px 22px" }}
+              style={{ background: "var(--v2-paper-2)", padding: "var(--v2-s-4) var(--v2-s-5)" }}
             >
               {today.plannedExercises.slice(0, 4).map((ex, i, arr) => (
                 <Fragment key={`${ex.name}-${i}`}>
@@ -143,8 +143,8 @@ function TodayDeck({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 12,
-                      padding: "10px 0",
+                      gap: "var(--v2-s-3)",
+                      padding: "var(--v2-s-3) 0px",
                     }}
                   >
                     <div
@@ -206,7 +206,7 @@ function TodayDeck({
           )}
 
           {/* CTA — bottom-nav "시작" 버튼과 동일한 핸들러를 공유 */}
-          <div style={{ padding: "14px 16px 16px" }}>
+          <div style={{ padding: "var(--v2-s-4) var(--v2-s-4) var(--v2-s-4)" }}>
             <Link
               href={resolveStartHref({ hasPlan, todayHref: today.href })}
               style={{ textDecoration: "none", display: "block" }}
@@ -222,10 +222,10 @@ function TodayDeck({
       {/* 보조 카드: 스트릭 + 이번 주 */}
       <div
         style={{
-          padding: "14px 16px 0",
+          padding: "var(--v2-s-4) var(--v2-s-4) 0px",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
-          gap: 10,
+          gap: "var(--v2-s-3)",
         }}
       >
         <V2Card>
@@ -236,7 +236,7 @@ function TodayDeck({
             style={{
               display: "flex",
               alignItems: "baseline",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               marginTop: 8,
             }}
           >
@@ -247,7 +247,7 @@ function TodayDeck({
               {locale === "ko" ? "일" : "d"}
             </span>
           </div>
-          <div style={{ display: "flex", gap: 3, marginTop: 12 }}>
+          <div style={{ display: "flex", gap: "var(--v2-s-1)", marginTop: 12 }}>
             {weekly.days.map((d) => (
               <div
                 key={d.key}
@@ -284,7 +284,7 @@ function TodayDeck({
             style={{
               display: "flex",
               alignItems: "baseline",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               marginTop: 8,
             }}
           >
@@ -301,7 +301,7 @@ function TodayDeck({
           <div
             style={{
               display: "flex",
-              gap: 4,
+              gap: "var(--v2-s-1)",
               marginTop: 12,
             }}
           >
@@ -334,7 +334,7 @@ function TodayDeck({
       {/* 최근 PR */}
       {strength.length > 0 && (
         <>
-          <div style={{ padding: "24px 24px 8px" }}>
+          <div style={{ padding: "var(--v2-s-6) var(--v2-s-6) var(--v2-s-2)" }}>
             <div
               style={{
                 display: "flex",
@@ -358,7 +358,7 @@ function TodayDeck({
               </Link>
             </div>
           </div>
-          <div style={{ padding: "0 16px" }}>
+          <div style={{ padding: "0px var(--v2-s-4)" }}>
             {strength.slice(0, 3).map((s) => {
               const isPr = s.trend === "up" && s.improvement > 0;
               return (
@@ -371,7 +371,7 @@ function TodayDeck({
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 14,
+                      gap: "var(--v2-s-4)",
                     }}
                   >
                     <div

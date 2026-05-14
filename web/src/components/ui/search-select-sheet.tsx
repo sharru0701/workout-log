@@ -99,7 +99,7 @@ export function SearchSelectCombobox({
                     display: "flex",
                     alignItems: "center",
                     width: "100%",
-                    padding: "11px 12px",
+                    padding: "var(--v2-s-3) var(--v2-s-3)",
                     boxShadow: option.active ? "inset 0 0 0 2px var(--v2-accent)" : "none",
                     border: "none",
                     borderRadius: "var(--v2-r-2)",
@@ -152,7 +152,7 @@ export function SearchSelectSheet({
       primaryAction={primaryAction}
       footer={footer}
     >
-      <div style={{ padding: "4px 2px 0 2px" }}>
+      <div style={{ padding: "var(--v2-s-1) 2px 0px 2px" }}>
         <SearchSelectCombobox {...comboboxProps} />
         {children}
       </div>

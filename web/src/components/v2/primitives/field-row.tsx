@@ -26,7 +26,7 @@ export function V2FieldRow({
         alignItems: "baseline",
         justifyContent: "space-between",
         cursor: "pointer",
-        padding: "4px 0",
+        padding: "var(--v2-s-1) 0px",
         opacity: active ? 1 : 0.5,
         background: "transparent",
         border: "none",
@@ -42,7 +42,7 @@ export function V2FieldRow({
       >
         {label}
       </span>
-      <span style={{ display: "inline-flex", alignItems: "baseline", gap: 8 }}>
+      <span style={{ display: "inline-flex", alignItems: "baseline", gap: "var(--v2-s-2)" }}>
         <span
           className={small ? "v2-num-md" : "v2-num-lg"}
           style={{ color, fontSize: small ? 32 : 56 }}
