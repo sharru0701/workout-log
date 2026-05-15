@@ -23,7 +23,7 @@ permissions:
 jobs:
   # ──────────────────────────────────────────────
   # Job 1: lint + typecheck + unit tests
-  # 가장 빠른 피드백. 이 job이 통과해야 build/e2e 시작
+  # 가장 빠른 피드백. 이 job이 통과해야 e2e 시작
   # ──────────────────────────────────────────────
   quality:
     name: Lint · Typecheck · Unit Tests
@@ -48,45 +48,9 @@ jobs:
         run: pnpm test:unit
 
   # ──────────────────────────────────────────────
-  # Job 2: next build 검증
-  # DB_MIGRATE_ENABLED=0 으로 migrate.mjs를 스킵하고 빌드만 실행
-  # ──────────────────────────────────────────────
-  build:
-    name: Build
-    needs: quality
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup-pnpm-node
-
-      # .next/cache 캐시 — 빌드 설정 + 소스 변경 기준으로 복원, 전체 재빌드 방지
-      - name: Cache Next.js build
-        uses: actions/cache@v4
-        with:
-          path: web/.next/cache
-          key: nextjs-build-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'web/next.config.ts', 'web/postcss.config.mjs') }}-${{ hashFiles('web/src/**/*.{ts,tsx,css}') }}
-          restore-keys: |
-            nextjs-build-${{ runner.os }}-${{ hashFiles('web/pnpm-lock.yaml', 'web/next.config.ts', 'web/postcss.config.mjs') }}-
-            nextjs-build-${{ runner.os }}-
-
-      - name: Build
-        run: pnpm build
-        env:
-          # migrate.mjs 스킵 (DB 없어도 빌드 통과)
-          DB_MIGRATE_ENABLED: "0"
-          # next build 시 DATABASE_URL 형식 체크 통과용 (실제 연결 안 함)
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
-          NEXT_TELEMETRY_DISABLED: "1"
-          WORKOUT_AUTH_USER_ID: ci-user
-          NEXT_PUBLIC_APP_URL: http://localhost:3100
-
-  # ──────────────────────────────────────────────
-  # Job 3: Playwright smoke E2E
-  # quality 통과 후 build와 병렬 실행 — 빌드 아티팩트 불필요
-  # PostgreSQL 서비스 컨테이너 + next dev 서버 사용
+  # Job 2: Playwright smoke E2E
+  # quality 통과 후 실행. PostgreSQL 서비스 컨테이너 + next dev 서버.
+  # 빌드 검증은 Vercel Preview 빌드가 담당 (이중 빌드 회피)
   # ──────────────────────────────────────────────
   e2e-smoke:
     name: E2E Smoke
