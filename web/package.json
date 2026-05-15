@@ -45,6 +45,7 @@
     "dev:turbo": "next dev --turbo"
   },
   "dependencies": {
+    "@sentry/nextjs": "^10.53.1",
     "@tanstack/react-virtual": "^3.13.23",
     "drizzle-orm": "^0.45.1",
     "idb": "^8.0.3",

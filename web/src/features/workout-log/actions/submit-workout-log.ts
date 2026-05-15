@@ -24,6 +24,13 @@ export async function submitWorkoutLogAction(
     };
   } catch (error: any) {
     logError("action.submit_workout_log_error", { error });
+    // Server Action은 Turbopack에서 자동 instrumentation이 안 됨 → 명시 캡처
+    try {
+      const { captureException } = await import("@sentry/nextjs");
+      captureException(error, { tags: { action: "submit_workout_log" } });
+    } catch {
+      // Sentry 모듈 로드 실패 시 무시
+    }
     return {
       success: false,
       error: error?.message ?? "Failed to save the workout log.",

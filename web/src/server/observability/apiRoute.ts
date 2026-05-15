@@ -75,6 +75,17 @@ export function withApiLogging<TContext = unknown>(handler: ApiRouteHandler<TCon
         error,
       });
 
+      // withApiLogging이 모든 에러를 catch하므로 onRequestError가 자동 발화하지 않음 → 명시 캡처
+      try {
+        const { captureException, withScope } = await import("@sentry/nextjs");
+        withScope((scope) => {
+          scope.setContext("api", { requestId, method, route });
+          captureException(error);
+        });
+      } catch {
+        // Sentry 모듈 로드 실패 시 무시 (logError로 fallback)
+      }
+
       const response = NextResponse.json(
         { error: "Internal Server Error", requestId },
         { status: 500 },

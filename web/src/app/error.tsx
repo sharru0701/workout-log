@@ -19,6 +19,12 @@ export default function RootError({
       digest: error.digest,
       stack: error.stack,
     });
+    // digest tag로 Sentry 이벤트와 화면의 "Error ID" 1:1 매칭
+    import("@sentry/nextjs").then(({ captureException }) => {
+      captureException(error, {
+        tags: { digest: error.digest ?? "none" },
+      });
+    });
   }, [error]);
 
   const locale =

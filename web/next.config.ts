@@ -1,3 +1,4 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 const allowedDevOrigins = Array.from(new Set([
@@ -141,4 +142,19 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withSentryConfig(nextConfig, {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+
+  silent: !process.env.CI,
+
+  // SENTRY_AUTH_TOKEN 미설정 시 source map 업로드 스킵 — 로컬/fork PR 빌드 안전망
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+
+  widenClientFileUpload: true,
+  disableLogger: true,
+  telemetry: false,
+});
