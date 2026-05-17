@@ -198,22 +198,18 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
               const isSelected = dateOnly === selectedDate;
               const isOutside = !dateOnly.startsWith(baseMonthKey);
               const hasDot = hasSelectedPlan && logDates.has(dateOnly);
-              const cellBg = isToday
-                ? "color-mix(in srgb, var(--v2-accent) 12%, var(--v2-paper))"
-                : isSelected
-                  ? "var(--v2-accent)"
+              const cellBg = isSelected
+                ? "var(--v2-accent)"
+                : isToday
+                  ? "var(--v2-accent-weak)"
                   : "transparent";
-              const cellBoxShadow = isToday
-                ? "inset 0 0 0 1px color-mix(in srgb, var(--v2-accent) 30%, transparent)"
-                : "none";
-              const cellColor = isToday
-                ? "var(--v2-accent-ink)"
-                : isSelected
-                  ? "var(--v2-ink-on-accent)"
+              const cellColor = isSelected
+                ? "var(--v2-ink-on-accent)"
+                : isToday
+                  ? "var(--v2-accent-ink)"
                   : isOutside
                     ? "var(--v2-ink-3)"
                     : "var(--v2-ink)";
-              const cellRadius = isToday ? "var(--v2-r-2)" : "50%";
               const dotColor = isSelected
                 ? "var(--v2-ink-on-accent)"
                 : "var(--v2-accent)";
@@ -235,10 +231,10 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
                     height: 36,
                     margin: "4px auto",
                     padding: 0,
-                    boxShadow: cellBoxShadow,
+                    border: "none",
                     background: cellBg,
                     color: cellColor,
-                    borderRadius: cellRadius,
+                    borderRadius: "50%",
                     transition: "background 0.15s ease, color 0.15s ease",
                     fontWeight: isToday || isSelected ? 700 : 400,
                     cursor: "pointer",
