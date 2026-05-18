@@ -121,6 +121,135 @@ test("operator: mid-block fail with later recovery should still trigger block-en
   assert.equal(state.targets.DEADLIFT?.workKg, 195);
 });
 
+// Asymptote Protocol: 4 사이클 × 3 세션 = 12 세션 풀 블록 시뮬레이션.
+// 사이클 3 AMRAP 마지막 세트의 actual reps가 TM 변동을 결정한다.
+function makeAsymptoteRunner(planParams: Record<string, unknown>) {
+  let state: any = {};
+  let logCounter = 0;
+  const log = (sets: Array<{ name: string; reps: number; weight: number }>) => {
+    logCounter += 1;
+    const result = reduceProgressionState({
+      program: "asymptote",
+      previousState: state,
+      planParams,
+      logId: `log-${logCounter}`,
+      sets: sets.map((s) => ({
+        exerciseName: s.name,
+        reps: s.reps,
+        weightKg: s.weight,
+        meta: {},
+      })),
+    });
+    state = result.nextState;
+    return result;
+  };
+  return { log, getState: () => state };
+}
+
+// Helper: produce sets for a single asymptote session.
+// `cycleAmrapReps` overrides the last-set reps of AMRAP-tagged lifts on cycle 3.
+function asymptoteSessionSets(
+  cycleInBlock: number, // 1..4
+  sessionInCycle: number, // 1..3 (A/B/C)
+  cycleAmrapReps?: Partial<Record<"SQUAT" | "BENCH" | "PULL", number>>,
+): Array<{ name: string; reps: number; weight: number }> {
+  const ROWS: Record<
+    number,
+    Array<{ name: string; target: "SQUAT" | "BENCH" | "PULL" | "DEADLIFT" | "OHP"; sets: number; reps: number; amrap: boolean }>
+  > = {
+    1: [
+      { name: "Back Squat", target: "SQUAT", sets: 4, reps: 3, amrap: true },
+      { name: "Bench Press", target: "BENCH", sets: 4, reps: 5, amrap: false },
+      { name: "Weighted Pull-Up", target: "PULL", sets: 4, reps: 3, amrap: true },
+    ],
+    2: [
+      { name: "Back Squat", target: "SQUAT", sets: 5, reps: 5, amrap: false },
+      { name: "Deadlift", target: "DEADLIFT", sets: 3, reps: 3, amrap: false },
+      { name: "Weighted Pull-Up", target: "PULL", sets: 3, reps: 8, amrap: false },
+    ],
+    3: [
+      { name: "Back Squat", target: "SQUAT", sets: 6, reps: 3, amrap: false },
+      { name: "Bench Press", target: "BENCH", sets: 4, reps: 3, amrap: true },
+      { name: "Overhead Press", target: "OHP", sets: 4, reps: 5, amrap: false },
+    ],
+  };
+  const rows = ROWS[sessionInCycle]!;
+  const out: Array<{ name: string; reps: number; weight: number }> = [];
+  for (const row of rows) {
+    for (let i = 0; i < row.sets; i += 1) {
+      const isLastSet = i === row.sets - 1;
+      const isAmrapSet = cycleInBlock === 3 && row.amrap && isLastSet;
+      const reps =
+        isAmrapSet && cycleAmrapReps && cycleAmrapReps[row.target as "SQUAT" | "BENCH" | "PULL"] !== undefined
+          ? cycleAmrapReps[row.target as "SQUAT" | "BENCH" | "PULL"]!
+          : row.reps;
+      out.push({ name: row.name, reps, weight: 50 });
+    }
+  }
+  return out;
+}
+
+test("asymptote: full 12-session block applies AMRAP-driven TM deltas", () => {
+  const initialTm = { SQUAT: 95, BENCH: 75, PULL: 97.5, DEADLIFT: 95, OHP: 35 };
+  const runner = makeAsymptoteRunner({ trainingMaxKg: { ...initialTm } });
+  let lastResult: any = null;
+
+  // Cycles 1, 2: normal sessions (no AMRAP)
+  for (let cycle = 1; cycle <= 2; cycle += 1) {
+    for (let session = 1; session <= 3; session += 1) {
+      lastResult = runner.log(asymptoteSessionSets(cycle, session));
+    }
+  }
+  // Cycle 3: hit AMRAP on the relevant sessions
+  //   Session A → SQ 8 reps (→ +2.5), PULL 6 reps (→ hold)
+  //   Session C → BP 3 reps (→ -2.5)
+  lastResult = runner.log(asymptoteSessionSets(3, 1, { SQUAT: 8, PULL: 6 }));
+  lastResult = runner.log(asymptoteSessionSets(3, 2));
+  lastResult = runner.log(asymptoteSessionSets(3, 3, { BENCH: 3 }));
+  // Cycle 4: deload sessions
+  for (let session = 1; session <= 3; session += 1) {
+    lastResult = runner.log(asymptoteSessionSets(4, session));
+  }
+
+  const state = runner.getState();
+  assert.equal(state.cycle, 2, "block number should advance to 2 after 12-session block");
+  assert.equal(state.week, 1, "cycle-within-block should reset to 1");
+  assert.equal(state.day, 1, "session-within-cycle should reset to 1");
+  assert.equal(state.targets.SQUAT?.workKg, 97.5, "SQUAT TM +2.5 (AMRAP 8)");
+  assert.equal(state.targets.BENCH?.workKg, 72.5, "BENCH TM -2.5 (AMRAP 3)");
+  assert.equal(state.targets.PULL?.workKg, 97.5, "PULL TM hold (AMRAP 6)");
+  // Auxiliary derivation: DL = new SQ, OHP = floor(new BP × 0.5 / 2.5) × 2.5
+  assert.equal(state.targets.DEADLIFT?.workKg, 97.5, "DL TM tracks new SQ TM");
+  assert.equal(state.targets.OHP?.workKg, 35, "OHP TM = floor(72.5 × 0.5 / 2.5) × 2.5 = 35");
+  assert.equal(state.lightBlockMode, false, "no AMRAP ≤2, so no light block");
+  void lastResult;
+});
+
+test("asymptote: AMRAP ≤2 on any main lift triggers light block flag", () => {
+  const runner = makeAsymptoteRunner({
+    trainingMaxKg: { SQUAT: 95, BENCH: 75, PULL: 97.5, DEADLIFT: 95, OHP: 35 },
+  });
+
+  for (let cycle = 1; cycle <= 2; cycle += 1) {
+    for (let session = 1; session <= 3; session += 1) {
+      runner.log(asymptoteSessionSets(cycle, session));
+    }
+  }
+  // Cycle 3 Session A — disastrous AMRAP on SQUAT (2 reps)
+  runner.log(asymptoteSessionSets(3, 1, { SQUAT: 2, PULL: 6 }));
+  runner.log(asymptoteSessionSets(3, 2));
+  runner.log(asymptoteSessionSets(3, 3, { BENCH: 6 }));
+  for (let session = 1; session <= 3; session += 1) {
+    runner.log(asymptoteSessionSets(4, session));
+  }
+
+  const state = runner.getState();
+  assert.equal(state.targets.SQUAT?.workKg, 90, "SQUAT TM -5 on AMRAP ≤2");
+  assert.equal(state.lightBlockMode, true, "light block flag should be set");
+  // DL tracks new SQ
+  assert.equal(state.targets.DEADLIFT?.workKg, 90, "DL TM tracks new SQ");
+});
+
 // Sanity: a real, non-recovered failure on the FINAL session of the block
 // should still hold (no auto-increase) — the prompt remains the user's
 // channel to override.

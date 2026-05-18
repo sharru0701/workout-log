@@ -205,7 +205,8 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     const prevDay = Number((beforeState.day as number | undefined) ?? 1);
     const isOperatorBlockEnd = resolved.progressionProgram === "operator" && prevWeek === 6 && prevDay === 3;
     const is531BlockEnd = resolved.progressionProgram === "wendler-531" && prevWeek === 4 && prevDay === 4;
-    const shouldApplyOverrideToAllTargets = isOperatorBlockEnd || is531BlockEnd;
+    const isAsymptoteBlockEnd = resolved.progressionProgram === "asymptote" && prevWeek === 4 && prevDay === 3;
+    const shouldApplyOverrideToAllTargets = isOperatorBlockEnd || is531BlockEnd || isAsymptoteBlockEnd;
     const prevTargets = ((beforeState as Record<string, unknown>).targets ?? {}) as Record<string, Record<string, unknown>>;
 
     if (input.progressionOverride === "hold") {
