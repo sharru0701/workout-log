@@ -11,6 +11,13 @@ import {
   programVersion,
 } from "@/server/db/schema";
 import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
+import {
+  ASYMPTOTE_CYCLE_COEF,
+  ASYMPTOTE_LIGHT_CYCLE_COEF,
+  ASYMPTOTE_SESSIONS,
+  ASYMPTOTE_SESSION_LABELS,
+  floorToMultiple2p5,
+} from "./asymptote";
 import { roundToNearest2p5 } from "./round";
 
 type AccessoryPatch = {
@@ -544,6 +551,76 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
   });
 }
 
+function resolveAsymptoteTm(
+  target: ProgressionTarget,
+  params: any,
+  defaults: any,
+): number | null {
+  if (target === "SQUAT" || target === "BENCH" || target === "PULL") {
+    return pickTrainingMaxKg(params, defaults, target);
+  }
+  if (target === "DEADLIFT") {
+    const explicit = pickTrainingMaxKg(params, defaults, target);
+    if (explicit !== null) return explicit;
+    return pickTrainingMaxKg(params, defaults, "SQUAT");
+  }
+  if (target === "OHP") {
+    const explicit = pickTrainingMaxKg(params, defaults, target);
+    if (explicit !== null) return explicit;
+    const bpTm = pickTrainingMaxKg(params, defaults, "BENCH");
+    if (bpTm === null) return null;
+    return Math.floor((bpTm * 0.5) / 2.5) * 2.5;
+  }
+  return null;
+}
+
+function generateAsymptote(_def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
+  // Asymptote Protocol: ctx.week ∈ {1..4} = 블록 내 사이클, ctx.day ∈ {1..3} = 세션 A/B/C.
+  // ctx.params.lightBlockMode === true 면 light 계수 사용 (이전 블록 AMRAP ≤2 트리거).
+  const cycleInBlock = ((ctx.week - 1) % 4) + 1;
+  const sessionInCycle = ((ctx.day - 1) % 3) + 1;
+  const lightBlockMode = (ctx.params as Record<string, unknown> | undefined)?.lightBlockMode === true;
+  const cycleCoef =
+    (lightBlockMode ? ASYMPTOTE_LIGHT_CYCLE_COEF : ASYMPTOTE_CYCLE_COEF)[cycleInBlock] ??
+    ASYMPTOTE_CYCLE_COEF[1]!;
+  const isAmrapCycle = cycleInBlock === 3 && !lightBlockMode;
+  const session = ASYMPTOTE_SESSIONS[sessionInCycle] ?? ASYMPTOTE_SESSIONS[1]!;
+  const sessionLabel = ASYMPTOTE_SESSION_LABELS[sessionInCycle] ?? "A";
+
+  return session.map((row, i) => {
+    const tm = resolveAsymptoteTm(row.target, ctx.params, ctx.defaults);
+    const workingWeightKg = tm !== null ? floorToMultiple2p5(tm * cycleCoef * row.coef) : null;
+    const sets: PlannedSet[] = Array.from({ length: row.sets }, (_, setIdx) => {
+      const isLastSet = setIdx === row.sets - 1;
+      const isAmrapSet = isAmrapCycle && row.amrap && isLastSet;
+      const baseTag = `Asymptote C${cycleInBlock}${sessionLabel}${lightBlockMode ? " · light" : ""}`;
+      const note = isAmrapSet
+        ? `${baseTag} · AMRAP ${row.reps}+`
+        : row.note
+          ? `${baseTag} · ${row.note}`
+          : baseTag;
+      const set: PlannedSet = {
+        reps: row.reps,
+        percent: cycleCoef * row.coef,
+        note,
+      };
+      if (workingWeightKg !== null) set.targetWeightKg = workingWeightKg;
+      return set;
+    });
+
+    return {
+      exerciseName: row.name,
+      role: "MAIN" as const,
+      sourceBlockTarget: row.target,
+      order: ctx.orderBase + i,
+      rowType: "AUTO",
+      progressionTarget: row.target,
+      progressionKey: row.target,
+      sets,
+    };
+  });
+}
+
 function generateCanditoLinear(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
   const weekInCycle = ((ctx.week - 1) % 6) + 1;
   const dayMap = Array.isArray(def.progression?.dayMap)
@@ -586,6 +663,7 @@ function generateFromLogicDefinition(
   if (kind === "531") return generate531(def, ctx);
   if (kind === "operator") return generateOperator(def, ctx);
   if (kind === "candito-linear") return generateCanditoLinear(def, ctx);
+  if (kind === "asymptote") return generateAsymptote(def, ctx);
 
   const target = ctx.forcedTarget ? normalizeTarget(ctx.forcedTarget) : "CUSTOM";
   return [
@@ -842,20 +920,31 @@ function pickManualSession(definition: any, sessionKey: string) {
 function mergePlanParamsWithRuntimeState(planParams: unknown, runtimeState: unknown) {
   const baseParams = (planParams ?? {}) as Record<string, unknown>;
   const runtimeTrainingMax = extractTrainingMaxOverridesFromState(runtimeState);
-  if (Object.keys(runtimeTrainingMax).length < 1) return baseParams;
+  const runtimeRecord =
+    runtimeState && typeof runtimeState === "object" && !Array.isArray(runtimeState)
+      ? (runtimeState as Record<string, unknown>)
+      : null;
+  const runtimeLightBlockMode = runtimeRecord?.lightBlockMode === true;
+
+  const hasTmOverride = Object.keys(runtimeTrainingMax).length > 0;
+  if (!hasTmOverride && !runtimeLightBlockMode) return baseParams;
 
   const existingTrainingMax =
     typeof baseParams.trainingMaxKg === "object" && baseParams.trainingMaxKg
       ? (baseParams.trainingMaxKg as Record<string, unknown>)
       : {};
 
-  return {
-    ...baseParams,
-    trainingMaxKg: {
+  const next: Record<string, unknown> = { ...baseParams };
+  if (hasTmOverride) {
+    next.trainingMaxKg = {
       ...existingTrainingMax,
       ...runtimeTrainingMax,
-    },
-  };
+    };
+  }
+  if (runtimeLightBlockMode) {
+    next.lightBlockMode = true;
+  }
+  return next;
 }
 
 function applyManualRuntimeWeightOverrides(

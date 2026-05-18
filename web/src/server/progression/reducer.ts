@@ -7,7 +7,8 @@ export type ProgressionProgram =
   | "stronglifts-5x5"
   | "texas-method"
   | "gzclp"
-  | "wendler-531";
+  | "wendler-531"
+  | "asymptote";
 
 export type ProgressionEventType = "INCREASE" | "HOLD" | "RESET" | "ADVANCE_WEEK";
 
@@ -26,6 +27,7 @@ export type TargetRuntimeState = {
   workKg: number;
   successStreak: number;
   failureStreak: number;
+  amrapReps?: number | null;
 };
 
 export type ProgressionRuntimeState = {
@@ -34,6 +36,7 @@ export type ProgressionRuntimeState = {
   day: number;
   targets: Record<string, TargetRuntimeState>;
   lastAppliedLogId: string | null;
+  lightBlockMode?: boolean;
 };
 
 type TargetOutcome = {
@@ -192,6 +195,17 @@ export function rulesFor(program: ProgressionProgram, target: string) {
     };
   }
 
+  if (program === "asymptote") {
+    // Asymptote Protocol: 블록 종료 시 AMRAP 결과로만 TM 변동 (±2.5/유지/-5).
+    // rulesFor는 override 경로의 안전 디폴트로만 사용된다.
+    return {
+      increaseEverySuccesses: 1,
+      failResetThreshold: 3,
+      increaseKg: 2.5,
+      resetFactor: 0.95,
+    };
+  }
+
   // greyskull-lp, starting-strength-lp, stronglifts-5x5:
   // 매 세션 증량, 3회 연속 실패 시 10% 감소
   return {
@@ -205,6 +219,7 @@ export function rulesFor(program: ProgressionProgram, target: string) {
 function targetsFor(program: ProgressionProgram): ProgressionTarget[] {
   if (program === "operator") return ["SQUAT", "BENCH", "DEADLIFT", "PULL"];
   if (program === "wendler-531") return ["SQUAT", "BENCH", "OHP", "DEADLIFT"];
+  if (program === "asymptote") return ["SQUAT", "BENCH", "DEADLIFT", "OHP", "PULL"];
   return ["SQUAT", "BENCH", "OHP", "DEADLIFT", "PULL"];
 }
 
@@ -248,7 +263,17 @@ function deriveInitialState(input: {
         input.outcomes.get(key)?.progressionTarget ??
         parseProgressionTarget(key) ??
         "SQUAT";
-      baseTargets[key] = { progressionTarget, workKg: toPositiveRounded2p5(workKg), successStreak, failureStreak };
+      const amrapRepsRaw = toFiniteNumber((prevTarget as Partial<TargetRuntimeState>).amrapReps);
+      const next: TargetRuntimeState = {
+        progressionTarget,
+        workKg: toPositiveRounded2p5(workKg),
+        successStreak,
+        failureStreak,
+      };
+      if (amrapRepsRaw !== null && amrapRepsRaw >= 0) {
+        next.amrapReps = Math.floor(amrapRepsRaw);
+      }
+      baseTargets[key] = next;
       continue;
     }
 
@@ -271,6 +296,7 @@ function deriveInitialState(input: {
     day,
     targets: baseTargets,
     lastAppliedLogId: typeof prev.lastAppliedLogId === "string" ? prev.lastAppliedLogId : null,
+    lightBlockMode: prev.lightBlockMode === true ? true : undefined,
   };
 }
 
@@ -299,12 +325,14 @@ export function resolveAutoProgressionProgram(programSlug: string, definition?: 
   if (slug === "texas-method") return "texas-method";
   if (slug === "gzclp") return "gzclp";
   if (slug === "wendler-531" || slug === "wendler-531-fsl" || slug === "wendler-531-bbb") return "wendler-531";
+  if (slug === "asymptote-protocol" || slug === "asymptote") return "asymptote";
   if (kind === "operator" || family === "operator" || def.operatorStyle === true) return "operator";
   if (kind === "greyskull-lp" || family === "greyskull-lp") return "greyskull-lp";
   if (kind === "starting-strength-lp" || family === "starting-strength-lp") return "starting-strength-lp";
   if (kind === "stronglifts-5x5" || family === "stronglifts-5x5") return "stronglifts-5x5";
   if (kind === "texas-method" || family === "texas-method") return "texas-method";
   if (kind === "gzclp" || family === "gzclp") return "gzclp";
+  if (kind === "asymptote" || family === "asymptote") return "asymptote";
   return null;
 }
 
@@ -382,6 +410,45 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
   return out;
 }
 
+// Asymptote AMRAP 위치: 사이클 3(=week 3)에서만, 메인 3개 리프트 마지막 세트.
+// Session A(day=1): SQUAT/PULL 마지막 세트, Session C(day=3): BENCH 마지막 세트.
+const ASYMPTOTE_AMRAP_KEYS_BY_DAY: Record<number, ReadonlyArray<string>> = {
+  1: ["SQUAT", "PULL"],
+  3: ["BENCH"],
+};
+
+function collectAsymptoteAmrapReps(
+  sets: LoggedSetInput[],
+  prevWeek: number,
+  prevDay: number,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  if (prevWeek !== 3) return out;
+  const amrapKeys = ASYMPTOTE_AMRAP_KEYS_BY_DAY[prevDay];
+  if (!amrapKeys || amrapKeys.length === 0) return out;
+
+  const setsByKey = new Map<string, LoggedSetInput[]>();
+  for (const set of sets) {
+    if (set.isExtra) continue;
+    const identity = progressionIdentityForSet(set);
+    if (!identity) continue;
+    const list = setsByKey.get(identity.key) ?? [];
+    list.push(set);
+    setsByKey.set(identity.key, list);
+  }
+
+  for (const key of amrapKeys) {
+    const list = setsByKey.get(key);
+    if (!list || list.length === 0) continue;
+    const lastSet = list[list.length - 1]!;
+    const reps = toFiniteNumber(lastSet.reps);
+    if (reps === null) continue;
+    // 0 렙은 "수행했으나 실패"로 기록 (≤2 분기에서 -5 + light 트리거).
+    out.set(key, Math.max(0, Math.floor(reps)));
+  }
+  return out;
+}
+
 export function reduceProgressionState(input: {
   program: ProgressionProgram;
   previousState: unknown;
@@ -401,6 +468,10 @@ export function reduceProgressionState(input: {
       ? Array.from(new Set([...Object.keys(state.targets), ...Array.from(outcomes.keys())]))
       : targetsFor(input.program);
   const decisions: TargetDecision[] = [];
+  const amrapRepsByKey =
+    input.program === "asymptote"
+      ? collectAsymptoteAmrapReps(input.sets, state.week, state.day)
+      : null;
 
   for (const key of keysToProcess) {
     const outcome = outcomes.get(key);
@@ -422,7 +493,7 @@ export function reduceProgressionState(input: {
       next.workKg = outcome.averageWeightKg ?? 0;
     }
 
-    if (input.program === "operator" || input.program === "wendler-531") {
+    if (input.program === "operator" || input.program === "wendler-531" || input.program === "asymptote") {
       // 블록 기반 프로그램: LP 진행 로직 없이 스트릭만 누적.
       // 단, 다음 세션에서 회복하면 failure 스트릭이 리셋되도록 LP 경로와 동일하게
       // 반대편 스트릭을 0으로 만든다 — 블록 중간에 한 세트만 실패해도
@@ -435,6 +506,15 @@ export function reduceProgressionState(input: {
         next.failureStreak += 1;
         next.successStreak = 0;
         reason = "hold:block-failure";
+      }
+
+      // Asymptote: 사이클 3 AMRAP 세트의 실측 렙수를 누적해 블록 종료 시 TM 변동에 사용.
+      // 0 렙은 "수행했으나 실패"로 보존 (≤2 분기에서 -5 + light 트리거).
+      if (input.program === "asymptote" && amrapRepsByKey) {
+        const amrapReps = amrapRepsByKey.get(key);
+        if (typeof amrapReps === "number" && amrapReps >= 0) {
+          next.amrapReps = amrapReps;
+        }
       }
 
       state.targets[key] = next;
@@ -622,6 +702,158 @@ export function reduceProgressionState(input: {
           state.targets[key] = { ...current, successStreak: 0, failureStreak: 0 };
         }
       }
+    }
+  }
+
+  // Asymptote Protocol: 4 사이클 × 3 세션 (A/B/C) 블록.
+  // TM 변동은 사이클 3 AMRAP 결과로만 결정. 보조(DL/OHP)는 메인에서 자동 도출.
+  if (input.program === "asymptote") {
+    const loggedTargets = Array.from(outcomes.keys()).filter((key) => outcomes.get(key)?.total);
+    const completedBlock = state.week === 4 && state.day === 3;
+
+    if (loggedTargets.length > 0) {
+      state.day += 1;
+      if (state.day > 3) {
+        state.day = 1;
+        state.week += 1;
+        if (state.week > 4) {
+          state.week = 1;
+          state.cycle += 1;
+        }
+      }
+      didAdvanceSession = true;
+    }
+
+    if (completedBlock && loggedTargets.length > 0) {
+      let triggerLight = false;
+
+      const upsertDecision = (params: {
+        key: string;
+        progressionTarget: ProgressionTarget;
+        before: TargetRuntimeState;
+        after: TargetRuntimeState;
+        eventType: "INCREASE" | "HOLD" | "RESET";
+        outcomeLabel: "SUCCESS" | "FAIL";
+        reason: string;
+      }) => {
+        const decisionLabel = outcomes.get(params.key)?.displayTarget ?? params.key;
+        const index = decisions.findIndex((d) => d.key === params.key);
+        const updatedDecision: TargetDecision = {
+          key: params.key,
+          target: decisionLabel,
+          progressionTarget: params.progressionTarget,
+          outcome: params.outcomeLabel,
+          eventType: params.eventType,
+          reason: params.reason,
+          before: params.before,
+          after: params.after,
+        };
+        if (index >= 0) decisions[index] = updatedDecision;
+        else decisions.push(updatedDecision);
+      };
+
+      // 1) 메인 3개 (SQ/BP/PULL) TM 변동: AMRAP 렙수 기반.
+      for (const [key, current] of Object.entries(state.targets)) {
+        const progressionTarget =
+          parseProgressionTarget(current?.progressionTarget) ?? parseProgressionTarget(key);
+        if (!progressionTarget) continue;
+        if (progressionTarget === "DEADLIFT" || progressionTarget === "OHP") continue;
+
+        const before = state.targets[key]!;
+        const amrapReps = toFiniteNumber(before.amrapReps);
+
+        let delta = 0;
+        let outcomeLabel: "SUCCESS" | "FAIL" = "SUCCESS";
+        let eventType: "INCREASE" | "HOLD" | "RESET" = "HOLD";
+        let amrapReason = "hold:amrap-missing";
+
+        if (amrapReps !== null && amrapReps >= 0) {
+          if (amrapReps >= 8) {
+            delta = 2.5;
+            eventType = "INCREASE";
+            amrapReason = `increase:amrap-${amrapReps}reps:+2.5kg`;
+          } else if (amrapReps >= 5) {
+            delta = 0;
+            eventType = "HOLD";
+            amrapReason = `hold:amrap-${amrapReps}reps`;
+          } else if (amrapReps >= 3) {
+            delta = -2.5;
+            outcomeLabel = "FAIL";
+            eventType = "RESET";
+            amrapReason = `reset:amrap-${amrapReps}reps:-2.5kg`;
+          } else {
+            // 0, 1, 2 렙: -5 kg + 다음 블록 light
+            delta = -5;
+            outcomeLabel = "FAIL";
+            eventType = "RESET";
+            triggerLight = true;
+            amrapReason = `reset:amrap-${amrapReps}reps:-5kg+light`;
+          }
+        }
+
+        const newWorkKg =
+          before.workKg > 0 ? toPositiveRounded2p5(before.workKg + delta) : before.workKg;
+        const after: TargetRuntimeState = {
+          progressionTarget,
+          workKg: newWorkKg,
+          successStreak: 0,
+          failureStreak: 0,
+          amrapReps: null,
+        };
+        state.targets[key] = after;
+
+        upsertDecision({
+          key,
+          progressionTarget,
+          before,
+          after,
+          eventType,
+          outcomeLabel,
+          reason: amrapReason,
+        });
+      }
+
+      // 2) 보조 도출: DL = SQ TM, OHP = floor(BP TM × 0.5 / 2.5) × 2.5
+      const newSqTm = state.targets["SQUAT"]?.workKg ?? 0;
+      const newBpTm = state.targets["BENCH"]?.workKg ?? 0;
+      for (const [key, current] of Object.entries(state.targets)) {
+        const progressionTarget =
+          parseProgressionTarget(current?.progressionTarget) ?? parseProgressionTarget(key);
+        if (progressionTarget !== "DEADLIFT" && progressionTarget !== "OHP") continue;
+
+        const before = state.targets[key]!;
+        const derived =
+          progressionTarget === "DEADLIFT"
+            ? toPositiveRounded2p5(newSqTm)
+            : toPositiveRounded2p5(Math.floor((newBpTm * 0.5) / 2.5) * 2.5);
+        const after: TargetRuntimeState = {
+          progressionTarget,
+          workKg: derived,
+          successStreak: 0,
+          failureStreak: 0,
+          amrapReps: null,
+        };
+        state.targets[key] = after;
+
+        if (derived === before.workKg) continue;
+        const eventType: "INCREASE" | "HOLD" | "RESET" =
+          derived > before.workKg ? "INCREASE" : "RESET";
+        const reason =
+          progressionTarget === "DEADLIFT"
+            ? `derived:dl=sq:${derived}kg`
+            : `derived:ohp=bp*0.5:${derived}kg`;
+        upsertDecision({
+          key,
+          progressionTarget,
+          before,
+          after,
+          eventType,
+          outcomeLabel: derived >= before.workKg ? "SUCCESS" : "FAIL",
+          reason,
+        });
+      }
+
+      state.lightBlockMode = triggerLight;
     }
   }
 

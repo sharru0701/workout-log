@@ -664,6 +664,29 @@ export async function runSeed(options: SeedRunOptions = {}) {
     changelog: "5/3/1 with Boring But Big 5x10",
   });
 
+  // 4) Asymptote Protocol — 3-세션 로테이션(A/B/C) × 4 사이클 블록, 사이클 3 AMRAP 게이팅
+  const templateAsymptote = await upsertTemplate("asymptote-protocol", {
+    slug: "asymptote-protocol",
+    name: "Asymptote Protocol (Base)",
+    type: "LOGIC",
+    visibility: "PUBLIC",
+    description:
+      "점근선 프로토콜 — 회복이 불안정한 중급 리프터를 위한 성과 기반 스트렝스 프로그램. 3-세션 로테이션(A/B/C) × 4 사이클(적응/빌드/검증/디로드) 블록 구조에서 TM은 자동으로 오르지 않고 사이클 3 AMRAP 검증으로만 갱신된다. 스쿼트/벤치/중량풀업/데드리프트/오버헤드프레스 5개 종목, 세션 기반 로테이션이라 캘린더에 묶이지 않는다.",
+    tags: ["strength", "barbell", "asymptote", "intermediate", "block-periodization", "amrap"],
+  });
+
+  const templateAsymptoteV1 = await upsertVersion(templateAsymptote.id, 1, {
+    definition: {
+      dslVersion: 1,
+      kind: "asymptote",
+      schedule: { weeks: 4, sessionsPerWeek: 3 },
+      modules: ["SQUAT", "BENCH", "DEADLIFT", "OHP", "PULL"],
+      progression: { profile: "asymptote-v1" },
+    },
+    defaults: { tmPercent: 0.83 },
+    changelog: "v1.0 — 3-session A/B/C rotation, 4-cycle blocks, cycle-3 AMRAP gating",
+  });
+
   const templateGreyskull = await upsertTemplate("greyskull-lp", {
     slug: "greyskull-lp",
     name: "Greyskull LP (Base)",
@@ -875,6 +898,20 @@ export async function runSeed(options: SeedRunOptions = {}) {
           sessionKeyMode: "PROGRESSION",
           autoProgression: true,
           trainingMaxKg: { SQUAT: 120, BENCH: 85, OHP: 55, DEADLIFT: 150 },
+        },
+      });
+    }
+
+    if (templateAsymptoteV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Asymptote Protocol", {
+        type: "SINGLE",
+        rootProgramVersionId: templateAsymptoteV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          sessionKeyMode: "PROGRESSION",
+          autoProgression: true,
+          trainingMaxKg: { SQUAT: 95, BENCH: 75, PULL: 97.5, DEADLIFT: 95, OHP: 35 },
         },
       });
     }
