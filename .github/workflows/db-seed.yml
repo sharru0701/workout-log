@@ -1,0 +1,43 @@
+name: db-seed
+
+on:
+  # db-migrate 워크플로우가 main에서 성공하면 자동 실행. seed-if-needed가 seed.ts 해시를
+  # 비교해 변경이 없으면 NO-OP. 새 프로그램/운동/seed 데이터가 들어왔을 때만 실제 seed 수행.
+  workflow_run:
+    workflows: [db-migrate]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: db-seed-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  seed:
+    name: DB Seed (${{ matrix.env }})
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - env: prod
+            secret: SUPABASE_DIRECT_URL
+          - env: dev
+            secret: SUPABASE_DEV_DIRECT_URL
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm-node
+
+      - name: Run idempotent seed sync
+        env:
+          DATABASE_URL: ${{ secrets[matrix.secret] }}
+          DB_SEED_RUNNER: github-actions-${{ matrix.env }}
+          DB_SEED_KEY: ${{ matrix.env }}
+        run: pnpm db:seed:sync
