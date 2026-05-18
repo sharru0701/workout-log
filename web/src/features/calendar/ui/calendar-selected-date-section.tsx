@@ -144,20 +144,6 @@ export const CalendarSelectedDateSection = memo(
               gap: "var(--v2-s-2)",
             }}
           >
-            {selectedPlanName && !isToday ? (
-              <span
-                className="v2-small"
-                style={{
-                  color: "var(--v2-ink-3)",
-                  maxWidth: 120,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {selectedPlanName}
-              </span>
-            ) : null}
             {isToday ? (
               <V2Chip tone="accent">
                 {locale === "ko" ? "오늘" : "Today"}
@@ -240,16 +226,13 @@ export const CalendarSelectedDateSection = memo(
                     className="v2-h3"
                     style={{ fontSize: "var(--v2-t-body)", fontWeight: 700 }}
                   >
-                    {selectedPlanName}
+                    {loggedDayLabel ?? copy.completed}
                   </p>
                   <p className="v2-eyebrow" style={{ marginTop: 2 }}>
                     {copy.completed}
                   </p>
                 </div>
               </div>
-              {loggedDayLabel ? (
-                <V2Chip tone="accent">{loggedDayLabel}</V2Chip>
-              ) : null}
             </div>
 
             {loggedSummary.exercises.length > 0 ? (
@@ -437,21 +420,11 @@ export const CalendarSelectedDateSection = memo(
                         whiteSpace: "nowrap",
                       }}
                     >
-                      {selectedPlanName}
+                      {selectedSessionWDLabel ?? copy.beforeStart}
                     </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "var(--v2-s-2)",
-                        marginTop: 2,
-                      }}
-                    >
-                      <span className="v2-eyebrow">{copy.beforeStart}</span>
-                      {selectedSessionWDLabel ? (
-                        <V2Chip tone="accent">{selectedSessionWDLabel}</V2Chip>
-                      ) : null}
-                    </div>
+                    <p className="v2-eyebrow" style={{ marginTop: 2 }}>
+                      {copy.beforeStart}
+                    </p>
                   </div>
                 </div>
                 <V2PrimaryBtn
