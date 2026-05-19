@@ -6,7 +6,7 @@
 
 - **앱 코드**: `web/` 디렉터리 (Next.js App Router)
 - **인프라**: `infra/` 디렉터리
-- **로컬 실행**: 저장소 루트에서 `./dev up` (Docker), 접속 `http://localhost:3000`
+- **로컬 실행**: `pnpm -C web dev` (Next.js dev 서버), 접속 `http://localhost:3000`. Postgres 접속 정보는 `web/.env.local`의 `DATABASE_URL`로 전달. 배포는 Vercel(웹앱) + Supabase(Postgres).
 
 ## 핵심 문서
 
@@ -14,7 +14,7 @@
 |------|------|
 | [디자인 가이드](web/docs/design-guide.md) | 색상 토큰, 타이포그래피, 컴포넌트 규칙, 안티패턴, 43개 화면 체크리스트 |
 | [구현 히스토리](web/docs/implementation-changelog.md) | PR2~PR41 기반 IA 구조, 디자인 시스템, 모션, 비동기 UX, 자동 진행 등 전체 구현 맥락 |
-| [로컬 개발 가이드](web/docs/local-dev-after-clone-guide.md) | clone 후 세팅, Docker/non-Docker 실행, 운영 스케줄러 설정 |
+| [로컬 개발 가이드](web/docs/local-dev-after-clone-guide.md) | clone 후 세팅, 로컬 실행, 운영 스케줄러 설정 |
 | [QA 테스트 가이드](web/docs/qa-test-guide.md) | 라이트/헤비 유저 E2E 시나리오, 비동기 UX 연속성 체크리스트 |
 | [프로그램 Seed 가이드](web/docs/program-seed-guide.md) | 6개 근력 프로그램 canonical 규칙, seed 명령, 자동 진행 구현 상세 |
 
@@ -47,20 +47,20 @@ web/src/
 ## 자주 쓰는 명령
 
 ```bash
-# 개발 서버 (Docker)
-./dev up
+# 개발 서버 (web 디렉터리에서 실행하거나 -C 옵션 사용)
+pnpm -C web dev
 
 # DB 마이그레이션 + 시드
-pnpm db:migrate
-pnpm db:seed
-pnpm db:seed:demo-plans   # 샘플 플랜 포함
+pnpm -C web db:migrate
+pnpm -C web db:seed
+pnpm -C web db:seed:demo-plans   # 샘플 플랜 포함
 
 # 테스트
-pnpm test:progression     # 자동 진행 로직 유닛 테스트
-pnpm test:e2e             # Playwright E2E
+pnpm -C web test:progression     # 자동 진행 로직 유닛 테스트
+pnpm -C web test:e2e             # Playwright E2E
 
 # 빌드
-pnpm build
+pnpm -C web build
 ```
 
 ## 코드 규칙 요약

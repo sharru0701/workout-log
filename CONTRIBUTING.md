@@ -60,4 +60,3 @@ pnpm test:e2e
 ## 5) 금지/주의 사항
 - `.env.local` 등 비밀값 파일은 커밋하지 않습니다.
 - 대용량 산출물(`.next`, `node_modules`)은 커밋하지 않습니다.
-- 개발환경 재현에 필요한 파일(`docker-compose.dev.yml`, `Dockerfile.dev`, `scripts/docker-dev-start.sh`)은 커밋 대상입니다.

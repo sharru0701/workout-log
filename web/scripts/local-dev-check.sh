@@ -41,12 +41,6 @@ else
   fail "dependencies are not fully installed (run: pnpm install)"
 fi
 
-if command -v docker >/dev/null 2>&1 && docker --version >/dev/null 2>&1; then
-  ok "docker: $(docker --version)"
-else
-  warn "docker is not available in this WSL distro"
-fi
-
 if (echo > /dev/tcp/127.0.0.1/5432) >/dev/null 2>&1; then
   ok "Postgres is reachable on 127.0.0.1:5432"
 else

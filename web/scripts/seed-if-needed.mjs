@@ -197,7 +197,7 @@ async function releaseAdvisoryLock(client, lockHeld) {
 }
 
 async function runSeedScript() {
-  // Prefer pre-compiled JS (production Docker build); fall back to tsx for local dev
+  // Prefer pre-compiled JS if a build step produced it; otherwise run seed.ts via tsx.
   const compiledPath = path.resolve(process.cwd(), "scripts/seed-compiled.cjs");
   const seedScriptPath = path.resolve(process.cwd(), "src/server/db/seed.ts");
 
