@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { AppNumberStepper } from "@/components/ui/form-controls";
-import { V2NavRow, V2PrimaryBtn } from "@/components/v2/primitives";
+import { V2Card, V2NavRow, V2PrimaryBtn } from "@/components/v2/primitives";
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -79,7 +79,7 @@ export function V2MorePage() {
       style={{
         paddingTop: 16,
         paddingBottom: 24,
-        background: "var(--v2-paper)",
+        background: "var(--v2-bg)",
         minHeight: "100%",
       }}
     >
@@ -100,14 +100,13 @@ export function V2MorePage() {
 
       {me && (
         <div className="v2-font-display" style={{ padding: "0px var(--v2-s-4) var(--v2-s-1)" }}>
-          <div
+          <V2Card
+            tone="inset"
+            padding="var(--v2-s-4)"
             style={{
               display: "flex",
               alignItems: "center",
               gap: "var(--v2-s-3)",
-              padding: "var(--v2-s-4) var(--v2-s-4)",
-              background: "var(--v2-paper-2)",
-              borderRadius: "var(--v2-r-3)",
             }}
           >
             <div
@@ -189,7 +188,7 @@ export function V2MorePage() {
                 </span>
               </button>
             )}
-          </div>
+          </V2Card>
         </div>
       )}
 
@@ -351,10 +350,10 @@ function Section({
       <div className="v2-label" style={{ padding: "0px var(--v2-s-2) var(--v2-s-1)" }}>
         {title}
       </div>
-      <div
+      <V2Card
+        padding={0}
+        radius="var(--v2-r-3)"
         style={{
-          background: "var(--v2-paper)",
-          borderRadius: "var(--v2-r-3)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
@@ -362,7 +361,7 @@ function Section({
         } as CSSProperties}
       >
         {children}
-      </div>
+      </V2Card>
     </div>
   );
 }
