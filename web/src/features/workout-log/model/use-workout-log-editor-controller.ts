@@ -1,4 +1,3 @@
-import type { Dispatch, SetStateAction } from "react";
 import { useCallback, useEffect, useRef } from "react";
 import {
   buildExerciseActionUpdate,
@@ -7,12 +6,9 @@ import {
 import type { WorkoutPreferences } from "@/lib/settings/workout-preferences";
 import type {
   WorkoutExerciseViewModel,
-  WorkoutProgramExerciseEntryStateMap,
   WorkoutRecordDraft,
-  WorkoutWorkflowState,
 } from "@/entities/workout-record";
 import {
-  applyWorkoutLogWeightRulesToDraft,
   resolveWorkoutWeightWithPreferences,
 } from "./weight-rules";
 

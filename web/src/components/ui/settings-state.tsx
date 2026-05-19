@@ -132,7 +132,7 @@ export function LoadingStateRows({
   if (!visible) return null;
 
   return (
-    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel} className={className}>
       <V2NavRow as="div" trailing="none" label={resolvedLabel} leading={<V2RowIcon symbol="LD" tone="info" />} />
     </V2SettingsGroup>
   );
@@ -175,7 +175,7 @@ export function EmptyStateRows({
   if (!visible) return null;
 
   return (
-    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel} className={className}>
       <V2NavRow as="div" trailing="none" label={resolvedLabel} />
     </V2SettingsGroup>
   );
@@ -227,7 +227,7 @@ export function ErrorStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel} className={className}>
       <V2NavRow as="div" trailing="none" label={message} leading={<V2RowIcon symbol="ER" />} />
       <V2NavRow
         label={resolvedRetryLabel}
@@ -252,7 +252,7 @@ export function DisabledStateRows({
   if (!when) return null;
 
   return (
-    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel} className={className}>
       <V2NavRow as="div" trailing="none" label={resolvedLabel} leading={<V2RowIcon symbol="DS" tone="neutral" />} />
     </V2SettingsGroup>
   );
@@ -300,7 +300,7 @@ export function NoticeStateRows({
   if (shouldUseDialog) return null;
 
   return (
-    <V2SettingsGroup ariaLabel={resolvedAriaLabel}>
+    <V2SettingsGroup ariaLabel={resolvedAriaLabel} className={className}>
       <V2NavRow as="div" trailing="none" label={message} leading={<V2RowIcon symbol="NT" tone="surface" />} />
     </V2SettingsGroup>
   );

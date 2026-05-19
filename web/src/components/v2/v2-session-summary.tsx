@@ -8,7 +8,6 @@ import {
   V2Card,
   V2Chip,
   V2PrimaryBtn,
-  V2SecondaryBtn,
   V2CountUp,
 } from "./primitives";
 

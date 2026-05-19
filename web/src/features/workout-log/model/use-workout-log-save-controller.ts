@@ -3,10 +3,6 @@ import type { FailureProtocolChoice } from "@/components/ui/failure-protocol-she
 import {
   validateWorkoutDraft,
   validateWorkoutRecordEntryState,
-  type WorkoutExerciseViewModel,
-  type WorkoutProgramExerciseEntryStateMap,
-  type WorkoutRecordDraft,
-  type WorkoutWorkflowState,
 } from "@/entities/workout-record";
 import {
   resolveWorkoutLogProgressionOverride,

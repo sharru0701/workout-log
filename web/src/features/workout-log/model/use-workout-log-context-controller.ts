@@ -130,6 +130,9 @@ export function useWorkoutLogContextController({
         setLoading(false);
       }
     },
+    // setLastSession, setRecentLogItems, setWorkoutPreferences 는 useSetAtom 의
+    // 안정적 reference 이므로 의존성에서 제외.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [
       applyWeightRulesToDraft,
       browserTimezone,
@@ -253,6 +256,9 @@ export function useWorkoutLogContextController({
     return () => {
       cancelled = true;
     };
+    // setLastSession, setRecentLogItems, setWorkoutPreferences 는 useSetAtom 안정 reference,
+    // hasRestoredDraft 는 ref-stable callback. 의도적으로 deps 에서 제외.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     initialPlans,
     initialSettings,

@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { and, asc, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { generatedSession, plan, planProgressEvent, workoutLog, workoutSet } from "@/server/db/schema";
-import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
+import { generatedSession, planProgressEvent, workoutLog, workoutSet } from "@/server/db/schema";
+import { buildProgressionSummary } from "@/server/progression/summary";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { getAuthenticatedUserId } from "@/server/auth/user";
@@ -29,19 +29,6 @@ function normalizeTimezone(raw: string | null) {
   }
 }
 
-function dateOnlyInTimezone(date: Date, timezone: string) {
-  const parts = new Intl.DateTimeFormat("en-CA", {
-    timeZone: timezone,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).formatToParts(date);
-
-  const year = parts.find((part) => part.type === "year")?.value ?? "1970";
-  const month = parts.find((part) => part.type === "month")?.value ?? "01";
-  const day = parts.find((part) => part.type === "day")?.value ?? "01";
-  return `${year}-${month}-${day}`;
-}
 
 function resolvePerformedAt(raw: unknown) {
   if (typeof raw !== "string" || !raw.trim()) {

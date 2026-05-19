@@ -11,12 +11,7 @@ import { computeBodyweightTotalLoadKg } from "@/lib/bodyweight-load";
 import {
   resolveMinimumPlateIncrement,
   resolveMinimumPlateIncrementKg,
-  type WorkoutPreferences,
 } from "@/lib/settings/workout-preferences";
-import type {
-  WorkoutRecordDraft,
-  WorkoutWorkflowState,
-} from "@/entities/workout-record";
 import { fetchWorkoutExerciseOptions } from "./client";
 import {
   buildAddExerciseDraftUpdate,
@@ -26,7 +21,6 @@ import {
   createDefaultAddExerciseDraft,
   type AddExerciseDraft,
   type WorkoutLogExerciseOption,
-  type WorkoutLogRecentLogItem,
 } from "./types";
 
 import { useStore, useSetAtom, useAtomValue } from "jotai";
