@@ -4,7 +4,7 @@ import type { CSSProperties } from "react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { AppNumberStepper } from "@/components/ui/form-controls";
-import { V2Card, V2NavRow, V2PrimaryBtn } from "@/components/v2/primitives";
+import { V2Card, V2IconBtn, V2NavRow, V2PrimaryBtn, V2SecondaryBtn } from "@/components/v2/primitives";
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -77,20 +77,20 @@ export function V2MorePage() {
   return (
     <div
       style={{
-        paddingTop: 16,
-        paddingBottom: 24,
+        paddingTop: "var(--v2-s-4)",
+        paddingBottom: "var(--v2-s-6)",
         background: "var(--v2-bg)",
         minHeight: "100%",
       }}
     >
       <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">{locale === "ko" ? "더보기" : "MORE"}</p>
-        <h1 id={headingId} className="v2-h1" style={{ marginTop: 6 }}>
+        <h1 id={headingId} className="v2-h1" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko" ? "계정 · 설정" : "Account · Settings"}
         </h1>
         <p
           className="v2-small"
-          style={{ marginTop: 4, color: "var(--v2-ink-2)" }}
+          style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}
         >
           {locale === "ko"
             ? "계정, 단위, 테마처럼 자주 쓰는 보조 기능만 모았습니다."
@@ -110,27 +110,26 @@ export function V2MorePage() {
             }}
           >
             <div
+              className="v2-h3 v2-font-display"
               style={{
-                width: 40,
-                height: 40,
+                width: "var(--v2-s-8)",
+                height: "var(--v2-s-8)",
                 borderRadius: "var(--v2-r-pill)",
                 background: "var(--v2-accent)",
                 color: "var(--v2-ink-on-accent)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                fontWeight: 700,
-                fontSize: "var(--v2-t-16)",
                 flexShrink: 0,
               }}
             >
               {(me.displayName?.[0] ?? me.email?.[0] ?? "?").toUpperCase()}
             </div>
-            <div className="v2-font-display" style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <div
+                className="v2-body v2-font-display"
                 style={{
                   fontWeight: 700,
-                  fontSize: "var(--v2-t-14)",
                   color: "var(--v2-ink)",
                   whiteSpace: "nowrap",
                   overflow: "hidden",
@@ -159,34 +158,11 @@ export function V2MorePage() {
               </div>
             </div>
             {!me.fallback && me.email && (
-              <button
-                type="button"
+              <V2IconBtn
+                icon="lock"
+                label={locale === "ko" ? "비밀번호 변경" : "Change password"}
                 onClick={() => setPwOpen(true)}
-                aria-label={
-                  locale === "ko" ? "비밀번호 변경" : "Change password"
-                }
-                className="v2-pressable"
-                style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: "var(--v2-r-2)",
-                  border: "none",
-                  background: "var(--v2-paper-3)",
-                  color: "var(--v2-ink-2)",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: "var(--v2-t-18)" }}
-                  aria-hidden
-                >
-                  lock
-                </span>
-              </button>
+              />
             )}
           </V2Card>
         </div>
@@ -292,8 +268,8 @@ export function V2MorePage() {
           gap: "var(--v2-s-3)",
         }}
       >
-        <button
-          type="button"
+        <V2SecondaryBtn
+          icon="logout"
           onClick={async () => {
             try {
               await fetch("/api/auth/logout", { method: "POST" });
@@ -302,31 +278,9 @@ export function V2MorePage() {
             }
             window.location.href = "/login";
           }}
-          className="v2-pressable v2-font-display"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "var(--v2-s-1)",
-            padding: "var(--v2-s-3) var(--v2-s-5)",
-            background: "transparent",
-            color: "var(--v2-ink-3)",
-            borderRadius: "var(--v2-r-2)",
-            border: "none",
-            cursor: "pointer",
-            fontWeight: 600,
-            fontSize: "var(--v2-t-small)",
-          }}
         >
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: "var(--v2-t-18)" }}
-            aria-hidden
-          >
-            logout
-          </span>
           {locale === "ko" ? "로그아웃" : "Sign out"}
-        </button>
+        </V2SecondaryBtn>
 
         <AppInfoFooter />
       </div>

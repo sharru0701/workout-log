@@ -191,7 +191,7 @@ export default function SettingsDataPage() {
         </V2SettingsGroup>
         <V2SecondaryBtn
           full
-          style={{ marginTop: "var(--space-sm)" }}
+          style={{ marginTop: "var(--v2-s-2)" }}
           onClick={() => {
             void runClearCache();
           }}
@@ -248,7 +248,7 @@ export default function SettingsDataPage() {
         <V2SecondaryBtn
           full
           tone="danger"
-          style={{ marginTop: "var(--space-sm)" }}
+          style={{ marginTop: "var(--v2-s-2)" }}
           onClick={() => {
             void runReset();
           }}

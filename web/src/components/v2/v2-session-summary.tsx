@@ -193,7 +193,7 @@ function BigStat({
   sub?: string;
 }) {
   return (
-    <V2Card padding="18px">
+    <V2Card padding="var(--v2-s-5)">
       <div className="v2-label" style={{ fontSize: "var(--v2-t-eyebrow)" }}>
         {label}
       </div>
@@ -502,7 +502,7 @@ export function V2SessionSummary({
             return (
               <V2Card
                 key={`${p.source}:${p.target}`}
-                padding="20px"
+                padding="var(--v2-s-5)"
                 style={{
                   background:
                     "color-mix(in srgb, var(--v2-c-pr) 12%, var(--v2-paper))",
@@ -749,7 +749,7 @@ export function V2PRCard({
   return (
     <div style={{ padding: "var(--v2-s-2) var(--v2-s-4) 0px" }}>
       <V2Card
-        padding="20px"
+        padding="var(--v2-s-5)"
         style={{
           background:
             "color-mix(in srgb, var(--v2-c-pr) 12%, var(--v2-paper))",

@@ -74,17 +74,17 @@ function TodayDeck({
   const completedDays = weekly.days.filter((d) => d.hasWorkout).length;
 
   return (
-    <div style={{ paddingTop: 16, paddingBottom: 24 }}>
+    <div style={{ paddingTop: "var(--v2-s-4)", paddingBottom: "var(--v2-s-6)" }}>
       {/* eyebrow */}
       <div style={{ padding: "0px var(--v2-s-6) var(--v2-s-2)" }}>
         <p className="v2-eyebrow">{formatDateEyebrow(locale)}</p>
-        <h1 className="v2-h1" style={{ marginTop: 6 }}>
+        <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-1)" }}>
           {today.headline || (locale === "ko" ? "오늘" : "Today")}
         </h1>
         {today.meta && (
           <p
             className="v2-small"
-            style={{ marginTop: 4, color: "var(--v2-ink-2)" }}
+            style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}
           >
             {today.meta}
           </p>
@@ -100,7 +100,7 @@ function TodayDeck({
                 display: "flex",
                 alignItems: "center",
                 gap: "var(--v2-s-2)",
-                marginBottom: 10,
+                marginBottom: "var(--v2-s-3)",
               }}
             >
               {today.programName ? (
@@ -122,14 +122,11 @@ function TodayDeck({
                 </span>
               )}
             </div>
-            <div
-              className="v2-h1"
-              style={{ letterSpacing: "-0.025em", fontSize: "var(--v2-t-h2)" }}
-            >
+            <h2 className="v2-h2" style={{ margin: 0, letterSpacing: "-0.025em" }}>
               {hasPlan
                 ? today.headline
                 : copy.home.protocol.selectProgram}
-            </div>
+            </h2>
           </div>
 
           {/* 운동 목록 */}
@@ -148,10 +145,10 @@ function TodayDeck({
                     }}
                   >
                     <div
-                      className="v2-font-num"
+                      className="v2-mono-label"
                       style={{
-                        width: 28,
-                        height: 28,
+                        width: "var(--v2-s-7)",
+                        height: "var(--v2-s-7)",
                         borderRadius: "var(--v2-r-1)",
                         background:
                           ex.role === "MAIN"
@@ -164,8 +161,6 @@ function TodayDeck({
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        fontWeight: 700,
-                        fontSize: "var(--v2-t-small)",
                         flexShrink: 0,
                       }}
                     >
@@ -173,9 +168,9 @@ function TodayDeck({
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
-                        className="v2-h3"
+                        className="v2-body"
                         style={{
-                          fontSize: "var(--v2-t-body)",
+                          fontWeight: 700,
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -237,7 +232,7 @@ function TodayDeck({
               display: "flex",
               alignItems: "baseline",
               gap: "var(--v2-s-1)",
-              marginTop: 8,
+              marginTop: "var(--v2-s-2)",
             }}
           >
             <span className="v2-num-md" style={{ color: "var(--v2-c-pr)" }}>
@@ -247,13 +242,13 @@ function TodayDeck({
               {locale === "ko" ? "일" : "d"}
             </span>
           </div>
-          <div style={{ display: "flex", gap: "var(--v2-s-1)", marginTop: 12 }}>
+          <div style={{ display: "flex", gap: "var(--v2-s-1)", marginTop: "var(--v2-s-3)" }}>
             {weekly.days.map((d) => (
               <div
                 key={d.key}
                 style={{
                   flex: 1,
-                  height: 6,
+                  height: "var(--v2-s-2)",
                   borderRadius: "var(--v2-r-pill)",
                   background: d.hasWorkout
                     ? "var(--v2-c-pr)"
@@ -268,7 +263,7 @@ function TodayDeck({
           </div>
           <div
             className="v2-mono-label"
-            style={{ color: "var(--v2-ink-3)", marginTop: 8 }}
+            style={{ color: "var(--v2-ink-3)", marginTop: "var(--v2-s-2)" }}
           >
             {locale === "ko"
               ? `이번 주 ${completedDays}/${weekly.days.length}`
@@ -285,7 +280,7 @@ function TodayDeck({
               display: "flex",
               alignItems: "baseline",
               gap: "var(--v2-s-1)",
-              marginTop: 8,
+              marginTop: "var(--v2-s-2)",
             }}
           >
             <span
@@ -302,7 +297,7 @@ function TodayDeck({
             style={{
               display: "flex",
               gap: "var(--v2-s-1)",
-              marginTop: 12,
+              marginTop: "var(--v2-s-3)",
             }}
           >
             {Array.from({ length: 5 }).map((_, i) => (
@@ -310,7 +305,7 @@ function TodayDeck({
                 key={i}
                 style={{
                   flex: 1,
-                  height: 8,
+                  height: "var(--v2-s-2)",
                   borderRadius: "var(--v2-r-pill)",
                   background:
                     i < Math.min(5, weekly.sessionCount)
@@ -322,7 +317,7 @@ function TodayDeck({
           </div>
           <div
             className="v2-mono-label"
-            style={{ color: "var(--v2-ink-3)", marginTop: 8 }}
+            style={{ color: "var(--v2-ink-3)", marginTop: "var(--v2-s-2)" }}
           >
             {locale === "ko"
               ? `${weekly.completedSets} 세트 완료`
@@ -365,7 +360,7 @@ function TodayDeck({
                 <V2Card
                   key={s.exerciseName}
                   tone="inset"
-                  style={{ marginBottom: 8 }}
+                  style={{ marginBottom: "var(--v2-s-2)" }}
                 >
                   <div
                     style={{
@@ -376,8 +371,8 @@ function TodayDeck({
                   >
                     <div
                       style={{
-                        width: 40,
-                        height: 40,
+                        width: "var(--v2-s-8)",
+                        height: "var(--v2-s-8)",
                         borderRadius: "var(--v2-r-2)",
                         background: isPr
                           ? "color-mix(in srgb, var(--v2-c-pr) 16%, var(--v2-paper))"
@@ -405,9 +400,9 @@ function TodayDeck({
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div
-                        className="v2-h3"
+                        className="v2-body"
                         style={{
-                          fontSize: "var(--v2-t-body)",
+                          fontWeight: 700,
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",

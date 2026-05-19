@@ -36,9 +36,8 @@ const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { e
         <div>
           {main.map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--v2-s-1)" }}>
-              {/* INFO COLOR: exercise-name — 주 운동명은 즉시 식별 가능한 강조톤 */}
-              <span style={{ font: "var(--font-card-title)", color: "var(--v2-ink)", fontWeight: "var(--font-weight-exercise-name)" }}>{ex.name}</span>
-              <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
+              <span className="v2-body" style={{ color: "var(--v2-ink)", fontWeight: 700 }}>{ex.name}</span>
+              <span className="v2-small" style={{ color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
         </div>
@@ -49,13 +48,12 @@ const ExerciseGroupedList = memo(function ExerciseGroupedList({ exercises }: { e
           <div>
           {assist.slice(0, 3).map((ex) => (
             <div key={ex.name} style={{ display: "flex", justifyContent: "space-between", marginBottom: "var(--v2-s-1)" }}>
-              {/* INFO COLOR: exercise-name (assist) — 보조 운동은 muted 컨텍스트톤으로 위계 조정 */}
-              <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)" }}>{ex.name}</span>
-              <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
+              <span className="v2-small" style={{ color: "var(--v2-ink-2)" }}>{ex.name}</span>
+              <span className="v2-small" style={{ color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>{ex.summary}</span>
             </div>
           ))}
           {assist.length > 3 && (
-            <div style={{ font: "var(--font-secondary)", color: "var(--v2-ink-3)", textAlign: "right", marginTop: "var(--v2-s-1)" }}>
+            <div className="v2-small" style={{ color: "var(--v2-ink-3)", textAlign: "right", marginTop: "var(--v2-s-1)" }}>
               {locale === "ko" ? `+보조 ${assist.length - 3}개 더` : `+${assist.length - 3} more assist`}
             </div>
           )}
@@ -72,9 +70,8 @@ const ExerciseFlatList = memo(function ExerciseFlatList({ exercises }: { exercis
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
       {exercises.map((ex) => (
         <div key={ex.name} style={{ display: "flex", justifyContent: "space-between" }}>
-          {/* INFO COLOR: exercise-name — 운동명은 700 weight와 강조톤으로 요약보다 먼저 읽힘 */}
-          <span style={{ font: "var(--font-card-title)", color: "var(--v2-ink)", fontWeight: "var(--font-weight-exercise-name)" }}>{ex.name}</span>
-          <span style={{ font: "var(--font-secondary)", color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>
+          <span className="v2-body" style={{ color: "var(--v2-ink)", fontWeight: 700 }}>{ex.name}</span>
+          <span className="v2-small" style={{ color: "var(--v2-ink-3)", fontVariantNumeric: "tabular-nums" }}>
             {ex.weightDelta != null && ex.weightDelta !== 0 && (
               <span className={`metric-trend ${ex.weightDelta > 0 ? "metric-trend--up" : "metric-trend--down"}`} style={{ marginRight: "var(--v2-s-1)" }}>
                 {ex.weightDelta > 0 ? "+" : ""}{ex.weightDelta}kg
@@ -126,9 +123,8 @@ function TodayCard({
     <>
       <div className="card-header">
         <div>
-          {/* INFO COLOR: session-name — 오늘 세션 제목은 plan/program identity */}
-          <div className="card-title" style={{ color: "var(--text-session-name)", font: "var(--font-card-title)", fontWeight: 700 }}>{title}</div>
-          {meta && <p style={{ font: "var(--font-secondary)", color: "var(--v2-ink-2)", margin: 0, marginTop: "2px" }}>{meta}</p>}
+          <div className="v2-h3 card-title" style={{ color: "var(--text-session-name)" }}>{title}</div>
+          {meta && <p className="v2-small" style={{ color: "var(--v2-ink-2)", margin: 0, marginTop: 2 }}>{meta}</p>}
         </div>
         {badge && <V2Chip tone="accent">{badge}</V2Chip>}
       </div>
@@ -147,6 +143,7 @@ function TodayCard({
         href ? (
           // Parent <Link> wraps the card; CTA is decorative div styled as primary button.
           <div
+            className="v2-font-display"
             style={{
               display: "inline-flex",
               alignItems: "center",
@@ -159,7 +156,6 @@ function TodayCard({
               background: "var(--v2-accent)",
               color: "var(--v2-ink-on-accent)",
               fontWeight: 700,
-              fontSize: "var(--v2-t-16)",
               letterSpacing: "-0.01em",
               boxShadow: "var(--v2-elev-2)",
               marginTop: "var(--v2-s-4)",
@@ -227,13 +223,10 @@ function LastCard({
     <>
       <div className="card-header">
         <div>
-          {/* INFO COLOR: plan-name — 지난 세션 제목은 program/plan identity */}
-          <div className="card-title" style={{ color: "var(--v2-ink)", font: "var(--font-card-title)", fontWeight: 600 }}>{title}</div>
-          {/* INFO COLOR: session-context — 날짜는 계획/컨텍스트 정보이므로 강조톤 */}
-          <div style={{ font: "var(--font-secondary)", color: "var(--text-session-date)" }}>{date}</div>
+          <div className="v2-h3 card-title" style={{ color: "var(--v2-ink)" }}>{title}</div>
+          <div className="v2-small" style={{ color: "var(--text-session-date)" }}>{date}</div>
         </div>
-        {/* INFO COLOR: meta-muted — 총 세트/볼륨은 참고 통계로 muted */}
-        <div style={{ font: "var(--font-secondary)", color: "var(--v2-ink-3)", display: "flex", gap: "var(--v2-s-1)", fontVariantNumeric: "tabular-nums" }}>
+        <div className="v2-small" style={{ color: "var(--v2-ink-3)", display: "flex", gap: "var(--v2-s-1)", fontVariantNumeric: "tabular-nums" }}>
           {totalSets !== undefined && (
             <span>{locale === "ko" ? `${totalSets}세트` : `${totalSets} sets`}</span>
           )}

@@ -232,7 +232,7 @@ export function PrHistoryScreen({
           {prs.length === 0 ? (
             <V2Card
               tone="inset"
-              padding="20px"
+              padding="var(--v2-s-5)"
               radius="var(--v2-r-1)"
             >
               <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>

@@ -63,7 +63,7 @@ function MetricCard({
   return (
     <V2Card
       tone="paper"
-      padding="16px"
+      padding="var(--v2-s-4)"
       radius="var(--v2-r-1)"
       style={{
         minHeight: "var(--v2-s-9)",
@@ -147,7 +147,7 @@ function PrHistory({
     return (
       <V2Card
         tone="inset"
-        padding="18px"
+        padding="var(--v2-s-5)"
         radius="var(--v2-r-1)"
       >
         <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
@@ -240,7 +240,7 @@ function RecentSets({
     return (
       <V2Card
         tone="inset"
-        padding="18px"
+        padding="var(--v2-s-5)"
         radius="var(--v2-r-1)"
       >
         <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
@@ -497,7 +497,7 @@ export function ExerciseDetailScreen({
           ) : (
             <V2Card
               tone="inset"
-              padding="18px"
+              padding="var(--v2-s-5)"
               radius="var(--v2-r-1)"
                   >
               <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>

@@ -49,11 +49,11 @@ function SectionTitle({
   return (
     <div style={{ display: "grid", gap: "var(--v2-s-1)" }}>
       <p className="v2-label">{label}</p>
-      <h2 className="v2-h2" style={{ fontSize: "var(--v2-t-h2)", letterSpacing: 0 }}>
+      <h2 className="v2-h2" style={{ letterSpacing: 0 }}>
         {title}
       </h2>
       {description ? (
-        <p className="v2-small" style={{ maxWidth: 560 }}>
+        <p className="v2-small" style={{ maxWidth: "62ch" }}>
           {description}
         </p>
       ) : null}
@@ -79,8 +79,8 @@ function MetricCard({
   return (
     <V2Card
       tone="paper"
-      padding="16px"
-      radius="var(--v2-r-1)"
+      padding="var(--v2-s-4)"
+      radius="var(--v2-r-2)"
       style={{
         minHeight: "var(--v2-s-9)",
         display: "flex",
@@ -109,18 +109,12 @@ function MetricCard({
             {value}
           </span>
           {unit ? (
-            <span
-              style={{
-                fontSize: "var(--v2-t-small)",
-                fontWeight: 700,
-                color: "var(--v2-ink-2)",
-              }}
-            >
+            <span className="v2-label" style={{ color: "var(--v2-ink-2)" }}>
               {unit}
             </span>
           ) : null}
         </div>
-        <p className="v2-small" style={{ marginTop: 6, color: "var(--v2-ink-2)" }}>
+        <p className="v2-small" style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}>
           {caption}
         </p>
       </div>
@@ -139,13 +133,13 @@ function PrList({
     return (
       <V2Card
         tone="inset"
-        padding="18px"
-        radius="var(--v2-r-1)"
+        padding="var(--v2-s-5)"
+        radius="var(--v2-r-2)"
       >
-        <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
+        <p className="v2-h3">
           {locale === "ko" ? "표시할 PR 데이터가 없습니다" : "No PR data yet"}
         </p>
-        <p className="v2-small" style={{ marginTop: 6 }}>
+        <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko"
             ? "운동 기록이 쌓이면 최근 90일 기준 최고 기록 변화를 보여줍니다."
             : "Recent 90-day personal record changes appear here after more logs are added."}
@@ -162,8 +156,8 @@ function PrList({
         const card = (
             <V2Card
               tone="paper"
-              padding="14px 16px"
-              radius="var(--v2-r-1)"
+              padding="var(--v2-s-3) var(--v2-s-4)"
+              radius="var(--v2-r-2)"
               style={{
                 display: "grid",
                 gridTemplateColumns: "minmax(0, 1fr) auto auto",
@@ -173,9 +167,9 @@ function PrList({
             >
               <div className="v2-font-display" style={{ minWidth: 0 }}>
                 <div
+                  className="v2-body"
                   style={{
-                    fontWeight: 800,
-                    fontSize: "var(--v2-t-body)",
+                    fontWeight: 700,
                     color: "var(--v2-ink)",
                     overflow: "hidden",
                     textOverflow: "ellipsis",
@@ -185,12 +179,12 @@ function PrList({
                   {row.exerciseName}
                 </div>
                 <div
+                  className="v2-small"
                   style={{
                     display: "flex",
                     flexWrap: "wrap",
-                    gap: "4px 10px",
-                    marginTop: 4,
-                    fontSize: "var(--v2-t-12)",
+                    gap: "var(--v2-s-1) var(--v2-s-3)",
+                    marginTop: "var(--v2-s-1)",
                     color: "var(--v2-ink-2)",
                     fontVariantNumeric: "tabular-nums",
                   }}
@@ -381,7 +375,7 @@ export function StatsScreen({
           <V2Card
             tone="inset"
             padding="var(--v2-s-3)"
-            radius="var(--v2-r-1)"
+            radius="var(--v2-r-2)"
           >
             <Stats1RMDetailed
               ref={detailedRef}
@@ -422,15 +416,15 @@ export function StatsScreen({
               ) : null}
               <Link
                 href={APP_ROUTES.prHistory}
+                className="v2-mono-label v2-pressable"
                 style={{
-                  fontWeight: 700,
-                  fontSize: "var(--v2-t-12)",
-                  letterSpacing: "0.04em",
                   color: "var(--v2-accent-ink)",
                   textDecoration: "none",
                   padding: "var(--v2-s-1) var(--v2-s-3)",
                   borderRadius: "var(--v2-r-pill)",
                   background: "var(--v2-accent-weak)",
+                  display: "inline-flex",
+                  alignItems: "center",
                 }}
               >
                 {locale === "ko" ? "전체 보기" : "View all"}
