@@ -135,6 +135,13 @@
   --radius-md: var(--v2-r-3);
   --radius-lg: var(--v2-r-4);
 
+  /* spacing (legacy 4-pt grid → v2 tokens) */
+  --space-xs: var(--v2-s-1);
+  --space-sm: var(--v2-s-2);
+  --space-md: var(--v2-s-4);
+  --space-lg: var(--v2-s-6);
+  --space-xl: var(--v2-s-7);
+
   /* metric system */
   --metric-weight-color: var(--v2-c-weight);
   --metric-reps-color: var(--v2-c-reps);

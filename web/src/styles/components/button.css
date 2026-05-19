@@ -2,10 +2,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
   padding: 10px 16px;
   border-radius: 14px;
-  font-family: var(--font-label-family);
+  font-family: var(--v2-f-display);
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -122,14 +122,16 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
-  padding: var(--space-xl) var(--space-md);
+  gap: var(--v2-s-2);
+  padding: var(--v2-s-7) var(--v2-s-4);
   
   background-color: transparent;
-  color: var(--color-text-muted);
-  border: 2px dashed var(--color-border);
-  border-radius: 12px;
-  font: var(--font-section-title);
+  color: var(--v2-ink-3);
+  border: 2px dashed var(--v2-paper-4);
+  border-radius: var(--v2-r-2);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h3);
+  font-weight: var(--v2-w-semi);
   
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);

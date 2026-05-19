@@ -43,7 +43,7 @@
 }
 
 .metric-trend {
-  margin-top: var(--space-xs);
+  margin-top: var(--v2-s-1);
   font-size: 12px;
   font-weight: 600;
   color: var(--metric-trend-color, var(--metric-trend-flat));

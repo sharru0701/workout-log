@@ -1,6 +1,6 @@
 /* ============================================================
    HOME DASHBOARD — hd-* component classes
-   Translates the Stitch dark-theme design to the token system.
+   v2 tokens 으로 정렬된 상태. 클래스명은 컨슈머와의 호환을 위해 유지.
    ============================================================ */
 
 /* ── Root container ─────────────────────────────────────── */
@@ -8,8 +8,8 @@
 .hd-root {
   display: flex;
   flex-direction: column;
-  gap: var(--space-xl);
-  padding-bottom: var(--space-xl);
+  gap: var(--v2-s-7);
+  padding-bottom: var(--v2-s-7);
 }
 
 /* ── Shared section scaffold ─────────────────────────────── */
@@ -17,7 +17,7 @@
 .hd-section {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--v2-s-2);
 }
 
 .hd-section__header {
@@ -28,20 +28,20 @@
 }
 
 .hd-section__title {
-  font-family: var(--font-headline-family, var(--font-family));
-  font-size: 19px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h3);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -0.3px;
-  color: var(--color-text);
+  color: var(--v2-ink);
   margin: 0;
 }
 
 .hd-section__meta {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.06em;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   text-transform: uppercase;
 }
 
@@ -54,21 +54,21 @@
 }
 
 .hd-welcome__status {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   margin: 0;
 }
 
 .hd-welcome__title {
-  font-family: var(--font-headline-family, var(--font-family));
-  font-size: 28px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h1);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -0.5px;
-  color: var(--color-text);
+  color: var(--v2-ink);
   margin: 0;
 }
 
@@ -76,15 +76,15 @@
 
 .hd-protocol {
   position: relative;
-  border-radius: 22px;
-  background: var(--color-surface-container-high);
-  padding: var(--space-lg);
+  border-radius: var(--v2-r-4);
+  background: var(--v2-paper-3);
+  padding: var(--v2-s-6);
   overflow: hidden;
-  box-shadow: 0 1px 3px var(--shadow-color-soft);
+  box-shadow: var(--v2-elev-1);
 }
 
 .hd-protocol--empty {
-  background: var(--color-surface-container-low);
+  background: var(--v2-paper);
 }
 
 .hd-protocol__gradient {
@@ -95,7 +95,7 @@
   height: 100%;
   background: linear-gradient(
     to left,
-    color-mix(in srgb, var(--color-primary) 6%, transparent),
+    color-mix(in srgb, var(--v2-accent) 6%, transparent),
     transparent
   );
   pointer-events: none;
@@ -107,78 +107,78 @@
 }
 
 .hd-protocol__eyebrow {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  color: var(--color-primary);
+  color: var(--v2-accent);
   display: block;
 }
 
 .hd-protocol__name {
-  font-family: var(--font-headline-family, var(--font-family));
-  font-size: 22px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h2);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -0.4px;
-  color: var(--color-text);
-  margin: 4px 0 0;
+  color: var(--v2-ink);
+  margin: var(--v2-s-1) 0 0;
 }
 
 .hd-protocol__empty-desc {
-  font-size: 13px;
-  color: var(--color-text-muted);
+  font-size: var(--v2-t-small);
+  color: var(--v2-ink-3);
   line-height: 1.6;
-  margin: var(--space-sm) 0 var(--space-md);
+  margin: var(--v2-s-2) 0 var(--v2-s-4);
 }
 
 /* Progress bar */
 .hd-protocol__progress {
-  margin-top: var(--space-lg);
-  margin-bottom: var(--space-md);
+  margin-top: var(--v2-s-6);
+  margin-bottom: var(--v2-s-4);
 }
 
 .hd-protocol__progress-labels {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-bottom: 6px;
+  margin-bottom: var(--v2-s-1);
 }
 
 .hd-protocol__progress-label {
-  font-size: 13px;
-  color: var(--color-text-muted);
+  font-size: var(--v2-t-small);
+  color: var(--v2-ink-3);
 }
 
 .hd-protocol__progress-pct {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-primary);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-12);
+  font-weight: var(--v2-w-bold);
+  color: var(--v2-accent);
 }
 
 .hd-protocol__progress-track {
   height: 5px;
   width: 100%;
-  background: var(--color-surface-container-lowest, var(--color-surface));
-  border-radius: 9999px;
+  background: var(--v2-paper);
+  border-radius: var(--v2-r-pill);
   overflow: hidden;
 }
 
 .hd-protocol__progress-fill {
   height: 100%;
-  background: var(--color-primary);
-  border-radius: 9999px;
-  transition: width 0.4s ease;
+  background: var(--v2-accent);
+  border-radius: var(--v2-r-pill);
+  transition: width var(--v2-d-3) var(--v2-e-out);
 }
 
 /* Weekly activity dots */
 .hd-protocol__week-dots {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
   text-align: center;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--v2-s-6);
 }
 
 .hd-protocol__week-day {
@@ -189,27 +189,27 @@
 }
 
 .hd-protocol__day-label {
-  font-size: 10px;
-  color: var(--color-text-muted);
-  font-weight: 500;
+  font-size: var(--v2-t-eyebrow);
+  color: var(--v2-ink-3);
+  font-weight: var(--v2-w-med);
 }
 
 .hd-protocol__dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--color-outline-variant);
+  width: var(--v2-s-3);
+  height: var(--v2-s-3);
+  border-radius: var(--v2-r-pill);
+  background: var(--v2-paper-4);
   display: inline-block;
-  transition: background 0.2s;
+  transition: background var(--v2-d-1) var(--v2-e-out);
 }
 
 .hd-protocol__dot--active {
-  background: var(--color-primary);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--color-primary) 28%, transparent);
+  background: var(--v2-accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--v2-accent) 28%, transparent);
 }
 
 .hd-protocol__dot--today {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--v2-accent);
   outline-offset: 2px;
 }
 
@@ -218,20 +218,20 @@
 .hd-protocol__done-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-xs);
-  padding: 8px 14px;
-  margin-bottom: var(--space-sm);
+  gap: var(--v2-s-1);
+  padding: var(--v2-s-2) var(--v2-s-3);
+  margin-bottom: var(--v2-s-2);
   align-self: flex-start;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--color-success, #22c55e) 14%, transparent);
-  color: var(--color-success, #16a34a);
-  font-size: 13px;
-  font-weight: 600;
+  border-radius: var(--v2-r-pill);
+  background: color-mix(in srgb, var(--v2-c-success) 14%, transparent);
+  color: var(--v2-c-success);
+  font-size: var(--v2-t-small);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.04em;
 }
 
 .hd-protocol__done-badge .material-symbols-outlined {
-  font-size: 18px;
+  font-size: var(--v2-t-18);
 }
 
 /* ── Last Entry Bento grid ─────────────────────────────────── */
@@ -239,24 +239,24 @@
 .hd-bento-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: var(--v2-s-3);
   text-decoration: none;
   color: inherit;
 }
 
 .hd-bento-tile {
-  background: var(--color-surface-container-low);
-  border-radius: 18px;
-  padding: 16px;
-  box-shadow: 0 1px 3px var(--shadow-color-soft);
+  background: var(--v2-paper);
+  border-radius: var(--v2-r-4);
+  padding: var(--v2-s-4);
+  box-shadow: var(--v2-elev-1);
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  transition: background 0.15s;
+  gap: var(--v2-s-1);
+  transition: background var(--v2-d-1) var(--v2-e-out);
 }
 
 .hd-bento-grid:active .hd-bento-tile {
-  background: var(--color-surface-container);
+  background: var(--v2-paper-2);
 }
 
 .hd-bento-tile--wide {
@@ -264,54 +264,54 @@
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  padding: 20px;
+  padding: var(--v2-s-5);
 }
 
 .hd-bento-tile__label {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   margin: 0 0 2px;
 }
 
 .hd-bento-tile__value-row {
   display: flex;
   align-items: baseline;
-  gap: 4px;
+  gap: var(--v2-s-1);
 }
 
 .hd-bento-tile__value-row--tertiary {
-  color: var(--color-warning);
+  color: var(--v2-c-warning);
 }
 
 .hd-bento-tile__number {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 30px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-28);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -1px;
-  color: var(--color-text);
+  color: var(--v2-ink);
   line-height: 1;
 }
 
 .hd-bento-tile--pr .hd-bento-tile__number {
-  color: var(--color-warning);
+  color: var(--v2-c-warning);
 }
 
 .hd-bento-tile__unit {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
 }
 
 .hd-bento-tile__sub {
-  font-size: 12px;
-  color: var(--color-text-muted);
+  font-size: var(--v2-t-12);
+  color: var(--v2-ink-3);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -319,18 +319,18 @@
 }
 
 .hd-bento-tile__icon {
-  font-size: 36px;
+  font-size: var(--v2-t-h1);
   opacity: 0.4;
   flex-shrink: 0;
 }
 
 .hd-bento-tile__icon--secondary {
-  color: var(--color-success);
+  color: var(--v2-c-success);
 }
 
 .hd-bento-tile__star {
-  font-size: 18px;
-  color: var(--color-warning);
+  font-size: var(--v2-t-18);
+  color: var(--v2-c-warning);
   align-self: flex-end;
   margin-bottom: 2px;
 }
@@ -340,37 +340,37 @@
 .hd-logistics {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--v2-s-2);
 }
 
 .hd-logistics-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: var(--color-surface-container-lowest, var(--color-surface));
-  border-radius: 18px;
-  box-shadow: 0 1px 3px var(--shadow-color-soft);
+  padding: var(--v2-s-3) var(--v2-s-4);
+  background: var(--v2-paper);
+  border-radius: var(--v2-r-4);
+  box-shadow: var(--v2-elev-1);
   text-decoration: none;
   color: inherit;
-  transition: background 0.15s;
+  transition: background var(--v2-d-1) var(--v2-e-out);
 }
 
 .hd-logistics-row:active {
-  background: var(--color-surface-container-low);
+  background: var(--v2-paper-2);
 }
 
 .hd-logistics-row__left {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: var(--v2-s-3);
 }
 
 .hd-logistics-row__icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  background: var(--color-surface-container-high);
+  width: var(--v2-s-8);
+  height: var(--v2-s-8);
+  border-radius: var(--v2-r-2);
+  background: var(--v2-paper-3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -378,30 +378,29 @@
 }
 
 .hd-logistics-row__icon {
-  font-size: 20px;
-  color: var(--color-primary);
+  font-size: var(--v2-t-20);
+  color: var(--v2-accent);
 }
 
 .hd-logistics-row__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text);
+  font-size: var(--v2-t-14);
+  font-weight: var(--v2-w-semi);
+  color: var(--v2-ink);
   margin: 0;
   letter-spacing: -0.1px;
 }
 
 .hd-logistics-row__subtitle {
-  font-family: var(--font-label-family, var(--font-family));
-  font-size: 10px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   margin: 2px 0 0;
 }
 
 .hd-logistics-row__arrow {
-  font-size: 14px;
-  color: var(--color-text-muted);
+  font-size: var(--v2-t-14);
+  color: var(--v2-ink-3);
 }
-
