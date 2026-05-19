@@ -206,7 +206,7 @@ function ArchitectureGrid({ items }: { items: ArchItem[] }) {
               style={{
                 fontSize: "var(--v2-t-small)",
                 fontWeight: 700,
-                marginBottom: 3,
+                marginBottom: "var(--v2-s-1)",
               }}
             >
               {item.title}

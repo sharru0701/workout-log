@@ -257,7 +257,7 @@ function LogisticsSection({ copy, locale }: { copy: AppCopy; locale: AppLocale }
 
   return (
     <PageSection title={copy.home.logistics.title}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-xs)" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
         {links.map((link) => (
           <NavRow
             key={link.href}

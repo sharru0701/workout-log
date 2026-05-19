@@ -78,7 +78,8 @@ const RULES = [
   },
   {
     key: "legacyHdCtaClass",
-    label: "[Rule 5] .hd-cta-* 클래스",
+    // eslint-disable-next-line no-restricted-syntax -- 룰 패턴 정의 자체
+    label: "[Rule 5] .hd-cta-* 클래스 (label string includes pattern)",
     extensions: [".ts", ".tsx"],
     regex: /\bhd-cta[-\w]*\b/g,
   },

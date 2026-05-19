@@ -401,7 +401,7 @@ export function WorkoutLogKeypadPanel({
               onClick={onOpenAddExerciseSheet}
               className="v2-font-display"
               style={{
-                marginTop: 8,
+                marginTop: "var(--v2-s-2)",
                 padding: "var(--v2-s-3) var(--v2-s-5)",
                 borderRadius: "var(--v2-r-2)",
                 border: "none",
@@ -481,7 +481,7 @@ export function WorkoutLogKeypadPanel({
                 flexDirection: "column",
                 alignItems: "flex-start",
                 gap: 2,
-                minWidth: 100,
+                minWidth: "var(--v2-s-9)",
                 minHeight: "var(--v2-s-8)",
                 textAlign: "left",
               }}
@@ -505,7 +505,7 @@ export function WorkoutLogKeypadPanel({
                       padding: "1px var(--v2-s-1)",
                       borderRadius: "var(--v2-r-0)",
                       background: isActive
-                        ? "rgba(255,255,255,0.16)"
+                        ? "color-mix(in srgb, var(--v2-ink-on-accent) 16%, transparent)"
                         : "var(--v2-paper-3)",
                       color: isActive
                         ? "var(--v2-ink-on-accent)"
@@ -544,7 +544,7 @@ export function WorkoutLogKeypadPanel({
               cursor: "pointer",
               background: "var(--v2-paper-2)",
               color: "var(--v2-accent)",
-              minWidth: 48,
+              minWidth: "var(--v2-s-8)",
               minHeight: "var(--v2-s-8)",
               display: "flex",
               alignItems: "center",
@@ -691,7 +691,7 @@ export function WorkoutLogKeypadPanel({
             }}
             size="md"
           />
-          <V2Hairline style={{ marginTop: 6, marginBottom: 6 }} />
+          <V2Hairline style={{ marginTop: "var(--v2-s-1)", marginBottom: "var(--v2-s-1)" }} />
           <div
             style={{
               display: "grid",
@@ -744,7 +744,7 @@ export function WorkoutLogKeypadPanel({
             <p
               className="v2-mono-label"
               style={{
-                marginTop: 6,
+                marginTop: "var(--v2-s-1)",
                 color: "var(--v2-ink-3)",
                 fontSize: "var(--v2-t-eyebrow)",
               }}
@@ -920,13 +920,13 @@ export function WorkoutLogKeypadPanel({
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: "var(--v2-s-3) var(--v2-s-3) var(--v2-s-4)",
-            marginTop: 8,
+            marginTop: "var(--v2-s-2)",
             flexShrink: 0,
           }}
         >
           <p
             className="v2-label"
-            style={{ marginBottom: 8, fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
+            style={{ marginBottom: "var(--v2-s-2)", fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
           >
             {locale === "ko"
               ? `${activeExercise.exerciseName} · 메모`
@@ -955,7 +955,7 @@ export function WorkoutLogKeypadPanel({
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
             padding: "var(--v2-s-2) var(--v2-s-3) var(--v2-s-3)",
-            marginTop: 8,
+            marginTop: "var(--v2-s-2)",
             flexShrink: 0,
           }}
         >

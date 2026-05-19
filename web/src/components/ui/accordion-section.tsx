@@ -18,9 +18,9 @@ export function AccordionSection({
   title,
   description,
   defaultOpen = false,
-  className = "",
+  className,
   summarySlot,
-  surface = "flat",
+  surface: _surface = "flat",
   children,
 }: AccordionSectionProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -28,7 +28,7 @@ export function AccordionSection({
   const panelId = useId();
 
   return (
-    <section
+    <section className={className}
     >
       <button
         id={triggerId}

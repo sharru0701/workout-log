@@ -161,7 +161,7 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           display: "grid",
           gridTemplateColumns: "repeat(7, 1fr)",
           textAlign: "center",
-          marginBottom: 4,
+          marginBottom: "var(--v2-s-1)",
         }}
       >
         {(locale === "ko" ? WEEKDAY_SHORT_KO : WEEKDAY_SHORT_EN).map((name) => (

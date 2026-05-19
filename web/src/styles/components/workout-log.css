@@ -1,14 +1,13 @@
 /* =====================================================
    Workout Log — Stitch Editorial Design System
-   Bento-style session cards, semantic set row states,
-   Material Symbols icons, surface-container hierarchy
+   v2 tokens 으로 정렬된 상태. 클래스명은 컨슈머와의 호환을 위해 유지.
    ===================================================== */
 
 /* ── Exercise Card ─────────────────────────────────── */
 
 .exercise-card {
   position: relative;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--v2-s-6);
   border-radius: var(--v2-r-1);
   background: var(--v2-paper);
   box-shadow: var(--v2-elev-1);
@@ -21,23 +20,23 @@
   align-items: center;
   padding: var(--v2-s-4);
   background: var(--v2-paper-2);
-  gap: var(--space-sm);
-  min-height: 58px;
+  gap: var(--v2-s-2);
+  min-height: var(--v2-s-9);
 }
 
 .exercise-card__name-row {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
   flex-wrap: nowrap;
   min-width: 0;
   flex: 1;
 }
 
 .exercise-card__name {
-  font-family: var(--font-headline-family);
-  font-size: 17px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h3);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0;
   color: var(--v2-ink);
   white-space: nowrap;
@@ -48,16 +47,16 @@
 .exercise-card__category-chip {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-family: var(--font-label-family);
-  font-size: 10px;
-  font-weight: 600;
+  padding: 2px var(--v2-s-2);
+  border-radius: var(--v2-r-pill);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  background: var(--color-surface-container-highest);
-  color: var(--color-text-muted);
-  box-shadow: inset 0 0 0 1px var(--color-outline-variant);
+  background: var(--v2-paper-3);
+  color: var(--v2-ink-3);
+  box-shadow: inset 0 0 0 1px var(--v2-paper-4);
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -65,7 +64,7 @@
 .exercise-card__header-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
   flex-shrink: 0;
 }
 
@@ -73,11 +72,11 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 3px 8px;
+  padding: 3px var(--v2-s-2);
   border-radius: var(--v2-r-pill);
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.02em;
   background: var(--v2-paper-3);
   color: var(--v2-ink-3);
@@ -96,26 +95,26 @@
 .set-table__header {
   display: grid;
   grid-template-columns: 2.25rem minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.78fr) 2.5rem;
-  gap: var(--space-xs);
-  margin-bottom: 8px;
+  gap: var(--v2-s-1);
+  margin-bottom: var(--v2-s-2);
   text-align: center;
-  font-family: var(--font-label-family);
+  font-family: var(--v2-f-display);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
 
 .set-table__h-set {
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   text-align: center;
-  padding-left: 10px;
+  padding-left: var(--v2-s-3);
 }
 
-.set-table__h-weight { color: var(--metric-weight-color); }
-.set-table__h-reps   { color: var(--metric-reps-color); }
+.set-table__h-weight { color: var(--v2-c-weight); }
+.set-table__h-reps   { color: var(--v2-c-reps); }
 .set-table__h-rpe    { color: var(--v2-c-warning); }
-.set-table__h-done   { color: var(--color-text-muted); }
+.set-table__h-done   { color: var(--v2-ink-3); }
 
 /* ── Set Rows ──────────────────────────────────────── */
 
@@ -123,11 +122,11 @@
   position: relative;
   display: grid;
   grid-template-columns: 2.25rem minmax(0, 1.15fr) minmax(0, 1fr) minmax(0, 0.78fr) 2.5rem;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
   align-items: center;
   text-align: center;
   min-height: 54px;
-  padding: 4px 0;
+  padding: var(--v2-s-1) 0;
   border-radius: var(--v2-r-1);
   /*
    * transition 제거 — 스크롤 중에도 모든 세트에 걸려 프레임 드롭 유발.
@@ -137,17 +136,17 @@
 
 /* Active set — strong left accent, full-width blue-tint background */
 .set-row--active {
-  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  background: color-mix(in srgb, var(--v2-accent) 8%, transparent);
   /*
    * border-left로 대체 — inset box-shadow는 매 세트마다 GPU compositing layer를 강제 생성.
    * border-left는 추가 레이어 없이 동일한 시각 효과를 냅니다.
    */
-  border-left: 4px solid var(--color-primary);
+  border-left: 4px solid var(--v2-accent);
   border-radius: 0;
-  margin-left: calc(-1 * var(--space-md));
-  margin-right: calc(-1 * var(--space-md));
-  padding-left: calc(var(--space-md) - 4px);
-  padding-right: var(--space-md);
+  margin-left: calc(-1 * var(--v2-s-4));
+  margin-right: calc(-1 * var(--v2-s-4));
+  padding-left: calc(var(--v2-s-4) - 4px);
+  padding-right: var(--v2-s-4);
 }
 
 /* Complete set — green wash from label-complete-bg */
@@ -158,8 +157,8 @@
 /* Pending sets — dimmed via token override (opacity would create GPU compositing layers) */
 .set-row--pending {
   background: var(--v2-paper-2);
-  --text-metric-weight: var(--color-text-muted);
-  --text-metric-reps: var(--color-text-muted);
+  --text-metric-weight: var(--v2-ink-3);
+  --text-metric-reps: var(--v2-ink-3);
 }
 
 /* Failure set — red tint using set-failure tokens */
@@ -183,58 +182,58 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  margin-left: 10px;
-  font-family: var(--font-label-family);
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-  background: var(--color-surface-container-highest);
+  width: var(--v2-s-6);
+  height: var(--v2-s-6);
+  border-radius: var(--v2-r-pill);
+  margin-left: var(--v2-s-3);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-12);
+  font-weight: var(--v2-w-bold);
+  color: var(--v2-ink-3);
+  background: var(--v2-paper-3);
   line-height: 1;
   letter-spacing: 0;
   flex-shrink: 0;
 }
 
-.set-row--active   .set-row__number { color: var(--color-primary); background: var(--color-primary-weak); }
+.set-row--active   .set-row__number { color: var(--v2-accent); background: var(--v2-accent-weak); }
 .set-row--complete .set-row__number { color: var(--label-complete-text); background: var(--label-complete-bg); }
 .set-row--failure  .set-row__number { color: var(--set-failure-text); background: var(--set-failure-bg); }
 
 /* Set row value cells — large, readable numeric values */
 .set-row .workout-record-picker-btn {
-  font-family: var(--font-label-family) !important;
-  font-size: 20px !important;
-  font-weight: 700 !important;
+  font-family: var(--v2-f-num) !important;
+  font-size: var(--v2-t-20) !important;
+  font-weight: var(--v2-w-bold) !important;
   letter-spacing: 0;
-  min-height: 44px;
+  min-height: var(--v2-s-8);
 }
 
-/* Weight value: metric-weight-color */
+/* Weight value: --v2-c-weight */
 .set-row .workout-record-picker-btn--weight {
-  color: var(--metric-weight-color);
+  color: var(--v2-c-weight);
 }
 
-/* Reps value: metric-reps-color */
+/* Reps value: --v2-c-reps */
 .set-row .workout-record-picker-btn--reps {
-  color: var(--metric-reps-color);
+  color: var(--v2-c-reps);
 }
 
 .set-row__done {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: var(--color-outline-variant);
+  color: var(--v2-paper-4);
   min-width: 2.5rem;
   height: 2.5rem;
 }
 
 .set-row__done .material-symbols-outlined {
-  font-size: 22px;
+  font-size: var(--v2-t-h2);
 }
 
-.set-row--complete .set-row__done { color: var(--color-success); }
-.set-row--failure  .set-row__done { color: var(--color-danger); }
+.set-row--complete .set-row__done { color: var(--v2-c-success); }
+.set-row--failure  .set-row__done { color: var(--v2-c-danger); }
 
 /* ── Add Set Button ────────────────────────────────── */
 
@@ -242,35 +241,37 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: var(--v2-s-2);
   width: 100%;
-  padding: 13px var(--space-md);
+  padding: 13px var(--v2-s-4);
   background: transparent;
   border: none;
-  box-shadow: inset 0 1px 0 0 var(--color-outline-variant);
-  color: var(--color-text-muted);
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 700;
+  box-shadow: inset 0 1px 0 0 var(--v2-paper-4);
+  color: var(--v2-ink-3);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition:
+    background-color var(--v2-d-1) var(--v2-e-out),
+    color var(--v2-d-1) var(--v2-e-out);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .set-add-btn:hover {
-    background: var(--color-surface-container);
-    color: var(--color-primary);
+    background: var(--v2-paper-2);
+    color: var(--v2-accent);
   }
 }
 
 .set-add-btn:active {
-  background: color-mix(in srgb, var(--color-primary) 6%, transparent);
-  color: var(--color-primary);
+  background: color-mix(in srgb, var(--v2-accent) 6%, transparent);
+  color: var(--v2-accent);
 }
 
 .set-add-btn:focus {
@@ -278,18 +279,18 @@
 }
 
 .set-add-btn:focus-visible {
-  background: var(--color-surface-container);
-  color: var(--color-primary);
+  background: var(--v2-paper-2);
+  color: var(--v2-accent);
 }
 
 .set-add-btn .material-symbols-outlined {
-  font-size: 18px;
+  font-size: var(--v2-t-18);
 }
 
 /* ── Set Hint / Info Footer ────────────────────────── */
 
 .set-hint {
-  padding: 0 var(--space-md) var(--space-sm);
+  padding: 0 var(--v2-s-4) var(--v2-s-2);
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -298,32 +299,32 @@
 .set-hint__item {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  color: var(--color-text-subtle);
+  gap: var(--v2-s-1);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  color: var(--v2-ink-4);
   opacity: 0.8;
 }
 
 .set-hint__item .material-symbols-outlined {
-  font-size: 13px;
+  font-size: var(--v2-t-small);
   opacity: 0.6;
 }
 
 /* ── Session Progress Header ───────────────────────── */
 
 .session-progress-header {
-  margin-bottom: var(--space-lg);
-  padding: var(--space-md) 0 var(--space-md);
-  box-shadow: inset 0 -1px 0 0 var(--color-outline-variant);
+  margin-bottom: var(--v2-s-6);
+  padding: var(--v2-s-4) 0;
+  box-shadow: inset 0 -1px 0 0 var(--v2-paper-4);
 }
 
 .session-progress-header__top-row {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: var(--space-md);
-  margin-bottom: var(--space-sm);
+  gap: var(--v2-s-4);
+  margin-bottom: var(--v2-s-2);
 }
 
 .session-progress-header__title-group {
@@ -332,21 +333,21 @@
 }
 
 .session-progress-header__eyebrow {
-  font-family: var(--font-label-family);
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-primary);
-  margin-bottom: 4px;
+  color: var(--v2-accent);
+  margin-bottom: var(--v2-s-1);
 }
 
 .session-progress-header__title {
-  font-family: var(--font-headline-family);
-  font-size: 24px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h1);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -0.5px;
-  color: var(--color-text);
+  color: var(--v2-ink);
   margin: 0;
   line-height: 1.15;
   white-space: nowrap;
@@ -358,34 +359,32 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
 }
 
 .session-chip {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 600;
+  padding: var(--v2-s-1) var(--v2-s-3);
+  border-radius: var(--v2-r-pill);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.04em;
-  background: var(--color-surface-container-high);
-  color: var(--color-text-muted);
-  box-shadow: inset 0 0 0 1px var(--color-outline-variant);
+  background: var(--v2-paper-3);
+  color: var(--v2-ink-3);
+  box-shadow: inset 0 0 0 1px var(--v2-paper-4);
 }
 
 .session-chip--active {
-  background: var(--color-primary-weak);
-  color: var(--color-primary-strong);
-  border-color: color-mix(in srgb, var(--color-primary) 38%, transparent);
+  background: var(--v2-accent-weak);
+  color: var(--v2-accent-ink);
 }
 
 .session-chip--date {
   background: transparent;
-  color: var(--color-text-muted);
-  border-color: var(--color-outline-variant);
+  color: var(--v2-ink-3);
 }
 
 /* Date navigation chip (prev/date/next inline) */
@@ -394,22 +393,22 @@
   align-items: center;
   gap: 0;
   padding: 0;
-  border-radius: 20px;
-  background: var(--color-surface-container-high);
-  box-shadow: inset 0 0 0 1px var(--color-outline-variant);
+  border-radius: var(--v2-r-pill);
+  background: var(--v2-paper-3);
+  box-shadow: inset 0 0 0 1px var(--v2-paper-4);
   overflow: hidden;
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.04em;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
 }
 
 .session-chip--date-nav label {
   display: flex;
   align-items: center;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: var(--v2-s-1) var(--v2-s-2);
   user-select: none;
 }
 
@@ -417,30 +416,30 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-width: 28px;
-  min-height: 28px;
+  min-width: var(--v2-s-7);
+  min-height: var(--v2-s-7);
   padding: 0 2px;
   background: transparent;
   border: none;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 
 .date-nav-btn:active {
-  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
-  color: var(--color-primary);
+  background: color-mix(in srgb, var(--v2-accent) 10%, transparent);
+  color: var(--v2-accent);
 }
 
 @media (hover: hover) and (pointer: fine) {
   .date-nav-btn:hover {
-    background: var(--color-surface-container-highest);
-    color: var(--color-primary);
+    background: var(--v2-paper-4);
+    color: var(--v2-accent);
   }
 }
 
 .date-nav-btn:focus-visible {
-  outline: 2px solid var(--color-primary);
+  outline: 2px solid var(--v2-accent);
   outline-offset: -2px;
 }
 
@@ -449,27 +448,27 @@
 .last-session-banner {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 12px 14px;
-  margin-bottom: var(--space-md);
-  border-radius: 12px;
-  background: var(--color-surface-container);
+  gap: var(--v2-s-2);
+  padding: var(--v2-s-3);
+  margin-bottom: var(--v2-s-4);
+  border-radius: var(--v2-r-2);
+  background: var(--v2-paper-2);
 }
 
 .last-session-banner__icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--color-success) 14%, var(--color-surface-container));
+  width: var(--v2-s-7);
+  height: var(--v2-s-7);
+  border-radius: var(--v2-r-1);
+  background: color-mix(in srgb, var(--v2-c-success) 14%, var(--v2-paper-2));
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: var(--color-success);
+  color: var(--v2-c-success);
 }
 
 .last-session-banner__icon .material-symbols-outlined {
-  font-size: 16px;
+  font-size: var(--v2-t-16);
 }
 
 .last-session-banner__body {
@@ -478,29 +477,29 @@
 }
 
 .last-session-banner__label {
-  font-family: var(--font-label-family);
+  font-family: var(--v2-f-display);
   font-size: 9px;
-  font-weight: 700;
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
   margin-bottom: 2px;
 }
 
 .last-session-banner__title {
-  font-family: var(--font-headline-family);
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--color-text);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-small);
+  font-weight: var(--v2-w-bold);
+  color: var(--v2-ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .last-session-banner__meta {
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  color: var(--color-text-muted);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  color: var(--v2-ink-3);
   margin-top: 1px;
 }
 
@@ -510,43 +509,43 @@
 }
 
 .last-session-banner__stat-value {
-  font-family: var(--font-label-family);
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--color-text);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-18);
+  font-weight: var(--v2-w-bold);
+  color: var(--v2-ink);
   line-height: 1;
 }
 
 .last-session-banner__stat-label {
-  font-family: var(--font-label-family);
+  font-family: var(--v2-f-display);
   font-size: 9px;
-  font-weight: 600;
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
 }
 
 /* ── Plan Selector Strip ───────────────────────────── */
 
 .plan-selector-strip {
-  margin-bottom: var(--space-md);
+  margin-bottom: var(--v2-s-4);
 }
 
 .plan-selector-strip__label {
-  font-family: var(--font-label-family);
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-xs);
+  color: var(--v2-ink-3);
+  margin-bottom: var(--v2-s-1);
 }
 
 /* ── Finish Workout CTA (bottom) ───────────────────── */
 
 .finish-workout-cta {
-  margin-top: var(--space-xl);
-  padding-top: var(--space-md);
+  margin-top: var(--v2-s-7);
+  padding-top: var(--v2-s-4);
 }
 
 /* ── Add Exercise Button ───────────────────────────── */
@@ -555,30 +554,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--v2-s-2);
   width: 100%;
-  padding: 18px var(--space-md);
+  padding: var(--v2-s-5) var(--v2-s-4);
   border: none;
-  border-radius: 20px;
-  background: var(--color-surface-container-low);
-  color: var(--color-text-muted);
-  font-family: var(--font-label-family);
-  font-size: 12px;
-  font-weight: 700;
+  border-radius: var(--v2-r-4);
+  background: var(--v2-paper);
+  color: var(--v2-ink-3);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-12);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+  transition:
+    background-color var(--v2-d-1) var(--v2-e-out),
+    color var(--v2-d-1) var(--v2-e-out);
 }
 
 .btn-add-exercise:hover,
 .btn-add-exercise:active {
-  background: var(--color-primary-weak);
-  color: var(--color-primary);
+  background: var(--v2-accent-weak);
+  color: var(--v2-accent-ink);
 }
 
 .btn-add-exercise .material-symbols-outlined {
-  font-size: 22px;
+  font-size: var(--v2-t-h2);
 }
 
 /* ── Session Detail: Summary Bento ─────────────────── */
@@ -586,96 +587,98 @@
 .session-summary-bento {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-sm);
-  margin-bottom: var(--space-md);
+  gap: var(--v2-s-2);
+  margin-bottom: var(--v2-s-4);
 }
 
 .session-summary-bento__cell {
-  background: var(--color-surface-container-low);
-  border-radius: 14px;
-  padding: 14px;
+  background: var(--v2-paper);
+  border-radius: var(--v2-r-2);
+  padding: var(--v2-s-3);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--v2-s-1);
 }
 
 .session-summary-bento__label {
-  font-family: var(--font-label-family);
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--v2-ink-3);
 }
 
 .session-summary-bento__value {
-  font-family: var(--font-label-family);
-  font-size: 22px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h2);
+  font-weight: var(--v2-w-bold);
   line-height: 1;
-  color: var(--color-text);
+  color: var(--v2-ink);
 }
 
-.session-summary-bento__value--volume { color: var(--metric-weight-color); }
-.session-summary-bento__value--reps   { color: var(--metric-reps-color); }
+.session-summary-bento__value--volume { color: var(--v2-c-weight); }
+.session-summary-bento__value--reps   { color: var(--v2-c-reps); }
 
 /* ── Session Log Card (Recent Sessions list) ─────────── */
 
 .session-log-card {
-  background: var(--color-surface-container-low);
-  border-radius: 16px;
-  padding: 20px;
-  margin-bottom: var(--space-sm);
+  background: var(--v2-paper);
+  border-radius: var(--v2-r-3);
+  padding: var(--v2-s-5);
+  margin-bottom: var(--v2-s-2);
   cursor: pointer;
-  transition: background-color 0.15s ease, transform 0.1s ease;
+  transition:
+    background-color var(--v2-d-1) var(--v2-e-out),
+    transform var(--v2-d-1) var(--v2-e-out);
   text-decoration: none;
   display: block;
-  box-shadow: inset 0 0 0 1px var(--color-outline-variant);
+  box-shadow: inset 0 0 0 1px var(--v2-paper-4);
 }
 
 .session-log-card:active {
-  background: var(--color-surface-container);
+  background: var(--v2-paper-2);
   transform: scale(0.99);
 }
 
 .session-log-card__name {
-  font-family: var(--font-headline-family);
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 4px;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h3);
+  font-weight: var(--v2-w-bold);
+  color: var(--v2-ink);
+  margin-bottom: var(--v2-s-1);
 }
 
 .session-log-card__date {
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 600;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--text-session-date);
-  margin-bottom: 12px;
+  margin-bottom: var(--v2-s-3);
 }
 
 .session-log-card__metrics {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: var(--v2-s-2);
   flex-wrap: wrap;
-  margin-bottom: var(--space-sm);
+  margin-bottom: var(--v2-s-2);
 }
 
 .session-log-card__metric {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-family: var(--font-label-family);
-  font-size: 13px;
-  font-weight: 700;
+  gap: var(--v2-s-1);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-small);
+  font-weight: var(--v2-w-bold);
 }
 
-.session-log-card__metric--volume { color: var(--metric-weight-color); }
-.session-log-card__metric--sets   { color: var(--color-text-muted); }
-.session-log-card__metric--duration { color: var(--color-text-muted); }
+.session-log-card__metric--volume { color: var(--v2-c-weight); }
+.session-log-card__metric--sets   { color: var(--v2-ink-3); }
+.session-log-card__metric--duration { color: var(--v2-ink-3); }
 
 .session-log-card__footer {
   display: flex;
@@ -686,12 +689,12 @@
 .session-log-card__status-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-family: var(--font-label-family);
-  font-size: 11px;
-  font-weight: 600;
+  gap: var(--v2-s-1);
+  padding: var(--v2-s-1) var(--v2-s-3);
+  border-radius: var(--v2-r-pill);
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-label);
+  font-weight: var(--v2-w-semi);
   letter-spacing: 0.04em;
 }
 
@@ -702,9 +705,9 @@
 }
 
 .session-log-card__status-chip--in-progress {
-  background: var(--color-primary-weak);
-  color: var(--color-primary-strong);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-primary) 38%, transparent);
+  background: var(--v2-accent-weak);
+  color: var(--v2-accent-ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--v2-accent) 38%, transparent);
 }
 
 /* ── Workout Log Page Header ─────────────────────────── */
@@ -713,34 +716,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-md) 0;
-  margin-bottom: var(--space-md);
+  padding: var(--v2-s-4) 0;
+  margin-bottom: var(--v2-s-4);
 }
 
 .workout-log-header__title {
-  font-family: var(--font-headline-family);
-  font-size: 26px;
-  font-weight: 800;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h1);
+  font-weight: var(--v2-w-bold);
   letter-spacing: -0.5px;
-  color: var(--color-text);
+  color: var(--v2-ink);
   margin: 0;
 }
 
 .workout-log-header__actions {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: var(--v2-s-1);
 }
 
 .workout-log-section-title {
-  font-family: var(--font-label-family);
-  font-size: 10px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-eyebrow);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
-  margin-bottom: var(--space-sm);
-  margin-top: var(--space-lg);
+  color: var(--v2-ink-3);
+  margin-bottom: var(--v2-s-2);
+  margin-top: var(--v2-s-6);
 }
 
 /* ── Bottom Sheet: Stitch Pattern ─────────────────────── */
@@ -749,8 +752,8 @@
   width: 36px;
   height: 4px;
   border-radius: 2px;
-  background: var(--color-outline-variant);
-  margin: 0 auto 16px;
+  background: var(--v2-paper-4);
+  margin: 0 auto var(--v2-s-4);
 }
 
 /* ── FAB-style CTA button ─────────────────────────────── */
@@ -759,19 +762,21 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-sm);
+  gap: var(--v2-s-2);
   width: 100%;
-  padding: 16px var(--space-md);
-  border-radius: 16px;
-  background: var(--color-primary);
-  color: var(--color-text-on-primary);
+  padding: var(--v2-s-4);
+  border-radius: var(--v2-r-3);
+  background: var(--v2-accent);
+  color: var(--v2-ink-on-accent);
   border: none;
-  font-family: var(--font-headline-family);
-  font-size: 15px;
-  font-weight: 700;
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-body);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.01em;
   cursor: pointer;
-  transition: opacity 0.12s ease, transform 0.1s ease;
+  transition:
+    opacity var(--v2-d-1) var(--v2-e-out),
+    transform var(--v2-d-1) var(--v2-e-out);
 }
 
 .workout-fab-cta:active {
@@ -785,5 +790,5 @@
 }
 
 .workout-fab-cta .material-symbols-outlined {
-  font-size: 20px;
+  font-size: var(--v2-t-20);
 }

@@ -132,13 +132,13 @@ export function DesignSystemCatalog() {
         }}
       >
         <div>
-          <p className="v2-eyebrow" style={{ marginBottom: 6 }}>
+          <p className="v2-eyebrow" style={{ marginBottom: "var(--v2-s-1)" }}>
             IronGraph · V2 Quiet Premium
           </p>
           <h1 className="v2-h1">Design System Catalog</h1>
           <p
             className="v2-small"
-            style={{ marginTop: 4, color: "var(--v2-ink-3)" }}
+            style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-3)" }}
           >
             All tokens, primitives and patterns the app should be assembled from.
           </p>
@@ -189,7 +189,7 @@ export function DesignSystemCatalog() {
                   <div key={cls}>
                     <p
                       className="v2-eyebrow"
-                      style={{ marginBottom: 4, color: "var(--v2-ink-3)" }}
+                      style={{ marginBottom: "var(--v2-s-1)", color: "var(--v2-ink-3)" }}
                     >
                       {cls}
                     </p>
@@ -211,7 +211,7 @@ export function DesignSystemCatalog() {
           <Section eyebrow="03" title="Spacing · Radius · Elevation">
             <V2Stack gap={4}>
               <V2Card tone="paper">
-                <p className="v2-label" style={{ marginBottom: 8 }}>
+                <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                   Spacing — 4-pt grid
                 </p>
                 <V2Inline gap={3} align="flex-end" wrap>
@@ -232,7 +232,7 @@ export function DesignSystemCatalog() {
               </V2Card>
 
               <V2Card tone="paper">
-                <p className="v2-label" style={{ marginBottom: 8 }}>
+                <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                   Border radius
                 </p>
                 <V2Inline gap={3} align="center" wrap>
@@ -256,7 +256,7 @@ export function DesignSystemCatalog() {
               </V2Card>
 
               <V2Card tone="paper">
-                <p className="v2-label" style={{ marginBottom: 8 }}>
+                <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                   Elevation
                 </p>
                 <V2Inline gap={4} align="center" wrap>
@@ -292,7 +292,7 @@ export function DesignSystemCatalog() {
             >
               {CARD_TONES.map((tone) => (
                 <V2Card key={tone} tone={tone}>
-                  <p className="v2-label" style={{ marginBottom: 4 }}>
+                  <p className="v2-label" style={{ marginBottom: "var(--v2-s-1)" }}>
                     {tone}
                   </p>
                   <p className="v2-body" style={{ margin: 0 }}>
@@ -331,7 +331,7 @@ export function DesignSystemCatalog() {
             <V2Card tone="paper">
               <V2Stack gap={4}>
                 <div>
-                  <p className="v2-label" style={{ marginBottom: 8 }}>
+                  <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                     Primary
                   </p>
                   <V2Inline gap={2} wrap>
@@ -344,7 +344,7 @@ export function DesignSystemCatalog() {
                   </V2Inline>
                 </div>
                 <div>
-                  <p className="v2-label" style={{ marginBottom: 8 }}>
+                  <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                     Secondary
                   </p>
                   <V2Inline gap={2} wrap>
@@ -359,7 +359,7 @@ export function DesignSystemCatalog() {
                   </V2Inline>
                 </div>
                 <div>
-                  <p className="v2-label" style={{ marginBottom: 8 }}>
+                  <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                     Icon
                   </p>
                   <V2Inline gap={2} wrap>
@@ -370,7 +370,7 @@ export function DesignSystemCatalog() {
                   </V2Inline>
                 </div>
                 <div>
-                  <p className="v2-label" style={{ marginBottom: 8 }}>
+                  <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                     Anchor
                   </p>
                   <V2Inline gap={3} wrap>
@@ -561,14 +561,14 @@ export function DesignSystemCatalog() {
                 </V2Inline>
               </V2Card>
               <V2Card tone="paper">
-                <p className="v2-label" style={{ marginBottom: 8 }}>
+                <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
                   Hairline
                 </p>
-                <p className="v2-body" style={{ marginBottom: 8 }}>
+                <p className="v2-body" style={{ marginBottom: "var(--v2-s-2)" }}>
                   위쪽 컨텐츠
                 </p>
                 <V2Hairline />
-                <p className="v2-body" style={{ marginTop: 8 }}>
+                <p className="v2-body" style={{ marginTop: "var(--v2-s-2)" }}>
                   아래쪽 컨텐츠
                 </p>
               </V2Card>
@@ -870,7 +870,7 @@ function TokenSwatchRow({
 }) {
   return (
     <V2Card tone="paper">
-      <p className="v2-label" style={{ marginBottom: 8 }}>
+      <p className="v2-label" style={{ marginBottom: "var(--v2-s-2)" }}>
         {title}
       </p>
       <V2Inline gap={2} wrap>

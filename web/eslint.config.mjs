@@ -28,6 +28,7 @@ const LEGACY_UI_IMPORT_RULE = [
 
 // Hard Rules (web/docs/design-guide.md §0.5) — IDE/CLI 피드백용 warning.
 // CI 회귀 차단은 `pnpm lint:design` (scripts/design-lint.mjs baseline)이 담당.
+/* eslint-disable no-restricted-syntax -- 룰 정의 자체이므로 패턴 문자열은 제외 */
 const HARD_RULES_SYNTAX = [
   "warn",
   {
@@ -58,6 +59,7 @@ const HARD_RULES_SYNTAX = [
       "[Rule 5] Legacy `.label-tag-*` class. Use <V2Chip>. See design-guide.md §0.5.",
   },
 ];
+/* eslint-enable no-restricted-syntax */
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -66,6 +68,16 @@ const eslintConfig = defineConfig([
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
       "react-hooks/set-state-in-effect": "off",
+      // _prefix 로 시작하는 변수는 의도적으로 사용하지 않는 매개변수임을 표시 — 무시.
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+          destructuredArrayIgnorePattern: "^_",
+        },
+      ],
       "no-restricted-imports": LEGACY_UI_IMPORT_RULE,
       "no-restricted-syntax": HARD_RULES_SYNTAX,
     },

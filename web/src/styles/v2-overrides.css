@@ -116,6 +116,9 @@
   --color-icon-button-border: color-mix(in srgb, var(--v2-paper-4) 40%, transparent);
   --color-icon-button-text: var(--v2-ink-2);
   --color-icon-button-active: var(--v2-paper-3);
+  --color-icon-button-danger-bg: color-mix(in srgb, var(--v2-c-danger) 12%, var(--v2-paper));
+  --color-icon-button-danger-border: color-mix(in srgb, var(--v2-c-danger) 32%, transparent);
+  --color-icon-button-danger-text: var(--v2-c-danger);
 
   --color-focus-ring: var(--v2-focus);
   --color-link: var(--v2-accent);
@@ -134,6 +137,13 @@
   --radius-sm: var(--v2-r-1);
   --radius-md: var(--v2-r-3);
   --radius-lg: var(--v2-r-4);
+
+  /* spacing (legacy 4-pt grid → v2 tokens) */
+  --space-xs: var(--v2-s-1);
+  --space-sm: var(--v2-s-2);
+  --space-md: var(--v2-s-4);
+  --space-lg: var(--v2-s-6);
+  --space-xl: var(--v2-s-7);
 
   /* metric system */
   --metric-weight-color: var(--v2-c-weight);

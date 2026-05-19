@@ -90,12 +90,12 @@ export function V2PasswordSheet({
         <p className="v2-eyebrow">
           {locale === "ko" ? "보안" : "SECURITY"}
         </p>
-        <h1 className="v2-h1 v2-font-display" style={{ marginTop: 6 }}>
+        <h1 className="v2-h1 v2-font-display" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko" ? "비밀번호 변경" : "Change password"}
         </h1>
         <p
           className="v2-small"
-          style={{ marginTop: 6, color: "var(--v2-ink-2)" }}
+          style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}
         >
           {locale === "ko"
             ? "변경 후 다른 기기의 모든 세션은 자동 로그아웃됩니다."
@@ -138,7 +138,7 @@ export function V2PasswordSheet({
           <div
             role="alert"
             style={{
-              marginTop: 8,
+              marginTop: "var(--v2-s-2)",
               padding: "var(--v2-s-3) var(--v2-s-4)",
               borderRadius: "var(--v2-r-2)",
               background:
@@ -155,7 +155,7 @@ export function V2PasswordSheet({
           <div
             role="status"
             style={{
-              marginTop: 8,
+              marginTop: "var(--v2-s-2)",
               padding: "var(--v2-s-3) var(--v2-s-4)",
               borderRadius: "var(--v2-r-2)",
               background:
@@ -171,7 +171,7 @@ export function V2PasswordSheet({
           </div>
         )}
 
-        <div style={{ marginTop: 18, display: "flex", gap: "var(--v2-s-2)" }}>
+        <div style={{ marginTop: "var(--v2-s-5)", display: "flex", gap: "var(--v2-s-2)" }}>
           <V2PrimaryBtn
             full
             type="submit"

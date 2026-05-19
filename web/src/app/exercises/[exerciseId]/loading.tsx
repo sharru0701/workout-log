@@ -56,7 +56,7 @@ export default function ExerciseDetailLoading() {
                 <div style={{ ...skeletonStyle, height: 12, width: "50%", borderRadius: "var(--v2-r-0)" }} />
                 <div>
                   <div style={{ ...skeletonStyle, height: 34, width: "58%", borderRadius: "var(--v2-r-0)" }} />
-                  <div style={{ ...skeletonStyle, height: 14, width: "70%", marginTop: 8, borderRadius: "var(--v2-r-0)" }} />
+                  <div style={{ ...skeletonStyle, height: 14, width: "70%", marginTop: "var(--v2-s-2)", borderRadius: "var(--v2-r-0)" }} />
                 </div>
               </div>
             ))}
@@ -104,7 +104,7 @@ export default function ExerciseDetailLoading() {
               >
                 <div>
                   <div style={{ ...skeletonStyle, height: 16, width: "55%" }} />
-                  <div style={{ ...skeletonStyle, height: 14, width: "72%", marginTop: 8, borderRadius: "var(--v2-r-0)" }} />
+                  <div style={{ ...skeletonStyle, height: 14, width: "72%", marginTop: "var(--v2-s-2)", borderRadius: "var(--v2-r-0)" }} />
                 </div>
                 <div style={{ ...skeletonStyle, height: 24, width: 48, borderRadius: "var(--v2-r-pill)" }} />
               </div>
