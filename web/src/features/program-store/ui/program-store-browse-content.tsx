@@ -122,6 +122,7 @@ export function ProgramStoreBrowseContent({
               onClick={() => onChangeCategoryFilter(category.key)}
               style={{
                 padding: "var(--v2-s-2) var(--v2-s-5)",
+                border: "none",
                 borderRadius: "var(--v2-r-pill)",
                 cursor: "pointer",
                 whiteSpace: "nowrap",
@@ -137,7 +138,7 @@ export function ProgramStoreBrowseContent({
                     : "var(--v2-paper)",
                 color:
                   categoryFilter === category.key
-                    ? "var(--v2-ink-on-accent)"
+                    ? "var(--v2-accent-ink)"
                     : "var(--v2-ink-2)",
                 boxShadow:
                   categoryFilter === category.key
