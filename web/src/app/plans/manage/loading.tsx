@@ -51,7 +51,7 @@ export default function PlansManageLoading() {
                 padding: "var(--v2-s-4)",
               }}
             >
-              <div style={{ ...skeletonStyle, height: 10, width: "70%", marginBottom: 6, borderRadius: "var(--v2-r-0)" }} />
+              <div style={{ ...skeletonStyle, height: 10, width: "70%", marginBottom: "var(--v2-s-1)", borderRadius: "var(--v2-r-0)" }} />
               <div style={{ ...skeletonStyle, height: 22, width: "50%", borderRadius: "var(--v2-r-0)" }} />
             </div>
           ))}
@@ -110,7 +110,7 @@ export default function PlansManageLoading() {
                     borderRadius: "var(--v2-r-1)",
                   }}
                 >
-                  <div style={{ ...skeletonStyle, height: 10, width: "70%", marginBottom: 4, borderRadius: "var(--v2-r-0)" }} />
+                  <div style={{ ...skeletonStyle, height: 10, width: "70%", marginBottom: "var(--v2-s-1)", borderRadius: "var(--v2-r-0)" }} />
                   <div style={{ ...skeletonStyle, height: 14, width: "60%", borderRadius: "var(--v2-r-0)" }} />
                 </div>
               ))}

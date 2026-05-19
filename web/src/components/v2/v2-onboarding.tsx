@@ -311,7 +311,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          marginBottom: 28,
+          marginBottom: "var(--v2-s-7)",
         }}
       >
         <span
@@ -348,7 +348,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
       <p
         className="v2-body"
         style={{
-          marginTop: 18,
+          marginTop: "var(--v2-s-5)",
           fontSize: "var(--v2-t-16)",
           color: "var(--v2-ink-2)",
         }}
@@ -360,7 +360,7 @@ function Welcome({ locale }: { locale: "ko" | "en" }) {
 
       <div
         style={{
-          marginTop: 28,
+          marginTop: "var(--v2-s-7)",
           display: "flex",
           flexDirection: "column",
           gap: "var(--v2-s-4)",
@@ -443,10 +443,10 @@ function UnitGoals({
       <p className="v2-eyebrow">
         {locale === "ko" ? "설정 1/3" : "STEP 1/3"}
       </p>
-      <h1 className="v2-h1" style={{ marginTop: 8 }}>
+      <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-2)" }}>
         {locale === "ko" ? "주된 목표는?" : "What's your goal?"}
       </h1>
-      <p className="v2-small" style={{ marginTop: 6 }}>
+      <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
         {locale === "ko"
           ? "여러 개 선택 가능. 나중에 변경됩니다."
           : "Select multiple. You can change later."}
@@ -551,10 +551,10 @@ function Experience({
       <p className="v2-eyebrow">
         {locale === "ko" ? "설정 2/3" : "STEP 2/3"}
       </p>
-      <h1 className="v2-h1" style={{ marginTop: 8 }}>
+      <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-2)" }}>
         {locale === "ko" ? "훈련 경험은?" : "Training experience?"}
       </h1>
-      <p className="v2-small" style={{ marginTop: 6 }}>
+      <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
         {locale === "ko"
           ? "적합한 프로그램과 시작 무게를 추천하는 데 사용해요."
           : "Used to recommend programs and starting weights."}
@@ -607,10 +607,10 @@ function ProgramPick({
       <p className="v2-eyebrow">
         {locale === "ko" ? "설정 3/3" : "STEP 3/3"}
       </p>
-      <h1 className="v2-h1" style={{ marginTop: 8 }}>
+      <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-2)" }}>
         {locale === "ko" ? "시작 프로그램." : "Pick a program."}
       </h1>
-      <p className="v2-small" style={{ marginTop: 6 }}>
+      <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
         {locale === "ko"
           ? "경험에 맞춰 골랐어요. 언제든 변경 가능."
           : "Picked to match your experience. Switch any time."}
@@ -621,7 +621,7 @@ function ProgramPick({
           display: "flex",
           flexDirection: "column",
           gap: "var(--v2-s-2)",
-          marginTop: 24,
+          marginTop: "var(--v2-s-6)",
         }}
       >
         {recs.map((rec) => {

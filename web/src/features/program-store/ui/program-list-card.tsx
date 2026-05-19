@@ -296,7 +296,7 @@ export function ProgramListCard({
         <div style={{ flex: 1 }}>
           <span
             className="v2-eyebrow"
-            style={{ display: "block", marginBottom: 6 }}
+            style={{ display: "block", marginBottom: "var(--v2-s-1)" }}
           >
             {locale === "ko" ? "강도" : "Intensity"}
           </span>

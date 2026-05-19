@@ -27,8 +27,8 @@ export default function PlanHistoryLoading() {
             marginBottom: "var(--v2-s-4)",
           }}
         >
-          <div style={{ ...skeletonStyle, height: 12, width: 100, marginBottom: 8, borderRadius: "var(--v2-r-0)" }} />
-          <div style={{ ...skeletonStyle, height: 28, width: 180, marginBottom: 6, borderRadius: "var(--v2-r-0)" }} />
+          <div style={{ ...skeletonStyle, height: 12, width: 100, marginBottom: "var(--v2-s-2)", borderRadius: "var(--v2-r-0)" }} />
+          <div style={{ ...skeletonStyle, height: 28, width: 180, marginBottom: "var(--v2-s-1)", borderRadius: "var(--v2-r-0)" }} />
           <div style={{ ...skeletonStyle, height: 13, width: "75%", borderRadius: "var(--v2-r-0)" }} />
         </div>
 
@@ -66,7 +66,7 @@ export default function PlanHistoryLoading() {
         >
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={i} style={{ padding: "0px var(--v2-s-3)" }}>
-              <div style={{ ...skeletonStyle, height: 10, width: "60%", marginBottom: 6, borderRadius: "var(--v2-r-0)" }} />
+              <div style={{ ...skeletonStyle, height: 10, width: "60%", marginBottom: "var(--v2-s-1)", borderRadius: "var(--v2-r-0)" }} />
               <div style={{ ...skeletonStyle, height: 17, width: "70%", borderRadius: "var(--v2-r-0)" }} />
             </div>
           ))}
@@ -75,7 +75,7 @@ export default function PlanHistoryLoading() {
 
       {/* ── Logs Section ── */}
       <section style={{ marginTop: "var(--v2-s-5)" }}>
-        <div style={{ ...skeletonStyle, height: 24, width: 110, marginBottom: 14, borderRadius: "var(--v2-r-pill)" }} />
+        <div style={{ ...skeletonStyle, height: 24, width: 110, marginBottom: "var(--v2-s-3)", borderRadius: "var(--v2-r-pill)" }} />
 
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-3)" }}>
           {Array.from({ length: 3 }).map((_, i) => (

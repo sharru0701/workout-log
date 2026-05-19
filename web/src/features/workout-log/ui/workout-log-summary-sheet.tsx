@@ -78,7 +78,7 @@ export function WorkoutLogSummarySheet({
             {completedSets}/{totalSets}
           </span>
         </p>
-        <h1 className="v2-h2" style={{ marginTop: 4, fontSize: "var(--v2-t-18)" }}>
+        <h1 className="v2-h2" style={{ marginTop: "var(--v2-s-1)", fontSize: "var(--v2-t-18)" }}>
           {locale === "ko"
             ? `${allExercises.length}개 운동`
             : `${allExercises.length} exercises`}
@@ -87,7 +87,7 @@ export function WorkoutLogSummarySheet({
           <p
             className="v2-small"
             style={{
-              marginTop: 8,
+              marginTop: "var(--v2-s-2)",
               color: "var(--v2-ink-3)",
               whiteSpace: "pre-wrap",
             }}
@@ -230,7 +230,7 @@ export function WorkoutLogSummarySheet({
                   {memo ? (
                     <div
                       style={{
-                        marginTop: 10,
+                        marginTop: "var(--v2-s-3)",
                         padding: "var(--v2-s-3) var(--v2-s-3)",
                         borderRadius: "var(--v2-r-1)",
                         background: "var(--v2-paper)",
@@ -290,7 +290,7 @@ function SetDetailTable({
   return (
     <div
       style={{
-        marginTop: 10,
+        marginTop: "var(--v2-s-3)",
         display: "flex",
         flexDirection: "column",
         gap: "var(--v2-s-1)",

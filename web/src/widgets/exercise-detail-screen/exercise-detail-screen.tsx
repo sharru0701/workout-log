@@ -104,7 +104,7 @@ function MetricCard({
             </span>
           ) : null}
         </div>
-        <p className="v2-small" style={{ marginTop: 6, color: "var(--v2-ink-2)" }}>
+        <p className="v2-small" style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}>
           {caption}
         </p>
       </div>
@@ -153,7 +153,7 @@ function PrHistory({
         <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
           {locale === "ko" ? "PR 기록이 아직 없습니다" : "No PR history yet"}
         </p>
-        <p className="v2-small" style={{ marginTop: 6 }}>
+        <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko"
             ? "최근 90일 동안 더 많은 세트를 기록하면 PR 진행이 표시됩니다."
             : "PR progression appears after more sets are logged in the last 90 days."}
@@ -200,7 +200,7 @@ function PrHistory({
             </div>
             <div
               style={{
-                marginTop: 4,
+                marginTop: "var(--v2-s-1)",
                 fontSize: "var(--v2-t-12)",
                 color: "var(--v2-ink-2)",
                 fontVariantNumeric: "tabular-nums",
@@ -246,7 +246,7 @@ function RecentSets({
         <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
           {locale === "ko" ? "최근 세트 기록이 없습니다" : "No recent sets"}
         </p>
-        <p className="v2-small" style={{ marginTop: 6 }}>
+        <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko"
             ? "운동 기록이 추가되면 최근 세트가 여기 표시됩니다."
             : "Recent sets appear here once logs are added."}
@@ -269,7 +269,7 @@ function RecentSets({
               display: "flex",
               justifyContent: "space-between",
               alignItems: "baseline",
-              marginBottom: 8,
+              marginBottom: "var(--v2-s-2)",
             }}
           >
             <span
@@ -503,7 +503,7 @@ export function ExerciseDetailScreen({
               <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
                 {locale === "ko" ? "표시할 차트 데이터가 없습니다" : "No chart data"}
               </p>
-              <p className="v2-small" style={{ marginTop: 6 }}>
+              <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
                 {locale === "ko"
                   ? "운동 기록이 추가되면 e1RM 추이가 표시됩니다."
                   : "The e1RM trend appears once logs are added."}

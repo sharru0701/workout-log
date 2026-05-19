@@ -238,7 +238,7 @@ export function PrHistoryScreen({
               <p className="v2-h3" style={{ fontSize: "var(--v2-t-16)" }}>
                 {locale === "ko" ? "표시할 PR이 없습니다" : "No PRs to show"}
               </p>
-              <p className="v2-small" style={{ marginTop: 6 }}>
+              <p className="v2-small" style={{ marginTop: "var(--v2-s-1)" }}>
                 {locale === "ko"
                   ? "다른 기간이나 운동을 선택하거나, 운동 기록을 추가한 뒤 다시 확인하세요."
                   : "Try a different range or exercise, or log more workouts and check back."}
@@ -279,7 +279,7 @@ export function PrHistoryScreen({
                           display: "flex",
                           flexWrap: "wrap",
                           gap: "4px 10px",
-                          marginTop: 4,
+                          marginTop: "var(--v2-s-1)",
                           fontSize: "var(--v2-t-12)",
                           color: "var(--v2-ink-2)",
                           fontVariantNumeric: "tabular-nums",
