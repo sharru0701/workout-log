@@ -29,14 +29,14 @@ a {
 }
 
 ::selection {
-  background-color: var(--color-selection);
+  background-color: var(--v2-accent-weak);
 }
 
 input,
 textarea,
 select {
-  accent-color: var(--color-action);
-  caret-color: var(--color-action-strong);
+  accent-color: var(--v2-accent);
+  caret-color: var(--v2-accent-2);
 }
 
 button,
@@ -44,7 +44,7 @@ a,
 input,
 textarea,
 select {
-  -webkit-tap-highlight-color: var(--color-selection);
+  -webkit-tap-highlight-color: var(--v2-accent-weak);
 }
 
 button:focus-visible,

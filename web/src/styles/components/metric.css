@@ -3,10 +3,10 @@
   flex-direction: column;
   position: relative;
   overflow: hidden;
-  --metric-tone-color: var(--color-text);
+  --metric-tone-color: var(--v2-ink);
   --metric-value-color: var(--metric-tone-color);
   --metric-trend-color: var(--metric-trend-flat);
-  --metric-accent-line: color-mix(in srgb, var(--color-border) 64%, transparent);
+  --metric-accent-line: color-mix(in srgb, var(--v2-paper-4) 64%, transparent);
 }
 
 .metric-badge::before {
@@ -18,34 +18,42 @@
 }
 
 .metric-value {
-  font: var(--font-numeric-metric);
-  color: var(--metric-value-color, var(--metric-tone-color, var(--color-text)));
+  font-family: var(--v2-f-num);
+  font-size: var(--v2-t-28);
+  font-weight: var(--v2-w-bold);
+  line-height: 1;
+  color: var(--metric-value-color, var(--metric-tone-color, var(--v2-ink)));
   letter-spacing: -0.5px;
   font-variant-numeric: tabular-nums lining-nums;
 }
 
 .metric-label {
-  font: var(--font-secondary);
+  font-family: var(--v2-f-text);
+  font-size: var(--v2-t-small);
+  font-weight: var(--v2-w-reg);
   color: var(--metric-label-color);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .metric-kicker {
-  font: var(--font-secondary);
+  font-family: var(--v2-f-text);
+  font-size: var(--v2-t-small);
   color: var(--metric-label-color);
 }
 
 .metric-inline {
-  font: var(--font-card-title);
-  color: var(--metric-value-color, var(--metric-tone-color, var(--color-text)));
+  font-family: var(--v2-f-display);
+  font-size: var(--v2-t-h3);
+  font-weight: var(--v2-w-semi);
+  color: var(--metric-value-color, var(--metric-tone-color, var(--v2-ink)));
   font-variant-numeric: tabular-nums lining-nums;
 }
 
 .metric-trend {
   margin-top: var(--v2-s-1);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--v2-t-12);
+  font-weight: var(--v2-w-semi);
   color: var(--metric-trend-color, var(--metric-trend-flat));
   font-variant-numeric: tabular-nums;
 }
@@ -63,27 +71,27 @@
 }
 
 .metric-weight {
-  --metric-tone-color: var(--metric-weight-color);
+  --metric-tone-color: var(--v2-c-weight);
   --metric-accent-line: var(--metric-weight-accent);
 }
 
 .metric-1rm {
-  --metric-tone-color: var(--metric-1rm-color);
+  --metric-tone-color: var(--v2-c-onerm);
   --metric-accent-line: var(--metric-1rm-accent);
 }
 
 .metric-reps {
-  --metric-tone-color: var(--metric-reps-color);
+  --metric-tone-color: var(--v2-c-reps);
   --metric-accent-line: var(--metric-reps-accent);
 }
 
 .metric-volume {
-  --metric-tone-color: var(--metric-volume-color);
+  --metric-tone-color: var(--v2-c-volume);
   --metric-accent-line: var(--metric-volume-accent);
 }
 
 .metric-progress {
-  --metric-tone-color: var(--metric-progress-color);
+  --metric-tone-color: var(--v2-c-progress);
   --metric-accent-line: var(--metric-progress-accent);
 }
 
@@ -91,7 +99,7 @@
   display: block;
   width: 100%;
   height: auto;
-  color: var(--metric-tone-color, var(--color-primary));
+  color: var(--metric-tone-color, var(--v2-accent));
 }
 
 .sparkline-chart text {
@@ -104,7 +112,7 @@
   width: 100%;
   min-height: 4px;
   background-color: var(--progress-track);
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--v2-r-1) var(--v2-r-1) 0 0;
   overflow: hidden;
 }
 
@@ -137,18 +145,23 @@
 }
 
 .activity-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
+  width: var(--v2-s-2);
+  height: var(--v2-s-2);
+  border-radius: var(--v2-r-pill);
   background-color: var(--progress-dot-rest);
   display: block;
   opacity: 0.5;
-  transition: background-color 0.2s, box-shadow 0.2s, width 0.2s, height 0.2s, opacity 0.2s;
+  transition:
+    background-color var(--v2-d-1) var(--v2-e-out),
+    box-shadow var(--v2-d-1) var(--v2-e-out),
+    width var(--v2-d-1) var(--v2-e-out),
+    height var(--v2-d-1) var(--v2-e-out),
+    opacity var(--v2-d-1) var(--v2-e-out);
 }
 
 .activity-dot.is-active {
-  width: 12px;
-  height: 12px;
+  width: var(--v2-s-3);
+  height: var(--v2-s-3);
   background-color: var(--progress-dot-active);
   box-shadow: 0 0 6px 2px var(--progress-dot-active-glow);
   opacity: 1;

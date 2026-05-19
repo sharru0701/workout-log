@@ -3,31 +3,29 @@
   align-items: center;
   justify-content: center;
   gap: var(--v2-s-1);
-  padding: 10px 16px;
-  border-radius: 14px;
+  padding: var(--v2-s-3) var(--v2-s-4);
+  border-radius: var(--v2-r-2);
   font-family: var(--v2-f-display);
-  font-size: 13px;
-  font-weight: 700;
+  font-size: var(--v2-t-small);
+  font-weight: var(--v2-w-bold);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px transparent;
   touch-action: manipulation;
-  min-height: 44px; /* 최소 터치 타겟 크기 */
-  box-shadow: 0 10px 20px color-mix(in srgb, var(--shadow-color-soft) 72%, transparent);
+  min-height: var(--v2-s-8); /* 최소 터치 타겟 크기 */
+  box-shadow: var(--v2-elev-2);
   transition:
-    transform 0.2s ease,
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    color 0.2s ease,
-    box-shadow 0.2s ease,
-    opacity 0.2s ease;
+    transform var(--v2-d-1) var(--v2-e-out),
+    background-color var(--v2-d-1) var(--v2-e-out),
+    color var(--v2-d-1) var(--v2-e-out),
+    box-shadow var(--v2-d-1) var(--v2-e-out),
+    opacity var(--v2-d-1) var(--v2-e-out);
 }
 
 .btn:active {
   opacity: 1;
   transform: translateY(1px);
-  box-shadow: 0 6px 14px color-mix(in srgb, var(--shadow-color-soft) 64%, transparent);
+  box-shadow: var(--v2-elev-1);
 }
 
 .btn:disabled {
@@ -40,15 +38,15 @@
    .btn-full / .btn-sm / .btn-lg 룰 제거. V2PrimaryBtn / V2SecondaryBtn 사용. */
 
 .btn-icon {
-  width: var(--touch-target);
-  height: var(--touch-target);
-  min-width: var(--touch-target);
-  min-height: var(--touch-target);
+  width: var(--v2-touch);
+  height: var(--v2-touch);
+  min-width: var(--v2-touch);
+  min-height: var(--v2-touch);
   padding: 0;
   aspect-ratio: 1 / 1;
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px var(--color-icon-button-border);
-  border-radius: 12px;
+  border-radius: var(--v2-r-2);
   background-color: var(--color-icon-button-bg);
   color: var(--color-icon-button-text);
   line-height: 0;
@@ -56,7 +54,7 @@
 
 .btn-icon:active {
   background-color: var(--color-icon-button-active);
-  border-color: color-mix(in srgb, var(--color-border-strong) 24%, var(--color-icon-button-border));
+  border-color: color-mix(in srgb, var(--v2-ink-3) 24%, var(--color-icon-button-border));
   opacity: 1;
 }
 
@@ -67,52 +65,51 @@
 }
 
 .btn-icon-danger:active {
-  background-color: color-mix(in srgb, var(--color-icon-button-danger-bg) 72%, var(--color-surface-active));
-  border-color: color-mix(in srgb, var(--color-danger) 32%, var(--color-icon-button-danger-border));
+  background-color: color-mix(in srgb, var(--color-icon-button-danger-bg) 72%, var(--v2-paper-3));
+  border-color: color-mix(in srgb, var(--v2-c-danger) 32%, var(--color-icon-button-danger-border));
 }
 
 .btn-inline-action {
-  min-height: 38px;
-  padding: 8px 14px;
-  border-radius: 999px;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 600;
+  min-height: var(--v2-s-7);
+  padding: var(--v2-s-2) var(--v2-s-3);
+  border-radius: var(--v2-r-pill);
+  gap: var(--v2-s-1);
+  font-size: var(--v2-t-12);
+  font-weight: var(--v2-w-semi);
   line-height: 1;
   letter-spacing: 0.04em;
   text-transform: none;
-  background-color: color-mix(in srgb, var(--color-surface-hover) 82%, var(--color-surface-container-low));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-border-strong) 14%, var(--color-border));
-  color: var(--color-text-muted);
-  box-shadow: none;
+  background-color: var(--v2-paper-2);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--v2-ink-3) 14%, var(--v2-paper-4));
+  color: var(--v2-ink-3);
 }
 
 .btn-inline-action:active {
   background-color: var(--color-icon-button-active);
-  border-color: color-mix(in srgb, var(--color-border-strong) 20%, var(--color-border));
+  border-color: color-mix(in srgb, var(--v2-ink-3) 20%, var(--v2-paper-4));
   opacity: 1;
 }
 
 .btn-inline-action-primary {
-  background-color: var(--color-action-weak);
-  border-color: var(--color-selected-border);
-  color: var(--color-action-strong);
+  background-color: var(--v2-accent-weak);
+  border-color: color-mix(in srgb, var(--v2-accent) 50%, transparent);
+  color: var(--v2-accent-ink);
 }
 
 .btn-inline-action-primary:active {
-  background-color: color-mix(in srgb, var(--color-action-weak) 74%, var(--color-surface-active));
-  border-color: color-mix(in srgb, var(--color-action) 30%, var(--color-selected-border));
+  background-color: color-mix(in srgb, var(--v2-accent-weak) 74%, var(--v2-paper-3));
+  border-color: color-mix(in srgb, var(--v2-accent) 30%, var(--v2-accent-weak));
 }
 
 .btn-inline-action-danger {
-  background-color: color-mix(in srgb, var(--color-danger-weak) 34%, var(--color-surface-container-low));
+  background-color: color-mix(in srgb, var(--v2-c-danger) 14%, var(--v2-paper));
   border-color: var(--color-icon-button-danger-border);
   color: var(--color-icon-button-danger-text);
 }
 
 .btn-inline-action-danger:active {
-  background-color: color-mix(in srgb, var(--color-danger-weak) 46%, var(--color-surface-active));
-  border-color: color-mix(in srgb, var(--color-danger) 30%, var(--color-icon-button-danger-border));
+  background-color: color-mix(in srgb, var(--v2-c-danger) 22%, var(--v2-paper-3));
+  border-color: color-mix(in srgb, var(--v2-c-danger) 30%, var(--color-icon-button-danger-border));
 }
 
 /* 특수 버튼: 운동 추가 넓은 점선 박스 등 */
@@ -124,7 +121,7 @@
   justify-content: center;
   gap: var(--v2-s-2);
   padding: var(--v2-s-7) var(--v2-s-4);
-  
+
   background-color: transparent;
   color: var(--v2-ink-3);
   border: 2px dashed var(--v2-paper-4);
@@ -132,13 +129,13 @@
   font-family: var(--v2-f-display);
   font-size: var(--v2-t-h3);
   font-weight: var(--v2-w-semi);
-  
+
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--v2-d-1) var(--v2-e-out);
 }
 
 .btn-add-exercise:active {
-  background-color: var(--color-surface-hover);
+  background-color: var(--v2-paper-2);
   transform: scale(0.98);
 }
 
@@ -150,8 +147,8 @@
 
 /* 운동 세트 reps 완료 강조 */
 .reps-complete {
-  background-color: var(--color-success-weak) !important;
-  color: var(--color-success-strong) !important;
-  border-color: color-mix(in srgb, var(--color-success) 35%, var(--color-border)) !important;
-  font-weight: 600 !important;
+  background-color: color-mix(in srgb, var(--v2-c-success) 16%, var(--v2-paper)) !important;
+  color: var(--v2-c-success) !important;
+  border-color: color-mix(in srgb, var(--v2-c-success) 35%, var(--v2-paper-4)) !important;
+  font-weight: var(--v2-w-semi) !important;
 }
