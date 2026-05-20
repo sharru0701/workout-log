@@ -83,7 +83,7 @@ export function V2MorePage() {
         minHeight: "100%",
       }}
     >
-      <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
+      <div style={{ padding: "var(--v2-s-2) 0px var(--v2-s-3)" }}>
         <p className="v2-eyebrow">{locale === "ko" ? "더보기" : "MORE"}</p>
         <h1 id={headingId} className="v2-h1" style={{ marginTop: "var(--v2-s-1)" }}>
           {locale === "ko" ? "계정 · 설정" : "Account · Settings"}
@@ -99,7 +99,7 @@ export function V2MorePage() {
       </div>
 
       {me && (
-        <div className="v2-font-display" style={{ padding: "0px var(--v2-s-4) var(--v2-s-1)" }}>
+        <div className="v2-font-display" style={{ padding: "0px 0px var(--v2-s-1)" }}>
           <V2Card
             tone="inset"
             padding="var(--v2-s-4)"
@@ -262,7 +262,7 @@ export function V2MorePage() {
       {/* ── FOOTER (App info + logout + onboarding replay) ── */}
       <div
         style={{
-          padding: "var(--v2-s-5) var(--v2-s-4) var(--v2-s-6)",
+          padding: "var(--v2-s-5) 0px var(--v2-s-6)",
           display: "flex",
           flexDirection: "column",
           gap: "var(--v2-s-3)",
@@ -300,7 +300,7 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <div style={{ padding: "var(--v2-s-3) var(--v2-s-4) 0px" }}>
+    <div style={{ padding: "var(--v2-s-3) 0px 0px" }}>
       <div className="v2-label" style={{ padding: "0px var(--v2-s-2) var(--v2-s-1)" }}>
         {title}
       </div>

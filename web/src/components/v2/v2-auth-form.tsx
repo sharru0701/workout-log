@@ -176,7 +176,7 @@ export function V2AuthForm({ mode }: { mode: Mode }) {
           flex: 1,
           overflowY: "auto",
           padding:
-            "calc(env(safe-area-inset-top, 0px) + 40px) 24px 28px",
+            "calc(env(safe-area-inset-top, 0px) + 40px) var(--v2-s-4) 28px",
           display: "flex",
           flexDirection: "column",
           justifyContent: "center",
