@@ -260,13 +260,9 @@
   /* INFO COLOR: primary-identity */
   /* A. 운동명 / 종목명 — 카드에서 가장 먼저 읽혀야 하는 identity 정보 */
   --text-exercise-name: color-mix(in srgb, var(--color-text) 60%, var(--color-primary-strong));
-  --font-weight-exercise-name: 700;
 
   /* B. 플랜명 / 프로그램명 — 세션/카드의 주 제목 */
   --text-plan-name: color-mix(in srgb, var(--color-text) 80%, var(--color-info-strong));
-  --font-weight-plan-name: 600;
-  --text-program-name: var(--text-plan-name);
-  --text-section-title: var(--color-text);
 
   /* INFO COLOR: session-context */
   /* C. 세션명 / 주차 / 날짜 / 요일 / 진행 컨텍스트 */
@@ -346,29 +342,19 @@
   /* ============================
      TYPOGRAPHY SYSTEM
      ============================ */
-  /* Inter(영문) → Pretendard Variable(한글) 순서로 스택
-     Inter는 라틴 문자만 포함하므로 한글은 자동으로 Pretendard로 fallback */
-  --font-family: var(--font-inter, 'Inter'), 'Pretendard Variable', 'Pretendard', system-ui, sans-serif;
-  --font-headline-family: var(--font-inter, 'Inter'), 'Pretendard Variable', 'Pretendard', system-ui, sans-serif;
-  /* 레이블/수치: Pretendard를 우선 — 한글·숫자 일관성 확보 */
-  --font-label-family: 'Pretendard Variable', 'Pretendard', var(--font-inter, 'Inter'), system-ui, sans-serif;
+  /* Legacy font family tokens 제거됨. V2 타이포는 --v2-f-display / --v2-f-text /
+     --v2-f-num 사용 (정의: styles/v2-tokens.css). */
 
   /* font-variation-settings — variable font wght axis 미세 조절 토큰
      표준 font-weight 사이 값으로 타이포그래피 계층 세분화 */
   --fvs-normal: "wght" 400;
-  --fvs-medium: "wght" 500;
-  --fvs-semibold: "wght" 620;   /* 600~640 — Inter/Pretendard에서 가독성 최적 구간 */
-  --fvs-bold: "wght" 700;
-  --fvs-extrabold: "wght" 760;  /* 타이틀용 — 800보다 덜 무겁고 임팩트 유지 */
 
-  --font-page-title: 700 24px/1.2 var(--font-headline-family);
-  --font-section-title: 600 20px/1.3 var(--font-headline-family);
-  --font-card-title: 600 16px/1.4 var(--font-headline-family);
-  --font-body: 400 16px/1.5 var(--font-family);
-  --font-secondary: 400 14px/1.5 var(--font-family);
-  --font-numeric-metric: 700 28px/1 var(--font-label-family);
-  --font-label: 500 12px/1 var(--font-label-family);
-  --font-heading: var(--font-section-title);
+  /* Legacy font composite tokens 제거됨 (Phase 디자인 정합화 완료).
+     --font-page-title / --font-section-title / --font-card-title /
+     --font-body / --font-secondary / --font-numeric-metric / --font-label /
+     --font-heading 모두 0건 참조 확인 후 삭제.
+     V2 typography 는 클래스(.v2-h1/h2/h3/body/small/label/eyebrow/mono-label)
+     또는 토큰(--v2-f-display/--v2-f-text/--v2-f-num + --v2-t-* + --v2-w-*) 직접 사용. */
 
   /* ============================
      LAYOUT + SURFACE SYSTEM
@@ -387,13 +373,9 @@
 
   /* ============================
      SPACING SYSTEM
+     Legacy --space-* 는 v2-overrides.css 에서 --v2-s-* alias로 재정의됨.
+     --touch-target 은 v2-tokens.css 의 --v2-touch 와 동일.
      ============================ */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
-  --touch-target: 44px;
 }
 
 

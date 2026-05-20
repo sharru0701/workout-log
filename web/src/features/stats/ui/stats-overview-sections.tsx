@@ -69,7 +69,7 @@ const PrRow = memo(function PrRow({
           style={{
             fontSize: "var(--v2-t-small)",
             fontWeight: 700,
-            marginBottom: 3,
+            marginBottom: "var(--v2-s-1)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",

@@ -195,7 +195,7 @@ function StrengthCard({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: 4,
+            marginBottom: "var(--v2-s-1)",
           }}
         >
           <span

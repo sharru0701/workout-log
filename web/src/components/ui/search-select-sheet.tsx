@@ -82,12 +82,12 @@ export function SearchSelectCombobox({
           <div
             role="listbox"
             aria-label={resultsAriaLabel}
-            style={{ display: "flex", flexDirection: "column", gap: "2px", height: "300px", overflowY: "auto", marginTop: "var(--v2-s-2)" }}
+            style={{ display: "flex", flexDirection: "column", gap: 2, height: "300px", overflowY: "auto", marginTop: "var(--v2-s-2)" }}
           >
             {loading ? (
-              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{resolvedLoadingText}</span>
+              <span className="v2-small" style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)" }}>{resolvedLoadingText}</span>
             ) : options.length === 0 ? (
-              <span style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)", fontSize: "var(--v2-t-small)" }}>{emptyText}</span>
+              <span className="v2-small" style={{ padding: "var(--v2-s-4)", textAlign: "center", color: "var(--v2-ink-2)" }}>{emptyText}</span>
             ) : (
               options.map((option) => (
                 <button
@@ -95,11 +95,12 @@ export function SearchSelectCombobox({
                   type="button"
                   aria-current={option.ariaCurrent ? "true" : undefined}
                   onClick={option.onSelect}
+                  className="v2-pressable v2-body"
                   style={{
                     display: "flex",
                     alignItems: "center",
                     width: "100%",
-                    padding: "var(--v2-s-3) var(--v2-s-3)",
+                    padding: "var(--v2-s-3)",
                     boxShadow: option.active ? "inset 0 0 0 2px var(--v2-accent)" : "none",
                     border: "none",
                     borderRadius: "var(--v2-r-2)",
@@ -107,9 +108,7 @@ export function SearchSelectCombobox({
                     color: option.active ? "var(--v2-accent-ink)" : "var(--v2-ink)",
                     cursor: "pointer",
                     textAlign: "left",
-                    fontSize: "var(--v2-t-14)",
                     fontWeight: option.active ? 700 : 500,
-                    letterSpacing: option.active ? "-0.1px" : "0",
                     transition: "background-color 0.12s ease",
                   }}
                 >

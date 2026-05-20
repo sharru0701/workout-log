@@ -32,7 +32,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  padding-bottom: var(--space-xl);
+  padding-bottom: var(--v2-s-7);
 }
 
 /*
@@ -83,8 +83,8 @@ body[data-viewport-locked="true"] .app-shell__page {
 
 /* Base utility padding container */
 .container {
-  padding-left: var(--space-md);
-  padding-right: var(--space-md);
+  padding-left: var(--v2-s-4);
+  padding-right: var(--v2-s-4);
   width: 100%;
 }
 

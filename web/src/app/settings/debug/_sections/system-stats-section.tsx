@@ -199,7 +199,7 @@ export function SystemStatsSection() {
   const [uxSnapshot, setUxSnapshot] = useState<UxSnapshotResp | null>(null);
   const [migrationTelemetry, setMigrationTelemetry] = useState<MigrationTelemetryResp | null>(null);
   const [loading, setLoading] = useState(false);
-  const [refreshTick, setRefreshTick] = useState(0);
+  const [refreshTick] = useState(0);
   const [lookback, setLookback] = useState<number>(720);
 
 

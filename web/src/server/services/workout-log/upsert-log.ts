@@ -25,7 +25,7 @@ export type UpsertWorkoutLogInput = {
 export async function upsertWorkoutLogService({
   logId,
   userId,
-  timezone,
+  timezone: _timezone,
   performedAt,
   durationMinutes,
   notes,

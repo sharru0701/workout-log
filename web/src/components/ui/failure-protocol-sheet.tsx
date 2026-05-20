@@ -41,7 +41,7 @@ export function FailureProtocolSheet({
           style={{
             display: "flex",
             flexDirection: "column",
-            gap: "var(--space-xs)",
+            gap: "var(--v2-s-1)",
             width: "100%",
           }}
         >

@@ -13,7 +13,7 @@ type InlineDisclosureProps = {
 export function InlineDisclosure({
   label = "Details",
   defaultOpen = false,
-  className = "",
+  className,
   children,
 }: InlineDisclosureProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -21,7 +21,7 @@ export function InlineDisclosure({
   const panelId = useId();
 
   return (
-    <div>
+    <div className={className}>
       <button
         id={triggerId}
         type="button"
