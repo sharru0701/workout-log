@@ -70,7 +70,16 @@ export function ProgramStoreBrowseContent({
 }: ProgramStoreBrowseContentProps) {
   return (
     <AppPage>
-      <PageHeader eyebrow={copy.eyebrow} title={copy.title} description={copy.description} />
+      <PageHeader
+        eyebrow={copy.eyebrow}
+        title={copy.title}
+        description={copy.description}
+        actions={(
+          <V2SecondaryBtn icon="add" onClick={onOpenCreateSheet}>
+            {locale === "ko" ? "프로그램 만들기" : "Create Program"}
+          </V2SecondaryBtn>
+        )}
+      />
 
       {error ? (
         <StateBlock
