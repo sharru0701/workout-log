@@ -76,7 +76,7 @@ function TodayDeck({
   return (
     <div style={{ paddingTop: "var(--v2-s-4)", paddingBottom: "var(--v2-s-6)" }}>
       {/* eyebrow */}
-      <div style={{ padding: "0px var(--v2-s-6) var(--v2-s-2)" }}>
+      <div style={{ padding: "0px 0px var(--v2-s-2)" }}>
         <p className="v2-eyebrow">{formatDateEyebrow(locale)}</p>
         <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-1)" }}>
           {today.headline || (locale === "ko" ? "오늘" : "Today")}
@@ -92,7 +92,7 @@ function TodayDeck({
       </div>
 
       {/* hero card — 오늘의 세션 */}
-      <div style={{ padding: "var(--v2-s-4) var(--v2-s-4) 0px" }}>
+      <div style={{ padding: "var(--v2-s-4) 0px 0px" }}>
         <V2Card padding={0} radius="var(--v2-r-4)">
           <div style={{ padding: "var(--v2-s-5) var(--v2-s-5) var(--v2-s-4)" }}>
             <div
@@ -217,7 +217,7 @@ function TodayDeck({
       {/* 보조 카드: 스트릭 + 이번 주 */}
       <div
         style={{
-          padding: "var(--v2-s-4) var(--v2-s-4) 0px",
+          padding: "var(--v2-s-4) 0px 0px",
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: "var(--v2-s-3)",
@@ -329,7 +329,7 @@ function TodayDeck({
       {/* 최근 PR */}
       {strength.length > 0 && (
         <>
-          <div style={{ padding: "var(--v2-s-6) var(--v2-s-6) var(--v2-s-2)" }}>
+          <div style={{ padding: "var(--v2-s-6) 0px var(--v2-s-2)" }}>
             <div
               style={{
                 display: "flex",
@@ -353,7 +353,7 @@ function TodayDeck({
               </Link>
             </div>
           </div>
-          <div style={{ padding: "0px var(--v2-s-4)" }}>
+          <div style={{ padding: 0 }}>
             {strength.slice(0, 3).map((s) => {
               const isPr = s.trend === "up" && s.improvement > 0;
               return (

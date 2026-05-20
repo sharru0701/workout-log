@@ -141,7 +141,7 @@ export function V2Onboarding() {
       <div
         style={{
           paddingTop: "calc(env(safe-area-inset-top, 0px) + 16px)",
-          padding: "calc(env(safe-area-inset-top, 0px) + 16px) 20px 0",
+          padding: "calc(env(safe-area-inset-top, 0px) + 16px) var(--v2-s-4) 0",
         }}
       >
         <div style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)" }}>
@@ -222,7 +222,7 @@ export function V2Onboarding() {
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "var(--v2-s-7) var(--v2-s-6) var(--v2-s-4)",
+          padding: "var(--v2-s-7) var(--v2-s-4) var(--v2-s-4)",
           animation: "v2-fadeUp 320ms var(--v2-e-out) both",
         }}
         key={step}

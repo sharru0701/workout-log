@@ -317,6 +317,26 @@ var(--layout-max-wide)  /* 와이드 모드 */
 - 모바일 퍼스트 safe-area 인식 쉘 + 하단 네비게이션
 - 콘텐츠를 `surface-container` 계층 가장자리까지 블리드 허용 → 현대적인 wide-screen 모바일 느낌
 
+#### 화면 좌우 패딩 — Single Source
+
+화면 좌우 padding은 **`.container` (= `var(--v2-s-4)` = 16px) 단일 기준**. `AppShell` 이 모든 페이지를 `.container` 로 감싸므로, 페이지/feature 컴포넌트가 inner wrapper 로 horizontal padding 을 *추가* 하지 않는다. 이중 padding 으로 화면마다 좌우 여백이 32/36/40px 로 갈리는 드리프트의 원인.
+
+```tsx
+// ❌ NG — .container 안에서 또 horizontal padding
+<div style={{ padding: "var(--v2-s-6) var(--v2-s-6) var(--v2-s-2)" }}>
+  <h1 className="v2-h1">제목</h1>
+</div>
+
+// ✅ OK — vertical 만 두고 horizontal 은 .container 에 위임
+<div style={{ padding: "var(--v2-s-6) 0px var(--v2-s-2)" }}>
+  <h1 className="v2-h1">제목</h1>
+</div>
+```
+
+**예외**:
+- Auth/온보딩 화면(`/login`, `/signup`, `/forgot-password`, `/reset-password`, `/onboarding`)은 `position: fixed; inset: 0` 으로 `.container` 를 우회한다. 이 경우에도 내부 horizontal padding 은 `var(--v2-s-4)` 로 동일하게 맞춘다.
+- 풀블리드 효과(active set row 등)는 `margin-left/right: calc(-1 * var(--v2-s-4))` 로 명시적으로 `.container` 를 상쇄해서 표현.
+
 ### 3-3. Border Radius 기준
 
 ```
