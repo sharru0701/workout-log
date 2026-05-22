@@ -68,3 +68,9 @@ Thumbs.db
 coverage/
 *.tmp
 *.bak
+
+########################################
+# Claude Code (local-only settings)
+########################################
+
+.claude/settings.local.json
