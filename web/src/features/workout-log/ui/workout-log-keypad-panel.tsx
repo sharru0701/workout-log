@@ -348,6 +348,7 @@ export function WorkoutLogKeypadPanel({
       });
     });
     setActiveField("weight");
+    setMemoMode(false);
   };
 
   const handleAddSet = () => {
@@ -832,7 +833,7 @@ export function WorkoutLogKeypadPanel({
             {locale === "ko" ? "세트 추가" : "Add set"}
           </button>
 
-          {recommendedWeightKg != null && !memoMode && (
+          {recommendedWeightKg != null && (
             <button
               type="button"
               onClick={applyRecommendedWeight}
@@ -918,14 +919,14 @@ export function WorkoutLogKeypadPanel({
             background: "var(--v2-paper-2)",
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
-            padding: "var(--v2-s-3) var(--v2-s-3) var(--v2-s-4)",
+            padding: "var(--v2-s-2) var(--v2-s-3) var(--v2-s-3)",
             marginTop: "auto",
             flexShrink: 0,
           }}
         >
           <p
             className="v2-label"
-            style={{ marginBottom: "var(--v2-s-2)", fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
+            style={{ marginBottom: "var(--v2-s-1)", fontSize: "var(--v2-t-eyebrow)", color: "var(--v2-ink-3)" }}
           >
             {locale === "ko"
               ? `${activeExercise.exerciseName} · 메모`
@@ -942,8 +943,10 @@ export function WorkoutLogKeypadPanel({
               borderRadius: "var(--v2-r-2)",
               background: "var(--v2-paper)",
               fontSize: "var(--v2-t-14)",
-              minHeight: "var(--v2-s-9)",
+              minHeight:
+                "calc(var(--v2-workout-key-h) * 4 + var(--v2-workout-key-gap) * 3)",
               width: "100%",
+              resize: "none",
             }}
           />
         </div>
