@@ -4,6 +4,7 @@ import { useMemo, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { useLocale } from "@/components/locale-provider";
 import type { ProgressionSummaryPayload } from "@/lib/progression/summary";
+import type { TrainingGoalKey } from "@/lib/settings/workout-preferences";
 import {
   V2Card,
   V2Chip,
@@ -35,6 +36,8 @@ export type V2SummaryLog = {
   progression?: ProgressionSummaryPayload | null;
   /** 서버 계산된 PR (best e1RM 비교 기반). detectPersonalRecords 결과. */
   personalRecords?: V2PersonalRecord[] | null;
+  /** 사용자의 1순위 운동 목적. BigStat / hero 카피 차별화에 사용. */
+  goal?: TrainingGoalKey | null;
 };
 
 export type V2PersonalRecord = {
@@ -172,6 +175,69 @@ function buildExerciseSummaries(sets: V2SummarySet[]): ExerciseSummary[] {
     map.set(name, cur);
   }
   return Array.from(map.values());
+}
+
+/** 세션 전체에서 EST 1RM 기준 최고 세트(epley) — 스트렝스/파워리프팅 BigStat에 사용. */
+function findTopEstOneRm(sets: V2SummarySet[]): {
+  exerciseName: string;
+  weightKg: number;
+  reps: number;
+  estOneRm: number;
+} | null {
+  let best: {
+    exerciseName: string;
+    weightKg: number;
+    reps: number;
+    estOneRm: number;
+  } | null = null;
+  for (const s of sets) {
+    if (s.isExtra) continue;
+    const w = Number(s.weightKg ?? 0);
+    const r = Number(s.reps ?? 0);
+    if (!Number.isFinite(w) || w <= 0 || !Number.isFinite(r) || r <= 0)
+      continue;
+    const e = epleyEstimate(w, r);
+    if (!best || e > best.estOneRm) {
+      best = {
+        exerciseName: String(s.exerciseName ?? "").trim(),
+        weightKg: w,
+        reps: r,
+        estOneRm: e,
+      };
+    }
+  }
+  return best;
+}
+
+type ResolvedGoal = "strength" | "hypertrophy" | "endurance" | "general";
+
+function resolveGoal(goal: TrainingGoalKey | null | undefined): ResolvedGoal {
+  if (goal === "strength" || goal === "powerlifting") return "strength";
+  if (goal === "hypertrophy") return "hypertrophy";
+  if (goal === "endurance") return "endurance";
+  return "general";
+}
+
+function getHeroCopy(
+  resolved: ResolvedGoal,
+  locale: "ko" | "en",
+  freshComplete: boolean,
+): { title: string; eyebrow: string } {
+  if (!freshComplete) {
+    return {
+      title: locale === "ko" ? "세션 요약" : "Session Summary",
+      eyebrow: locale === "ko" ? "수행 기록" : "PERFORMED",
+    };
+  }
+  const eyebrow = locale === "ko" ? "세션 완료" : "SESSION COMPLETE";
+  const titleMap: Record<ResolvedGoal, { ko: string; en: string }> = {
+    strength: { ko: "강해졌어요.", en: "Stronger." },
+    hypertrophy: { ko: "한 걸음 더.", en: "One step closer." },
+    endurance: { ko: "꾸준함이 무기.", en: "Consistency pays." },
+    general: { ko: "잘했어요.", en: "Well done." },
+  };
+  const t = titleMap[resolved];
+  return { title: locale === "ko" ? t.ko : t.en, eyebrow };
 }
 
 /* ─── BigStat ─── */
@@ -312,6 +378,8 @@ export function V2SessionSummary({
     const exerciseSummaries = buildExerciseSummaries(log.sets);
     const totalVolume = exerciseSummaries.reduce((s, e) => s + e.volumeKg, 0);
     const totalSets = exerciseSummaries.reduce((s, e) => s + e.setCount, 0);
+    const totalReps = exerciseSummaries.reduce((s, e) => s + e.totalReps, 0);
+    const topEstOneRm = findTopEstOneRm(log.sets);
     const prCards = buildPrCards(log.progression, log.personalRecords);
 
     // 운동명별 top set 매칭 — progression 카드의 EST 1RM 보강에 사용
@@ -349,6 +417,8 @@ export function V2SessionSummary({
       exerciseSummaries,
       totalVolume,
       totalSets,
+      totalReps,
+      topEstOneRm,
       prCards: enrichedPrs,
       prKeys,
     };
@@ -358,22 +428,17 @@ export function V2SessionSummary({
 
   const durationLabel = formatDurationLong(log.durationMinutes);
   const performedAtLabel = formatPerformedAt(log.performedAt, locale);
+  const resolvedGoal = resolveGoal(log.goal);
+  const { title: heroTitle, eyebrow: heroEyebrow } = getHeroCopy(
+    resolvedGoal,
+    locale,
+    freshComplete,
+  );
 
-  const heroTitle = freshComplete
-    ? locale === "ko"
-      ? "잘했어요."
-      : "Well done."
-    : locale === "ko"
-      ? "세션 요약"
-      : "Session Summary";
-
-  const heroEyebrow = freshComplete
-    ? locale === "ko"
-      ? "세션 완료"
-      : "SESSION COMPLETE"
-    : locale === "ko"
-      ? "수행 기록"
-      : "PERFORMED";
+  // PR이 있을 때는 EST 1RM에 강조 표시를 위해 매칭 키 비교
+  const topPrMatch =
+    summary.topEstOneRm &&
+    summary.prKeys.has(summary.topEstOneRm.exerciseName.trim().toLowerCase());
 
   return (
     <div
@@ -438,7 +503,7 @@ export function V2SessionSummary({
         </p>
       </div>
 
-      {/* ── BigStats ── */}
+      {/* ── BigStats (goal별 차별화) ── */}
       <div
         style={{
           padding: "0px var(--v2-s-4)",
@@ -447,36 +512,99 @@ export function V2SessionSummary({
           gap: "var(--v2-s-2)",
         }}
       >
-        <BigStat
-          label={locale === "ko" ? "총 볼륨" : "Volume"}
-          value={
-            freshComplete ? (
-              <V2CountUp
-                to={summary.totalVolume}
-                format={(v) => Math.round(v).toLocaleString()}
-              />
-            ) : (
-              Math.round(summary.totalVolume).toLocaleString()
-            )
-          }
-          unit="kg"
-          color="var(--v2-c-volume)"
-          sub={
-            locale === "ko"
-              ? `${summary.totalSets}세트`
-              : `${summary.totalSets} sets`
-          }
-        />
-        <BigStat
-          label={locale === "ko" ? "시간" : "Duration"}
-          value={durationLabel ?? "—"}
-          color="var(--v2-ink)"
-          sub={
-            locale === "ko"
-              ? `${summary.exerciseSummaries.length}개 운동`
-              : `${summary.exerciseSummaries.length} exercises`
-          }
-        />
+        {resolvedGoal === "strength" ? (
+          <BigStat
+            label={locale === "ko" ? "최고 EST 1RM" : "Top EST 1RM"}
+            value={
+              summary.topEstOneRm
+                ? freshComplete
+                  ? (
+                      <V2CountUp
+                        to={summary.topEstOneRm.estOneRm}
+                        format={(v) => v.toFixed(1)}
+                      />
+                    )
+                  : summary.topEstOneRm.estOneRm.toFixed(1)
+                : "—"
+            }
+            unit={summary.topEstOneRm ? "kg" : undefined}
+            color="var(--v2-c-onerm)"
+            sub={
+              summary.topEstOneRm
+                ? topPrMatch
+                  ? `${summary.topEstOneRm.exerciseName} · ${locale === "ko" ? "PR" : "PR"}`
+                  : `${summary.topEstOneRm.exerciseName} · ${summary.topEstOneRm.weightKg}kg×${summary.topEstOneRm.reps}`
+                : locale === "ko"
+                  ? "기록된 세트 없음"
+                  : "No logged sets"
+            }
+          />
+        ) : resolvedGoal === "endurance" ? (
+          <BigStat
+            label={locale === "ko" ? "시간" : "Duration"}
+            value={durationLabel ?? "—"}
+            color="var(--v2-c-progress)"
+            sub={
+              locale === "ko"
+                ? `${summary.exerciseSummaries.length}개 운동`
+                : `${summary.exerciseSummaries.length} exercises`
+            }
+          />
+        ) : (
+          <BigStat
+            label={locale === "ko" ? "총 볼륨" : "Volume"}
+            value={
+              freshComplete ? (
+                <V2CountUp
+                  to={summary.totalVolume}
+                  format={(v) => Math.round(v).toLocaleString()}
+                />
+              ) : (
+                Math.round(summary.totalVolume).toLocaleString()
+              )
+            }
+            unit="kg"
+            color="var(--v2-c-volume)"
+            sub={
+              locale === "ko"
+                ? `${summary.totalSets}세트`
+                : `${summary.totalSets} sets`
+            }
+          />
+        )}
+
+        {resolvedGoal === "endurance" ? (
+          <BigStat
+            label={locale === "ko" ? "총 세트" : "Total sets"}
+            value={
+              freshComplete ? (
+                <V2CountUp
+                  to={summary.totalSets}
+                  format={(v) => Math.round(v).toLocaleString()}
+                />
+              ) : (
+                summary.totalSets.toLocaleString()
+              )
+            }
+            color="var(--v2-c-reps)"
+            sub={
+              locale === "ko"
+                ? `${summary.totalReps.toLocaleString()} reps`
+                : `${summary.totalReps.toLocaleString()} reps`
+            }
+          />
+        ) : (
+          <BigStat
+            label={locale === "ko" ? "시간" : "Duration"}
+            value={durationLabel ?? "—"}
+            color="var(--v2-ink)"
+            sub={
+              locale === "ko"
+                ? `${summary.exerciseSummaries.length}개 운동`
+                : `${summary.exerciseSummaries.length} exercises`
+            }
+          />
+        )}
       </div>
 
       {/* ── PR 카드 ── */}
@@ -659,30 +787,94 @@ export function V2SessionSummary({
                           marginTop: 2,
                         }}
                       >
-                        {ex.setCount}
-                        {locale === "ko" ? "세트" : " sets"}
-                        {ex.topWeightKg > 0
-                          ? ` · top ${ex.topWeightKg.toLocaleString()}kg`
-                          : ""}
+                        {resolvedGoal === "strength" ? (
+                          <>
+                            {ex.setCount}
+                            {locale === "ko" ? "세트" : " sets"}
+                            {ex.volumeKg > 0
+                              ? ` · ${formatVolumeShort(ex.volumeKg)}kg`
+                              : ""}
+                          </>
+                        ) : resolvedGoal === "endurance" ? (
+                          <>
+                            {ex.setCount}
+                            {locale === "ko" ? "세트" : " sets"}
+                            {ex.topWeightKg > 0
+                              ? ` · ${ex.topWeightKg.toLocaleString()}kg`
+                              : ""}
+                          </>
+                        ) : (
+                          <>
+                            {ex.setCount}
+                            {locale === "ko" ? "세트" : " sets"}
+                            {ex.topWeightKg > 0
+                              ? ` · top ${ex.topWeightKg.toLocaleString()}kg`
+                              : ""}
+                          </>
+                        )}
                       </div>
                     </div>
                     <div style={{ textAlign: "right" }}>
-                      <div
-                        className="v2-num-sm"
-                        style={{ color: "var(--v2-c-volume)" }}
-                      >
-                        {formatVolumeShort(ex.volumeKg)}
-                      </div>
-                      <div
-                        className="v2-mono-label"
-                        style={{
-                          fontSize: "var(--v2-t-eyebrow)",
-                          color: "var(--v2-ink-3)",
-                          marginTop: 2,
-                        }}
-                      >
-                        kg
-                      </div>
+                      {resolvedGoal === "strength" ? (
+                        <>
+                          <div
+                            className="v2-num-sm"
+                            style={{ color: "var(--v2-c-weight)" }}
+                          >
+                            {ex.topWeightKg > 0
+                              ? ex.topWeightKg.toLocaleString()
+                              : "—"}
+                          </div>
+                          <div
+                            className="v2-mono-label"
+                            style={{
+                              fontSize: "var(--v2-t-eyebrow)",
+                              color: "var(--v2-ink-3)",
+                              marginTop: 2,
+                            }}
+                          >
+                            {locale === "ko" ? "top kg" : "top kg"}
+                          </div>
+                        </>
+                      ) : resolvedGoal === "endurance" ? (
+                        <>
+                          <div
+                            className="v2-num-sm"
+                            style={{ color: "var(--v2-c-reps)" }}
+                          >
+                            {ex.totalReps.toLocaleString()}
+                          </div>
+                          <div
+                            className="v2-mono-label"
+                            style={{
+                              fontSize: "var(--v2-t-eyebrow)",
+                              color: "var(--v2-ink-3)",
+                              marginTop: 2,
+                            }}
+                          >
+                            reps
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div
+                            className="v2-num-sm"
+                            style={{ color: "var(--v2-c-volume)" }}
+                          >
+                            {formatVolumeShort(ex.volumeKg)}
+                          </div>
+                          <div
+                            className="v2-mono-label"
+                            style={{
+                              fontSize: "var(--v2-t-eyebrow)",
+                              color: "var(--v2-ink-3)",
+                              marginTop: 2,
+                            }}
+                          >
+                            kg
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                 </V2Card>
