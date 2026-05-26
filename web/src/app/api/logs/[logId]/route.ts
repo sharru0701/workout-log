@@ -17,6 +17,8 @@ import { getAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
+import { getSettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
+import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 
 type Ctx = { params: Promise<{ logId: string }> };
 
@@ -308,6 +310,10 @@ async function GETImpl(_req: Request, ctx: Ctx) {
       performedAt: log.performedAt,
     });
 
+    const settings = await getSettingsSnapshot();
+    const prefs = readWorkoutPreferences(settings);
+    const goal = prefs.trainingGoalPrimary;
+
     return NextResponse.json({
       item: {
         ...log,
@@ -315,6 +321,7 @@ async function GETImpl(_req: Request, ctx: Ctx) {
         generatedSession: generated,
         progression: progressionSummary,
         personalRecords,
+        goal,
       },
     });
   } catch (e: any) {
