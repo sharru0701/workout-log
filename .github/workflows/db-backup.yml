@@ -82,10 +82,19 @@ jobs:
             exit 1
           fi
 
-          if ! gunzip -c "${BACKUP_FILE}" | head -5 | grep -q "PostgreSQL database dump"; then
-            echo "::error::Backup does not start with valid PostgreSQL dump header"
-            echo "--- first 20 lines (decompressed) ---"
-            gunzip -c "${BACKUP_FILE}" | head -20 || true
+          # gzip 무결성 검증.
+          if ! gzip -t "${BACKUP_FILE}"; then
+            echo "::error::Backup is not a valid gzip archive"
+            exit 1
+          fi
+
+          # pg_dump 출력의 stable한 마커. 버전 14~17 모두 처음 수십 줄 내에 SET statement_timeout
+          # 또는 pg_catalog 참조가 등장한다. --clean --if-exists 사용 시 'PostgreSQL database dump'
+          # 코멘트는 첫 5줄 밖으로 밀려서 그것만으로는 판정 불가.
+          if ! gunzip -c "${BACKUP_FILE}" | head -50 | grep -qE "^SET statement_timeout|pg_catalog"; then
+            echo "::error::Backup does not look like a valid pg_dump output"
+            echo "--- first 30 lines (decompressed) ---"
+            gunzip -c "${BACKUP_FILE}" | head -30 || true
             exit 1
           fi
 
