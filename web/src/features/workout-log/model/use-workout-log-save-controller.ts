@@ -1,5 +1,8 @@
 import { useCallback, useRef, useState } from "react";
-import type { FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
+import type {
+  FailureProtocolResult,
+  FailureProtocolTarget,
+} from "@/components/ui/failure-protocol-sheet";
 import {
   validateWorkoutDraft,
   validateWorkoutRecordEntryState,
@@ -12,8 +15,9 @@ import { submitWorkoutLogDraft } from "./save";
 
 type FailureProtocolSheetState = {
   title: string;
-  message: string;
+  description: string;
   mode: ProgressionProtocolMode;
+  targets: FailureProtocolTarget[];
 } | null;
 
 import { useStore, useSetAtom } from "jotai";
@@ -43,15 +47,15 @@ export function useWorkoutLogSaveController({
   const [failureProtocolSheet, setFailureProtocolSheet] =
     useState<FailureProtocolSheetState>(null);
   const failureProtocolResolveRef =
-    useRef<((choice: FailureProtocolChoice) => void) | null>(null);
+    useRef<((result: FailureProtocolResult) => void) | null>(null);
 
   const requestFailureProtocolChoice = useCallback(
     (input: NonNullable<FailureProtocolSheetState>) =>
-      new Promise<FailureProtocolChoice>((resolve) => {
-        failureProtocolResolveRef.current = (choice) => {
+      new Promise<FailureProtocolResult>((resolve) => {
+        failureProtocolResolveRef.current = (result) => {
           setFailureProtocolSheet(null);
           failureProtocolResolveRef.current = null;
-          resolve(choice);
+          resolve(result);
         };
         setFailureProtocolSheet(input);
       }),
@@ -59,8 +63,8 @@ export function useWorkoutLogSaveController({
   );
 
   const handleFailureProtocolSelect = useCallback(
-    (choice: FailureProtocolChoice) => {
-      failureProtocolResolveRef.current?.(choice);
+    (result: FailureProtocolResult) => {
+      failureProtocolResolveRef.current?.(result);
     },
     [],
   );
@@ -120,6 +124,7 @@ export function useWorkoutLogSaveController({
         draft,
         bodyweightKg,
         progressionOverride: progression.override,
+        progressionTargetOverridesKg: progression.targetOverridesKg ?? null,
         persistenceKey,
       });
 
