@@ -104,13 +104,20 @@ export function FailureProtocolSheet({
     }));
   };
 
-  const adjustTarget = (key: string, delta: number) => {
+  const adjustTarget = (target: FailureProtocolTarget, delta: number) => {
     setDecisions((prev) => {
-      const current = prev[key];
+      const current = prev[target.key];
       if (!current) return prev;
+      const nextWorkKg = snapTo2p5(current.workKg + delta);
+      const nextMode: FailureProtocolMode =
+        nextWorkKg > target.currentWorkKg
+          ? "increase"
+          : nextWorkKg < target.currentWorkKg
+            ? "reset"
+            : "hold";
       return {
         ...prev,
-        [key]: { ...current, workKg: snapTo2p5(current.workKg + delta) },
+        [target.key]: { mode: nextMode, workKg: nextWorkKg },
       };
     });
   };
@@ -289,7 +296,7 @@ export function FailureProtocolSheet({
                         icon="remove"
                         label={locale === "ko" ? "2.5kg 감소" : "Decrease 2.5kg"}
                         tone="neutral"
-                        onClick={() => adjustTarget(target.key, -STEP_KG)}
+                        onClick={() => adjustTarget(target, -STEP_KG)}
                       />
                       <V2Stack gap={1} align="center" style={{ flex: 1 }}>
                         <span className="v2-num-lg" style={{ color: "var(--v2-ink)" }}>
@@ -309,7 +316,7 @@ export function FailureProtocolSheet({
                         icon="add"
                         label={locale === "ko" ? "2.5kg 증가" : "Increase 2.5kg"}
                         tone="neutral"
-                        onClick={() => adjustTarget(target.key, STEP_KG)}
+                        onClick={() => adjustTarget(target, STEP_KG)}
                       />
                     </V2Inline>
 
