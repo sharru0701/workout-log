@@ -29,8 +29,13 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client-17 jq
 
-          echo "Installed pg_dump version:"
-          pg_dump --version
+          # Ubuntu 24.04 runner에는 postgresql-client-16이 이미 있고 /usr/bin/pg_dump는
+          # pg_wrapper를 통해 여전히 16을 호출한다. 17 바이너리는 /usr/lib/postgresql/17/bin
+          # 에만 들어가므로 PATH 우선순위를 17로 올린다.
+          echo "/usr/lib/postgresql/17/bin" >> "$GITHUB_PATH"
+
+          echo "Installed pg_dump version (direct path):"
+          /usr/lib/postgresql/17/bin/pg_dump --version
 
       - name: Extract Supabase Details
         id: supabase
@@ -54,6 +59,10 @@ jobs:
         run: |
           BACKUP_FILE="workoutlog_backup_$(date +'%Y%m%d_%H%M%S').sql.gz"
           echo "BACKUP_FILE=${BACKUP_FILE}" >> $GITHUB_ENV
+
+          echo "Using pg_dump:"
+          which pg_dump
+          pg_dump --version
 
           echo "Generating PostgreSQL public schema dump..."
           pg_dump "${{ secrets.SUPABASE_DIRECT_URL }}" \
