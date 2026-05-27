@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
 import {
   V2Card,
+  V2Chip,
   V2Hairline,
   V2IconBtn,
   V2Inline,
@@ -12,6 +13,7 @@ import {
   V2Segmented,
   V2Stack,
 } from "@/components/v2/primitives";
+import type { V2ChipTone } from "@/components/v2/primitives";
 import { BottomSheet } from "./bottom-sheet";
 
 export type FailureProtocolMode = "increase" | "hold" | "reset";
@@ -187,18 +189,27 @@ export function FailureProtocolSheet({
       <V2Stack gap={4}>
         {description || targets.length > 0 ? (
           <V2Card tone={isBlockCompletion ? "inset" : "danger"} padding="var(--v2-s-4)">
-            <V2Stack gap={2}>
+            <V2Stack gap={3}>
               {description ? (
-                <p className="v2-body" style={{ whiteSpace: "pre-line", margin: 0 }}>
+                <p
+                  className="v2-body"
+                  style={{ whiteSpace: "pre-line", margin: 0, color: "var(--v2-ink-2)" }}
+                >
                   {description}
                 </p>
               ) : null}
               {targets.length > 0 ? (
-                <V2Stack gap={1}>
+                <V2Stack gap={2}>
                   {targets.map((target) => {
                     const recommendedNext = recommendedNextKg(target, target.recommendedMode);
                     const delta = recommendedNext - target.currentWorkKg;
-                    const modeLabel =
+                    const chipTone: V2ChipTone =
+                      target.recommendedMode === "increase"
+                        ? "success"
+                        : target.recommendedMode === "reset"
+                          ? "danger"
+                          : "neutral";
+                    const chipLabel =
                       target.recommendedMode === "increase"
                         ? locale === "ko"
                           ? "증량"
@@ -212,19 +223,32 @@ export function FailureProtocolSheet({
                             : "Hold";
                     const deltaText =
                       delta === 0
-                        ? locale === "ko"
-                          ? "유지"
-                          : "hold"
+                        ? null
                         : `${delta > 0 ? "+" : ""}${formatKg(delta)}kg`;
                     return (
-                      <p
-                        key={target.key}
-                        className="v2-small"
-                        style={{ margin: 0, color: "var(--v2-ink-2)" }}
-                      >
-                        • {target.label}: {formatKg(target.currentWorkKg)}kg → {formatKg(recommendedNext)}kg ({deltaText}, {modeLabel} {locale === "ko" ? "권장" : "recommended"}
-                        {target.reasonLabel ? ` · ${target.reasonLabel}` : ""})
-                      </p>
+                      <V2Stack key={target.key} gap={1}>
+                        <V2Inline justify="space-between" align="center">
+                          <span className="v2-label" style={{ color: "var(--v2-ink)" }}>
+                            {target.label}
+                          </span>
+                          <V2Chip tone={chipTone}>
+                            {deltaText ? `${deltaText} ${chipLabel}` : chipLabel}
+                          </V2Chip>
+                        </V2Inline>
+                        <V2Inline gap={2} align="baseline" wrap>
+                          <span
+                            className="v2-mono-label"
+                            style={{ color: "var(--v2-ink-2)" }}
+                          >
+                            {formatKg(target.currentWorkKg)} → {formatKg(recommendedNext)} kg
+                          </span>
+                          {target.reasonLabel ? (
+                            <span className="v2-small" style={{ color: "var(--v2-ink-3)" }}>
+                              {target.reasonLabel}
+                            </span>
+                          ) : null}
+                        </V2Inline>
+                      </V2Stack>
                     );
                   })}
                 </V2Stack>
