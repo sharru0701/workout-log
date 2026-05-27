@@ -14,12 +14,11 @@ import {
   programEntryStateAtom,
   visibleExercisesAtom,
 } from "@/features/workout-log/store/workout-log-atoms";
-import type { KeypadInitialFocus } from "./workout-log-keypad-panel";
 
 type WorkoutLogSummarySheetProps = {
   open: boolean;
   onClose: () => void;
-  onJumpToExercise: (focus: KeypadInitialFocus) => void;
+  onJumpToExercise: (exerciseId: string) => void;
 };
 
 /**
@@ -195,26 +194,16 @@ export function WorkoutLogSummarySheet({
                     total={totalSetsExercise}
                   />
                   <V2IconBtn
-                    icon="dialpad"
+                    icon="north_east"
                     size={36}
                     tone="accent"
                     label={
                       locale === "ko"
-                        ? `${ex.exerciseName} 키패드 입력`
-                        : `Enter ${ex.exerciseName}`
+                        ? `${ex.exerciseName} 으로 이동`
+                        : `Jump to ${ex.exerciseName}`
                     }
                     onClick={() => {
-                      const empty = repsInputs.findIndex(
-                        (v) =>
-                          (v ?? "").toString().trim() === "" ||
-                          Number(v) <= 0,
-                      );
-                      onJumpToExercise({
-                        exerciseId: ex.id,
-                        setIndex: empty >= 0 ? empty : 0,
-                        field: "reps",
-                        nonce: Date.now(),
-                      });
+                      onJumpToExercise(ex.id);
                       onClose();
                     }}
                     style={{ borderRadius: "var(--v2-r-2)", flexShrink: 0 }}

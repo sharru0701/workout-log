@@ -1,6 +1,6 @@
 /*
   DEPRECATED (migration DS-2): legacy .app-page / .page-header / .app-action-row.
-  v2-overrides.css 가 --color-*/--space-*/--radius-* 토큰을 v2 paper/violet 으로
+  v2-overrides.css 가 --color-…/--space-…/--radius-… 토큰을 v2 paper/violet 으로
   remap 하므로 색감/간격은 일치하지만, 새 화면에서는 components/v2/primitives.tsx
   의 V2Card / V2PrimaryBtn / v2-h1 등을 사용해야 합니다.
 
