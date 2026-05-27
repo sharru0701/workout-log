@@ -19,6 +19,7 @@ export type UpsertWorkoutLogInput = {
   generatedSessionId?: string | null;
   sets: any[];
   progressionOverride?: "hold" | "increase" | "reset" | null;
+  progressionTargetOverridesKg?: Record<string, number> | null;
   locale: "ko" | "en";
 };
 
@@ -34,6 +35,7 @@ export async function upsertWorkoutLogService({
   generatedSessionId: submittedGeneratedSessionId,
   sets,
   progressionOverride,
+  progressionTargetOverridesKg,
   locale,
 }: UpsertWorkoutLogInput) {
   if (sets.length === 0) {
@@ -245,6 +247,7 @@ export async function upsertWorkoutLogService({
         sets,
         mode: logId ? "replay" : "upsert",
         progressionOverride,
+        progressionTargetOverridesKg,
       });
     }
 

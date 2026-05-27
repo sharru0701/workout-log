@@ -59,6 +59,19 @@ function encodeCursor(cursor: LogCursor): string {
   return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
 }
 
+function parseProgressionTargetOverridesKg(raw: unknown): Record<string, number> | null {
+  if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+  const out: Record<string, number> = {};
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const trimmedKey = String(key).trim();
+    if (!trimmedKey) continue;
+    const num = typeof value === "number" ? value : Number(value);
+    if (!Number.isFinite(num) || num < 0) continue;
+    out[trimmedKey] = Math.max(0, Math.round(num / 2.5) * 2.5);
+  }
+  return Object.keys(out).length > 0 ? out : null;
+}
+
 function parseBooleanQueryParam(raw: string | null, defaultValue: boolean) {
   if (raw == null) return defaultValue;
   const normalized = raw.trim().toLowerCase();
@@ -259,6 +272,7 @@ async function POSTImpl(req: Request) {
       generatedSessionId: typeof body.generatedSessionId === "string" && body.generatedSessionId.trim() ? body.generatedSessionId.trim() : null,
       sets,
       progressionOverride: body.progressionOverride === "hold" || body.progressionOverride === "increase" || body.progressionOverride === "reset" ? body.progressionOverride : null,
+      progressionTargetOverridesKg: parseProgressionTargetOverridesKg(body.progressionTargetOverridesKg),
     });
 
     return NextResponse.json(created, { status: 201 });

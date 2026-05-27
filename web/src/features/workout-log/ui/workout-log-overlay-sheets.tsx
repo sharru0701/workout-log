@@ -3,7 +3,10 @@
 import { memo } from "react";
 import dynamic from "next/dynamic";
 import type { Dispatch, SetStateAction } from "react";
-import type { FailureProtocolChoice } from "@/components/ui/failure-protocol-sheet";
+import type {
+  FailureProtocolResult,
+  FailureProtocolTarget,
+} from "@/components/ui/failure-protocol-sheet";
 import type { PendingRestorePrompt } from "@/features/workout-log/model/editor-actions";
 import type { AddExerciseDraft, WorkoutLogExerciseOption } from "@/features/workout-log/model/types";
 import {
@@ -67,10 +70,11 @@ type WorkoutLogOverlaySheetsProps = {
   onResolveRestorePrompt: (accept: boolean) => void;
   failureProtocolSheet: {
     title: string;
-    message: string;
+    description: string;
     mode: "block-completion" | "greyskull-reset";
+    targets: FailureProtocolTarget[];
   } | null;
-  onSelectFailureProtocol: (choice: FailureProtocolChoice) => void;
+  onSelectFailureProtocol: (result: FailureProtocolResult) => void;
 };
 
 function areSelectedExerciseOptionsEqual(
@@ -86,6 +90,28 @@ function areSelectedExerciseOptionsEqual(
   );
 }
 
+function areFailureProtocolTargetsEqual(
+  left: FailureProtocolTarget[],
+  right: FailureProtocolTarget[],
+) {
+  if (left === right) return true;
+  if (left.length !== right.length) return false;
+  for (let i = 0; i < left.length; i += 1) {
+    const a = left[i];
+    const b = right[i];
+    if (
+      a.key !== b.key ||
+      a.label !== b.label ||
+      a.currentWorkKg !== b.currentWorkKg ||
+      a.recommendedIncreaseKg !== b.recommendedIncreaseKg ||
+      a.recommendedResetKg !== b.recommendedResetKg
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
 function areFailureProtocolSheetsEqual(
   left: WorkoutLogOverlaySheetsProps["failureProtocolSheet"],
   right: WorkoutLogOverlaySheetsProps["failureProtocolSheet"],
@@ -94,8 +120,9 @@ function areFailureProtocolSheetsEqual(
   if (!left || !right) return false;
   return (
     left.title === right.title &&
-    left.message === right.message &&
-    left.mode === right.mode
+    left.description === right.description &&
+    left.mode === right.mode &&
+    areFailureProtocolTargetsEqual(left.targets, right.targets)
   );
 }
 
@@ -226,8 +253,9 @@ export const WorkoutLogOverlaySheets = memo(function WorkoutLogOverlaySheets({
       <FailureProtocolSheet
         open={failureProtocolSheet !== null}
         title={failureProtocolSheet?.title ?? ""}
-        message={failureProtocolSheet?.message ?? ""}
+        description={failureProtocolSheet?.description ?? ""}
         mode={failureProtocolSheet?.mode ?? "block-completion"}
+        targets={failureProtocolSheet?.targets ?? []}
         onSelect={onSelectFailureProtocol}
       />
     </>

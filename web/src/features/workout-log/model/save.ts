@@ -7,11 +7,13 @@ export async function submitWorkoutLogDraft({
   draft,
   bodyweightKg,
   progressionOverride,
+  progressionTargetOverridesKg,
   persistenceKey,
 }: {
   draft: WorkoutRecordDraft;
   bodyweightKg: number | null | undefined;
   progressionOverride: "hold" | "increase" | "reset" | null;
+  progressionTargetOverridesKg?: Record<string, number> | null;
   persistenceKey: string | null;
 }) {
   const payload = toWorkoutLogPayload(draft, {
@@ -19,18 +21,17 @@ export async function submitWorkoutLogDraft({
     isBodyweightExercise: isBodyweightExerciseName,
   });
 
-  const payloadWithOverride = progressionOverride ? { ...payload, progressionOverride } : payload;
-  
   const result = await submitWorkoutLogAction({
     logId: draft.session.logId ?? undefined,
-    timezone: payloadWithOverride.timezone ?? "UTC",
-    performedAt: new Date(payloadWithOverride.performedAt),
-    durationMinutes: payloadWithOverride.durationMinutes,
-    notes: payloadWithOverride.notes,
-    planId: payloadWithOverride.planId,
-    generatedSessionId: payloadWithOverride.generatedSessionId,
-    sets: payloadWithOverride.sets,
-    progressionOverride: (payloadWithOverride as any).progressionOverride as "hold" | "increase" | "reset" | undefined,
+    timezone: payload.timezone ?? "UTC",
+    performedAt: new Date(payload.performedAt),
+    durationMinutes: payload.durationMinutes,
+    notes: payload.notes,
+    planId: payload.planId,
+    generatedSessionId: payload.generatedSessionId,
+    sets: payload.sets,
+    progressionOverride: progressionOverride ?? undefined,
+    progressionTargetOverridesKg: progressionTargetOverridesKg ?? undefined,
   });
 
   if (!result.success) {

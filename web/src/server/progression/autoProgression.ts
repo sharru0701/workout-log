@@ -29,7 +29,25 @@ type ApplyAutoProgressionInput = {
   sets: unknown[];
   mode?: "upsert" | "replay";
   progressionOverride?: ProgressionOverride | null;
+  progressionTargetOverridesKg?: Record<string, number> | null;
 };
+
+function snapTo2p5(value: number) {
+  return Math.max(0, Math.round(value / 2.5) * 2.5);
+}
+
+function readOverrideWorkKg(
+  overrides: Record<string, number> | null | undefined,
+  key: string,
+  target: string,
+): number | null {
+  if (!overrides) return null;
+  const byKey = overrides[key];
+  if (typeof byKey === "number" && Number.isFinite(byKey) && byKey >= 0) return snapTo2p5(byKey);
+  const byTarget = overrides[target];
+  if (typeof byTarget === "number" && Number.isFinite(byTarget) && byTarget >= 0) return snapTo2p5(byTarget);
+  return null;
+}
 
 type ResolvedAutoProgressionContext =
   | {
@@ -210,19 +228,24 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
     const shouldApplyOverrideToAllTargets = isOperatorBlockEnd || is531BlockEnd || isAsymptoteBlockEnd;
     const prevTargets = ((beforeState as Record<string, unknown>).targets ?? {}) as Record<string, Record<string, unknown>>;
 
+    // 사용자가 sheet에서 직접 조정한 타겟별 절대 workKg.
+    // 있으면 protocol 기본값 대신 그 값을 사용 — 없는 타겟은 기본값으로 fallback.
+    const userOverrides = input.progressionTargetOverridesKg ?? null;
+
     if (input.progressionOverride === "hold") {
-      // workKg는 이전 값 유지, streak은 0으로 초기화 (새 시작)
       const nextTargets = { ...reduced.nextState.targets };
       for (const key of Object.keys(nextTargets)) {
+        const target = nextTargets[key];
+        if (!target) continue;
         const prev = prevTargets[key];
-        if (prev) {
-          nextTargets[key] = {
-            ...nextTargets[key],
-            workKg: Number(prev.workKg ?? 0),
-            successStreak: 0,
-            failureStreak: 0,
-          };
-        }
+        const baseKg = prev ? Number(prev.workKg ?? 0) : target.workKg;
+        const overrideKg = readOverrideWorkKg(userOverrides, key, target.progressionTarget);
+        nextTargets[key] = {
+          ...target,
+          workKg: overrideKg ?? snapTo2p5(baseKg),
+          successStreak: 0,
+          failureStreak: 0,
+        };
       }
       finalNextState = { ...reduced.nextState, targets: nextTargets };
       finalEventType = "HOLD";
@@ -236,14 +259,21 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
         if (!target) continue;
         const prev = prevTargets[key];
         const baseKg = prev ? Number(prev.workKg ?? 0) : target.workKg;
-        const { increaseKg } = rulesFor(
-          resolved.progressionProgram,
-          target.progressionTarget,
-          readIncrementOverride(resolved.params, key, target.progressionTarget),
-        );
+        const overrideKg = readOverrideWorkKg(userOverrides, key, target.progressionTarget);
+        let resolvedWorkKg: number;
+        if (overrideKg !== null) {
+          resolvedWorkKg = overrideKg;
+        } else {
+          const { increaseKg } = rulesFor(
+            resolved.progressionProgram,
+            target.progressionTarget,
+            readIncrementOverride(resolved.params, key, target.progressionTarget),
+          );
+          resolvedWorkKg = snapTo2p5(baseKg + increaseKg);
+        }
         nextTargets[key] = {
           ...target,
-          workKg: Math.max(0, Math.round((baseKg + increaseKg) / 2.5) * 2.5),
+          workKg: resolvedWorkKg,
           successStreak: 0,
           failureStreak: 0,
         };
@@ -260,18 +290,25 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
         if (!target) continue;
         const prev = prevTargets[key];
         const baseKg = prev ? Number(prev.workKg ?? 0) : target.workKg;
-        const rule = rulesFor(
-          resolved.progressionProgram,
-          target.progressionTarget,
-          readIncrementOverride(resolved.params, key, target.progressionTarget),
-        );
-        const computedKg =
-          rule.decreaseKg !== null
-            ? baseKg - rule.decreaseKg
-            : baseKg * rule.resetFactor;
+        const overrideKg = readOverrideWorkKg(userOverrides, key, target.progressionTarget);
+        let resolvedWorkKg: number;
+        if (overrideKg !== null) {
+          resolvedWorkKg = overrideKg;
+        } else {
+          const rule = rulesFor(
+            resolved.progressionProgram,
+            target.progressionTarget,
+            readIncrementOverride(resolved.params, key, target.progressionTarget),
+          );
+          const computedKg =
+            rule.decreaseKg !== null
+              ? baseKg - rule.decreaseKg
+              : baseKg * rule.resetFactor;
+          resolvedWorkKg = snapTo2p5(computedKg);
+        }
         nextTargets[key] = {
           ...target,
-          workKg: Math.max(0, Math.round(computedKg / 2.5) * 2.5),
+          workKg: resolvedWorkKg,
           successStreak: 0,
           failureStreak: 0,
         };
@@ -293,6 +330,9 @@ export async function applyAutoProgressionFromLog(input: ApplyAutoProgressionInp
       meta: {
         ...toProgressionEventMeta(reduced),
         ...(input.progressionOverride ? { override: input.progressionOverride } : {}),
+        ...(input.progressionTargetOverridesKg && Object.keys(input.progressionTargetOverridesKg).length > 0
+          ? { targetOverridesKg: input.progressionTargetOverridesKg }
+          : {}),
       },
     });
     await upsertAutoProgressionRuntimeState({
