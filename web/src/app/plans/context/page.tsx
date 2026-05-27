@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
-import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
-import { V2SecondaryBtn } from "@/components/v2/primitives";
+import { AppPage, PageSection } from "@/components/ui/page-layout";
+import { V2SecondaryBtn, V2SectionHeader } from "@/components/v2/primitives";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -87,7 +87,7 @@ export default async function PlanContextPage({ searchParams }: { searchParams?:
 
   return (
     <AppPage>
-      <PageHeader eyebrow={copy.plansContext.eyebrow} title={copy.plansContext.title} description={copy.plansContext.description} actions={<V2SecondaryBtn as="a" href={APP_ROUTES.plansManage}>{copy.plans.manage}</V2SecondaryBtn>} />
+      <V2SectionHeader level="h1" eyebrow={copy.plansContext.eyebrow} title={copy.plansContext.title} description={copy.plansContext.description} action={<V2SecondaryBtn as="a" href={APP_ROUTES.plansManage}>{copy.plans.manage}</V2SecondaryBtn>} />
       <PageSection title={copy.plansContext.sectionTitle}>
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
           {contextItems.map((item) => <SettingRow key={item.href} item={item} />)}

@@ -1,8 +1,8 @@
 "use client";
 
 import { SearchInput } from "@/components/ui/search-input";
-import { V2PrimaryBtn, V2SecondaryBtn } from "@/components/v2/primitives";
-import { AppPage, PageHeader, PageSection, StateBlock } from "@/components/ui/page-layout";
+import { V2PrimaryBtn, V2SecondaryBtn, V2SectionHeader } from "@/components/v2/primitives";
+import { AppPage, PageSection, StateBlock } from "@/components/ui/page-layout";
 import type { ProgramListItem } from "@/lib/program-store/model";
 import { ProgramListCard } from "./program-list-card";
 
@@ -70,11 +70,12 @@ export function ProgramStoreBrowseContent({
 }: ProgramStoreBrowseContentProps) {
   return (
     <AppPage>
-      <PageHeader
+      <V2SectionHeader
+        level="h1"
         eyebrow={copy.eyebrow}
         title={copy.title}
         description={copy.description}
-        actions={(
+        action={(
           <V2SecondaryBtn icon="add" onClick={onOpenCreateSheet}>
             {locale === "ko" ? "프로그램 만들기" : "Create Program"}
           </V2SecondaryBtn>
