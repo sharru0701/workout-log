@@ -289,6 +289,41 @@ var(--font-label)           /* 500 12px/1 Space Grotesk */
 | 본문 | Inter | 16px | 400 | — |
 | 보조 텍스트 | Inter | 13px | 400 | `color-text-muted` |
 
+### 2-4. 가변 텍스트 줄바꿈 정책
+
+플랜명·세션명·종목명·메모처럼 길이를 통제할 수 없는 텍스트는 **자연 wrap을 허용**한다. 별도 처리 불필요 — [`v2-overrides.css`](../src/styles/v2-overrides.css) 가 다음을 전역 강제한다.
+
+```css
+body                          { word-break: keep-all; overflow-wrap: break-word; }
+h1, h2, h3, .v2-h1, .v2-h2,
+.v2-h3, .v2-display           { word-break: keep-all; text-wrap: balance; }
+.t-body, .v2-body, p          { word-break: keep-all; overflow-wrap: break-word; text-wrap: pretty; }
+```
+
+→ 한글은 어절 단위 보존, 긴 영문 단어는 단어 경계에서 wrap, 헤드라인은 균형 wrap.
+
+```tsx
+// ❌ NG — 좁은 모바일에서 가변 텍스트가 잘려서 잘림 (혹은 ellipsis)
+<button className="page-header__title" style={{
+  whiteSpace: "nowrap",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+}}>
+  {selectedPlan.name}
+</button>
+
+// ✅ OK — inline overflow 처리를 빼면 body 전역 룰이 자동 적용되어 2줄 wrap
+<button className="page-header__title" style={{ display: "block", width: "100%" }}>
+  {selectedPlan.name}
+</button>
+```
+
+**예외 — 의도적 truncate가 필요한 경우** (리스트 행 우측에 메트릭/액션이 함께 표시되는 좁은 셀, 예: [`workout-exercise-card.tsx`](../src/widgets/workout-log-screen/workout-exercise-card.tsx) 의 종목명):
+- 1줄 ellipsis 허용 (`white-space: nowrap` + `overflow: hidden` + `text-overflow: ellipsis`)
+- 단, 부모는 **반드시 `minWidth: 0` + `flex: 1`** 로 flex 컨테이너에서 shrink 가능해야 한다 (그러지 않으면 ellipsis가 발동하지 않고 옆 요소를 밀어 가로 overflow 발생)
+
+> **inline `wordBreak`/`overflowWrap` 박지 말 것** — 전역 룰이 이미 `break-word` 인데 inline 으로 `anywhere` 를 박으면 영문 단어 중간이 깨져 가이드 정책과 어긋난다.
+
 ---
 
 ## 3. 간격 & 레이아웃 시스템
@@ -417,6 +452,35 @@ rounded-full        → 칩, pill 버튼, 프로그레스 바, 인텐시티 바
   섹션명
 </h2>
 ```
+
+#### V2SectionHeader (v2 primitive — 신규 화면은 이쪽 사용)
+
+[`components/v2/primitives/section-header.tsx`](../src/components/v2/primitives/section-header.tsx) — `.page-header__*` / `<h1 style={...}>` 인라인 헤더 패턴을 대체. Hard Rule 1(Primitive-First) 준수.
+
+```tsx
+import { V2SectionHeader } from "@/components/v2/primitives";
+
+<V2SectionHeader
+  level="h1"                              // h1 | h2(default) | h3
+  eyebrow="오늘의 운동 · C1W6D3"
+  title={selectedPlan.name}
+  description={lockedNote}                // (선택) title 아래 보조 텍스트
+  onTitleClick={openPlanSheet}            // (선택) title을 button 으로 래핑 + trailing unfold_more
+  titleDisabled={isEditingExistingLog}    // (선택) onTitleClick은 유지하되 잠금 (a11y tree 에서 disabled button)
+  titleAriaLabel="플랜 선택 열기"
+  titleAriaExpanded={planSheetOpen}
+  titleAriaHasPopup="dialog"
+  action={<V2IconBtn icon="more_horiz" label="옵션" />}  // (선택) title 우측 별도 영역
+/>
+```
+
+| prop | 용도 |
+|---|---|
+| `eyebrow` · `title` · `description` | 상/중/하 텍스트. 가변 텍스트는 §2-4 전역 wrap 정책 위임 (별도 처리 불필요) |
+| `onTitleClick` | 있으면 title 을 `<button>` 으로 래핑하고 trailing `unfold_more` 아이콘 자동 노출 (dialog/sheet trigger 패턴) |
+| `titleDisabled` | `onTitleClick` 은 유지하되 잠금. 인디케이터 숨김, cursor: default, button disabled 로 a11y tree 보존 |
+| `titleAria*` | aria-label / -expanded / -haspopup passthrough |
+| `action` | title 우측 별도 인터랙티브 영역 (`V2IconBtn`, `V2Chip` 등). `onTitleClick` 과 독립 |
 
 > **금지**: `fontSize: "9px"` eyebrow div를 섹션 레이블로 사용.
 > 카드 내부 stat 레이블(세트/시간/볼륨 등)은 10px `font-label` 유지.
@@ -940,6 +1004,8 @@ var(--ease-emphasized)    /* 강조 이징 */
 | 고채도 그림자 | ambient shadow (4–8% opacity, on-surface tint) |
 | `0.5rem` 이하 radius 카드 | `12px` 이상 |
 | Inter + Space Grotesk 같은 단어 혼용 | UI/수치 폰트 영역 분리 |
+| 가변 텍스트(플랜/세션/종목/메모)에 inline `whiteSpace: nowrap` + `textOverflow: ellipsis` 로 1줄 잘림 | body 전역 `keep-all` + `break-word` 룰에 위임 (자연 wrap). 의도적 truncate는 §2-4 예외만 |
+| inline `wordBreak: "anywhere"` / `overflowWrap: "anywhere"` 추가 | 전역 `break-word` 정책 유지. 영문 단어 중간 깨짐 방지 |
 | 하단 네비게이션 inline style | 토큰 기반 클래스 |
 | `--color-surface` (bottom nav 배경) | `surface-container-highest` 85% opacity + backdrop-blur |
 

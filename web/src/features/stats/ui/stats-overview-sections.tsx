@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { memo } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { PageHeader, SectionHeading, StateBlock } from "@/components/ui/page-layout";
+import { SectionHeading, StateBlock } from "@/components/ui/page-layout";
+import { V2SectionHeader } from "@/components/v2/primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type { StatsBundleResult } from "@/server/stats/bundle-service";
 
@@ -11,7 +12,8 @@ export function StatsPageHeader() {
   const { locale } = useLocale();
 
   return (
-    <PageHeader
+    <V2SectionHeader
+      level="h1"
       eyebrow={locale === "ko" ? "퍼포먼스" : "Performance"}
       title={locale === "ko" ? "통계" : "Stats"}
       description={

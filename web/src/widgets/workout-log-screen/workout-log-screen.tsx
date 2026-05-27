@@ -30,6 +30,7 @@ import {
 } from "@/features/workout-log/ui/workout-log-stacked-list";
 import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
 import { AppPage, StickyActionBar } from "@/components/ui/page-layout";
+import { V2SectionHeader } from "@/components/v2/primitives";
 import type {
   WorkoutLogInitialContext,
   WorkoutLogPageBootstrap,
@@ -304,70 +305,27 @@ function WorkoutLogScreenContent({
 
       {!noPlan && isDraftLoaded && draft ? (
         <AppPage>
-          <header className="page-header">
-            <div className="page-header__body">
-              <p className="page-header__eyebrow">
-                {locale === "ko" ? "오늘의 운동" : "TODAY"}
-                {sessionLabel ? ` · ${sessionLabel}` : ""}
-                {sessionTypeLabel ? ` · ${sessionTypeLabel}` : ""}
-              </p>
-              <button
-                type="button"
-                className="page-header__title"
-                onClick={isEditingExistingLog ? undefined : openPlanSheet}
-                disabled={isEditingExistingLog}
-                aria-expanded={
-                  isEditingExistingLog ? false : planSheetOpen
-                }
-                aria-haspopup="dialog"
-                aria-label={
-                  locale === "ko" ? "플랜 선택 열기" : "Open plan selector"
-                }
-                style={{
-                  display: "block",
-                  position: "relative",
-                  width: "100%",
-                  maxWidth: "100%",
-                  minWidth: 0,
-                  background: "transparent",
-                  border: "none",
-                  padding: 0,
-                  paddingRight: !isEditingExistingLog
-                    ? "var(--v2-s-6)"
-                    : 0,
-                  cursor: isEditingExistingLog ? "default" : "pointer",
-                  textAlign: "left",
-                  color: "inherit",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {selectedPlan?.name ?? ""}
-                {!isEditingExistingLog && (
-                  <span
-                    className="material-symbols-outlined"
-                    style={{
-                      position: "absolute",
-                      right: 0,
-                      top: "50%",
-                      transform: "translateY(-50%)",
-                      fontSize: "var(--v2-t-h3)",
-                      color: "var(--v2-ink-3)",
-                    }}
-                    aria-hidden
-                  >
-                    unfold_more
-                  </span>
-                )}
-              </button>
-              {isEditingExistingLog && (
-                <p className="page-header__description">
-                  {copy.workoutLog.planLockedWhileEditing}
-                </p>
-              )}
-            </div>
-          </header>
+          <V2SectionHeader
+            level="h1"
+            eyebrow={
+              (locale === "ko" ? "오늘의 운동" : "TODAY") +
+              (sessionLabel ? ` · ${sessionLabel}` : "") +
+              (sessionTypeLabel ? ` · ${sessionTypeLabel}` : "")
+            }
+            title={selectedPlan?.name ?? ""}
+            description={
+              isEditingExistingLog
+                ? copy.workoutLog.planLockedWhileEditing
+                : undefined
+            }
+            onTitleClick={openPlanSheet}
+            titleDisabled={isEditingExistingLog}
+            titleAriaLabel={
+              locale === "ko" ? "플랜 선택 열기" : "Open plan selector"
+            }
+            titleAriaExpanded={!isEditingExistingLog && planSheetOpen}
+            titleAriaHasPopup="dialog"
+          />
 
           <div
             style={{
