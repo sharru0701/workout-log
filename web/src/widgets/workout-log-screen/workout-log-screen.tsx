@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import {
   EmptyStateRows,
@@ -25,10 +25,11 @@ import { formatDateFriendly } from "@/features/workout-log/model/last-session-su
 import { parseSessionKey } from "@/lib/session-key";
 import { WorkoutLogOverlaySheets } from "@/features/workout-log/ui/workout-log-overlay-sheets";
 import {
-  WorkoutLogKeypadPanel,
-  type KeypadInitialFocus,
-} from "@/features/workout-log/ui/workout-log-keypad-panel";
+  WorkoutLogStackedList,
+  type WorkoutLogStackedListHandle,
+} from "@/features/workout-log/ui/workout-log-stacked-list";
 import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
+import { AppPage, StickyActionBar } from "@/components/ui/page-layout";
 import type {
   WorkoutLogInitialContext,
   WorkoutLogPageBootstrap,
@@ -79,35 +80,20 @@ function WorkoutLogScreenContent({
   const [addSheetOpen, setAddSheetOpen] = useState(false);
   const [showSaveSuccessToast, setShowSaveSuccessToast] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [keypadInitialFocus, setKeypadInitialFocus] =
-    useState<KeypadInitialFocus | null>(null);
+  const stackedListRef = useRef<WorkoutLogStackedListHandle>(null);
 
   const dismissSaveSuccessToast = useCallback(
     () => setShowSaveSuccessToast(false),
     [],
   );
 
-  const jumpKeypadToExercise = useCallback((focus: KeypadInitialFocus) => {
-    setKeypadInitialFocus(focus);
+  const jumpToExercise = useCallback((exerciseId: string) => {
+    stackedListRef.current?.focusFirstEmptyOf(exerciseId);
   }, []);
 
   const persistenceKey =
     selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
   const isWorkoutLogRouteActive = pathname?.startsWith("/workout/log") ?? true;
-
-  // 운동기록 화면은 뷰포트 내에서 컨텐츠가 정확히 맞도록 lock.
-  // 하단 네비게이션 영역을 reserve 하고 수직 스크롤이 발생하지 않게 한다.
-  useEffect(() => {
-    const previous = document.body.dataset.viewportLocked;
-    document.body.dataset.viewportLocked = "true";
-    return () => {
-      if (previous === undefined) {
-        delete document.body.dataset.viewportLocked;
-      } else {
-        document.body.dataset.viewportLocked = previous;
-      }
-    };
-  }, []);
 
   const {
     pendingRestorePrompt,
@@ -317,252 +303,191 @@ function WorkoutLogScreenContent({
       <EmptyStateRows className="v2-font-display" when={noPlan} label={copy.workoutLog.noPlans} />
 
       {!noPlan && isDraftLoaded && draft ? (
-        <div
-          style={{
-            display: "flex",
-            flex: 1,
-            flexDirection: "column",
-            minHeight: 0,
-            // 부모(.app-shell__page)의 flex 계산이 일부 모바일 환경에서
-            // child 로 height 를 전파하지 못하는 경우를 대비한 안전망.
-            height: "100%",
-            gap: "var(--v2-s-1)",
-            overflow: "hidden",
-          }}
-        >
-          {/* 컴팩트 상단 바 */}
-          <section
+        <AppPage>
+          <header className="page-header">
+            <div className="page-header__body">
+              <p className="page-header__eyebrow">
+                {locale === "ko" ? "오늘의 운동" : "TODAY"}
+                {sessionLabel ? ` · ${sessionLabel}` : ""}
+                {sessionTypeLabel ? ` · ${sessionTypeLabel}` : ""}
+              </p>
+              <button
+                type="button"
+                className="page-header__title"
+                onClick={isEditingExistingLog ? undefined : openPlanSheet}
+                disabled={isEditingExistingLog}
+                aria-expanded={
+                  isEditingExistingLog ? false : planSheetOpen
+                }
+                aria-haspopup="dialog"
+                aria-label={
+                  locale === "ko" ? "플랜 선택 열기" : "Open plan selector"
+                }
+                style={{
+                  display: "block",
+                  position: "relative",
+                  width: "100%",
+                  maxWidth: "100%",
+                  minWidth: 0,
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  paddingRight: !isEditingExistingLog
+                    ? "var(--v2-s-6)"
+                    : 0,
+                  cursor: isEditingExistingLog ? "default" : "pointer",
+                  textAlign: "left",
+                  color: "inherit",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {selectedPlan?.name ?? ""}
+                {!isEditingExistingLog && (
+                  <span
+                    className="material-symbols-outlined"
+                    style={{
+                      position: "absolute",
+                      right: 0,
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      fontSize: "var(--v2-t-h3)",
+                      color: "var(--v2-ink-3)",
+                    }}
+                    aria-hidden
+                  >
+                    unfold_more
+                  </span>
+                )}
+              </button>
+              {isEditingExistingLog && (
+                <p className="page-header__description">
+                  {copy.workoutLog.planLockedWhileEditing}
+                </p>
+              )}
+            </div>
+          </header>
+
+          <div
             style={{
               display: "flex",
-              flexDirection: "column",
-              gap: "var(--v2-s-1)",
-              flexShrink: 0,
+              gap: "var(--v2-s-2)",
+              alignItems: "stretch",
             }}
           >
+            <DateNav
+              dateKey={sessionDate}
+              label={formatDateFriendly(sessionDate, locale)}
+              onPrev={() => shiftDate(-1)}
+              onNext={() => shiftDate(1)}
+              onPick={handleDateChange}
+              ariaLabel={copy.workoutLog.dateChangeAriaLabel}
+              prevLabel={copy.workoutLog.dateNavPrev}
+              nextLabel={copy.workoutLog.dateNavNext}
+              style={{ flex: 1, minWidth: 0 }}
+            />
             <button
               type="button"
-              onClick={isEditingExistingLog ? undefined : openPlanSheet}
-              disabled={isEditingExistingLog}
-              aria-expanded={isEditingExistingLog ? false : planSheetOpen}
-              aria-haspopup="dialog"
+              onClick={() => setSummaryOpen(true)}
               aria-label={
-                locale === "ko" ? "플랜 선택 열기" : "Open plan selector"
+                locale === "ko"
+                  ? "오늘의 운동 보기"
+                  : "View today's workout"
               }
+              className="v2-font-display"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "var(--v2-s-1)",
-                padding: "var(--v2-s-1) var(--v2-s-3)",
+                gap: "var(--v2-s-2)",
+                padding: "var(--v2-s-2) var(--v2-s-4)",
                 borderRadius: "var(--v2-r-2)",
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink)",
                 border: "none",
-                cursor: isEditingExistingLog ? "default" : "pointer",
+                cursor: "pointer",
+                minHeight: "var(--v2-s-8)",
+                flexShrink: 0,
                 fontWeight: 700,
-                fontSize: "var(--v2-t-12)",
-                minHeight: "var(--v2-s-7)",
-                width: "100%",
-                textAlign: "left",
-                justifyContent: "space-between",
               }}
             >
               <span
-                style={{
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  minWidth: 0,
-                }}
+                className="material-symbols-outlined"
+                style={{ fontSize: "var(--v2-t-18)" }}
+                aria-hidden
               >
-                {selectedPlan?.name ?? ""}
+                list_alt
               </span>
-              {!isEditingExistingLog && (
-                <span
-                  className="material-symbols-outlined v2-font-display"
-                  aria-hidden
-                  style={{
-                    fontSize: "var(--v2-t-16)",
-                    color: "var(--v2-ink-3)",
-                    flexShrink: 0,
-                  }}
-                >
-                  unfold_more
-                </span>
-              )}
+              <span
+                className="v2-mono-label"
+                style={{
+                  color:
+                    completedExercisesCount > 0
+                      ? "var(--v2-c-success)"
+                      : "var(--v2-ink-3)",
+                }}
+              >
+                {completedExercisesCount}/{exerciseIds.length}
+              </span>
             </button>
+          </div>
 
-            <div
-              style={{
-                display: "flex",
-                gap: "var(--v2-s-1)",
-                alignItems: "stretch",
-              }}
-            >
-              {sessionLabel && (
-                <span
-                  className="v2-mono-label"
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    gap: "var(--v2-s-1)",
-                    padding: "var(--v2-s-1) var(--v2-s-3)",
-                    borderRadius: "var(--v2-r-2)",
-                    background:
-                      "color-mix(in srgb, var(--v2-accent) 14%, var(--v2-paper))",
-                    color: "var(--v2-accent-ink)",
-                    fontWeight: 700,
-                    fontSize: "var(--v2-t-12)",
-                    letterSpacing: "0.04em",
-                    minHeight: "var(--v2-s-7)",
-                    flexShrink: 0,
-                  }}
-                  aria-label={
-                    locale === "ko" ? `세션 ${sessionLabel}` : `Session ${sessionLabel}`
-                  }
-                >
-                  {sessionLabel}
-                  {sessionTypeLabel && (
-                    <span
-                      style={{
-                        marginLeft: 4,
-                        color: "var(--v2-ink-3)",
-                        fontWeight: 600,
-                        fontSize: "var(--v2-t-eyebrow)",
-                      }}
-                    >
-                      · {sessionTypeLabel}
-                    </span>
-                  )}
-                </span>
-              )}
-              <DateNav
-                dateKey={sessionDate}
-                label={formatDateFriendly(sessionDate, locale)}
-                onPrev={() => shiftDate(-1)}
-                onNext={() => shiftDate(1)}
-                onPick={handleDateChange}
-                ariaLabel={copy.workoutLog.dateChangeAriaLabel}
-                prevLabel={copy.workoutLog.dateNavPrev}
-                nextLabel={copy.workoutLog.dateNavNext}
-                style={{ flex: 1, minWidth: 0 }}
-              />
-              <button
-                type="button"
-                onClick={() => setSummaryOpen(true)}
-                aria-label={
-                  locale === "ko" ? "오늘의 운동 보기" : "View today's workout"
-                }
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "var(--v2-s-1)",
-                  padding: "var(--v2-s-2) var(--v2-s-3)",
-                  borderRadius: "var(--v2-r-2)",
-                  background: "var(--v2-paper-2)",
-                  color: "var(--v2-ink)",
-                  border: "none",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                  fontSize: "var(--v2-t-12)",
-                  minHeight: "var(--v2-s-7)",
-                  flexShrink: 0,
-                }}
-              >
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: "var(--v2-t-16)" }}
-                  aria-hidden
-                >
-                  list_alt
-                </span>
-                <span
-                  className="v2-mono-label"
-                  style={{
-                    color:
-                      completedExercisesCount > 0
-                        ? "var(--v2-c-success)"
-                        : "var(--v2-ink-3)",
-                    fontSize: "var(--v2-t-eyebrow)",
-                  }}
-                >
-                  {completedExercisesCount}/{exerciseIds.length}
-                </span>
-              </button>
-            </div>
-
-            {isEditingExistingLog ? (
-              <p
-                className="v2-small"
-                style={{
-                  fontSize: "var(--v2-t-label)",
-                  color: "var(--v2-ink-3)",
-                  margin: 0,
-                }}
-              >
-                {copy.workoutLog.planLockedWhileEditing}
-              </p>
-            ) : null}
-          </section>
-
-          {/* 인라인 키패드 패널 — 메인 영역 */}
-          <WorkoutLogKeypadPanel
-            initialFocus={keypadInitialFocus}
+          <WorkoutLogStackedList
+            ref={stackedListRef}
             onExerciseAction={handleExerciseAction}
             onOpenAddExerciseSheet={openAddExerciseSheet}
           />
 
-          <button
-            type="button"
-            onClick={requestSave}
-            disabled={workflowState === "saving"}
-            style={{
-              width: "100%",
-              display: "inline-flex",
-              alignItems: "center",
-              justifyContent: "center",
-              gap: "var(--v2-s-1)",
-              padding: "var(--v2-s-1) var(--v2-s-4)",
-              borderRadius: "var(--v2-r-2)",
-              background:
-                workflowState === "saving"
-                  ? "var(--v2-paper-2)"
-                  : "var(--v2-c-success)",
-              color:
-                workflowState === "saving"
-                  ? "var(--v2-ink-3)"
-                  : "var(--v2-ink-on-accent)",
-              border: "none",
-              cursor:
-                workflowState === "saving" ? "not-allowed" : "pointer",
-              fontWeight: 700,
-              fontSize: "var(--v2-t-12)",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              minHeight: "var(--v2-s-7)",
-              flexShrink: 0,
-            }}
-          >
-            <span
-              className="material-symbols-outlined"
-              style={{ fontSize: "var(--v2-t-16)" }}
-              aria-hidden
+          <StickyActionBar>
+            <button
+              type="button"
+              onClick={requestSave}
+              disabled={workflowState === "saving"}
+              className="v2-font-display"
+              style={{
+                width: "100%",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "var(--v2-s-2)",
+                padding: "var(--v2-s-3) var(--v2-s-4)",
+                borderRadius: "var(--v2-r-3)",
+                background:
+                  workflowState === "saving"
+                    ? "var(--v2-paper-2)"
+                    : "var(--v2-c-success)",
+                color:
+                  workflowState === "saving"
+                    ? "var(--v2-ink-3)"
+                    : "var(--v2-ink-on-accent)",
+                border: "none",
+                cursor:
+                  workflowState === "saving" ? "not-allowed" : "pointer",
+                fontWeight: 700,
+                minHeight: "var(--v2-s-8)",
+              }}
             >
-              done_all
-            </span>
-            {workflowState === "saving"
-              ? copy.workoutLog.saveInProgress
-              : isEditingExistingLog
-                ? copy.workoutLog.saveEdited
-                : copy.workoutLog.saveCreate}
-          </button>
-        </div>
+              <span
+                className="material-symbols-outlined"
+                style={{ fontSize: "var(--v2-t-18)" }}
+                aria-hidden
+              >
+                done_all
+              </span>
+              {workflowState === "saving"
+                ? copy.workoutLog.saveInProgress
+                : isEditingExistingLog
+                  ? copy.workoutLog.saveEdited
+                  : copy.workoutLog.saveCreate}
+            </button>
+          </StickyActionBar>
+        </AppPage>
       ) : null}
 
       <WorkoutLogSummarySheet
         open={summaryOpen}
         onClose={() => setSummaryOpen(false)}
-        onJumpToExercise={jumpKeypadToExercise}
+        onJumpToExercise={jumpToExercise}
       />
 
       <WorkoutLogOverlaySheets
@@ -631,7 +556,7 @@ function DateNav({
         padding: "var(--v2-s-1) var(--v2-s-3)",
         borderRadius: "var(--v2-r-2)",
         background: "var(--v2-paper-2)",
-        minHeight: "var(--v2-s-7)",
+        minHeight: "var(--v2-s-8)",
         ...style,
       }}
     >
@@ -644,7 +569,7 @@ function DateNav({
         <span
           className="material-symbols-outlined"
           aria-hidden="true"
-          style={{ fontSize: "var(--v2-t-16)", fontVariationSettings: "'wght' 400" }}
+          style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}
         >
           chevron_left
         </span>
@@ -656,7 +581,6 @@ function DateNav({
           display: "flex",
           alignItems: "center",
           fontWeight: 700,
-          fontSize: "var(--v2-t-12)",
           color: "var(--v2-ink)",
         }}
       >
@@ -687,7 +611,7 @@ function DateNav({
         <span
           className="material-symbols-outlined"
           aria-hidden="true"
-          style={{ fontSize: "var(--v2-t-16)", fontVariationSettings: "'wght' 400" }}
+          style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}
         >
           chevron_right
         </span>

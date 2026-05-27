@@ -37,7 +37,9 @@
 | `app/workout/[sessionId]/page.tsx` | ✅ |
 | `app/workout/session/[logId]/page.tsx` | ✅ |
 | `widgets/workout-log-screen/workout-log-screen.tsx` | ✅ (legacy `--text-hint`, `--space-xl` 제거) |
-| `features/workout-log/ui/workout-log-keypad-panel.tsx` | ✅ (이미 V2) |
+| `features/workout-log/ui/workout-log-stacked-list.tsx` | ✅ (위→아래 스크롤 리팩터, V2Card 조합) |
+| `features/workout-log/ui/workout-exercise-card.tsx` | ✅ (V2Card/V2Chip/V2IconBtn/V2Textarea) |
+| `features/workout-log/ui/workout-set-row.tsx` | ✅ (native input + No-Line focus shadow) |
 | `features/workout-log/ui/add-exercise-sheet.tsx` | ✅ (V2Card 톤 정렬, .v2-eyebrow/.v2-body 도입, 15 legacy color 제거) |
 | `features/workout-log/ui/restore-draft-sheet.tsx` | ✅ (V2PrimaryBtn/V2SecondaryBtn 도입, legacy ui/primary-button 제거) |
 | `features/workout-log/ui/workout-log-summary-sheet.tsx` | ✅ (V2Chip/V2IconBtn 도입) |

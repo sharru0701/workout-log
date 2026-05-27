@@ -88,7 +88,13 @@ export function V2Sheet({
           />
         </div>
         <div
-          style={{ flex: 1, overflowY: "auto", overscrollBehavior: "contain" }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            overflowY: "auto",
+            overflowX: "hidden",
+            overscrollBehavior: "contain",
+          }}
         >
           {children}
         </div>
