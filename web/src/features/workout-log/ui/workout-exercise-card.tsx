@@ -31,7 +31,7 @@ type Props = {
 };
 
 const ROW_GRID =
-  "var(--v2-s-7) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-7)";
+  "var(--v2-s-6) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-6) var(--v2-s-7)";
 
 export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
   const { locale } = useLocale();
@@ -380,6 +380,7 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
             RPE
           </span>
           <span style={{ textAlign: "center" }}>✓</span>
+          <span aria-hidden />
         </div>
 
         <div
@@ -394,6 +395,7 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
               key={i}
               exercise={exercise}
               setIndex={i}
+              canRemove={canRemoveSet}
               onExerciseAction={dispatchAction}
             />
           ))}
