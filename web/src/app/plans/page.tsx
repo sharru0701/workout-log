@@ -1,8 +1,8 @@
 import { APP_ROUTES } from "@/lib/app-routes";
 import { getAppCopy, resolveRequestLocale } from "@/lib/i18n/messages";
 import { NavRow } from "@/components/workout/nav-row";
-import { V2SecondaryBtn } from "@/components/v2/primitives";
-import { AppPage, PageHeader, PageSection } from "@/components/ui/page-layout";
+import { V2SecondaryBtn, V2SectionHeader } from "@/components/v2/primitives";
+import { AppPage, PageSection } from "@/components/ui/page-layout";
 
 type NavItem = {
   href: string;
@@ -27,11 +27,12 @@ export default async function PlansIndexPage() {
 
   return (
     <AppPage>
-      <PageHeader
+      <V2SectionHeader
+        level="h1"
         eyebrow={copy.plans.headerEyebrow}
         title={copy.plans.title}
         description={locale === "ko" ? "지금 진행 중인 플랜을 한눈에 관리하세요." : "Manage your active plans in one place."}
-        actions={(
+        action={(
           <V2SecondaryBtn as="a" href={APP_ROUTES.programStore}>
             {locale === "ko" ? "프로그램 스토어" : "Program Store"}
           </V2SecondaryBtn>

@@ -25,7 +25,8 @@ import {
 import {
   CalendarOverlaySheets,
 } from "@/features/calendar/ui/calendar-overlay-sheets";
-import { AppPage, PageHeader } from "@/components/ui/page-layout";
+import { AppPage } from "@/components/ui/page-layout";
+import { V2SectionHeader } from "@/components/v2/primitives";
 import {
   CalendarFilterBar,
 } from "@/features/calendar/ui/calendar-filter-bar";
@@ -230,7 +231,8 @@ export function CalendarScreen({
   return (
     <>
       <AppPage>
-        <PageHeader
+        <V2SectionHeader
+          level="h1"
           eyebrow={locale === "ko" ? "캘린더" : "Calendar"}
           title={copy.calendar.title}
           description={
