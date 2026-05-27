@@ -305,7 +305,6 @@ function WorkoutLogScreenContent({
             level="h1"
             eyebrow={
               (locale === "ko" ? "오늘의 운동" : "TODAY") +
-              (sessionLabel ? ` · ${sessionLabel}` : "") +
               (sessionTypeLabel ? ` · ${sessionTypeLabel}` : "")
             }
             title={selectedPlan?.name ?? ""}
