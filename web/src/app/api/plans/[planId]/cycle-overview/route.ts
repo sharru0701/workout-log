@@ -420,6 +420,10 @@ function totalWeeksFromDefinition(definition: unknown): number | null {
   if (kind === "operator") return 6;
   if (kind === "candito-linear") return 6;
   if (kind === "asymptote") return 4;
+  const family = String(def.programFamily ?? "").toLowerCase();
+  if (family === "operator" || def.operatorStyle === true) return 6;
+  if (family === "wendler-531") return 4;
+  if (family === "asymptote") return 4;
   return null;
 }
 
