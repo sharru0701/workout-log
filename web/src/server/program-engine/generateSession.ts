@@ -73,7 +73,7 @@ type PlannedSet = {
   note?: string;
 };
 
-type PlannedExercise = {
+export type PlannedExercise = {
   exerciseId?: string | null;
   exerciseName: string;
   role: "MAIN" | "ASSIST";
@@ -84,6 +84,8 @@ type PlannedExercise = {
   progressionTarget?: "SQUAT" | "BENCH" | "DEADLIFT" | "OHP" | "PULL" | null;
   progressionKey?: string | null;
 };
+
+export type { PlannedSet };
 
 type GeneratorCtx = {
   week: number;
@@ -1218,4 +1220,114 @@ export async function generateAndSaveSession(input: {
     .returning();
 
   return created;
+}
+
+export type PreviewSessionInput = {
+  planType: "SINGLE" | "COMPOSITE" | "MANUAL";
+  planParams: unknown;
+  runtimeState: unknown;
+  rootVersion?: { definition: unknown; defaults?: unknown } | null;
+  rootTemplateSlug?: string | null;
+  modules?: Array<{
+    target: string;
+    params: unknown;
+    version: { definition: unknown; defaults?: unknown };
+    templateSlug?: string;
+  }>;
+  week: number;
+  day: number;
+};
+
+/**
+ * DB write 없이 메모리에서 세션의 운동 미리보기를 계산.
+ * generateAndSaveSession의 snapshot 생성 로직을 재사용하지만 overrides는 미적용.
+ * 사이클 전체 흐름을 시각화할 때 18개 세션을 한 번에 계산하기 위한 용도.
+ */
+export function previewSessionExercises(
+  input: PreviewSessionInput,
+): PlannedExercise[] {
+  const effectivePlanParams = mergePlanParamsWithRuntimeState(
+    input.planParams,
+    input.runtimeState,
+  );
+
+  if (input.planType === "COMPOSITE") {
+    if (!input.modules || input.modules.length === 0) return [];
+    const blocks = input.modules.map((m) => ({
+      target: m.target,
+      definition: m.version.definition,
+      defaults: m.version.defaults ?? {},
+      params: m.params ?? {},
+    }));
+    return plannedExercisesFromBlocks(
+      { blocks },
+      input.week,
+      input.day,
+      effectivePlanParams,
+    );
+  }
+
+  if (!input.rootVersion) return [];
+
+  if (input.planType === "MANUAL") {
+    const schedule = Array.isArray(
+      (effectivePlanParams as Record<string, unknown> | null)?.schedule,
+    )
+      ? ((effectivePlanParams as Record<string, unknown>).schedule as unknown[])
+      : [];
+    if (schedule.length === 0) return [];
+    const chosenKey =
+      schedule[input.day - 1] ??
+      schedule[(input.day - 1) % schedule.length];
+    if (typeof chosenKey !== "string" || !chosenKey) return [];
+
+    const manualSession = pickManualSession(
+      input.rootVersion.definition,
+      chosenKey,
+    );
+    if (!manualSession) return [];
+
+    const manualDefinition =
+      (input.rootVersion.definition ?? {}) as Record<string, unknown>;
+    const isOperatorManual =
+      manualDefinition.operatorStyle === true ||
+      String(manualDefinition.programFamily ?? "")
+        .trim()
+        .toLowerCase() === "operator";
+
+    let exercises = isOperatorManual
+      ? plannedExercisesFromOperatorManualSession(
+          manualSession,
+          input.week,
+          effectivePlanParams,
+          (input.planParams ?? {}) as Record<string, unknown>,
+          input.rootVersion.defaults ?? {},
+        )
+      : plannedExercisesFromManualSession(manualSession);
+
+    if (!isOperatorManual && input.rootTemplateSlug) {
+      exercises = applyManualRuntimeWeightOverrides(
+        input.rootTemplateSlug,
+        exercises,
+        input.runtimeState,
+      );
+    }
+
+    return exercises;
+  }
+
+  const blocks = [
+    {
+      target: "CUSTOM",
+      definition: input.rootVersion.definition,
+      defaults: input.rootVersion.defaults ?? {},
+      params: effectivePlanParams,
+    },
+  ];
+  return plannedExercisesFromBlocks(
+    { blocks },
+    input.week,
+    input.day,
+    effectivePlanParams,
+  );
 }

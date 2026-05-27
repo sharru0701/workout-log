@@ -88,10 +88,6 @@ function WorkoutLogScreenContent({
     [],
   );
 
-  const jumpToExercise = useCallback((exerciseId: string) => {
-    stackedListRef.current?.focusFirstEmptyOf(exerciseId);
-  }, []);
-
   const persistenceKey =
     selectedPlanId && query.date ? `${selectedPlanId}:${query.date}` : null;
   const isWorkoutLogRouteActive = pathname?.startsWith("/workout/log") ?? true;
@@ -309,7 +305,6 @@ function WorkoutLogScreenContent({
             level="h1"
             eyebrow={
               (locale === "ko" ? "오늘의 운동" : "TODAY") +
-              (sessionLabel ? ` · ${sessionLabel}` : "") +
               (sessionTypeLabel ? ` · ${sessionTypeLabel}` : "")
             }
             title={selectedPlan?.name ?? ""}
@@ -350,15 +345,15 @@ function WorkoutLogScreenContent({
               onClick={() => setSummaryOpen(true)}
               aria-label={
                 locale === "ko"
-                  ? "오늘의 운동 보기"
-                  : "View today's workout"
+                  ? `오늘의 운동 보기${sessionLabel ? ` · ${sessionLabel}` : ""}`
+                  : `View today's workout${sessionLabel ? ` · ${sessionLabel}` : ""}`
               }
               className="v2-font-display"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
-                gap: "var(--v2-s-2)",
-                padding: "var(--v2-s-2) var(--v2-s-4)",
+                gap: "var(--v2-s-3)",
+                padding: "var(--v2-s-2) var(--v2-s-5)",
                 borderRadius: "var(--v2-r-2)",
                 background: "var(--v2-paper-2)",
                 color: "var(--v2-ink)",
@@ -376,6 +371,18 @@ function WorkoutLogScreenContent({
               >
                 list_alt
               </span>
+              {sessionLabel ? (
+                <span
+                  className="v2-mono-label"
+                  style={{
+                    color: "var(--v2-ink)",
+                    fontSize: "var(--v2-t-12)",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  {sessionLabel}
+                </span>
+              ) : null}
               <span
                 className="v2-mono-label"
                 style={{
@@ -445,7 +452,7 @@ function WorkoutLogScreenContent({
       <WorkoutLogSummarySheet
         open={summaryOpen}
         onClose={() => setSummaryOpen(false)}
-        onJumpToExercise={jumpToExercise}
+        planId={selectedPlan?.id ?? null}
       />
 
       <WorkoutLogOverlaySheets
