@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useAtomValue } from "jotai";
 import { useLocale } from "@/components/locale-provider";
-import { V2Sheet } from "@/components/v2/primitives";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import { apiGet, isAbortError } from "@/lib/api";
 import { formatPerformedHistoryLine } from "@/lib/workout-notation";
 import { draftAtom } from "@/features/workout-log/store/workout-log-atoms";
@@ -103,11 +103,13 @@ export function WorkoutLogSummarySheet({
     overview.targets.length === 0;
 
   return (
-    <V2Sheet
+    <BottomSheet
       open={open}
       onClose={onClose}
-      height="92%"
-      ariaLabel={localeKey === "ko" ? "사이클 개요" : "Cycle overview"}
+      headless
+      height="92dvh"
+      title={localeKey === "ko" ? "사이클 개요" : "Cycle overview"}
+      closeLabel={localeKey === "ko" ? "닫기" : "Close"}
     >
       <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">
@@ -326,7 +328,7 @@ export function WorkoutLogSummarySheet({
           </div>
         ) : null}
       </div>
-    </V2Sheet>
+    </BottomSheet>
   );
 }
 

@@ -73,6 +73,16 @@ type BottomSheetProps = {
   header?: ReactNode;
   primaryAction?: BottomSheetPrimaryAction | null;
   footer?: ReactNode;
+  /**
+   * headless 모드: 기본 헤더(title/description/close)를 그리지 않고 children만 렌더.
+   * 드래그 핸들과 X 버튼은 패널 우상단에 absolute로 표시됨. 컨테이너 내부 padding도 0.
+   * 콘텐츠를 자유롭게 배치하고 싶을 때 사용.
+   */
+  headless?: boolean;
+  /** 패널 명시적 높이. CSS 값(예: "92dvh", "60%"). 지정하지 않으면 콘텐츠 기반 auto. */
+  height?: string;
+  ariaLabelledBy?: string;
+  id?: string;
 };
 
 export function BottomSheet({
@@ -87,6 +97,10 @@ export function BottomSheet({
   header,
   primaryAction = null,
   footer,
+  headless = false,
+  height,
+  ariaLabelledBy,
+  id,
 }: BottomSheetProps) {
   const sheetId = useId();
   const [present, setPresent] = useState(open);
@@ -484,6 +498,15 @@ export function BottomSheet({
     [isInteractiveSheet, onClose, clearDragState, clearDragListeners],
   );
 
+  const panelStyle = height ? { height } : undefined;
+  const panelClasses = [
+    "mobile-bottom-sheet-panel",
+    headless ? "mobile-bottom-sheet-panel--headless" : "",
+    panelClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   const sheetElement = (
     <div
       ref={sheetRef}
@@ -493,19 +516,39 @@ export function BottomSheet({
       <div className="mobile-bottom-sheet-frame">
         <section
           ref={panelRef}
+          id={id}
           role="dialog"
           aria-modal="true"
-          aria-label={title}
+          aria-label={ariaLabelledBy ? undefined : title}
+          aria-labelledby={ariaLabelledBy}
           tabIndex={-1}
-          className={`mobile-bottom-sheet-panel ${panelClassName}`}
+          className={panelClasses}
+          style={panelStyle}
         >
           <div
             className="mobile-bottom-sheet-drag-handle"
             onPointerDown={(e) => onHandlePointerDown(e, true)}
           >
             <div aria-hidden="true" className="mobile-bottom-sheet-drag-handle-pill" />
+            {headless ? (
+              <button
+                type="button"
+                className="mobile-bottom-sheet-btn mobile-bottom-sheet-btn--floating"
+                onClick={handleClose}
+                onPointerDown={(e) => e.stopPropagation()}
+                aria-label={closeLabel}
+              >
+                <span
+                  className="material-symbols-outlined"
+                  aria-hidden="true"
+                  style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 500" }}
+                >
+                  close
+                </span>
+              </button>
+            ) : null}
           </div>
-          {header ?? (primaryAction ? (
+          {headless ? null : header ?? (primaryAction ? (
             <BottomSheetActionHeader
               title={title}
               description={hasDescription ? description : undefined}

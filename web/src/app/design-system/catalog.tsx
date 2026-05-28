@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type ReactNode } from "react";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   V2Anchor,
   V2Card,
@@ -17,7 +18,6 @@ import {
   V2SectionHeader,
   V2Segmented,
   V2SelectableRow,
-  V2Sheet,
   V2Skeleton,
   V2Stack,
   V2TextField,
@@ -575,7 +575,7 @@ export function DesignSystemCatalog() {
             </V2Stack>
           </Section>
 
-          <Section eyebrow="11" title="V2Sheet (interactive)">
+          <Section eyebrow="11" title="BottomSheet (interactive)">
             <V2Card tone="paper">
               <V2Inline gap={3} align="center" wrap>
                 <V2PrimaryBtn icon="open_in_new" onClick={() => setSheetOpen(true)}>
@@ -822,11 +822,12 @@ export function DesignSystemCatalog() {
           </Section>
         </V2Stack>
 
-        <V2Sheet
+        <BottomSheet
           open={sheetOpen}
           onClose={() => setSheetOpen(false)}
-          ariaLabel="Demo sheet"
-          height="60%"
+          headless
+          height="60dvh"
+          title="Demo sheet"
         >
           <div style={{ padding: "var(--v2-s-5)" }}>
             <V2SectionHeader title="Sheet 예시" eyebrow="DEMO" level="h2" />
@@ -838,7 +839,7 @@ export function DesignSystemCatalog() {
               <V2SecondaryBtn onClick={() => setSheetOpen(false)}>취소</V2SecondaryBtn>
             </V2Inline>
           </div>
-        </V2Sheet>
+        </BottomSheet>
       </main>
     </div>
   );
