@@ -37,7 +37,9 @@
   background-color: var(--v2-paper);
   border-top-left-radius: var(--v2-r-5);
   border-top-right-radius: var(--v2-r-5);
-  max-height: 92vh;
+  /* 상태바(notch / safe-area-inset-top) 영역에 paper 배경이 침범하지 않도록
+     dvh 기반으로 상단 safe-area를 빼서 최대 높이를 제한 */
+  max-height: calc(100dvh - env(safe-area-inset-top, 0px) - var(--v2-s-3));
   display: flex;
   flex-direction: column;
   pointer-events: auto;
@@ -218,4 +220,29 @@
 .mobile-bottom-sheet-footer {
   flex-shrink: 0;
   padding-bottom: calc(var(--v2-s-4) + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── Headless mode ────────────────────────────────────── */
+/* 콘텐츠를 자유롭게 배치하는 모드: 기본 헤더/내부 padding 제거 */
+
+.mobile-bottom-sheet-panel--headless {
+  padding: 0;
+}
+
+.mobile-bottom-sheet-panel--headless .mobile-bottom-sheet-drag-handle {
+  position: relative;
+  padding: var(--v2-s-3) 0 var(--v2-s-1);
+  margin: 0;
+}
+
+.mobile-bottom-sheet-panel--headless .mobile-bottom-sheet-content {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* X 버튼: 핸들 영역 우측에 absolute로 배치 */
+.mobile-bottom-sheet-btn--floating {
+  position: absolute;
+  top: var(--v2-s-2);
+  right: var(--v2-s-3);
+  z-index: 2;
 }

@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { V2PrimaryBtn, V2Sheet } from "./primitives";
+import { V2PrimaryBtn } from "./primitives";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 export function V2PasswordSheet({
   open,
@@ -80,11 +81,13 @@ export function V2PasswordSheet({
   };
 
   return (
-    <V2Sheet
+    <BottomSheet
       open={open}
       onClose={onClose}
-      height="78%"
-      ariaLabel={locale === "ko" ? "비밀번호 변경" : "Change password"}
+      headless
+      height="78dvh"
+      title={locale === "ko" ? "비밀번호 변경" : "Change password"}
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
     >
       <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-3)" }}>
         <p className="v2-eyebrow">
@@ -188,7 +191,7 @@ export function V2PasswordSheet({
           </V2PrimaryBtn>
         </div>
       </form>
-    </V2Sheet>
+    </BottomSheet>
   );
 }
 

@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { apiGet } from "@/lib/api";
 import { APP_ROUTES } from "@/lib/app-routes";
-import { V2Card, V2Sheet } from "./primitives";
+import { V2Card } from "./primitives";
+import { BottomSheet } from "@/components/ui/bottom-sheet";
 
 type PlanItem = {
   id: string;
@@ -356,11 +357,14 @@ export function V2PlanSheet({
   const plansLoading = plans === null;
 
   return (
-    <V2Sheet
+    <BottomSheet
       open={open}
       onClose={onClose}
+      headless
+      height="85dvh"
       ariaLabelledBy={headingId}
-      ariaLabel={locale === "ko" ? "계획" : "Plan"}
+      title={locale === "ko" ? "계획" : "Plan"}
+      closeLabel={locale === "ko" ? "닫기" : "Close"}
       id={controlsId}
     >
       <div style={{ padding: "var(--v2-s-2) var(--v2-s-6) var(--v2-s-4)" }}>
@@ -671,6 +675,6 @@ export function V2PlanSheet({
           </button>
         </Link>
       </div>
-    </V2Sheet>
+    </BottomSheet>
   );
 }

@@ -13,7 +13,6 @@ export { V2PrimaryBtn } from "./primary-btn";
 export { V2SecondaryBtn } from "./secondary-btn";
 export { V2Anchor } from "./anchor";
 
-export { V2Sheet } from "./sheet";
 export { V2ActionDock } from "./action-dock";
 export type { V2ActionDockItem } from "./action-dock";
 export { V2CountUp } from "./count-up";
