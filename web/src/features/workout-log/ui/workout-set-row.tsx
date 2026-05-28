@@ -22,17 +22,15 @@ import type { WorkoutExerciseViewModel } from "@/lib/workout-record/model";
 type Props = {
   exercise: WorkoutExerciseViewModel;
   setIndex: number;
-  canRemove: boolean;
   onExerciseAction: (action: ExerciseRowAction) => void;
 };
 
 const ROW_GRID =
-  "var(--v2-s-6) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-6) var(--v2-s-7)";
+  "var(--v2-s-6) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-6)";
 
 export function WorkoutSetRow({
   exercise,
   setIndex,
-  canRemove,
   onExerciseAction,
 }: Props) {
   const { locale } = useLocale();
@@ -254,40 +252,6 @@ export function WorkoutSetRow({
           />
         )}
       </span>
-      <button
-        type="button"
-        onClick={() =>
-          onExerciseAction({ type: "REMOVE_SET", index: setIndex })
-        }
-        disabled={!canRemove}
-        aria-label={
-          locale === "ko"
-            ? `세트 ${setIndex + 1} 삭제`
-            : `Delete set ${setIndex + 1}`
-        }
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          justifyContent: "center",
-          width: "var(--v2-s-7)",
-          height: "var(--v2-s-7)",
-          padding: 0,
-          background: "transparent",
-          border: "none",
-          borderRadius: "var(--v2-r-pill)",
-          color: canRemove ? "var(--v2-ink-3)" : "var(--v2-ink-4, var(--v2-ink-3))",
-          cursor: canRemove ? "pointer" : "not-allowed",
-          opacity: canRemove ? 1 : 0.4,
-        }}
-      >
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: "var(--v2-t-18)" }}
-          aria-hidden
-        >
-          close
-        </span>
-      </button>
     </div>
   );
 }
