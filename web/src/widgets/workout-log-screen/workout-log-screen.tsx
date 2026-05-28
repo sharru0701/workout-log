@@ -41,8 +41,8 @@ import {
   isDraftLoadedAtom,
   programEntryStateAtom,
   saveErrorAtom,
-  sessionExerciseIdsAtom,
-  completedExercisesCountAtom,
+  completedSetsCountAtom,
+  totalSetsCountAtom,
   workflowStateAtom,
 } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
@@ -74,8 +74,8 @@ function WorkoutLogScreenContent({
   const saveError = useAtomValue(saveErrorAtom);
   const isDraftLoaded = useAtomValue(isDraftLoadedAtom);
   const draft = useAtomValue(draftAtom);
-  const exerciseIds = useAtomValue(sessionExerciseIdsAtom);
-  const completedExercisesCount = useAtomValue(completedExercisesCountAtom);
+  const completedSetsCount = useAtomValue(completedSetsCountAtom);
+  const totalSetsCount = useAtomValue(totalSetsCountAtom);
   const setDraft = useSetAtom(draftAtom);
   const setProgramEntryState = useSetAtom(programEntryStateAtom);
   const [addSheetOpen, setAddSheetOpen] = useState(false);
@@ -383,17 +383,6 @@ function WorkoutLogScreenContent({
                   {sessionLabel}
                 </span>
               ) : null}
-              <span
-                className="v2-mono-label"
-                style={{
-                  color:
-                    completedExercisesCount > 0
-                      ? "var(--v2-c-success)"
-                      : "var(--v2-ink-3)",
-                }}
-              >
-                {completedExercisesCount}/{exerciseIds.length}
-              </span>
             </button>
           </div>
 
@@ -404,6 +393,61 @@ function WorkoutLogScreenContent({
           />
 
           <StickyActionBar>
+            {totalSetsCount > 0 && (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "var(--v2-s-2)",
+                  paddingBottom: "var(--v2-s-2)",
+                }}
+                aria-label={
+                  locale === "ko"
+                    ? `세트 진행률 ${completedSetsCount}/${totalSetsCount}`
+                    : `Sets progress ${completedSetsCount}/${totalSetsCount}`
+                }
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={totalSetsCount}
+                aria-valuenow={completedSetsCount}
+              >
+                <span
+                  className="v2-mono-label"
+                  style={{
+                    color:
+                      completedSetsCount >= totalSetsCount
+                        ? "var(--v2-c-success)"
+                        : "var(--v2-ink-3)",
+                    fontVariantNumeric: "tabular-nums",
+                    flexShrink: 0,
+                  }}
+                >
+                  {completedSetsCount}/{totalSetsCount}{" "}
+                  {locale === "ko" ? "세트" : "sets"}
+                </span>
+                <div
+                  style={{
+                    flex: 1,
+                    height: "var(--v2-s-1)",
+                    borderRadius: "var(--v2-r-pill)",
+                    background: "var(--v2-paper-2)",
+                    overflow: "hidden",
+                  }}
+                >
+                  <div
+                    style={{
+                      width: `${Math.min(100, (completedSetsCount / Math.max(1, totalSetsCount)) * 100)}%`,
+                      height: "100%",
+                      background:
+                        completedSetsCount >= totalSetsCount
+                          ? "var(--v2-c-success)"
+                          : "var(--v2-accent)",
+                      transition: "width 200ms ease, background 200ms ease",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
             <button
               type="button"
               onClick={requestSave}

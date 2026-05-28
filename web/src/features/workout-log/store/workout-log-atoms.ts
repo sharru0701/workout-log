@@ -145,3 +145,28 @@ export const completedExercisesCountAtom = atom((get) => {
     });
   }).length;
 });
+
+export const completedSetsCountAtom = atom((get) => {
+  const visibleExercises = get(visibleExercisesAtom);
+  const entryStateMap = get(programEntryStateAtom);
+  let count = 0;
+  for (const exercise of visibleExercises) {
+    const entryState = entryStateMap[exercise.id];
+    for (let i = 0; i < exercise.set.repsPerSet.length; i++) {
+      const rawValue = entryState?.repsInputs[i]?.trim() ?? "";
+      const actual =
+        exercise.source === "PROGRAM"
+          ? Number(rawValue)
+          : exercise.set.repsPerSet[i];
+      if (Number.isFinite(actual) && actual > 0) count++;
+    }
+  }
+  return count;
+});
+
+export const totalSetsCountAtom = atom((get) => {
+  return get(visibleExercisesAtom).reduce(
+    (sum, e) => sum + e.set.repsPerSet.length,
+    0,
+  );
+});

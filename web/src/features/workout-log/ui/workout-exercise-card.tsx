@@ -13,7 +13,6 @@ import {
   V2Card,
   V2Chip,
   V2Hairline,
-  V2IconBtn,
   V2Textarea,
 } from "@/components/v2/primitives";
 import {
@@ -31,7 +30,7 @@ type Props = {
 };
 
 const ROW_GRID =
-  "var(--v2-s-6) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-6) var(--v2-s-7)";
+  "var(--v2-s-6) minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr) var(--v2-s-6)";
 
 export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
   const { locale } = useLocale();
@@ -52,7 +51,6 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
   const [memoVisibleManual, setMemoVisibleManual] = useState<boolean | null>(
     null,
   );
-  const [actionsOpen, setActionsOpen] = useState(false);
 
   if (!exerciseCard) return null;
   const { exercise } = exerciseCard;
@@ -149,12 +147,10 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
   const handleRemoveLastSet = () => {
     if (totalSets <= 1) return;
     dispatchAction({ type: "REMOVE_SET", index: totalSets - 1 });
-    setActionsOpen(false);
   };
 
   const handleDelete = () => {
     dispatchAction({ type: "DELETE" });
-    setActionsOpen(false);
   };
 
   const handleMemoChange = (value: string) => {
@@ -166,7 +162,6 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
       const current = prev ?? !!(memoValue && memoValue.trim().length > 0);
       return !current;
     });
-    setActionsOpen(false);
   };
 
   return (
@@ -248,41 +243,23 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
           >
             {filledSets}/{totalSets}
           </span>
-          <V2IconBtn
-            icon="more_vert"
-            tone="ghost"
-            size={36}
-            label={locale === "ko" ? "운동 메뉴" : "Exercise menu"}
-            onClick={() => setActionsOpen((v) => !v)}
-          />
         </div>
 
-        {actionsOpen && (
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "var(--v2-s-1)",
-            }}
-          >
-            <ChipButton onClick={toggleMemo} icon="edit_note">
-              {memoVisible
-                ? locale === "ko"
-                  ? "메모 숨기기"
-                  : "Hide memo"
-                : locale === "ko"
-                  ? "메모"
-                  : "Memo"}
-            </ChipButton>
+        {!previousSession && recommendedWeightKg != null && (
+          <div style={{ display: "flex" }}>
             <ChipButton
-              onClick={handleRemoveLastSet}
-              icon="remove"
-              disabled={!canRemoveSet}
+              onClick={handleApplyRecommendedWeight}
+              icon="restart_alt"
+              tone="accent"
+              size="sm"
             >
-              {locale === "ko" ? "마지막 세트 삭제" : "Remove last set"}
-            </ChipButton>
-            <ChipButton onClick={handleDelete} icon="delete" tone="danger">
-              {locale === "ko" ? "운동 삭제" : "Remove exercise"}
+              {locale === "ko"
+                ? firstReps > 0
+                  ? `권장 ${recommendedWeightKg}×${firstReps}`
+                  : `권장 ${recommendedWeightKg}kg`
+                : firstReps > 0
+                  ? `Target ${recommendedWeightKg}×${firstReps}`
+                  : `Suggested ${recommendedWeightKg}kg`}
             </ChipButton>
           </div>
         )}
@@ -316,42 +293,110 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
               {locale === "ko" ? "지난" : "PREV"}{" "}
               {formatDateFriendly(previousSession.performedAt, locale)}
             </span>
-            <div
-              style={{
-                display: "flex",
-                gap: "var(--v2-s-1)",
-                overflowX: "auto",
-                scrollbarWidth: "none",
-                flex: 1,
-                minWidth: 0,
-              }}
-            >
-              {previousSession.sets.map((s, i) => (
-                <span
-                  key={i}
-                  className="v2-mono-label"
-                  style={{
-                    flexShrink: 0,
-                    padding: "var(--v2-s-1) var(--v2-s-2)",
-                    borderRadius: "var(--v2-r-0)",
-                    background: "var(--v2-paper-2)",
-                  }}
-                >
-                  <span style={{ color: "var(--v2-c-weight)" }}>
-                    {s.weightKg > 0 ? s.weightKg : "—"}
-                  </span>
+            {(() => {
+              const sets = previousSession.sets;
+              const uniform =
+                sets.length > 0 &&
+                sets.every(
+                  (s) =>
+                    s.weightKg === sets[0].weightKg && s.reps === sets[0].reps,
+                );
+              if (uniform) {
+                const s0 = sets[0];
+                return (
                   <span
+                    className="v2-mono-label"
                     style={{
-                      color: "var(--v2-ink-3)",
-                      margin: "0 var(--v2-s-1)",
+                      flexShrink: 0,
+                      marginRight: "auto",
+                      padding: "var(--v2-s-1) var(--v2-s-2)",
+                      borderRadius: "var(--v2-r-0)",
+                      background: "var(--v2-paper-2)",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    ×
+                    <span style={{ color: "var(--v2-c-weight)" }}>
+                      {s0.weightKg > 0 ? s0.weightKg : "—"}
+                    </span>
+                    <span
+                      style={{
+                        color: "var(--v2-ink-3)",
+                        margin: "0 var(--v2-s-1)",
+                      }}
+                    >
+                      ×
+                    </span>
+                    <span style={{ color: "var(--v2-c-reps)" }}>{s0.reps}</span>
+                    {sets.length > 1 && (
+                      <span
+                        style={{
+                          color: "var(--v2-ink-3)",
+                          marginLeft: "var(--v2-s-2)",
+                        }}
+                      >
+                        ×{sets.length}
+                      </span>
+                    )}
                   </span>
-                  <span style={{ color: "var(--v2-c-reps)" }}>{s.reps}</span>
-                </span>
-              ))}
-            </div>
+                );
+              }
+              return (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "var(--v2-s-1)",
+                    overflowX: "auto",
+                    scrollbarWidth: "none",
+                    flex: 1,
+                    minWidth: 0,
+                  }}
+                >
+                  {sets.map((s, i) => (
+                    <span
+                      key={i}
+                      className="v2-mono-label"
+                      style={{
+                        flexShrink: 0,
+                        padding: "var(--v2-s-1) var(--v2-s-2)",
+                        borderRadius: "var(--v2-r-0)",
+                        background: "var(--v2-paper-2)",
+                      }}
+                    >
+                      <span style={{ color: "var(--v2-c-weight)" }}>
+                        {s.weightKg > 0 ? s.weightKg : "—"}
+                      </span>
+                      <span
+                        style={{
+                          color: "var(--v2-ink-3)",
+                          margin: "0 var(--v2-s-1)",
+                        }}
+                      >
+                        ×
+                      </span>
+                      <span style={{ color: "var(--v2-c-reps)" }}>{s.reps}</span>
+                    </span>
+                  ))}
+                </div>
+              );
+            })()}
+            {recommendedWeightKg != null && (
+              <div style={{ flexShrink: 0 }}>
+                <ChipButton
+                  onClick={handleApplyRecommendedWeight}
+                  icon="restart_alt"
+                  tone="accent"
+                  size="sm"
+                >
+                  {locale === "ko"
+                    ? firstReps > 0
+                      ? `권장 ${recommendedWeightKg}×${firstReps}`
+                      : `권장 ${recommendedWeightKg}kg`
+                    : firstReps > 0
+                      ? `Target ${recommendedWeightKg}×${firstReps}`
+                      : `Suggested ${recommendedWeightKg}kg`}
+                </ChipButton>
+              </div>
+            )}
           </div>
         )}
 
@@ -380,7 +425,6 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
             RPE
           </span>
           <span style={{ textAlign: "center" }}>✓</span>
-          <span aria-hidden />
         </div>
 
         <div
@@ -395,7 +439,6 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
               key={i}
               exercise={exercise}
               setIndex={i}
-              canRemove={canRemoveSet}
               onExerciseAction={dispatchAction}
             />
           ))}
@@ -406,22 +449,25 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
             display: "flex",
             flexWrap: "wrap",
             gap: "var(--v2-s-1)",
+            justifyContent: "space-between",
           }}
         >
+          <ChipButton onClick={toggleMemo} icon="edit_note">
+            {locale === "ko" ? "메모" : "Memo"}
+          </ChipButton>
           <ChipButton onClick={handleAddSet} icon="add">
             {locale === "ko" ? "세트 추가" : "Add set"}
           </ChipButton>
-          {recommendedWeightKg != null && (
-            <ChipButton
-              onClick={handleApplyRecommendedWeight}
-              icon="restart_alt"
-              tone="accent"
-            >
-              {locale === "ko"
-                ? `권장 ${recommendedWeightKg}kg`
-                : `Suggested ${recommendedWeightKg}kg`}
-            </ChipButton>
-          )}
+          <ChipButton
+            onClick={handleRemoveLastSet}
+            icon="remove"
+            disabled={!canRemoveSet}
+          >
+            {locale === "ko" ? "마지막 세트 삭제" : "Remove last set"}
+          </ChipButton>
+          <ChipButton onClick={handleDelete} icon="delete" tone="danger">
+            {locale === "ko" ? "운동 삭제" : "Remove exercise"}
+          </ChipButton>
         </div>
 
         {memoVisible && (
@@ -445,13 +491,16 @@ function ChipButton({
   children,
   disabled,
   tone,
+  size = "md",
 }: {
   onClick: () => void;
   icon?: string;
   children: ReactNode;
   disabled?: boolean;
   tone?: "danger" | "accent";
+  size?: "sm" | "md";
 }) {
+  const compact = size === "sm";
   const fg =
     tone === "danger"
       ? "var(--v2-c-danger)"
@@ -472,20 +521,20 @@ function ChipButton({
         display: "inline-flex",
         alignItems: "center",
         gap: "var(--v2-s-1)",
-        padding: "var(--v2-s-2) var(--v2-s-3)",
-        borderRadius: "var(--v2-r-2)",
+        padding: "var(--v2-s-1) var(--v2-s-2)",
+        borderRadius: compact ? "var(--v2-r-0)" : "var(--v2-r-2)",
         background: bg,
         color: disabled ? "var(--v2-ink-3)" : fg,
         border: "none",
         cursor: disabled ? "not-allowed" : "pointer",
-        minHeight: "var(--v2-s-8)",
-        fontWeight: 700,
+        minHeight: compact ? undefined : "var(--v2-s-8)",
+        fontWeight: compact ? 400 : 700,
       }}
     >
       {icon && (
         <span
           className="material-symbols-outlined"
-          style={{ fontSize: "var(--v2-t-16)" }}
+          style={{ fontSize: compact ? "var(--v2-t-14)" : "var(--v2-t-16)" }}
           aria-hidden
         >
           {icon}
