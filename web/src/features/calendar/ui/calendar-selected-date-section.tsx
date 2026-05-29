@@ -470,7 +470,6 @@ export const CalendarSelectedDateSection = memo(
                         >
                           {plannedExercises
                             .filter((exercise) => exercise.role !== "MAIN")
-                            .slice(0, 3)
                             .map((exercise) => (
                               <ExerciseLine
                                 key={exercise.name}

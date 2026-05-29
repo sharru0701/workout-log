@@ -135,7 +135,7 @@ function TodayDeck({
             <div
               style={{ background: "var(--v2-paper-2)", padding: "var(--v2-s-4) var(--v2-s-5)" }}
             >
-              {today.plannedExercises.slice(0, 4).map((ex, i, arr) => (
+              {today.plannedExercises.map((ex, i, arr) => (
                 <Fragment key={`${ex.name}-${i}`}>
                   <div
                     style={{
@@ -327,7 +327,7 @@ function TodayDeck({
         </V2Card>
       </div>
 
-      {/* 최근 PR */}
+      {/* 메인 리프트 — 현재 플랜 메인 운동의 1RM */}
       {strength.length > 0 && (
         <>
           <div style={{ padding: "var(--v2-s-6) 0px var(--v2-s-2)" }}>
@@ -339,7 +339,7 @@ function TodayDeck({
               }}
             >
               <div className="v2-label">
-                {locale === "ko" ? "최근 PR" : "Recent PRs"}
+                {locale === "ko" ? "메인 리프트" : "Main Lifts"}
               </div>
               <Link
                 href={APP_ROUTES.statsHome}
@@ -355,7 +355,7 @@ function TodayDeck({
             </div>
           </div>
           <div style={{ padding: 0 }}>
-            {strength.slice(0, 3).map((s) => {
+            {strength.map((s) => {
               const isPr = s.trend === "up" && s.improvement > 0;
               return (
                 <V2Card

@@ -39,6 +39,7 @@ import type { AppLocale } from "@/lib/i18n/messages";
 
 export type HomeTodayExercise = {
   name: string;
+  exerciseId: string | null;
   role: "MAIN" | "ASSIST" | string;
   totalSets: number;
   summary: string;
@@ -274,7 +275,9 @@ export async function getHomeData(params: {
   const [plans, logs, prs, volumeSeries, goalMetrics] = await Promise.all([
     fetchPlans(userId, locale),
     fetchLogs(userId, 40),
-    fetchPrs(userId, prFrom, now, 4, locale),
+    // 최근 PR 카드는 "현재 플랜 메인 운동"으로 구성하므로, 1RM 상위 N개로 자르지 않고
+    // 충분히 넓게 조회해 둔 뒤 buildStrengthProgress에서 메인 운동과 매칭한다.
+    fetchPrs(userId, prFrom, now, 200, locale),
     fetchVolumeSeries(userId),
     fetchGoalMetrics(userId, goal, bodyweightKg, now),
   ]);
@@ -606,7 +609,7 @@ function buildHomeData(params: {
     recentLimit,
     recentSessions: buildRecentSessions(plans, logs, recentLimit, locale, todayKey),
     lastSession: buildLastSession(plans, logs, plannedWeightByExercise, locale, todayKey),
-    strengthProgress: buildStrengthProgress(prs),
+    strengthProgress: buildStrengthProgress(prs, plannedExercises),
     volumeTrend: buildVolumeTrend(volumeSeries, locale),
     quickStats: buildQuickStats(logs, todayKey),
     goal,
@@ -734,8 +737,43 @@ function buildLastSession(plans: any[], logs: any[], plannedWeightByExercise: Ma
   return { id: lastLog.id, planName: lastLog.planId ? plansById.get(lastLog.planId) ?? copy.unassignedProgram : copy.unassignedProgram, date: formatDate(lastLog.performedAt, locale), totalSets: lastLog.sets.length, totalVolume: Math.round(totalVolume), exercises, href: `/workout/log?context=recent&logId=${encodeURIComponent(lastLog.id)}` };
 }
 
-function buildStrengthProgress(prs: any[]): HomeStrengthItem[] {
-  return prs.map(item => ({ exerciseName: item.exerciseName, exerciseId: item.exerciseId, bestE1rm: Math.round(item.best.e1rm), latestE1rm: Math.round(item.latest.e1rm), improvement: Math.round(item.improvement), trend: item.improvement > 1 ? "up" : item.improvement < -1 ? "down" : "flat" }));
+function buildStrengthProgress(prs: any[], plannedExercises: HomeTodayExercise[]): HomeStrengthItem[] {
+  // "최근 PR" 카드는 현재 수행 중인 플랜의 메인 운동으로 구성한다.
+  // 메인 운동을 플랜에 나오는 순서대로 두고, 기록(1RM)이 있는 것만 매칭해 노출한다.
+  const mainExercises = plannedExercises.filter((e) => e.role === "MAIN");
+  if (mainExercises.length === 0) return [];
+
+  // PR 인덱스: exerciseId 우선, 없으면 이름(소문자)으로 매칭.
+  const prById = new Map<string, any>();
+  const prByName = new Map<string, any>();
+  for (const item of prs) {
+    if (item.exerciseId) prById.set(String(item.exerciseId), item);
+    const nameKey = String(item.exerciseName ?? "").trim().toLowerCase();
+    if (nameKey && !prByName.has(nameKey)) prByName.set(nameKey, item);
+  }
+
+  const result: HomeStrengthItem[] = [];
+  const seen = new Set<string>();
+  for (const ex of mainExercises) {
+    const match =
+      (ex.exerciseId ? prById.get(String(ex.exerciseId)) : null) ??
+      prByName.get(ex.name.trim().toLowerCase());
+    if (!match) continue;
+    const dedupeKey = match.exerciseId
+      ? `id:${match.exerciseId}`
+      : `name:${String(match.exerciseName ?? "").trim().toLowerCase()}`;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
+    result.push({
+      exerciseName: match.exerciseName,
+      exerciseId: match.exerciseId,
+      bestE1rm: Math.round(match.best.e1rm),
+      latestE1rm: Math.round(match.latest.e1rm),
+      improvement: Math.round(match.improvement),
+      trend: match.improvement > 1 ? "up" : match.improvement < -1 ? "down" : "flat",
+    });
+  }
+  return result;
 }
 
 function buildVolumeTrend(series: any[], locale: AppLocale): HomeVolumeTrendPoint[] {
@@ -770,7 +808,7 @@ function buildPlannedExercises(snapshot: any) {
     let maxW = 0;
     for (const s of sets) if (s.targetWeightKg && s.targetWeightKg > maxW) maxW = s.targetWeightKg;
     if (maxW > 0) plannedWeightByExercise.set(ex.exerciseName.toLowerCase(), maxW);
-    return { name: ex.exerciseName, role: ex.role, totalSets: sets.length, summary: summarizeSets(sets) };
+    return { name: ex.exerciseName, exerciseId: ex.exerciseId ?? null, role: ex.role, totalSets: sets.length, summary: summarizeSets(sets) };
   });
   return { exercises, totalSets, plannedWeightByExercise };
 }
