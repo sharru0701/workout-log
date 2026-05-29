@@ -6,7 +6,7 @@ import type { WorkoutRecordDraft } from "@/lib/workout-record/model";
 import { hasWorkoutEdits } from "@/lib/workout-record/model";
 import type { WorkoutProgramExerciseEntryStateMap } from "@/lib/workout-record/entry-state";
 import { hasProgramEntryStateEdits } from "@/lib/workout-record/entry-state";
-import { debounce } from "@/lib/storage/workoutSession";
+import { debounce } from "@/lib/debounce";
 
 const DRAFT_EXPIRATION_MS = 6 * 60 * 60 * 1000; // 6 hours
 
