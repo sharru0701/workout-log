@@ -451,14 +451,16 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
           >
             {locale === "ko" ? "세트 삭제" : "Remove set"}
           </ChipButton>
-          <ChipButton
-            onClick={handleDelete}
-            icon="delete"
-            tone="danger"
-            style={{ flex: 1, justifyContent: "center", minWidth: 0 }}
-          >
-            {locale === "ko" ? "운동 삭제" : "Delete"}
-          </ChipButton>
+          {!isProgramAuto && (
+            <ChipButton
+              onClick={handleDelete}
+              icon="delete"
+              tone="danger"
+              style={{ flex: 1, justifyContent: "center", minWidth: 0 }}
+            >
+              {locale === "ko" ? "운동 삭제" : "Delete"}
+            </ChipButton>
+          )}
         </div>
 
         {memoVisible && (
