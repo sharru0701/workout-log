@@ -41,14 +41,12 @@
     "@tanstack/react-virtual": "^3.13.23",
     "drizzle-orm": "^0.45.1",
     "idb": "^8.0.3",
-    "immer": "^11.1.4",
     "jotai": "^2.19.1",
     "next": "16.2.3",
     "pg": "^8.18.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "tsx": "^4.21.0",
-    "zustand": "^5.0.12"
+    "tsx": "^4.21.0"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.11.1",
