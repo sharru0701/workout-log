@@ -280,6 +280,13 @@ const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
     ref,
   ) {
     const [focused, setFocused] = useState(false);
+    // 입력 중에는 사용자가 친 raw 문자열(draft)을 그대로 표시한다.
+    // store의 weightKg는 매 입력마다 최소 플레이트 단위로 스냅되는데(예: 8 → 7.5),
+    // 그 스냅값을 controlled value로 되돌려 쓰면 iOS Safari에서 커서가 끝으로 튀고
+    // "8" 같은 중간 입력이 즉시 7.5로 바뀌어 백스페이스가 막힌다.
+    // focus 동안에는 draft를 보여주고, blur 시 null로 비워 정규화된 store 값으로 복귀한다.
+    const [draft, setDraft] = useState<string | null>(null);
+    const displayValue = draft ?? value;
     return (
       <input
         ref={ref}
@@ -288,20 +295,28 @@ const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
         pattern={allowDecimal ? "[0-9]*[.]?[0-9]*" : "[0-9]*"}
         enterKeyHint="next"
         autoComplete="off"
-        value={value}
+        value={displayValue}
         placeholder={placeholder}
         aria-label={ariaLabel}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          const raw = e.target.value;
+          setDraft(raw);
+          onChange(raw);
+        }}
         onKeyDown={onKeyDown}
         onFocus={(e) => {
           setFocused(true);
+          setDraft(e.currentTarget.value);
           try {
             e.currentTarget.select();
           } catch {
             // ignore
           }
         }}
-        onBlur={() => setFocused(false)}
+        onBlur={() => {
+          setFocused(false);
+          setDraft(null);
+        }}
         className="v2-num-sm"
         style={{
           width: "100%",
