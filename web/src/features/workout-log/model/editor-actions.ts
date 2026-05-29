@@ -181,6 +181,11 @@ export function buildExerciseActionUpdate(
       };
     }
     case "DELETE": {
+      // 자동 진행(PROGRAM AUTO) 운동은 프로그램이 구성을 소유하므로 삭제 불가.
+      // 수동(CUSTOM) 프로그램 운동과 USER 운동만 삭제 허용.
+      const isProgramAuto =
+        exercise.source === "PROGRAM" && exercise.badge !== "CUSTOM";
+      if (isProgramAuto) return null;
       return {
         draftUpdater: (prev) =>
           exercise.source === "PROGRAM"
