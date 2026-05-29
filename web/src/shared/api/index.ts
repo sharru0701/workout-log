@@ -6,8 +6,5 @@ export {
   apiPost,
   apiPut,
   isAbortError,
-  isOfflineQueuedError,
   subscribeApiNetworkInflight,
 } from "@/lib/api";
-
-export { OfflineQueuedError } from "@/lib/api";
