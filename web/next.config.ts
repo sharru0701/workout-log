@@ -19,10 +19,10 @@ const nextConfig: NextConfig = {
   },
   // PERF: Node.js 전용 패키지(pg)를 서버 번들에서 외부 모듈로 유지 → 클라이언트 번들 제외
   serverExternalPackages: ["pg", "pg-native"],
-  // PERF: 대용량 패키지의 named import를 자동으로 tree-shake → 번들 크기 감소
-  // PERF: Partial Prerendering - 정적 쉘을 즉시 서빙하고 동적 콘텐츠를 스트리밍
-  // Next.js 16에서 experimental.ppr → 최상위 cacheComponents로 이동
-  cacheComponents: true,
+  // NOTE: cacheComponents(PPR)는 의도적으로 비활성화한다.
+  // "use cache"/cacheLife/cacheTag/unstable_cache 사용처가 0건이라 자동 static shell 외
+  // 이득이 없고, Vercel preview 빈 화면 + dev typecheck race 비용만 유발했다.
+  // 캐싱은 lib/api.ts SWR 캐시 + API Route Cache-Control 헤더로 처리한다.
   experimental: {
     optimizePackageImports: ["drizzle-orm", "jotai", "idb"],
     // PERF: React 서버 렌더링 최적화 (불필요한 서버 컴포넌트 래퍼 제거)
