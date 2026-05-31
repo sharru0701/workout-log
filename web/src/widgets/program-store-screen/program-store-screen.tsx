@@ -122,7 +122,6 @@ export function ProgramStoreScreen({
     changeCreateName,
     changeCreateMode,
     changeCreateSourceTemplate,
-    changeCreateRuleType,
     changeCreateSessionCount,
     patchCreateExercise,
     moveCreateExercise,
@@ -292,7 +291,6 @@ export function ProgramStoreScreen({
         onChangeSourceTemplate={(sourceTemplateSlug) => {
           changeCreateSourceTemplate(sourceTemplateSlug, templates);
         }}
-        onChangeRuleType={changeCreateRuleType}
         onChangeSessionCount={changeCreateSessionCount}
         onSessionDrop={dropCreateExerciseAtSessionEnd}
         onPatchExercise={patchCreateExercise}

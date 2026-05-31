@@ -38,7 +38,7 @@ export function buildInitialCreateDraft(
     templates.find((template) => template.visibility === "PUBLIC") ??
     templates[0] ??
     null;
-  const initialRule: SessionRule = { type: "AB", count: 2 };
+  const initialRule: SessionRule = { type: "NUMERIC", count: 2 };
   const keys = makeSessionKeys(initialRule);
 
   return {
