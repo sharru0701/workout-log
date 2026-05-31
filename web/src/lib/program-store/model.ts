@@ -54,7 +54,7 @@ export type ProgramSessionDraft = {
   exercises: ProgramExerciseDraft[];
 };
 
-export type SessionRuleType = "AB" | "NUMERIC";
+export type SessionRuleType = "NUMERIC";
 
 export type SessionRule = {
   type: SessionRuleType;
@@ -884,7 +884,6 @@ export function inferSessionDraftsFromTemplate(template: ProgramTemplate): Progr
 }
 
 export function makeSessionKeys(rule: SessionRule): string[] {
-  if (rule.type === "AB") return ["A", "B"];
   const count = Math.min(7, Math.max(1, Math.floor(rule.count)));
   return Array.from({ length: count }, (_, index) => String(index + 1));
 }

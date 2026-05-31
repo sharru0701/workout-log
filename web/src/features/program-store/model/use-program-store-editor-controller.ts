@@ -414,24 +414,6 @@ export function useProgramStoreEditorController({
     [setCreateDraft],
   );
 
-  const changeCreateRuleType = useCallback(
-    (ruleType: SessionRule["type"]) => {
-      setCreateDraft((prev) => {
-        if (!prev) return prev;
-        const nextRule: SessionRule =
-          ruleType === "AB"
-            ? { type: "AB", count: 2 }
-            : { type: "NUMERIC", count: prev.rule.count || 2 };
-        return {
-          ...prev,
-          rule: nextRule,
-          sessions: reconcileSessionsByKeys(prev.sessions, makeSessionKeys(nextRule)),
-        };
-      });
-    },
-    [setCreateDraft],
-  );
-
   const changeCreateSessionCount = useCallback(
     (count: number) => {
       setCreateDraft((prev) => {
@@ -479,7 +461,6 @@ export function useProgramStoreEditorController({
     changeCreateName,
     changeCreateMode,
     changeCreateSourceTemplate,
-    changeCreateRuleType,
     changeCreateSessionCount,
     patchCreateExercise,
     moveCreateExercise,
