@@ -81,12 +81,15 @@ export function CalendarRangePicker({
           active={Boolean(!isSelectingEnd && startDate)}
         />
         <span
+          className="material-symbols-outlined"
+          aria-hidden="true"
           style={{
             alignSelf: "center",
             color: "var(--v2-ink-3)",
+            fontSize: "var(--v2-t-20)",
           }}
         >
-          →
+          arrow_forward
         </span>
         <RangeChip
           label={locale === "ko" ? "종료일" : "End"}
@@ -119,20 +122,29 @@ export function CalendarRangePicker({
         </span>
         <button
           type="button"
-          className="v2-pressable"
+          className="v2-pressable v2-small"
           onClick={() => onRangeChange("", "")}
           style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: "var(--v2-s-1)",
             background: "none",
             border: "none",
-            color: "var(--v2-ink-2)",
-            fontSize: "var(--v2-t-12)",
-            textDecoration: "underline",
+            color: "var(--v2-accent)",
             cursor: "pointer",
             minHeight: "var(--v2-s-8)",
             minWidth: "var(--v2-s-8)",
-            padding: "var(--v2-s-3)",
+            padding: "var(--v2-s-2) var(--v2-s-3)",
+            borderRadius: "var(--v2-r-1)",
           }}
         >
+          <span
+            className="material-symbols-outlined"
+            aria-hidden="true"
+            style={{ fontSize: "var(--v2-t-18)" }}
+          >
+            restart_alt
+          </span>
           {locale === "ko" ? "초기화" : "Reset"}
         </button>
       </div>
@@ -231,12 +243,15 @@ export function CalendarRangePicker({
                 borderRadius,
                 cursor: "pointer",
                 fontSize: "var(--v2-t-14)",
-                fontWeight: isToday || selected ? 700 : 400,
+                fontWeight: isToday || selected
+                  ? "var(--v2-w-bold)"
+                  : "var(--v2-w-reg)",
                 fontVariantNumeric: "tabular-nums",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                transition: "all 0.2s cubic-bezier(0.4, 0, 0.2, 1)",
+                minHeight: "var(--v2-s-8)",
+                transition: "background var(--v2-d-2) var(--v2-e-out), color var(--v2-d-2) var(--v2-e-out)",
                 position: "relative",
                 ...selectionStyle,
               }}
@@ -246,10 +261,10 @@ export function CalendarRangePicker({
                 <span
                   style={{
                     position: "absolute",
-                    bottom: 4,
-                    width: 4,
-                    height: 4,
-                    borderRadius: "50%",
+                    bottom: "var(--v2-s-1)",
+                    width: "var(--v2-s-1)",
+                    height: "var(--v2-s-1)",
+                    borderRadius: "var(--v2-r-pill)",
                     background: "var(--v2-accent)",
                   }}
                 />
@@ -288,7 +303,10 @@ function RangeChip({
       >
         {label}
       </div>
-      <div className="v2-body" style={{ fontSize: "var(--v2-t-14)", fontWeight: 700 }}>
+      <div
+        className="v2-num-sm"
+        style={{ color: "var(--v2-ink)", marginTop: "var(--v2-s-1)" }}
+      >
         {value}
       </div>
     </div>
