@@ -2,7 +2,8 @@
 
 import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { AppNumberStepper, AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { AppSelect, AppTextInput } from "@/components/ui/form-controls";
+import { NumberKeypadField } from "@/components/ui/number-keypad-field";
 import { V2IconBtn, V2SecondaryBtn } from "@/components/v2/primitives";
 import {
   inferProgressionTargetFromExerciseName,
@@ -514,9 +515,31 @@ const ProgramExerciseEditorRow = memo(function ProgramExerciseEditorRow({
       )}
 
       {!operatorAutoRow ? (
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
-          <AppNumberStepper label={locale === "ko" ? "세트" : "Sets"} value={exercise.sets} min={1} max={50} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })} />
-          <AppNumberStepper label={locale === "ko" ? "횟수" : "Reps"} value={exercise.reps} min={1} max={100} step={1} onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })} />
+        <div style={{ display: "flex", gap: "var(--v2-s-3)" }}>
+          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
+            <span className="v2-small" style={{ color: "var(--v2-ink-2)" }}>
+              {locale === "ko" ? "세트" : "Sets"}
+            </span>
+            <NumberKeypadField
+              ariaLabel={locale === "ko" ? "세트" : "Sets"}
+              value={exercise.sets}
+              min={1}
+              max={50}
+              onChange={(next) => onPatch(sessionId, exercise.id, { sets: next })}
+            />
+          </label>
+          <label style={{ flex: 1, display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
+            <span className="v2-small" style={{ color: "var(--v2-ink-2)" }}>
+              {locale === "ko" ? "횟수" : "Reps"}
+            </span>
+            <NumberKeypadField
+              ariaLabel={locale === "ko" ? "횟수" : "Reps"}
+              value={exercise.reps}
+              min={1}
+              max={100}
+              onChange={(next) => onPatch(sessionId, exercise.id, { reps: next })}
+            />
+          </label>
         </div>
       ) : null}
 
