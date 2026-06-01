@@ -15,6 +15,8 @@
  * 처방과 히스토리는 의미가 달라 절대 같은 형식으로 통일하지 말 것.
  */
 
+import { bodyweightAddedSuffix } from "@/lib/bodyweight-load";
+
 export interface PrescriptionInput {
   sets: number;
   reps: number;
@@ -60,13 +62,26 @@ export interface PerformedSetInput {
   weightKg: number;
   reps: number;
   isAmrap?: boolean;
+  /** 무게 뒤 병기 라벨 (맨몸 운동 `(+20)`/`(체중)`). weightKg가 표시될 때만. */
+  weightSuffix?: string | null;
+}
+
+/**
+ * 맨몸 운동 총무게 병기 컨텍스트. weightKg는 이미 총무게로 환산된 값이어야 한다.
+ */
+export interface PerformedLoadContext {
+  exerciseName?: string;
+  bodyweightKg?: number | null;
+  locale?: "ko" | "en";
 }
 
 /** 수행 로그 1세트를 `100kg × 5` 형태로. AMRAP이면 `+` 접미사 */
 export function formatPerformedSet(input: PerformedSetInput): string {
   const { weightKg, reps, isAmrap } = input;
   const weightToken = weightKg > 0 ? `${weightKg}kg` : "—";
-  return `${weightToken} × ${reps}${isAmrap ? "+" : ""}`;
+  const suffix =
+    weightKg > 0 && input.weightSuffix ? ` ${input.weightSuffix}` : "";
+  return `${weightToken}${suffix} × ${reps}${isAmrap ? "+" : ""}`;
 }
 
 export type PerformedHistoryView =
@@ -118,15 +133,48 @@ export function formatPerformedHistoryCompact(
   return `${weightToken} × ${reps}`;
 }
 
-/** 수행 로그를 한 줄 문자열로 요약. compact이면 한 줄, expanded이면 세트별 ` / ` 구분. */
+/**
+ * 수행 로그를 한 줄 문자열로 요약. compact이면 한 줄, expanded이면 세트별 ` / ` 구분.
+ * load가 주어지면 맨몸 운동의 총무게 뒤에 추가중량을 병기한다.
+ */
 export function formatPerformedHistoryLine(
   sets: PerformedSetInput[],
+  load?: PerformedLoadContext,
 ): string {
   const view = summarizePerformedHistory(sets);
   if (view.mode === "compact") {
-    return formatPerformedHistoryCompact(view.weightKg, view.reps, view.sets);
+    const suffix =
+      view.weightKg > 0
+        ? bodyweightAddedSuffix(
+            load?.exerciseName ?? "",
+            view.weightKg,
+            load?.bodyweightKg ?? null,
+            load?.locale,
+          )
+        : null;
+    return formatPerformedHistoryCompact(
+      view.weightKg,
+      view.reps,
+      view.sets,
+      suffix,
+    );
   }
-  return view.sets.map((s) => formatPerformedSet(s)).join(" / ");
+  return view.sets
+    .map((s) =>
+      formatPerformedSet({
+        ...s,
+        weightSuffix:
+          s.weightKg > 0
+            ? bodyweightAddedSuffix(
+                load?.exerciseName ?? "",
+                s.weightKg,
+                load?.bodyweightKg ?? null,
+                load?.locale,
+              )
+            : null,
+      }),
+    )
+    .join(" / ");
 }
 
 export interface PlannedGroup {
