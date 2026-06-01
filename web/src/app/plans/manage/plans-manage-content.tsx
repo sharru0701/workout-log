@@ -20,7 +20,7 @@ import {
 } from "@/components/v2/primitives";
 import { SearchInput } from "@/components/ui/search-input";
 import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/ui/settings-state";
-import { apiDelete, apiGet, apiPatch } from "@/lib/api";
+import { apiDelete, apiGet, apiPatch, apiPost } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { APP_ROUTES } from "@/lib/app-routes";
 import {
@@ -447,6 +447,9 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   } | null>(null);
   const [lastEvents, setLastEvents] = useState<Record<string, TargetLastEvent>>({});
   const [showStartingBaseline, setShowStartingBaseline] = useState(false);
+  const [adjustOpen, setAdjustOpen] = useState(false);
+  const [adjustDraft, setAdjustDraft] = useState<Record<string, number>>({});
+  const [adjusting, setAdjusting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -553,6 +556,8 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     setProgressPosition(null);
     setLastEvents({});
     setShowStartingBaseline(false);
+    setAdjustOpen(false);
+    setAdjustDraft({});
     setManagePlanId(plan.id);
 
     const planParams = toRecord(plan.params);
@@ -595,6 +600,78 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       setIncrementDraft({});
     } finally {
       setIncrementLoading(false);
+    }
+  }
+
+  function openAdjustment() {
+    const draft: Record<string, number> = {};
+    for (const row of currentProgressRows) {
+      draft[row.key] = row.weightKg ?? 0;
+    }
+    setAdjustDraft(draft);
+    setAdjustOpen(true);
+  }
+
+  async function saveAdjustment() {
+    if (!managedPlan) return;
+    const adjustments: Record<string, { workKg: number }> = {};
+    for (const row of currentProgressRows) {
+      const next = adjustDraft[row.key];
+      if (typeof next !== "number" || !Number.isFinite(next) || next <= 0) continue;
+      if (next === (row.weightKg ?? 0)) continue;
+      adjustments[row.key] = { workKg: next };
+    }
+    if (Object.keys(adjustments).length === 0) {
+      setAdjustOpen(false);
+      return;
+    }
+    try {
+      setAdjusting(true);
+      const res = await apiPost<{
+        ok: boolean;
+        state: ProgressionStateApiResponse["state"];
+        targetsLastEvent?: Record<string, TargetLastEvent>;
+      }>(
+        `/api/plans/${encodeURIComponent(managedPlan.id)}/runtime-targets`,
+        { adjustments },
+        { invalidateCachePrefixes: ["/api/plans"] },
+      );
+      const targets = res.state?.targets ?? {};
+      setIncrementDraft((prev) => {
+        const nextDraft = { ...prev };
+        for (const [key, target] of Object.entries(targets)) {
+          if (nextDraft[key]) {
+            nextDraft[key] = {
+              ...nextDraft[key],
+              workKg: target.workKg ?? nextDraft[key].workKg,
+            };
+          }
+        }
+        return nextDraft;
+      });
+      if (res.state) {
+        setProgressPosition({
+          cycle: res.state.cycle,
+          week: res.state.week,
+          day: res.state.day,
+        });
+      }
+      if (res.targetsLastEvent) setLastEvents(res.targetsLastEvent);
+      setAdjustOpen(false);
+      await alert({
+        title: "조정 완료",
+        message: "현재 TM이 조정되었습니다.",
+        buttonText: "확인",
+      });
+    } catch (e: any) {
+      await alert({
+        title: "조정 실패",
+        message: e?.message ?? "현재 TM 조정에 실패했습니다.",
+        buttonText: "확인",
+        tone: "danger",
+      });
+    } finally {
+      setAdjusting(false);
     }
   }
 
@@ -997,6 +1074,62 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                     />
                   ))}
                 </div>
+                {adjustOpen ? (
+                  <V2Stack gap={2}>
+                    <p
+                      className="v2-small"
+                      style={{ margin: 0, color: "var(--v2-ink-2)" }}
+                    >
+                      {copy.plansManage.adjustHint}
+                    </p>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                        gap: "var(--v2-s-3)",
+                      }}
+                    >
+                      {currentProgressRows.map((row) => (
+                        <StrengthEditField key={row.key} label={row.label}>
+                          <NumberPickerField
+                            label={`${row.label} TM`}
+                            value={adjustDraft[row.key] ?? 0}
+                            min={0}
+                            max={500}
+                            step={2.5}
+                            unit="kg"
+                            formatValue={formatKg}
+                            onChange={(value) =>
+                              setAdjustDraft((prev) => ({ ...prev, [row.key]: value }))
+                            }
+                          />
+                        </StrengthEditField>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: "var(--v2-s-2)" }}>
+                      <V2PrimaryBtn
+                        full
+                        disabled={adjusting}
+                        onClick={() => {
+                          void saveAdjustment();
+                        }}
+                      >
+                        {adjusting ? copy.plansManage.saveInProgress : copy.plansManage.adjustSave}
+                      </V2PrimaryBtn>
+                      <V2SecondaryBtn
+                        full
+                        disabled={adjusting}
+                        onClick={() => setAdjustOpen(false)}
+                      >
+                        {copy.plansManage.adjustCancel}
+                      </V2SecondaryBtn>
+                    </div>
+                  </V2Stack>
+                ) : (
+                  <V2SecondaryBtn full icon="tune" onClick={openAdjustment}>
+                    {copy.plansManage.adjustCurrentTm}
+                  </V2SecondaryBtn>
+                )}
               </V2Stack>
             ) : null}
 
