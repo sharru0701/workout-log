@@ -2,12 +2,15 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   createEmptyExerciseDraft,
+  decodeExerciseKey,
   extractOneRmTargetsFromTemplate,
+  familyFallbackKeyForBaselineKey,
   getProgramDescription,
   getProgramDetailInfo,
   inferSessionDraftsFromTemplate,
   isOperatorTemplate,
   resolveOperatorExerciseDefaults,
+  selectDisplayStrengthBaselineKeys,
   toManualDefinition,
   type ProgramTemplate,
 } from "./model";
@@ -401,4 +404,64 @@ test("getProgramDescription falls back to the DB description for custom (non-mar
   // 코드 사전에 없는 slug → DB description으로 폴백(언어 무관).
   assert.equal(getProgramDescription(customTemplate, "ko"), "내가 직접 만든 커스텀 프로그램 설명입니다.");
   assert.equal(getProgramDescription(customTemplate, "en"), "내가 직접 만든 커스텀 프로그램 설명입니다.");
+});
+
+// ── plans-manage 1RM/TM 중복 표시 수정 ──
+// start-program이 펼친 per-exercise(EX_) ↔ family canonical 키 쌍을, plans-manage 표시에서
+// 동일 매퍼로 되접기 위한 역연산 헬퍼. extractOneRmTargetsFromTemplate가 만든 키 구조의 정역(正逆) 정합을 보장한다.
+
+test("decodeExerciseKey reverses manualExerciseKey into a family-mappable name", () => {
+  assert.equal(decodeExerciseKey("EX_BENCH_PRESS"), "BENCH PRESS");
+  assert.equal(decodeExerciseKey("EX_BACK_SQUAT"), "BACK SQUAT");
+  assert.equal(decodeExerciseKey("EX_PULL_UP"), "PULL UP");
+  // 비-EX_ 키(canonical 등)는 그대로 반환
+  assert.equal(decodeExerciseKey("BENCH"), "BENCH");
+});
+
+test("familyFallbackKeyForBaselineKey maps EX_ keys to canonical family via the shared mapper", () => {
+  assert.equal(familyFallbackKeyForBaselineKey("EX_BACK_SQUAT"), "SQUAT");
+  assert.equal(familyFallbackKeyForBaselineKey("EX_BENCH_PRESS"), "BENCH");
+  assert.equal(familyFallbackKeyForBaselineKey("EX_PULL_UP"), "PULL");
+  assert.equal(familyFallbackKeyForBaselineKey("EX_BARBELL_ROW"), "PULL");
+  assert.equal(familyFallbackKeyForBaselineKey("EX_ROMANIAN_DEADLIFT"), "DEADLIFT");
+  // canonical 키(EX_ 아님)는 family가 없다 → null
+  assert.equal(familyFallbackKeyForBaselineKey("BENCH"), null);
+  // family로 매핑되지 않는 EX_ 키도 null (start-program도 이 경우 fallbackKey를 만들지 않는다)
+  assert.equal(familyFallbackKeyForBaselineKey("EX_FACE_PULL"), null);
+  assert.equal(familyFallbackKeyForBaselineKey("EX_BICEP_CURL"), null);
+});
+
+test("selectDisplayStrengthBaselineKeys folds the family canonical shadow of each EX_ key", () => {
+  // operator 시작 시 저장되는 평면 맵: 각 EX_ 운동 + 그 family canonical 키가 공존 → EX_만 표시.
+  assert.deepEqual(
+    selectDisplayStrengthBaselineKeys([
+      "EX_BACK_SQUAT", "SQUAT",
+      "EX_BENCH_PRESS", "BENCH",
+      "EX_PULL_UP", "PULL",
+    ]),
+    ["EX_BACK_SQUAT", "EX_BENCH_PRESS", "EX_PULL_UP"],
+  );
+});
+
+test("selectDisplayStrengthBaselineKeys keeps canonical-only keys (LOGIC programs without EX_ keys)", () => {
+  assert.deepEqual(
+    selectDisplayStrengthBaselineKeys(["SQUAT", "BENCH", "DEADLIFT"]),
+    ["SQUAT", "BENCH", "DEADLIFT"],
+  );
+});
+
+test("selectDisplayStrengthBaselineKeys keeps unmapped EX_ keys and orphan canonical keys", () => {
+  // EX_FACE_PULL은 family 미매핑 → 그림자 없음. SQUAT은 짝 EX_가 없으므로 그대로 표시. 입력 순서 보존.
+  assert.deepEqual(
+    selectDisplayStrengthBaselineKeys(["EX_BENCH_PRESS", "BENCH", "SQUAT", "EX_FACE_PULL"]),
+    ["EX_BENCH_PRESS", "SQUAT", "EX_FACE_PULL"],
+  );
+});
+
+test("selectDisplayStrengthBaselineKeys keeps multiple EX_ keys sharing one family but folds the shared canonical", () => {
+  // Pull-Up과 Barbell Row는 둘 다 PULL family지만 서로 다른 운동 → 둘 다 표시, PULL 그림자만 제거.
+  assert.deepEqual(
+    selectDisplayStrengthBaselineKeys(["EX_PULL_UP", "EX_BARBELL_ROW", "PULL"]),
+    ["EX_PULL_UP", "EX_BARBELL_ROW"],
+  );
 });
