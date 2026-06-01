@@ -232,3 +232,35 @@ test("formatPlannedGroups: 다중 그룹 무게 없으면 max 생략", () => {
 test("formatPlannedGroups: 빈 배열은 빈 문자열", () => {
   assert.equal(formatPlannedGroups([]), "");
 });
+
+test("formatPlannedGroups: load 컨텍스트로 맨몸 총무게 병기", () => {
+  // 단일 그룹
+  assert.equal(
+    formatPlannedGroups([{ count: 3, reps: 5, weightKg: 90 }], {
+      exerciseName: "Pull-Up",
+      bodyweightKg: 70,
+      locale: "ko",
+    }),
+    "3 × 5 @ 90kg (+20)",
+  );
+  // 비-맨몸은 병기 없음
+  assert.equal(
+    formatPlannedGroups([{ count: 3, reps: 5, weightKg: 100 }], {
+      exerciseName: "Back Squat",
+      bodyweightKg: 70,
+      locale: "ko",
+    }),
+    "3 × 5 @ 100kg",
+  );
+  // 다중 그룹은 max 무게에 병기
+  assert.equal(
+    formatPlannedGroups(
+      [
+        { count: 1, reps: 5, weightKg: 90 },
+        { count: 1, reps: 3, weightKg: 100 },
+      ],
+      { exerciseName: "Pull-Up", bodyweightKg: 70, locale: "ko" },
+    ),
+    "1 × 5, 1 × 3 (max 100kg (+30))",
+  );
+});

@@ -7,6 +7,7 @@ import {
   formatPerformedHistoryCompact,
   formatPlannedGroups,
 } from "@/lib/workout-notation/format";
+import { resolveLoggedLoadDisplay } from "@/lib/bodyweight-load";
 import type {
   CalendarExercisePreviewItem,
   CalendarPlan,
@@ -24,7 +25,12 @@ function daysBetween(aDateOnly: string, bDateOnly: string) {
   );
 }
 
-function summarizePlannedSets(sets: CalendarSnapshotSet[]) {
+function summarizePlannedSets(
+  sets: CalendarSnapshotSet[],
+  exerciseName?: string,
+  bodyweightKg?: number | null,
+  locale: "ko" | "en" = "ko",
+) {
   if (sets.length === 0) return "";
 
   const groups: Array<{ reps: number; weightKg: number; count: number }> = [];
@@ -39,16 +45,21 @@ function summarizePlannedSets(sets: CalendarSnapshotSet[]) {
     groups.push({ reps, weightKg, count: 1 });
   }
 
-  return formatPlannedGroups(groups);
+  // 목표 무게(targetWeightKg)는 이미 총부하(TM×%)이므로 맨몸 운동은 추가중량 병기.
+  return formatPlannedGroups(groups, { exerciseName, bodyweightKg, locale });
 }
 
-export function buildPlannedExercisePreview(snapshot: {
-  exercises?: Array<{
-    exerciseName?: string;
-    role?: "MAIN" | "ASSIST" | string;
-    sets?: CalendarSnapshotSet[];
-  }>;
-} | null): CalendarExercisePreviewItem[] {
+export function buildPlannedExercisePreview(
+  snapshot: {
+    exercises?: Array<{
+      exerciseName?: string;
+      role?: "MAIN" | "ASSIST" | string;
+      sets?: CalendarSnapshotSet[];
+    }>;
+  } | null,
+  bodyweightKg?: number | null,
+  locale: "ko" | "en" = "ko",
+): CalendarExercisePreviewItem[] {
   const exercises = Array.isArray(snapshot?.exercises) ? snapshot.exercises : [];
 
   return exercises
@@ -59,17 +70,21 @@ export function buildPlannedExercisePreview(snapshot: {
       return {
         name,
         role: exercise?.role ?? "MAIN",
-        summary: summarizePlannedSets(sets),
+        summary: summarizePlannedSets(sets, name, bodyweightKg, locale),
       } satisfies CalendarExercisePreviewItem;
     })
     .filter((exercise): exercise is CalendarExercisePreviewItem => exercise !== null);
 }
 
-function buildLoggedExercisePreview(sets: CalendarWorkoutLogForDate["sets"]) {
+function buildLoggedExercisePreview(
+  sets: CalendarWorkoutLogForDate["sets"],
+  bodyweightKg?: number | null,
+  locale: "ko" | "en" = "ko",
+) {
   let totalVolume = 0;
   const grouped = new Map<
     string,
-    { count: number; bestWeight: number; bestReps: number }
+    { count: number; bestWeight: number; bestReps: number; bestSuffix: string | null }
   >();
 
   for (const set of sets) {
@@ -77,12 +92,24 @@ function buildLoggedExercisePreview(sets: CalendarWorkoutLogForDate["sets"]) {
     if (!name) continue;
 
     const reps = Number(set.reps ?? 0);
-    const weight = Number(set.weightKg ?? 0);
+    // 맨몸 운동은 총부하(체중+추가)로 환산해 best/볼륨을 집계한다.
+    const display = resolveLoggedLoadDisplay({
+      exerciseName: name,
+      weightKg: set.weightKg,
+      meta: set.meta,
+      locale,
+    });
+    const weight = Number(display.totalKg ?? set.weightKg ?? 0);
     totalVolume += Math.max(0, reps) * Math.max(0, weight);
 
     const current = grouped.get(name);
     if (!current) {
-      grouped.set(name, { count: 1, bestWeight: weight, bestReps: reps });
+      grouped.set(name, {
+        count: 1,
+        bestWeight: weight,
+        bestReps: reps,
+        bestSuffix: display.suffix,
+      });
       continue;
     }
 
@@ -93,6 +120,7 @@ function buildLoggedExercisePreview(sets: CalendarWorkoutLogForDate["sets"]) {
     ) {
       current.bestWeight = weight;
       current.bestReps = reps;
+      current.bestSuffix = display.suffix;
     }
   }
 
@@ -104,6 +132,7 @@ function buildLoggedExercisePreview(sets: CalendarWorkoutLogForDate["sets"]) {
         value.bestWeight,
         value.bestReps,
         value.count,
+        value.bestSuffix,
       ),
     })),
     totalSets: sets.length,
@@ -169,6 +198,8 @@ type UseCalendarDerivedStateInput = {
   recentSessions: CalendarRecentGeneratedSession[];
   allPlanLogs: CalendarWorkoutLogSummary[];
   currentSelectedLog: CalendarWorkoutLogForDate | null;
+  bodyweightKg?: number | null;
+  locale?: "ko" | "en";
 };
 
 export function useCalendarDerivedState({
@@ -179,6 +210,8 @@ export function useCalendarDerivedState({
   recentSessions,
   allPlanLogs,
   currentSelectedLog,
+  bodyweightKg = null,
+  locale = "ko",
 }: UseCalendarDerivedStateInput) {
   const generatedByDate = useMemo(() => {
     const map = new Map<string, CalendarRecentGeneratedSession>();
@@ -306,8 +339,13 @@ export function useCalendarDerivedState({
     isAutoProgressionPlan && isPastDate && !currentSelectedLog && hasLaterLogs;
 
   const loggedSummary = useMemo(
-    () => buildLoggedExercisePreview(currentSelectedLog?.sets ?? []),
-    [currentSelectedLog],
+    () =>
+      buildLoggedExercisePreview(
+        currentSelectedLog?.sets ?? [],
+        bodyweightKg,
+        locale,
+      ),
+    [currentSelectedLog, bodyweightKg, locale],
   );
 
   const selectedDayLabel = useMemo(() => {

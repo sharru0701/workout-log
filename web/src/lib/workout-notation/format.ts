@@ -188,16 +188,28 @@ export interface PlannedGroup {
 /**
  * 다중 그룹 처방을 한 줄 문자열로. 단일 그룹은 `Sets × Reps @ Weight`,
  * 다중 그룹은 `S1 × R1, S2 × R2 (max Wkg)` (그룹별 누적 + 최대 무게).
- * 처방 컨벤션 따라 모든 곳에 공백.
+ * 처방 컨벤션 따라 모든 곳에 공백. load가 주어지면 맨몸 운동 무게(=총부하)
+ * 뒤에 추가중량을 병기한다 (`3 × 5 @ 90kg (+20)`).
  */
-export function formatPlannedGroups(groups: PlannedGroup[]): string {
+export function formatPlannedGroups(
+  groups: PlannedGroup[],
+  load?: PerformedLoadContext,
+): string {
   if (groups.length === 0) return "";
   if (groups.length === 1) {
     const g = groups[0]!;
-    const weightSuffix =
-      typeof g.weightKg === "number" && g.weightKg > 0
-        ? ` @ ${g.weightKg}kg`
-        : "";
+    const hasWeight = typeof g.weightKg === "number" && g.weightKg > 0;
+    const suffix = hasWeight
+      ? bodyweightAddedSuffix(
+          load?.exerciseName ?? "",
+          g.weightKg,
+          load?.bodyweightKg ?? null,
+          load?.locale,
+        )
+      : null;
+    const weightSuffix = hasWeight
+      ? ` @ ${g.weightKg}kg${suffix ? ` ${suffix}` : ""}`
+      : "";
     return `${g.count} × ${g.reps}${weightSuffix}`;
   }
   const repsPart = groups
@@ -209,6 +221,18 @@ export function formatPlannedGroups(groups: PlannedGroup[]): string {
     ),
     0,
   );
-  const weightSuffix = maxWeight > 0 ? ` (max ${maxWeight}kg)` : "";
+  const maxSuffix =
+    maxWeight > 0
+      ? bodyweightAddedSuffix(
+          load?.exerciseName ?? "",
+          maxWeight,
+          load?.bodyweightKg ?? null,
+          load?.locale,
+        )
+      : null;
+  const weightSuffix =
+    maxWeight > 0
+      ? ` (max ${maxWeight}kg${maxSuffix ? ` ${maxSuffix}` : ""})`
+      : "";
   return `${repsPart}${weightSuffix}`;
 }
