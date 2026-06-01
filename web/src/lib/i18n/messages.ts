@@ -350,6 +350,10 @@ export type AppCopy = {
     adjustSave: string;
     adjustCancel: string;
     adjustHint: string;
+    incrementSettingsLabel: string;
+    incrementSettingsHint: string;
+    showIncrementSettings: string;
+    hideIncrementSettings: string;
     viewHistory: string;
     saveInProgress: string;
     saveChanges: string;
@@ -762,7 +766,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       noStrengthBaselines: "저장된 시작 기준 1RM/TM이 없습니다.",
       currentProgress: "현재 진행 상태",
       startingBaselineHint:
-        "이 값은 프로그램을 처음 시작할 때의 기준입니다. 진행 중에는 위 '현재 진행 상태' 무게가 사용되며, 이 값을 수정해도 진행 중 무게에 즉시 반영되지 않습니다.",
+        "프로그램을 처음 시작할 때 입력한 기준값입니다. 진행 중에는 위 '현재 진행 상태'의 무게가 사용됩니다.",
       showStartingBaseline: "시작 기준 1RM/TM 보기",
       hideStartingBaseline: "시작 기준 1RM/TM 숨기기",
       adjustCurrentTm: "현재 TM 조정",
@@ -770,6 +774,11 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       adjustCancel: "취소",
       adjustHint:
         "운동별 현재 TM을 2.5kg 단위로 직접 보정합니다 (부상·디로드 등). 다음 세션 무게부터 반영됩니다.",
+      incrementSettingsLabel: "증량/감량 사이클 설정",
+      incrementSettingsHint:
+        "자동 진행 성공/실패 시 운동 종목별 변동량을 2.5kg 단위로 조정합니다. 감량 0 = 프로그램 기본값(%) 사용.",
+      showIncrementSettings: "증량/감량 설정 보기",
+      hideIncrementSettings: "증량/감량 설정 숨기기",
       viewHistory: "수행 히스토리 보기",
       saveInProgress: "저장 중...",
       saveChanges: "변경사항 저장",
@@ -1180,7 +1189,7 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       noStrengthBaselines: "No starting 1RM/TM values are saved.",
       currentProgress: "Current Progress",
       startingBaselineHint:
-        "These are your baselines from when the program first started. While a program is in progress the 'Current Progress' weights above are used — editing these values does not immediately affect in-progress weights.",
+        "Baseline values from when the program first started. While in progress, the 'Current Progress' weights above are used.",
       showStartingBaseline: "Show starting 1RM/TM",
       hideStartingBaseline: "Hide starting 1RM/TM",
       adjustCurrentTm: "Adjust current TM",
@@ -1188,6 +1197,11 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
       adjustCancel: "Cancel",
       adjustHint:
         "Manually correct each lift's current TM in 2.5kg steps (injury, deload, etc.). Applies from the next session.",
+      incrementSettingsLabel: "Per-Cycle Increment / Decrement",
+      incrementSettingsHint:
+        "Adjust per-exercise change applied on success/failure (2.5kg step). Decrease 0 = use program default (%).",
+      showIncrementSettings: "Show increment/decrement",
+      hideIncrementSettings: "Hide increment/decrement",
       viewHistory: "View History",
       saveInProgress: "Saving...",
       saveChanges: "Save Changes",

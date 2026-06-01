@@ -192,8 +192,11 @@ function readTrainingMaxPreview(params: unknown) {
   const source = toRecord(params);
   const tm = readPositiveNumberMap(source.trainingMaxKg);
   const orm = readPositiveNumberMap(source.oneRepMaxKg);
-  const keys = Object.keys({ ...tm, ...orm });
-  if (keys.length === 0) return [] as Array<{ key: string; label: string; valueKg: number; kind: "TM" | "1RM" }>;
+  const allKeys = Object.keys({ ...tm, ...orm });
+  if (allKeys.length === 0) return [] as Array<{ key: string; label: string; valueKg: number; kind: "TM" | "1RM" }>;
+  // 상세(createStrengthBaselineDraft)와 동일하게 per-exercise(EX_) 키와 짝인 family canonical 키를 접어
+  // 카드 미리보기에서 "Squat"와 "Back Squat"가 동시에 보이는 중복을 막는다.
+  const keys = selectDisplayStrengthBaselineKeys(allKeys);
 
   const sorted = keys.sort((a, b) => {
     const ai = TARGET_PRIORITY.indexOf(a);
@@ -447,6 +450,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   } | null>(null);
   const [lastEvents, setLastEvents] = useState<Record<string, TargetLastEvent>>({});
   const [showStartingBaseline, setShowStartingBaseline] = useState(false);
+  const [showIncrementSettings, setShowIncrementSettings] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
   const [adjustDraft, setAdjustDraft] = useState<Record<string, number>>({});
   const [adjusting, setAdjusting] = useState(false);
@@ -556,6 +560,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     setProgressPosition(null);
     setLastEvents({});
     setShowStartingBaseline(false);
+    setShowIncrementSettings(false);
     setAdjustOpen(false);
     setAdjustDraft({});
     setManagePlanId(plan.id);
@@ -1173,44 +1178,56 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                         }}
                       >
                         <StrengthEditField label={copy.plansManage.oneRepMax}>
-                          <NumberPickerField
-                            label={`${row.label} ${copy.plansManage.oneRepMax}`}
-                            value={row.oneRepMaxKg}
-                            min={0}
-                            max={500}
-                            step={0.5}
-                            unit="kg"
-                            formatValue={formatKg}
-                            onChange={(value) => {
-                              setStrengthDraft((prev) => ({
-                                ...prev,
-                                [row.key]: {
-                                  ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
-                                  oneRepMaxKg: value,
-                                },
-                              }));
-                            }}
-                          />
+                          {isAutoProgression ? (
+                            <span className="v2-body" style={{ color: "var(--v2-ink)" }}>
+                              {row.oneRepMaxKg > 0 ? `${formatKg(row.oneRepMaxKg)} kg` : "—"}
+                            </span>
+                          ) : (
+                            <NumberPickerField
+                              label={`${row.label} ${copy.plansManage.oneRepMax}`}
+                              value={row.oneRepMaxKg}
+                              min={0}
+                              max={500}
+                              step={0.5}
+                              unit="kg"
+                              formatValue={formatKg}
+                              onChange={(value) => {
+                                setStrengthDraft((prev) => ({
+                                  ...prev,
+                                  [row.key]: {
+                                    ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
+                                    oneRepMaxKg: value,
+                                  },
+                                }));
+                              }}
+                            />
+                          )}
                         </StrengthEditField>
                         <StrengthEditField label={copy.plansManage.trainingMax}>
-                          <NumberPickerField
-                            label={`${row.label} ${copy.plansManage.trainingMax}`}
-                            value={row.trainingMaxKg}
-                            min={0}
-                            max={500}
-                            step={0.5}
-                            unit="kg"
-                            formatValue={formatKg}
-                            onChange={(value) => {
-                              setStrengthDraft((prev) => ({
-                                ...prev,
-                                [row.key]: {
-                                  ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
-                                  trainingMaxKg: value,
-                                },
-                              }));
-                            }}
-                          />
+                          {isAutoProgression ? (
+                            <span className="v2-body" style={{ color: "var(--v2-ink)" }}>
+                              {row.trainingMaxKg > 0 ? `${formatKg(row.trainingMaxKg)} kg` : "—"}
+                            </span>
+                          ) : (
+                            <NumberPickerField
+                              label={`${row.label} ${copy.plansManage.trainingMax}`}
+                              value={row.trainingMaxKg}
+                              min={0}
+                              max={500}
+                              step={0.5}
+                              unit="kg"
+                              formatValue={formatKg}
+                              onChange={(value) => {
+                                setStrengthDraft((prev) => ({
+                                  ...prev,
+                                  [row.key]: {
+                                    ...(prev[row.key] ?? { oneRepMaxKg: 0, trainingMaxKg: 0 }),
+                                    trainingMaxKg: value,
+                                  },
+                                }));
+                              }}
+                            />
+                          )}
                         </StrengthEditField>
                       </div>
                     </StrengthEditRow>
@@ -1229,23 +1246,29 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
             {/* ── Increment overrides ── */}
             {Object.keys(incrementDraft).length > 0 ? (
               <V2Stack gap={2}>
-                <V2Stack gap={1}>
-                  <span
-                    className="v2-eyebrow"
-                    style={{ color: "var(--v2-ink-3)" }}
-                  >
-                    {locale === "ko" ? "증량/감량 사이클 설정 (kg)" : "Per-Cycle Increment / Decrement (kg)"}
-                  </span>
+                <span
+                  className="v2-eyebrow"
+                  style={{ color: "var(--v2-ink-3)" }}
+                >
+                  {copy.plansManage.incrementSettingsLabel}
+                </span>
+                <V2SecondaryBtn
+                  full
+                  icon={showIncrementSettings ? "expand_less" : "expand_more"}
+                  onClick={() => setShowIncrementSettings((prev) => !prev)}
+                >
+                  {showIncrementSettings
+                    ? copy.plansManage.hideIncrementSettings
+                    : copy.plansManage.showIncrementSettings}
+                </V2SecondaryBtn>
+                {showIncrementSettings ? (
+                <V2Stack gap={2}>
                   <p
                     className="v2-small"
                     style={{ margin: 0, color: "var(--v2-ink-2)" }}
                   >
-                    {locale === "ko"
-                      ? "자동 진행 성공/실패 시 운동 종목별 변동량을 2.5kg 단위로 조정합니다. 감량 0 = 프로그램 기본값(%) 사용."
-                      : "Adjust per-exercise change applied on success/failure (2.5kg step). Decrease 0 = use program default (%)."}
+                    {copy.plansManage.incrementSettingsHint}
                   </p>
-                </V2Stack>
-                <V2Stack gap={2}>
                   {Object.entries(incrementDraft).map(([key, row]) => {
                     const label = targetLabelFromKey(key);
                     return (
@@ -1308,6 +1331,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                     );
                   })}
                 </V2Stack>
+                ) : null}
               </V2Stack>
             ) : incrementLoading ? (
               <V2EmptyState
