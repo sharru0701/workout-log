@@ -652,6 +652,44 @@ function manualExerciseKey(exerciseName: string) {
     .slice(0, 48)}`;
 }
 
+/**
+ * manualExerciseKey의 역연산. per-exercise 키(`EX_BENCH_PRESS`)를 family 매핑에 쓸 수 있는
+ * 운동명 형태(`"BENCH PRESS"`)로 되돌린다. 원본 운동명을 정확히 복원하는 것이 목적이 아니라
+ * mapExerciseNameToTarget이 substring으로 family를 찾을 수 있는 형태면 충분하다. 비-EX_ 키는 그대로 반환.
+ */
+export function decodeExerciseKey(key: string): string {
+  const raw = String(key ?? "").trim();
+  return raw.startsWith("EX_") ? raw.slice(3).replace(/_/g, " ").trim() : raw;
+}
+
+/**
+ * per-exercise(EX_) baseline 키가 묶이는 family canonical 키(SQUAT/BENCH/...)를 반환한다.
+ * 프로그램 시작 시 fallbackKey를 만드는 것과 동일한 정규 매퍼(mapExerciseNameToTarget)를 사용하므로,
+ * "시작 시 펼친 family 그림자 키"를 표시 단계에서 그대로 되접을 수 있다. canonical/비-EX_/미매핑 키는 null.
+ */
+export function familyFallbackKeyForBaselineKey(key: string): string | null {
+  const raw = String(key ?? "").trim();
+  if (!raw.startsWith("EX_")) return null;
+  return mapExerciseNameToTarget(decodeExerciseKey(raw));
+}
+
+/**
+ * 평면 strength baseline 키 집합에서, per-exercise(EX_) 키와 짝을 이루는 family canonical 키
+ * (예: `EX_BENCH_PRESS` ↔ `BENCH`)를 "그림자"로 보고 표시 대상에서 제외한 키 목록을 반환한다.
+ * 입력 순서는 보존한다. 짝이 없는 canonical 키(EX_ 키를 안 쓰는 LOGIC 프로그램 등)나
+ * family로 매핑되지 않는 EX_ 키는 그대로 유지된다.
+ */
+export function selectDisplayStrengthBaselineKeys(keys: string[]): string[] {
+  const present = keys.map((key) => String(key ?? "").trim()).filter(Boolean);
+  const presentSet = new Set(present);
+  const shadowed = new Set<string>();
+  for (const key of presentSet) {
+    const family = familyFallbackKeyForBaselineKey(key);
+    if (family && presentSet.has(family)) shadowed.add(family);
+  }
+  return present.filter((key, index) => present.indexOf(key) === index && !shadowed.has(key));
+}
+
 function oneRmTargetsFromManualDefinition(definition: any): OneRmTarget[] {
   if (definition?.kind !== "manual" || !Array.isArray(definition.sessions)) return [];
   const operatorStyle = definition?.operatorStyle === true || String(definition?.programFamily ?? "").trim().toLowerCase() === "operator";

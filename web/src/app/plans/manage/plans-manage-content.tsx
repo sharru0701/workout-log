@@ -23,6 +23,10 @@ import { EmptyStateRows, ErrorStateRows, LoadingStateRows } from "@/components/u
 import { apiDelete, apiGet, apiPatch } from "@/lib/api";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import { APP_ROUTES } from "@/lib/app-routes";
+import {
+  familyFallbackKeyForBaselineKey,
+  selectDisplayStrengthBaselineKeys,
+} from "@/lib/program-store/model";
 import type { PlanForManage } from "@/server/services/plans/get-plans-for-manage";
 
 // PERF: SSR로 주입된 initialPlans로 첫 화면 즉시 렌더 (스피너 없음).
@@ -92,7 +96,10 @@ function createStrengthBaselineDraft(params: unknown): StrengthBaselineDraft {
   const source = toRecord(params);
   const oneRepMaxKg = readPositiveNumberMap(source.oneRepMaxKg);
   const trainingMaxKg = readPositiveNumberMap(source.trainingMaxKg);
-  const keys = Array.from(new Set([...Object.keys(oneRepMaxKg), ...Object.keys(trainingMaxKg)])).sort();
+  const allKeys = Array.from(new Set([...Object.keys(oneRepMaxKg), ...Object.keys(trainingMaxKg)]));
+  // per-exercise(EX_) 키와 짝을 이루는 family canonical 키(예: EX_BENCH_PRESS ↔ BENCH)는
+  // 같은 운동의 중복 행이므로 표시에서 접는다. baseline 값 자체는 저장 시 fallbackKey로 동기화해 보존.
+  const keys = selectDisplayStrengthBaselineKeys(allKeys).sort();
 
   const next: StrengthBaselineDraft = {};
   for (const key of keys) {
@@ -437,6 +444,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     () =>
       Object.entries(strengthDraft).map(([key, value]) => ({
         key,
+        fallbackKey: familyFallbackKeyForBaselineKey(key),
         label: targetLabelFromKey(key),
         oneRepMaxKg: value.oneRepMaxKg,
         trainingMaxKg: value.trainingMaxKg,
@@ -570,6 +578,19 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       }
       if (row.oneRepMaxKg > 0) oneRepMaxKg[row.key] = row.oneRepMaxKg;
       if (row.trainingMaxKg > 0) trainingMaxKg[row.key] = row.trainingMaxKg;
+
+      // per-exercise(EX_) 행은 family canonical 키에도 같은 값을 기록한다. 표시 단계에서 접은
+      // family 그림자 행을 여기서 되살려, 자동 진행이 참조하는 family baseline이 사라지지 않게 한다.
+      // (프로그램 시작 시 submitStartProgram이 펼치는 fallbackKey 동기화와 동일한 패턴.)
+      const { fallbackKey } = row;
+      if (fallbackKey) {
+        if (row.oneRepMaxKg > 0 && oneRepMaxKg[fallbackKey] === undefined) {
+          oneRepMaxKg[fallbackKey] = row.oneRepMaxKg;
+        }
+        if (row.trainingMaxKg > 0 && trainingMaxKg[fallbackKey] === undefined) {
+          trainingMaxKg[fallbackKey] = row.trainingMaxKg;
+        }
+      }
     }
 
     const prevPlan = managedPlan;
