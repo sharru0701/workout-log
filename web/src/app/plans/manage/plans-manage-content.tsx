@@ -28,6 +28,8 @@ import {
   selectDisplayStrengthBaselineKeys,
 } from "@/lib/program-store/model";
 import { TargetWeightChip } from "@/features/progression/ui/target-weight-chip";
+import { bodyweightAddedSuffix } from "@/lib/bodyweight-load";
+import { useBodyweightKg } from "@/lib/settings/use-bodyweight";
 import type { PlanForManage } from "@/server/services/plans/get-plans-for-manage";
 
 // PERF: SSR로 주입된 initialPlans로 첫 화면 즉시 렌더 (스피너 없음).
@@ -137,6 +139,16 @@ function shortTargetLabel(key: string) {
   return targetLabelFromKey(key);
 }
 
+/**
+ * 자동 진행 타깃 키를 맨몸 운동 감지용 이름으로 매핑.
+ * 카드 라벨("Pull")은 isBodyweightExerciseName과 매칭되지 않으므로 키로 판별한다.
+ * PULL → Pull-Up, EX_PULL_UP → "Pull Up" (둘 다 매칭됨).
+ */
+function bodyweightExerciseNameForTargetKey(key: string): string {
+  if (key === "PULL") return "Pull-Up";
+  return targetLabelFromKey(key);
+}
+
 function formatKg(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
@@ -238,11 +250,13 @@ function PlanCardV2({
   onManage,
   copy,
   locale,
+  bodyweightKg,
 }: {
   plan: Plan;
   onManage: () => void;
   copy: ReturnType<typeof useLocale>["copy"];
   locale: "ko" | "en";
+  bodyweightKg: number | null;
 }) {
   const days = daysSince(plan.lastPerformedAt);
   const relText = formatRelativeDays(days, locale);
@@ -334,6 +348,15 @@ function PlanCardV2({
                       style={{ color: "var(--v2-ink-3)", marginLeft: "var(--v2-s-1)" }}
                     >
                       kg
+                      {(() => {
+                        const suffix = bodyweightAddedSuffix(
+                          bodyweightExerciseNameForTargetKey(row.key),
+                          row.valueKg,
+                          bodyweightKg,
+                          locale,
+                        );
+                        return suffix ? ` ${suffix}` : "";
+                      })()}
                     </span>
                   </span>
                 </div>
@@ -428,6 +451,8 @@ function StrengthEditField({
 
 export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   const { copy, locale } = useLocale();
+  const localeKey: "ko" | "en" = locale === "ko" ? "ko" : "en";
+  const bodyweightKg = useBodyweightKg();
   const { alert, confirm } = useAppDialog();
   const [plans, setPlans] = useState<Plan[]>(initialPlans);
   const [loading, setLoading] = useState(false);
@@ -481,6 +506,16 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       key,
       label: shortTargetLabel(key),
       weightKg: entry.workKg > 0 ? entry.workKg : null,
+      // 맨몸 운동(PULL 등)은 현재 무게(=총부하) 뒤에 추가중량 병기.
+      weightSuffix:
+        entry.workKg > 0
+          ? bodyweightAddedSuffix(
+              bodyweightExerciseNameForTargetKey(key),
+              entry.workKg,
+              bodyweightKg,
+              localeKey,
+            )
+          : null,
       lastDeltaKg: lastEvents[key]?.lastDeltaKg ?? null,
       lastEventType: lastEvents[key]?.lastEventType ?? null,
     }));
@@ -493,7 +528,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
       return ai - bi;
     });
     return rows;
-  }, [incrementDraft, lastEvents]);
+  }, [incrementDraft, lastEvents, bodyweightKg, localeKey]);
   const isSettled = useQuerySettled(loadKey, loading);
   const filteredPlans = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -972,6 +1007,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   plan={plan}
                   copy={copy}
                   locale={locale}
+                  bodyweightKg={bodyweightKg}
                   onManage={() => openManageSheet(plan)}
                 />
               ))}
@@ -1074,6 +1110,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                       key={row.key}
                       label={row.label}
                       weightKg={row.weightKg}
+                      weightSuffix={row.weightSuffix}
                       lastDeltaKg={row.lastDeltaKg}
                       lastEventType={row.lastEventType}
                     />

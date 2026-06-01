@@ -602,7 +602,7 @@ function buildHomeData(params: {
 }): HomeData {
   const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey, goal, goalMetrics, bodyweightKg } = params;
 
-  const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } = buildPlannedExercises(snapshot);
+  const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } = buildPlannedExercises(snapshot, bodyweightKg, locale);
 
   return {
     today: buildTodaySummary(plans, logs, plannedExercises, totalPlannedSets, locale, todayKey, bodyweightKg),
@@ -800,7 +800,7 @@ function buildQuickStats(logs: any[], todayKey: string): HomeQuickStats {
   return { totalSessions: logs.length, totalVolume: Math.round(totalVolume), currentStreak: streak, thisMonthSessions };
 }
 
-function buildPlannedExercises(snapshot: any) {
+function buildPlannedExercises(snapshot: any, bodyweightKg: number | null, locale: AppLocale) {
   if (!snapshot?.exercises) return { exercises: [], totalSets: 0, plannedWeightByExercise: new Map<string, number>() };
   let totalSets = 0;
   const plannedWeightByExercise = new Map<string, number>();
@@ -810,12 +810,12 @@ function buildPlannedExercises(snapshot: any) {
     let maxW = 0;
     for (const s of sets) if (s.targetWeightKg && s.targetWeightKg > maxW) maxW = s.targetWeightKg;
     if (maxW > 0) plannedWeightByExercise.set(ex.exerciseName.toLowerCase(), maxW);
-    return { name: ex.exerciseName, exerciseId: ex.exerciseId ?? null, role: ex.role, totalSets: sets.length, summary: summarizeSets(sets) };
+    return { name: ex.exerciseName, exerciseId: ex.exerciseId ?? null, role: ex.role, totalSets: sets.length, summary: summarizeSets(sets, ex.exerciseName, bodyweightKg, locale) };
   });
   return { exercises, totalSets, plannedWeightByExercise };
 }
 
-function summarizeSets(sets: any[]): string {
+function summarizeSets(sets: any[], exerciseName?: string, bodyweightKg?: number | null, locale: AppLocale = "ko"): string {
   if (sets.length === 0) return "";
   const groups: Array<{ count: number; reps: number; weightKg: number }> = [];
   for (const s of sets) {
@@ -828,7 +828,8 @@ function summarizeSets(sets: any[]): string {
       groups.push({ reps: r, weightKg: w, count: 1 });
     }
   }
-  return formatPlannedGroups(groups);
+  // 목표 무게(targetWeightKg)는 이미 총부하(TM×%)이므로 맨몸 운동은 추가중량 병기.
+  return formatPlannedGroups(groups, { exerciseName, bodyweightKg, locale });
 }
 
 function groupLoggedExercises(sets: any[]) {

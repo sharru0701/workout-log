@@ -42,6 +42,7 @@ import {
 import type { CalendarPageBootstrap } from "@/server/services/calendar/get-calendar-page-bootstrap";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { apiDelete, apiPatch } from "@/lib/api";
+import { useBodyweightKg } from "@/lib/settings/use-bodyweight";
 
 import { buildTodayLogHref } from "@/lib/workout-links";
 
@@ -55,6 +56,8 @@ export function CalendarScreen({
   initialToday,
 }: CalendarScreenProps) {
   const { copy, locale } = useLocale();
+  const localeKey: "ko" | "en" = locale === "ko" ? "ko" : "en";
+  const bodyweightKg = useBodyweightKg();
   const router = useRouter();
   const timezone = useMemo(
     () => initialTimezone ?? (Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"),
@@ -136,6 +139,8 @@ export function CalendarScreen({
     recentSessions,
     allPlanLogs,
     currentSelectedLog,
+    bodyweightKg,
+    locale: localeKey,
   });
   const { selectedSessionDetail } = useCalendarSessionDetail({
     locale,
@@ -145,8 +150,13 @@ export function CalendarScreen({
     setError,
   });
   const plannedExercises = useMemo(
-    () => buildPlannedExercisePreview(selectedSessionDetail?.snapshot ?? null),
-    [selectedSessionDetail],
+    () =>
+      buildPlannedExercisePreview(
+        selectedSessionDetail?.snapshot ?? null,
+        bodyweightKg,
+        localeKey,
+      ),
+    [selectedSessionDetail, bodyweightKg, localeKey],
   );
 
   const workoutHref = currentSelectedLog

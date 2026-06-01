@@ -44,6 +44,7 @@ export type CalendarWorkoutLogForDate = {
     exerciseName: string;
     reps: number | null;
     weightKg: number | null;
+    meta?: Record<string, unknown> | null;
   }>;
 };
 

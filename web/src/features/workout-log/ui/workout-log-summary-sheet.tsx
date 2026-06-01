@@ -292,6 +292,7 @@ export function WorkoutLogSummarySheet({
                         key={s.sessionKey}
                         session={s}
                         locale={localeKey}
+                        bodyweightKg={bodyweightKg}
                       />
                     ))}
                   </div>
@@ -352,9 +353,11 @@ export function WorkoutLogSummarySheet({
 function SessionCard({
   session,
   locale,
+  bodyweightKg,
 }: {
   session: CycleOverviewSession;
   locale: "ko" | "en";
+  bodyweightKg: number | null;
 }) {
   const isDone = session.status === "DONE";
   const isToday = session.status === "TODAY";
@@ -470,6 +473,7 @@ function SessionCard({
                 key={`${ex.exerciseName}-${i}`}
                 exercise={ex}
                 locale={locale}
+                bodyweightKg={bodyweightKg}
               />
             ))}
           </div>
@@ -489,11 +493,18 @@ function SessionCard({
 function ExerciseRow({
   exercise,
   locale,
+  bodyweightKg,
 }: {
   exercise: CycleOverviewSessionExercise;
   locale: "ko" | "en";
+  bodyweightKg: number | null;
 }) {
-  const setSummary = formatSetsSummary(exercise.sets ?? [], locale);
+  const setSummary = formatSetsSummary(
+    exercise.sets ?? [],
+    locale,
+    exercise.exerciseName,
+    bodyweightKg,
+  );
   return (
     <div
       style={{
@@ -544,15 +555,23 @@ function ExerciseRow({
 
 function formatSetsSummary(
   sets: CycleOverviewSessionExercise["sets"],
-  _locale: "ko" | "en",
+  locale: "ko" | "en",
+  exerciseName?: string,
+  bodyweightKg?: number | null,
 ): string {
   if (!sets || sets.length === 0) return "—";
   // 히스토리 컨벤션: per-set `Weight × Reps`. uniform 시에만 compact `Weight × Reps × Sets`.
+  // 목표 무게(targetWeightKg)는 이미 총부하(TM×%)이므로, 맨몸 운동은 총무게 뒤에
+  // 추가중량을 병기한다 (`105kg (+31) × 5 × 3`).
   const normalized = sets.map((s) => ({
     weightKg: s.weightKg ?? 0,
     reps: s.reps ?? 0,
   }));
-  return formatPerformedHistoryLine(normalized);
+  return formatPerformedHistoryLine(normalized, {
+    exerciseName,
+    bodyweightKg,
+    locale,
+  });
 }
 
 function formatSessionDate(dateStr: string, locale: "ko" | "en"): string {
