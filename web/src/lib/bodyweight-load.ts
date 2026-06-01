@@ -55,6 +55,31 @@ export function computeExternalLoadFromTotalKg(
   return roundTo2(Math.max(0, total - bodyweightKg));
 }
 
+/**
+ * 프로그램 처방 무게(targetWeightKg = TM × %, 맨몸 운동은 체중 포함 총부하)를
+ * 기록 입력 필드용 외부 추가중량으로 변환한다. 기록 필드는 외부 추가중량만 받는다.
+ *
+ * - 비-맨몸 운동: 처방값이 곧 외부중량 → 그대로 반환.
+ * - 맨몸 + 체중 설정됨: 총부하 − 체중 (음수는 0).
+ * - 맨몸 + 체중 미설정: 총부하를 외부중량으로 그대로 시드하면 부풀려진 값(예:
+ *   풀업 97.5)이 외부중량으로 저장된다(2026-05-23 C2W6D1 이상치의 직접 원인).
+ *   변환이 불가능하므로 0을 반환해 사용자가 실제 추가중량을 입력하도록 유도한다.
+ */
+export function prescriptionToExternalLoadKg(
+  exerciseName: string,
+  prescribedTotalKg: number,
+  bodyweightKg: number | null,
+): number {
+  const base = Number.isFinite(prescribedTotalKg) ? prescribedTotalKg : 0;
+  if (!isBodyweightExerciseName(exerciseName)) return base;
+  const external = computeExternalLoadFromTotalKg(
+    exerciseName,
+    base,
+    bodyweightKg,
+  );
+  return external ?? 0;
+}
+
 export function resolveLoggedTotalLoadKg(input: {
   exerciseName: string;
   weightKg?: number | null;
