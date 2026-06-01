@@ -346,6 +346,10 @@ export type AppCopy = {
     startingBaselineHint: string;
     showStartingBaseline: string;
     hideStartingBaseline: string;
+    adjustCurrentTm: string;
+    adjustSave: string;
+    adjustCancel: string;
+    adjustHint: string;
     viewHistory: string;
     saveInProgress: string;
     saveChanges: string;
@@ -761,6 +765,11 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         "이 값은 프로그램을 처음 시작할 때의 기준입니다. 진행 중에는 위 '현재 진행 상태' 무게가 사용되며, 이 값을 수정해도 진행 중 무게에 즉시 반영되지 않습니다.",
       showStartingBaseline: "시작 기준 1RM/TM 보기",
       hideStartingBaseline: "시작 기준 1RM/TM 숨기기",
+      adjustCurrentTm: "현재 TM 조정",
+      adjustSave: "조정 저장",
+      adjustCancel: "취소",
+      adjustHint:
+        "운동별 현재 TM을 2.5kg 단위로 직접 보정합니다 (부상·디로드 등). 다음 세션 무게부터 반영됩니다.",
       viewHistory: "수행 히스토리 보기",
       saveInProgress: "저장 중...",
       saveChanges: "변경사항 저장",
@@ -1174,6 +1183,11 @@ export const appCopyByLocale: Record<AppLocale, AppCopy> = {
         "These are your baselines from when the program first started. While a program is in progress the 'Current Progress' weights above are used — editing these values does not immediately affect in-progress weights.",
       showStartingBaseline: "Show starting 1RM/TM",
       hideStartingBaseline: "Hide starting 1RM/TM",
+      adjustCurrentTm: "Adjust current TM",
+      adjustSave: "Save adjustment",
+      adjustCancel: "Cancel",
+      adjustHint:
+        "Manually correct each lift's current TM in 2.5kg steps (injury, deload, etc.). Applies from the next session.",
       viewHistory: "View History",
       saveInProgress: "Saving...",
       saveChanges: "Save Changes",

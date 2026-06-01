@@ -1,4 +1,4 @@
-import { and, asc, eq, gt, inArray, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, or } from "drizzle-orm";
 import {
   plan as planTable,
   planProgressEvent,
@@ -632,5 +632,122 @@ export async function rebuildAutoProgressionForPlan(input: {
     reason: "rebuild:updated" as const,
     programSlug: resolved.templateSlug,
     rebuiltLogCount: remainingLogs.length,
+  };
+}
+
+export type ManualRuntimeAdjustment = { workKg: number };
+
+// 사용자가 자동 진행 플랜의 "현재 TM(runtime workKg)"을 직접 보정한다(부상/디로드 등).
+// 핵심 제약: planRuntimeState를 직접 UPDATE하면 과거 로그 수정으로 rebuild가 돌 때
+// 덮어써지고, null-logId 이벤트를 심으면 rebuild가 그 이벤트를 삭제한다. 그래서
+// runtime을 만든 "가장 최근(performedAt desc, id desc) 실 로그 이벤트"의
+// meta.targetDecisionsOverride에 보정을 머지한다. 그러면 rebuild/replay가 그 logId를
+// 재생할 때 readStoredDecisionsFromMeta로 복원해 보정이 보존된다(PR #360 메커니즘과 정합).
+export async function applyManualRuntimeAdjustment(input: {
+  tx: any;
+  userId: string;
+  planId: string | null | undefined;
+  adjustments: Record<string, ManualRuntimeAdjustment>;
+}) {
+  const context = await resolveAutoProgressionContext({
+    tx: input.tx,
+    userId: input.userId,
+    planId: input.planId,
+  });
+  if (!context.ok) return { applied: false as const, reason: context.reason };
+  const resolved = context;
+
+  // 입력 정규화: 2.5kg 스냅, 유효값(finite·≥0)만.
+  const requested: Record<string, ProgressionTargetDecision> = {};
+  for (const [rawKey, value] of Object.entries(input.adjustments ?? {})) {
+    const key = String(rawKey).trim();
+    const workKg = typeof value?.workKg === "number" ? value.workKg : Number(value?.workKg);
+    if (!key || !Number.isFinite(workKg) || workKg < 0) continue;
+    requested[key] = { mode: "hold", workKg: snapTo2p5(workKg) };
+  }
+  if (Object.keys(requested).length === 0) {
+    return { applied: false as const, reason: "skip:no-adjustments" as const };
+  }
+
+  // runtime을 만든 가장 최근 실 로그 이벤트(= afterState가 현재 runtime).
+  const latestRows = await input.tx
+    .select({
+      eventId: planProgressEvent.id,
+      logId: planProgressEvent.logId,
+      beforeState: planProgressEvent.beforeState,
+      meta: planProgressEvent.meta,
+    })
+    .from(planProgressEvent)
+    .innerJoin(workoutLog, eq(planProgressEvent.logId, workoutLog.id))
+    .where(
+      and(
+        eq(planProgressEvent.planId, resolved.planId),
+        eq(planProgressEvent.programSlug, resolved.templateSlug),
+      ),
+    )
+    .orderBy(desc(workoutLog.performedAt), desc(workoutLog.id))
+    .limit(1);
+  const latest = latestRows[0] ?? null;
+  if (!latest || !latest.logId) {
+    return { applied: false as const, reason: "skip:no-applied-log" as const };
+  }
+
+  // 대상 로그의 세트로 reducer 결과를 재현한 뒤, (기존 override + 신규 보정)을 머지해 적용.
+  const setRows = await input.tx
+    .select({
+      exerciseName: workoutSet.exerciseName,
+      reps: workoutSet.reps,
+      weightKg: workoutSet.weightKg,
+      isExtra: workoutSet.isExtra,
+      meta: workoutSet.meta,
+    })
+    .from(workoutSet)
+    .where(eq(workoutSet.logId, latest.logId))
+    .orderBy(asc(workoutSet.sortOrder), asc(workoutSet.setNumber), asc(workoutSet.id));
+
+  const reduced = reduceProgressionState({
+    program: resolved.progressionProgram,
+    previousState: latest.beforeState ?? {},
+    planParams: resolved.params,
+    sets: toLoggedSetRows(setRows),
+    logId: latest.logId,
+  });
+
+  // mode는 표시/eventType 용도 — 보정값과 현재값 비교로 결정(보존 정확성은 workKg 절대세팅에 의존).
+  const decisions: Record<string, ProgressionTargetDecision> = {
+    ...(readStoredDecisionsFromMeta(latest.meta) ?? {}),
+  };
+  for (const [key, d] of Object.entries(requested)) {
+    const current = reduced.nextState.targets[key]?.workKg ?? 0;
+    const mode: ProgressionTargetDecisionMode =
+      d.workKg > current ? "increase" : d.workKg < current ? "reset" : "hold";
+    decisions[key] = { mode, workKg: d.workKg };
+  }
+
+  const applied = applyTargetDecisionsToReduced(reduced, decisions);
+
+  await input.tx
+    .update(planProgressEvent)
+    .set({
+      eventType: applied.eventType,
+      reason: "manual:tm-adjustment",
+      beforeState: latest.beforeState ?? {},
+      afterState: applied.nextState,
+      meta: buildProgressionEventMeta(reduced, applied.appliedDecisions),
+    })
+    .where(eq(planProgressEvent.id, latest.eventId));
+
+  await upsertAutoProgressionRuntimeState({
+    tx: input.tx,
+    planId: resolved.planId,
+    userId: input.userId,
+    nextState: applied.nextState,
+  });
+
+  return {
+    applied: true as const,
+    reason: "manual:tm-adjustment" as const,
+    state: applied.nextState,
+    programSlug: resolved.templateSlug,
   };
 }
