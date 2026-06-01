@@ -144,29 +144,57 @@ export type ProgramDetailInfo = {
 
 export type ProgramStoreLocale = "ko" | "en";
 
-const ENGLISH_PROGRAM_DESCRIPTIONS: Partial<Record<string, string>> = {
-  operator:
-    "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
-  manual:
-    "A fully open manual template for lifters who want to design every exercise, set, and rep themselves. There is no automatic progression engine, so each session can be logged exactly as written. It works well when you want full control instead of adapting to a prebuilt system.",
-  "starting-strength-lp":
-    "Mark Rippetoe's classic novice linear progression. Train an A/B full-body split three days per week with squats, presses, deadlifts, and power cleans, adding 2.5 to 5 kg whenever the work sets are completed. The program strips away distractions and leans hard into compound barbell lifts to maximize the novice effect.",
-  "stronglifts-5x5":
-    "A novice linear progression popularized by Mehdi. It resembles Starting Strength, but most main lifts are performed for 5x5 while deadlift stays lower in volume. Weight increases happen in small, predictable jumps, and the reset rules are simple enough that new lifters can run it with very little friction.",
-  "texas-method":
-    "A weekly undulating progression for intermediate lifters who have outgrown session-to-session linear gains. The standard flow is volume day, recovery day, and intensity day within the same week, letting stress, recovery, and peak output cycle together. It is a strong bridge for athletes who still want predictable progression without novice-level recovery speed.",
-  gzclp:
-    "Cody LeFever's tiered linear progression built around T1, T2, and T3 work. T1 lifts emphasize heavy strength practice, T2 movements drive additional volume, and T3 slots add high-rep work capacity and hypertrophy. It is a good fit for beginners and early intermediates who want more exercise variety than classic novice LPs.",
-  "wendler-531":
-    "Jim Wendler's 5/3/1 base template with no additional assistance work. It runs a 4-week cycle using a 90% training max, builds around submaximal top sets, and finishes each main week with an AMRAP set to drive long-term progress. This version is clean and minimal: just the main work and the progression engine.",
-  "wendler-531-fsl":
-    "A 5/3/1 variant that adds First Set Last work after the main sets. The first working-set load is repeated for 5x5, giving you extra technical practice and useful volume without losing the character of the original program. It is one of the most practical ways to make 5/3/1 feel more productive week to week.",
-  "wendler-531-bbb":
-    "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
-  "greyskull-lp":
-    "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
-  "asymptote-protocol":
-    "A performance-gated strength program for intermediates whose recovery, nutrition, or sleep is inconsistent. Three rotating sessions (A/B/C) cycle through four phases per block — acclimation, build, validation, deload — and the training max only moves when a cycle-3 AMRAP earns it. Five lifts (Squat, Bench, Weighted Pull-Up, Deadlift, Overhead Press) with auxiliary TMs derived from the mains, on a session-based rotation that ignores the calendar.",
+// 마켓 템플릿 소개글은 코드 사전(appCopyByLocale 패턴)을 정본으로 ko/en을 함께 둔다.
+// 사용자 커스텀 프로그램은 이 맵에 slug가 없으므로 DB의 template.description으로 폴백한다.
+const PROGRAM_DESCRIPTIONS: Record<ProgramStoreLocale, Partial<Record<string, string>>> = {
+  ko: {
+    operator:
+      "전술 운동선수와 현장 요원을 위한 서브맥시멀 스트렝스 프로그램입니다. 실제 1RM의 90%를 훈련 최대 중량(TM)으로 사용해 스쿼트·벤치·데드리프트를 6주 파동으로 운영하며, 실패 직전까지 갈아 넣기보다 반복 가능한 고중량 훈련을 우선합니다. 매 사이클이 끝나면 TM을 조금씩 올려 장기적인 점진적 과부하를 유지합니다.",
+    manual:
+      "모든 운동·세트·횟수를 직접 설계하고 싶은 리프터를 위한 완전 개방형 수동 템플릿입니다. 자동 진행 엔진이 없어 각 세션을 작성한 그대로 기록합니다. 미리 짜인 시스템에 맞추기보다 전적인 통제권을 원할 때 잘 맞습니다.",
+    "starting-strength-lp":
+      "마크 리피토의 고전적인 초보자 선형 진행 프로그램입니다. 주 3회 A/B 전신 분할로 스쿼트·프레스·데드리프트·파워클린을 훈련하며, 작업 세트를 완료할 때마다 2.5~5kg을 더합니다. 군더더기를 걷어내고 복합 바벨 운동에 집중해 초보자 효과를 극대화합니다.",
+    "stronglifts-5x5":
+      "Mehdi가 대중화한 초보자 선형 진행 프로그램입니다. 스타팅 스트렝스와 비슷하지만 대부분의 메인 리프트를 5×5로 수행하고 데드리프트는 볼륨을 낮게 유지합니다. 중량은 작고 예측 가능한 폭으로 증가하며, 리셋 규칙이 단순해 초보자도 거의 마찰 없이 운영할 수 있습니다.",
+    "texas-method":
+      "세션마다 중량을 올리는 선형 성장을 졸업한 중급 리프터를 위한 주간 비선형(undulating) 진행 프로그램입니다. 한 주 안에 볼륨일·회복일·강도일을 배치해 스트레스·회복·최대 출력을 함께 순환시킵니다. 초보자 수준의 회복 속도는 지났지만 여전히 예측 가능한 진행을 원하는 사람에게 좋은 다리 역할을 합니다.",
+    gzclp:
+      "Cody LeFever가 만든 T1·T2·T3 계층 구조의 선형 진행 프로그램입니다. T1은 고중량 스트렝스 훈련, T2는 추가 볼륨, T3는 고반복 작업 능력과 근비대를 담당합니다. 고전적인 초보 LP보다 다양한 종목을 원하는 초보자와 초기 중급자에게 잘 맞습니다.",
+    "wendler-531":
+      "짐 웬들러의 5/3/1 기본 템플릿으로, 추가 보조 운동이 없습니다. 훈련 최대 중량(TM)의 90%를 기준으로 4주 사이클을 운영하고, 서브맥시멀 톱세트를 중심으로 구성하며, 각 메인 주차를 AMRAP 세트로 마무리해 장기적인 성장을 끌어냅니다. 메인 운동과 진행 엔진만 남긴 깔끔하고 미니멀한 버전입니다.",
+    "wendler-531-fsl":
+      "메인 세트 뒤에 First Set Last(FSL) 작업을 더한 5/3/1 변형입니다. 첫 작업 세트 중량을 5×5로 반복해, 원래 프로그램의 성격을 유지하면서 추가적인 기술 연습과 유용한 볼륨을 확보합니다. 5/3/1을 주차마다 더 알차게 만드는 가장 실용적인 방법 중 하나입니다.",
+    "wendler-531-bbb":
+      "메인 운동 뒤에 Boring But Big(BBB) 보조 운동을 더한 5/3/1 변형입니다. 이어지는 5×10 세트가 훨씬 큰 근비대·작업 능력 자극을 만들고, 핵심 진행은 여전히 5/3/1 톱세트에서 나옵니다. 스트렝스와 함께 더 큰 사이즈를 원하는 리프터를 위한 고볼륨 옵션입니다.",
+    "greyskull-lp":
+      "고전적인 바벨 기본기에 AMRAP 마지막 세트를 더한 초보자 선형 진행 프로그램입니다. 처음 두 작업 세트 뒤, 마지막 세트에서 최대한 많은 횟수를 시도해 그날 컨디션에 따라 볼륨이 자동으로 조절되도록 합니다. 진행은 단순하게 유지하면서도 초보자에게 더 많은 유연성과 선택적 보조 운동을 추가할 명확한 경로를 제공합니다.",
+    "asymptote-protocol":
+      "회복·영양·수면이 불안정한 중급 리프터를 위한 성과 기반(performance-gated) 스트렝스 프로그램입니다. 3개 세션(A/B/C)이 블록마다 적응·빌드·검증·디로드 네 단계를 순환하며, 훈련 최대 중량(TM)은 자동으로 오르지 않고 사이클 3의 AMRAP 검증을 통과해야만 갱신됩니다. 스쿼트·벤치·중량 풀업·데드리프트·오버헤드 프레스 5개 종목으로 구성되고, 보조 TM은 메인 종목에서 파생되며, 캘린더에 묶이지 않는 세션 기반 로테이션으로 진행됩니다.",
+  },
+  en: {
+    operator:
+      "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
+    manual:
+      "A fully open manual template for lifters who want to design every exercise, set, and rep themselves. There is no automatic progression engine, so each session can be logged exactly as written. It works well when you want full control instead of adapting to a prebuilt system.",
+    "starting-strength-lp":
+      "Mark Rippetoe's classic novice linear progression. Train an A/B full-body split three days per week with squats, presses, deadlifts, and power cleans, adding 2.5 to 5 kg whenever the work sets are completed. The program strips away distractions and leans hard into compound barbell lifts to maximize the novice effect.",
+    "stronglifts-5x5":
+      "A novice linear progression popularized by Mehdi. It resembles Starting Strength, but most main lifts are performed for 5x5 while deadlift stays lower in volume. Weight increases happen in small, predictable jumps, and the reset rules are simple enough that new lifters can run it with very little friction.",
+    "texas-method":
+      "A weekly undulating progression for intermediate lifters who have outgrown session-to-session linear gains. The standard flow is volume day, recovery day, and intensity day within the same week, letting stress, recovery, and peak output cycle together. It is a strong bridge for athletes who still want predictable progression without novice-level recovery speed.",
+    gzclp:
+      "Cody LeFever's tiered linear progression built around T1, T2, and T3 work. T1 lifts emphasize heavy strength practice, T2 movements drive additional volume, and T3 slots add high-rep work capacity and hypertrophy. It is a good fit for beginners and early intermediates who want more exercise variety than classic novice LPs.",
+    "wendler-531":
+      "Jim Wendler's 5/3/1 base template with no additional assistance work. It runs a 4-week cycle using a 90% training max, builds around submaximal top sets, and finishes each main week with an AMRAP set to drive long-term progress. This version is clean and minimal: just the main work and the progression engine.",
+    "wendler-531-fsl":
+      "A 5/3/1 variant that adds First Set Last work after the main sets. The first working-set load is repeated for 5x5, giving you extra technical practice and useful volume without losing the character of the original program. It is one of the most practical ways to make 5/3/1 feel more productive week to week.",
+    "wendler-531-bbb":
+      "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
+    "greyskull-lp":
+      "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
+    "asymptote-protocol":
+      "A performance-gated strength program for intermediates whose recovery, nutrition, or sleep is inconsistent. Three rotating sessions (A/B/C) cycle through four phases per block — acclimation, build, validation, deload — and the training max only moves when a cycle-3 AMRAP earns it. Five lifts (Squat, Bench, Weighted Pull-Up, Deadlift, Overhead Press) with auxiliary TMs derived from the mains, on a session-based rotation that ignores the calendar.",
+  },
 };
 
 function t(locale: ProgramStoreLocale, ko: string, en: string) {
@@ -177,10 +205,8 @@ export function getProgramDescription(
   template: ProgramTemplate,
   locale: ProgramStoreLocale = "ko",
 ) {
-  if (locale === "en") {
-    const override = ENGLISH_PROGRAM_DESCRIPTIONS[template.slug];
-    if (override) return override;
-  }
+  const override = PROGRAM_DESCRIPTIONS[locale]?.[template.slug];
+  if (override) return override;
   return template.description ?? null;
 }
 

@@ -3,6 +3,7 @@ import test from "node:test";
 import {
   createEmptyExerciseDraft,
   extractOneRmTargetsFromTemplate,
+  getProgramDescription,
   getProgramDetailInfo,
   inferSessionDraftsFromTemplate,
   isOperatorTemplate,
@@ -360,4 +361,44 @@ test("inferSessionDraftsFromTemplate reads legacy slot roles as auto rows", () =
   assert.equal(session?.exercises[1]?.rowType, "AUTO");
   assert.equal(session?.exercises[1]?.progressionTarget, "PULL");
   assert.equal(session?.exercises[2]?.rowType, "CUSTOM");
+});
+
+const greyskullTemplate: ProgramTemplate = {
+  id: "template-greyskull",
+  slug: "greyskull-lp",
+  name: "Greyskull LP (Base)",
+  type: "MANUAL",
+  visibility: "PUBLIC",
+  // DB(seed)에 영어로 들어간 값. 마켓 템플릿은 코드 사전이 우선하므로 ko에서 이 값이 노출되면 안 된다(회귀).
+  description:
+    "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
+  tags: ["manual", "strength", "linear", "amrap", "novice"],
+  latestVersion: null,
+};
+
+test("getProgramDescription localizes market copy and never falls back to the English DB value in ko", () => {
+  const ko = getProgramDescription(greyskullTemplate, "ko");
+  assert.ok(ko && /[가-힣]/.test(ko), "ko 소개글은 한국어여야 한다");
+  assert.ok(
+    !ko.startsWith("A novice LP"),
+    "ko에서 DB의 영어 description으로 폴백되면 안 된다",
+  );
+
+  const en = getProgramDescription(greyskullTemplate, "en");
+  assert.ok(en?.startsWith("A novice LP"), "en 소개글은 영어 마켓 카피여야 한다");
+
+  assert.notEqual(ko, en);
+});
+
+test("getProgramDescription falls back to the DB description for custom (non-market) programs", () => {
+  const customTemplate: ProgramTemplate = {
+    ...greyskullTemplate,
+    slug: "greyskull-lp-fork-abc123",
+    visibility: "PRIVATE",
+    description: "내가 직접 만든 커스텀 프로그램 설명입니다.",
+  };
+
+  // 코드 사전에 없는 slug → DB description으로 폴백(언어 무관).
+  assert.equal(getProgramDescription(customTemplate, "ko"), "내가 직접 만든 커스텀 프로그램 설명입니다.");
+  assert.equal(getProgramDescription(customTemplate, "en"), "내가 직접 만든 커스텀 프로그램 설명입니다.");
 });
