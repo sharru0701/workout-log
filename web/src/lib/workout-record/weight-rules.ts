@@ -1,4 +1,4 @@
-import { computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
+import { prescriptionToExternalLoadKg } from "@/lib/bodyweight-load";
 import {
   resolveMinimumPlateIncrementKg,
   snapWeightToIncrementKg,
@@ -28,8 +28,10 @@ function snapWeightPerSet(
 ): { next: number[]; changed: boolean } {
   let changed = false;
   const next = weightKgPerSet.map((weightKg) => {
+    // 맨몸 운동 처방(총부하)을 외부 추가중량으로 변환해 시드한다. 체중 미설정 시
+    // 변환 불가 → 0으로 시드(총부하를 그대로 외부중량으로 저장하던 버그 방지).
     const basis = applyBodyweightLoad
-      ? computeExternalLoadFromTotalKg(exerciseName, weightKg, preferences.bodyweightKg) ?? weightKg
+      ? prescriptionToExternalLoadKg(exerciseName, weightKg, preferences.bodyweightKg)
       : weightKg;
     const snapped = resolveWorkoutWeightWithPreferences(
       basis,

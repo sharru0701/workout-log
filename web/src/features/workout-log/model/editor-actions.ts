@@ -1,6 +1,6 @@
 import type { WorkoutDraftData } from "@/lib/storage/workoutDraftStore";
 import type { WorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { computeExternalLoadFromTotalKg } from "@/lib/bodyweight-load";
+import { prescriptionToExternalLoadKg } from "@/lib/bodyweight-load";
 import {
   addUserExercise,
   patchSeedExercise,
@@ -102,15 +102,16 @@ export function buildExerciseActionUpdate(
       // 프로그램 처방 무게(targetWeightKg = TM × %)는 맨몸 운동(풀업/친업 등)에서
       // 체중을 포함한 총부하다. 하지만 무게 입력 필드는 외부 추가 중량만 받으므로,
       // 로드 시점의 시드 가중치 규칙(applyWorkoutLogWeightRulesToDraft)과 동일하게
-      // 맨몸 운동이면 체중을 빼서 외부 부하로 변환한다. 변환 불가(맨몸 아님/체중 미설정)
-      // 시에는 원래 총부하 값을 그대로 사용한다. USER 입력값은 이미 외부 부하이므로 변환하지 않는다.
+      // 맨몸 운동이면 체중을 빼서 외부 부하로 변환한다. 비-맨몸은 그대로, 맨몸+체중
+      // 미설정은 0(총부하를 외부중량으로 저장하던 버그 방지). USER 입력값은 이미
+      // 외부 부하이므로 변환하지 않는다.
       const toExternalLoad = (totalKg: number) =>
         exercise.source === "PROGRAM"
-          ? computeExternalLoadFromTotalKg(
+          ? prescriptionToExternalLoadKg(
               exercise.exerciseName,
               totalKg,
               preferences.bodyweightKg,
-            ) ?? totalKg
+            )
           : totalKg;
       const firstValidTarget = targets.find(
         (entry): entry is number =>

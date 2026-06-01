@@ -7,11 +7,23 @@ import {
   resolveLoggedTotalLoadKg,
   bodyweightAddedSuffix,
   resolveLoggedLoadDisplay,
+  prescriptionToExternalLoadKg,
 } from "./bodyweight-load";
 
 test("computeExternalLoadFromTotalKg subtracts bodyweight for pull-up", () => {
   assert.equal(computeExternalLoadFromTotalKg("Pull-Up", 92.5, 70), 22.5);
   assert.equal(computeExternalLoadFromTotalKg("Pull-Up", 62.5, 70), 0);
+});
+
+test("prescriptionToExternalLoadKg: 처방 총부하를 외부 추가중량으로 변환", () => {
+  // 맨몸 + 체중 설정: 총부하 − 체중
+  assert.equal(prescriptionToExternalLoadKg("Pull-Up", 97.5, 72.5), 25);
+  // 맨몸 + 체중 미설정: 변환 불가 → 0 (총부하를 외부중량으로 저장하던 버그 방지)
+  assert.equal(prescriptionToExternalLoadKg("Pull-Up", 97.5, null), 0);
+  assert.equal(prescriptionToExternalLoadKg("Pull-Up", 97.5, 0), 0);
+  // 비-맨몸 운동: 처방값 그대로
+  assert.equal(prescriptionToExternalLoadKg("Back Squat", 95, null), 95);
+  assert.equal(prescriptionToExternalLoadKg("Back Squat", 95, 72.5), 95);
 });
 
 test("resolveLoggedTotalLoadKg prefers logged total load meta for bodyweight exercise", () => {
