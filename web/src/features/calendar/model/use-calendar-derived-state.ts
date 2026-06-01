@@ -239,6 +239,20 @@ export function useCalendarDerivedState({
     return generatedById.get(lastLog.generatedSessionId)?.sessionKey ?? null;
   }, [allPlanLogs, generatedById]);
 
+  // autoProgression은 cycle-wave 키(C{c}W{w}D{d})라 sessionKey의 날짜로 세션을 매핑할 수 없다.
+  // "다음 할 세션" = 아직 기록되지 않은(미로그) 세션 중 가장 최근 생성/갱신된 것.
+  // generateAndSaveSession이 runtime 위치 세션을 그때그때 upsert하므로 이 값이 현재 위치다.
+  const nextPlannedSession = useMemo(() => {
+    let best: CalendarRecentGeneratedSession | null = null;
+    for (const session of recentSessions) {
+      if (sessionLoggedDateMap.has(session.id)) continue; // 이미 기록된 세션 제외
+      if (!best || new Date(best.updatedAt).getTime() < new Date(session.updatedAt).getTime()) {
+        best = session;
+      }
+    }
+    return best;
+  }, [recentSessions, sessionLoggedDateMap]);
+
   const selectedCtx = useMemo(
     () => computePlanContextForDate(selectedPlan, selectedDate),
     [selectedDate, selectedPlan],
@@ -249,11 +263,18 @@ export function useCalendarDerivedState({
     const isAutoProgression = selectedPlan?.params?.autoProgression === true;
 
     let session: CalendarRecentGeneratedSession | null = null;
-    if (mode === "DATE") {
+    if (mode === "DATE" && !isAutoProgression) {
+      // 순수 DATE 모드: sessionKey == 날짜 → 날짜로 매핑 (회귀 없음)
       session = generatedByDate.get(selectedDate) ?? null;
-    } else {
+    } else if (mode !== "DATE") {
+      // PROGRESSION 등: 논리 위치 키로 정확 매핑
       if (!selectedCtx) return null;
       session = generatedByKey.get(selectedCtx.sessionKey) ?? null;
+    } else {
+      // DATE + autoProgression: cycle-wave 키라 날짜 매핑 불가.
+      // 미로그 최신 세션을 "다음 할 세션"으로 사용. 아래 가드가 과거/이후로그 케이스를
+      // 차단하므로 실질적으로 "오늘 + 다음 세션"에서만 표시된다.
+      session = nextPlannedSession;
     }
     if (!session) return null;
 
@@ -269,6 +290,7 @@ export function useCalendarDerivedState({
   }, [
     generatedByDate,
     generatedByKey,
+    nextPlannedSession,
     logDates,
     selectedCtx,
     selectedDate,
