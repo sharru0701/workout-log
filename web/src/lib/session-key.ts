@@ -125,7 +125,12 @@ export function buildSessionKey(input: {
 
   if (mode === "DATE") {
     if (input.autoProgression === true) {
-      return `${input.sessionDate}@C${cycle}W${week}D${day}`;
+      // autoProgression은 cycle/week/day가 runtime_state로 논리 위치를 고정한다.
+      // sessionKey에 호출 날짜를 넣으면 같은 논리 세션이 조회 날짜마다 다른 키가 되어
+      // (plan_id, sessionKey) unique 기반 upsert를 무력화하고 중복 row가 누적된다.
+      // 날짜를 빼 cycle-wave로 수렴시켜 unique 인덱스가 중복을 원천 차단하게 한다.
+      // (날짜 정보는 workout_log.performed_at / snapshot.sessionDate에 보존됨)
+      return `C${cycle}W${week}D${day}`;
     }
     return input.sessionDate;
   }

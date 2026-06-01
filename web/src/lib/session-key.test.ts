@@ -20,7 +20,8 @@ test("buildSessionKey keeps legacy date key when auto progression is disabled", 
   );
 });
 
-test("buildSessionKey appends cycle/week/day for auto progression date sessions", () => {
+test("buildSessionKey drops date for auto progression date sessions (cycle-wave)", () => {
+  // autoProgression DATE 세션은 논리 위치(cycle/week/day)로만 식별해야 중복 생성을 막는다.
   assert.equal(
     buildSessionKey({
       mode: "DATE",
@@ -30,7 +31,7 @@ test("buildSessionKey appends cycle/week/day for auto progression date sessions"
       day: 1,
       autoProgression: true,
     }),
-    "2026-03-06@C1W2D1",
+    "C1W2D1",
   );
 });
 
