@@ -325,3 +325,92 @@ test("PR-C 인프라: stage 없는 구(舊) state도 크래시 없이 통과한�
 
   assert.equal(result.nextState.targets.D1_s0?.stage, undefined);
 });
+
+// PR-D(한계2 gzclp): 정석 stage 머신. v2 옵트인(progressionModel:"v2")에서만 동작.
+// T1/T2는 실패 시 무게 유지·rep 스킴 강등(stage++), stage 2 소진 후 실패에만 리셋.
+// T3(amrap 슬롯)는 마지막 세트 ≥25 시 증량.
+function gzSet(progressionKey: string, progressionTarget: string, reps: number, plannedReps: number, weightKg: number, amrap = false) {
+  return {
+    exerciseName: progressionTarget === "BENCH" ? "Bench Press" : "Back Squat",
+    reps,
+    weightKg,
+    meta: { plannedRef: { reps: plannedReps, progressionTarget, progressionKey, ...(amrap ? { amrap: true } : {}) } },
+  };
+}
+
+test("PR-D gzclp(v2): T1/T2 stage 클리어(성공) → 증량 + stage 0 복귀", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D1_s0: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0, stage: 1 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-d1-1",
+    sets: [gzSet("D1_s0", "SQUAT", 3, 3, 100)],
+  });
+  assert.equal(result.nextState.targets.D1_s0?.workKg, 102.5); // SQUAT +2.5
+  assert.equal(result.nextState.targets.D1_s0?.stage, 0);
+  assert.equal(result.eventType, "INCREASE");
+});
+
+test("PR-D gzclp(v2): T1/T2 실패 → 무게 유지 + stage++ (rep 스킴 강등, HOLD)", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D1_s0: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0, stage: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-d1-2",
+    sets: [gzSet("D1_s0", "SQUAT", 2, 3, 100)],
+  });
+  assert.equal(result.nextState.targets.D1_s0?.workKg, 100); // 무게 유지
+  assert.equal(result.nextState.targets.D1_s0?.stage, 1); // stage++
+  assert.equal(result.eventType, "HOLD");
+});
+
+test("PR-D gzclp(v2): stage 2 소진 후 실패 → 무게 리셋(*0.85) + stage 0", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D1_s0: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0, stage: 2 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-d1-3",
+    sets: [gzSet("D1_s0", "SQUAT", 0, 1, 100)],
+  });
+  assert.equal(result.nextState.targets.D1_s0?.workKg, 85); // 100 * 0.85
+  assert.equal(result.nextState.targets.D1_s0?.stage, 0);
+  assert.equal(result.eventType, "RESET");
+});
+
+test("PR-D gzclp(v2): T3 amrap 마지막 세트 ≥25 → 증량(stage 머신 안 탐)", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D3_s2: { progressionTarget: "BENCH", workKg: 50, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-d1-4",
+    sets: [gzSet("D3_s2", "BENCH", 15, 15, 50), gzSet("D3_s2", "BENCH", 27, 15, 50, true)],
+  });
+  assert.equal(result.nextState.targets.D3_s2?.workKg, 52.5); // BENCH +2.5
+  assert.equal(result.eventType, "INCREASE");
+});
+
+test("PR-D gzclp(v2): T3 amrap 마지막 세트 <25 → 유지(HOLD)", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D3_s2: { progressionTarget: "BENCH", workKg: 50, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-d1-5",
+    sets: [gzSet("D3_s2", "BENCH", 20, 15, 50, true)],
+  });
+  assert.equal(result.nextState.targets.D3_s2?.workKg, 50); // 유지
+  assert.equal(result.eventType, "HOLD");
+});
+
+test("PR-D gzclp(flag 없음): 기존 LP 유지 — stage 안 굴림(forward-only 회귀 가드)", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { D1_s0: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: {}, // v2 flag 없음
+    logId: "log-d1-6",
+    sets: [gzSet("D1_s0", "SQUAT", 2, 3, 100)],
+  });
+  // 기존 LP: 실패 1회는 failResetThreshold(3) 미달 → 무게 유지 + failureStreak 누적, stage 미사용
+  assert.equal(result.nextState.targets.D1_s0?.workKg, 100);
+  assert.equal(result.nextState.targets.D1_s0?.failureStreak, 1);
+  assert.equal(result.nextState.targets.D1_s0?.stage, undefined);
+});

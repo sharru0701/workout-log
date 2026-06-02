@@ -62,6 +62,7 @@ type TargetOutcome = {
   total: number;
   successful: number;
   averageWeightKg: number | null;
+  amrapReps?: number; // gzclp T3: amrap 세트 실측 reps(마지막값). undefined면 비-amrap 슬롯.
 };
 
 export type TargetDecision = {
@@ -289,6 +290,12 @@ function initTargetState(progressionTarget: ProgressionTarget, initialWorkKg: nu
   };
 }
 
+// 정석 stage/주간 모델(v2) 옵트인 플래그. 기존 플랜은 부재로 기존 LP 유지(forward-only) →
+// 진행 중 유저의 rep 스킴이 갑자기 바뀌는 체감 변화·rebuild 과거 오염 방지.
+function isProgressionModelV2(planParams: unknown): boolean {
+  return (planParams as { progressionModel?: unknown } | null | undefined)?.progressionModel === "v2";
+}
+
 function readTrainingMaxForKey(planParams: unknown, key: string, progressionTarget: ProgressionTarget) {
   const params = (planParams ?? {}) as { trainingMaxKg?: Record<string, unknown> };
   const tm = params.trainingMaxKg ?? {};
@@ -425,6 +432,7 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
       successful: number;
       weightSum: number;
       weightCount: number;
+      amrapReps?: number;
     }
   >();
 
@@ -444,6 +452,13 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
     outcome.total += 1;
     if (setWasCompleted(set)) {
       outcome.successful += 1;
+    }
+
+    // gzclp T3: amrap 세트(처방이 plannedRef.amrap 주입)의 실측 reps를 보존 — 마지막값.
+    const amrapPlanned = readPlannedRef(set.meta);
+    if (amrapPlanned.amrap === true) {
+      const amrapReps = toFiniteNumber(set.reps);
+      if (amrapReps !== null && amrapReps >= 0) outcome.amrapReps = Math.floor(amrapReps);
     }
 
     const weight = resolveLoggedTotalLoadKg({
@@ -469,6 +484,7 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
       successful: value.successful,
       averageWeightKg:
         value.weightCount > 0 ? toPositiveRounded2p5(value.weightSum / value.weightCount) : null,
+      amrapReps: value.amrapReps,
     });
   }
   return out;
@@ -576,6 +592,66 @@ export function reduceProgressionState(input: {
         if (typeof amrapReps === "number" && amrapReps >= 0) {
           next.amrapReps = amrapReps;
         }
+      }
+
+      state.targets[key] = next;
+      decisions.push({
+        key,
+        target: outcome.displayTarget,
+        progressionTarget,
+        outcome: success ? "SUCCESS" : "FAIL",
+        eventType,
+        reason,
+        before,
+        after: next,
+      });
+      continue;
+    }
+
+    // gzclp 정석 stage 머신 (v2 옵트인). T1/T2는 실패 시 무게를 유지한 채 rep 스킴을 강등
+    // (5×3 → 6×2 → 10×1, stage 0→1→2)하고, stage 소진(2) 후의 실패에만 무게를 리셋한다.
+    // T3(amrap 슬롯)는 마지막 세트 실측 reps ≥ 25일 때만 증량. tier(T1/T2) 구분은 reducer엔
+    // 불필요 — 두 tier의 전이가 동일하고, 차이는 처방의 stage별 세트뿐(D2).
+    if (input.program === "gzclp" && isProgressionModelV2(input.planParams)) {
+      const gzRule = rulesFor(
+        input.program,
+        progressionTarget,
+        readIncrementOverride(input.planParams, key, progressionTarget),
+      );
+      if (typeof outcome.amrapReps === "number") {
+        // T3 AMRAP: 마지막 세트 ≥ 25 → 증량, 아니면 유지
+        if (outcome.amrapReps >= 25) {
+          next.workKg = toPositiveRounded2p5(next.workKg + gzRule.increaseKg);
+          eventType = "INCREASE";
+          reason = `increase:amrap>=25:+${gzRule.increaseKg}kg`;
+        } else {
+          reason = "hold:amrap<25";
+        }
+        next.successStreak = 0;
+        next.failureStreak = 0;
+      } else if (success) {
+        // T1/T2 stage 클리어 → 증량 + stage 0 복귀
+        next.workKg = toPositiveRounded2p5(next.workKg + gzRule.increaseKg);
+        next.stage = 0;
+        next.successStreak = 0;
+        next.failureStreak = 0;
+        eventType = "INCREASE";
+        reason = `increase:stage-clear:+${gzRule.increaseKg}kg`;
+      } else {
+        // T1/T2 실패 → rep 스킴 강등(stage++). stage 2 소진 후 실패에만 무게 리셋.
+        const curStage = Math.max(0, Math.floor(next.stage ?? 0));
+        if (curStage < 2) {
+          next.stage = curStage + 1;
+          eventType = "HOLD";
+          reason = `stage-down:${curStage}->${curStage + 1}`;
+        } else {
+          next.workKg = toPositiveRounded2p5(next.workKg * gzRule.resetFactor);
+          next.stage = 0;
+          eventType = "RESET";
+          reason = `reset:stage-exhausted:*${gzRule.resetFactor}`;
+        }
+        next.successStreak = 0;
+        next.failureStreak = 0;
       }
 
       state.targets[key] = next;
