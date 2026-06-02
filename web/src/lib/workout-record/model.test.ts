@@ -473,3 +473,66 @@ test("toWorkoutLogPayload attaches per-set totalLoadKg for bodyweight exercises"
   assert.equal((sets[0].meta as { totalLoadKg?: number }).totalLoadKg, 70);
   assert.equal((sets[1].meta as { totalLoadKg?: number }).totalLoadKg, 80);
 });
+
+// 슬롯 자동진행 입력 흐름: 처방 progressionKey/target/reps/amrap을 로그 set.meta.plannedRef로
+// 흘려야 reducer가 슬롯 독립 진행을 굴린다(없으면 family 폴백 → 처방-reducer 키 불일치).
+test("toWorkoutLogPayload: 처방 progressionKey/target/reps/amrap을 set.meta.plannedRef로 흘린다", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-slot",
+    planId: "plan-slot",
+    sessionKey: "2026-03-09@C1W1D1",
+    snapshot: {
+      sessionKey: "2026-03-09@C1W1D1",
+      sessionDate: "2026-03-09",
+      week: 1,
+      day: 1,
+      program: { slug: "operator", name: "Tactical Barbell Operator" },
+      exercises: [
+        {
+          exerciseName: "Back Squat",
+          rowType: "AUTO",
+          progressionTarget: "SQUAT",
+          progressionKey: "EX_BACK_SQUAT",
+          sets: [
+            { reps: 5, targetWeightKg: 100 },
+            { reps: 5, targetWeightKg: 100 },
+            { reps: 5, targetWeightKg: 100, amrap: true },
+          ],
+        },
+      ],
+    },
+  };
+  const draft = createWorkoutRecordDraft(session, "Operator Plan", {
+    sessionDate: "2026-03-09",
+    timezone: "Asia/Seoul",
+  });
+  const payload = toWorkoutLogPayload(draft, {});
+
+  assert.equal(payload.sets.length, 3);
+  const meta0 = payload.sets[0]!.meta as {
+    plannedRef?: { progressionKey?: string; progressionTarget?: string; reps?: number; amrap?: boolean };
+  };
+  assert.equal(meta0.plannedRef?.progressionKey, "EX_BACK_SQUAT");
+  assert.equal(meta0.plannedRef?.progressionTarget, "SQUAT");
+  assert.equal(meta0.plannedRef?.reps, 5);
+  assert.notEqual(meta0.plannedRef?.amrap, true); // 비-amrap 세트
+  // 마지막 세트만 amrap
+  const metaLast = payload.sets[2]!.meta as { plannedRef?: { amrap?: boolean } };
+  assert.equal(metaLast.plannedRef?.amrap, true);
+});
+
+test("toWorkoutLogPayload: progressionKey 없는 사용자 추가 운동은 plannedRef 미부착", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-user",
+    planId: "plan-user",
+    sessionKey: "2026-04-07",
+    snapshot: { sessionKey: "2026-04-07", sessionDate: "2026-04-07", week: 1, day: 1, exercises: [] },
+  };
+  const draft = addUserExercise(
+    createWorkoutRecordDraft(session, "Plan", { sessionDate: "2026-04-07", timezone: "Asia/Seoul" }),
+    { exerciseId: "ex-curl", exerciseName: "Bicep Curl", weightKg: 20, repsPerSet: [12], memo: "" },
+  );
+  const payload = toWorkoutLogPayload(draft, {});
+  const meta0 = payload.sets[0]!.meta as { plannedRef?: unknown };
+  assert.equal(meta0.plannedRef, undefined);
+});

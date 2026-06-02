@@ -36,6 +36,11 @@ export type WorkoutExerciseModel = {
   badge?: WorkoutExerciseBadge | null;
   prescribedWeightKg?: number | null;
   plannedSetMeta?: WorkoutPlannedSetMeta | null;
+  // 슬롯 자동진행: 처방 슬롯키/타깃을 로그 meta.plannedRef로 흘리기 위해 보존한다. 없으면
+  // reducer가 family 폴백 → 처방-reducer 키 불일치로 슬롯 독립 진행이 무동작.
+  // userExercises(사용자 추가 운동)엔 없음(진행 추적 안 함).
+  progressionKey?: string | null;
+  progressionTarget?: string | null;
   set: WorkoutSetModel;
   note: WorkoutNoteModel;
 };
@@ -561,6 +566,8 @@ function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerc
     badge,
     prescribedWeightKg,
     plannedSetMeta,
+    progressionKey: typeof exercise.progressionKey === "string" ? exercise.progressionKey : null,
+    progressionTarget: typeof exercise.progressionTarget === "string" ? exercise.progressionTarget : null,
     set: {
       count: repsPerSet.length,
       reps: repsPerSet[0] ?? 5,
@@ -1121,6 +1128,20 @@ export function toWorkoutLogPayload(
       }
       if (amrapPerSet?.[index] === true) {
         meta.amrap = true;
+      }
+      // 슬롯 자동진행: 처방 슬롯키/타깃/계획reps/amrap을 plannedRef로 흘려 reducer가 슬롯 독립
+      // 진행을 굴리게 한다. 없으면 reducer가 family 폴백 → 처방(슬롯키)-reducer(family) 키
+      // 불일치로 무게가 seed에 고정(진행 미흐름). progressionKey 있는 PROGRAM 행만 부착.
+      if (exercise.progressionKey) {
+        const plannedReps = exercise.plannedSetMeta?.repsPerSet?.[index];
+        const plannedRef: Record<string, unknown> = {
+          progressionKey: exercise.progressionKey,
+          progressionLabel: exerciseName,
+        };
+        if (exercise.progressionTarget) plannedRef.progressionTarget = exercise.progressionTarget;
+        if (typeof plannedReps === "number" && plannedReps > 0) plannedRef.reps = plannedReps;
+        if (amrapPerSet?.[index] === true) plannedRef.amrap = true;
+        meta.plannedRef = plannedRef;
       }
 
       sets.push({
