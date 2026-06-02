@@ -1029,11 +1029,17 @@ export function plannedExercisesFromSlottedLpManualSession(
       // gzclp v2 stage 변형: stage>0이면 tier별 강등 스킴(T1 6×2/10×1, T2 3×8/3×6)으로 세트 도출.
       // stage 0/비-v2는 저장 세트 그대로 → T2 비균일(3×10/3×8) seed 구조 보존.
       const stageScheme = resolveGzclpStageScheme(effectiveParams, family, slot?.tier, slotKey);
+      // gzclp 정석(v2) T3: 마지막 세트는 AMRAP. reducer가 실측 reps≥25면 증량(plannedRef.amrap로 전달)
+      // 한다. mapManualSet이 amrap을 버리므로 여기서 명시 주입한다. 비-v2/타 tier엔 부착하지 않는다
+      // (forward-only — 기존 유저의 AMRAP 표시·진행 동작을 갑자기 바꾸지 않음).
+      const injectT3Amrap =
+        family === "gzclp" && effectiveParams?.progressionModel === "v2" && slot?.tier === "T3";
       const sets: PlannedSet[] = stageScheme
         ? buildGzclpStageSets(stageScheme, setRows, effectiveKg)
-        : setRows.map((s: any) => {
+        : setRows.map((s: any, sIdx: number) => {
             const base = mapManualSet(s);
             if (effectiveKg !== null && effectiveKg > 0) base.targetWeightKg = effectiveKg;
+            if (injectT3Amrap && sIdx === setRows.length - 1) base.amrap = true;
             return base;
           });
       return {

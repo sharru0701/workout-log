@@ -203,6 +203,52 @@ test("PR-D gzclp(v2): T2 stage 1 → 3×8 (T2 강등 스킴)", () => {
   assert.equal(out[0]!.sets[0]!.targetWeightKg, 62.5);
 });
 
+// PR-D3(한계2 gzclp T3): 정석 T3는 마지막 세트가 AMRAP(reducer가 실측 reps≥25면 증량). mapManualSet이
+// amrap을 버리므로 v2 옵트인 + tier=T3일 때만 마지막 세트에 amrap:true를 명시 주입한다.
+test("PR-D gzclp(v2): T3 마지막 세트만 AMRAP 주입 — reducer ≥25 증량 게이트", () => {
+  const t3 = {
+    exerciseName: "Lat Pulldown",
+    rowType: "AUTO",
+    progressionTarget: "ROW",
+    slot: { role: { ko: "T3", en: "T3" }, sessionKey: "D1", tier: "T3", progressionKey: "D1_s2", startWeightKg: 40 },
+    sets: [{ reps: 15, targetWeightKg: 40 }, { reps: 15, targetWeightKg: 40 }, { reps: 15, targetWeightKg: 40 }],
+  };
+  const session = { key: "D1", items: [t3] };
+
+  // v2 → 마지막 세트만 amrap:true, 앞 세트는 미부착. 무게는 reducer workKg.
+  const v2 = plannedExercisesFromSlottedLpManualSession(session, { progressionModel: "v2", trainingMaxKg: { D1_s2: 42.5 } }, {}, "gzclp");
+  assert.equal(v2[0]!.sets.length, 3);
+  assert.equal(v2[0]!.sets[0]!.amrap, undefined);
+  assert.equal(v2[0]!.sets[1]!.amrap, undefined);
+  assert.equal(v2[0]!.sets[2]!.amrap, true);
+  assert.equal(v2[0]!.sets[2]!.targetWeightKg, 42.5);
+  assert.equal(v2[0]!.progressionKey, "D1_s2");
+});
+
+test("PR-D gzclp: 비-v2 T3는 AMRAP 미부착(forward-only), T1/T2는 v2여도 미부착(T3 전용)", () => {
+  const t3 = {
+    exerciseName: "Lat Pulldown",
+    rowType: "AUTO",
+    progressionTarget: "ROW",
+    slot: { role: { ko: "T3", en: "T3" }, sessionKey: "D1", tier: "T3", progressionKey: "D1_s2", startWeightKg: 40 },
+    sets: [{ reps: 15, targetWeightKg: 40 }, { reps: 15, targetWeightKg: 40 }, { reps: 15, targetWeightKg: 40 }],
+  };
+  // 비-v2 → 기존 동작(amrap 미부착)
+  const v1 = plannedExercisesFromSlottedLpManualSession({ key: "D1", items: [t3] }, { trainingMaxKg: { D1_s2: 42.5 } }, {}, "gzclp");
+  assert.equal(v1[0]!.sets[2]!.amrap, undefined);
+
+  // v2 + T1 → AMRAP 미부착(stage 0이라 저장 3×3 유지)
+  const t1 = {
+    exerciseName: "Back Squat",
+    rowType: "AUTO",
+    progressionTarget: "SQUAT",
+    slot: { role: { ko: "T1", en: "T1" }, sessionKey: "D1", tier: "T1", progressionKey: "D1_s0", startWeightKg: 100 },
+    sets: [{ reps: 3, targetWeightKg: 100 }, { reps: 3, targetWeightKg: 100 }, { reps: 3, targetWeightKg: 100 }],
+  };
+  const t1Out = plannedExercisesFromSlottedLpManualSession({ key: "D1", items: [t1] }, { progressionModel: "v2", trainingMaxKg: { D1_s0: 102.5 } }, {}, "gzclp");
+  assert.equal(t1Out[0]!.sets[2]!.amrap, undefined);
+});
+
 test("PR-D: texas는 gzclp stage 변형 영향 안 받음(family 가드)", () => {
   const session = {
     key: "I",
