@@ -421,6 +421,23 @@ export function extractTrainingMaxOverridesFromState(state: unknown): Record<str
   return out;
 }
 
+// reducer state의 슬롯별 stage(gzclp 강등 단계)를 처방 params로 흘리는 맵.
+// extractTrainingMaxOverridesFromState의 짝 — 처방이 stage별 세트 스킴(6×2/10×1 등)을 도출한다.
+// stage 0/미설정은 기본 스킴(저장 세트)이므로 맵에서 생략한다.
+export function extractStageOverridesFromState(state: unknown): Record<string, number> {
+  const runtime = (state ?? {}) as Partial<ProgressionRuntimeState>;
+  const targets = runtime.targets ?? {};
+  const out: Record<string, number> = {};
+
+  for (const [key, targetState] of Object.entries(targets)) {
+    const stage = toFiniteNumber((targetState as TargetRuntimeState)?.stage);
+    if (stage === null || stage <= 0) continue;
+    out[key] = Math.floor(stage);
+  }
+
+  return out;
+}
+
 export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, TargetOutcome> {
   const acc = new Map<
     string,
