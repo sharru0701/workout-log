@@ -10,7 +10,7 @@ import {
   programTemplate,
   programVersion,
 } from "@/server/db/schema";
-import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
+import { extractTrainingMaxOverridesFromState, extractStageOverridesFromState } from "@/server/progression/reducer";
 import {
   ASYMPTOTE_CYCLE_COEF,
   ASYMPTOTE_LIGHT_CYCLE_COEF,
@@ -936,6 +936,41 @@ export function plannedExercisesFrom531ManualSession(
 // gzclp/texas 등 per-slot LP 슬롯형 커스터마이즈 처방. 각 item의 slot.progressionKey로 reducer가
 // 굴린 슬롯별 workKg를 읽어 무게를 채우고(없으면 저장 무게 폴백), 저장 sets 구조(reps/AMRAP)는 유지한다.
 // progressionKey=슬롯 키로 흘려보내 reducer per-slot 진행과 호환된다(같은 운동·다른 tier 독립).
+// gzclp 정석 stage(v2)에서 강등 단계별 세트 스킴. stage 0은 저장 세트를 쓰므로 여기 없음.
+// T1: 5×3 → 6×2 → 10×1, T2: 3×10 → 3×8 → 3×6 (인덱스 = stage).
+function resolveGzclpStageScheme(
+  effectiveParams: any,
+  family: string | null | undefined,
+  tier: string | undefined,
+  slotKey: string,
+): { setCount: number; reps: number } | null {
+  if (family !== "gzclp") return null;
+  if (effectiveParams?.progressionModel !== "v2") return null;
+  if (tier !== "T1" && tier !== "T2") return null;
+  const stage = Number(effectiveParams?.stageByKey?.[slotKey]) || 0;
+  if (stage <= 0) return null;
+  const schemes: Array<[number, number]> =
+    tier === "T1" ? [[5, 3], [6, 2], [10, 1]] : [[3, 10], [3, 8], [3, 6]];
+  const [setCount, reps] = schemes[Math.min(Math.floor(stage), 2)];
+  return { setCount, reps };
+}
+
+// stage 변형 세트: 저장 첫 세트를 템플릿으로 setCount개를 reps로 펼친다(무게는 reducer workKg).
+function buildGzclpStageSets(
+  scheme: { setCount: number; reps: number },
+  setRows: any[],
+  effectiveKg: number | null,
+): PlannedSet[] {
+  const template = mapManualSet(setRows[0] ?? {});
+  const out: PlannedSet[] = [];
+  for (let i = 0; i < scheme.setCount; i += 1) {
+    const base: PlannedSet = { ...template, reps: scheme.reps };
+    if (effectiveKg !== null && effectiveKg > 0) base.targetWeightKg = effectiveKg;
+    out.push(base);
+  }
+  return out;
+}
+
 export function plannedExercisesFromSlottedLpManualSession(
   manualSession: any,
   effectiveParams: any,
@@ -950,8 +985,8 @@ export function plannedExercisesFromSlottedLpManualSession(
       if (!exerciseName) return null;
 
       // 원본(미-fork) 정의는 slot이 없다 → note/index에서 동적 생성(fork draft와 동일한 인덱스 진행키).
-      let slot: { progressionKey?: string; startWeightKg?: number } | null =
-        (item?.slot as { progressionKey?: string; startWeightKg?: number } | null) ?? null;
+      let slot: { progressionKey?: string; startWeightKg?: number; tier?: string } | null =
+        (item?.slot as { progressionKey?: string; startWeightKg?: number; tier?: string } | null) ?? null;
       if ((!slot || !slot.progressionKey) && family && sessionKey) {
         const firstSet = (Array.isArray(item?.sets) ? item.sets[0] : null) ?? {};
         const note = String(firstSet?.note ?? item?.note ?? "");
@@ -990,11 +1025,17 @@ export function plannedExercisesFromSlottedLpManualSession(
           ? slot.startWeightKg
           : null;
       const effectiveKg = slotWorkKg !== null && slotWorkKg > 0 ? slotWorkKg : startWeightKg;
-      const sets: PlannedSet[] = setRows.map((s: any) => {
-        const base = mapManualSet(s);
-        if (effectiveKg !== null && effectiveKg > 0) base.targetWeightKg = effectiveKg;
-        return base;
-      });
+
+      // gzclp v2 stage 변형: stage>0이면 tier별 강등 스킴(T1 6×2/10×1, T2 3×8/3×6)으로 세트 도출.
+      // stage 0/비-v2는 저장 세트 그대로 → T2 비균일(3×10/3×8) seed 구조 보존.
+      const stageScheme = resolveGzclpStageScheme(effectiveParams, family, slot?.tier, slotKey);
+      const sets: PlannedSet[] = stageScheme
+        ? buildGzclpStageSets(stageScheme, setRows, effectiveKg)
+        : setRows.map((s: any) => {
+            const base = mapManualSet(s);
+            if (effectiveKg !== null && effectiveKg > 0) base.targetWeightKg = effectiveKg;
+            return base;
+          });
       return {
         exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
         exerciseName,
@@ -1176,9 +1217,11 @@ function mergePlanParamsWithRuntimeState(planParams: unknown, runtimeState: unkn
       ? (runtimeState as Record<string, unknown>)
       : null;
   const runtimeLightBlockMode = runtimeRecord?.lightBlockMode === true;
+  const runtimeStageByKey = extractStageOverridesFromState(runtimeState);
+  const hasStageOverride = Object.keys(runtimeStageByKey).length > 0;
 
   const hasTmOverride = Object.keys(runtimeTrainingMax).length > 0;
-  if (!hasTmOverride && !runtimeLightBlockMode) return baseParams;
+  if (!hasTmOverride && !runtimeLightBlockMode && !hasStageOverride) return baseParams;
 
   const existingTrainingMax =
     typeof baseParams.trainingMaxKg === "object" && baseParams.trainingMaxKg
@@ -1191,6 +1234,13 @@ function mergePlanParamsWithRuntimeState(planParams: unknown, runtimeState: unkn
       ...existingTrainingMax,
       ...runtimeTrainingMax,
     };
+  }
+  if (hasStageOverride) {
+    const existingStage =
+      typeof baseParams.stageByKey === "object" && baseParams.stageByKey
+        ? (baseParams.stageByKey as Record<string, unknown>)
+        : {};
+    next.stageByKey = { ...existingStage, ...runtimeStageByKey };
   }
   if (runtimeLightBlockMode) {
     next.lightBlockMode = true;

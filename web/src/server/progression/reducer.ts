@@ -33,6 +33,7 @@ export type TargetRuntimeState = {
   successStreak: number;
   failureStreak: number;
   amrapReps?: number | null;
+  stage?: number; // gzclp tier별 stage 인덱스(0=5×3 → 1=6×2 → 2=10×1). PR-D에서 전환 로직.
 };
 
 export type IncrementOverride = {
@@ -61,6 +62,7 @@ type TargetOutcome = {
   total: number;
   successful: number;
   averageWeightKg: number | null;
+  amrapReps?: number; // gzclp T3: amrap 세트 실측 reps(마지막값). undefined면 비-amrap 슬롯.
 };
 
 export type TargetDecision = {
@@ -288,6 +290,12 @@ function initTargetState(progressionTarget: ProgressionTarget, initialWorkKg: nu
   };
 }
 
+// 정석 stage/주간 모델(v2) 옵트인 플래그. 기존 플랜은 부재로 기존 LP 유지(forward-only) →
+// 진행 중 유저의 rep 스킴이 갑자기 바뀌는 체감 변화·rebuild 과거 오염 방지.
+function isProgressionModelV2(planParams: unknown): boolean {
+  return (planParams as { progressionModel?: unknown } | null | undefined)?.progressionModel === "v2";
+}
+
 function readTrainingMaxForKey(planParams: unknown, key: string, progressionTarget: ProgressionTarget) {
   const params = (planParams ?? {}) as { trainingMaxKg?: Record<string, unknown> };
   const tm = params.trainingMaxKg ?? {};
@@ -320,6 +328,7 @@ function deriveInitialState(input: {
         parseProgressionTarget(key) ??
         "SQUAT";
       const amrapRepsRaw = toFiniteNumber((prevTarget as Partial<TargetRuntimeState>).amrapReps);
+      const stageRaw = toFiniteNumber((prevTarget as Partial<TargetRuntimeState>).stage);
       const next: TargetRuntimeState = {
         progressionTarget,
         workKg: toPositiveRounded2p5(workKg),
@@ -328,6 +337,11 @@ function deriveInitialState(input: {
       };
       if (amrapRepsRaw !== null && amrapRepsRaw >= 0) {
         next.amrapReps = Math.floor(amrapRepsRaw);
+      }
+      // stage(gzclp 강등 단계)는 명시 복원이 필수 — 이 리터럴은 스프레드가 아니라 명시 필드만
+      // 재구성하므로, 빠뜨리면 DB엔 저장되나 다음 reduce에서 유실되는 silent-drop이 된다.
+      if (stageRaw !== null && stageRaw >= 0) {
+        next.stage = Math.floor(stageRaw);
       }
       baseTargets[key] = next;
       continue;
@@ -407,6 +421,23 @@ export function extractTrainingMaxOverridesFromState(state: unknown): Record<str
   return out;
 }
 
+// reducer state의 슬롯별 stage(gzclp 강등 단계)를 처방 params로 흘리는 맵.
+// extractTrainingMaxOverridesFromState의 짝 — 처방이 stage별 세트 스킴(6×2/10×1 등)을 도출한다.
+// stage 0/미설정은 기본 스킴(저장 세트)이므로 맵에서 생략한다.
+export function extractStageOverridesFromState(state: unknown): Record<string, number> {
+  const runtime = (state ?? {}) as Partial<ProgressionRuntimeState>;
+  const targets = runtime.targets ?? {};
+  const out: Record<string, number> = {};
+
+  for (const [key, targetState] of Object.entries(targets)) {
+    const stage = toFiniteNumber((targetState as TargetRuntimeState)?.stage);
+    if (stage === null || stage <= 0) continue;
+    out[key] = Math.floor(stage);
+  }
+
+  return out;
+}
+
 export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, TargetOutcome> {
   const acc = new Map<
     string,
@@ -418,6 +449,7 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
       successful: number;
       weightSum: number;
       weightCount: number;
+      amrapReps?: number;
     }
   >();
 
@@ -437,6 +469,13 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
     outcome.total += 1;
     if (setWasCompleted(set)) {
       outcome.successful += 1;
+    }
+
+    // gzclp T3: amrap 세트(처방이 plannedRef.amrap 주입)의 실측 reps를 보존 — 마지막값.
+    const amrapPlanned = readPlannedRef(set.meta);
+    if (amrapPlanned.amrap === true) {
+      const amrapReps = toFiniteNumber(set.reps);
+      if (amrapReps !== null && amrapReps >= 0) outcome.amrapReps = Math.floor(amrapReps);
     }
 
     const weight = resolveLoggedTotalLoadKg({
@@ -462,6 +501,7 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
       successful: value.successful,
       averageWeightKg:
         value.weightCount > 0 ? toPositiveRounded2p5(value.weightSum / value.weightCount) : null,
+      amrapReps: value.amrapReps,
     });
   }
   return out;
@@ -569,6 +609,66 @@ export function reduceProgressionState(input: {
         if (typeof amrapReps === "number" && amrapReps >= 0) {
           next.amrapReps = amrapReps;
         }
+      }
+
+      state.targets[key] = next;
+      decisions.push({
+        key,
+        target: outcome.displayTarget,
+        progressionTarget,
+        outcome: success ? "SUCCESS" : "FAIL",
+        eventType,
+        reason,
+        before,
+        after: next,
+      });
+      continue;
+    }
+
+    // gzclp 정석 stage 머신 (v2 옵트인). T1/T2는 실패 시 무게를 유지한 채 rep 스킴을 강등
+    // (5×3 → 6×2 → 10×1, stage 0→1→2)하고, stage 소진(2) 후의 실패에만 무게를 리셋한다.
+    // T3(amrap 슬롯)는 마지막 세트 실측 reps ≥ 25일 때만 증량. tier(T1/T2) 구분은 reducer엔
+    // 불필요 — 두 tier의 전이가 동일하고, 차이는 처방의 stage별 세트뿐(D2).
+    if (input.program === "gzclp" && isProgressionModelV2(input.planParams)) {
+      const gzRule = rulesFor(
+        input.program,
+        progressionTarget,
+        readIncrementOverride(input.planParams, key, progressionTarget),
+      );
+      if (typeof outcome.amrapReps === "number") {
+        // T3 AMRAP: 마지막 세트 ≥ 25 → 증량, 아니면 유지
+        if (outcome.amrapReps >= 25) {
+          next.workKg = toPositiveRounded2p5(next.workKg + gzRule.increaseKg);
+          eventType = "INCREASE";
+          reason = `increase:amrap>=25:+${gzRule.increaseKg}kg`;
+        } else {
+          reason = "hold:amrap<25";
+        }
+        next.successStreak = 0;
+        next.failureStreak = 0;
+      } else if (success) {
+        // T1/T2 stage 클리어 → 증량 + stage 0 복귀
+        next.workKg = toPositiveRounded2p5(next.workKg + gzRule.increaseKg);
+        next.stage = 0;
+        next.successStreak = 0;
+        next.failureStreak = 0;
+        eventType = "INCREASE";
+        reason = `increase:stage-clear:+${gzRule.increaseKg}kg`;
+      } else {
+        // T1/T2 실패 → rep 스킴 강등(stage++). stage 2 소진 후 실패에만 무게 리셋.
+        const curStage = Math.max(0, Math.floor(next.stage ?? 0));
+        if (curStage < 2) {
+          next.stage = curStage + 1;
+          eventType = "HOLD";
+          reason = `stage-down:${curStage}->${curStage + 1}`;
+        } else {
+          next.workKg = toPositiveRounded2p5(next.workKg * gzRule.resetFactor);
+          next.stage = 0;
+          eventType = "RESET";
+          reason = `reset:stage-exhausted:*${gzRule.resetFactor}`;
+        }
+        next.successStreak = 0;
+        next.failureStreak = 0;
       }
 
       state.targets[key] = next;
