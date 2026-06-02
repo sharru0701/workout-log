@@ -1129,10 +1129,11 @@ export function toWorkoutLogPayload(
       if (amrapPerSet?.[index] === true) {
         meta.amrap = true;
       }
-      // 슬롯 자동진행: 처방 슬롯키/타깃/계획reps/amrap을 plannedRef로 흘려 reducer가 슬롯 독립
-      // 진행을 굴리게 한다. 없으면 reducer가 family 폴백 → 처방(슬롯키)-reducer(family) 키
-      // 불일치로 무게가 seed에 고정(진행 미흐름). progressionKey 있는 PROGRAM 행만 부착.
-      if (exercise.progressionKey) {
+      // 슬롯 자동진행: 슬롯형(gzclp/texas, key=`{sessionKey}_s{n}`)만 plannedRef를 흘려 reducer가
+      // 슬롯 독립 진행을 굴리게 한다. operator EX_키처럼 family와 1:1인 키는 부착 시 기존
+      // family-state 진행이 단절되므로 제외 — operator/uniform LP는 family 폴백으로 이미 정상 동작.
+      // 패턴은 buildSlottedLpSlot(model.ts)의 progressionKey 형식과 결합(테스트로 고정).
+      if (typeof exercise.progressionKey === "string" && /_s\d+$/.test(exercise.progressionKey)) {
         const plannedReps = exercise.plannedSetMeta?.repsPerSet?.[index];
         const plannedRef: Record<string, unknown> = {
           progressionKey: exercise.progressionKey,

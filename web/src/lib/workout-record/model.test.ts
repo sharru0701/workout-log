@@ -474,12 +474,58 @@ test("toWorkoutLogPayload attaches per-set totalLoadKg for bodyweight exercises"
   assert.equal((sets[1].meta as { totalLoadKg?: number }).totalLoadKg, 80);
 });
 
-// 슬롯 자동진행 입력 흐름: 처방 progressionKey/target/reps/amrap을 로그 set.meta.plannedRef로
-// 흘려야 reducer가 슬롯 독립 진행을 굴린다(없으면 family 폴백 → 처방-reducer 키 불일치).
-test("toWorkoutLogPayload: 처방 progressionKey/target/reps/amrap을 set.meta.plannedRef로 흘린다", () => {
+// 슬롯 자동진행 입력 흐름: 슬롯형(gzclp/texas, key=`{sessionKey}_s{n}`) progressionKey만 로그
+// set.meta.plannedRef로 흘려야 reducer가 슬롯 독립 진행을 굴린다. operator EX_키 등 family 1:1
+// 키는 제외(부착 시 기존 family-state 진행 단절).
+test("toWorkoutLogPayload: 슬롯형 progressionKey(_s)는 set.meta.plannedRef로 흘린다", () => {
   const session: GeneratedSessionLike = {
     id: "session-slot",
     planId: "plan-slot",
+    sessionKey: "2026-03-09@D1",
+    snapshot: {
+      sessionKey: "2026-03-09@D1",
+      sessionDate: "2026-03-09",
+      week: 1,
+      day: 1,
+      program: { slug: "gzclp", name: "GZCLP" },
+      exercises: [
+        {
+          exerciseName: "Back Squat",
+          rowType: "AUTO",
+          progressionTarget: "SQUAT",
+          progressionKey: "D1_s0",
+          sets: [
+            { reps: 5, targetWeightKg: 100 },
+            { reps: 5, targetWeightKg: 100 },
+            { reps: 5, targetWeightKg: 100, amrap: true },
+          ],
+        },
+      ],
+    },
+  };
+  const draft = createWorkoutRecordDraft(session, "GZCLP Plan", {
+    sessionDate: "2026-03-09",
+    timezone: "Asia/Seoul",
+  });
+  const payload = toWorkoutLogPayload(draft, {});
+
+  assert.equal(payload.sets.length, 3);
+  const meta0 = payload.sets[0]!.meta as {
+    plannedRef?: { progressionKey?: string; progressionTarget?: string; reps?: number; amrap?: boolean };
+  };
+  assert.equal(meta0.plannedRef?.progressionKey, "D1_s0");
+  assert.equal(meta0.plannedRef?.progressionTarget, "SQUAT");
+  assert.equal(meta0.plannedRef?.reps, 5);
+  assert.notEqual(meta0.plannedRef?.amrap, true); // 비-amrap 세트
+  // 마지막 세트만 amrap
+  const metaLast = payload.sets[2]!.meta as { plannedRef?: { amrap?: boolean } };
+  assert.equal(metaLast.plannedRef?.amrap, true);
+});
+
+test("toWorkoutLogPayload: operator EX_키(family 1:1)는 plannedRef 미부착(전환 단절 방지)", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-op",
+    planId: "plan-op",
     sessionKey: "2026-03-09@C1W1D1",
     snapshot: {
       sessionKey: "2026-03-09@C1W1D1",
@@ -493,11 +539,7 @@ test("toWorkoutLogPayload: 처방 progressionKey/target/reps/amrap을 set.meta.p
           rowType: "AUTO",
           progressionTarget: "SQUAT",
           progressionKey: "EX_BACK_SQUAT",
-          sets: [
-            { reps: 5, targetWeightKg: 100 },
-            { reps: 5, targetWeightKg: 100 },
-            { reps: 5, targetWeightKg: 100, amrap: true },
-          ],
+          sets: [{ reps: 5, targetWeightKg: 100 }],
         },
       ],
     },
@@ -507,18 +549,8 @@ test("toWorkoutLogPayload: 처방 progressionKey/target/reps/amrap을 set.meta.p
     timezone: "Asia/Seoul",
   });
   const payload = toWorkoutLogPayload(draft, {});
-
-  assert.equal(payload.sets.length, 3);
-  const meta0 = payload.sets[0]!.meta as {
-    plannedRef?: { progressionKey?: string; progressionTarget?: string; reps?: number; amrap?: boolean };
-  };
-  assert.equal(meta0.plannedRef?.progressionKey, "EX_BACK_SQUAT");
-  assert.equal(meta0.plannedRef?.progressionTarget, "SQUAT");
-  assert.equal(meta0.plannedRef?.reps, 5);
-  assert.notEqual(meta0.plannedRef?.amrap, true); // 비-amrap 세트
-  // 마지막 세트만 amrap
-  const metaLast = payload.sets[2]!.meta as { plannedRef?: { amrap?: boolean } };
-  assert.equal(metaLast.plannedRef?.amrap, true);
+  const meta0 = payload.sets[0]!.meta as { plannedRef?: unknown };
+  assert.equal(meta0.plannedRef, undefined);
 });
 
 test("toWorkoutLogPayload: progressionKey 없는 사용자 추가 운동은 plannedRef 미부착", () => {
