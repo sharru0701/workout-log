@@ -159,6 +159,8 @@ function planWithPatchedFields(prevPlan: Plan, updatedPlan: Plan): Plan {
     ...updatedPlan,
     baseProgramName: updatedPlan.baseProgramName ?? prevPlan.baseProgramName,
     lastPerformedAt: updatedPlan.lastPerformedAt ?? prevPlan.lastPerformedAt,
+    // PATCH 응답은 runtime TM을 포함하지 않으므로 이전 값을 유지(이름/params 편집은 TM을 바꾸지 않음).
+    currentTrainingMaxKg: updatedPlan.currentTrainingMaxKg ?? prevPlan.currentTrainingMaxKg,
   };
 }
 
@@ -200,10 +202,20 @@ function normalizeSearchText(...values: Array<string | null | undefined>) {
     .join(" ");
 }
 
-function readTrainingMaxPreview(params: unknown) {
+function readTrainingMaxPreview(params: unknown, currentTrainingMaxKg?: Record<string, number> | null) {
   const source = toRecord(params);
   const tm = readPositiveNumberMap(source.trainingMaxKg);
   const orm = readPositiveNumberMap(source.oneRepMaxKg);
+  // 자동 진행으로 갱신된 현재(최신) TM. runtime state의 키는 params.trainingMaxKg와 같은 키 체계
+  // (EX_/family/canonical)이므로, 해당 키 또는 family fallback 키로 시작 TM 대신 최신값을 덮어쓴다.
+  const currentTm = readPositiveNumberMap(currentTrainingMaxKg);
+  const latestTmForKey = (key: string): number | null => {
+    const direct = currentTm[key];
+    if (direct && direct > 0) return direct;
+    const family = familyFallbackKeyForBaselineKey(key);
+    const viaFamily = family ? currentTm[family] : undefined;
+    return viaFamily && viaFamily > 0 ? viaFamily : null;
+  };
   const allKeys = Object.keys({ ...tm, ...orm });
   if (allKeys.length === 0) return [] as Array<{ key: string; label: string; valueKg: number; kind: "TM" | "1RM" }>;
   // 상세(createStrengthBaselineDraft)와 동일하게 per-exercise(EX_) 키와 짝인 family canonical 키를 접어
@@ -221,13 +233,17 @@ function readTrainingMaxPreview(params: unknown) {
 
   return sorted
     .map((key) => {
-      const valueKg = tm[key] ?? orm[key] ?? 0;
+      // 최신 TM이 있으면 시작 TM보다 우선. 둘 다 없으면 1RM 폴백.
+      const latestTm = latestTmForKey(key);
+      const baselineTm = tm[key];
+      const tmValue = latestTm ?? (baselineTm && baselineTm > 0 ? baselineTm : null);
+      const valueKg = tmValue ?? orm[key] ?? 0;
       if (valueKg <= 0) return null;
       return {
         key,
         label: shortTargetLabel(key),
         valueKg,
-        kind: tm[key] ? ("TM" as const) : ("1RM" as const),
+        kind: tmValue !== null ? ("TM" as const) : ("1RM" as const),
       };
     })
     .filter((v): v is { key: string; label: string; valueKg: number; kind: "TM" | "1RM" } => v !== null);
@@ -261,7 +277,7 @@ function PlanCardV2({
   const days = daysSince(plan.lastPerformedAt);
   const relText = formatRelativeDays(days, locale);
   const isFresh = typeof days === "number" && days <= RECENT_THRESHOLD_DAYS;
-  const tmPreview = readTrainingMaxPreview(plan.params).slice(0, 4);
+  const tmPreview = readTrainingMaxPreview(plan.params, plan.currentTrainingMaxKg).slice(0, 4);
   const typeText = planTypeLabel(plan.type, locale);
   const typeTone = planTypeChipTone(plan.type);
 

@@ -1,7 +1,8 @@
 import { db } from "@/server/db/client";
-import { plan, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
+import { plan, planRuntimeState, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { getAuthenticatedUserId } from "@/server/auth/user";
+import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 // PERF: Plans manage 페이지 SSR용 서버 전용 플랜 조회 함수.
@@ -17,6 +18,9 @@ export type PlanForManage = {
   createdAt: string; // ISO 문자열 (클라이언트 직렬화 호환)
   baseProgramName: string | null;
   lastPerformedAt: string | null; // ISO 문자열
+  // 자동 진행으로 갱신된 "현재(최신) TM" — runtime state의 workKg. 카드 미리보기가 params의
+  // 시작 TM 대신 이 값을 우선 표시한다. 키는 params.trainingMaxKg와 동일(EX_/family/canonical).
+  currentTrainingMaxKg: Record<string, number>;
 };
 
 export async function getPlansForManage(): Promise<PlanForManage[]> {
@@ -40,8 +44,8 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
   );
   const planIds = baseItems.map((item) => item.id);
 
-  // PERF: versionRows와 logRows는 독립적이므로 병렬 실행
-  const [versionRows, logRows] = await Promise.all([
+  // PERF: versionRows·logRows·runtimeRows는 서로 독립적이므로 병렬 실행
+  const [versionRows, logRows, runtimeRows] = await Promise.all([
     rootVersionIds.length > 0
       ? db
           .select({ versionId: programVersion.id, templateName: programTemplate.name })
@@ -60,6 +64,10 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
         ),
       )
       .orderBy(desc(workoutLog.performedAt)),
+    db
+      .select({ planId: planRuntimeState.planId, state: planRuntimeState.state })
+      .from(planRuntimeState)
+      .where(inArray(planRuntimeState.planId, planIds)),
   ]);
 
   const versionNameById = new Map<string, string>();
@@ -73,6 +81,12 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
   for (const row of logRows) {
     if (!row.planId || lastPerformedAtByPlanId.has(row.planId)) continue;
     lastPerformedAtByPlanId.set(row.planId, row.performedAt);
+  }
+
+  const currentTmByPlanId = new Map<string, Record<string, number>>();
+  for (const row of runtimeRows) {
+    if (!row.planId) continue;
+    currentTmByPlanId.set(row.planId, extractTrainingMaxOverridesFromState(row.state));
   }
 
   return baseItems.map((item): PlanForManage => {
@@ -92,6 +106,7 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
       createdAt: item.createdAt.toISOString(),
       baseProgramName,
       lastPerformedAt: lastPerformedAt ? lastPerformedAt.toISOString() : null,
+      currentTrainingMaxKg: currentTmByPlanId.get(item.id) ?? {},
     };
   });
 }
