@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { and, desc, eq, gte } from "drizzle-orm";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { db } from "@/server/db/client";
 import { generatedSession, plan, workoutLog } from "@/server/db/schema";
 
@@ -47,7 +47,7 @@ function dateOnlyInTimezone(date: Date, timezone: string) {
 }
 
 export async function getCalendarPageBootstrap(): Promise<CalendarPageBootstrap> {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const cookieStore = await cookies();
   const timezone = cookieStore.get("timezone")?.value ?? "UTC";
 

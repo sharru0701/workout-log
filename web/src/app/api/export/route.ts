@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { buildUserDataExport, buildWorkoutSetCsv } from "@/server/export/userExport";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -10,7 +10,7 @@ async function GETImpl(req: Request) {
   try {
     const locale = await resolveRequestLocale();
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const format = (searchParams.get("format") ?? "json").toLowerCase();
     const type = (searchParams.get("type") ?? "").toLowerCase();
 

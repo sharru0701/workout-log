@@ -10,7 +10,7 @@ import {
   programTemplate,
   programVersion,
 } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import type { ProgramTemplate } from "@/lib/program-store/model";
 import type { ExerciseOption, PlanItem } from "@/features/program-store/model/types";
 
@@ -21,7 +21,7 @@ export type ProgramStorePageBootstrap = {
 };
 
 export async function getProgramStorePageBootstrap(): Promise<ProgramStorePageBootstrap> {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
 
   // 템플릿, 플랜, 운동 목록 병렬 조회
   const [templates, plans, exercises] = await Promise.all([

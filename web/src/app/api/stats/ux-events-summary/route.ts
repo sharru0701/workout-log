@@ -6,7 +6,7 @@ import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type UxEventSummary = {
@@ -119,7 +119,7 @@ async function computeSummary(input: { userId: string; from: Date; to: Date }) {
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const { from, to, rangeDays } = parseDateRangeFromSearchParams(searchParams, 14);
     const comparePrev = searchParams.get("comparePrev") === "1";
 

@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { logError, logInfo } from "@/server/observability/logger";
 import { checkIpRateLimit } from "@/server/security/rateLimit";
+import { UnauthorizedError } from "@/server/auth/user";
 
 export type ApiRouteHandler<TContext = unknown> = (
   req: Request,
@@ -66,6 +67,23 @@ export function withApiLogging<TContext = unknown>(handler: ApiRouteHandler<TCon
       });
       return responseWithId;
     } catch (error) {
+      // 미인증은 401로 매핑하고 info 레벨로 기록 (서버 에러가 아님).
+      if (error instanceof UnauthorizedError) {
+        const unauthorized = NextResponse.json(
+          { error: "Unauthorized", requestId },
+          { status: 401 },
+        );
+        unauthorized.headers.set("x-request-id", requestId);
+        logInfo("api.request", {
+          requestId,
+          method,
+          route,
+          status: 401,
+          latencyMs: elapsedMs(startedAt),
+        });
+        return unauthorized;
+      }
+
       logError("api.error", {
         requestId,
         method,

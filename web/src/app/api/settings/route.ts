@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { userSetting } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
@@ -99,7 +99,7 @@ async function readSettingsFromDb(userId: string): Promise<SettingsSnapshot> {
 }
 
 async function GETImpl() {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   try {
     const settings = mergeWithDefaults(await readSettingsFromDb(userId));
     return NextResponse.json({ settings });
@@ -114,7 +114,7 @@ async function GETImpl() {
 }
 
 async function PATCHImpl(request: Request) {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const locale = await resolveRequestLocale();
   try {
     const body = (await request.json().catch(() => ({}))) as PatchRequestBody;

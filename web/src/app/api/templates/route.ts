@@ -4,7 +4,7 @@ import { programTemplate, programVersion } from "@/server/db/schema";
 import { and, asc, desc, eq, gt, inArray, or } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type TemplateCursor = {
@@ -31,7 +31,7 @@ function encodeCursor(cursor: TemplateCursor): string {
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const cursor = parseCursor(searchParams.get("cursor"));
     const limitRaw = Number(searchParams.get("limit") ?? "20");
     const limit = Number.isFinite(limitRaw) ? Math.max(1, Math.min(100, Math.floor(limitRaw))) : 20;

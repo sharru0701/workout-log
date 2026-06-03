@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService, type UpsertWorkoutLogInput } from "@/server/services/workout-log/upsert-log";
 import { logError } from "@/server/observability/logger";
@@ -10,7 +10,7 @@ export async function submitWorkoutLogAction(
   payload: Omit<UpsertWorkoutLogInput, "userId" | "locale">
 ) {
   try {
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const locale = await resolveRequestLocale();
 
     const result = await upsertWorkoutLogService({

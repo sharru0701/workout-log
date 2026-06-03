@@ -11,7 +11,7 @@ import {
   programVersion,
   workoutLog,
 } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { buildSessionKey } from "@/lib/session-key";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
@@ -90,7 +90,7 @@ export async function GET(_req: Request, ctx: Ctx) {
     const locale = await resolveRequestLocale();
     const localeKey = locale === "ko" ? "ko" : "en";
     const { planId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const planRows = await db
       .select({

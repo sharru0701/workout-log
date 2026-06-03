@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
@@ -23,7 +23,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const body = (await req.json().catch(() => ({}))) as { adjustments?: unknown };
 
     const rawAdjustments =

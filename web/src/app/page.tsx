@@ -1,15 +1,17 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { getHomeData } from "@/server/home/home-service";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { V2HomeDashboard } from "@/components/v2/v2-home-dashboard";
 import { V2OnboardingRedirect } from "@/components/v2/v2-onboarding-redirect";
 import HomeLoading from "./loading";
 
+// 인증·사용자별 데이터 페이지 — 정적 prerender 금지(세션 쿠키 기반 요청별 동적 렌더).
+export const dynamic = "force-dynamic";
 
 async function HomeContent() {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const locale = await resolveRequestLocale();
 
   const cookieStore = await cookies();

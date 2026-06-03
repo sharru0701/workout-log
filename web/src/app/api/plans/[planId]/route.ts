@@ -4,7 +4,7 @@ import { db } from "@/server/db/client";
 import { generatedSession, plan as planTable, workoutLog } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
@@ -88,7 +88,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const body = (await req.json().catch(() => ({}))) as {
       name?: unknown;
       params?: unknown;
@@ -162,7 +162,7 @@ async function DELETEImpl(_: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const rows = await db
       .select()

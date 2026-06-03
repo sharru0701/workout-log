@@ -1,7 +1,7 @@
 import { db } from "@/server/db/client";
 import { plan, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 // PERF: Plans manage 페이지 SSR용 서버 전용 플랜 조회 함수.
@@ -21,7 +21,7 @@ export type PlanForManage = {
 
 export async function getPlansForManage(): Promise<PlanForManage[]> {
   const locale = await resolveRequestLocale();
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
 
   const baseItems = await db
     .select()

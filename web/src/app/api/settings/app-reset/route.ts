@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { runSeed } from "@/server/db/seed";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -10,7 +10,7 @@ type ResetRequestBody = {
 
 async function POSTImpl(req: Request) {
   const locale = await resolveRequestLocale();
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const body = (await req.json().catch(() => ({}))) as ResetRequestBody;
 
   if (body.confirmToken !== "RESET_APP_DATA") {

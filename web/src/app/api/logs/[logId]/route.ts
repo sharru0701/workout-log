@@ -13,7 +13,7 @@ import { buildProgressionSummary, readProgressEventByLog } from "@/server/progre
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
@@ -266,7 +266,7 @@ async function GETImpl(_req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const logRows = await db
       .select({
@@ -372,7 +372,7 @@ async function PATCHImpl(req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const body = await req.json();
 
     const sets = Array.isArray(body.sets) ? body.sets : [];
@@ -433,7 +433,7 @@ async function DELETEImpl(_req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { logId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const existingRows = await db
       .select({

@@ -3,7 +3,7 @@ import { db } from "@/server/db/client";
 import { plan, planModule, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -32,7 +32,7 @@ async function POSTImpl(req: Request) {
   const locale = await resolveRequestLocale();
   const body = await req.json();
 
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const name = body.name;
   const type = body.type;
 
@@ -95,7 +95,7 @@ async function POSTImpl(req: Request) {
 
 async function GETImpl() {
   const locale = await resolveRequestLocale();
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
 
   const baseItems = await db
     .select()

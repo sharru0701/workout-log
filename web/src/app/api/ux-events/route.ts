@@ -3,7 +3,7 @@ import { db } from "@/server/db/client";
 import { uxEventLog } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -55,7 +55,7 @@ function toSafeEvent(raw: unknown): IncomingUxEvent | null {
 async function POSTImpl(req: Request) {
   try {
     const locale = await resolveRequestLocale();
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const body: unknown = await req.json().catch(() => ({}));
     const rawEvents: unknown[] =
       isPlainObject(body) && Array.isArray(body.events) ? body.events : [];

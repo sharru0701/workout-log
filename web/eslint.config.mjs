@@ -6,25 +6,40 @@ import nextTs from "eslint-config-next/typescript";
 // R4-1에서 settings-list 패밀리도 삭제 — V2 settings helpers는
 // `@/components/v2/settings/section`, V2NavRow는 `@/components/v2/primitives`.
 // 이 규칙은 향후 누군가 동일한 이름의 모듈을 다시 만들 경우를 대비한 가드.
-const LEGACY_UI_IMPORT_RULE = [
-  "error",
+const LEGACY_UI_IMPORT_PATTERNS = [
   {
-    patterns: [
-      {
-        group: [
-          "@/components/ui/card",
-          "@/components/ui/primary-button",
-          "@/components/ui/button",
-          "@/components/ui/settings-list",
-        ],
-        message:
-          'Use V2 primitives from "@/components/v2/primitives" (V2NavRow, etc.) ' +
-          'and V2 settings helpers from "@/components/v2/settings/section" instead. ' +
-          "See web/src/components/v2/primitives/README.md.",
-      },
+    group: [
+      "@/components/ui/card",
+      "@/components/ui/primary-button",
+      "@/components/ui/button",
+      "@/components/ui/settings-list",
     ],
+    message:
+      'Use V2 primitives from "@/components/v2/primitives" (V2NavRow, etc.) ' +
+      'and V2 settings helpers from "@/components/v2/settings/section" instead. ' +
+      "See web/src/components/v2/primitives/README.md.",
   },
 ];
+
+const LEGACY_UI_IMPORT_RULE = [
+  "error",
+  { patterns: LEGACY_UI_IMPORT_PATTERNS },
+];
+
+// 요청 스코프(API 라우트 / 페이지 / 서버 액션 / 페이지 부트스트랩)에서
+// env-only `getAuthenticatedUserId`를 쓰면 세션을 무시하고 모든 사용자가 단일
+// env 유저로 붕괴된다(멀티유저 격리 깨짐). 이런 경로에서는 cookie-aware
+// `requireAuthenticatedUserId`만 사용해야 한다. getAuthenticatedUserId는
+// 요청 스코프가 없는 배경 작업/스크립트에서만 정당하므로, 이 가드는 위
+// 디렉터리에서의 import만 차단한다.
+const RESTRICTED_AUTH_IMPORT = {
+  name: "@/server/auth/user",
+  importNames: ["getAuthenticatedUserId"],
+  message:
+    "Request-scoped code must use requireAuthenticatedUserId() (cookie-aware). " +
+    "getAuthenticatedUserId() is env-only and ignores the session cookie — it " +
+    "collapses every user onto a single env user. See web/src/server/auth/user.ts.",
+};
 
 // Hard Rules (web/docs/design-guide.md §0.5) — IDE/CLI 피드백용 warning.
 // CI 회귀 차단은 `pnpm lint:design` (scripts/design-lint.mjs baseline)이 담당.
@@ -80,6 +95,26 @@ const eslintConfig = defineConfig([
       ],
       "no-restricted-imports": LEGACY_UI_IMPORT_RULE,
       "no-restricted-syntax": HARD_RULES_SYNTAX,
+    },
+  },
+  // 요청 스코프 디렉터리: env-only getAuthenticatedUserId import 차단.
+  // (레거시 UI 패턴도 함께 유지 — flat config rule은 병합이 아닌 교체이므로.)
+  {
+    files: [
+      "src/app/**/*.ts",
+      "src/app/**/*.tsx",
+      "src/server/services/**/*.ts",
+      "src/features/**/*.ts",
+      "src/features/**/*.tsx",
+    ],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: LEGACY_UI_IMPORT_PATTERNS,
+          paths: [RESTRICTED_AUTH_IMPORT],
+        },
+      ],
     },
   },
   // Override default ignores of eslint-config-next.
