@@ -253,11 +253,17 @@ function buildArchItems(
 
   const freqStat = info.stats.find((s) => s.key === "frequency");
   const cycleStat = info.stats.find((s) => s.key === "cycle");
+  const splitStat = info.stats.find((s) => s.key === "split");
+  const durationStat = info.stats.find((s) => s.key === "duration");
   items.push({
     icon: "event_repeat",
     title: locale === "ko" ? "훈련 일정" : "Training Rhythm",
     desc:
-      [freqStat?.value, cycleStat?.value]
+      // LOGIC: 빈도·사이클, manual: 분할·기간 순으로 사용 가능한 값을 노출한다.
+      [
+        freqStat?.value ?? splitStat?.value,
+        cycleStat?.value ?? durationStat?.value,
+      ]
         .filter((value) => value && value !== "-")
         .join(" · ") ||
       (locale === "ko"
@@ -352,9 +358,57 @@ export function ProgramDetailSheet({
 
   const cycleStat = info.stats.find((s) => s.key === "cycle");
   const frequencyStat = info.stats.find((s) => s.key === "frequency");
+  const splitStat = info.stats.find((s) => s.key === "split");
+  const durationStat = info.stats.find((s) => s.key === "duration");
   const difficultyStat = info.stats.find((s) => s.key === "difficulty");
   const difficultyLevel =
     difficultyStat?.value ?? (locale === "ko" ? "일반" : "Standard");
+
+  // 자동 진행(LOGIC) 프로그램은 사이클·주당 빈도를, 세션 고정(manual) 프로그램은
+  // 기간·분할을 노출한다. 데이터 모델에 맞춰 셀의 라벨/아이콘/값을 함께 전환해
+  // manual 프로그램에서 "-"만 뜨던 문제를 해결한다.
+  const isUsableStat = (value: string | undefined): value is string =>
+    Boolean(value) && value !== "-";
+
+  // 1열: 기간 디스크립터 — 사이클 길이(LOGIC) 우선, 없으면 총 기간(manual)
+  const primaryCell = isUsableStat(cycleStat?.value)
+    ? {
+        icon: "calendar_today",
+        value: cycleStat!.value,
+        label: locale === "ko" ? "사이클" : "Cycle",
+      }
+    : isUsableStat(durationStat?.value)
+      ? {
+          icon: "all_inclusive",
+          value: durationStat!.value,
+          label: locale === "ko" ? "기간" : "Duration",
+        }
+      : {
+          icon: "calendar_today",
+          value: "-",
+          label: locale === "ko" ? "사이클" : "Cycle",
+        };
+
+  // 2열: 주간 리듬 — 주당 빈도(LOGIC) 우선, 없으면 분할 수(manual). 라벨이 단위를
+  // 설명하므로 값은 숫자만 남긴다.
+  const numericValue = (raw: string) => raw.match(/\d+/)?.[0] ?? raw;
+  const secondaryCell = isUsableStat(frequencyStat?.value)
+    ? {
+        icon: "event_repeat",
+        value: numericValue(frequencyStat!.value),
+        label: locale === "ko" ? "주당 빈도" : "Days/Wk",
+      }
+    : isUsableStat(splitStat?.value)
+      ? {
+          icon: "splitscreen",
+          value: numericValue(splitStat!.value),
+          label: locale === "ko" ? "분할" : "Split",
+        }
+      : {
+          icon: "event_repeat",
+          value: "-",
+          label: locale === "ko" ? "주당 빈도" : "Days/Wk",
+        };
 
   // ── Level badge metadata ──
   const levelBadge = (() => {
@@ -493,20 +547,14 @@ export function ProgramDetailSheet({
           }}
         >
           <StatBentoCell
-            icon="calendar_today"
-            value={cycleStat?.value ?? "-"}
-            label={locale === "ko" ? "사이클" : "Cycle"}
+            icon={primaryCell.icon}
+            value={primaryCell.value}
+            label={primaryCell.label}
           />
           <StatBentoCell
-            icon="event_repeat"
-            value={
-              frequencyStat
-                ? locale === "ko"
-                  ? frequencyStat.value.replace("주 ", "").replace("회", "")
-                  : frequencyStat.value.replace(" days/wk", "")
-                : "-"
-            }
-            label={locale === "ko" ? "주당 빈도" : "Days/Wk"}
+            icon={secondaryCell.icon}
+            value={secondaryCell.value}
+            label={secondaryCell.label}
           />
           <StatBentoCell label={locale === "ko" ? "강도" : "Intensity"}>
             <IntensityBars level={difficultyLevel} />
