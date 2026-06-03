@@ -74,22 +74,64 @@ function TodayDeck({
 
   const completedDays = weekly.days.filter((d) => d.hasWorkout).length;
 
+  // 헤더: 카드/하단 스트릭과 겹치지 않도록 시간대 인사말 + 오늘 상태 한 줄로 구성한다.
+  const hour = new Date().getHours();
+  const greeting =
+    locale === "ko"
+      ? hour < 5
+        ? "늦은 밤이에요"
+        : hour < 12
+          ? "좋은 아침이에요"
+          : hour < 18
+            ? "좋은 오후예요"
+            : "좋은 저녁이에요"
+      : hour < 5
+        ? "Still up"
+        : hour < 12
+          ? "Good morning"
+          : hour < 18
+            ? "Good afternoon"
+            : "Good evening";
+
+  const weekText =
+    locale === "ko"
+      ? `이번 주 ${weekly.activeDays}일째`
+      : `${weekly.activeDays} day${weekly.activeDays === 1 ? "" : "s"} this week`;
+
+  const statusLine = !hasPlan
+    ? locale === "ko"
+      ? "프로그램을 선택하고 오늘 운동을 시작하세요"
+      : "Pick a program to start today's workout"
+    : isComplete
+      ? locale === "ko"
+        ? `오늘 운동 완료 · ${weekText}`
+        : `Workout done · ${weekText}`
+      : today.completedSets > 0
+        ? locale === "ko"
+          ? `운동 진행 중 · ${weekText}`
+          : `Workout in progress · ${weekText}`
+        : weekly.activeDays > 0
+          ? locale === "ko"
+            ? `오늘도 가볼까요 · ${weekText}`
+            : `Let's keep it going · ${weekText}`
+          : locale === "ko"
+            ? "오늘 첫 세트를 시작해보세요"
+            : "Start your first set today";
+
   return (
     <div style={{ paddingTop: "var(--v2-s-4)", paddingBottom: "var(--v2-s-6)" }}>
       {/* eyebrow */}
       <div style={{ padding: "0px 0px var(--v2-s-2)" }}>
         <p className="v2-eyebrow">{formatDateEyebrow(locale)}</p>
         <h1 className="v2-h1" style={{ marginTop: "var(--v2-s-1)" }}>
-          {today.headline || (locale === "ko" ? "오늘" : "Today")}
+          {greeting}
         </h1>
-        {today.meta && (
-          <p
-            className="v2-small"
-            style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}
-          >
-            {today.meta}
-          </p>
-        )}
+        <p
+          className="v2-small"
+          style={{ marginTop: "var(--v2-s-1)", color: "var(--v2-ink-2)" }}
+        >
+          {statusLine}
+        </p>
       </div>
 
       {/* hero card — 오늘의 세션 */}
