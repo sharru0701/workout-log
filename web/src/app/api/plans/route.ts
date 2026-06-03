@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { db } from "@/server/db/client";
-import { plan, planModule, planRuntimeState, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
+import { plan, planModule, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
 import { and, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { getAuthenticatedUserId } from "@/server/auth/user";
-import { extractTrainingMaxOverridesFromState } from "@/server/progression/reducer";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
 function toRecord(value: unknown): Record<string, unknown> {
@@ -116,9 +115,9 @@ async function GETImpl() {
     ),
   );
 
-  // PERF: versionRows·logRows·runtimeRows는 서로 독립적이므로 병렬 실행
+  // PERF: versionRows와 logRows는 서로 독립적이므로 병렬 실행
   const planIds = baseItems.map((item) => item.id);
-  const [versionRows, logRows, runtimeRows] = await Promise.all([
+  const [versionRows, logRows] = await Promise.all([
     rootVersionIds.length > 0
       ? db
           .select({
@@ -143,10 +142,6 @@ async function GETImpl() {
         ),
       )
       .orderBy(desc(workoutLog.performedAt)),
-    db
-      .select({ planId: planRuntimeState.planId, state: planRuntimeState.state })
-      .from(planRuntimeState)
-      .where(inArray(planRuntimeState.planId, planIds)),
   ]);
   const versionNameById = new Map<string, string>();
   for (const row of versionRows) {
@@ -163,12 +158,6 @@ async function GETImpl() {
     lastPerformedAtByPlanId.set(planId, row.performedAt);
   }
 
-  const currentTmByPlanId = new Map<string, Record<string, number>>();
-  for (const row of runtimeRows) {
-    if (!row.planId) continue;
-    currentTmByPlanId.set(row.planId, extractTrainingMaxOverridesFromState(row.state));
-  }
-
   const items = baseItems.map((item) => {
     const baseProgramName =
       (item.rootProgramVersionId && versionNameById.get(item.rootProgramVersionId)) ??
@@ -179,7 +168,6 @@ async function GETImpl() {
       ...item,
       baseProgramName,
       lastPerformedAt: lastPerformedAtByPlanId.get(item.id) ?? null,
-      currentTrainingMaxKg: currentTmByPlanId.get(item.id) ?? {},
     };
   });
 
