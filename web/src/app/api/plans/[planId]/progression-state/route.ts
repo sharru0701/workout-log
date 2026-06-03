@@ -7,7 +7,7 @@ import {
   programTemplate,
   programVersion,
 } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import {
   readIncrementOverride,
   resolveAutoProgressionProgram,
@@ -24,7 +24,7 @@ export async function GET(_req: Request, ctx: Ctx) {
   try {
     const locale = await resolveRequestLocale();
     const { planId } = await ctx.params;
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const planRows = await db
       .select({

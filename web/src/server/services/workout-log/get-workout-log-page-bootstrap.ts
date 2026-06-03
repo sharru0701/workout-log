@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { db } from "@/server/db/client";
 import { plan, userSetting, workoutLog } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { generateAndSaveSession } from "@/server/program-engine/generateSession";
 import { loadWorkoutContextServer } from "./load-workout-log-context";
@@ -63,7 +63,7 @@ function getString(params: RawSearchParams, key: string): string | null {
 export async function getWorkoutLogPageBootstrap(
   searchParams: RawSearchParams = {},
 ): Promise<WorkoutLogPageBootstrap> {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
 
   // plans + settings 병렬 조회 (기존 동작)
   const [plans, settingRows] = await Promise.all([

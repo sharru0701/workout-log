@@ -1,12 +1,12 @@
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { plan } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { getSettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
 import { DebugContent } from "./debug-content";
 
 async function fetchPlansForThresholds() {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const rows = await db
     .select({ id: plan.id, name: plan.name, type: plan.type })
     .from(plan)

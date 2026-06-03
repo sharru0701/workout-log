@@ -4,7 +4,7 @@ import { planOverride, plan as planTable } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -34,7 +34,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     const { planId } = await ctx.params;
     const body = await req.json();
 
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const planRow = await db.select().from(planTable).where(eq(planTable.id, planId)).limit(1);
     const p = planRow[0];

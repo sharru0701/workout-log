@@ -5,7 +5,7 @@
 import { eq } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { userSetting } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import type { SettingValue } from "@/lib/settings/update-setting";
 
 export type SettingsSnapshot = Record<string, SettingValue>;
@@ -25,7 +25,7 @@ const DEFAULT_SETTINGS: SettingsSnapshot = {
 };
 
 export async function getSettingsSnapshot(): Promise<SettingsSnapshot> {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const rows = await db
     .select({ key: userSetting.key, value: userSetting.value })
     .from(userSetting)

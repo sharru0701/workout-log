@@ -2,14 +2,14 @@ import { NextResponse } from "next/server";
 import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { fetchPrsList } from "@/server/stats/prs-service";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const exerciseId = searchParams.get("exerciseId")?.trim() ?? "";
     const exerciseName = searchParams.get("exercise") ?? searchParams.get("exerciseName");
     const limitRaw = Number(searchParams.get("limit") ?? "20");

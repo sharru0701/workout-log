@@ -1,7 +1,7 @@
 import { asc } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { exercise } from "@/server/db/schema";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import {
   readWorkoutPreferences,
   type TrainingGoalKey,
@@ -122,7 +122,7 @@ async function fetchStatsGoalMetrics(
 export async function getStatsPageBootstrap(
   searchParams?: SearchParams,
 ): Promise<StatsPageBootstrap> {
-  const userId = getAuthenticatedUserId();
+  const userId = await requireAuthenticatedUserId();
   const params = searchParams ?? {};
   const defer1rmBootstrap = readString(params, "defer1rmBootstrap") === "1";
   const selectedExerciseId = readString(params, "exerciseId")?.trim() ?? "";

@@ -4,7 +4,7 @@ import { programTemplate, programVersion } from "@/server/db/schema";
 import { eq } from "drizzle-orm";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -15,7 +15,7 @@ async function PUTImpl(req: Request, ctx: Ctx) {
     const locale = await resolveRequestLocale();
     const { id } = await ctx.params;
     const body = await req.json();
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
 
     const definition = body.definition;
     if (!definition) {

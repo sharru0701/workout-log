@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { logError } from "@/server/observability/logger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { fetchE1rmStats } from "@/server/stats/e1rm-service";
@@ -9,7 +9,7 @@ import { parseDateRangeFromSearchParams } from "@/server/stats/range";
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const planId = searchParams.get("planId")?.trim() ?? "";
     const exerciseId = searchParams.get("exerciseId")?.trim() ?? "";
     const exerciseName =

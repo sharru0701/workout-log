@@ -3,7 +3,7 @@ import { db } from "@/server/db/client";
 import { workoutLog, workoutSet } from "@/server/db/schema";
 import { and, desc, eq, gte, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@/lib/bodyweight-load";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
@@ -16,7 +16,7 @@ function epley1RM(weightKg: number, reps: number) {
 
 async function GETImpl(req: Request) {
   try {
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const { searchParams } = new URL(req.url);
     const lookbackDays = Number(searchParams.get("days") ?? "30");
     const topLimit = Number(searchParams.get("limit") ?? "5");

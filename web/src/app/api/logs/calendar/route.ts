@@ -4,7 +4,7 @@ import { db } from "@/server/db/client";
 import { workoutLog } from "@/server/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 function normalizeTimezone(raw: string | null): string {
@@ -31,7 +31,7 @@ function normalizeTimezone(raw: string | null): string {
  */
 async function GETImpl(req: Request) {
   try {
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const { searchParams } = new URL(req.url);
     const year = Number(searchParams.get("year"));
     const month = Number(searchParams.get("month"));

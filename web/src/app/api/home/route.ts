@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
@@ -20,7 +20,7 @@ function normalizeTimezone(raw: string | null): string {
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const locale = await resolveRequestLocale();
     const timezone = normalizeTimezone(searchParams.get("timezone"));
     const recentLimit = parseInt(searchParams.get("recentLimit") || "3", 10);

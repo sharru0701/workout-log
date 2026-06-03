@@ -3,7 +3,7 @@ import path from "node:path";
 import { NextResponse, after } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
@@ -165,7 +165,7 @@ async function readLocalMigrationCount() {
 async function GETImpl(req: Request) {
   try {
     const { searchParams } = new URL(req.url);
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const lookbackMinutes = parseBoundedInt(searchParams.get("lookbackMinutes"), 720, 30, 10080);
     const limit = parseBoundedInt(searchParams.get("limit"), 8, 1, 50);
     const runStatus = parseRunStatusFilter(searchParams.get("runStatus"));

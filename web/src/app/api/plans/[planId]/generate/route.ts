@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { generateAndSaveSession } from "@/server/program-engine/generateSession";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";
-import { getAuthenticatedUserId } from "@/server/auth/user";
+import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -14,7 +14,7 @@ async function POSTImpl(req: Request, ctx: Ctx) {
     const locale = await resolveRequestLocale();
 
     const body = await req.json();
-    const userId = getAuthenticatedUserId();
+    const userId = await requireAuthenticatedUserId();
     const rawWeek = body.week;
     const rawDay = body.day;
     const week =
