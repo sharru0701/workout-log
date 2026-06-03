@@ -200,39 +200,6 @@ function normalizeSearchText(...values: Array<string | null | undefined>) {
     .join(" ");
 }
 
-function readTrainingMaxPreview(params: unknown) {
-  const source = toRecord(params);
-  const tm = readPositiveNumberMap(source.trainingMaxKg);
-  const orm = readPositiveNumberMap(source.oneRepMaxKg);
-  const allKeys = Object.keys({ ...tm, ...orm });
-  if (allKeys.length === 0) return [] as Array<{ key: string; label: string; valueKg: number; kind: "TM" | "1RM" }>;
-  // 상세(createStrengthBaselineDraft)와 동일하게 per-exercise(EX_) 키와 짝인 family canonical 키를 접어
-  // 카드 미리보기에서 "Squat"와 "Back Squat"가 동시에 보이는 중복을 막는다.
-  const keys = selectDisplayStrengthBaselineKeys(allKeys);
-
-  const sorted = keys.sort((a, b) => {
-    const ai = TARGET_PRIORITY.indexOf(a);
-    const bi = TARGET_PRIORITY.indexOf(b);
-    if (ai === -1 && bi === -1) return a.localeCompare(b);
-    if (ai === -1) return 1;
-    if (bi === -1) return -1;
-    return ai - bi;
-  });
-
-  return sorted
-    .map((key) => {
-      const valueKg = tm[key] ?? orm[key] ?? 0;
-      if (valueKg <= 0) return null;
-      return {
-        key,
-        label: shortTargetLabel(key),
-        valueKg,
-        kind: tm[key] ? ("TM" as const) : ("1RM" as const),
-      };
-    })
-    .filter((v): v is { key: string; label: string; valueKg: number; kind: "TM" | "1RM" } => v !== null);
-}
-
 function planTypeChipTone(type: Plan["type"]) {
   if (type === "COMPOSITE") return "info" as const;
   if (type === "MANUAL") return "neutral" as const;
@@ -250,18 +217,15 @@ function PlanCardV2({
   onManage,
   copy,
   locale,
-  bodyweightKg,
 }: {
   plan: Plan;
   onManage: () => void;
   copy: ReturnType<typeof useLocale>["copy"];
   locale: "ko" | "en";
-  bodyweightKg: number | null;
 }) {
   const days = daysSince(plan.lastPerformedAt);
   const relText = formatRelativeDays(days, locale);
   const isFresh = typeof days === "number" && days <= RECENT_THRESHOLD_DAYS;
-  const tmPreview = readTrainingMaxPreview(plan.params).slice(0, 4);
   const typeText = planTypeLabel(plan.type, locale);
   const typeTone = planTypeChipTone(plan.type);
 
@@ -309,70 +273,6 @@ function PlanCardV2({
               : copy.plansManage.noPerformedHistory}
           </p>
         </V2Stack>
-
-        {tmPreview.length > 0 ? (
-          <V2Card tone="inset" padding="var(--v2-s-3)" radius="var(--v2-r-2)">
-            <div
-              style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(72px, 1fr))",
-                gap: "var(--v2-s-2)",
-              }}
-            >
-              {tmPreview.map((row) => (
-                <div
-                  key={row.key}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "var(--v2-s-1)",
-                    padding: "var(--v2-s-2) var(--v2-s-3)",
-                    background: "var(--v2-paper)",
-                    borderRadius: "var(--v2-r-1)",
-                    minWidth: 0,
-                  }}
-                >
-                  <span
-                    className="v2-eyebrow"
-                    style={{ color: "var(--v2-ink-3)" }}
-                  >
-                    {row.label} · {row.kind}
-                  </span>
-                  <span
-                    className="v2-num-sm"
-                    style={{ color: "var(--v2-c-weight)" }}
-                  >
-                    {formatKg(row.valueKg)}
-                    <span
-                      className="v2-small"
-                      style={{ color: "var(--v2-ink-3)", marginLeft: "var(--v2-s-1)" }}
-                    >
-                      kg
-                      {(() => {
-                        const suffix = bodyweightAddedSuffix(
-                          bodyweightExerciseNameForTargetKey(row.key),
-                          row.valueKg,
-                          bodyweightKg,
-                          locale,
-                        );
-                        return suffix ? ` ${suffix}` : "";
-                      })()}
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div>
-          </V2Card>
-        ) : (
-          <V2Card tone="inset" padding="var(--v2-s-3)" radius="var(--v2-r-2)">
-            <p
-              className="v2-small"
-              style={{ margin: 0, color: "var(--v2-ink-3)" }}
-            >
-              {locale === "ko" ? "1RM/TM 미설정 — 관리에서 입력하세요." : "1RM/TM not set — open Manage to enter."}
-            </p>
-          </V2Card>
-        )}
 
         <V2PrimaryBtn
           full
@@ -1007,7 +907,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   plan={plan}
                   copy={copy}
                   locale={locale}
-                  bodyweightKg={bodyweightKg}
                   onManage={() => openManageSheet(plan)}
                 />
               ))}
