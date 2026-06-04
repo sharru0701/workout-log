@@ -15,7 +15,10 @@
 .app-page {
   display: flex;
   flex-direction: column;
-  gap: var(--v2-s-7);
+  /* 세로 리듬 Single Source: 페이지 섹션 간 세로 간격은 s-5(20px)로 통일한다.
+     섹션 컴포넌트 루트에 marginBottom 으로 간격을 더하거나, 같은 역할의 inner
+     wrapper 로 세로 간격을 재구현하지 말 것. (좌우 패딩의 .container 규칙과 대칭) */
+  gap: var(--v2-s-5);
 }
 
 .app-page--compact {

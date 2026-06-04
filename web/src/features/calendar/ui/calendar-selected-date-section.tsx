@@ -127,7 +127,7 @@ export const CalendarSelectedDateSection = memo(
       : formatCalendarDay(selectedDate, locale);
 
     return (
-      <section style={{ marginBottom: "var(--v2-s-7)" }}>
+      <section>
         <div
           style={{
             display: "flex",
