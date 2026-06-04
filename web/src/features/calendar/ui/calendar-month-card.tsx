@@ -73,7 +73,6 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
         background: "var(--v2-paper)",
         borderRadius: "var(--v2-r-4)",
         padding: "var(--v2-s-4) var(--v2-s-4) var(--v2-s-5)",
-        marginBottom: "var(--v2-s-6)",
         boxShadow: "var(--v2-elev-1)",
       }}
     >

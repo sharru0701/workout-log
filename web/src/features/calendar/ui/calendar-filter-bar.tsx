@@ -18,6 +18,7 @@ const PILL_STYLE = {
   border: "none",
   borderRadius: "var(--v2-r-2)",
   padding: "var(--v2-s-2) var(--v2-s-4)",
+  minHeight: "var(--v2-s-8)",
   cursor: "pointer",
   fontSize: "var(--v2-t-12)",
   fontWeight: 700,
@@ -38,7 +39,6 @@ export const CalendarFilterBar = memo(function CalendarFilterBar({
       style={{
         display: "flex",
         gap: "var(--v2-s-2)",
-        marginBottom: "var(--v2-s-6)",
       }}
     >
       <button

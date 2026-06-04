@@ -340,7 +340,7 @@ var(--touch-target): 44px  ← 최소 터치 영역
 ```
 
 > **4pt 그리드**: 모든 간격은 4의 배수(4, 8, 12, 16, 24, 32)를 사용합니다.
-> **주요 섹션 간격**: `Spacing-8` (1.75rem ≈ 28px)이 기본 "숨쉬는 공간"입니다.
+> **주요 섹션 간격**: `--v2-s-5` (20px)가 `.app-page` 직속 섹션 사이의 기본 간격입니다 (아래 3-2 "페이지 세로 리듬 — Single Source" 참고).
 
 ### 3-2. 레이아웃 시스템
 
@@ -371,6 +371,32 @@ var(--layout-max-wide)  /* 와이드 모드 */
 **예외**:
 - Auth/온보딩 화면(`/login`, `/signup`, `/forgot-password`, `/reset-password`, `/onboarding`)은 `position: fixed; inset: 0` 으로 `.container` 를 우회한다. 이 경우에도 내부 horizontal padding 은 `var(--v2-s-4)` 로 동일하게 맞춘다.
 - 풀블리드 효과(active set row 등)는 `margin-left/right: calc(-1 * var(--v2-s-4))` 로 명시적으로 `.container` 를 상쇄해서 표현.
+
+#### 페이지 세로 리듬 — Single Source
+
+화면 내 섹션 간 **세로 간격은 `.app-page` 의 `gap` (= `var(--v2-s-5)` = 20px) 단일 기준**. `AppPage` 가 메인 화면을 `.app-page` (flex column) 로 감싸므로, 페이지/섹션 컴포넌트가 루트에 `marginBottom` 으로 간격을 *추가* 하거나, 세로 간격만을 위한 inner wrapper(grid/flex + gap)를 *덧대지* 않는다. 화면마다 섹션 간격이 20 / 32 / 56px 로 갈리던 드리프트의 원인. (좌우 패딩의 `.container` 규칙과 동일한 정신.)
+
+```tsx
+// ❌ NG — 섹션 루트가 자체 marginBottom 을 가져 .app-page gap 과 합산(이중 간격)
+<section style={{ marginBottom: "var(--v2-s-7)" }}>...</section>
+
+// ❌ NG — AppPage 안에서 세로 간격용 wrapper 를 또 만들어 gap 을 재선언
+<AppPage>
+  <div style={{ display: "grid", gap: "var(--v2-s-6)" }}>…</div>
+</AppPage>
+
+// ✅ OK — 섹션을 .app-page 직속에 두고 간격은 .app-page gap 에 위임
+<AppPage>
+  <V2SectionHeader … />
+  <SectionA />
+  <SectionB />
+</AppPage>
+```
+
+**예외**:
+- 섹션 *내부* 간격(헤딩-콘텐츠, 카드 리스트 등)은 해당 컨테이너의 `gap`/`margin` 으로 제어한다. 이 규칙은 `.app-page` *직속* 섹션 사이 간격에만 적용된다.
+- 페이지 헤더(`V2SectionHeader`)는 제목-본문 분리를 위해 자체 `marginBottom: var(--v2-s-4)` (16px) 을 유지한다(헤더 다음 간격만 36px). 그 외 섹션은 추가 margin 없이 위임.
+- 하단 여백이 필요하면 마지막 섹션의 margin 대신 단일 wrapper(`paddingBottom: var(--v2-s-8)`)로 감싸도 된다. 단 그 wrapper 의 `gap` 도 `var(--v2-s-5)` 로 맞춰 `.app-page` 와 동일 리듬을 유지한다(현재 stats·exercise-detail·pr-history·calendar 화면 패턴).
 
 ### 3-3. Border Radius 기준
 

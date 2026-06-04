@@ -34,7 +34,7 @@ export const CalendarRecentLogsSection = memo(function CalendarRecentLogsSection
   if (recentPastLogs.length === 0) return null;
 
   return (
-    <section style={{ marginBottom: "var(--v2-s-7)" }}>
+    <section>
       <h2 className="v2-h3" style={{ marginBottom: "var(--v2-s-3)" }}>
         {title}
       </h2>
