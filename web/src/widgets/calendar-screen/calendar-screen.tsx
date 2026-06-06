@@ -279,6 +279,7 @@ export function CalendarScreen({
             onShiftPrevMonth={() => shiftMonthWithFeedback(-1)}
             onShiftNextMonth={() => shiftMonthWithFeedback(1)}
             onOpenMonthPicker={() => setMonthPickerOpen(true)}
+            onPickMonth={handleMonthPickerChange}
           />
 
           <CalendarSelectedDateSection
