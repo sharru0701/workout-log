@@ -9,9 +9,11 @@ import {
 import {
   dateOnlyToUtcDate,
   dayOfMonth,
+  getYear,
   monthGrid,
   monthStart,
 } from "@/lib/date-utils";
+import { useIsIos } from "@/lib/use-is-ios";
 
 type CalendarMonthCardProps = {
   locale: "ko" | "en";
@@ -26,6 +28,7 @@ type CalendarMonthCardProps = {
   onShiftPrevMonth: () => void;
   onShiftNextMonth: () => void;
   onOpenMonthPicker: () => void;
+  onPickMonth: (value: { year: number; month: number }) => void;
 };
 
 const NAV_BUTTON_STYLE = {
@@ -55,7 +58,24 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
   onShiftPrevMonth,
   onShiftNextMonth,
   onOpenMonthPicker,
+  onPickMonth,
 }: CalendarMonthCardProps) {
+  // iOS Safari에서는 커스텀 휠픽커 바텀시트 대신 네이티브 연월 휠픽커
+  // (`<input type="month">`)를 트리거 버튼 위에 덮어 띄운다.
+  const isIos = useIsIos();
+  const anchorMonth = anchorDate.slice(0, 7);
+  const minMonth = `${getYear(today) - 10}-01`;
+  const maxMonth = `${getYear(today) + 10}-12`;
+
+  function handleNativeMonthChange(value: string) {
+    if (!value) return;
+    const [yearStr, monthStr] = value.split("-");
+    const year = Number(yearStr);
+    const month = Number(monthStr);
+    if (!Number.isInteger(year) || !Number.isInteger(month)) return;
+    onPickMonth({ year, month });
+  }
+
   const baseMonthKey = monthStart(anchorDate).slice(0, 7);
   const cells = monthGrid(anchorDate);
   const monthLabel = new Intl.DateTimeFormat(
@@ -90,37 +110,64 @@ export const CalendarMonthCard = memo(function CalendarMonthCard({
           marginBottom: "var(--v2-s-3)",
         }}
       >
-        <button
-          type="button"
-          onClick={onOpenMonthPicker}
-          aria-label={
-            locale === "ko" ? "연월 선택 열기" : "Open year and month picker"
-          }
-          aria-haspopup="dialog"
-          aria-expanded={monthPickerOpen}
-          className="v2-pressable v2-font-display"
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "var(--v2-s-1)",
-            background: "transparent",
-            border: "none",
-            padding: "var(--v2-s-1) var(--v2-s-1)",
-            cursor: "pointer",
-            fontSize: "var(--v2-t-16)",
-            fontWeight: 700,
-            color: "var(--v2-ink)",
-            letterSpacing: "-0.01em",
-          }}
-        >
-          <span>{monthLabel}</span>
-          <span
-            className="material-symbols-outlined"
-            style={{ fontSize: "var(--v2-t-18)", color: "var(--v2-ink-3)" }}
+        <div style={{ position: "relative", display: "inline-flex" }}>
+          <button
+            type="button"
+            onClick={onOpenMonthPicker}
+            aria-label={
+              locale === "ko" ? "연월 선택 열기" : "Open year and month picker"
+            }
+            aria-haspopup="dialog"
+            aria-expanded={monthPickerOpen}
+            className="v2-pressable v2-font-display"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "var(--v2-s-1)",
+              background: "transparent",
+              border: "none",
+              padding: "var(--v2-s-1) var(--v2-s-1)",
+              cursor: "pointer",
+              fontSize: "var(--v2-t-16)",
+              fontWeight: 700,
+              color: "var(--v2-ink)",
+              letterSpacing: "-0.01em",
+            }}
           >
-            expand_more
-          </span>
-        </button>
+            <span>{monthLabel}</span>
+            <span
+              className="material-symbols-outlined"
+              style={{ fontSize: "var(--v2-t-18)", color: "var(--v2-ink-3)" }}
+            >
+              expand_more
+            </span>
+          </button>
+          {isIos ? (
+            <input
+              type="month"
+              value={anchorMonth}
+              min={minMonth}
+              max={maxMonth}
+              onChange={(event) => handleNativeMonthChange(event.target.value)}
+              aria-label={
+                locale === "ko" ? "연월 선택" : "Select year and month"
+              }
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                margin: 0,
+                padding: 0,
+                border: "none",
+                opacity: 0,
+                cursor: "pointer",
+                // iOS Safari 자동 확대 방지 — 16px 미만 폰트 회피.
+                fontSize: "var(--v2-t-16)",
+              }}
+            />
+          ) : null}
+        </div>
 
         <div style={{ display: "flex", gap: "var(--v2-s-1)" }}>
           <button
