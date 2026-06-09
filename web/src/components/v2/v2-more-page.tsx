@@ -1,10 +1,10 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { AppNumberStepper } from "@/components/ui/form-controls";
-import { V2Card, V2IconBtn, V2NavRow, V2PrimaryBtn, V2SecondaryBtn } from "@/components/v2/primitives";
+import { NumberKeypadField } from "@/components/ui/number-keypad-field";
+import { V2Card, V2IconBtn, V2NavRow, V2PrimaryBtn, V2SecondaryBtn, V2Stack } from "@/components/v2/primitives";
 import { apiGet } from "@/lib/api";
 import { createPersistServerSetting } from "@/lib/settings/settings-api";
 import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
@@ -490,6 +490,18 @@ function normalizeBodyweightKg(value: number) {
   return Math.round(clipped * 10) / 10;
 }
 
+/** label(eyebrow)을 위, iOS 키패드 입력을 아래로 쌓는 래퍼. 운동 기록/최소 원판 화면과 동일한 패턴. */
+function LabeledKeypadField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <V2Stack gap={1}>
+      <span className="v2-eyebrow" style={{ color: "var(--v2-ink-3)" }}>
+        {label}
+      </span>
+      {children}
+    </V2Stack>
+  );
+}
+
 function BodyweightRow({
   snapshot,
   expanded,
@@ -549,15 +561,17 @@ function BodyweightRow({
             gap: "var(--v2-s-2)",
           }}
         >
-          <AppNumberStepper
-            label="Bodyweight (kg)"
-            value={draft}
-            min={MIN_BODYWEIGHT_KG}
-            max={MAX_BODYWEIGHT_KG}
-            step={0.1}
-            inputMode="decimal"
-            onChange={(next) => setDraft(normalizeBodyweightKg(next))}
-          />
+          <LabeledKeypadField label={locale === "ko" ? "체중 (kg)" : "Bodyweight (kg)"}>
+            <NumberKeypadField
+              ariaLabel={locale === "ko" ? "체중 (kg)" : "Bodyweight (kg)"}
+              value={draft}
+              min={MIN_BODYWEIGHT_KG}
+              max={MAX_BODYWEIGHT_KG}
+              allowDecimal
+              step={0.1}
+              onChange={(next) => setDraft(normalizeBodyweightKg(next))}
+            />
+          </LabeledKeypadField>
           <V2PrimaryBtn
             full
             disabled={!canSave}
