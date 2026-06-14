@@ -49,6 +49,15 @@ export function sessionHasBodyweightAmrap(
   });
 }
 
+// 이번 세션에 중량풀업 등 "맨몸 운동"이 (AMRAP 여부와 무관하게) 하나라도 있는가.
+// 체중은 맨몸 운동 총중량 추적의 전제이므로, 중량풀업을 수행하는 모든 프로그램에서 체중 확인을
+// 권고하기 위한 게이트. AMRAP에 묶이지 않아 TB/5x5/531 등에도 적용된다.
+export function sessionHasBodyweightExercise(
+  exercises: ReadonlyArray<{ exerciseName: string }>,
+): boolean {
+  return exercises.some((exercise) => isBodyweightExerciseName(exercise.exerciseName));
+}
+
 export function computeBodyweightTotalLoadKg(
   exerciseName: string,
   externalWeightKg: number,

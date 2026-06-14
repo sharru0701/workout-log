@@ -22,7 +22,7 @@ import { readWorkoutLogQueryContext } from "@/features/workout-log/model/query-c
 import { useWorkoutLogSaveController } from "@/features/workout-log/model/use-workout-log-save-controller";
 import { applyWorkoutLogWeightRulesToDraft } from "@/lib/workout-record/weight-rules";
 import { migrateWorkoutRecordDraft } from "@/entities/workout-record";
-import { sessionHasBodyweightAmrap } from "@/lib/bodyweight-load";
+import { sessionHasBodyweightExercise } from "@/lib/bodyweight-load";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { apiPatch } from "@/lib/api";
 import { BodyweightCheckBanner } from "./bodyweight-check-banner";
@@ -51,6 +51,10 @@ import {
   workflowStateAtom,
 } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "@/app/workout/log/loading";
+
+// 체중 확인 안내: 마지막 확인 시각 설정 키 + 스테일 임계(14일). 이 기간 내에 확인했으면 다시 안 묻는다.
+const BODYWEIGHT_CHECKED_AT_KEY = "prefs.bodyweight.checkedAtMs";
+const BODYWEIGHT_CHECK_STALE_MS = 14 * 24 * 60 * 60 * 1000;
 
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
   initialContext?: WorkoutLogInitialContext | null;
@@ -198,11 +202,19 @@ function WorkoutLogScreenContent({
 
   useWorkoutLogKeyboardOpenEffect();
 
+  // 체중: (A) 저장 시 맨몸 운동 총중량(meta.totalLoadKg) 스탬프에 전달 + (B) 체중 확인 안내가 공유.
+  // 저장 컨트롤러보다 먼저 선언해 모든 프로그램의 중량풀업 로그에 총중량이 기록되도록 한다.
+  const [bodyweightKg, setBodyweightKg] = useState<number | null>(
+    () => readWorkoutPreferences(initialSettings as Record<string, string | number | boolean | null>).bodyweightKg,
+  );
+  const [bodyweightSubmitting, setBodyweightSubmitting] = useState(false);
+  const [bodyweightDismissedKey, setBodyweightDismissedKey] = useState<string | null>(null);
+
   const { failureProtocolSheet, handleFailureProtocolSelect, requestSave } =
     useWorkoutLogSaveController({
       locale,
       selectedPlan,
-      bodyweightKg: null,
+      bodyweightKg,
       persistenceKey,
       onSaved: useCallback(
         (savedLogId: string | null) => {
@@ -230,38 +242,43 @@ function WorkoutLogScreenContent({
 
   const isEditingExistingLog = Boolean(query.logId);
 
-  // 하이브리드 체중 확인: 검증(풀업 AMRAP) 세션 진입 시 1회 "업데이트/유지" 안내.
-  // "유지"는 한 탭(쓰기 없음), "업데이트"만 prefs.bodyweight.kg를 갱신 → 모니터가 읽음.
-  const [bodyweightKg, setBodyweightKg] = useState<number | null>(
-    () => readWorkoutPreferences(initialSettings as Record<string, string | number | boolean | null>).bodyweightKg,
-  );
-  const [bodyweightSubmitting, setBodyweightSubmitting] = useState(false);
-  const [bodyweightDismissedKey, setBodyweightDismissedKey] = useState<string | null>(null);
+  // 체중 확인 안내(B): 중량풀업을 수행하는 모든 프로그램에서, 마지막 확인 후 14일+ 지났을 때만
+  // "업데이트/유지"를 권고한다(매 세션 마찰 회피). "유지"도 확인 시각을 기록해 14일간 다시 안 묻는다.
   const currentSessionKey = draft?.session.sessionKey ?? null;
+  const bodyweightCheckedAtMs =
+    Number((initialSettings as Record<string, unknown>)[BODYWEIGHT_CHECKED_AT_KEY]) || 0;
+  const isBodyweightStale = Date.now() - bodyweightCheckedAtMs >= BODYWEIGHT_CHECK_STALE_MS;
   const showBodyweightCheck =
     !isEditingExistingLog &&
     Boolean(draft) &&
     currentSessionKey !== null &&
     bodyweightDismissedKey !== currentSessionKey &&
-    sessionHasBodyweightAmrap(draft?.seedExercises ?? []);
+    isBodyweightStale &&
+    sessionHasBodyweightExercise(draft?.seedExercises ?? []);
+  const markBodyweightChecked = useCallback(() => {
+    // 확인 시각 기록(스테일 게이트). 실패는 무시 — 다음 세션에 다시 권고될 뿐.
+    void apiPatch("/api/settings", { key: BODYWEIGHT_CHECKED_AT_KEY, value: Date.now() }).catch(() => {});
+  }, []);
   const handleBodyweightUpdate = useCallback(
     async (kg: number) => {
       setBodyweightSubmitting(true);
       try {
         await apiPatch("/api/settings", { key: "prefs.bodyweight.kg", value: kg });
         setBodyweightKg(kg);
+        markBodyweightChecked();
       } catch {
-        // 저장 실패해도 안내는 닫는다 — 다음 검증 세션에 다시 권고된다.
+        // 저장 실패해도 안내는 닫는다 — 다음 권고 시점에 다시 뜬다.
       } finally {
         setBodyweightSubmitting(false);
         setBodyweightDismissedKey(currentSessionKey);
       }
     },
-    [currentSessionKey],
+    [currentSessionKey, markBodyweightChecked],
   );
   const handleBodyweightKeep = useCallback(() => {
+    markBodyweightChecked();
     setBodyweightDismissedKey(currentSessionKey);
-  }, [currentSessionKey]);
+  }, [currentSessionKey, markBodyweightChecked]);
 
   const handleDateChange = useCallback(
     (newDateKey: string) => {
