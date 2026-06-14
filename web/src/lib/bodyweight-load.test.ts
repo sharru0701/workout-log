@@ -9,6 +9,7 @@ import {
   resolveLoggedLoadDisplay,
   prescriptionToExternalLoadKg,
   sessionHasBodyweightAmrap,
+  sessionHasBodyweightExercise,
 } from "./bodyweight-load";
 
 test("computeExternalLoadFromTotalKg subtracts bodyweight for pull-up", () => {
@@ -153,4 +154,29 @@ test("sessionHasBodyweightAmrap: plannedSetMeta 없거나 빈 세션은 false", 
     sessionHasBodyweightAmrap([{ exerciseName: "Pull-Up", plannedSetMeta: { amrapPerSet: null } }]),
     false,
   );
+});
+
+test("sessionHasBodyweightExercise: 중량풀업이 있으면 true (AMRAP 무관)", () => {
+  assert.equal(
+    sessionHasBodyweightExercise([
+      { exerciseName: "Back Squat" },
+      { exerciseName: "Weighted Pull-Up" },
+    ]),
+    true,
+  );
+  // AMRAP 세트가 없어도 풀업이면 true (TB/5x5 등 적용)
+  assert.equal(sessionHasBodyweightExercise([{ exerciseName: "Pull-Up" }]), true);
+  assert.equal(sessionHasBodyweightExercise([{ exerciseName: "친업" }]), true);
+});
+
+test("sessionHasBodyweightExercise: 맨몸 운동이 없으면 false", () => {
+  assert.equal(
+    sessionHasBodyweightExercise([
+      { exerciseName: "Back Squat" },
+      { exerciseName: "Bench Press" },
+      { exerciseName: "Deadlift" },
+    ]),
+    false,
+  );
+  assert.equal(sessionHasBodyweightExercise([]), false);
 });
