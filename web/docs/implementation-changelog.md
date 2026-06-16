@@ -20,6 +20,7 @@
 11. [DevOps — 마이그레이션 · 운영 텔레메트리](#11-devops--마이그레이션--운영-텔레메트리)
 12. [검증 명령어 모음](#12-검증-명령어-모음)
 13. [인프라 — Vercel & Supabase 이전](#13-인프라--vercel--supabase-이전)
+14. [PWA 활성화](#14-pwa-활성화)
 
 ---
 
@@ -859,3 +860,29 @@ DB_MIGRATE_ENABLED=0 DATABASE_URL=postgres://... node web/scripts/migrate.mjs
 3. **빌드 및 배포 파이프라인**:
    - `package.json`의 배포 스크립트에 `pnpm db:migrate && next build --turbopack`을 적용하여, Vercel 빌드 타임에 Drizzle 마이그레이션이 자동 수행되도록 파이프라인 일원화.
    - `vercel.json`에 `icn1` 한국 리전을 등록하여 Supabase 서울서버와의 핑(latency)을 최소화.
+
+---
+
+## 14. PWA 활성화
+
+### 배경
+`/sw.js` 라우트 핸들러(서비스워커 JS 생성·서빙)는 이전부터 라이브였으나 **클라이언트 등록 코드와 manifest가 없어 PWA가 실질 비활성**이었다. 나머지 구성요소를 채워 활성화.
+
+### 구성요소
+| 파일 | 역할 |
+|------|------|
+| `src/app/sw.js/route.ts` (기존) | SW JS 동적 생성. 버전드 캐시, install/activate/fetch. `/api/`는 network-only로 **절대 캐시 안 함**(인증 데이터 보호). 정적 자산 cache-first, 아이콘 SWR, 네비 network-first + offline 폴백. |
+| `src/components/service-worker-register.tsx` (신규) | `/sw.js` 등록(layout 마운트). `NEXT_PUBLIC_DISABLE_SW==='1'` 게이트 → 로컬 dev 자동 off, prod만 활성. `load` 이후 등록. |
+| `src/app/manifest.ts` (신규) | Web App Manifest. Next 파일규칙이 `/manifest.webmanifest` 서빙 + `<link rel="manifest">` 자동 주입. `display: standalone`, 다크 톤 splash/theme `#16151c`, icons 192/512(`purpose:any`). |
+| `public/offline.html` (신규) | SW가 precache하는 오프라인 폴백. 외부 폰트 의존 없이 자체 포함, 라이트/다크 토큰 반영. |
+
+### 주의 / 결정
+- **dev 비활성**: 로컬 `.env.local`의 `NEXT_PUBLIC_DISABLE_SW=1`로 dev에서 SW가 안 켜진다(HMR/스테일 캐시 혼란 회피). 로컬 검증 시 플래그를 끄고 prod 빌드로 실행.
+- **offline.html 선행 필수**: SW install의 `cache.addAll(PRECACHE_URLS)`은 원자적이라 `/offline.html`이 404면 install 전체가 실패한다. 등록을 켜기 전에 폴백 페이지가 반드시 존재해야 한다(이번에 함께 해결).
+- **인증 우회 라우트**: `proxy.ts` matcher에 `offline.html` 추가(이미 `sw.js`/`manifest`/`icons` 제외). `next.config.ts` 캐시 헤더 source를 `manifest`로 일반화해 `.webmanifest` 매칭.
+- **보안**: SW가 `/api/`를 캐시하지 않으므로 멀티유저 격리/RLS 미해결 상태에서도 인증 데이터 누출은 없다. 향후 오프라인 데이터 캐싱 도입 시 격리 선결 필요.
+
+### 검증
+- `pnpm -C web typecheck` / `lint` / `lint:design` 통과.
+- dev 런타임: `/manifest.webmanifest`(200, `application/manifest+json`), `/offline.html`(200, 인증 우회), `/sw.js`(200), `<head>` `<link rel="manifest">` 자동 주입 확인.
+- 업데이트(새 배포 → 클라이언트 갱신) 플로우는 manifest/SW 캐시 헤더 특성상 실배포에서 1회 검증 권장.
