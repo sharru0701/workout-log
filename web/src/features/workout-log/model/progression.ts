@@ -254,7 +254,8 @@ export async function resolveWorkoutLogProgressionOverride({
     );
 
     if (progressionData.program === "operator" && isOperatorBlockEnd) {
-      const targets = buildBlockCompletionTargets(progressionData.state, progressionData.effectiveRules, 0.95, locale);
+      // TB 공식 reset = 현재 TM의 90%(10% 감량). effectiveRules.resetFactor 부재 시 폴백.
+      const targets = buildBlockCompletionTargets(progressionData.state, progressionData.effectiveRules, 0.9, locale);
       if (targets.length === 0) {
         return { cancelled: false, decisions: null };
       }

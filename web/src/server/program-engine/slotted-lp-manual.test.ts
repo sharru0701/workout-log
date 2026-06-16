@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  plannedExercisesFromManualSession,
   plannedExercisesFromSlottedLpManualSession,
   resolveManualEntry,
 } from "./generateSession";
@@ -384,4 +385,27 @@ test("PR-E texas(비-v2): 슬롯 독립 LP 유지(파생 안 함), texasRole nul
   assert.equal(out[0]!.sets[0]!.targetWeightKg, 122.5); // 슬롯 독립 workKg
   assert.equal(out[0]!.progressionKey, "V_s0"); // 진행 추적(기존)
   assert.equal(out[0]!.texasRole, null); // 비-v2 배지 없음
+});
+
+// Greyskull(v2): 메인 리프트 마지막 세트에만 amrap:true 주입(ASSIST·앞 세트 미부착, 비-v2 미부착).
+test("greyskull(v2): plannedExercisesFromManualSession이 메인 마지막 세트에 amrap 주입", () => {
+  const session = {
+    key: "A",
+    items: [
+      { exerciseName: "Back Squat", role: "MAIN", sets: [{ reps: 5 }, { reps: 5 }, { reps: 5 }] },
+      { exerciseName: "Chin-Up", role: "ASSIST", sets: [{ reps: 8 }, { reps: 8 }] },
+    ],
+  };
+
+  const v2 = plannedExercisesFromManualSession(session, { injectAmrapLastMainSet: true });
+  // 메인: 마지막 세트만 amrap, 앞 세트는 미부착
+  assert.equal(v2[0]!.sets[0]!.amrap, undefined);
+  assert.equal(v2[0]!.sets[1]!.amrap, undefined);
+  assert.equal(v2[0]!.sets[2]!.amrap, true);
+  // 보조(ASSIST): 미부착
+  assert.equal(v2[1]!.sets[1]!.amrap, undefined);
+
+  // 비-v2(플래그 없음): 아무 세트도 amrap 아님 — forward-only
+  const v1 = plannedExercisesFromManualSession(session);
+  assert.equal(v1[0]!.sets[2]!.amrap, undefined);
 });
