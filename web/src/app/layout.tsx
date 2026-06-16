@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { Inter } from "next/font/google";
 import "@/styles/index.css";
 import "@/styles/components/bottom-sheet.css";
+import "@/styles/components/pull-to-refresh.css";
 import { AppShell } from "@/components/app-shell";
 import { AppLaunchSplash } from "@/components/app-launch-splash";
 import { ThemePreferenceSync } from "@/components/theme-preference-sync";
