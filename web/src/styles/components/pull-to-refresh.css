@@ -1,0 +1,56 @@
+/* components/pull-to-refresh.css */
+/* 설치된 PWA(standalone) 당겨서 새로고침 인디케이터. 동적 값은 JS가 --ptr-* 로 주입. */
+
+.ptr {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: env(safe-area-inset-top, 0px);
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.ptr__badge {
+  display: grid;
+  place-items: center;
+  width: var(--v2-s-8);
+  height: var(--v2-s-8);
+  border-radius: var(--v2-r-pill);
+  background-color: var(--v2-paper-2);
+  color: var(--v2-accent);
+  box-shadow: var(--v2-elev-2);
+  /* --ptr-y: 당긴 거리(px). 기본은 safe-area 위로 숨김(-s-9), 당기면 아래로 내려옴. */
+  transform: translateY(calc(var(--ptr-y, 0px) - var(--v2-s-9)));
+  opacity: var(--ptr-opacity, 0);
+  transition:
+    transform var(--v2-d-2) var(--v2-e-out),
+    opacity var(--v2-d-1) var(--v2-e-out);
+}
+
+/* 드래그 중에는 손가락을 즉시 따라오도록 트랜지션 제거 */
+.ptr.is-dragging .ptr__badge {
+  transition: none;
+}
+
+.ptr__icon {
+  font-size: var(--v2-t-20);
+  transition: transform var(--v2-d-1) var(--v2-e-out);
+}
+
+/* 임계값 도달 — 화살표를 뒤집어 "놓으면 새로고침" 신호 */
+.ptr.is-ready .ptr__icon {
+  transform: rotate(180deg);
+}
+
+/* 새로고침 중 — 스피너 회전 */
+.ptr.is-refreshing .ptr__icon {
+  animation: ptr-spin 0.8s linear infinite;
+}
+
+@keyframes ptr-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
