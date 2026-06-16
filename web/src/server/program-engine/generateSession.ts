@@ -696,7 +696,10 @@ function mapManualSet(s: any): PlannedSet {
   return { reps, targetWeightKg, percent, rpe, note };
 }
 
-function plannedExercisesFromManualSession(manualSession: any): PlannedExercise[] {
+export function plannedExercisesFromManualSession(
+  manualSession: any,
+  options?: { injectAmrapLastMainSet?: boolean },
+): PlannedExercise[] {
   const items = Array.isArray(manualSession?.items) ? manualSession.items : [];
   const out: PlannedExercise[] = [];
 
@@ -707,11 +710,20 @@ function plannedExercisesFromManualSession(manualSession: any): PlannedExercise[
 
     const setRows = Array.isArray(item?.sets) && item.sets.length > 0 ? item.sets : [item];
     const sets = setRows.map(mapManualSet);
+    const role = item?.role === "ASSIST" ? "ASSIST" : "MAIN";
+
+    // Greyskull 정석(v2): 메인 리프트 마지막 세트를 기능적 AMRAP(5+)으로 표시. mapManualSet이
+    // seed의 amrap 플래그를 보존하지 않고(시드는 note만 "AMRAP 5+"), reducer가 meta.amrap의 실측
+    // reps로 더블 프로그레션/디로드를 판정하므로 여기서 명시 주입한다. forward-only(v2)일 때만.
+    if (options?.injectAmrapLastMainSet && role === "MAIN" && sets.length > 0) {
+      const lastSet = sets[sets.length - 1];
+      if (lastSet) (lastSet as PlannedSet).amrap = true;
+    }
 
     out.push({
       exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
       exerciseName,
-      role: item?.role === "ASSIST" ? "ASSIST" : "MAIN",
+      role,
       sets,
       sourceBlockTarget: "MANUAL",
       order: toNumberOrNull(item?.order) ?? i,
@@ -1613,9 +1625,14 @@ export async function generateAndSaveSession(input: {
             manualEntry?.family,
           );
         } else {
+          const injectGreyskullAmrap =
+            manualEntry?.family === "greyskull-lp" &&
+            (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
           snapshot.exercises = applyManualRuntimeWeightOverrides(
             manualEntry,
-            plannedExercisesFromManualSession(snapshot.manualSession),
+            plannedExercisesFromManualSession(snapshot.manualSession, {
+              injectAmrapLastMainSet: injectGreyskullAmrap,
+            }),
             runtimeState,
           );
         }
@@ -1783,7 +1800,12 @@ export function previewSessionExercises(
         manualEntry?.family,
       );
     } else {
-      exercises = plannedExercisesFromManualSession(manualSession);
+      const injectGreyskullAmrap =
+        manualEntry?.family === "greyskull-lp" &&
+        (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
+      exercises = plannedExercisesFromManualSession(manualSession, {
+        injectAmrapLastMainSet: injectGreyskullAmrap,
+      });
       exercises = applyManualRuntimeWeightOverrides(
         manualEntry,
         exercises,

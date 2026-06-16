@@ -141,7 +141,7 @@ test("rulesFor: no override preserves legacy behavior (regression guard)", () =>
   const opSquat = rulesFor("operator", "SQUAT");
   assert.equal(opSquat.increaseKg, 5);
   assert.equal(opSquat.decreaseKg, null);
-  assert.equal(opSquat.resetFactor, 0.95);
+  assert.equal(opSquat.resetFactor, 0.9); // TB 공식 reset = 현재 TM의 90%(10% 감량)
 
   const wendlerBench = rulesFor("wendler-531", "BENCH");
   assert.equal(wendlerBench.increaseKg, 2.5);
@@ -150,6 +150,10 @@ test("rulesFor: no override preserves legacy behavior (regression guard)", () =>
   const gzclpDl = rulesFor("gzclp", "DEADLIFT");
   assert.equal(gzclpDl.increaseKg, 5);
   assert.equal(gzclpDl.resetFactor, 0.85);
+
+  // GZCLP 하체는 SQUAT도 +5kg(=10lb), 상체는 +2.5kg(=5lb)
+  assert.equal(rulesFor("gzclp", "SQUAT").increaseKg, 5);
+  assert.equal(rulesFor("gzclp", "BENCH").increaseKg, 2.5);
 });
 
 test("readIncrementOverride: falls back from key to target", () => {
@@ -346,7 +350,7 @@ test("PR-D gzclp(v2): T1/T2 stage 클리어(성공) → 증량 + stage 0 복귀"
     logId: "log-d1-1",
     sets: [gzSet("D1_s0", "SQUAT", 3, 3, 100)],
   });
-  assert.equal(result.nextState.targets.D1_s0?.workKg, 102.5); // SQUAT +2.5
+  assert.equal(result.nextState.targets.D1_s0?.workKg, 105); // SQUAT 하체 +5kg(=10lb)
   assert.equal(result.nextState.targets.D1_s0?.stage, 0);
   assert.equal(result.eventType, "INCREASE");
 });
@@ -452,4 +456,87 @@ test("PR-E texas(flag 없음): I 1회 성공으론 증량 안 함(기존 3회-�
   });
   assert.equal(result.nextState.targets.I_s0?.workKg, 100); // 1회론 증량 X
   assert.equal(result.nextState.targets.I_s0?.successStreak, 1);
+});
+
+// Greyskull 정석(v2): 메인 마지막 세트 AMRAP(meta.amrap, uniform LP라 plannedRef 없음)의 실측 reps로
+// 자기조절 — ≥10 더블 프로그레션, ≥5 단일 증량, <5 실패(2연속 시 ×0.9 디로드). 비-v2는 기존 단순 LP.
+function gsSet(exerciseName: string, reps: number, weightKg: number, amrap = false) {
+  return {
+    exerciseName,
+    reps,
+    weightKg,
+    meta: amrap ? { amrap: true } : {},
+  };
+}
+
+test("greyskull(v2): AMRAP 5~9 → 단일 증량(SQUAT +2.5)", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-gs-1",
+    sets: [gsSet("Back Squat", 5, 100), gsSet("Back Squat", 5, 100), gsSet("Back Squat", 7, 100, true)],
+  });
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 102.5); // 단일 +2.5
+  assert.equal(result.eventType, "INCREASE");
+});
+
+test("greyskull(v2): AMRAP ≥10 → 더블 프로그레션(SQUAT +5)", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-gs-2",
+    sets: [gsSet("Back Squat", 5, 100), gsSet("Back Squat", 5, 100), gsSet("Back Squat", 10, 100, true)],
+  });
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 105); // 더블 +5
+  assert.equal(result.eventType, "INCREASE");
+});
+
+test("greyskull(v2): DEADLIFT 더블 프로그레션(+5 기본의 2배 = +10)", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { DEADLIFT: { progressionTarget: "DEADLIFT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-gs-3",
+    sets: [gsSet("Deadlift", 12, 100, true)],
+  });
+  assert.equal(result.nextState.targets.DEADLIFT?.workKg, 110); // 더블 +10
+});
+
+test("greyskull(v2): AMRAP <5 1회 → HOLD(디로드 아직, failureStreak 1)", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-gs-4",
+    sets: [gsSet("Back Squat", 5, 100), gsSet("Back Squat", 5, 100), gsSet("Back Squat", 3, 100, true)],
+  });
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 100); // 무게 유지
+  assert.equal(result.nextState.targets.SQUAT?.failureStreak, 1);
+  assert.equal(result.eventType, "HOLD");
+});
+
+test("greyskull(v2): AMRAP <5 2연속 → 디로드(×0.9)", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 1 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-gs-5",
+    sets: [gsSet("Back Squat", 5, 100), gsSet("Back Squat", 4, 100), gsSet("Back Squat", 2, 100, true)],
+  });
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 90); // 100 × 0.9
+  assert.equal(result.nextState.targets.SQUAT?.failureStreak, 0); // reset
+  assert.equal(result.eventType, "RESET");
+});
+
+test("greyskull(flag 없음): 기존 단순 LP — AMRAP 무시(더블 안 함, +2.5만), forward-only 가드", () => {
+  const result = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: {}, // 비-v2
+    logId: "log-gs-6",
+    sets: [gsSet("Back Squat", 5, 100), gsSet("Back Squat", 5, 100), gsSet("Back Squat", 10, 100, true)],
+  });
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 102.5); // 단순 LP 단일 +2.5 (더블 아님)
 });

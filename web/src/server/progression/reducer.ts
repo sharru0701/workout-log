@@ -170,12 +170,12 @@ export function rulesFor(
 
   if (program === "operator") {
     // Tactical Barbell Operator 공식 룰: 블록 완주 시 상체(BENCH/PULL) +5lb(≈2.5kg),
-    // 하체(SQUAT/DEADLIFT) +10lb(≈5kg).
+    // 하체(SQUAT/DEADLIFT) +10lb(≈5kg). 정체로 재구축 시 현재 TM의 90%로 리셋(공식 포럼).
     defaults = {
       increaseEverySuccesses: 3,
       failResetThreshold: 2,
       increaseKg: target === "DEADLIFT" || target === "SQUAT" ? 5 : 2.5,
-      resetFactor: 0.95,
+      resetFactor: 0.9,
     };
   } else if (program === "wendler-531") {
     // 짐 웬들러 5/3/1: 4주 사이클, 상체+2.5kg / 하체+5kg, 10% 감소 딜로드
@@ -186,11 +186,12 @@ export function rulesFor(
       resetFactor: 0.9,
     };
   } else if (program === "gzclp") {
-    // T1 기준: 3회 연속 실패 시 15% 감소
+    // Cody Lefever GZCLP 공식 룰: T1/T2 증량은 하체(SQUAT/DEADLIFT) +10lb(≈5kg),
+    // 상체(BENCH/OHP) +5lb(≈2.5kg)/세션. 마지막 stage 소진 후 실패에만 새 5RM의 85%로 리셋.
     defaults = {
       increaseEverySuccesses: 1,
       failResetThreshold: 3,
-      increaseKg: target === "DEADLIFT" ? 5 : 2.5,
+      increaseKg: target === "DEADLIFT" || target === "SQUAT" ? 5 : 2.5,
       resetFactor: 0.85,
     };
   } else if (program === "texas-method") {
@@ -471,9 +472,13 @@ export function collectTargetOutcomes(sets: LoggedSetInput[]): Map<string, Targe
       outcome.successful += 1;
     }
 
-    // gzclp T3: amrap 세트(처방이 plannedRef.amrap 주입)의 실측 reps를 보존 — 마지막값.
+    // amrap 세트의 실측 reps를 보존 — 마지막값. gzclp T3는 plannedRef.amrap(슬롯형)로,
+    // greyskull(v2) 같은 uniform LP는 plannedRef 없이 meta.amrap만 스탬프되므로 둘 다 인정한다.
     const amrapPlanned = readPlannedRef(set.meta);
-    if (amrapPlanned.amrap === true) {
+    const isAmrapSet =
+      amrapPlanned.amrap === true ||
+      (set.meta as Record<string, unknown> | undefined)?.amrap === true;
+    if (isAmrapSet) {
       const amrapReps = toFiniteNumber(set.reps);
       if (amrapReps !== null && amrapReps >= 0) outcome.amrapReps = Math.floor(amrapReps);
     }
@@ -718,6 +723,63 @@ export function reduceProgressionState(input: {
         target: outcome.displayTarget,
         progressionTarget,
         outcome: success ? "SUCCESS" : "FAIL",
+        eventType,
+        reason,
+        before,
+        after: next,
+      });
+      continue;
+    }
+
+    // Greyskull LP 정석(v2 옵트인). 메인 리프트 마지막 세트가 AMRAP(5+)이며, 그 실측 reps가
+    // 진행을 자기조절한다: ≥10이면 더블 프로그레션(증량 2배, Phrak's), ≥5이면 단일 증량,
+    // <5(실패)는 2회 연속 시 디로드(×resetFactor=0.9). 같은 무게의 work set과 AMRAP을 함께 쓰므로
+    // "AMRAP≥5 ⟺ 전 세트 성공"으로 단순화한다. AMRAP 세트가 없으면(레거시/누락) 기본 success로 폴백.
+    if (input.program === "greyskull-lp" && isProgressionModelV2(input.planParams)) {
+      const gsRule = rulesFor(
+        input.program,
+        progressionTarget,
+        readIncrementOverride(input.planParams, key, progressionTarget),
+      );
+      const amrapReps = toFiniteNumber(outcome.amrapReps);
+      const GREYSKULL_AMRAP_MIN = 5;
+      const GREYSKULL_DOUBLE_AT = 10;
+      const passed = amrapReps !== null ? amrapReps >= GREYSKULL_AMRAP_MIN : success;
+
+      if (passed) {
+        const isDouble = amrapReps !== null && amrapReps >= GREYSKULL_DOUBLE_AT;
+        const inc = isDouble ? gsRule.increaseKg * 2 : gsRule.increaseKg;
+        next.workKg = toPositiveRounded2p5(next.workKg + inc);
+        next.successStreak += 1;
+        next.failureStreak = 0;
+        eventType = "INCREASE";
+        reason = isDouble
+          ? `increase:amrap-${amrapReps}reps:double:+${inc}kg`
+          : `increase:+${inc}kg`;
+      } else {
+        next.failureStreak += 1;
+        next.successStreak = 0;
+        reason = "hold:failure-streak";
+        // Phrak's: 2회 연속 실패 시 디로드.
+        if (next.failureStreak >= 2) {
+          if (gsRule.decreaseKg !== null) {
+            next.workKg = toPositiveRounded2p5(next.workKg - gsRule.decreaseKg);
+            reason = `reset:-${gsRule.decreaseKg}kg`;
+          } else {
+            next.workKg = toPositiveRounded2p5(next.workKg * gsRule.resetFactor);
+            reason = `reset:*${gsRule.resetFactor}`;
+          }
+          next.failureStreak = 0;
+          eventType = "RESET";
+        }
+      }
+
+      state.targets[key] = next;
+      decisions.push({
+        key,
+        target: outcome.displayTarget,
+        progressionTarget,
+        outcome: passed ? "SUCCESS" : "FAIL",
         eventType,
         reason,
         before,

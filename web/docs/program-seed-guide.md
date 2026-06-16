@@ -54,6 +54,7 @@
 ## 2. 제외 항목
 
 - 코치/개인별 세부 증량 규칙 (실패 시 리셋 규칙의 세부 분기)
+  - ⚠️ 단, gzclp/texas/greyskull은 신규 플랜에 한해 정석 모델(`progressionModel:"v2"`)로 실패·리셋 분기를 구현함 — 아래 §5-5 참조. 기존 플랜은 플래그 부재로 단순 LP 유지(forward-only).
 - 보조운동 대규모 템플릿
 - 책/유료 자료에만 있는 상세 변형
 - `%TM` 기반 5/3/1 계열 (legacy `531`, `candito-linear` 제거됨)
@@ -172,9 +173,14 @@ pnpm db:verify:programs
 - `src/server/program-engine/generateSession.ts` — runtime state 오버레이
 
 **기본 정책**:
-- Operator: 블록 내 증량 없이 3일 완료 시 day/week/cycle 전진, 6주 블록 완료 후 증량
+- Operator: 블록 내 증량 없이 3일 완료 시 day/week/cycle 전진, 6주 블록 완료 후 증량(상체 +2.5kg/하체 +5kg). 정체 재구축 리셋폭 ×0.9(TB 공식 90%).
 - Greyskull: 성공 시 선형 증량, 실패 누적 시 reset
 - `PATCH /api/logs/[logId]` 시 해당 로그 이벤트 재계산 + 이후 이벤트 순차 replay
+
+**정석 모델(v2, 신규 플랜 기본 적용 · forward-only)** — `progressionModel:"v2"`:
+- gzclp: T1/T2 실패 시 무게 유지 + rep 스킴 강등(T1 5×3→6×2→10×1, T2 3×10→3×8→3×6), 마지막 stage 소진 후 실패에만 ×0.85 리셋. T3는 마지막 AMRAP ≥25 시 증량. 하체 증량 +5kg/상체 +2.5kg.
+- texas: I(강도일)만 reducer 도달 — 성공 시 주 1회 즉시 증량, 3연속 실패 시 ×0.9 리셋. V/R 무게는 I×0.9/0.8 파생.
+- greyskull: 메인 리프트 마지막 세트 AMRAP(5+) 자기조절 — 실측 reps ≥10이면 더블 프로그레션(증량 2배), ≥5 단일 증량, <5(실패) 2연속 시 ×0.9 디로드(Phrak's). uniform LP라 plannedRef 미주입 → 처방이 마지막 메인 세트에 `amrap:true`를 주입해 reducer가 `meta.amrap` 실측 reps로 판정.
 
 ### 5-6. 자동 진행 UX
 
