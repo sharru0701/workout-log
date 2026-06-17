@@ -42,43 +42,58 @@ export function V2ActionDock({
         boxShadow: "var(--v2-elev-2)",
         zIndex: 40,
         margin: "0 auto",
-        maxWidth: 360,
+        maxWidth: 320,
       }}
     >
       {items.map((it) => {
+        const isSelected = Boolean(it.active);
         const inner = (
           <span
-            className="material-symbols-outlined"
             style={{
-              fontSize: it.primary ? 30 : 28,
-              fontVariationSettings: it.active
-                ? "'FILL' 1, 'wght' 500"
-                : "'FILL' 0, 'wght' 400",
+              display: "inline-flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: "var(--v2-s-8)",
+              height: "var(--v2-s-8)",
+              borderRadius: "var(--v2-r-3)",
+              background: isSelected
+                ? "color-mix(in srgb, var(--v2-ink) 10%, transparent)"
+                : "transparent",
+              transition: "background var(--v2-d-1) var(--v2-e-out)",
             }}
-            aria-hidden
           >
-            {it.icon}
+            <span
+              className="material-symbols-outlined"
+              style={{
+                fontSize: it.primary ? 26 : 24,
+                fontVariationSettings: it.active
+                  ? "'FILL' 1, 'wght' 600"
+                  : "'FILL' 0, 'wght' 400",
+              }}
+              aria-hidden
+            >
+              {it.icon}
+            </span>
           </span>
         );
-        const isSelected = Boolean(it.active);
         const styleCommon: CSSProperties = {
           flex: "0 0 auto",
           minWidth: 0,
-          background: isSelected ? "var(--v2-accent)" : "transparent",
-          color: isSelected ? "var(--v2-ink-on-accent)" : "var(--v2-ink-2)",
+          background: "transparent",
+          color: isSelected ? "var(--v2-ink)" : "var(--v2-ink-3)",
           border: "none",
           cursor: "pointer",
           borderRadius: "var(--v2-r-pill)",
-          padding: "var(--v2-s-2) 2px",
+          padding: "0 2px",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: "calc(var(--v2-s-8) + var(--v2-s-3))",
+          minHeight: "calc(var(--v2-s-8) + var(--v2-s-1))",
           textDecoration: "none",
           overflow: "hidden",
           WebkitTapHighlightColor: "transparent",
           transition:
-            "background var(--v2-d-1) var(--v2-e-out), color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
+            "color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
         };
         if (it.href) {
           return (
