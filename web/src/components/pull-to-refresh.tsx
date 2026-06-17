@@ -2,10 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// 당김 임계값/최대치/감쇠 — 손가락 이동 ≈ 거리/DAMPING 만큼 당겨야 트리거된다.
+// 당김 임계값/최대치 — 손가락 이동에 감쇠를 적용해 임계값 이상 당겨야 트리거된다.
 const THRESHOLD = 70;
-const MAX_PULL = 112;
-const DAMPING = 0.5;
+const MAX_PULL = 120;
+// 감쇠 계수가 클수록 손가락보다 천천히 따라온다. Safari처럼 당길수록 저항이
+// 커지는 고무줄 느낌을 주기 위해 진행도에 따라 감쇠를 점진적으로 강화한다.
+const BASE_DAMPING = 0.6;
 
 /**
  * 설치된 PWA(standalone)에서 "당겨서 새로고침".
@@ -17,6 +19,9 @@ const DAMPING = 0.5;
  * - 동작: 임계값 이상 당기고 놓으면 `location.reload()` (네이티브 Safari 새로고침과 동일,
  *   SW network-first가 fresh 제공). 커스텀 캐시 레이어에 전역 재검증 훅이 없어 reload가 가장 확실.
  * - 성능: 드래그 중 값은 React state 대신 CSS 변수(`--ptr-y`)로 DOM에 직접 반영(bottom-sheet 패턴).
+ * - 페이지 감각: Safari 네이티브처럼 당기는 동안 페이지 콘텐츠(`.app-main`)도 함께 아래로
+ *   밀려 내려간다. transform은 제스처 중에만 인라인으로 적용하고 끝나면 제거한다
+ *   (상시 transform은 내부 position:fixed 자식의 컨테이닝 블록을 바꾸므로).
  */
 export function PullToRefresh() {
   const [active, setActive] = useState(false);
@@ -33,34 +38,83 @@ export function PullToRefresh() {
     let tracking = false;
     let pull = 0;
     let refreshing = false;
+    let resetTimer = 0;
 
     const atTop = () => (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
 
-    const setVars = (y: number) => {
-      const node = elRef.current;
-      if (!node) return;
-      node.style.setProperty("--ptr-y", `${y}px`);
-      node.style.setProperty("--ptr-opacity", `${Math.min(1, y / THRESHOLD)}`);
+    // 열려 있는(=비활성 inert가 아닌) 바텀시트/다이얼로그가 있으면 PTR을 멈춘다.
+    // 모든 모달은 BottomSheet(.mobile-bottom-sheet)를 통해 렌더되며, 비활성 상태에는
+    // inert가 붙으므로 `:not([inert])`로 활성 모달만 감지한다.
+    const modalOpen = () => Boolean(document.querySelector(".mobile-bottom-sheet:not([inert])"));
+
+    const getPage = () => document.querySelector<HTMLElement>(".app-main");
+
+    // 손가락 이동량(dy) → 점진적 감쇠가 적용된 당김 거리. 당길수록 저항 증가.
+    const damp = (dy: number) => {
+      const linear = dy * BASE_DAMPING;
+      // 임계값을 넘어선 영역은 추가 감쇠로 더 무겁게 → 고무줄 느낌.
+      const eased = MAX_PULL * (1 - Math.exp(-linear / MAX_PULL));
+      return Math.min(MAX_PULL, eased);
     };
 
-    const reset = () => {
+    const setVars = (y: number) => {
+      const node = elRef.current;
+      if (node) {
+        node.style.setProperty("--ptr-y", `${y}px`);
+        node.style.setProperty("--ptr-opacity", `${Math.min(1, y / THRESHOLD)}`);
+      }
+      // 페이지 콘텐츠를 함께 끌어내려 "페이지가 당겨지는" 감각을 준다.
+      const page = getPage();
+      if (page) page.style.transform = y > 0 ? `translate3d(0, ${y}px, 0)` : "";
+    };
+
+    // 손가락을 떼거나 취소될 때 페이지/배지를 부드럽게 제자리로 복귀.
+    const animatePageBack = () => {
+      const page = getPage();
+      if (!page) return;
+      page.style.transition = "transform var(--v2-d-3, 0.32s) var(--v2-e-out, cubic-bezier(0.22,0.61,0.36,1))";
+      page.style.transform = "";
+      window.clearTimeout(resetTimer);
+      resetTimer = window.setTimeout(() => {
+        page.style.transition = "";
+      }, 360);
+    };
+
+    const reset = (animate = false) => {
       tracking = false;
       pull = 0;
       elRef.current?.classList.remove("is-dragging", "is-ready");
-      setVars(0);
+      const node = elRef.current;
+      if (node) {
+        node.style.setProperty("--ptr-y", "0px");
+        node.style.setProperty("--ptr-opacity", "0");
+      }
+      if (animate) animatePageBack();
+      else {
+        const page = getPage();
+        if (page) page.style.transform = "";
+      }
     };
 
     const onStart = (e: TouchEvent) => {
-      if (refreshing || e.touches.length !== 1 || !atTop()) {
+      if (refreshing || e.touches.length !== 1 || !atTop() || modalOpen()) {
         tracking = false;
         return;
       }
+      window.clearTimeout(resetTimer);
+      const page = getPage();
+      if (page) page.style.transition = "";
       startY = e.touches[0]?.clientY ?? 0;
       tracking = true;
     };
 
     const onMove = (e: TouchEvent) => {
       if (!tracking || refreshing) return;
+      // 제스처 도중 모달이 열렸다면 즉시 중단.
+      if (modalOpen()) {
+        reset(pull > 0);
+        return;
+      }
       const touch = e.touches[0];
       if (!touch) return;
       const dy = touch.clientY - startY;
@@ -71,7 +125,7 @@ export function PullToRefresh() {
       }
       // 최상단에서 아래로 당기는 중 — 기본 스크롤/바운스 차단
       e.preventDefault();
-      pull = Math.min(MAX_PULL, dy * DAMPING);
+      pull = damp(dy);
       const node = elRef.current;
       if (node) {
         node.classList.add("is-dragging");
@@ -90,11 +144,18 @@ export function PullToRefresh() {
         node.classList.add("is-refreshing");
         const icon = node.querySelector(".ptr__icon");
         if (icon) icon.textContent = "progress_activity";
-        setVars(THRESHOLD);
+        node.style.setProperty("--ptr-y", `${THRESHOLD}px`);
+        node.style.setProperty("--ptr-opacity", "1");
+        // 페이지는 살짝 당겨진 상태에서 멈췄다가 새로고침되도록 임계값 위치로 정착.
+        const page = getPage();
+        if (page) {
+          page.style.transition = "transform var(--v2-d-2, 0.22s) var(--v2-e-out, cubic-bezier(0.22,0.61,0.36,1))";
+          page.style.transform = `translate3d(0, ${THRESHOLD}px, 0)`;
+        }
         // 스피너가 잠깐 보이도록 살짝 지연 후 새로고침
         window.setTimeout(() => window.location.reload(), 320);
       } else {
-        reset();
+        reset(true);
       }
     };
 
@@ -103,6 +164,12 @@ export function PullToRefresh() {
     document.addEventListener("touchend", onEnd, { passive: true });
     document.addEventListener("touchcancel", onEnd, { passive: true });
     return () => {
+      window.clearTimeout(resetTimer);
+      const page = getPage();
+      if (page) {
+        page.style.transform = "";
+        page.style.transition = "";
+      }
       document.removeEventListener("touchstart", onStart);
       document.removeEventListener("touchmove", onMove);
       document.removeEventListener("touchend", onEnd);
