@@ -75,44 +75,26 @@
   }
 }
 
-/* ─── View Transitions API ───────────────────────────────────────
- * iOS Safari 18+ / Android Chrome 111+ 지원
- * @supports 가드로 미지원 브라우저에서 안전하게 무시됨
- * PERF: 네이티브 앱 수준의 페이지 전환 애니메이션
+/* ─── 페이지 전환 애니메이션 (콘텐츠 전용) ──────────────────────────
+ * 라우트 전환 시 .app-shell__page가 key=pathname로 리마운트되며 가벼운
+ * 페이드 인을 재생한다. 과거 document 레벨 View Transitions API는 반투명
+ * backdrop-filter 바텀 네비가 전환 중 스냅샷으로 교체되며 블러가 풀렸다
+ * 다시 생기는 깜빡임(특히 iOS Safari)을 유발해 제거했다. 콘텐츠만 페이드하면
+ * 바텀 네비는 라이브 DOM으로 남아 블러가 끊기지 않는다.
+ * opacity만 사용 — transform/filter는 fixed 자식의 컨테이닝 블록을 바꾸므로 회피.
  */
-@supports (view-transition-name: none) {
-  /* 크로스페이드: old/new 지속시간을 동일하게 + mix-blend-mode: plus-lighter로
-   * 두 스냅샷의 opacity 합이 항상 1이 되게 한다. 이러면 전환 중 화면 전체가
-   * 잠깐 더 투명해지는 dip(바텀 네비가 깜빡이던 원인)이 사라진다.
-   * 바텀 네비는 일부러 view-transition-name을 주지 않는다 — name을 주면
-   * 격리 스냅샷이라 backdrop-filter가 필터링할 배경을 잃어 전환 중 블러가
-   * 빠졌다가 늦게 따라오는 깜빡임이 생긴다. root 스냅샷 안에 두면 프로스트가
-   * 픽셀로 캡처돼 그대로 유지된다. */
-  ::view-transition-old(root) {
-    animation: view-transition-out 200ms ease-out both;
-    mix-blend-mode: plus-lighter;
-  }
-
-  ::view-transition-new(root) {
-    animation: view-transition-in 200ms ease-out both;
-    mix-blend-mode: plus-lighter;
-  }
+.app-shell__page {
+  animation: page-enter 200ms ease-out both;
 }
 
-@keyframes view-transition-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+@keyframes page-enter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 
-@keyframes view-transition-in {
-  from { opacity: 0; transform: translateY(4px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-/* 모션 감소 설정 시 트랜지션 비활성화 (접근성) */
+/* 모션 감소 설정 시 전환 비활성화 (접근성) */
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) {
+  .app-shell__page {
     animation: none;
   }
 }
