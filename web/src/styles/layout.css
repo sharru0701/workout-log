@@ -81,27 +81,21 @@
  * PERF: 네이티브 앱 수준의 페이지 전환 애니메이션
  */
 @supports (view-transition-name: none) {
-  /* 기본 크로스페이드 - 빠르고 자연스러운 전환 */
+  /* 크로스페이드: old/new 지속시간을 동일하게 + mix-blend-mode: plus-lighter로
+   * 두 스냅샷의 opacity 합이 항상 1이 되게 한다. 이러면 전환 중 화면 전체가
+   * 잠깐 더 투명해지는 dip(바텀 네비가 깜빡이던 원인)이 사라진다.
+   * 바텀 네비는 일부러 view-transition-name을 주지 않는다 — name을 주면
+   * 격리 스냅샷이라 backdrop-filter가 필터링할 배경을 잃어 전환 중 블러가
+   * 빠졌다가 늦게 따라오는 깜빡임이 생긴다. root 스냅샷 안에 두면 프로스트가
+   * 픽셀로 캡처돼 그대로 유지된다. */
   ::view-transition-old(root) {
-    animation: view-transition-out 150ms ease-out both;
+    animation: view-transition-out 200ms ease-out both;
+    mix-blend-mode: plus-lighter;
   }
 
   ::view-transition-new(root) {
     animation: view-transition-in 200ms ease-out both;
-  }
-
-  /* 바텀 네비(v2-action-dock)는 root 크로스페이드에서 분리.
-   * 반투명 + backdrop-filter 배경이 old/new 스냅샷과 겹쳐
-   * 전환 중 투명도가 출렁이며 깜빡이던 문제 방지 → 페이드 없이 즉시 전환. */
-  ::view-transition-group(v2-action-dock) {
-    animation-duration: 0s;
-  }
-  ::view-transition-old(v2-action-dock) {
-    animation: none;
-    display: none;
-  }
-  ::view-transition-new(v2-action-dock) {
-    animation: none;
+    mix-blend-mode: plus-lighter;
   }
 }
 
