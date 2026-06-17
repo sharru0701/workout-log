@@ -89,6 +89,20 @@
   ::view-transition-new(root) {
     animation: view-transition-in 200ms ease-out both;
   }
+
+  /* 바텀 네비(v2-action-dock)는 root 크로스페이드에서 분리.
+   * 반투명 + backdrop-filter 배경이 old/new 스냅샷과 겹쳐
+   * 전환 중 투명도가 출렁이며 깜빡이던 문제 방지 → 페이드 없이 즉시 전환. */
+  ::view-transition-group(v2-action-dock) {
+    animation-duration: 0s;
+  }
+  ::view-transition-old(v2-action-dock) {
+    animation: none;
+    display: none;
+  }
+  ::view-transition-new(v2-action-dock) {
+    animation: none;
+  }
 }
 
 @keyframes view-transition-out {

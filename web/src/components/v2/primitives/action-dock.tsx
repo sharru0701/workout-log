@@ -43,6 +43,8 @@ export function V2ActionDock({
         zIndex: 40,
         margin: "0 auto",
         maxWidth: 320,
+        // 페이지 전환 시 root 크로스페이드에서 분리 → 반투명 배경 깜빡임 방지
+        viewTransitionName: "v2-action-dock",
       }}
     >
       {items.map((it) => {
