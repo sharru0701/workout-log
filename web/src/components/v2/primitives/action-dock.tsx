@@ -52,7 +52,7 @@ export function V2ActionDock({
             style={{
               fontSize: it.primary ? 30 : 28,
               fontVariationSettings: it.active
-                ? "'FILL' 1, 'wght' 500"
+                ? "'FILL' 1, 'wght' 600"
                 : "'FILL' 0, 'wght' 400",
             }}
             aria-hidden
@@ -64,8 +64,8 @@ export function V2ActionDock({
         const styleCommon: CSSProperties = {
           flex: "0 0 auto",
           minWidth: 0,
-          background: isSelected ? "var(--v2-accent)" : "transparent",
-          color: isSelected ? "var(--v2-ink-on-accent)" : "var(--v2-ink-2)",
+          background: "transparent",
+          color: isSelected ? "var(--v2-ink)" : "var(--v2-ink-3)",
           border: "none",
           cursor: "pointer",
           borderRadius: "var(--v2-r-pill)",
@@ -78,7 +78,7 @@ export function V2ActionDock({
           overflow: "hidden",
           WebkitTapHighlightColor: "transparent",
           transition:
-            "background var(--v2-d-1) var(--v2-e-out), color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
+            "color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
         };
         if (it.href) {
           return (
