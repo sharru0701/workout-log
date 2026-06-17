@@ -30,7 +30,7 @@ export function V2ActionDock({
         left: "max(12px, env(safe-area-inset-left))",
         right: "max(12px, env(safe-area-inset-right))",
         bottom: "calc(12px + env(safe-area-inset-bottom))",
-        background: "color-mix(in srgb, var(--v2-paper) 88%, transparent)",
+        background: "color-mix(in srgb, var(--v2-paper) 68%, transparent)",
         backdropFilter: "blur(20px) saturate(160%)",
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
         borderRadius: "var(--v2-r-pill)",
@@ -42,36 +42,23 @@ export function V2ActionDock({
         boxShadow: "var(--v2-elev-2)",
         zIndex: 40,
         margin: "0 auto",
-        maxWidth: 480,
+        maxWidth: 360,
       }}
     >
       {items.map((it) => {
         const inner = (
-          <>
-            <span
-              className="material-symbols-outlined"
-              style={{
-                fontSize: it.primary ? 22 : 20,
-                fontVariationSettings: it.active
-                  ? "'FILL' 1, 'wght' 500"
-                  : "'FILL' 0, 'wght' 400",
-              }}
-              aria-hidden
-            >
-              {it.icon}
-            </span>
-            <span
-              style={{
-                maxWidth: "100%",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                fontSize: "var(--v2-t-eyebrow)",
-                lineHeight: 1.1,
-              }}
-            >
-              {it.label}
-            </span>
-          </>
+          <span
+            className="material-symbols-outlined"
+            style={{
+              fontSize: it.primary ? 30 : 28,
+              fontVariationSettings: it.active
+                ? "'FILL' 1, 'wght' 500"
+                : "'FILL' 0, 'wght' 400",
+            }}
+            aria-hidden
+          >
+            {it.icon}
+          </span>
         );
         const isSelected = Boolean(it.active);
         const styleCommon: CSSProperties = {
@@ -82,17 +69,12 @@ export function V2ActionDock({
           border: "none",
           cursor: "pointer",
           borderRadius: "var(--v2-r-pill)",
-          padding: "var(--v2-s-1) 2px",
+          padding: "var(--v2-s-2) 2px",
           display: "flex",
-          flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          gap: 2,
-          minHeight: "var(--v2-s-8)",
+          minHeight: "calc(var(--v2-s-8) + var(--v2-s-3))",
           textDecoration: "none",
-          fontSize: "var(--v2-t-eyebrow)",
-          fontWeight: 700,
-          whiteSpace: "nowrap",
           overflow: "hidden",
           WebkitTapHighlightColor: "transparent",
           transition:
