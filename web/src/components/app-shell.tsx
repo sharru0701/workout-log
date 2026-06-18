@@ -6,6 +6,7 @@ import { V2BottomDockProvider } from "@/components/v2/v2-bottom-dock-context";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
 import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import { PullToRefresh } from "@/components/pull-to-refresh";
+import { V2AppUpdateBanner } from "@/components/v2/app-update-banner";
 import { V2EmailVerificationBanner } from "@/components/v2/auth/v2-email-verification-banner";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { usePathname, useRouter } from "next/navigation";
@@ -82,6 +83,7 @@ export function AppShell({
         <ApiCacheWarmer />
         <div className="app-shell v2-frame flex flex-col min-h-screen">
           {!hideNav && <PullToRefresh />}
+          {!hideNav && <V2AppUpdateBanner />}
           {!hideNav && <V2EmailVerificationBanner />}
           <main className="app-main flex-1 flex flex-col overflow-x-hidden">
             <div className="container app-shell__content">
