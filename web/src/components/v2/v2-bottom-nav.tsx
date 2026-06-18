@@ -5,6 +5,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
 import { APP_ROUTES } from "@/lib/app-routes";
 import { useV2BottomDockRegistration } from "./v2-bottom-dock-context";
+import { useNavScrollCompact } from "./use-nav-scroll-compact";
 import { V2ActionDock, type V2ActionDockItem } from "./primitives";
 
 function isActive(pathname: string, href: string): boolean {
@@ -22,6 +23,7 @@ export function V2BottomNav() {
   const searchParams = useSearchParams();
   const { locale } = useLocale();
   const bottomDockRegistration = useV2BottomDockRegistration();
+  const compact = useNavScrollCompact();
 
   const homeDeckParam = searchParams.get("deck") ?? "today";
   const items = useMemo<V2ActionDockItem[]>(() => {
@@ -73,5 +75,5 @@ export function V2BottomNav() {
     ];
   }, [bottomDockRegistration, homeDeckParam, locale, pathname]);
 
-  return <V2ActionDock items={items} />;
+  return <V2ActionDock items={items} compact={compact} />;
 }

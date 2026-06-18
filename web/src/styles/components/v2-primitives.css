@@ -225,3 +225,78 @@
   outline: 2px solid var(--v2-focus);
   outline-offset: 2px;
 }
+
+/*
+  ActionDock (바텀 네비) — 스크롤 방향에 따른 compact 축소/복원.
+  -----------------------------------------------------------------
+  콘텐츠가 위로 올라갈 때(아래로 스크롤) 네비가 작아지고, 아래로
+  내려올 때 원래대로 복원된다(인스타그램류 floating dock UX).
+
+  크기 전환은 transform/scale 대신 실제 크기(width·height·font-size·
+  min-height)를 전이한다 — 네비의 backdrop-filter 블러가 transform에서
+  깜빡이는 문제(#409~#412) 때문. 기본/축소 값과 transition을 모두 여기
+  CSS에 두어 inline style과 우선순위 충돌 없이 data-compact로 토글한다.
+*/
+.v2-action-dock {
+  padding: var(--v2-s-1);
+  max-width: 320px;
+  transition:
+    padding var(--v2-d-2) var(--v2-e-out),
+    max-width var(--v2-d-2) var(--v2-e-out);
+}
+
+.v2-action-dock__item {
+  /* 펼침 48px → 축소 36px(box 32 + 상하 여유). 도크 전체가 아이콘 박스와
+     같은 비율(~0.73)로 줄도록 높이·너비·패딩을 함께 전이한다.
+     color/transform은 기존 inline transition을 이리로 옮긴 것(활성 색 전환·
+     press 피드백 보존). min-height와 한 선언에 둬야 inline에 덮이지 않는다. */
+  min-height: calc(var(--v2-s-8) + var(--v2-s-1));
+  transition:
+    min-height var(--v2-d-2) var(--v2-e-out),
+    color var(--v2-d-1) var(--v2-e-out),
+    transform var(--v2-d-1) var(--v2-e-out);
+}
+
+.v2-action-dock__icon-box {
+  width: var(--v2-s-8);
+  height: var(--v2-s-8);
+  transition:
+    width var(--v2-d-2) var(--v2-e-out),
+    height var(--v2-d-2) var(--v2-e-out),
+    background var(--v2-d-1) var(--v2-e-out);
+}
+
+.v2-action-dock .material-symbols-outlined {
+  font-size: 24px;
+  transition: font-size var(--v2-d-2) var(--v2-e-out);
+}
+.v2-action-dock .material-symbols-outlined[data-primary] {
+  font-size: 26px;
+}
+
+.v2-action-dock[data-compact] {
+  padding: calc(var(--v2-s-1) / 2);
+  max-width: 240px;
+}
+.v2-action-dock[data-compact] .v2-action-dock__item {
+  min-height: calc(var(--v2-s-7) + var(--v2-s-1));
+}
+.v2-action-dock[data-compact] .v2-action-dock__icon-box {
+  width: var(--v2-s-7);
+  height: var(--v2-s-7);
+}
+.v2-action-dock[data-compact] .material-symbols-outlined {
+  font-size: 18px;
+}
+.v2-action-dock[data-compact] .material-symbols-outlined[data-primary] {
+  font-size: 20px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v2-action-dock,
+  .v2-action-dock__item,
+  .v2-action-dock__icon-box,
+  .v2-action-dock .material-symbols-outlined {
+    transition: none;
+  }
+}
