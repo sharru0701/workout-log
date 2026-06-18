@@ -241,15 +241,9 @@ export function StateBlock({
   );
 }
 
-export function StickyActionBar({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
-  return <div className={cx("app-sticky-action", className)}>{children}</div>;
-}
+// StickyActionBar는 바텀 네비 compact에 연동돼야 해(useNavScrollCompact 구독)
+// client 컴포넌트로 분리했다.
+export { StickyActionBar } from "./sticky-action-bar";
 
 export function FieldLabel({ children, className = "" }: FieldLabelProps) {
   return <div className={cx("app-field-label", className)}>{children}</div>;

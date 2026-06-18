@@ -351,6 +351,9 @@
 .app-sticky-action {
   position: sticky;
   bottom: calc(64px + env(safe-area-inset-bottom, 0px) + var(--v2-s-2));
+  /* 바텀 네비(v2-action-dock)가 compact로 축소될 때 저장 버튼도 함께 내려와
+     간격을 유지한다. 전환 토큰을 네비와 동일하게 맞춰 동시에 움직이게 한다. */
+  transition: bottom var(--v2-d-2) var(--v2-e-out);
   padding-top: var(--v2-s-4);
   background:
     linear-gradient(
@@ -359,6 +362,11 @@
       color-mix(in srgb, var(--v2-bg) 90%, transparent) 26px,
       var(--v2-bg) 100%
     );
+}
+
+/* compact 시 네비 높이 축소분(약 16px)만큼 저장 버튼을 내려 간격을 유지 */
+.app-sticky-action[data-compact] {
+  bottom: calc(48px + env(safe-area-inset-bottom, 0px) + var(--v2-s-2));
 }
 
 .app-field-label {
