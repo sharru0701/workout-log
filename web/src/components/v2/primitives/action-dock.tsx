@@ -17,13 +17,17 @@ export type V2ActionDockItem = {
 export function V2ActionDock({
   items,
   className,
+  compact = false,
 }: {
   items: V2ActionDockItem[];
   className?: string;
+  /** 스크롤 다운 시 축소 상태. 크기 전환은 CSS(data-compact)가 담당. */
+  compact?: boolean;
 }) {
   return (
     <nav
       className={`v2-action-dock ${className ?? ""}`}
+      data-compact={compact ? "" : undefined}
       aria-label="Main navigation"
       style={{
         position: "fixed",
@@ -34,7 +38,6 @@ export function V2ActionDock({
         backdropFilter: "blur(20px) saturate(160%)",
         WebkitBackdropFilter: "blur(20px) saturate(160%)",
         borderRadius: "var(--v2-r-pill)",
-        padding: "var(--v2-s-1)",
         display: "grid",
         gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))`,
         gap: 2,
@@ -42,30 +45,28 @@ export function V2ActionDock({
         boxShadow: "var(--v2-elev-2)",
         zIndex: 40,
         margin: "0 auto",
-        maxWidth: 320,
+        // max-width는 v2-action-dock(CSS)에 — compact 시 너비도 함께 축소
       }}
     >
       {items.map((it) => {
         const isSelected = Boolean(it.active);
         const inner = (
           <span
+            className="v2-action-dock__icon-box"
             style={{
               display: "inline-flex",
               alignItems: "center",
               justifyContent: "center",
-              width: "var(--v2-s-8)",
-              height: "var(--v2-s-8)",
               borderRadius: "var(--v2-r-3)",
               background: isSelected
                 ? "color-mix(in srgb, var(--v2-ink) 10%, transparent)"
                 : "transparent",
-              transition: "background var(--v2-d-1) var(--v2-e-out)",
             }}
           >
             <span
               className="material-symbols-outlined"
+              data-primary={it.primary ? "" : undefined}
               style={{
-                fontSize: it.primary ? 26 : 24,
                 fontVariationSettings: it.active
                   ? "'FILL' 1, 'wght' 600"
                   : "'FILL' 0, 'wght' 400",
@@ -88,12 +89,11 @@ export function V2ActionDock({
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          minHeight: "calc(var(--v2-s-8) + var(--v2-s-1))",
           textDecoration: "none",
           overflow: "hidden",
           WebkitTapHighlightColor: "transparent",
-          transition:
-            "color var(--v2-d-1) var(--v2-e-out), transform var(--v2-d-1) var(--v2-e-out)",
+          // transition은 v2-action-dock__item(CSS)에 통합 — inline으로 두면
+          // compact 시 min-height 전환을 덮어써 높이만 끊겨 점프한다.
         };
         if (it.href) {
           return (
@@ -102,7 +102,7 @@ export function V2ActionDock({
               href={it.href}
               aria-label={it.label}
               aria-current={it.active ? "page" : undefined}
-              className="v2-font-display"
+              className="v2-font-display v2-action-dock__item"
               style={styleCommon}
             >
               {inner}
@@ -122,7 +122,7 @@ export function V2ActionDock({
                 : undefined
             }
             aria-controls={it.controls}
-            className="v2-font-display"
+            className="v2-font-display v2-action-dock__item"
             style={styleCommon}
           >
             {inner}
