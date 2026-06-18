@@ -8,7 +8,6 @@ import { ApiCacheWarmer } from "@/components/api-cache-warmer";
 import { PullToRefresh } from "@/components/pull-to-refresh";
 import { V2EmailVerificationBanner } from "@/components/v2/auth/v2-email-verification-banner";
 import type { AppLocale } from "@/lib/i18n/messages";
-import { shouldUseViewTransition } from "@/lib/navigation/view-transition";
 import { usePathname, useRouter } from "next/navigation";
 
 const NAV_HIDDEN_PATH_PREFIXES = [
@@ -25,7 +24,8 @@ const PREFETCH_ROUTES = ["/", "/workout/log", "/stats", "/calendar", "/plans"];
 
 /**
  * AppShell Component
- * PERF: View Transitions API로 네이티브 앱 같은 페이지 전환 제공.
+ * 페이지 전환: 콘텐츠 전용 페이드 애니메이션(.app-shell__page) — 바텀 네비의
+ * backdrop-filter 블러를 끊지 않기 위해 document 레벨 View Transition은 쓰지 않음.
  * PERF: 주요 경로 prefetch로 즉각적인 네비게이션 응답성 확보.
  */
 export function AppShell({
@@ -50,11 +50,12 @@ export function AppShell({
     return () => clearTimeout(timer);
   }, [router]);
 
-  // PERF: View Transitions API - iOS Safari 18+ / Android Chrome 111+ 지원
-  // 미지원 브라우저는 자동 fallback (일반 router.push)
+  // 내부 링크(<a>)를 클라이언트 사이드 네비게이션으로 처리.
+  // 과거에는 document.startViewTransition으로 감쌌으나, 반투명 backdrop-filter
+  // 바텀 네비가 전환 중 스냅샷으로 교체되며 블러가 풀렸다 다시 생기는 깜빡임이
+  // 있어(특히 iOS Safari) 제거했다. 전환 느낌은 네비를 건드리지 않는 콘텐츠
+  // 전용 페이드(.app-shell__page, key=pathname)로 대체한다.
   useEffect(() => {
-    if (!("startViewTransition" in document)) return;
-
     const handleLinkClick = (e: MouseEvent) => {
       const target = (e.target as HTMLElement).closest("a");
       if (
@@ -68,16 +69,7 @@ export function AppShell({
       e.preventDefault();
       const href = target.getAttribute("href");
       if (!href) return;
-      const nextUrl = new URL(href, window.location.href);
-
-      if (!shouldUseViewTransition(window.location.pathname, nextUrl.pathname)) {
-        router.push(href);
-        return;
-      }
-
-      (document as any).startViewTransition(() => {
-        router.push(href);
-      });
+      router.push(href);
     };
 
     window.addEventListener("click", handleLinkClick);
@@ -93,7 +85,7 @@ export function AppShell({
           {!hideNav && <V2EmailVerificationBanner />}
           <main className="app-main flex-1 flex flex-col overflow-x-hidden">
             <div className="container app-shell__content">
-              <div className="app-shell__page">
+              <div className="app-shell__page" key={pathname}>
                 {children}
               </div>
             </div>
