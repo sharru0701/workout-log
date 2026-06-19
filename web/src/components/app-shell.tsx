@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { V2BottomNav } from "@/components/v2/v2-bottom-nav";
 import { V2BottomDockProvider } from "@/components/v2/v2-bottom-dock-context";
 import { AppDialogProvider } from "@/components/ui/app-dialog-provider";
@@ -10,6 +10,9 @@ import { V2AppUpdateBanner } from "@/components/v2/app-update-banner";
 import { V2EmailVerificationBanner } from "@/components/v2/auth/v2-email-verification-banner";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { usePathname, useRouter } from "next/navigation";
+import { useThemeSkin } from "@/components/use-theme-skin";
+import { TermShell, type TermTab } from "@/components/v2/terminal";
+import { APP_ROUTES } from "@/lib/app-routes";
 
 const NAV_HIDDEN_PATH_PREFIXES = [
   "/login",
@@ -22,6 +25,26 @@ const NAV_HIDDEN_PATH_PREFIXES = [
 // PERF: 앱 시작 시 즉시 prefetch할 주요 네비게이션 경로
 // 사용자가 탭을 클릭하기 전에 미리 JS 청크를 다운로드 → 네비게이션 체감 속도 향상
 const PREFETCH_ROUTES = ["/", "/workout/log", "/stats", "/calendar", "/plans"];
+
+// terminal 테마 셸의 탭 스트립 = 네비게이션(paper의 V2BottomNav 대체). href로 SPA 이동.
+const TERM_TABS: TermTab[] = [
+  { key: "home", label: "home", href: "/" },
+  { key: "log", label: "log", href: "/workout/log" },
+  { key: "stats", label: "stats", href: "/stats" },
+  { key: "cal", label: "cal", href: APP_ROUTES.calendarHome },
+  { key: "store", label: "store", href: APP_ROUTES.programStore },
+  { key: "more", label: "more", href: "/settings" },
+];
+
+function activeTermTab(pathname: string): string {
+  if (pathname.startsWith("/workout/log")) return "log";
+  if (pathname.startsWith("/stats")) return "stats";
+  if (pathname.startsWith(APP_ROUTES.calendarHome)) return "cal";
+  if (pathname.startsWith(APP_ROUTES.programStore)) return "store";
+  if (pathname.startsWith("/settings")) return "more";
+  if (pathname === "/") return "home";
+  return "log";
+}
 
 /**
  * AppShell Component
@@ -40,6 +63,22 @@ export function AppShell({
   const router = useRouter();
   const pathname = usePathname() ?? "";
   const hideNav = NAV_HIDDEN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
+  const skin = useThemeSkin();
+  const [clock, setClock] = useState("");
+
+  // 터미널 셸 타이틀바 시계 — 클라 전용(SSR 불일치 방지), terminal일 때만 tick.
+  useEffect(() => {
+    if (skin !== "terminal") return;
+    const tick = () => {
+      const d = new Date();
+      setClock(
+        `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`,
+      );
+    };
+    tick();
+    const id = window.setInterval(tick, 30000);
+    return () => window.clearInterval(id);
+  }, [skin]);
 
   // PERF: 앱 마운트 시 주요 경로 prefetch (300ms 지연 후 → 초기 렌더 차단 방지)
   useEffect(() => {
@@ -76,6 +115,27 @@ export function AppShell({
     window.addEventListener("click", handleLinkClick);
     return () => window.removeEventListener("click", handleLinkClick);
   }, [router]);
+
+  // ── terminal 스킨: AppShell chrome를 TermShell로 교체(풀하이트 프레임) ──
+  // V2BottomNav·배너·app-shell wrapper 생략, children은 TermShell ViewPane에.
+  // providers(Dialog/Dock)·ApiCacheWarmer는 기능이라 유지. paper 트리는 아래 그대로(무수정).
+  if (skin === "terminal" && !hideNav) {
+    return (
+      <AppDialogProvider>
+        <V2BottomDockProvider>
+          <ApiCacheWarmer />
+          <TermShell
+            path={`~${pathname === "/" ? "/home" : pathname}`}
+            clock={clock}
+            tabs={TERM_TABS}
+            activeTab={activeTermTab(pathname)}
+          >
+            {children}
+          </TermShell>
+        </V2BottomDockProvider>
+      </AppDialogProvider>
+    );
+  }
 
   return (
     <AppDialogProvider>

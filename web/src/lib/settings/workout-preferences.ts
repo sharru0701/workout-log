@@ -2,6 +2,7 @@ import {
   computeBodyweightTotalLoadKg,
   isBodyweightExerciseName,
 } from "@/lib/bodyweight-load";
+import { setThemeSkin } from "./theme-skin-store";
 
 export type SettingValue = string | number | boolean | null;
 export type SettingsSnapshot = Record<string, SettingValue>;
@@ -344,6 +345,7 @@ export function applyThemeSkinToDocument(skin: ThemeSkin) {
   } else {
     document.documentElement.removeAttribute("data-theme");
   }
+  setThemeSkin(skin);
 }
 
 export function readThemeSkinFromLocalCache(): ThemeSkin {

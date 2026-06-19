@@ -7,7 +7,7 @@ import type { CSSProperties, ReactNode } from "react";
 // 디자인 규칙: CSS border 금지(box-drawing 문자/배경톤/boxShadow inset로 계층),
 // 치수는 var(--v2-*) 토큰만 → design-lint 위반 0.
 
-export type TermTab = { key: string; label: string };
+export type TermTab = { key: string; label: string; href?: string };
 export type TermKeyHint = { key: string; label: string };
 
 const TRAFFIC: ReadonlyArray<string> = ["#ff5f56", "#ffbd2e", "#27c93f"];
@@ -81,18 +81,26 @@ export function TermShell({
         >
           {tabs.map((t, i) => {
             const active = t.key === activeTab;
-            return (
-              <span
-                key={t.key}
-                style={{
-                  padding: "var(--v2-s-1) var(--v2-s-2)",
-                  whiteSpace: "nowrap",
-                  color: active ? "var(--term-amber)" : "var(--term-dim)",
-                  background: active ? "var(--term-bg)" : "transparent",
-                }}
-              >
+            const tabStyle: CSSProperties = {
+              padding: "var(--v2-s-1) var(--v2-s-2)",
+              whiteSpace: "nowrap",
+              textDecoration: "none",
+              color: active ? "var(--term-amber)" : "var(--term-dim)",
+              background: active ? "var(--term-bg)" : "transparent",
+            };
+            const inner = (
+              <>
                 {i + 1}:{t.label}
                 {active ? "*" : ""}
+              </>
+            );
+            return t.href ? (
+              <a key={t.key} href={t.href} style={tabStyle}>
+                {inner}
+              </a>
+            ) : (
+              <span key={t.key} style={tabStyle}>
+                {inner}
               </span>
             );
           })}
