@@ -3,6 +3,8 @@
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { useLocale } from "@/components/locale-provider";
+import { useThemeSkin } from "@/components/use-theme-skin";
+import { SettingsTuiView } from "@/components/v2/settings-tui-view";
 import { NumberKeypadField } from "@/components/ui/number-keypad-field";
 import { V2Card, V2IconBtn, V2NavRow, V2PrimaryBtn, V2SecondaryBtn, V2Stack } from "@/components/v2/primitives";
 import { apiGet } from "@/lib/api";
@@ -43,7 +45,14 @@ type SettingsResponse = {
   settings: SettingsSnapshot;
 };
 
+// skin 분기 래퍼 — terminal이면 SettingsTuiView(테마 토글 포함), paper는 기존(무수정).
 export function V2MorePage() {
+  const skin = useThemeSkin();
+  if (skin === "terminal") return <SettingsTuiView />;
+  return <V2MorePagePaper />;
+}
+
+function V2MorePagePaper() {
   const { locale } = useLocale();
   const headingId = useId();
   const [me, setMe] = useState<MeResponse["user"] | null>(null);
