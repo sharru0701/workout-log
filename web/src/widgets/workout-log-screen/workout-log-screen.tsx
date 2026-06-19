@@ -366,14 +366,25 @@ function WorkoutLogScreenContent({
 
       {!noPlan && ((isDraftLoaded && draft) || blockedMessage) ? (
         skin === "terminal" ? (
-          // ── terminal 본문(Step 1c/1d): TUI 테이블만. 헤더·DateNav·저장(⏎)·
-          //    3-way 게이트는 후속 단계. 시트/toast는 게이트 밖에서 양쪽 공유. ──
+          // ── terminal 본문: TUI 테이블 + 저장(⏎, 셸 푸터) + BW notice.
+          //    DateNav·헤더는 후속. 시트/toast는 게이트 밖에서 양쪽 공유. ──
           draft ? (
-            <WorkoutLogTuiView
-              onExerciseAction={handleExerciseAction}
-              onOpenAddExerciseSheet={openAddExerciseSheet}
-              onSave={requestSave}
-            />
+            <>
+              {showBodyweightCheck ? (
+                <BodyweightCheckBanner
+                  currentKg={bodyweightKg}
+                  locale={locale}
+                  submitting={bodyweightSubmitting}
+                  onUpdate={handleBodyweightUpdate}
+                  onKeep={handleBodyweightKeep}
+                />
+              ) : null}
+              <WorkoutLogTuiView
+                onExerciseAction={handleExerciseAction}
+                onOpenAddExerciseSheet={openAddExerciseSheet}
+                onSave={requestSave}
+              />
+            </>
           ) : (
             <NoticeStateRows
               message={blockedMessage}
