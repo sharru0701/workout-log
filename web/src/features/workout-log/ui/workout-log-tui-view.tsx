@@ -118,7 +118,8 @@ function TuiViewContent({ onExerciseAction, onOpenAddExerciseSheet }: Props) {
           time,
           segments: [
             { text: v.name, tone: "fg" },
-            { text: `${v.wt > 0 ? v.wt : "—"}×${v.reps}`, tone: "info" },
+            // 맨몸(무게 0)은 무게 토큰 생략 → `×5`, 가중은 `100×5`.
+            { text: v.wt > 0 ? `${v.wt}×${v.reps}` : `×${v.reps}`, tone: "info" },
             { text: "✓", tone: "success" },
           ],
         });
