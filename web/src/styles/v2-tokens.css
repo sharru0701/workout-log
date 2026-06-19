@@ -221,7 +221,7 @@
   --term-line: rgba(110, 231, 135, 0.22);
   --term-line-box: rgba(110, 231, 135, 0.3);
   --term-scrim: rgba(11, 14, 11, 0.72);
-  --term-mono: "Sarasa Mono K", "D2Coding", "JetBrains Mono", "Symbols Nerd Font Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+  --term-mono: "Sarasa Mono K", "JetBrains Mono", "Nanum Gothic Coding", "D2Coding", "Symbols Nerd Font Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
 
   /* remap --v2-* → terminal (컴포넌트는 --v2-*만 읽으므로 cascade로 전부 리스킨) */
   --v2-bg: var(--term-bg);
