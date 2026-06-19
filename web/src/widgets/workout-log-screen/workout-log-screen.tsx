@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/settings-state";
 import { Toast } from "@/components/ui/toast";
 import { useLocale } from "@/components/locale-provider";
+import { useThemeSkin } from "@/components/use-theme-skin";
 import {
   useWorkoutLogAddExerciseController,
 } from "@/features/workout-log/model/use-workout-log-add-exercise-controller";
@@ -33,6 +34,7 @@ import {
   WorkoutLogStackedList,
   type WorkoutLogStackedListHandle,
 } from "@/features/workout-log/ui/workout-log-stacked-list";
+import { WorkoutLogTuiView } from "@/features/workout-log/ui/workout-log-tui-view";
 import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
 import { AppPage, StickyActionBar } from "@/components/ui/page-layout";
 import { V2SectionHeader } from "@/components/v2/primitives";
@@ -68,6 +70,7 @@ function WorkoutLogScreenContent({
   const router = useRouter();
   const pathname = usePathname();
   const { copy, locale } = useLocale();
+  const skin = useThemeSkin();
   const { alert } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
@@ -362,6 +365,26 @@ function WorkoutLogScreenContent({
       <EmptyStateRows className="v2-font-display" when={noPlan} label={copy.workoutLog.noPlans} />
 
       {!noPlan && ((isDraftLoaded && draft) || blockedMessage) ? (
+        skin === "terminal" ? (
+          // ── terminal 본문(Step 1c/1d): TUI 테이블만. 헤더·DateNav·저장(⏎)·
+          //    3-way 게이트는 후속 단계. 시트/toast는 게이트 밖에서 양쪽 공유. ──
+          draft ? (
+            <WorkoutLogTuiView
+              onExerciseAction={handleExerciseAction}
+              onOpenAddExerciseSheet={openAddExerciseSheet}
+            />
+          ) : (
+            <NoticeStateRows
+              message={blockedMessage}
+              tone="warning"
+              preferInline
+              label={locale === "ko" ? "기록 안내" : "Log notice"}
+              ariaLabel={
+                locale === "ko" ? "기록 안내 상태" : "Log notice state"
+              }
+            />
+          )
+        ) : (
         <AppPage>
           <V2SectionHeader
             level="h1"
@@ -577,6 +600,7 @@ function WorkoutLogScreenContent({
           </>
           )}
         </AppPage>
+        )
       ) : null}
 
       <WorkoutLogSummarySheet
