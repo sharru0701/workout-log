@@ -9,7 +9,7 @@ import { PullToRefresh } from "@/components/pull-to-refresh";
 import { V2AppUpdateBanner } from "@/components/v2/app-update-banner";
 import { V2EmailVerificationBanner } from "@/components/v2/auth/v2-email-verification-banner";
 import type { AppLocale } from "@/lib/i18n/messages";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useThemeSkin } from "@/components/use-theme-skin";
 import { TermShell, type TermTab } from "@/components/v2/terminal";
 import { APP_ROUTES } from "@/lib/app-routes";
@@ -36,14 +36,23 @@ const TERM_TABS: TermTab[] = [
   { key: "more", label: "more", href: "/settings" },
 ];
 
-function activeTermTab(pathname: string): string {
+function isStatsDeck(deck: string | null): boolean {
+  return deck === "stats" || deck === "progress";
+}
+
+function activeTermTab(pathname: string, deck: string | null): string {
+  if (pathname === "/") return isStatsDeck(deck) ? "stats" : "home";
   if (pathname.startsWith("/workout/log")) return "log";
   if (pathname.startsWith("/stats")) return "stats";
   if (pathname.startsWith(APP_ROUTES.calendarHome)) return "cal";
   if (pathname.startsWith(APP_ROUTES.programStore)) return "store";
   if (pathname.startsWith("/settings")) return "more";
-  if (pathname === "/") return "home";
   return "log";
+}
+
+function termPath(pathname: string, deck: string | null): string {
+  if (pathname === "/") return isStatsDeck(deck) ? "~/stats" : "~/home";
+  return `~${pathname}`;
 }
 
 /**
@@ -64,6 +73,7 @@ export function AppShell({
   const pathname = usePathname() ?? "";
   const hideNav = NAV_HIDDEN_PATH_PREFIXES.some((p) => pathname.startsWith(p));
   const skin = useThemeSkin();
+  const deck = useSearchParams().get("deck");
   const [clock, setClock] = useState("");
 
   // 터미널 셸 타이틀바 시계 — 클라 전용(SSR 불일치 방지), terminal일 때만 tick.
@@ -125,10 +135,10 @@ export function AppShell({
         <V2BottomDockProvider>
           <ApiCacheWarmer />
           <TermShell
-            path={`~${pathname === "/" ? "/home" : pathname}`}
+            path={termPath(pathname, deck)}
             clock={clock}
             tabs={TERM_TABS}
-            activeTab={activeTermTab(pathname)}
+            activeTab={activeTermTab(pathname, deck)}
           >
             {children}
           </TermShell>
