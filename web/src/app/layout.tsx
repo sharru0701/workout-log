@@ -94,12 +94,15 @@ async function LocaleShell({ children }: { children: React.ReactNode }) {
   return (
     <LocaleProvider initialLocale={initialLocale}>
       <AppLaunchSplash />
-      <AppShell initialLocale={initialLocale}>
-        <ThemePreferenceSync />
-        <LocalePreferenceSync />
-        <TimezonePreferenceSync />
-        {children}
-      </AppShell>
+      {/* 테마/로케일/타임존 sync는 AppShell 밖(sibling)에 둔다.
+          AppShell이 skin 토글로 paper↔terminal 트리를 전환하면 children이 remount되는데,
+          ThemePreferenceSync가 children 안에 있으면 재실행되며 서버 스냅샷(persist 전 구값)을
+          다시 적용해 방금 고른 skin을 되돌리는 race가 발생함(테마가 가끔 paper로 복귀).
+          sibling으로 빼면 토글 시 remount되지 않음. */}
+      <ThemePreferenceSync />
+      <LocalePreferenceSync />
+      <TimezonePreferenceSync />
+      <AppShell initialLocale={initialLocale}>{children}</AppShell>
     </LocaleProvider>
   );
 }
