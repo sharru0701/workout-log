@@ -6,3 +6,5 @@ export { TermProgress } from "./term-progress";
 export type { TermProgressTone } from "./term-progress";
 export { TermBadge } from "./term-badge";
 export type { TermBadgeTone } from "./term-badge";
+export { TermLog } from "./term-log";
+export type { TermLogTone, TermLogSegment, TermLogEntry } from "./term-log";

@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useAtomValue } from "jotai";
 import { useLocale } from "@/components/locale-provider";
-import { TermProgress } from "@/components/v2/terminal";
+import { TermLog, TermProgress, type TermLogEntry } from "@/components/v2/terminal";
 import { SetRowFocusChainProvider } from "@/features/workout-log/model/use-set-row-focus-chain";
 import { useRestTimer } from "@/features/workout-log/model/use-rest-timer";
 import {
   completedSetsCountAtom,
+  programEntryStateAtom,
   totalSetsCountAtom,
   visibleExercisesAtom,
 } from "@/features/workout-log/store/workout-log-atoms";
@@ -68,6 +69,70 @@ function TuiViewContent({ onExerciseAction, onOpenAddExerciseSheet }: Props) {
   }, [completedSets, startRest]);
 
   const setsComplete = totalSets > 0 && completedSets >= totalSets;
+
+  // ── combat log(ephemeral): 세트 완료(reps>0 신규) 감지 → ‹time› 운동명 wt×reps ✓ ──
+  const programEntryState = useAtomValue(programEntryStateAtom);
+  const [logEntries, setLogEntries] = useState<TermLogEntry[]>([]);
+  const seenSetsRef = useRef<Set<string> | null>(null);
+  const logSeqRef = useRef(0);
+  useEffect(() => {
+    // 입력 정착 후 캡처(디바운스) — reps를 한 글자씩 칠 때 중간값(×1)이 박히지 않도록.
+    const captureId = window.setTimeout(() => {
+      const current = new Map<
+        string,
+        { name: string; wt: number; reps: number }
+      >();
+      for (const ex of exercises) {
+        const repsArr = ex.set.repsPerSet;
+        for (let i = 0; i < repsArr.length; i++) {
+          const reps =
+            ex.source === "PROGRAM"
+              ? Number(
+                  (programEntryState[ex.id]?.repsInputs?.[i] ?? "").trim() || 0,
+                )
+              : (repsArr[i] ?? 0);
+          if (Number.isFinite(reps) && reps > 0) {
+            current.set(`${ex.id}:${i}`, {
+              name: ex.exerciseName,
+              wt: ex.set.weightKgPerSet?.[i] ?? 0,
+              reps,
+            });
+          }
+        }
+      }
+      // mount 시 기존 완료분은 seed만(스팸 방지), 로그 생성 안 함.
+      if (seenSetsRef.current === null) {
+        seenSetsRef.current = new Set(current.keys());
+        return;
+      }
+      const seen = seenSetsRef.current;
+      const additions: TermLogEntry[] = [];
+      for (const [key, v] of current) {
+        if (seen.has(key)) continue;
+        seen.add(key);
+        const d = new Date();
+        const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+        logSeqRef.current += 1;
+        additions.push({
+          id: `${key}#${logSeqRef.current}`,
+          time,
+          segments: [
+            { text: v.name, tone: "fg" },
+            { text: `${v.wt > 0 ? v.wt : "—"}×${v.reps}`, tone: "info" },
+            { text: "✓", tone: "success" },
+          ],
+        });
+      }
+      // 완료 해제(reps→0)된 키는 seen에서 제거 → 재완료 시 다시 로그.
+      for (const key of Array.from(seen)) {
+        if (!current.has(key)) seen.delete(key);
+      }
+      if (additions.length > 0) {
+        setLogEntries((prev) => [...prev, ...additions].slice(-6));
+      }
+    }, 1200);
+    return () => window.clearTimeout(captureId);
+  }, [exercises, programEntryState]);
 
   return (
     <section
@@ -147,6 +212,9 @@ function TuiViewContent({ onExerciseAction, onOpenAddExerciseSheet }: Props) {
           </div>
         </div>
       ) : null}
+
+      {/* combat log — 세션 한정 ephemeral, 최근 3줄 */}
+      <TermLog entries={logEntries} max={3} />
     </section>
   );
 }
