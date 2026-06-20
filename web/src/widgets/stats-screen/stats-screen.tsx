@@ -297,6 +297,8 @@ export function StatsScreen({
         initialVolumeWeekly={initialVolumeWeekly}
         initialSelectedExerciseId={initialSelectedExerciseId}
         initialSelectedPlanId={initialSelectedPlanId}
+        goal={goal}
+        goalMetrics={goalMetrics}
       />
     );
   }
