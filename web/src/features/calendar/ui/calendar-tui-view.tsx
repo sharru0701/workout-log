@@ -17,7 +17,28 @@ import {
   monthStart,
 } from "@/lib/date-utils";
 import { useBodyweightKg } from "@/lib/settings/use-bodyweight";
+import { formatPerformedHistoryLine } from "@/lib/workout-notation";
+import { buildTodayLogHref } from "@/lib/workout-links";
+import type { CalendarWorkoutLogForDate } from "@/features/calendar/model/types";
 import type { CalendarPageBootstrap } from "@/server/services/calendar/get-calendar-page-bootstrap";
+
+// 선택일 로그를 운동별 한 줄 요약으로(히스토리 Weight × Reps 표기 재사용).
+function summarizeDayLog(
+  log: CalendarWorkoutLogForDate | null,
+): { name: string; line: string }[] {
+  if (!log) return [];
+  const byEx = new Map<string, { weightKg: number; reps: number }[]>();
+  for (const s of log.sets) {
+    if ((s.reps ?? 0) <= 0) continue;
+    const arr = byEx.get(s.exerciseName) ?? [];
+    arr.push({ weightKg: s.weightKg ?? 0, reps: s.reps ?? 0 });
+    byEx.set(s.exerciseName, arr);
+  }
+  return Array.from(byEx, ([name, sets]) => ({
+    name,
+    line: formatPerformedHistoryLine(sets),
+  }));
+}
 
 // terminal(ironlog) calendar 뷰 — paper CalendarScreen의 terminal 대응(P3).
 // navigation/data/derived 컨트롤러(presentation-agnostic)를 그대로 공유하고 표현만 TUI로.
@@ -50,8 +71,14 @@ export function CalendarTuiView({
   const { anchorDate, selectedDate, shiftMonthWithFeedback, selectDate, focusDate } =
     useCalendarNavigationController({ initialToday: today });
   const [planQuery] = useState("");
-  const { recentSessions, allPlanLogs, currentSelectedLog, selectedPlan } =
-    useCalendarDataController({
+  const {
+    planId,
+    recentSessions,
+    allPlanLogs,
+    currentSelectedLog,
+    selectedLogLoading,
+    selectedPlan,
+  } = useCalendarDataController({
       locale,
       timezone,
       selectedDate,
@@ -81,6 +108,12 @@ export function CalendarTuiView({
     locale === "ko" ? "ko-KR" : "en-US",
     { year: "numeric", month: "long", timeZone: "UTC" },
   ).format(dateOnlyToUtcDate(anchorDate));
+  const daySummary = summarizeDayLog(currentSelectedLog);
+  const detailHref = buildTodayLogHref({
+    planId,
+    date: selectedDate,
+    logId: currentSelectedLog?.id,
+  });
 
   return (
     <section
@@ -204,6 +237,77 @@ export function CalendarTuiView({
             })}
           </div>
         ))}
+      </div>
+
+      {/* 선택일 상세 — 그날 기록 + 기록/수정 링크 */}
+      <div
+        style={{
+          padding: "var(--v2-s-3)",
+          background: "var(--term-panel)",
+          boxShadow: "inset 0 0 0 1px var(--term-line-box)",
+          borderRadius: "var(--v2-r-2)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--v2-s-1)",
+        }}
+      >
+        <div
+          className="v2-mono-label"
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            color: "var(--term-dim)",
+          }}
+        >
+          <span>‹{selectedDate}›</span>
+          <a
+            href={detailHref}
+            className="v2-mono-label"
+            style={{ color: "var(--term-cyan)", textDecoration: "none" }}
+          >
+            {currentSelectedLog
+              ? locale === "ko"
+                ? "[수정]"
+                : "[edit]"
+              : locale === "ko"
+                ? "[+ 기록]"
+                : "[+ log]"}
+          </a>
+        </div>
+        {selectedLogLoading ? (
+          <span className="v2-mono-label" style={{ color: "var(--term-dim)" }}>
+            …
+          </span>
+        ) : daySummary.length > 0 ? (
+          daySummary.map((row, i) => (
+            <div
+              key={i}
+              className="v2-mono-label"
+              style={{ display: "flex", gap: "var(--v2-s-2)" }}
+            >
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                  color: "var(--term-fg)",
+                }}
+              >
+                {row.name}
+              </span>
+              <span style={{ color: "var(--term-cyan)", whiteSpace: "nowrap" }}>
+                {row.line}
+              </span>
+            </div>
+          ))
+        ) : (
+          <span className="v2-mono-label" style={{ color: "var(--term-ghost)" }}>
+            {locale === "ko" ? "기록 없음" : "no log"}
+          </span>
+        )}
       </div>
 
       {/* 역시간 세션 리스트 */}
