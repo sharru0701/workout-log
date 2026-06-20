@@ -10,6 +10,8 @@ import {
 import { useCalendarNavigationController } from "@/features/calendar/model/use-calendar-navigation-controller";
 import { useCalendarDataController } from "@/features/calendar/model/use-calendar-data-controller";
 import { useCalendarDerivedState } from "@/features/calendar/model/use-calendar-derived-state";
+import { useCalendarPlanPickerController } from "@/features/calendar/model/use-calendar-plan-picker-controller";
+import { SearchSelectSheet } from "@/components/ui/search-select-sheet";
 import {
   dateOnlyToUtcDate,
   dayOfMonth,
@@ -70,14 +72,16 @@ export function CalendarTuiView({
 
   const { anchorDate, selectedDate, shiftMonthWithFeedback, selectDate, focusDate } =
     useCalendarNavigationController({ initialToday: today });
-  const [planQuery] = useState("");
+  const [planQuery, setPlanQuery] = useState("");
   const {
     planId,
+    setPlanId,
     recentSessions,
     allPlanLogs,
     currentSelectedLog,
     selectedLogLoading,
     selectedPlan,
+    filteredPlans,
   } = useCalendarDataController({
       locale,
       timezone,
@@ -97,6 +101,17 @@ export function CalendarTuiView({
     currentSelectedLog,
     bodyweightKg,
     locale: localeKey,
+  });
+  const {
+    planSheetOpen,
+    openPlanPicker,
+    closePlanPicker,
+    submitFirstMatchingPlan,
+    selectPlan,
+  } = useCalendarPlanPickerController({
+    filteredPlans,
+    setPlanId,
+    resetPlanQuery: () => setPlanQuery(""),
   });
 
   const hasSelectedPlan = !!selectedPlan;
@@ -136,19 +151,35 @@ export function CalendarTuiView({
           {monthLabel}
         </span>
         <NavBtn label="›" onClick={() => shiftMonthWithFeedback(1)} />
-        <span
+        <button
+          type="button"
+          onClick={openPlanPicker}
           className="v2-mono-label"
           style={{
             marginLeft: "auto",
-            color: "var(--term-dim)",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
             minWidth: 0,
+            minHeight: "var(--v2-touch)",
+            display: "flex",
+            alignItems: "center",
+            gap: "var(--v2-s-1)",
+            background: "transparent",
+            border: "none",
+            cursor: "pointer",
+            color: "var(--term-dim)",
           }}
         >
-          {selectedPlan?.name ?? (locale === "ko" ? "플랜 없음" : "no plan")}
-        </span>
+          <span
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {selectedPlan?.name ?? (locale === "ko" ? "플랜 없음" : "no plan")}
+          </span>
+          <span>▾</span>
+        </button>
       </div>
 
       {/* 월 그리드 */}
@@ -362,6 +393,32 @@ export function CalendarTuiView({
           })}
         </div>
       ) : null}
+
+      {/* 플랜 피커 시트 (공유 SearchSelectSheet, terminal CSS 리스킨) */}
+      <SearchSelectSheet
+        open={planSheetOpen}
+        title={locale === "ko" ? "플랜 선택" : "Select plan"}
+        description={
+          locale === "ko"
+            ? "캘린더에 표시할 플랜을 고릅니다."
+            : "Choose the plan to show in the calendar."
+        }
+        onClose={closePlanPicker}
+        closeLabel={locale === "ko" ? "닫기" : "Close"}
+        query={planQuery}
+        placeholder={locale === "ko" ? "플랜 검색..." : "Search plans..."}
+        onQueryChange={setPlanQuery}
+        onQuerySubmit={submitFirstMatchingPlan}
+        resultsAriaLabel={locale === "ko" ? "플랜 목록" : "Plan list"}
+        emptyText={locale === "ko" ? "검색 결과가 없습니다." : "No results found."}
+        options={filteredPlans.map((plan) => ({
+          key: plan.id,
+          label: plan.name,
+          active: plan.id === planId,
+          ariaCurrent: plan.id === planId,
+          onSelect: () => selectPlan(plan.id),
+        }))}
+      />
     </section>
   );
 }
