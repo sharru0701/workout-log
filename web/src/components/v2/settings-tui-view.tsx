@@ -8,11 +8,14 @@ import { useSettingRowMutation } from "@/lib/settings/use-setting-row-mutation";
 import {
   applyThemeSkinToDocument,
   DEFAULT_THEME_SKIN,
+  DEFAULT_TRAINING_GOAL_PRIMARY,
   normalizeLocalePreference,
   normalizeThemeSkin,
+  normalizeTrainingGoal,
   SETTINGS_KEYS,
   type LocalePreference,
   type ThemeSkin,
+  type TrainingGoalKey,
 } from "@/lib/settings/workout-preferences";
 import type { SettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
 
@@ -139,6 +142,26 @@ export function SettingsTuiView() {
     !bw.pending &&
     Number.isFinite(bwParsed) &&
     normBodyweight(bwParsed) !== normBodyweight(bw.value);
+
+  // 훈련 목적 (primary) — 통계/목표 기준
+  const goal = useSettingRowMutation<string>({
+    key: SETTINGS_KEYS.trainingGoalPrimary,
+    fallbackValue: DEFAULT_TRAINING_GOAL_PRIMARY,
+    serverValue: normalizeTrainingGoal(
+      snapshot?.[SETTINGS_KEYS.trainingGoalPrimary],
+    ),
+    persistServer: createPersistServerSetting<string>(),
+    successMessage: locale === "ko" ? "운동 목적을 저장했습니다." : "Saved goal.",
+    rollbackNotice: locale === "ko" ? "목적 저장에 실패했습니다." : "Failed to save goal.",
+  });
+  const selectedGoal = normalizeTrainingGoal(goal.value);
+  const goalOptions: { value: TrainingGoalKey; label: string }[] = [
+    { value: "strength", label: locale === "ko" ? "근력" : "strength" },
+    { value: "powerlifting", label: locale === "ko" ? "파워" : "power" },
+    { value: "hypertrophy", label: locale === "ko" ? "근비대" : "hyper" },
+    { value: "endurance", label: locale === "ko" ? "지구력" : "endur" },
+    { value: "general", label: locale === "ko" ? "일반" : "general" },
+  ];
 
   return (
     <section
@@ -276,6 +299,34 @@ export function SettingsTuiView() {
           >
             [{bw.pending ? (locale === "ko" ? "저장중" : "saving") : "save"}]
           </button>
+        </div>
+        {/* 훈련 목적 (primary) */}
+        <div
+          className="v2-mono-label"
+          style={{
+            color: "var(--term-dim)",
+            margin: "var(--v2-s-3) 0 var(--v2-s-1)",
+          }}
+        >
+          {locale === "ko" ? "운동 목적" : "goal"}
+        </div>
+        <div style={{ display: "flex", gap: "var(--v2-s-1)", flexWrap: "wrap" }}>
+          {goalOptions.map((o) => {
+            const active = o.value === selectedGoal;
+            return (
+              <button
+                key={o.value}
+                type="button"
+                disabled={goal.pending}
+                onClick={() => void goal.commit(o.value)}
+                className="v2-mono-label"
+                style={toggleBtnStyle(active, goal.pending)}
+              >
+                [{o.label}
+                {active ? "*" : ""}]
+              </button>
+            );
+          })}
         </div>
       </div>
 

@@ -38,6 +38,7 @@ type StatsTuiViewProps = Pick<
   | "initialExercises"
   | "initialPlans"
   | "initialE1rm"
+  | "initialVolumeWeekly"
   | "initialSelectedExerciseId"
   | "initialSelectedPlanId"
 >;
@@ -47,6 +48,7 @@ export function StatsTuiView({
   initialExercises,
   initialPlans,
   initialE1rm,
+  initialVolumeWeekly,
   initialSelectedExerciseId,
   initialSelectedPlanId,
 }: StatsTuiViewProps) {
@@ -225,6 +227,27 @@ export function StatsTuiView({
           </>
         ) : null}
       </div>
+
+      {/* 주간 볼륨 추세 */}
+      {initialVolumeWeekly && initialVolumeWeekly.series.length > 1 ? (
+        <div
+          className="v2-mono-label"
+          style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)" }}
+        >
+          <span style={{ color: "var(--term-dim)" }}>
+            {locale === "ko" ? "주간 볼륨" : "weekly vol"}
+          </span>
+          <TermSparkline
+            data={initialVolumeWeekly.series.map((p) => p.tonnage)}
+            width={20}
+            tone="accent"
+            markPeak
+          />
+          <span style={{ color: "var(--term-amber)", marginLeft: "auto" }}>
+            {formatKg(initialVolumeWeekly.series.at(-1)?.tonnage ?? 0)}
+          </span>
+        </div>
+      ) : null}
 
       {/* PR 리스트 (90일) */}
       {initialBundle.prs90d.length > 0 ? (
