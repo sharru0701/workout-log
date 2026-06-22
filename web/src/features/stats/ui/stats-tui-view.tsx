@@ -14,6 +14,11 @@ import { clampIndex } from "@/features/stats/ui/e1rm-interactive-chart";
 import { Stats1RMOverlaySheets } from "@/features/stats/ui/stats-1rm-overlay-sheets";
 import type { RangePreset } from "@/features/stats/model/stats-1rm-types";
 import type { StatsPageBootstrap } from "@/server/services/stats/get-stats-page-bootstrap";
+import type { AsymptoteMonitorResult } from "@/server/stats/asymptote-monitor-service";
+import type {
+  DriverKey,
+  DriverTrendDirection,
+} from "@/server/program-engine/asymptote-monitor";
 
 // terminal(ironlog) stats 뷰 — paper StatsScreen/Stats1RMDetailed의 terminal 대응(P2-b).
 // useStats1RMController(presentation-agnostic) + Stats1RMOverlaySheets(시트)를 그대로
@@ -44,6 +49,7 @@ type StatsTuiViewProps = Pick<
   | "initialSelectedPlanId"
   | "goal"
   | "goalMetrics"
+  | "asymptoteMonitor"
 >;
 
 export function StatsTuiView({
@@ -56,6 +62,7 @@ export function StatsTuiView({
   initialSelectedPlanId,
   goal,
   goalMetrics,
+  asymptoteMonitor,
 }: StatsTuiViewProps) {
   const { locale } = useLocale();
   const c = useStats1RMController({
@@ -252,6 +259,11 @@ export function StatsTuiView({
             {formatKg(initialVolumeWeekly.series.at(-1)?.tonnage ?? 0)}
           </span>
         </div>
+      ) : null}
+
+      {/* 하이브리드(asymptote) 드라이버 e1RM 추세 모니터 (paper asymptote-monitor-section 대응) */}
+      {asymptoteMonitor ? (
+        <AsymptoteMonitor data={asymptoteMonitor} locale={locale} />
       ) : null}
 
       {/* 목표 지표 (goal-aware: 근력→Big3 · 근비대→근육볼륨 · 지구력→시간) */}
@@ -455,6 +467,98 @@ function GoalMetric({
   }
 
   return null;
+}
+
+// 드라이버 라벨(모노 그리드 정합 위해 Latin, redesign-target §3/R7) — paper DRIVER_LABELS 대응.
+const DRIVER_LABELS: Record<DriverKey, { ko: string; en: string }> = {
+  SQUAT: { ko: "스쿼트", en: "Squat" },
+  BENCH: { ko: "벤치", en: "Bench" },
+  PULL: { ko: "풀업", en: "Pull-Up" },
+};
+
+// 추세 → 글리프(term-icon UNICODE_GLYPH와 동일 매핑: ↗/↘/→)·색·라벨.
+function trendGlyph(
+  trend: DriverTrendDirection,
+  locale: "ko" | "en",
+): { glyph: string; color: string; label: string } {
+  switch (trend) {
+    case "RISING":
+      return { glyph: "↗", color: "var(--term-green)", label: locale === "ko" ? "상승" : "rising" };
+    case "FALLING":
+      return { glyph: "↘", color: "var(--term-red)", label: locale === "ko" ? "하락" : "falling" };
+    case "FLAT":
+      return { glyph: "→", color: "var(--term-amber)", label: locale === "ko" ? "정체" : "flat" };
+    default:
+      return {
+        glyph: "·",
+        color: "var(--term-dim)",
+        label: locale === "ko" ? "데이터 부족" : "building",
+      };
+  }
+}
+
+// 하이브리드(asymptote) 드라이버 e1RM 추세 — paper asymptote-monitor-section의 terminal 대응.
+// 드라이버별: 운동명 · 추세 글리프(↗/↘/→) · 이동평균값(kg) · 노출수. window는 헤더에 노출.
+function AsymptoteMonitor({
+  data,
+  locale,
+}: {
+  data: AsymptoteMonitorResult;
+  locale: "ko" | "en";
+}) {
+  const ko = locale === "ko";
+  const row: CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "var(--v2-s-2)",
+  };
+  return (
+    <div style={GOAL_PANEL}>
+      <div className="v2-mono-label" style={{ ...row, justifyContent: "space-between" }}>
+        <span style={{ color: "var(--term-dim)" }}>
+          {ko ? "드라이버 e1RM 추세" : "driver e1RM trend"}
+        </span>
+        <span style={{ color: "var(--term-dim)" }}>
+          {ko ? `${data.window}세션 이동평균` : `${data.window}-sess MA`}
+        </span>
+      </div>
+      {data.drivers.map((driver) => {
+        const meta = DRIVER_LABELS[driver.target];
+        const t = trendGlyph(driver.trend, locale);
+        return (
+          <div key={driver.target} className="v2-mono-label" style={row}>
+            <span
+              role="img"
+              aria-label={t.label}
+              style={{ color: t.color, width: "1ch", textAlign: "center" }}
+            >
+              {t.glyph}
+            </span>
+            <span
+              style={{
+                flex: 1,
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                color: "var(--term-fg)",
+              }}
+            >
+              {ko ? meta.ko : meta.en}
+            </span>
+            <span style={{ color: t.color, whiteSpace: "nowrap" }}>
+              {driver.latestMovingAvg !== null
+                ? `${driver.latestMovingAvg.toFixed(1)}kg`
+                : "—"}
+            </span>
+            <span style={{ color: "var(--term-dim)", whiteSpace: "nowrap" }}>
+              {ko ? `${driver.exposures}노출` : `${driver.exposures}×`}
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 function selectorStyle(color: string): CSSProperties {

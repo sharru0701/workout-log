@@ -299,6 +299,7 @@ export function StatsScreen({
         initialSelectedPlanId={initialSelectedPlanId}
         goal={goal}
         goalMetrics={goalMetrics}
+        asymptoteMonitor={asymptoteMonitor}
       />
     );
   }
