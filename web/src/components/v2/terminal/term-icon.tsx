@@ -73,6 +73,28 @@ const MATERIAL_TO_GLYPH: Record<string, string> = {
   report: "!",
   info: "i",
   terminal: "▸",
+
+  // ── 확장: cascade/위젯 아이콘 (geometric/화살표 — mono 커버 양호) ──
+  calendar_month: "▦",
+  calendar_today: "▦",
+  today: "▦",
+  event_note: "▦",
+  event_repeat: "▦",
+  date_range: "▦",
+  show_chart: "▥",
+  monitoring: "▥",
+  leaderboard: "▥",
+  equalizer: "▥",
+  bar_chart: "▥",
+  bolt: "↯",
+  contrast: "◐",
+  all_inclusive: "∞",
+  track_changes: "◎",
+  unfold_more: "▾",
+  cloud_done: "✓",
+  auto_awesome: "✦",
+  open_in_new: "↗",
+  launch: "↗",
 };
 
 export const GLYPH_FALLBACK = "·";

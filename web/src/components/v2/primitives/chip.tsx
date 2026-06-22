@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { V2Icon } from "./v2-icon";
 
 export type V2ChipTone =
   | "neutral"
@@ -85,13 +86,7 @@ export function V2Chip({
       }}
     >
       {icon && (
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: "var(--v2-t-small)" }}
-          aria-hidden
-        >
-          {icon}
-        </span>
+        <V2Icon name={icon} style={{ fontSize: "var(--v2-t-small)" }} />
       )}
       {children}
     </span>
