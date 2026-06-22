@@ -990,6 +990,8 @@ type SummaryData = {
   prKeys: Set<string>;
 };
 
+type TermStatTone = "gold" | "cyan";
+
 function TermSummaryCell({
   label,
   value,
@@ -997,7 +999,7 @@ function TermSummaryCell({
 }: {
   label: string;
   value: string;
-  tone?: "gold";
+  tone?: TermStatTone;
 }) {
   return (
     <span style={{ display: "flex", justifyContent: "space-between", gap: "var(--v2-s-2)" }}>
@@ -1007,6 +1009,110 @@ function TermSummaryCell({
       </span>
     </span>
   );
+}
+
+type TermStatCell = {
+  key: string;
+  label: string;
+  value: string;
+  tone: TermStatTone;
+};
+
+/**
+ * paper BigStat의 goal별 차별화를 terminal readout 순서·강조로 재현.
+ * strength=top e1RM(gold) 우선, endurance=시간+세트 우선, 기타=볼륨 우선.
+ * 항상 같은 5종(볼륨/세트/reps/시간/e1RM)을 노출하되 순서로 주요 지표를 드러낸다.
+ */
+function buildTermStatCells(
+  summary: SummaryData,
+  goal: ResolvedGoal,
+  durationLabel: string | null,
+  ko: boolean,
+): TermStatCell[] {
+  const volume: TermStatCell = {
+    key: "volume",
+    label: ko ? "총 볼륨" : "volume",
+    value: `${formatVolumeShort(summary.totalVolume)}kg`,
+    tone: "cyan",
+  };
+  const sets: TermStatCell = {
+    key: "sets",
+    label: ko ? "세트" : "sets",
+    value: String(summary.totalSets),
+    tone: "cyan",
+  };
+  const reps: TermStatCell = {
+    key: "reps",
+    label: "reps",
+    value: summary.totalReps.toLocaleString(),
+    tone: "cyan",
+  };
+  const time: TermStatCell = {
+    key: "time",
+    label: ko ? "시간" : "time",
+    value: durationLabel ?? "—",
+    tone: "cyan",
+  };
+  const e1rm: TermStatCell | null = summary.topEstOneRm
+    ? {
+        key: "e1rm",
+        label: ko ? "최고 e1RM" : "top e1RM",
+        value: `${summary.topEstOneRm.estOneRm.toFixed(1)}kg`,
+        tone: "gold",
+      }
+    : null;
+
+  if (goal === "strength") {
+    // 주요: top e1RM(gold) → 시간 → 볼륨 → 세트 → reps
+    return [e1rm, time, volume, sets, reps].filter(
+      (c): c is TermStatCell => c != null,
+    );
+  }
+  if (goal === "endurance") {
+    // 주요: 시간 → 세트 → reps → 볼륨 → (e1RM)
+    return [time, sets, reps, volume, e1rm].filter(
+      (c): c is TermStatCell => c != null,
+    );
+  }
+  // hypertrophy/general — 주요: 볼륨 → 세트 → 시간 → reps → (e1RM)
+  return [volume, sets, time, reps, e1rm].filter(
+    (c): c is TermStatCell => c != null,
+  );
+}
+
+/** paper 운동별 우측 메트릭과 동일: strength=top kg, endurance=reps, 기타=volume. */
+function termExerciseMetric(ex: ExerciseSummary, goal: ResolvedGoal): string {
+  if (goal === "strength") {
+    return ex.topWeightKg > 0
+      ? `${ex.topWeightKg.toLocaleString()}kg${
+          ex.topWeightSuffix ? ` ${ex.topWeightSuffix}` : ""
+        }`
+      : "—";
+  }
+  if (goal === "endurance") {
+    return `${ex.totalReps.toLocaleString()} reps`;
+  }
+  return ex.volumeKg > 0
+    ? `${formatVolumeShort(ex.volumeKg)}kg`
+    : ex.topWeightKg > 0
+      ? `${ex.topWeightKg.toLocaleString()}kg`
+      : "—";
+}
+
+/**
+ * paper 운동별 sub-line의 보조 메트릭(주요 메트릭과 중복 없이):
+ * strength=볼륨, endurance=top kg, 기타=top kg. 없으면 빈 문자열.
+ */
+function termExerciseSubMetric(ex: ExerciseSummary, goal: ResolvedGoal): string {
+  if (goal === "strength") {
+    return ex.volumeKg > 0 ? `${formatVolumeShort(ex.volumeKg)}kg` : "";
+  }
+  // endurance / hypertrophy / general — top kg 병기(맨몸 suffix 포함)
+  return ex.topWeightKg > 0
+    ? `top ${ex.topWeightKg.toLocaleString()}kg${
+        ex.topWeightSuffix ? ` ${ex.topWeightSuffix}` : ""
+      }`
+    : "";
 }
 
 function TermSessionSummaryBody({
@@ -1059,7 +1165,7 @@ function TermSessionSummaryBody({
         </span>
       </div>
 
-      {/* 스탯 readout */}
+      {/* 스탯 readout — paper와 동일하게 goal별로 주요 스탯을 앞·강조. */}
       <div
         className="v2-mono-label"
         style={{
@@ -1068,23 +1174,13 @@ function TermSessionSummaryBody({
           gap: "var(--v2-s-1) var(--v2-s-3)",
         }}
       >
-        <TermSummaryCell
-          label={ko ? "총 볼륨" : "volume"}
-          value={`${formatVolumeShort(summary.totalVolume)}kg`}
-        />
-        <TermSummaryCell label={ko ? "세트" : "sets"} value={String(summary.totalSets)} />
-        <TermSummaryCell label="reps" value={summary.totalReps.toLocaleString()} />
-        <TermSummaryCell label={ko ? "시간" : "time"} value={durationLabel ?? "—"} />
-        {summary.topEstOneRm ? (
-          <TermSummaryCell
-            label={ko ? "최고 e1RM" : "top e1RM"}
-            value={`${summary.topEstOneRm.estOneRm.toFixed(1)}kg`}
-            tone="gold"
-          />
-        ) : null}
+        {buildTermStatCells(summary, resolvedGoal, durationLabel, ko).map((c) => (
+          <TermSummaryCell key={c.key} label={c.label} value={c.value} tone={c.tone} />
+        ))}
       </div>
 
-      {/* records (★) */}
+      {/* records (★) — paper PR 카드와 동일하게 source(자동증량/신기록) 구분 +
+          progression은 before→after 진행, personal은 EST 1RM 갱신폭 표기. */}
       {summary.prCards.length > 0 ? (
         <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
           <span className="v2-mono-label" style={{ color: "var(--term-dim)" }}>
@@ -1092,6 +1188,14 @@ function TermSessionSummaryBody({
           </span>
           {summary.prCards.map((p) => {
             const isPersonal = p.source === "personal";
+            // paper: personal=새 PR/NEW PR, progression=증량 성공/PROGRESSED
+            const eyebrow = isPersonal
+              ? ko
+                ? "새PR"
+                : "NEW PR"
+              : ko
+                ? "증량"
+                : "PROGRESSED";
             return (
               <div
                 key={`${p.source}:${p.target}`}
@@ -1109,15 +1213,33 @@ function TermSessionSummaryBody({
                     color: "var(--term-fg)",
                   }}
                 >
+                  <span style={{ color: "var(--term-dim)" }}>{eyebrow} </span>
                   {p.target}
                   <span style={{ color: "var(--term-dim)" }}>
-                    {" "}
-                    · {p.afterWorkKg.toFixed(1)}kg
-                    {(p.estOneRm ?? 0) > 0 ? ` · e1RM ${(p.estOneRm ?? 0).toFixed(1)}` : ""}
+                    {" · "}
+                    {isPersonal
+                      ? `${p.afterWorkKg.toFixed(1)}kg${
+                          (p.estOneRm ?? 0) > 0
+                            ? ` · e1RM ${(p.estOneRm ?? 0).toFixed(1)}`
+                            : ""
+                        }`
+                      : p.beforeWorkKg != null
+                        ? `${p.beforeWorkKg.toFixed(1)}→${p.afterWorkKg.toFixed(1)}kg${
+                            (p.estOneRm ?? 0) > 0
+                              ? ` · e1RM ${(p.estOneRm ?? 0).toFixed(1)}`
+                              : ""
+                          }`
+                        : `${p.afterWorkKg.toFixed(1)}kg${
+                            (p.estOneRm ?? 0) > 0
+                              ? ` · e1RM ${(p.estOneRm ?? 0).toFixed(1)}`
+                              : ""
+                          }`}
                   </span>
                 </span>
                 <TermBadge tone={isPersonal ? "pr" : "success"}>
-                  {isPersonal ? (ko ? "새PR" : "PR") : `+${p.deltaKg.toFixed(1)}`}
+                  {isPersonal && !(p.deltaKg > 0)
+                    ? "PR"
+                    : `+${p.deltaKg.toFixed(1)}`}
                 </TermBadge>
               </div>
             );
@@ -1133,14 +1255,9 @@ function TermSessionSummaryBody({
           </span>
           {summary.exerciseSummaries.map((ex, i) => {
             const isPr = summary.prKeys.has(ex.name.trim().toLowerCase());
-            const metric =
-              resolvedGoal === "endurance"
-                ? `${ex.totalReps} reps`
-                : ex.volumeKg > 0
-                  ? `${formatVolumeShort(ex.volumeKg)}kg`
-                  : ex.topWeightKg > 0
-                    ? `${ex.topWeightKg.toLocaleString()}kg`
-                    : "—";
+            // paper 운동별 주요 메트릭: strength=top kg, endurance=reps, 기타=volume.
+            const metric = termExerciseMetric(ex, resolvedGoal);
+            const subMetric = termExerciseSubMetric(ex, resolvedGoal);
             return (
               <div
                 key={`${ex.name}-${i}`}
@@ -1165,6 +1282,7 @@ function TermSessionSummaryBody({
                     {" "}
                     · {ex.setCount}
                     {ko ? "세트" : " sets"}
+                    {subMetric ? ` · ${subMetric}` : ""}
                   </span>
                 </span>
                 {isPr ? <TermBadge tone="pr">PR</TermBadge> : null}

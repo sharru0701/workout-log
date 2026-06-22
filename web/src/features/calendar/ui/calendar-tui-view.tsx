@@ -1,9 +1,12 @@
 "use client";
 
 import { useMemo, useState, type CSSProperties } from "react";
+import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
+import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import {
   dateOnlyInTimezone,
+  formatVolume,
   WEEKDAY_SHORT_EN,
   WEEKDAY_SHORT_KO,
 } from "@/features/calendar/lib/format";
@@ -21,6 +24,7 @@ import {
 import { useBodyweightKg } from "@/lib/settings/use-bodyweight";
 import { formatPerformedHistoryLine } from "@/lib/workout-notation";
 import { buildTodayLogHref } from "@/lib/workout-links";
+import { apiDelete } from "@/lib/api";
 import type { CalendarWorkoutLogForDate } from "@/features/calendar/model/types";
 import type { CalendarPageBootstrap } from "@/server/services/calendar/get-calendar-page-bootstrap";
 
@@ -45,7 +49,9 @@ function summarizeDayLog(
 // terminal(ironlog) calendar 뷰 — paper CalendarScreen의 terminal 대응(P3).
 // navigation/data/derived 컨트롤러(presentation-agnostic)를 그대로 공유하고 표현만 TUI로.
 // 월 그리드(logged █/▪ green·today amber·selected sel bg) + 역시간 세션 리스트.
-// 첫 플랜 자동 선택(plan-scoped). 플랜 피커·날짜이동·삭제·세션 상세는 후속(P3-b).
+// 선택일 상세는 운동별 한 줄 + 집계(세트·볼륨, paper Metric 대응) + [수정]/[del]
+// (삭제는 paper handleConfirmDelete와 동일 계약, useAppDialog confirm 재사용).
+// 첫 플랜 자동 선택(plan-scoped). 날짜이동·세션 상세는 후속(P3-b).
 // TermShell ViewPane 안 렌더라 외곽 패딩 없음.
 
 export function CalendarTuiView({
@@ -58,6 +64,8 @@ export function CalendarTuiView({
   const { locale } = useLocale();
   const localeKey: "ko" | "en" = locale === "ko" ? "ko" : "en";
   const bodyweightKg = useBodyweightKg();
+  const router = useRouter();
+  const { confirm } = useAppDialog();
 
   const timezone = useMemo(
     () =>
@@ -82,6 +90,8 @@ export function CalendarTuiView({
     selectedLogLoading,
     selectedPlan,
     filteredPlans,
+    refresh,
+    applyOptimisticDelete,
   } = useCalendarDataController({
       locale,
       timezone,
@@ -91,7 +101,7 @@ export function CalendarTuiView({
       initialSessions,
       initialLogs,
     });
-  const { logDates, recentPastLogs } = useCalendarDerivedState({
+  const { logDates, loggedSummary, recentPastLogs } = useCalendarDerivedState({
     selectedPlan,
     selectedDate,
     today,
@@ -129,6 +139,32 @@ export function CalendarTuiView({
     date: selectedDate,
     logId: currentSelectedLog?.id,
   });
+
+  // 로그 삭제 — paper handleConfirmDelete와 동일 계약(낙관 삭제→apiDelete→refresh,
+  // 실패 시 서버 데이터로 복원). overlay 시트 대신 useAppDialog confirm 재사용.
+  const handleDeleteLog = async () => {
+    const logId = currentSelectedLog?.id;
+    if (!logId) return;
+    const ok = await confirm({
+      title: locale === "ko" ? "기록 삭제" : "Delete Log",
+      message:
+        locale === "ko"
+          ? "이 운동 기록을 삭제하시겠습니까?"
+          : "Delete this workout log?",
+      confirmText: locale === "ko" ? "삭제" : "Delete",
+      cancelText: locale === "ko" ? "취소" : "Cancel",
+      tone: "danger",
+    });
+    if (!ok) return;
+    applyOptimisticDelete(logId);
+    try {
+      await apiDelete(`/api/logs/${logId}`);
+      refresh();
+      router.refresh();
+    } catch {
+      refresh();
+    }
+  };
 
   return (
     <section
@@ -292,48 +328,96 @@ export function CalendarTuiView({
           }}
         >
           <span>‹{selectedDate}›</span>
-          <a
-            href={detailHref}
-            className="v2-mono-label"
-            style={{ color: "var(--term-cyan)", textDecoration: "none" }}
-          >
-            {currentSelectedLog
-              ? locale === "ko"
-                ? "[수정]"
-                : "[edit]"
-              : locale === "ko"
-                ? "[+ 기록]"
-                : "[+ log]"}
-          </a>
+          <span style={{ display: "flex", alignItems: "center", gap: "var(--v2-s-2)" }}>
+            <a
+              href={detailHref}
+              className="v2-mono-label"
+              style={{ color: "var(--term-cyan)", textDecoration: "none" }}
+            >
+              {currentSelectedLog
+                ? locale === "ko"
+                  ? "[수정]"
+                  : "[edit]"
+                : locale === "ko"
+                  ? "[+ 기록]"
+                  : "[+ log]"}
+            </a>
+            {currentSelectedLog ? (
+              <button
+                type="button"
+                onClick={handleDeleteLog}
+                aria-label={locale === "ko" ? "기록 삭제" : "Delete log"}
+                className="v2-mono-label"
+                style={{
+                  minHeight: "var(--v2-touch)",
+                  padding: "0 var(--v2-s-2)",
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--term-red)",
+                  cursor: "pointer",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                [del]
+              </button>
+            ) : null}
+          </span>
         </div>
         {selectedLogLoading ? (
           <span className="v2-mono-label" style={{ color: "var(--term-dim)" }}>
             …
           </span>
         ) : daySummary.length > 0 ? (
-          daySummary.map((row, i) => (
-            <div
-              key={i}
-              className="v2-mono-label"
-              style={{ display: "flex", gap: "var(--v2-s-2)" }}
-            >
-              <span
+          <>
+            {daySummary.map((row, i) => (
+              <div
+                key={i}
+                className="v2-mono-label"
+                style={{ display: "flex", gap: "var(--v2-s-2)" }}
+              >
+                <span
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: "var(--term-fg)",
+                  }}
+                >
+                  {row.name}
+                </span>
+                <span style={{ color: "var(--term-cyan)", whiteSpace: "nowrap" }}>
+                  {row.line}
+                </span>
+              </div>
+            ))}
+            {/* 집계 readout — paper Metric(sets·volume) 대응 (loggedSummary 공유) */}
+            {loggedSummary.totalSets > 0 ? (
+              <div
+                className="v2-mono-label"
                 style={{
-                  flex: 1,
-                  minWidth: 0,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                  color: "var(--term-fg)",
+                  display: "flex",
+                  gap: "var(--v2-s-2)",
+                  color: "var(--term-dim)",
                 }}
               >
-                {row.name}
-              </span>
-              <span style={{ color: "var(--term-cyan)", whiteSpace: "nowrap" }}>
-                {row.line}
-              </span>
-            </div>
-          ))
+                <span>
+                  {locale === "ko" ? "세트" : "sets"}{" "}
+                  <span style={{ color: "var(--term-fg)" }}>
+                    {loggedSummary.totalSets}
+                  </span>
+                </span>
+                <span>·</span>
+                <span>
+                  {locale === "ko" ? "볼륨" : "vol"}{" "}
+                  <span style={{ color: "var(--term-fg)" }}>
+                    {formatVolume(loggedSummary.totalVolume)}
+                  </span>
+                </span>
+              </div>
+            ) : null}
+          </>
         ) : (
           <span className="v2-mono-label" style={{ color: "var(--term-ghost)" }}>
             {locale === "ko" ? "기록 없음" : "no log"}

@@ -12,12 +12,16 @@ import {
   normalizeLocalePreference,
   normalizeThemeSkin,
   normalizeTrainingGoal,
+  parseTrainingGoalSecondary,
+  serializeTrainingGoalSecondary,
   SETTINGS_KEYS,
   type LocalePreference,
   type ThemeSkin,
   type TrainingGoalKey,
 } from "@/lib/settings/workout-preferences";
 import type { SettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
+import { V2Icon } from "@/components/v2/primitives/v2-icon";
+import { V2PasswordSheet } from "./v2-password-sheet";
 
 // terminal(ironlog) settings 뷰 — paper V2MorePage의 terminal 대응(P4).
 // tree + reverse-video. 핵심은 테마 토글(paper/terminal) — 동일 mutation 훅 재사용해
@@ -60,6 +64,7 @@ export function SettingsTuiView() {
   const { locale, setLocale } = useLocale();
   const [me, setMe] = useState<MeUser | null>(null);
   const [snapshot, setSnapshot] = useState<SettingsSnapshot | null>(null);
+  const [pwOpen, setPwOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,6 +167,54 @@ export function SettingsTuiView() {
     { value: "endurance", label: locale === "ko" ? "지구력" : "endur" },
     { value: "general", label: locale === "ko" ? "일반" : "general" },
   ];
+
+  // 부(secondary) 훈련 목적 — paper와 동일 mutation/헬퍼 재사용. primary와 상호배타.
+  const goalSecondary = useSettingRowMutation<string>({
+    key: SETTINGS_KEYS.trainingGoalSecondaryJson,
+    fallbackValue: "[]",
+    serverValue: serializeTrainingGoalSecondary(
+      parseTrainingGoalSecondary(
+        snapshot?.[SETTINGS_KEYS.trainingGoalSecondaryJson],
+        normalizeTrainingGoal(snapshot?.[SETTINGS_KEYS.trainingGoalPrimary]),
+      ),
+    ),
+    persistServer: createPersistServerSetting<string>(),
+    successMessage:
+      locale === "ko" ? "부 운동 목적을 저장했습니다." : "Saved secondary goals.",
+    rollbackNotice:
+      locale === "ko"
+        ? "부 운동 목적 저장에 실패했습니다."
+        : "Failed to save secondary goals.",
+  });
+  const selectedSecondary = parseTrainingGoalSecondary(
+    goalSecondary.value,
+    selectedGoal,
+  );
+  const goalPending = goal.pending || goalSecondary.pending;
+
+  // primary 변경: paper와 동일 — secondary에 같은 키가 있으면 제거(상호배타).
+  const selectPrimaryGoal = (next: TrainingGoalKey) => {
+    void goal.commit(next);
+    if (selectedSecondary.includes(next)) {
+      void goalSecondary.commit(
+        serializeTrainingGoalSecondary(
+          selectedSecondary.filter((g) => g !== next),
+        ),
+      );
+    }
+  };
+  const toggleSecondaryGoal = (key: TrainingGoalKey) => {
+    if (key === selectedGoal) return;
+    const set = new Set(selectedSecondary);
+    if (set.has(key)) set.delete(key);
+    else set.add(key);
+    void goalSecondary.commit(
+      serializeTrainingGoalSecondary(Array.from(set)),
+    );
+  };
+
+  const canChangePassword = Boolean(me && !me.fallback && me.email);
+  const appVersion = process.env.NEXT_PUBLIC_APP_VERSION ?? "dev";
 
   return (
     <section
@@ -308,7 +361,7 @@ export function SettingsTuiView() {
             margin: "var(--v2-s-3) 0 var(--v2-s-1)",
           }}
         >
-          {locale === "ko" ? "운동 목적" : "goal"}
+          {locale === "ko" ? "운동 목적 (주)" : "goal (primary)"}
         </div>
         <div style={{ display: "flex", gap: "var(--v2-s-1)", flexWrap: "wrap" }}>
           {goalOptions.map((o) => {
@@ -317,16 +370,54 @@ export function SettingsTuiView() {
               <button
                 key={o.value}
                 type="button"
-                disabled={goal.pending}
-                onClick={() => void goal.commit(o.value)}
+                disabled={goalPending}
+                onClick={() => selectPrimaryGoal(o.value)}
                 className="v2-mono-label"
-                style={toggleBtnStyle(active, goal.pending)}
+                style={toggleBtnStyle(active, goalPending)}
               >
                 [{o.label}
                 {active ? "*" : ""}]
               </button>
             );
           })}
+        </div>
+        {/* 훈련 목적 (secondary) — primary 제외, 다중 선택 토글 */}
+        <div
+          className="v2-mono-label"
+          style={{
+            color: "var(--term-dim)",
+            margin: "var(--v2-s-3) 0 var(--v2-s-1)",
+          }}
+        >
+          {locale === "ko" ? "운동 목적 (부)" : "goal (secondary)"}
+        </div>
+        <div style={{ display: "flex", gap: "var(--v2-s-1)", flexWrap: "wrap" }}>
+          {goalOptions
+            .filter((o) => o.value !== selectedGoal)
+            .map((o) => {
+              const active = selectedSecondary.includes(o.value);
+              return (
+                <button
+                  key={o.value}
+                  type="button"
+                  disabled={goalPending}
+                  onClick={() => toggleSecondaryGoal(o.value)}
+                  className="v2-mono-label"
+                  style={toggleBtnStyle(active, goalPending)}
+                >
+                  [{active ? "+" : " "}
+                  {o.label}]
+                </button>
+              );
+            })}
+        </div>
+        <div
+          className="v2-mono-label"
+          style={{ color: "var(--term-ghost)", marginTop: "var(--v2-s-2)" }}
+        >
+          {locale === "ko"
+            ? "주 목적은 통계 기준 · 부 목적은 함께 추적"
+            : "primary drives stats · secondary tracked alongside"}
         </div>
       </div>
 
@@ -358,30 +449,83 @@ export function SettingsTuiView() {
         })}
       </div>
 
-      {/* 로그아웃 */}
-      <button
-        type="button"
-        onClick={async () => {
-          try {
-            await fetch("/api/auth/logout", { method: "POST" });
-          } catch {
-            /* ignore */
-          }
-          window.location.href = "/login";
-        }}
+      {/* 계정 액션: 비밀번호 변경 + 로그아웃 */}
+      <div style={{ display: "flex", gap: "var(--v2-s-2)", flexWrap: "wrap" }}>
+        {canChangePassword ? (
+          <button
+            type="button"
+            onClick={() => setPwOpen(true)}
+            className="v2-mono-label"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "var(--v2-s-1)",
+              minHeight: "var(--v2-touch)",
+              padding: "0 var(--v2-s-2)",
+              background: "transparent",
+              border: "none",
+              color: "var(--term-cyan)",
+              cursor: "pointer",
+            }}
+          >
+            <V2Icon name="lock" style={{ fontSize: "1em" }} />
+            [{locale === "ko" ? "비밀번호 변경" : "change password"}]
+          </button>
+        ) : null}
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await fetch("/api/auth/logout", { method: "POST" });
+            } catch {
+              /* ignore */
+            }
+            window.location.href = "/login";
+          }}
+          className="v2-mono-label"
+          style={{
+            minHeight: "var(--v2-touch)",
+            padding: "0 var(--v2-s-2)",
+            background: "transparent",
+            border: "none",
+            color: "var(--term-red)",
+            cursor: "pointer",
+          }}
+        >
+          [{locale === "ko" ? "로그아웃" : "logout"}]
+        </button>
+      </div>
+
+      {/* 앱 정보 footer — 버전 + 환영 투어 다시 보기(온보딩 재실행) */}
+      <div
         className="v2-mono-label"
         style={{
-          alignSelf: "flex-start",
-          minHeight: "var(--v2-touch)",
-          padding: "0 var(--v2-s-2)",
-          background: "transparent",
-          border: "none",
-          color: "var(--term-red)",
-          cursor: "pointer",
+          display: "flex",
+          flexDirection: "column",
+          gap: "var(--v2-s-1)",
+          color: "var(--term-ghost)",
         }}
       >
-        [{locale === "ko" ? "로그아웃" : "logout"}]
-      </button>
+        <div>
+          <span style={{ color: "var(--term-dim)" }}>$ </span>
+          workout-log --version {appVersion} · next.js
+        </div>
+        <a
+          href="/onboarding"
+          className="v2-mono-label"
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            minHeight: "var(--v2-touch)",
+            textDecoration: "none",
+            color: "var(--term-dim)",
+          }}
+        >
+          {locale === "ko" ? "› 환영 투어 다시 보기" : "› replay welcome tour"}
+        </a>
+      </div>
+
+      <V2PasswordSheet open={pwOpen} onClose={() => setPwOpen(false)} />
     </section>
   );
 }
