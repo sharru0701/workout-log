@@ -21,3 +21,4 @@ export type {
   TermKeyHintItem,
   TermFooterRegistration,
 } from "./term-keyhint-context";
+export { TermIcon, materialToTermGlyph, GLYPH_FALLBACK } from "./term-icon";

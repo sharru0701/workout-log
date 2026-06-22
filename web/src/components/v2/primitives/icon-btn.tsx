@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
+import { V2Icon } from "./v2-icon";
 
 export type V2IconBtnTone = "neutral" | "accent" | "ghost";
 
@@ -65,18 +66,12 @@ export function V2IconBtn(props: ButtonProps | AnchorProps) {
     ...style,
   };
   const inner = (
-    <span
-      className="material-symbols-outlined"
-      style={{
-        fontSize: Math.round(size * 0.55),
-        fontVariationSettings: fill
-          ? "'FILL' 1, 'wght' 500"
-          : "'FILL' 0, 'wght' 400",
-      }}
-      aria-hidden
-    >
-      {icon}
-    </span>
+    <V2Icon
+      name={icon}
+      fill={fill}
+      weight={fill ? 500 : 400}
+      style={{ fontSize: Math.round(size * 0.55) }}
+    />
   );
   const cls = ["v2-pressable", "v2-icon-btn", className]
     .filter(Boolean)

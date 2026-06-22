@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { V2Icon } from "./v2-icon";
 
 type CommonProps = {
   label: ReactNode;
@@ -122,13 +123,10 @@ export function V2NavRow(
           {leading}
         </div>
       ) : icon ? (
-        <span
-          className="material-symbols-outlined"
+        <V2Icon
+          name={icon}
           style={{ fontSize: "var(--v2-t-h2)", color: "var(--v2-ink-2)" }}
-          aria-hidden
-        >
-          {icon}
-        </span>
+        />
       ) : null}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p className="v2-body" style={{ margin: 0, fontWeight: 500 }}>
@@ -157,18 +155,15 @@ export function V2NavRow(
           {trailing as ReactNode}
         </div>
       ) : interactive && trailingIcon ? (
-        <span
-          className="material-symbols-outlined"
+        <V2Icon
+          name={trailingIcon}
           style={{
             fontSize: "var(--v2-t-18)",
             color: "var(--v2-ink-3)",
             flexShrink: 0,
             transition: "transform var(--v2-d-1) var(--v2-e-out)",
           }}
-          aria-hidden
-        >
-          {trailingIcon}
-        </span>
+        />
       ) : null}
     </>
   );

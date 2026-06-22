@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { V2Icon } from "./v2-icon";
 
 export type V2SelectableRowProps = {
   selected: boolean;
@@ -73,18 +74,16 @@ export function V2SelectableRow({
       }}
     >
       {icon ? (
-        <span
-          className="material-symbols-outlined"
+        <V2Icon
+          name={icon}
+          fill
+          weight={500}
           style={{
             fontSize: "var(--v2-t-h2)",
             color: selected ? "var(--v2-accent)" : "var(--v2-ink-3)",
-            fontVariationSettings: "'FILL' 1, 'wght' 500",
             flexShrink: 0,
           }}
-          aria-hidden
-        >
-          {icon}
-        </span>
+        />
       ) : null}
       <div style={{ flex: 1, minWidth: 0 }}>
         <p
@@ -112,17 +111,14 @@ export function V2SelectableRow({
       {trailing ? (
         <div style={{ flexShrink: 0 }}>{trailing}</div>
       ) : indicatorIcon ? (
-        <span
-          className="material-symbols-outlined"
+        <V2Icon
+          name={indicatorIcon}
           style={{
             fontSize: "var(--v2-t-h2)",
             color: selected ? "var(--v2-accent)" : "var(--v2-ink-4)",
             flexShrink: 0,
           }}
-          aria-hidden
-        >
-          {indicatorIcon}
-        </span>
+        />
       ) : null}
     </button>
   );

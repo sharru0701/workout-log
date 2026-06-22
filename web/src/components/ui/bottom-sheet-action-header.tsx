@@ -1,6 +1,7 @@
 "use client";
 
 import type { PointerEvent as ReactPointerEvent, ReactNode } from "react";
+import { V2Icon } from "@/components/v2/primitives/v2-icon";
 
 export type BottomSheetPrimaryAction = {
   ariaLabel: string;
@@ -10,7 +11,7 @@ export type BottomSheetPrimaryAction = {
 };
 
 function DefaultCheckIcon() {
-  return <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'FILL' 0, 'wght' 600" }}>check</span>;
+  return <V2Icon name="check" weight={600} style={{ fontSize: "var(--v2-t-20)" }} />;
 }
 
 export function BottomSheetActionHeader({
@@ -36,7 +37,7 @@ export function BottomSheetActionHeader({
         onClick={onClose}
         aria-label={closeLabel}
       >
-        <span className="material-symbols-outlined" aria-hidden="true" style={{ fontSize: "var(--v2-t-20)", fontVariationSettings: "'wght' 500" }}>close</span>
+        <V2Icon name="close" weight={500} style={{ fontSize: "var(--v2-t-20)" }} />
       </button>
       <div className="mobile-bottom-sheet-title">
         <h2>{title}</h2>
