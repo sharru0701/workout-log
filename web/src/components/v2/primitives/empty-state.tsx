@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { V2Card } from "./card";
+import { V2Icon } from "./v2-icon";
 
 export function V2EmptyState({
   icon,
@@ -27,16 +28,13 @@ export function V2EmptyState({
           gap: "var(--v2-s-2)",
         }}
       >
-        <span
-          className="material-symbols-outlined"
+        <V2Icon
+          name={icon}
           style={{
             fontSize: "var(--v2-t-h1)",
             color: "var(--v2-ink-3)",
           }}
-          aria-hidden
-        >
-          {icon}
-        </span>
+        />
         <p className="v2-h3" style={{ margin: 0 }}>
           {title}
         </p>

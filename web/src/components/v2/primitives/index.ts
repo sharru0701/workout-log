@@ -8,6 +8,7 @@ export { V2Hairline } from "./hairline";
 
 export { V2IconBtn } from "./icon-btn";
 export type { V2IconBtnTone } from "./icon-btn";
+export { V2Icon } from "./v2-icon";
 
 export { V2PrimaryBtn } from "./primary-btn";
 export { V2SecondaryBtn } from "./secondary-btn";
