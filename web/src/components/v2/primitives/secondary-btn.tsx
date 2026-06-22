@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { V2Icon } from "./v2-icon";
 
 type CommonProps = {
   children: ReactNode;
@@ -65,13 +66,7 @@ export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
   const inner = (
     <>
       {icon && (
-        <span
-          className="material-symbols-outlined"
-          style={{ fontSize: "var(--v2-t-18)" }}
-          aria-hidden
-        >
-          {icon}
-        </span>
+        <V2Icon name={icon} style={{ fontSize: "var(--v2-t-18)" }} />
       )}
       {children}
     </>

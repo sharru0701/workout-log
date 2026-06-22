@@ -419,6 +419,12 @@
   opacity: 0.45;
 }
 
+/* 4) 원형(border-radius:50%) → 사각 셀. 터미널은 원형 도형이 없다.
+      로딩 스켈레톤 dot·avatar 등 인라인 50%를 셀로 정렬. */
+[data-theme="terminal"] [style*="border-radius: 50%"] {
+  border-radius: 0 !important;
+}
+
 /* ─── 타이포그래피 클래스 ─── */
 .v2-eyebrow {
   font-family: var(--v2-f-display);

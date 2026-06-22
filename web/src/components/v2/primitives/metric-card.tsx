@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { V2Card } from "./card";
+import { V2Icon } from "./v2-icon";
 
 export type V2MetricTone =
   | "neutral"
@@ -78,13 +79,16 @@ export function V2MetricCard({
                   : "var(--v2-ink-3)",
           }}
         >
-          <span className="material-symbols-outlined" style={{ fontSize: "var(--v2-t-14)" }} aria-hidden>
-            {trend.direction === "up"
-              ? "trending_up"
-              : trend.direction === "down"
-                ? "trending_down"
-                : "trending_flat"}
-          </span>
+          <V2Icon
+            name={
+              trend.direction === "up"
+                ? "trending_up"
+                : trend.direction === "down"
+                  ? "trending_down"
+                  : "trending_flat"
+            }
+            style={{ fontSize: "var(--v2-t-14)" }}
+          />
           <span className="v2-mono-label">{trend.text}</span>
         </div>
       ) : null}

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { V2Icon } from "./v2-icon";
 
 type V2SectionHeaderProps = {
   eyebrow?: string;
@@ -60,17 +61,14 @@ export function V2SectionHeader({
     >
       <span style={{ minWidth: 0, flex: 1 }}>{title}</span>
       {showIndicator ? (
-        <span
-          className="material-symbols-outlined"
-          aria-hidden
+        <V2Icon
+          name="unfold_more"
           style={{
             fontSize: "var(--v2-t-h3)",
             color: "var(--v2-ink-3)",
             flexShrink: 0,
           }}
-        >
-          unfold_more
-        </span>
+        />
       ) : null}
     </button>
   ) : (

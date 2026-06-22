@@ -7,6 +7,7 @@ import {
   type InputHTMLAttributes,
   type ReactNode,
 } from "react";
+import { V2Icon } from "./v2-icon";
 
 export type V2TextFieldSize = "md" | "sm";
 
@@ -106,17 +107,14 @@ export const V2TextField = forwardRef<HTMLInputElement, V2TextFieldProps>(
           }}
         >
           {icon ? (
-            <span
-              className="material-symbols-outlined"
+            <V2Icon
+              name={icon}
               style={{
                 color: "var(--v2-ink-3)",
                 fontSize: ICON_FONT_SIZE[size],
                 flexShrink: 0,
               }}
-              aria-hidden
-            >
-              {icon}
-            </span>
+            />
           ) : null}
           <input
             ref={ref}
