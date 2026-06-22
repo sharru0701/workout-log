@@ -353,6 +353,72 @@
   --chip-danger-border: transparent;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   terminal: 비-터미널 표현 중성화 ([data-theme="terminal"] 한정 → paper 무영향)
+   터미널은 즉시 렌더(no 모션) + 단색 셀(no 그라데이션)이 원칙. cascade로 색만
+   리스킨되는 화면에 남는 shimmer·진입 모션·iOS 토글을 TUI 표현에 맞게 교정한다.
+   blur(action-dock)·회전 스피너(v2-spin 미사용)·count-up·pull-to-refresh·
+   페이지 페이드·confetti는 terminal에서 TermShell로 대체되거나 미렌더라 제외.
+   ───────────────────────────────────────────────────────────── */
+
+/* 1) 모션 제거 — 모든 keyframe 애니메이션 즉시 종료. transition은 보존하므로
+      mode pill 120ms crossfade 등 의도된 상태 전환은 그대로 유지된다. */
+[data-theme="terminal"] *,
+[data-theme="terminal"] *::before,
+[data-theme="terminal"] *::after {
+  animation-duration: 0.001ms !important;
+  animation-delay: 0s !important;
+  animation-iteration-count: 1 !important;
+}
+
+/* 2) 로딩 스켈레톤 — 흐르는 그라데이션 shimmer → 정적 단색 셀.
+      .v2-skeleton(컴포넌트)과 loading.tsx 인라인(style*="skeleton-shimmer") 둘 다. */
+[data-theme="terminal"] .v2-skeleton,
+[data-theme="terminal"] [style*="skeleton-shimmer"] {
+  animation: none !important;
+  background-image: none !important;
+  background-color: var(--term-inset) !important;
+}
+
+/* 3) iOS 슬라이딩 토글 → 터미널 [ ]/[x] 체크박스. thumb 제거, track을 글리프
+      박스로 치환. 44px 터치 영역은 .v2-switch에서 보장. */
+[data-theme="terminal"] .v2-switch {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: flex-end;
+}
+[data-theme="terminal"] .v2-switch-track {
+  width: auto;
+  height: auto;
+  background: transparent !important;
+  box-shadow: none;
+}
+[data-theme="terminal"] .v2-switch-thumb {
+  display: none;
+}
+[data-theme="terminal"] .v2-switch-track::before {
+  content: "[ ]";
+  font-family: var(--term-mono);
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--term-dim);
+  white-space: pre;
+}
+[data-theme="terminal"]
+  .v2-switch
+  > input[type="checkbox"]:checked
+  ~ .v2-switch-track::before {
+  content: "[x]";
+  color: var(--term-amber);
+}
+[data-theme="terminal"]
+  .v2-switch
+  > input[type="checkbox"]:disabled
+  ~ .v2-switch-track::before {
+  opacity: 0.45;
+}
+
 /* ─── 타이포그래피 클래스 ─── */
 .v2-eyebrow {
   font-family: var(--v2-f-display);
