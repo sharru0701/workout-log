@@ -86,11 +86,12 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           border: "none",
           outline: "none",
           boxShadow: focused ? `inset 0 0 0 2px ${focusRing}` : undefined,
-          // terminal: paper의 18px bold 숫자(v2-num-sm) 대신 mono 일반 크기(과대 입력 영역 완화).
+          // terminal: paper의 18px bold(v2-num-sm) 대신 mono. fontSize는 16px 고정 —
+          // iOS Safari는 input 폰트 <16px면 focus 시 화면을 자동 확대(줌)한다. dense는 행 높이(s-7)로.
           ...(terminal
             ? {
                 fontFamily: "var(--term-mono)",
-                fontSize: "var(--v2-t-14)",
+                fontSize: "var(--v2-t-16)",
                 fontWeight: 500,
                 fontVariantNumeric: "tabular-nums",
               }
