@@ -47,20 +47,24 @@ export function PullToRefresh({
     let refreshing = false;
     let resetTimer = 0;
 
-    // 스크롤 컨테이너 — terminal은 ViewPane(내부 스크롤), paper는 document.
-    const scroller = () =>
-      isTerminal ? document.querySelector<HTMLElement>(".term-viewpane") : null;
-    const atTop = () =>
-      isTerminal
-        ? (scroller()?.scrollTop ?? 0) <= 0
-        : (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+    // 최상단 판정 — terminal은 외곽 minHeight:100dvh라 콘텐츠가 길면 실제 스크롤이
+    // document(body)에서 일어나고 ViewPane은 늘어나 scrollTop이 0으로 고정될 수 있다.
+    // 어느 쪽이 스크롤 컨테이너든 안전하도록 window·ViewPane 둘 다 최상단일 때만 PTR.
+    const atTop = () => {
+      const winTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
+      if (!isTerminal) return winTop;
+      const vp = document.querySelector<HTMLElement>(".term-viewpane");
+      return winTop && (vp?.scrollTop ?? 0) <= 0;
+    };
 
     // 열려 있는(=비활성 inert가 아닌) 바텀시트/다이얼로그가 있으면 PTR을 멈춘다.
     const modalOpen = () => Boolean(document.querySelector(".mobile-bottom-sheet:not([inert])"));
 
     // 당겨질 때 함께 끌려 내려오는 콘텐츠 — terminal은 ViewPane, paper는 .app-main.
     const getPage = () =>
-      isTerminal ? scroller() : document.querySelector<HTMLElement>(".app-main");
+      isTerminal
+        ? document.querySelector<HTMLElement>(".term-viewpane")
+        : document.querySelector<HTMLElement>(".app-main");
 
     // 손가락 이동량(dy) → 점진적 감쇠가 적용된 당김 거리. 당길수록 저항 증가.
     const damp = (dy: number) => {
@@ -136,9 +140,13 @@ export function PullToRefresh({
         else tracking = false;
         return;
       }
-      // 최상단에서 아래로 당기는 중 — 기본 스크롤/바운스 차단
+      // terminal은 콘텐츠 스크롤 제스처와 구분하기 위해 작은 데드존(민감도 완화) —
+      // 데드존 안에서는 아직 당김으로 잡지 않고 대기(브라우저 스크롤에 맡김).
+      const deadzone = isTerminal ? 14 : 0;
+      if (dy <= deadzone) return;
+      // 최상단에서 데드존 이상 당기는 중 — 기본 스크롤/바운스 차단
       e.preventDefault();
-      pull = damp(dy);
+      pull = damp(dy - deadzone);
       const node = elRef.current;
       if (node) {
         node.classList.add("is-dragging");
