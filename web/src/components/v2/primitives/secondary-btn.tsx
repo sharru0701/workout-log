@@ -116,7 +116,7 @@ function SecondaryBtnTerminal(props: ButtonProps | AnchorProps) {
     gap: "var(--v2-s-1)",
     width: full ? "100%" : undefined,
     minHeight: "var(--v2-touch)",
-    padding: "var(--v2-s-3) var(--v2-s-4)",
+    padding: "var(--v2-s-2) var(--v2-s-3)",
     background: "transparent",
     color: fg,
     border: "none",
