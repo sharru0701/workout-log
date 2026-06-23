@@ -77,7 +77,7 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
         style={{
           width: "100%",
           minWidth: 0,
-          minHeight: "var(--v2-touch)",
+          minHeight: terminal ? "var(--v2-s-7)" : "var(--v2-touch)",
           padding: "var(--v2-s-1) var(--v2-s-2)",
           borderRadius: "var(--v2-r-1)",
           background: bg,
@@ -90,7 +90,7 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           ...(terminal
             ? {
                 fontFamily: "var(--term-mono)",
-                fontSize: "var(--v2-t-16)",
+                fontSize: "var(--v2-t-14)",
                 fontWeight: 500,
                 fontVariantNumeric: "tabular-nums",
               }
