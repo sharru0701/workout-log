@@ -188,8 +188,8 @@ export function TermSetRow({ exercise, setIndex, onExerciseAction }: Props) {
         gridTemplateColumns: ROW_GRID,
         gap: "var(--v2-s-2)",
         alignItems: "center",
-        padding: "var(--v2-s-1) var(--v2-s-2)",
-        minHeight: "var(--v2-touch)",
+        padding: "0 var(--v2-s-2)",
+        minHeight: "var(--v2-s-7)",
         // active 행 = +1 표면 + amber 좌바(boxShadow inset, border 금지). No-Line 준수.
         background: rowActive ? "var(--term-sel)" : "transparent",
         boxShadow: rowActive
