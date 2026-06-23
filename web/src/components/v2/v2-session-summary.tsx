@@ -992,6 +992,18 @@ type SummaryData = {
 
 type TermStatTone = "gold" | "cyan";
 
+/**
+ * terminal 볼륨 표기. paper는 `formatVolumeShort`(예: "4.1k")의 숫자부에 "kg"를
+ * 따로 붙이지만, terminal에서는 인라인이라 "4.1k"+"kg"="4.1kkg"로 뭉개진다.
+ * 다른 TUI 뷰(home/stats/exercise-detail)의 formatKg와 동일하게 ≥1000은 톤(t),
+ * 그 미만은 그대로 kg로 단위를 한 번만 붙인다.
+ */
+function formatTermVolume(kg: number): string {
+  if (!Number.isFinite(kg) || kg <= 0) return "0kg";
+  if (kg >= 1000) return `${(kg / 1000).toFixed(1)}t`;
+  return `${Math.round(kg).toLocaleString()}kg`;
+}
+
 function TermSummaryCell({
   label,
   value,
@@ -1032,7 +1044,7 @@ function buildTermStatCells(
   const volume: TermStatCell = {
     key: "volume",
     label: ko ? "총 볼륨" : "volume",
-    value: `${formatVolumeShort(summary.totalVolume)}kg`,
+    value: formatTermVolume(summary.totalVolume),
     tone: "cyan",
   };
   const sets: TermStatCell = {
@@ -1093,7 +1105,7 @@ function termExerciseMetric(ex: ExerciseSummary, goal: ResolvedGoal): string {
     return `${ex.totalReps.toLocaleString()} reps`;
   }
   return ex.volumeKg > 0
-    ? `${formatVolumeShort(ex.volumeKg)}kg`
+    ? formatTermVolume(ex.volumeKg)
     : ex.topWeightKg > 0
       ? `${ex.topWeightKg.toLocaleString()}kg`
       : "—";
@@ -1105,7 +1117,7 @@ function termExerciseMetric(ex: ExerciseSummary, goal: ResolvedGoal): string {
  */
 function termExerciseSubMetric(ex: ExerciseSummary, goal: ResolvedGoal): string {
   if (goal === "strength") {
-    return ex.volumeKg > 0 ? `${formatVolumeShort(ex.volumeKg)}kg` : "";
+    return ex.volumeKg > 0 ? formatTermVolume(ex.volumeKg) : "";
   }
   // endurance / hypertrophy / general — top kg 병기(맨몸 suffix 포함)
   return ex.topWeightKg > 0
