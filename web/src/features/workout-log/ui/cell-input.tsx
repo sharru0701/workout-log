@@ -1,6 +1,7 @@
 "use client";
 
 import { forwardRef, useState, type KeyboardEvent } from "react";
+import { useThemeSkin } from "@/components/use-theme-skin";
 
 export type CellInputProps = {
   value: string;
@@ -33,6 +34,7 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
     },
     ref,
   ) {
+    const terminal = useThemeSkin() === "terminal";
     const [focused, setFocused] = useState(false);
     // 입력 중에는 사용자가 친 raw 문자열(draft)을 그대로 표시한다.
     // store의 weightKg는 매 입력마다 최소 플레이트 단위로 스냅되는데(예: 8 → 7.5),
@@ -71,7 +73,7 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           setFocused(false);
           setDraft(null);
         }}
-        className="v2-num-sm"
+        className={terminal ? undefined : "v2-num-sm"}
         style={{
           width: "100%",
           minWidth: 0,
@@ -84,6 +86,15 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           border: "none",
           outline: "none",
           boxShadow: focused ? `inset 0 0 0 2px ${focusRing}` : undefined,
+          // terminal: paper의 18px bold 숫자(v2-num-sm) 대신 mono 일반 크기(과대 입력 영역 완화).
+          ...(terminal
+            ? {
+                fontFamily: "var(--term-mono)",
+                fontSize: "var(--v2-t-16)",
+                fontWeight: 500,
+                fontVariantNumeric: "tabular-nums",
+              }
+            : {}),
         }}
       />
     );
