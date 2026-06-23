@@ -125,8 +125,10 @@ export function TermShell({
         </div>
       ) : null}
 
-      {/* ViewPane (swappable) */}
-      <div style={{ flex: 1, padding: "var(--v2-s-3)", overflow: "auto" }}>{children}</div>
+      {/* ViewPane (swappable) — .term-viewpane: PTR이 이 내부 스크롤 컨테이너를 추적/transform */}
+      <div className="term-viewpane" style={{ flex: 1, padding: "var(--v2-s-3)", overflow: "auto" }}>
+        {children}
+      </div>
 
       {/* StatusBar (mode · path · rolling stat) */}
       <div
