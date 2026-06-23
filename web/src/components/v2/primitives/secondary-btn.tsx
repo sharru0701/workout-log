@@ -1,6 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode } from "react";
+import { useThemeSkin } from "@/components/use-theme-skin";
 import { V2Icon } from "./v2-icon";
 
 type CommonProps = {
@@ -29,6 +30,8 @@ type AnchorProps = CommonProps & {
 };
 
 export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
+  const skin = useThemeSkin();
+  if (skin === "terminal") return <SecondaryBtnTerminal {...props} />;
   const { children, icon, full = false, style, className, tone = "neutral" } = props;
   const bg =
     tone === "danger"
@@ -90,6 +93,65 @@ export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
         cursor: props.disabled ? "not-allowed" : "pointer",
         opacity: props.disabled ? 0.5 : 1,
       }}
+    >
+      {inner}
+    </button>
+  );
+}
+
+// ─── terminal(ironlog) 변형 ─────────────────────────────────────────────────
+// paper의 솔리드 paper-2 박스 대신 TUI outline 박스: 투명 배경 · 사각 · mono ·
+// inset 1px line-box. danger tone은 red 글자·red outline. ▶ 프롬프트는 primary 전용.
+function SecondaryBtnTerminal(props: ButtonProps | AnchorProps) {
+  const { children, icon, full = false, style, className, tone = "neutral" } = props;
+  const danger = tone === "danger";
+  const disabled = props.as !== "a" && Boolean(props.disabled);
+  const fg = danger ? "var(--term-red)" : "var(--term-fg)";
+  const line = danger ? "var(--term-red)" : "var(--term-line-box)";
+  const baseStyle: CSSProperties = {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: "var(--v2-s-2)",
+    width: full ? "100%" : undefined,
+    minHeight: "var(--v2-touch)",
+    padding: "var(--v2-s-3) var(--v2-s-5)",
+    background: "transparent",
+    color: fg,
+    border: "none",
+    borderRadius: 0,
+    boxShadow: `inset 0 0 0 1px ${line}`,
+    fontFamily: "var(--term-mono)",
+    fontWeight: 500,
+    fontSize: "var(--v2-t-14)",
+    textDecoration: "none",
+    cursor: disabled ? "not-allowed" : "pointer",
+    opacity: disabled ? 0.5 : 1,
+    whiteSpace: "nowrap",
+    ...style,
+  };
+  const cls = ["v2-btn-secondary", className].filter(Boolean).join(" ");
+  const inner = (
+    <>
+      {icon && <V2Icon name={icon} style={{ fontSize: "var(--v2-t-16)" }} />}
+      {children}
+    </>
+  );
+
+  if (props.as === "a") {
+    return (
+      <a href={props.href} className={cls} style={baseStyle}>
+        {inner}
+      </a>
+    );
+  }
+  return (
+    <button
+      type={props.type ?? "button"}
+      onClick={props.onClick}
+      disabled={props.disabled}
+      className={cls}
+      style={baseStyle}
     >
       {inner}
     </button>
