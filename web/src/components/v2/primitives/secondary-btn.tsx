@@ -100,8 +100,9 @@ export function V2SecondaryBtn(props: ButtonProps | AnchorProps) {
 }
 
 // ─── terminal(ironlog) 변형 ─────────────────────────────────────────────────
-// paper의 솔리드 paper-2 박스 대신 TUI outline 박스: 투명 배경 · 사각 · mono ·
-// inset 1px line-box. danger tone은 red 글자·red outline. ▶ 프롬프트는 primary 전용.
+// 기존 terminal 키힌트 표준과 동일하게: bracket [ ] 텍스트 + 투명 + inset 1px outline.
+// primary와 달리 ▶ 프롬프트 없음, 테두리는 흐린 line-box(amber 강조는 primary 전용).
+// danger tone은 red 글자·red outline.
 function SecondaryBtnTerminal(props: ButtonProps | AnchorProps) {
   const { children, icon, full = false, style, className, tone = "neutral" } = props;
   const danger = tone === "danger";
@@ -112,10 +113,10 @@ function SecondaryBtnTerminal(props: ButtonProps | AnchorProps) {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "var(--v2-s-2)",
+    gap: "var(--v2-s-1)",
     width: full ? "100%" : undefined,
     minHeight: "var(--v2-touch)",
-    padding: "var(--v2-s-3) var(--v2-s-5)",
+    padding: "var(--v2-s-3) var(--v2-s-4)",
     background: "transparent",
     color: fg,
     border: "none",
@@ -133,8 +134,18 @@ function SecondaryBtnTerminal(props: ButtonProps | AnchorProps) {
   const cls = ["v2-btn-secondary", className].filter(Boolean).join(" ");
   const inner = (
     <>
-      {icon && <V2Icon name={icon} style={{ fontSize: "var(--v2-t-16)" }} />}
-      {children}
+      <span aria-hidden>[</span>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "var(--v2-s-2)",
+        }}
+      >
+        {icon && <V2Icon name={icon} style={{ fontSize: "var(--v2-t-16)" }} />}
+        {children}
+      </span>
+      <span aria-hidden>]</span>
     </>
   );
 

@@ -96,24 +96,25 @@ export function V2PrimaryBtn(props: ButtonProps | AnchorProps) {
 }
 
 // ─── terminal(ironlog) 변형 ─────────────────────────────────────────────────
-// paper의 amber 솔리드·둥근·그림자 블록 대신 TUI 키처럼: 사각·mono·그림자 없음.
-// enabled는 amber 반전(채움), disabled는 outline만. icon 없으면 ▶ 실행 프롬프트.
+// 기존 terminal 키힌트 표준과 동일하게: bracket [ ] 텍스트 + 투명 배경 + amber 글자·테두리.
+// amber 솔리드 풀블록은 CLI 미감과 멀어 제거(home [▶ 이어가기] 패턴과 정렬). icon 없으면 ▶ 프롬프트.
 function PrimaryBtnTerminal(props: ButtonProps | AnchorProps) {
   const { children, icon, full = false, style, className } = props;
   const disabled = props.as !== "a" && Boolean(props.disabled);
+  const accent = disabled ? "var(--term-ghost)" : "var(--term-amber)";
   const baseStyle: CSSProperties = {
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
-    gap: "var(--v2-s-2)",
+    gap: "var(--v2-s-1)",
     width: full ? "100%" : undefined,
     minHeight: "var(--v2-touch)",
-    padding: "var(--v2-s-3) var(--v2-s-5)",
-    background: disabled ? "transparent" : "var(--term-amber)",
-    color: disabled ? "var(--term-ghost)" : "var(--term-bg)",
+    padding: "var(--v2-s-3) var(--v2-s-4)",
+    background: "transparent",
+    color: accent,
     border: "none",
     borderRadius: 0,
-    boxShadow: disabled ? "inset 0 0 0 1px var(--term-line-box)" : "none",
+    boxShadow: `inset 0 0 0 1px ${accent}`,
     fontFamily: "var(--term-mono)",
     fontWeight: 600,
     fontSize: "var(--v2-t-16)",
@@ -126,12 +127,22 @@ function PrimaryBtnTerminal(props: ButtonProps | AnchorProps) {
   const cls = ["v2-btn-primary", className].filter(Boolean).join(" ");
   const inner = (
     <>
-      {icon ? (
-        <V2Icon name={icon} style={{ fontSize: "var(--v2-t-18)" }} />
-      ) : (
-        <span aria-hidden>▶</span>
-      )}
-      {children}
+      <span aria-hidden>[</span>
+      <span
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: "var(--v2-s-2)",
+        }}
+      >
+        {icon ? (
+          <V2Icon name={icon} style={{ fontSize: "var(--v2-t-18)" }} />
+        ) : (
+          <span aria-hidden>▶</span>
+        )}
+        {children}
+      </span>
+      <span aria-hidden>]</span>
     </>
   );
 
