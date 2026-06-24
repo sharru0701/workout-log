@@ -43,12 +43,15 @@ func TestSnapshot(t *testing.T) {
 func sampleTodayFrame() Frame {
 	f := NewFrame(nil)
 	l := f.views[vToday].(Log)
-	l.rows = []logRow{
-		{exercise: "Squat", weight: "100", reps: "5", done: true},
-		{exercise: "Squat", weight: "102.5", reps: "5", done: true},
-		{exercise: "Squat", weight: "105", reps: ""},
+	l.groups = []exGroup{
+		{name: "Squat", prev: "100×5", tgt: "102.5", sets: []setEntry{
+			{weight: "100", reps: "5", done: true},
+			{weight: "102.5", reps: "5", done: true},
+			{weight: "105", reps: ""},
+		}},
+		{name: "Bench Press", prev: "70×5", sets: []setEntry{{}}},
 	}
-	l.row, l.col = 2, colReps
+	l.gi, l.si, l.col = 0, 2, colReps
 	l.rest = restState{active: true, remaining: 48, total: 90}
 	f.views[vToday] = l
 	return f

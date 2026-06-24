@@ -15,8 +15,8 @@ func renderFrame(f Frame, w, h int) string {
 
 func TestFrameBootsToday(t *testing.T) {
 	out := renderFrame(NewFrame(nil), 60, 20)
-	// pure buffer (log table) + statusline (mode + buffer) + hint globals
-	for _, want := range []string{"EXERCISE", "NORMAL", "today", "space", "이동"} {
+	// boots into an empty today buffer + statusline (mode/buffer) + hint globals
+	for _, want := range []string{"운동", "NORMAL", "today", "space", "이동"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("frame missing %q:\n%s", want, out)
 		}

@@ -20,16 +20,29 @@ const defaultRestSeconds = 90
 type logCol int
 
 const (
-	colExercise logCol = iota
-	colWeight
+	colWeight logCol = iota
 	colReps
 )
 
-type logRow struct {
-	exercise string
-	weight   string // kept as text for inline editing
-	reps     string
-	done     bool
+type editTarget int
+
+const (
+	editNone editTarget = iota
+	editName
+	editCell
+)
+
+type setEntry struct {
+	weight string
+	reps   string
+	done   bool
+}
+
+type exGroup struct {
+	name string
+	prev string // "100×5" previous performance (filled when a plan/session loads)
+	tgt  string // target weight
+	sets []setEntry
 }
 
 type restState struct {
@@ -43,7 +56,19 @@ type saveResultMsg struct {
 	err    error
 }
 
-func saveCmd(c *api.Client, sets []api.WorkoutSet) tea.Cmd {
+func saveCmd(c *api.Client, groups []exGroup) tea.Cmd {
+	var sets []api.WorkoutSet
+	for _, g := range groups {
+		name := strings.TrimSpace(g.name)
+		for _, s := range g.sets {
+			if !s.done {
+				continue
+			}
+			w, _ := strconv.ParseFloat(s.weight, 64)
+			reps, _ := strconv.Atoi(s.reps)
+			sets = append(sets, api.WorkoutSet{ExerciseName: name, WeightKg: w, Reps: reps})
+		}
+	}
 	now := time.Now()
 	return func() tea.Msg {
 		id, err := c.CreateLog(context.Background(), api.CreateLogRequest{Sets: sets, PerformedAt: now})
@@ -55,15 +80,16 @@ func saveCmd(c *api.Client, sets []api.WorkoutSet) tea.Cmd {
 	}
 }
 
-// Log is the hero workout-logging view (2:log): a spreadsheet-style focus-chain
-// table. Navigate rows (j/k) and cells (h/l) in NORMAL; edit a cell inline in
-// INSERT. Completing a set arms the rest gauge and drops a fresh row.
+// Log is the today buffer: exercises grouped (a section header per exercise),
+// each holding its sets. Navigate sets with j/k, cells (weight/reps) with h/l,
+// edit inline in INSERT. `e` starts a new exercise.
 type Log struct {
 	client    *api.Client
-	rows      []logRow
-	row       int
+	groups    []exGroup
+	gi, si    int // active group / set index
 	col       logCol
 	editing   bool
+	target    editTarget
 	edit      textinput.Model
 	rest      restState
 	saving    bool
@@ -72,13 +98,10 @@ type Log struct {
 	w, h      int
 }
 
-func NewLog(client *api.Client) Log {
-	return Log{client: client, rows: []logRow{{}}}
-}
+func NewLog(client *api.Client) Log { return Log{client: client} }
 
-// Editing reports whether a cell is being edited (so the shell hands every key
-// to this view instead of treating digits as tab switches).
 func (l Log) Editing() bool { return l.editing }
+func (l Log) Init() tea.Cmd { return nil }
 
 func (l Log) Mode() Mode {
 	switch {
@@ -93,51 +116,43 @@ func (l Log) Mode() Mode {
 	}
 }
 
-func (l Log) StatusRight() string {
-	done := 0
-	for _, r := range l.rows {
-		if r.done {
-			done++
-		}
-	}
-	if done == 0 {
+func (l Log) Context() string {
+	if l.gi >= len(l.groups) {
 		return ""
 	}
-	return fmt.Sprintf("%d set%s", done, plural(done))
+	g := l.groups[l.gi]
+	if strings.TrimSpace(g.name) == "" {
+		return ""
+	}
+	return fmt.Sprintf("%s %d/%d", truncate(g.name, 12), l.si+1, len(g.sets))
 }
 
-// Context is the statusline middle: current exercise and set position.
-func (l Log) Context() string {
-	if len(l.rows) == 0 {
+func (l Log) StatusRight() string {
+	n := l.doneCount()
+	if n == 0 {
 		return ""
 	}
-	ex := strings.TrimSpace(l.rows[l.row].exercise)
-	if ex == "" {
-		return ""
-	}
-	total, pos := 0, 0
-	for i, r := range l.rows {
-		if strings.EqualFold(strings.TrimSpace(r.exercise), ex) {
-			total++
-			if i == l.row {
-				pos = total
-			}
-		}
-	}
-	return fmt.Sprintf("%s %d/%d", truncate(ex, 12), pos, total)
+	return fmt.Sprintf("%d set%s", n, plural(n))
 }
 
 func (l Log) Hints(int) string {
 	if l.editing {
-		return joinHints(hint("⏎", "완료"), hint("tab", "셀"), hint("esc", "취소"))
+		return joinHints(hint("⏎", "다음"), hint("tab", "셀"), hint("esc", "취소"))
 	}
-	// The full keymap (o/d/hjkl/r) is in the ? help overlay; the hint line keeps
-	// only the essentials so the frame's space/: globals always fit.
-	return joinHints(hint("i", "편집"), hint("x", "완료"), hint("s", "저장"))
+	return joinHints(hint("i", "편집"), hint("e", "운동"), hint("s", "저장"))
 }
 
-// Init satisfies Screen; the log loads no remote data on entry.
-func (l Log) Init() tea.Cmd { return nil }
+func (l Log) doneCount() int {
+	n := 0
+	for _, g := range l.groups {
+		for _, s := range g.sets {
+			if s.done {
+				n++
+			}
+		}
+	}
+	return n
+}
 
 func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch m := msg.(type) {
@@ -155,14 +170,11 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	case saveResultMsg:
 		l.saving = false
 		if m.err != nil {
-			l.status = "저장 실패: " + humanizeAuthErr(m.err)
-			l.statusErr = true
+			l.status, l.statusErr = "저장 실패: "+humanizeAuthErr(m.err), true
 			return l, nil
 		}
-		l.status = summarizePRs(m.detail)
-		l.statusErr = false
-		l.rows = []logRow{{}}
-		l.row, l.col = 0, colExercise
+		l.status, l.statusErr = summarizePRs(m.detail), false
+		l.groups, l.gi, l.si = nil, 0, 0
 		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
@@ -183,33 +195,30 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 	switch m.String() {
 	case "j", "down":
-		if l.row < len(l.rows)-1 {
-			l.row++
-		}
+		l.moveSet(1)
 	case "k", "up":
-		if l.row > 0 {
-			l.row--
-		}
+		l.moveSet(-1)
 	case "h", "left":
-		if l.col > colExercise {
-			l.col--
-		}
+		l.col = colWeight
 	case "l", "right":
-		if l.col < colReps {
-			l.col++
-		}
+		l.col = colReps
+	case "r":
+		l.rest.active = false
 	case "i", "enter":
-		return l.beginEdit()
+		if len(l.groups) == 0 {
+			return l.addExercise()
+		}
+		return l.beginEdit(editCell)
+	case "e":
+		return l.addExercise()
 	case "x":
 		return l.toggleDone()
 	case "o":
-		return l.addRow(), nil
+		return l.addSet()
 	case "d":
-		return l.deleteRow(), nil
+		return l.deleteSet()
 	case "s":
 		return l.save()
-	case "r":
-		l.rest.active = false
 	}
 	return l, nil
 }
@@ -217,153 +226,199 @@ func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 func (l Log) updateEditing(m tea.KeyPressMsg) (Log, tea.Cmd) {
 	switch m.String() {
 	case "esc":
-		l.editing = false
+		l.editing, l.target = false, editNone
 		return l, nil
 	case "enter":
-		l.writeCell()
+		l.writeEdit()
 		l.editing = false
-		if l.col == colReps {
-			return l.completeRow()
+		switch l.target {
+		case editName:
+			l.col = colWeight
+			return l.beginEdit(editCell)
+		case editCell:
+			if l.col == colWeight {
+				l.col = colReps
+				return l.beginEdit(editCell)
+			}
+			return l.completeSet()
 		}
-		l.col++
-		return l.beginEdit()
+		return l, nil
 	case "tab":
-		l.writeCell()
+		l.writeEdit()
 		l.editing = false
-		if l.col < colReps {
-			l.col++
+		if l.target == editName {
+			l.col = colWeight
+		} else if l.col == colWeight {
+			l.col = colReps
 		} else {
-			l.col = colExercise
+			l.col = colWeight
 		}
-		return l.beginEdit()
+		return l.beginEdit(editCell)
 	}
 	var cmd tea.Cmd
 	l.edit, cmd = l.edit.Update(m)
 	return l, cmd
 }
 
-func (l Log) beginEdit() (Log, tea.Cmd) {
-	ti := textinput.New()
-	ti.Prompt = ""
-	ti.SetVirtualCursor(true)
-	r := l.rows[l.row]
-	switch l.col {
-	case colExercise:
-		ti.SetWidth(13)
-		ti.SetValue(r.exercise)
-	case colWeight:
-		ti.SetWidth(7)
-		ti.SetValue(r.weight)
-	case colReps:
-		ti.SetWidth(4)
-		ti.SetValue(r.reps)
+func (l *Log) moveSet(dir int) {
+	if len(l.groups) == 0 {
+		return
 	}
-	l.edit = ti
-	l.editing = true
-	return l, l.edit.Focus()
-}
-
-func (l *Log) writeCell() {
-	v := strings.TrimSpace(l.edit.Value())
-	switch l.col {
-	case colExercise:
-		l.rows[l.row].exercise = v
-	case colWeight:
-		l.rows[l.row].weight = v
-	case colReps:
-		l.rows[l.row].reps = v
+	if dir > 0 {
+		if l.si < len(l.groups[l.gi].sets)-1 {
+			l.si++
+		} else if l.gi < len(l.groups)-1 {
+			l.gi, l.si = l.gi+1, 0
+		}
+	} else {
+		if l.si > 0 {
+			l.si--
+		} else if l.gi > 0 {
+			l.gi = l.gi - 1
+			l.si = len(l.groups[l.gi].sets) - 1
+		}
 	}
 }
 
-func (l Log) completeRow() (Log, tea.Cmd) {
-	r := l.rows[l.row]
-	if strings.TrimSpace(r.exercise) == "" || !validNum(r.weight) || !validInt(r.reps) {
-		l.status = "운동·무게·reps를 정확히 입력하세요"
-		l.statusErr = true
+func (l Log) addExercise() (Log, tea.Cmd) {
+	l.groups = append(l.groups, exGroup{sets: []setEntry{{}}})
+	l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
+	return l.beginEdit(editName)
+}
+
+func (l Log) addSet() (Log, tea.Cmd) {
+	if len(l.groups) == 0 {
+		return l.addExercise()
+	}
+	at := l.si + 1
+	sets := l.groups[l.gi].sets
+	ns := make([]setEntry, 0, len(sets)+1)
+	ns = append(ns, sets[:at]...)
+	ns = append(ns, setEntry{})
+	ns = append(ns, sets[at:]...)
+	l.groups[l.gi].sets = ns
+	l.si, l.col = at, colWeight
+	return l, nil
+}
+
+func (l Log) deleteSet() (Log, tea.Cmd) {
+	if len(l.groups) == 0 {
 		return l, nil
 	}
-	l.rows[l.row].done = true
-	l.status, l.statusErr = "", false
-	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
-	l.rows = append(l.rows, logRow{exercise: r.exercise})
-	l.row = len(l.rows) - 1
-	l.col = colWeight
-	return l.beginEdit()
+	if len(l.groups[l.gi].sets) <= 1 {
+		l.groups = append(l.groups[:l.gi], l.groups[l.gi+1:]...)
+		if l.gi >= len(l.groups) {
+			l.gi = len(l.groups) - 1
+		}
+		if l.gi < 0 {
+			l.gi = 0
+		}
+		l.si = 0
+		return l, nil
+	}
+	sets := l.groups[l.gi].sets
+	l.groups[l.gi].sets = append(sets[:l.si], sets[l.si+1:]...)
+	if l.si >= len(l.groups[l.gi].sets) {
+		l.si = len(l.groups[l.gi].sets) - 1
+	}
+	return l, nil
 }
 
 func (l Log) toggleDone() (Log, tea.Cmd) {
-	if l.rows[l.row].done {
-		l.rows[l.row].done = false
+	if len(l.groups) == 0 {
 		return l, nil
 	}
-	r := l.rows[l.row]
-	if strings.TrimSpace(r.exercise) == "" || !validNum(r.weight) || !validInt(r.reps) {
-		l.status = "완료하려면 운동·무게·reps가 필요합니다"
-		l.statusErr = true
+	s := &l.groups[l.gi].sets[l.si]
+	if s.done {
+		s.done = false
 		return l, nil
 	}
-	l.rows[l.row].done = true
+	if strings.TrimSpace(l.groups[l.gi].name) == "" || !validNum(s.weight) || !validInt(s.reps) {
+		l.status, l.statusErr = "완료하려면 무게·reps가 필요합니다", true
+		return l, nil
+	}
+	s.done = true
 	l.status, l.statusErr = "", false
 	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
 	return l, nil
 }
 
-func (l Log) addRow() Log {
-	ex := l.rows[l.row].exercise
-	at := l.row + 1
-	rows := make([]logRow, 0, len(l.rows)+1)
-	rows = append(rows, l.rows[:at]...)
-	rows = append(rows, logRow{exercise: ex})
-	rows = append(rows, l.rows[at:]...)
-	l.rows = rows
-	l.row, l.col = at, colWeight
-	return l
-}
-
-func (l Log) deleteRow() Log {
-	if len(l.rows) <= 1 {
-		l.rows = []logRow{{}}
-		l.row, l.col = 0, colExercise
-		return l
+func (l Log) completeSet() (Log, tea.Cmd) {
+	s := l.groups[l.gi].sets[l.si]
+	if strings.TrimSpace(l.groups[l.gi].name) == "" || !validNum(s.weight) || !validInt(s.reps) {
+		l.status, l.statusErr = "무게·reps를 정확히 입력하세요", true
+		return l, nil
 	}
-	rows := make([]logRow, 0, len(l.rows)-1)
-	rows = append(rows, l.rows[:l.row]...)
-	rows = append(rows, l.rows[l.row+1:]...)
-	l.rows = rows
-	if l.row >= len(l.rows) {
-		l.row = len(l.rows) - 1
-	}
-	return l
+	l.groups[l.gi].sets[l.si].done = true
+	l.status, l.statusErr = "", false
+	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
+	l.groups[l.gi].sets = append(l.groups[l.gi].sets, setEntry{})
+	l.si, l.col = len(l.groups[l.gi].sets)-1, colWeight
+	return l.beginEdit(editCell)
 }
 
 func (l Log) save() (Log, tea.Cmd) {
 	if l.saving {
 		return l, nil
 	}
-	var sets []api.WorkoutSet
-	for _, r := range l.rows {
-		if !r.done {
-			continue
-		}
-		w, _ := strconv.ParseFloat(r.weight, 64)
-		reps, _ := strconv.Atoi(r.reps)
-		sets = append(sets, api.WorkoutSet{ExerciseName: strings.TrimSpace(r.exercise), WeightKg: w, Reps: reps})
-	}
-	if len(sets) == 0 {
-		l.status = "완료된 세트가 없습니다 ([space]로 완료)"
-		l.statusErr = true
+	if l.doneCount() == 0 {
+		l.status, l.statusErr = "완료된 세트가 없습니다 (x로 완료)", true
 		return l, nil
 	}
-	l.saving = true
-	l.status, l.statusErr = "", false
-	return l, saveCmd(l.client, sets)
+	l.saving, l.status, l.statusErr = true, "", false
+	return l, saveCmd(l.client, l.groups)
+}
+
+func (l Log) beginEdit(t editTarget) (Log, tea.Cmd) {
+	ti := textinput.New()
+	ti.Prompt = ""
+	ti.SetVirtualCursor(true)
+	switch t {
+	case editName:
+		ti.SetWidth(16)
+		ti.SetValue(l.groups[l.gi].name)
+	case editCell:
+		s := l.groups[l.gi].sets[l.si]
+		if l.col == colWeight {
+			ti.SetWidth(6)
+			ti.SetValue(s.weight)
+		} else {
+			ti.SetWidth(4)
+			ti.SetValue(s.reps)
+		}
+	}
+	l.edit, l.editing, l.target = ti, true, t
+	return l, l.edit.Focus()
+}
+
+func (l *Log) writeEdit() {
+	v := strings.TrimSpace(l.edit.Value())
+	switch l.target {
+	case editName:
+		l.groups[l.gi].name = v
+	case editCell:
+		if l.col == colWeight {
+			l.groups[l.gi].sets[l.si].weight = v
+		} else {
+			l.groups[l.gi].sets[l.si].reps = v
+		}
+	}
 }
 
 // --- rendering ---
 
 func (l Log) Body(w, h int) string {
 	var b strings.Builder
-	b.WriteString(l.renderTable(w))
+	if len(l.groups) == 0 {
+		b.WriteString(lipgloss.NewStyle().Foreground(theme.Ghost).Render("오늘 기록이 비어 있습니다.\n\n"))
+		b.WriteString(hint("e", "운동 추가") + lipgloss.NewStyle().Foreground(theme.Dim).Render(" 로 시작"))
+	} else {
+		groups := make([]string, len(l.groups))
+		for gi, g := range l.groups {
+			groups[gi] = l.renderGroup(gi, g, w)
+		}
+		b.WriteString(strings.Join(groups, "\n\n"))
+	}
 	if l.rest.active {
 		b.WriteString("\n\n" + l.restBar(w))
 	}
@@ -377,81 +432,69 @@ func (l Log) Body(w, h int) string {
 	return lipgloss.NewStyle().Width(w).Height(h).Padding(1, 1).Render(b.String())
 }
 
-func (l Log) renderTable(w int) string {
-	showE1rm := w >= 46
-	exW := 13
-	if !showE1rm {
-		exW = 15
+func (l Log) renderGroup(gi int, g exGroup, w int) string {
+	var header string
+	if gi == l.gi && l.editing && l.target == editName {
+		header = l.edit.View()
+	} else {
+		name := g.name
+		if strings.TrimSpace(name) == "" {
+			name = "운동?"
+		}
+		header = lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render(strings.ToUpper(name))
+		ctx := ""
+		if g.prev != "" {
+			ctx = "prev " + g.prev
+		}
+		if g.tgt != "" {
+			if ctx != "" {
+				ctx += "  "
+			}
+			ctx += "tgt " + g.tgt
+		}
+		if ctx != "" {
+			header = justify(header, lipgloss.NewStyle().Foreground(theme.Dim).Render(ctx), w-2)
+		}
 	}
-	lines := []string{l.tableHeader(exW, showE1rm)}
-	prevEx := ""
-	for i, r := range l.rows {
-		lines = append(lines, l.tableRow(i, r, prevEx, exW, showE1rm))
-		prevEx = r.exercise
+
+	lines := []string{header}
+	for si, s := range g.sets {
+		lines = append(lines, l.renderSet(gi, si, s))
 	}
 	return strings.Join(lines, "\n")
 }
 
-func (l Log) tableHeader(exW int, showE1rm bool) string {
-	d := lipgloss.NewStyle().Foreground(theme.Dim)
-	cells := []string{
-		d.Width(3).Render("#"),
-		d.Width(exW).Render("EXERCISE"),
-		d.Width(7).Render("WEIGHT"),
-		d.Width(4).Render("REPS"),
+func (l Log) renderSet(gi, si int, s setEntry) string {
+	active := gi == l.gi && si == l.si
+	marker := "   "
+	if active {
+		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render(" › ")
 	}
-	if showE1rm {
-		cells = append(cells, d.Width(5).Render("e1RM"))
+	wcell := l.setCell(active, colWeight, orDot(s.weight), 6)
+	rcell := l.setCell(active, colReps, orDot(s.reps), 3)
+	sep := lipgloss.NewStyle().Foreground(theme.Dim).Render(" × ")
+
+	done := lipgloss.NewStyle().Foreground(theme.Ghost).Render("·")
+	if s.done {
+		done = lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone)
 	}
-	cells = append(cells, d.Render("✓"))
-	return "  " + strings.Join(cells, " ")
+	e1rm := ""
+	if v := setE1rm(s); v > 0 {
+		e1rm = lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" e%.0f", v))
+	}
+	return marker + wcell + sep + rcell + "   " + done + e1rm
 }
 
-func (l Log) tableRow(i int, r logRow, prevEx string, exW int, showE1rm bool) string {
-	marker := "  "
-	if i == l.row {
-		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render("▸ ")
-	}
-
-	idx := lipgloss.NewStyle().Foreground(theme.Dim).Width(3).Render(fmt.Sprintf("%02d", i+1))
-
-	exText, exStyle := r.exercise, lipgloss.NewStyle().Foreground(theme.Fg)
-	if r.exercise == "" {
-		exText, exStyle = "운동?", lipgloss.NewStyle().Foreground(theme.Ghost)
-	} else if r.exercise == prevEx {
-		exText, exStyle = "〃", lipgloss.NewStyle().Foreground(theme.Ghost)
-	}
-	ex := l.cell(i, colExercise, exText, exW, exStyle)
-
-	wt := l.cell(i, colWeight, orDot(r.weight), 7, lipgloss.NewStyle().Foreground(theme.Cyan))
-	rp := l.cell(i, colReps, orDot(r.reps), 4, lipgloss.NewStyle().Foreground(theme.Fg))
-
-	cells := []string{idx, ex, wt, rp}
-	if showE1rm {
-		e := ""
-		if v := rowE1rm(r); v > 0 {
-			e = fmt.Sprintf("%.0f", v)
-		}
-		cells = append(cells, lipgloss.NewStyle().Foreground(theme.Dim).Width(5).Render(e))
-	}
-	mark := lipgloss.NewStyle().Foreground(theme.Ghost).Render("·")
-	if r.done {
-		mark = lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone)
-	}
-	cells = append(cells, mark)
-
-	return marker + strings.Join(cells, " ")
-}
-
-// cell renders one table cell, showing the inline editor when it is the active
-// cell in INSERT, an amber highlight when active in NORMAL, else plain.
-func (l Log) cell(i int, c logCol, text string, width int, base lipgloss.Style) string {
-	active := i == l.row && c == l.col
-	if active && l.editing {
+func (l Log) setCell(active bool, c logCol, text string, width int) string {
+	if active && l.editing && l.target == editCell && l.col == c {
 		return l.edit.View()
 	}
-	if active {
+	if active && l.col == c {
 		return lipgloss.NewStyle().Foreground(theme.Amber).Width(width).Render(truncate(text, width))
+	}
+	base := lipgloss.NewStyle().Foreground(theme.Cyan)
+	if c == colReps {
+		base = lipgloss.NewStyle().Foreground(theme.Fg)
 	}
 	return base.Width(width).Render(truncate(text, width))
 }
@@ -502,10 +545,10 @@ func orDot(s string) string {
 	return s
 }
 
-func rowE1rm(r logRow) float64 {
-	w, err1 := strconv.ParseFloat(strings.TrimSpace(r.weight), 64)
-	reps, err2 := strconv.Atoi(strings.TrimSpace(r.reps))
-	if err1 != nil || err2 != nil || reps <= 0 {
+func setE1rm(s setEntry) float64 {
+	w, e1 := strconv.ParseFloat(strings.TrimSpace(s.weight), 64)
+	reps, e2 := strconv.Atoi(strings.TrimSpace(s.reps))
+	if e1 != nil || e2 != nil || reps <= 0 {
 		return 0
 	}
 	return w * (1 + float64(reps)/30.0) // Epley estimate (display only)
@@ -521,9 +564,6 @@ func validInt(s string) bool {
 	return err == nil && v > 0
 }
 
-func dim(s string) string { return lipgloss.NewStyle().Foreground(theme.Dim).Render(s) }
-
-// hint renders a vim-style keybind: the key in cyan, the action dimmed.
 func hint(k, label string) string {
 	return lipgloss.NewStyle().Foreground(theme.Cyan).Bold(true).Render(k) + " " +
 		lipgloss.NewStyle().Foreground(theme.Dim).Render(label)
