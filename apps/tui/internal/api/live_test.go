@@ -850,6 +850,25 @@ func TestLiveVolumeSeries(t *testing.T) {
 	t.Logf("volume series: %d week(s), total %.0fkg, bucket=%s", len(vs.Series), total, vs.Bucket)
 }
 
+// TestLiveForgotPassword verifies the reset-request endpoint accepts a request
+// (generic 200, regardless of whether the email exists). Skipped without env.
+func TestLiveForgotPassword(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live forgot-password test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Unknown address still returns a generic success (no existence leak).
+	if err := c.RequestPasswordReset(ctx, fmt.Sprintf("nobody+%d@example.com", time.Now().UnixNano())); err != nil {
+		t.Fatalf("RequestPasswordReset: %v", err)
+	}
+	t.Log("password reset request accepted (generic 200)")
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")

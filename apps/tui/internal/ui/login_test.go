@@ -69,3 +69,35 @@ func TestLoginSignupValidSubmits(t *testing.T) {
 		t.Error("a valid signup should produce a submit command")
 	}
 }
+
+func TestLoginForgotNeedsEmail(t *testing.T) {
+	l2, cmd := NewLogin(nil).requestReset()
+	if cmd != nil {
+		t.Error("reset with no email should not send")
+	}
+	if !strings.Contains(l2.err, "이메일") {
+		t.Errorf("err = %q, want email prompt", l2.err)
+	}
+}
+
+func TestLoginForgotSubmits(t *testing.T) {
+	l := NewLogin(nil)
+	l.email.SetValue("me@example.com")
+	l2, cmd := l.requestReset()
+	if cmd == nil || !l2.submitting {
+		t.Error("a valid email should request a reset")
+	}
+}
+
+func TestLoginForgotNotice(t *testing.T) {
+	l := NewLogin(nil)
+	l.submitting = true
+	nl, _ := l.Update(forgotResultMsg{})
+	if nl.submitting {
+		t.Error("submitting should clear after the reset result")
+	}
+	out := ansi.Strip(renderLogin(nl, 60, 18))
+	if !strings.Contains(out, "재설정 메일") {
+		t.Errorf("reset notice not rendered:\n%s", out)
+	}
+}

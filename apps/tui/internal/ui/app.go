@@ -50,6 +50,15 @@ func signupCmd(c *api.Client, email, password string) tea.Cmd {
 	}
 }
 
+// forgotResultMsg reports a password-reset request result (err set on failure).
+type forgotResultMsg struct{ err error }
+
+func forgotCmd(c *api.Client, email string) tea.Cmd {
+	return func() tea.Msg {
+		return forgotResultMsg{err: c.RequestPasswordReset(context.Background(), email)}
+	}
+}
+
 // App is the root model: it gates on auth (login) and then hands off to the
 // Frame (the workout buffer chrome).
 type App struct {

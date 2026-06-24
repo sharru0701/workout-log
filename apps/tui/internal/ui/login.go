@@ -21,6 +21,7 @@ type Login struct {
 	signup     bool
 	submitting bool
 	err        string
+	notice     string // password-reset confirmation (non-error)
 	w, h       int
 }
 
@@ -53,6 +54,14 @@ func (l Login) Update(msg tea.Msg) (Login, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		l.w, l.h = m.Width, m.Height
 		return l, nil
+	case forgotResultMsg:
+		l.submitting = false
+		if m.err != nil {
+			l.notice, l.err = "", humanizeAuthErr(m.err)
+			return l, nil
+		}
+		l.err, l.notice = "", "재설정 메일을 보냈습니다. 메일함을 확인하세요"
+		return l, nil
 	case tea.KeyPressMsg:
 		switch m.String() {
 		case "tab", "down", "shift+tab", "up":
@@ -60,8 +69,10 @@ func (l Login) Update(msg tea.Msg) (Login, tea.Cmd) {
 			return l, l.refocus()
 		case "ctrl+t":
 			l.signup = !l.signup
-			l.err = ""
+			l.err, l.notice = "", ""
 			return l, nil
+		case "ctrl+f":
+			return l.requestReset()
 		case "enter":
 			return l.submit()
 		}
@@ -91,11 +102,27 @@ func (l Login) submit() (Login, tea.Cmd) {
 		return l, nil
 	}
 	l.submitting = true
-	l.err = ""
+	l.err, l.notice = "", ""
 	if l.signup {
 		return l, signupCmd(l.client, email, pw)
 	}
 	return l, loginCmd(l.client, email, pw)
+}
+
+// requestReset sends a password-reset email for the entered address. Only the
+// email field is needed; the reset link itself is completed in a browser.
+func (l Login) requestReset() (Login, tea.Cmd) {
+	if l.submitting {
+		return l, nil
+	}
+	email := strings.TrimSpace(l.email.Value())
+	if email == "" {
+		l.err, l.notice = "이메일을 입력하세요", ""
+		return l, nil
+	}
+	l.submitting = true
+	l.err, l.notice = "", ""
+	return l, forgotCmd(l.client, email)
 }
 
 func (l *Login) refocus() tea.Cmd {
@@ -186,7 +213,9 @@ func (l Login) statusLine() string {
 		return lipgloss.NewStyle().Foreground(theme.Cyan).Render(action + " 중…")
 	case l.err != "":
 		return lipgloss.NewStyle().Foreground(theme.Red).Render(theme.GlyphFail + " " + l.err)
+	case l.notice != "":
+		return lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone + " " + l.notice)
 	default:
-		return lipgloss.NewStyle().Foreground(theme.Dim).Render("[⏎] " + action + "   [tab] 이동   [ctrl+t] " + toggle + "   [ctrl+c] 종료")
+		return lipgloss.NewStyle().Foreground(theme.Dim).Render("[⏎] " + action + "   [tab] 이동   [ctrl+t] " + toggle + "   [ctrl+f] 비번찾기")
 	}
 }

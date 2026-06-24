@@ -51,3 +51,10 @@ func (c *Client) Me(ctx context.Context) (*User, error) {
 func (c *Client) Logout(ctx context.Context) error {
 	return c.do(ctx, "POST", "/api/auth/logout", nil, nil)
 }
+
+// RequestPasswordReset sends a reset email if the address has an account. The
+// response is intentionally generic (no account-existence leak); only rate
+// limiting (429) surfaces as an error.
+func (c *Client) RequestPasswordReset(ctx context.Context, email string) error {
+	return c.do(ctx, "POST", "/api/auth/password/reset/request", map[string]string{"email": email}, nil)
+}
