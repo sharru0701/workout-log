@@ -34,6 +34,6 @@ func (p placeholder) Hints(int) string                 { return joinHints(hint("
 
 func (p placeholder) Body(w, h int) string {
 	heading := lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).Render("  " + strings.ToUpper(p.name))
-	sub := lipgloss.NewStyle().Foreground(theme.Ghost).Render("  (곧 제공 — post-MVP)")
+	sub := lipgloss.NewStyle().Foreground(theme.Ghost).Render("  준비 중…")
 	return lipgloss.NewStyle().Width(w).Height(h).Render("\n" + heading + "\n\n" + sub)
 }

@@ -151,7 +151,7 @@ func (m Shell) View() tea.View {
 		h = 24
 	}
 
-	const chromeRows = 4 // title + tabs + status + hints
+	const chromeRows = 3 // top bar + status + hints
 	bodyH := h - chromeRows
 	if bodyH < 1 {
 		bodyH = 1
@@ -160,8 +160,7 @@ func (m Shell) View() tea.View {
 	s := m.screens[m.active]
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
-		fitLine(m.titleBar(w), w),
-		fitLine(m.tabStrip(), w),
+		fitLine(m.topBar(w), w),
 		s.Body(w, bodyH),
 		fitLine(m.statusBar(w, s.Mode(), s.StatusRight()), w),
 		fitLine(s.Hints(w), w),
@@ -173,34 +172,31 @@ func (m Shell) View() tea.View {
 	return v
 }
 
-func (m Shell) titleBar(w int) string {
-	dot := func(c color.Color) string { return lipgloss.NewStyle().Foreground(c).Render("●") }
-	dots := dot(theme.Red) + " " + dot(theme.Amber) + " " + dot(theme.Green)
-	name := lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("ironlog")
-	path := lipgloss.NewStyle().Foreground(theme.Dim).Render(" · " + tabMeta[m.active].name)
-	clock := lipgloss.NewStyle().Foreground(theme.Dim).Render(m.now.Format("15:04:05"))
-	return justify(dots+"  "+name+path, clock, w)
-}
-
-func (m Shell) tabStrip() string {
-	parts := make([]string, len(tabMeta))
+// topBar is the single header line: tab segments (active inverted, tmux-style)
+// with the app name on wide terminals and a HH:MM clock on the right.
+func (m Shell) topBar(w int) string {
+	tabs := make([]string, len(tabMeta))
 	for i, t := range tabMeta {
-		key := lipgloss.NewStyle().Foreground(theme.Cyan).Render(t.key)
-		nameStyle := lipgloss.NewStyle().Foreground(theme.Dim)
-		marker := " "
 		if Tab(i) == m.active {
-			nameStyle = lipgloss.NewStyle().Foreground(theme.Amber).Bold(true)
-			marker = lipgloss.NewStyle().Foreground(theme.Amber).Render("*")
+			tabs[i] = lipgloss.NewStyle().Background(theme.Amber).Foreground(theme.Bg).Bold(true).Render(" " + t.name + " ")
+		} else {
+			tabs[i] = lipgloss.NewStyle().Foreground(theme.Dim).Render(t.name)
 		}
-		parts[i] = key + ":" + nameStyle.Render(t.name) + marker
 	}
-	return strings.Join(parts, " ")
+	left := strings.Join(tabs, "  ")
+	if w >= 52 {
+		left = lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("ironlog") + "   " + left
+	}
+	clock := lipgloss.NewStyle().Foreground(theme.Dim).Render(m.now.Format("15:04"))
+	return justify(left, clock, w)
 }
 
+// statusBar shows a filled mode segment (airline-style) and right-aligned
+// screen context.
 func (m Shell) statusBar(w int, mode Mode, right string) string {
-	pill := lipgloss.NewStyle().Foreground(mode.Tone).Bold(true).Render("-- " + mode.Label + " --")
+	seg := lipgloss.NewStyle().Background(mode.Tone).Foreground(theme.Bg).Bold(true).Render(" " + mode.Label + " ")
 	rightText := lipgloss.NewStyle().Foreground(theme.Dim).Render(right)
-	return justify(pill, rightText, w)
+	return justify(seg, rightText, w)
 }
 
 // justify places left and right text on one line padded to width w.

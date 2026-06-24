@@ -113,7 +113,7 @@ func (l Log) Hints(w int) string {
 	if w < 46 {
 		return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("s", "저장"))
 	}
-	return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("o", "행"), hint("s", "저장"), hint("hjkl", "이동"))
+	return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("o", "행"), hint("s", "저장"), hint("hjkl", "이동"), hint("1-5", "탭"))
 }
 
 // Init satisfies Screen; the log loads no remote data on entry.
@@ -457,8 +457,8 @@ func (l Log) restBar(w int) string {
 		tone = theme.Red
 	}
 	gauge := lipgloss.NewStyle().Foreground(tone).Render(strings.Repeat("█", filled) + strings.Repeat("░", cells-filled))
-	label := lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" rest %d:%02d  [r]skip", l.rest.remaining/60, l.rest.remaining%60))
-	return "▕" + gauge + "▏" + label
+	clock := lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" rest %d:%02d  ", l.rest.remaining/60, l.rest.remaining%60))
+	return "▕" + gauge + "▏" + clock + hint("r", "skip")
 }
 
 func summarizePRs(log *api.LogDetail) string {
@@ -503,8 +503,9 @@ func validInt(s string) bool {
 
 func dim(s string) string { return lipgloss.NewStyle().Foreground(theme.Dim).Render(s) }
 
+// hint renders a vim-style keybind: the key in cyan, the action dimmed.
 func hint(k, label string) string {
-	return lipgloss.NewStyle().Foreground(theme.Cyan).Render("["+k+"]") +
+	return lipgloss.NewStyle().Foreground(theme.Cyan).Bold(true).Render(k) + " " +
 		lipgloss.NewStyle().Foreground(theme.Dim).Render(label)
 }
 

@@ -72,7 +72,7 @@ func (m Home) StatusRight() string {
 }
 
 func (m Home) Hints(int) string {
-	return joinHints(hint("r", "새로고침"), hint("2", "로깅"), hint("1-5", "탭"))
+	return joinHints(hint("r", "새로고침"), hint("1-5", "탭"), hint("q", "종료"))
 }
 
 func (m Home) Editing() bool { return false }
