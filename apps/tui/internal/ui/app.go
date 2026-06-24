@@ -43,6 +43,13 @@ func loginCmd(c *api.Client, email, password string) tea.Cmd {
 	}
 }
 
+func signupCmd(c *api.Client, email, password string) tea.Cmd {
+	return func() tea.Msg {
+		u, err := c.Signup(context.Background(), api.SignupRequest{Email: email, Password: password})
+		return loginResultMsg{user: u, err: err}
+	}
+}
+
 // App is the root model: it gates on auth (login) and then hands off to the
 // Frame (the workout buffer chrome).
 type App struct {

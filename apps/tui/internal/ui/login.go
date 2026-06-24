@@ -11,12 +11,14 @@ import (
 	"github.com/sharru0701/workout-log/apps/tui/internal/theme"
 )
 
-// Login is the email/password sign-in view.
+// Login is the email/password sign-in view. ctrl+t toggles to signup, so a new
+// user can create an account without leaving the TUI.
 type Login struct {
 	email      textinput.Model
 	password   textinput.Model
 	client     *api.Client
 	focus      int // 0 email, 1 password
+	signup     bool
 	submitting bool
 	err        string
 	w, h       int
@@ -56,6 +58,10 @@ func (l Login) Update(msg tea.Msg) (Login, tea.Cmd) {
 		case "tab", "down", "shift+tab", "up":
 			l.focus = (l.focus + 1) % 2
 			return l, l.refocus()
+		case "ctrl+t":
+			l.signup = !l.signup
+			l.err = ""
+			return l, nil
 		case "enter":
 			return l.submit()
 		}
@@ -80,8 +86,15 @@ func (l Login) submit() (Login, tea.Cmd) {
 		l.err = "이메일과 비밀번호를 입력하세요"
 		return l, nil
 	}
+	if l.signup && len(pw) < 8 {
+		l.err = "비밀번호는 8자 이상이어야 합니다"
+		return l, nil
+	}
 	l.submitting = true
 	l.err = ""
+	if l.signup {
+		return l, signupCmd(l.client, email, pw)
+	}
 	return l, loginCmd(l.client, email, pw)
 }
 
@@ -107,6 +120,8 @@ func humanizeAuthErr(err error) string {
 		return ""
 	case api.IsUnauthorized(err):
 		return "이메일 또는 비밀번호가 올바르지 않습니다"
+	case api.IsConflict(err):
+		return "이미 가입된 이메일입니다"
 	case api.IsRateLimited(err):
 		return "요청이 너무 많습니다. 잠시 후 다시 시도하세요"
 	default:
@@ -123,8 +138,12 @@ func (l Login) View() tea.View {
 		h = 18
 	}
 
+	mode := "login"
+	if l.signup {
+		mode = "signup"
+	}
 	title := lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("ironlog")
-	sub := lipgloss.NewStyle().Foreground(theme.Dim).Render("terminal · login")
+	sub := lipgloss.NewStyle().Foreground(theme.Dim).Render("terminal · " + mode)
 
 	form := lipgloss.JoinVertical(
 		lipgloss.Left,
@@ -158,12 +177,16 @@ func (l Login) field(label string, ti textinput.Model, focused bool) string {
 }
 
 func (l Login) statusLine() string {
+	action, toggle := "로그인", "가입"
+	if l.signup {
+		action, toggle = "가입", "로그인"
+	}
 	switch {
 	case l.submitting:
-		return lipgloss.NewStyle().Foreground(theme.Cyan).Render("로그인 중…")
+		return lipgloss.NewStyle().Foreground(theme.Cyan).Render(action + " 중…")
 	case l.err != "":
 		return lipgloss.NewStyle().Foreground(theme.Red).Render(theme.GlyphFail + " " + l.err)
 	default:
-		return lipgloss.NewStyle().Foreground(theme.Dim).Render("[⏎] 로그인   [tab] 이동   [ctrl+c] 종료")
+		return lipgloss.NewStyle().Foreground(theme.Dim).Render("[⏎] " + action + "   [tab] 이동   [ctrl+t] " + toggle + "   [ctrl+c] 종료")
 	}
 }
