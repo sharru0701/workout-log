@@ -381,6 +381,91 @@ func TestLivePlanFlow(t *testing.T) {
 	t.Logf("generated session: %d exercises", len(sess.Snapshot.Exercises))
 }
 
+// TestLiveChangePassword proves the password-change round-trip: signup, change
+// the password, and confirm the rotated cookie keeps the client authenticated
+// while the old password stops working and the new one logs in. Skipped without
+// env. Uses a throwaway account, so there is no side effect on real data.
+func TestLiveChangePassword(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live change-password test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-pw+%d@example.com", time.Now().UnixNano())
+	const oldPw, newPw = "spike-passw0rd", "spike-passw0rd-2"
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: oldPw}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	oldTok := c.SessionToken()
+
+	if err := c.ChangePassword(ctx, oldPw, newPw); err != nil {
+		t.Fatalf("ChangePassword: %v", err)
+	}
+	// The server revokes all sessions and issues a fresh cookie on this response;
+	// the jar must absorb it so the same client stays authenticated.
+	if c.SessionToken() == oldTok {
+		t.Error("expected the session cookie to rotate after a password change")
+	}
+	if u, err := c.Me(ctx); err != nil || u == nil {
+		t.Fatalf("client lost its session after password change: u=%v err=%v", u, err)
+	}
+	t.Log("password changed; rotated cookie kept the client authenticated")
+
+	if cBad, _ := New(base); true {
+		if _, err := cBad.Login(ctx, email, oldPw); !IsUnauthorized(err) {
+			t.Errorf("old password should be rejected, got err=%v", err)
+		}
+	}
+	cNew, _ := New(base)
+	if _, err := cNew.Login(ctx, email, newPw); err != nil {
+		t.Fatalf("new password should log in: %v", err)
+	}
+	t.Log("old password rejected, new password accepted")
+}
+
+// TestLiveDeleteAccount proves the account-deletion path against a throwaway
+// account: a wrong password is rejected (401), the correct one deletes the
+// account, and the session is then gone server-side. Skipped without env.
+func TestLiveDeleteAccount(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live delete-account test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-del+%d@example.com", time.Now().UnixNano())
+	const pw = "spike-passw0rd"
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: pw}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+
+	if err := c.DeleteAccount(ctx, "wrong-password"); !IsUnauthorized(err) {
+		t.Errorf("wrong password should be 401, got %v", err)
+	}
+	if u, err := c.Me(ctx); err != nil || u == nil {
+		t.Fatalf("account should survive a failed delete: u=%v err=%v", u, err)
+	}
+
+	if err := c.DeleteAccount(ctx, pw); err != nil {
+		t.Fatalf("DeleteAccount: %v", err)
+	}
+	if u, _ := c.Me(ctx); u != nil {
+		t.Errorf("expected no user after deletion, got %s", u.Email)
+	}
+	cRe, _ := New(base)
+	if _, err := cRe.Login(ctx, email, pw); err == nil {
+		t.Error("deleted credentials should no longer log in")
+	}
+	t.Log("account deleted: session gone and credentials rejected")
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")
