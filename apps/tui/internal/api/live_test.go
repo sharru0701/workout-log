@@ -89,3 +89,53 @@ func TestLiveAuthSpike(t *testing.T) {
 	}
 	t.Logf("login ok as %s", li.Email)
 }
+
+// TestLiveCreateLog proves the A4 write path: signup, save a workout, and read
+// back the server-computed result (PR detection). Skipped without the env var.
+func TestLiveCreateLog(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live create-log test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-log+%d@example.com", time.Now().UnixNano())
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: "spike-passw0rd", DisplayName: "TUI Log"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+
+	id, err := c.CreateLog(ctx, CreateLogRequest{
+		PerformedAt: time.Now(),
+		Sets: []WorkoutSet{
+			{ExerciseName: "Squat", WeightKg: 100, Reps: 5},
+			{ExerciseName: "Squat", WeightKg: 102.5, Reps: 5},
+		},
+	})
+	if err != nil {
+		t.Fatalf("CreateLog: %v", err)
+	}
+	if id == "" {
+		t.Fatal("created log has no id")
+	}
+	detail, err := c.GetLog(ctx, id)
+	if err != nil {
+		t.Fatalf("GetLog: %v", err)
+	}
+	t.Logf("created log %s, %d PR(s)", id, len(detail.PersonalRecords))
+	for _, pr := range detail.PersonalRecords {
+		t.Logf("  [PR] %s e1RM=%.1f (+%.1f) top=%.1fkg×%d",
+			pr.ExerciseName, float64(pr.EstOneRm), float64(pr.DeltaE1rm), float64(pr.TopWeightKg), pr.TopReps)
+	}
+
+	logs, err := c.ListLogs(ctx, ListLogsParams{Limit: 5})
+	if err != nil {
+		t.Fatalf("ListLogs: %v", err)
+	}
+	if len(logs) == 0 {
+		t.Fatal("expected the created log to appear in the list")
+	}
+	t.Logf("list shows %d log(s) after create", len(logs))
+}

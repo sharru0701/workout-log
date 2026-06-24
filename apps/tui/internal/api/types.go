@@ -2,8 +2,28 @@ package api
 
 import (
 	"encoding/json"
+	"strconv"
+	"strings"
 	"time"
 )
+
+// Float64 tolerates JSON numbers that arrive as either bare numbers or strings
+// (Postgres numeric columns serialize as strings via node-postgres).
+type Float64 float64
+
+func (f *Float64) UnmarshalJSON(b []byte) error {
+	s := strings.Trim(string(b), `"`)
+	if s == "" || s == "null" {
+		*f = 0
+		return nil
+	}
+	v, err := strconv.ParseFloat(s, 64)
+	if err != nil {
+		return err
+	}
+	*f = Float64(v)
+	return nil
+}
 
 // User is the authenticated account as returned by /api/auth/*.
 type User struct {
@@ -16,12 +36,44 @@ type User struct {
 	Fallback bool `json:"fallback"`
 }
 
-// LogItem is one workout session. Sets are kept raw for the auth spike; the
-// hero logging view (A4) decodes them once the real set shape is exercised
-// (weightKg may arrive as a numeric string from Postgres).
+// WorkoutSet is one logged set (also used as the create-log request element).
+type WorkoutSet struct {
+	ExerciseID   string  `json:"exerciseId,omitempty"`
+	ExerciseName string  `json:"exerciseName"`
+	SetNumber    int     `json:"setNumber,omitempty"`
+	Reps         int     `json:"reps"`
+	WeightKg     float64 `json:"weightKg"`
+	RPE          *int    `json:"rpe,omitempty"`
+	IsExtra      bool    `json:"isExtra,omitempty"`
+}
+
+// LogItem is one workout session in a list response.
 type LogItem struct {
 	ID          string          `json:"id"`
 	PlanID      *string         `json:"planId"`
 	PerformedAt time.Time       `json:"performedAt"`
 	Sets        json.RawMessage `json:"sets"`
+}
+
+// CreateLogRequest is the POST /api/logs body.
+type CreateLogRequest struct {
+	Sets        []WorkoutSet `json:"sets"`
+	PerformedAt time.Time    `json:"performedAt"`
+	Timezone    string       `json:"timezone,omitempty"`
+	Notes       string       `json:"notes,omitempty"`
+}
+
+// PersonalRecord is a server-detected PR (Epley e1RM) returned on log create.
+type PersonalRecord struct {
+	ExerciseName string  `json:"exerciseName"`
+	TopWeightKg  Float64 `json:"topWeightKg"`
+	TopReps      int     `json:"topReps"`
+	EstOneRm     Float64 `json:"estOneRm"`
+	DeltaE1rm    Float64 `json:"deltaE1rm"`
+}
+
+// LogDetail is the GET /api/logs/[id] item, including server-detected PRs.
+type LogDetail struct {
+	ID              string           `json:"id"`
+	PersonalRecords []PersonalRecord `json:"personalRecords"`
 }

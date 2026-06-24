@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
+	"github.com/sharru0701/workout-log/apps/tui/internal/api"
 	"github.com/sharru0701/workout-log/apps/tui/internal/theme"
 )
 
@@ -34,7 +35,7 @@ var tabMeta = []struct {
 	{"5", "set"},
 }
 
-// Mode is the status-bar mode label and its tone color (idle/logging/rest/...).
+// Mode is the status-bar label and its tone color (idle/logging/rest/...).
 type Mode struct {
 	Label string
 	Tone  color.Color
@@ -49,13 +50,13 @@ type Shell struct {
 	height int
 	now    time.Time
 	active Tab
-	mode   Mode
-	status string // statusRight text
+	client *api.Client
+	log    Log
 }
 
-// NewShell returns the shell with the log tab focused by default.
-func NewShell() Shell {
-	return Shell{active: TabLog, mode: ModeNormal, now: time.Now()}
+// NewShell builds the shell with the log tab focused by default.
+func NewShell(client *api.Client) Shell {
+	return Shell{active: TabLog, now: time.Now(), client: client, log: NewLog(client)}
 }
 
 type tickMsg time.Time
@@ -64,32 +65,60 @@ func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg(t) })
 }
 
-// Init starts the 1s clock tick.
+// Init starts the 1s clock tick (also drives the rest countdown).
 func (m Shell) Init() tea.Cmd { return tick() }
 
-// Update handles resize, the clock tick, and tab/quit keys.
 func (m Shell) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
+		var cmd tea.Cmd
+		m.log, cmd = m.log.Update(msg)
+		return m, cmd
 	case tickMsg:
 		m.now = time.Time(msg)
+		m.log = m.log.tickRest()
 		return m, tick()
 	case tea.KeyPressMsg:
+		// In INSERT mode the log view owns every key (so digits edit fields
+		// rather than switching tabs).
+		if m.active == TabLog && m.log.Editing() {
+			var cmd tea.Cmd
+			m.log, cmd = m.log.Update(msg)
+			return m, cmd
+		}
 		switch msg.String() {
-		case "q", "ctrl+c":
+		case "q":
 			return m, tea.Quit
 		case "1":
 			m.active = TabHome
+			return m, nil
 		case "2":
 			m.active = TabLog
+			return m, nil
 		case "3":
 			m.active = TabStats
+			return m, nil
 		case "4":
 			m.active = TabCal
+			return m, nil
 		case "5":
 			m.active = TabSettings
+			return m, nil
 		}
+		if m.active == TabLog {
+			var cmd tea.Cmd
+			m.log, cmd = m.log.Update(msg)
+			return m, cmd
+		}
+		return m, nil
+	}
+
+	// other messages (save result, cursor blink, …) → active view
+	if m.active == TabLog {
+		var cmd tea.Cmd
+		m.log, cmd = m.log.Update(msg)
+		return m, cmd
 	}
 	return m, nil
 }
@@ -111,12 +140,13 @@ func (m Shell) View() tea.View {
 		bodyH = 1
 	}
 
+	mode, right := m.statusContext()
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
 		m.titleBar(w),
 		m.tabStrip(),
-		m.viewPane(w, bodyH),
-		m.statusBar(w),
+		m.paneBody(w, bodyH),
+		m.statusBar(w, mode, right),
 		m.keyHint(),
 	)
 
@@ -124,6 +154,24 @@ func (m Shell) View() tea.View {
 	v.BackgroundColor = theme.Bg
 	v.AltScreen = true
 	return v
+}
+
+func (m Shell) statusContext() (Mode, string) {
+	if m.active == TabLog {
+		return m.log.Mode(), m.log.StatusRight()
+	}
+	return ModeNormal, ""
+}
+
+func (m Shell) paneBody(w, h int) string {
+	if m.active == TabLog {
+		return m.log.Body(w, h)
+	}
+	heading := lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).
+		Render("  " + strings.ToUpper(tabMeta[m.active].name))
+	sub := lipgloss.NewStyle().Foreground(theme.Ghost).Render("  (곧 제공 — post-MVP)")
+	body := "\n" + heading + "\n\n" + sub
+	return lipgloss.NewStyle().Width(w).Height(h).Render(body)
 }
 
 func (m Shell) titleBar(w int) string {
@@ -150,32 +198,17 @@ func (m Shell) tabStrip() string {
 	return strings.Join(parts, " ")
 }
 
-func (m Shell) viewPane(w, h int) string {
-	heading := lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).
-		Render("  " + strings.ToUpper(tabMeta[m.active].name))
-	sub := lipgloss.NewStyle().Foreground(theme.Ghost).
-		Render("  (placeholder — A2 shell skeleton)")
-	body := "\n" + heading + "\n\n" + sub
-	return lipgloss.NewStyle().Width(w).Height(h).Render(body)
-}
-
-func (m Shell) statusBar(w int) string {
-	pill := lipgloss.NewStyle().Foreground(m.mode.Tone).Bold(true).
-		Render("-- " + m.mode.Label + " --")
-	right := lipgloss.NewStyle().Foreground(theme.Dim).Render(m.status)
-	return justify(pill, right, w)
+func (m Shell) statusBar(w int, mode Mode, right string) string {
+	pill := lipgloss.NewStyle().Foreground(mode.Tone).Bold(true).Render("-- " + mode.Label + " --")
+	rightText := lipgloss.NewStyle().Foreground(theme.Dim).Render(right)
+	return justify(pill, rightText, w)
 }
 
 func (m Shell) keyHint() string {
-	hint := func(k, label string) string {
-		return lipgloss.NewStyle().Foreground(theme.Cyan).Render("["+k+"]") +
-			lipgloss.NewStyle().Foreground(theme.Dim).Render(" "+label)
+	if m.active == TabLog {
+		return m.log.Hints()
 	}
-	return strings.Join([]string{
-		hint("1-5", "tab"),
-		hint("?", "help"),
-		hint("q", "quit"),
-	}, "  ")
+	return joinHints(hint("1-5", "탭"), hint("?", "help"), hint("q", "종료"))
 }
 
 // justify places left and right text on one line padded to width w.

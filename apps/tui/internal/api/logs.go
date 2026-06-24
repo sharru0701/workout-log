@@ -38,3 +38,29 @@ func (c *Client) ListLogs(ctx context.Context, p ListLogsParams) ([]LogItem, err
 	}
 	return out.Items, nil
 }
+
+// CreateLog saves a workout and returns the new log id. The POST response is
+// {log, progression}; PRs are computed on the read path, so fetch them via
+// GetLog.
+func (c *Client) CreateLog(ctx context.Context, req CreateLogRequest) (string, error) {
+	var out struct {
+		Log struct {
+			ID string `json:"id"`
+		} `json:"log"`
+	}
+	if err := c.do(ctx, "POST", "/api/logs", req, &out); err != nil {
+		return "", err
+	}
+	return out.Log.ID, nil
+}
+
+// GetLog fetches one log with its server-detected personal records.
+func (c *Client) GetLog(ctx context.Context, id string) (*LogDetail, error) {
+	var out struct {
+		Item LogDetail `json:"item"`
+	}
+	if err := c.do(ctx, "GET", "/api/logs/"+id, nil, &out); err != nil {
+		return nil, err
+	}
+	return &out.Item, nil
+}

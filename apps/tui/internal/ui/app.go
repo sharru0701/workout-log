@@ -61,7 +61,7 @@ func NewApp(cfg config.Config, client *api.Client) App {
 		cfg:    cfg,
 		client: client,
 		login:  NewLogin(client),
-		shell:  NewShell(),
+		shell:  NewShell(client),
 	}
 	if tok := cfg.SessionToken(); tok != "" {
 		client.SetSessionToken(tok)

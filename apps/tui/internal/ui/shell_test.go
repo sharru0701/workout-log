@@ -14,8 +14,9 @@ func render(m Shell, w, h int) string {
 }
 
 func TestShellRenders(t *testing.T) {
-	out := render(NewShell(), 80, 24)
-	for _, want := range []string{"ironlog", "home", "log", "stats", "cal", "set", "NORMAL", "tab", "quit"} {
+	out := render(NewShell(nil), 80, 24)
+	// chrome (tabs, status) + the default log pane (table header) + footer hint
+	for _, want := range []string{"ironlog", "home", "log", "stats", "cal", "set", "NORMAL", "EXERCISE", "종료"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("shell output missing %q", want)
 		}
@@ -24,7 +25,7 @@ func TestShellRenders(t *testing.T) {
 
 func TestShellFillsHeight(t *testing.T) {
 	const h = 24
-	out := render(NewShell(), 80, h)
+	out := render(NewShell(nil), 80, h)
 	lines := strings.Count(out, "\n") + 1
 	if lines != h {
 		t.Errorf("expected %d rendered lines, got %d", h, lines)
@@ -32,7 +33,7 @@ func TestShellFillsHeight(t *testing.T) {
 }
 
 func TestTabSwitchHeading(t *testing.T) {
-	m := NewShell()
+	m := NewShell(nil)
 	m.active = TabStats
 	out := render(m, 80, 24)
 	if !strings.Contains(out, "STATS") {
