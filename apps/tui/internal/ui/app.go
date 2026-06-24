@@ -26,6 +26,9 @@ type loginResultMsg struct {
 	err  error
 }
 
+// loggedOutMsg returns to the login gate (emitted by the :logout command).
+type loggedOutMsg struct{}
+
 func authCheckCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
 		u, _ := c.Me(context.Background())
@@ -110,6 +113,12 @@ func (a App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		a.login = a.login.withError(m.err)
 		return a, nil
+	case loggedOutMsg:
+		_ = a.cfg.ClearSession()
+		a.user = nil
+		a.state = stateLogin
+		a.login = NewLogin(a.client)
+		return a, a.login.Init()
 	}
 
 	switch a.state {

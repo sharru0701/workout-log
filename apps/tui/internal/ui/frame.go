@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"image/color"
 	"strings"
 	"time"
@@ -12,6 +13,13 @@ import (
 	"github.com/sharru0701/workout-log/apps/tui/internal/api"
 	"github.com/sharru0701/workout-log/apps/tui/internal/theme"
 )
+
+func logoutCmd(c *api.Client) tea.Cmd {
+	return func() tea.Msg {
+		_ = c.Logout(context.Background())
+		return loggedOutMsg{}
+	}
+}
 
 // ViewKind identifies a buffer. There is no tab bar; views are switched via the
 // space-leader goto menu, the `:` command palette, or 1-5 accelerators.
@@ -294,6 +302,8 @@ func (f Frame) runCommand(cmd string) (tea.Model, tea.Cmd) {
 		return f, nil
 	case "q", "quit":
 		return f, tea.Quit
+	case "logout", "signout":
+		return f, logoutCmd(f.client)
 	case "t", "today":
 		return f.switchTo(vToday)
 	case "s", "stats":
@@ -415,6 +425,7 @@ func commandItems() []pickerItem {
 		{"history", "기록", "history"},
 		{"programs", "프로그램", "programs"},
 		{"settings", "설정", "settings"},
+		{"logout", "로그아웃", "logout"},
 		{"quit", "종료", "quit"},
 	}
 }

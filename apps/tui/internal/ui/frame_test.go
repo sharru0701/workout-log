@@ -51,6 +51,12 @@ func TestFrameQuitCommand(t *testing.T) {
 	}
 }
 
+func TestFrameLogoutCommand(t *testing.T) {
+	if _, cmd := NewFrame(nil).runCommand("logout"); cmd == nil {
+		t.Error("expected :logout to return a command")
+	}
+}
+
 func TestFramePickerFilter(t *testing.T) {
 	f := NewFrame(nil)
 	f.picker = newPicker(":", "", commandItems())
