@@ -49,10 +49,85 @@ func TestSettingsAccountSection(t *testing.T) {
 	st.loaded = true
 	st.values = map[string]json.RawMessage{}
 	out := ansi.Strip(st.Body(60, 20))
-	for _, want := range []string{"PREFERENCES", "ACCOUNT", "비밀번호", "계정 삭제"} {
+	for _, want := range []string{"PREFERENCES", "ACCOUNT", "이메일", "세션", "비밀번호", "계정 삭제"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("settings body missing %q:\n%s", want, out)
 		}
+	}
+}
+
+func TestSettingsAccountInfo(t *testing.T) {
+	st := NewSettings(nil)
+	st.loaded = true
+	scr, _ := st.Update(accountInfoMsg{email: "a@b.com", verified: false, active: 3, other: 2})
+	st = scr.(Settings)
+	if !st.acct.loaded || st.acct.active != 3 || st.acct.other != 2 {
+		t.Fatalf("account info not stored: %+v", st.acct)
+	}
+	out := ansi.Strip(st.Body(60, 20))
+	for _, want := range []string{"미인증", "활성 3 · 타 2"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("body missing %q:\n%s", want, out)
+		}
+	}
+}
+
+func TestSettingsEmailVerifiedNoop(t *testing.T) {
+	st := NewSettings(nil)
+	st.acct = accountInfo{loaded: true, verified: true}
+	st.sel = len(settingDefs) + actEmail
+	scr, cmd := st.triggerEmail()
+	st = scr.(Settings)
+	if cmd != nil {
+		t.Error("verified email should not resend")
+	}
+	if !strings.Contains(st.flash, "이미 인증") {
+		t.Errorf("expected already-verified flash, got %q", st.flash)
+	}
+}
+
+func TestSettingsEmailUnverifiedResends(t *testing.T) {
+	st := NewSettings(nil)
+	st.acct = accountInfo{loaded: true, verified: false}
+	scr, cmd := st.triggerEmail()
+	_ = scr
+	if cmd == nil {
+		t.Error("unverified email should trigger a resend command")
+	}
+}
+
+func TestSettingsSessionsNoOthers(t *testing.T) {
+	st := NewSettings(nil)
+	st.acct = accountInfo{loaded: true, active: 1, other: 0}
+	scr, cmd := st.triggerSessions()
+	st = scr.(Settings)
+	if cmd != nil {
+		t.Error("no other sessions → no confirm")
+	}
+	if !strings.Contains(st.flash, "다른 기기") {
+		t.Errorf("expected no-other-sessions flash, got %q", st.flash)
+	}
+}
+
+func TestSettingsSessionsRevokeConfirms(t *testing.T) {
+	st := NewSettings(nil)
+	st.acct = accountInfo{loaded: true, active: 3, other: 2}
+	_, cmd := st.triggerSessions()
+	if cmd == nil {
+		t.Fatal("expected a confirm command")
+	}
+	if _, ok := cmd().(confirmMsg); !ok {
+		t.Error("expected triggerSessions to emit a confirmMsg")
+	}
+}
+
+func TestSettingsAccountReload(t *testing.T) {
+	st := NewSettings(nil)
+	st.loaded = true
+	scr, cmd := st.Update(accountActionMsg{ok: "다른 세션 1개를 종료했습니다", reload: true})
+	st = scr.(Settings)
+	if !st.flashOk || cmd == nil {
+		t.Errorf("expected success flash + reload cmd, got ok=%v cmd=%v", st.flashOk, cmd != nil)
 	}
 }
 

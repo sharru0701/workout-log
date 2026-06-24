@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"image/color"
 	"strconv"
 	"strings"
 
@@ -42,17 +43,13 @@ var settingDefs = []settingDef{
 // --- ACCOUNT section: self-service actions opened as inline password forms ---
 
 const (
-	actChangePassword = iota
+	actEmail = iota
+	actSessions
+	actChangePassword
 	actDeleteAccount
 )
 
-var accountActions = []struct {
-	label string
-	hint  string
-}{
-	{label: "비밀번호", hint: "변경"},
-	{label: "계정 삭제", hint: "삭제"},
-}
+var accountActions = []string{"이메일", "세션", "비밀번호", "계정 삭제"}
 
 // settingsForm is the inline overlay opened on an ACCOUNT row.
 type settingsForm int
@@ -72,12 +69,24 @@ type settingsLoadedMsg struct {
 
 type settingSavedMsg struct{ err error }
 
-// accountActionMsg reports the result of a password change (ok set) or any
-// account action failure (err set). Account deletion success returns
+// accountActionMsg reports the result of an account action (ok set on success,
+// err on failure). reload asks the buffer to refresh account info afterward
+// (e.g. session count after a revoke). Account deletion success returns
 // loggedOutMsg instead, routed to the root App.
 type accountActionMsg struct {
-	ok  string
-	err error
+	ok     string
+	err    error
+	reload bool
+}
+
+// accountInfoMsg carries the read-only account state (email verification +
+// session counts) shown in the ACCOUNT section.
+type accountInfoMsg struct {
+	email    string
+	verified bool
+	active   int // non-expired sessions
+	other    int // non-expired sessions on other devices
+	err      error
 }
 
 // --- commands ---
@@ -113,6 +122,56 @@ func deleteAccountCmd(c *api.Client, pw string) tea.Cmd {
 	}
 }
 
+func accountLoadCmd(c *api.Client) tea.Cmd {
+	return func() tea.Msg {
+		u, err := c.Me(context.Background())
+		if err != nil {
+			return accountInfoMsg{err: err}
+		}
+		sessions, err := c.Sessions(context.Background())
+		if err != nil {
+			return accountInfoMsg{err: err}
+		}
+		m := accountInfoMsg{}
+		for _, s := range sessions {
+			if s.IsExpired {
+				continue
+			}
+			m.active++
+			if !s.IsCurrent {
+				m.other++
+			}
+		}
+		if u != nil {
+			m.email, m.verified = u.Email, u.EmailVerifiedAt != nil
+		}
+		return m
+	}
+}
+
+func resendVerificationCmd(c *api.Client) tea.Cmd {
+	return func() tea.Msg {
+		already, err := c.ResendEmailVerification(context.Background())
+		if err != nil {
+			return accountActionMsg{err: err}
+		}
+		if already {
+			return accountActionMsg{ok: "이미 인증된 이메일입니다"}
+		}
+		return accountActionMsg{ok: "인증 메일을 발송했습니다"}
+	}
+}
+
+func revokeSessionsCmd(c *api.Client) tea.Cmd {
+	return func() tea.Msg {
+		n, err := c.RevokeOtherSessions(context.Background())
+		if err != nil {
+			return accountActionMsg{err: err}
+		}
+		return accountActionMsg{ok: fmt.Sprintf("다른 세션 %d개를 종료했습니다", n), reload: true}
+	}
+}
+
 // Settings is the settings buffer: a PREFERENCES list plus an ACCOUNT section.
 // j/k moves; on prefs, enter cycles enums / i edits numbers; on account rows,
 // enter opens an inline password form (change password / delete account).
@@ -127,15 +186,27 @@ type Settings struct {
 	ffocus  int
 	pending bool // account request in flight
 	loaded  bool
+	acct    accountInfo
 	err     string
 	flash   string
 	flashOk bool
 	w, h    int
 }
 
+// accountInfo is the read-only ACCOUNT state loaded alongside preferences.
+type accountInfo struct {
+	loaded   bool
+	email    string
+	verified bool
+	active   int
+	other    int
+}
+
 func NewSettings(c *api.Client) Settings { return Settings{client: c} }
 
-func (s Settings) Init() tea.Cmd { return settingsLoadCmd(s.client) }
+func (s Settings) Init() tea.Cmd {
+	return tea.Batch(settingsLoadCmd(s.client), accountLoadCmd(s.client))
+}
 
 // Editing reports whether the buffer owns every key (number edit or a form),
 // so the frame routes input here instead of treating digits/space as globals.
@@ -164,6 +235,12 @@ func (s Settings) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return s, settingsLoadCmd(s.client) // revert to server truth
 		}
 		return s, nil
+	case accountInfoMsg:
+		if m.err != nil {
+			return s, nil // account info is non-critical; leave rows showing "…"
+		}
+		s.acct = accountInfo{loaded: true, email: m.email, verified: m.verified, active: m.active, other: m.other}
+		return s, nil
 	case accountActionMsg:
 		s.pending = false
 		if m.err != nil {
@@ -172,6 +249,9 @@ func (s Settings) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		s.form = formNone
 		s.setFlash(m.ok, true)
+		if m.reload {
+			return s, accountLoadCmd(s.client)
+		}
 		return s, nil
 	case tea.KeyPressMsg:
 		switch {
@@ -278,12 +358,37 @@ func (s Settings) updateEditing(m tea.KeyPressMsg) (Screen, tea.Cmd) {
 
 func (s Settings) triggerAccount() (Screen, tea.Cmd) {
 	switch s.accountIdx() {
+	case actEmail:
+		return s.triggerEmail()
+	case actSessions:
+		return s.triggerSessions()
 	case actChangePassword:
 		return s.beginPasswordForm()
 	case actDeleteAccount:
 		return s.beginDeleteForm()
 	}
 	return s, nil
+}
+
+func (s Settings) triggerEmail() (Screen, tea.Cmd) {
+	if s.acct.loaded && s.acct.verified {
+		s.setFlash("이미 인증된 이메일입니다", true)
+		return s, nil
+	}
+	s.setFlash("인증 메일 발송 중…", true)
+	return s, resendVerificationCmd(s.client)
+}
+
+func (s Settings) triggerSessions() (Screen, tea.Cmd) {
+	if s.acct.other == 0 {
+		s.setFlash("다른 기기 세션이 없습니다", true)
+		return s, nil
+	}
+	client := s.client
+	prompt := fmt.Sprintf("다른 기기 세션 %d개를 종료합니다", s.acct.other)
+	return s, func() tea.Msg {
+		return confirmMsg{prompt: prompt, onYes: revokeSessionsCmd(client)}
+	}
 }
 
 func newPwField() textinput.Model {
@@ -418,10 +523,16 @@ func (s Settings) Context() string {
 		return "계정 삭제"
 	}
 	if s.isAccountRow() {
-		if s.accountIdx() == actChangePassword {
+		switch s.accountIdx() {
+		case actEmail:
+			return "이메일 인증"
+		case actSessions:
+			return "활성 세션"
+		case actChangePassword:
 			return "비밀번호 변경"
+		default:
+			return "계정 삭제"
 		}
-		return "계정 삭제"
 	}
 	return settingDefs[s.sel].label
 }
@@ -437,6 +548,18 @@ func (s Settings) Hints(int) string {
 	}
 	if s.editing {
 		return joinHints(hint("⏎", "저장"), hint("esc", "취소"))
+	}
+	if s.isAccountRow() {
+		action := "변경"
+		switch s.accountIdx() {
+		case actEmail:
+			action = "인증메일"
+		case actSessions:
+			action = "세션종료"
+		case actDeleteAccount:
+			action = "삭제"
+		}
+		return joinHints(hint("jk", "이동"), hint("⏎", action))
 	}
 	return joinHints(hint("jk", "이동"), hint("⏎", "변경"), hint("i", "숫자편집"))
 }
@@ -492,19 +615,42 @@ func (s Settings) prefRow(i int, def settingDef) string {
 
 func (s Settings) actionRow(idx int) string {
 	ai := idx - len(settingDefs)
-	act := accountActions[ai]
 	marker, labelColor := "  ", theme.Dim
-	valColor := theme.Cyan
-	if ai == actDeleteAccount {
-		valColor = theme.Red
-	}
 	if idx == s.sel {
 		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render("› ")
 		labelColor = theme.Fg
 	}
-	label := lipgloss.NewStyle().Foreground(labelColor).Width(12).Render(act.label)
-	val := lipgloss.NewStyle().Foreground(valColor).Render(act.hint)
+	label := lipgloss.NewStyle().Foreground(labelColor).Width(12).Render(accountActions[ai])
+	valStr, valColor := s.actionValue(ai)
+	val := lipgloss.NewStyle().Foreground(valColor).Render(valStr)
 	return marker + label + val
+}
+
+// actionValue is the right-hand cell for an ACCOUNT row: live state for the
+// info rows (email/sessions) and a static verb for the action rows.
+func (s Settings) actionValue(ai int) (string, color.Color) {
+	switch ai {
+	case actEmail:
+		if !s.acct.loaded {
+			return "…", theme.Ghost
+		}
+		if s.acct.verified {
+			return "인증됨", theme.Green
+		}
+		return "미인증", theme.Amber
+	case actSessions:
+		if !s.acct.loaded {
+			return "…", theme.Ghost
+		}
+		if s.acct.other > 0 {
+			return fmt.Sprintf("활성 %d · 타 %d", s.acct.active, s.acct.other), theme.Amber
+		}
+		return fmt.Sprintf("활성 %d", s.acct.active), theme.Cyan
+	case actChangePassword:
+		return "변경", theme.Cyan
+	default: // actDeleteAccount
+		return "삭제", theme.Red
+	}
 }
 
 func (s Settings) passwordFormBody(w, h int) string {

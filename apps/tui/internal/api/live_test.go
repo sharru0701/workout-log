@@ -466,6 +466,99 @@ func TestLiveDeleteAccount(t *testing.T) {
 	t.Log("account deleted: session gone and credentials rejected")
 }
 
+func countSessions(sess []Session) (active, other int) {
+	for _, s := range sess {
+		if s.IsExpired {
+			continue
+		}
+		active++
+		if !s.IsCurrent {
+			other++
+		}
+	}
+	return active, other
+}
+
+// TestLiveSessions proves the session list + revoke-others path: a fresh account
+// has one session, a second login makes two, and revoke-others leaves one while
+// logging the other client out. Skipped without env.
+func TestLiveSessions(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live sessions test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-sess+%d@example.com", time.Now().UnixNano())
+	const pw = "spike-passw0rd"
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: pw}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+
+	sess, err := c.Sessions(ctx)
+	if err != nil {
+		t.Fatalf("Sessions: %v", err)
+	}
+	if a, o := countSessions(sess); a != 1 || o != 0 {
+		t.Fatalf("after signup want active=1 other=0, got active=%d other=%d", a, o)
+	}
+
+	c2, _ := New(base)
+	if _, err := c2.Login(ctx, email, pw); err != nil {
+		t.Fatalf("second Login: %v", err)
+	}
+	sess, _ = c.Sessions(ctx)
+	if a, o := countSessions(sess); a != 2 || o != 1 {
+		t.Fatalf("with two sessions want active=2 other=1, got active=%d other=%d", a, o)
+	}
+
+	n, err := c.RevokeOtherSessions(ctx)
+	if err != nil {
+		t.Fatalf("RevokeOtherSessions: %v", err)
+	}
+	if n != 1 {
+		t.Errorf("want 1 revoked, got %d", n)
+	}
+	sess, _ = c.Sessions(ctx)
+	if a, o := countSessions(sess); a != 1 || o != 0 {
+		t.Errorf("after revoke want active=1 other=0, got active=%d other=%d", a, o)
+	}
+	if u, _ := c2.Me(ctx); u != nil {
+		t.Error("the revoked client should be unauthenticated")
+	}
+	t.Log("sessions 1→2, revoke-others→1, revoked client logged out")
+}
+
+// TestLiveResendVerification proves the verification-resend call against a fresh
+// (unverified) account: it must report alreadyVerified=false. Skipped without
+// env. (Email delivery itself is best-effort and not asserted here.)
+func TestLiveResendVerification(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live resend-verification test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-verif+%d@example.com", time.Now().UnixNano())
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: "spike-passw0rd"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	already, err := c.ResendEmailVerification(ctx)
+	if err != nil {
+		t.Fatalf("ResendEmailVerification: %v", err)
+	}
+	if already {
+		t.Error("a fresh account should not be already-verified")
+	}
+	t.Logf("verification resend ok (alreadyVerified=%v)", already)
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")
