@@ -51,6 +51,7 @@ type LoggedSet struct {
 	ExerciseName string  `json:"exerciseName"`
 	WeightKg     Float64 `json:"weightKg"`
 	Reps         int     `json:"reps"`
+	RPE          *int    `json:"rpe,omitempty"`
 }
 
 // LogItem is one workout session in a list response.

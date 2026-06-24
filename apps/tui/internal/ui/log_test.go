@@ -89,6 +89,31 @@ func TestLogLoadForEdit(t *testing.T) {
 	}
 }
 
+func TestLogRPECell(t *testing.T) {
+	l := NewLog(nil)
+	l.groups = []exGroup{{name: "Squat", sets: []setEntry{{weight: "100", reps: "5"}}}}
+	l.gi, l.si, l.col = 0, 0, colRPE
+	l, _ = l.beginEdit(editCell)
+	l.edit.SetValue("8")
+	l.writeEdit()
+	if l.groups[0].sets[0].rpe != "8" {
+		t.Errorf("rpe = %q, want 8", l.groups[0].sets[0].rpe)
+	}
+}
+
+func TestLogLoadForEditRPE(t *testing.T) {
+	rpe := 8
+	scr, _ := NewLog(nil).Update(editLogMsg{
+		id:          "x",
+		performedAt: time.Date(2026, 6, 20, 0, 0, 0, 0, time.UTC),
+		sets:        []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5, RPE: &rpe}},
+	})
+	l := scr.(Log)
+	if got := l.groups[0].sets[0].rpe; got != "8" {
+		t.Errorf("rpe not restored on edit load: %q, want 8", got)
+	}
+}
+
 func TestLogEditSaveClears(t *testing.T) {
 	l := NewLog(nil)
 	l.saving, l.editID = true, "log-9"

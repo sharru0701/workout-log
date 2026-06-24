@@ -22,6 +22,7 @@ type logCol int
 const (
 	colWeight logCol = iota
 	colReps
+	colRPE
 )
 
 type editTarget int
@@ -35,6 +36,7 @@ const (
 type setEntry struct {
 	weight string
 	reps   string
+	rpe    string // optional RPE 1–10
 	done   bool
 }
 
@@ -70,7 +72,11 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 			}
 			w, _ := strconv.ParseFloat(s.weight, 64)
 			reps, _ := strconv.Atoi(s.reps)
-			sets = append(sets, api.WorkoutSet{ExerciseName: name, WeightKg: w, Reps: reps})
+			ws := api.WorkoutSet{ExerciseName: name, WeightKg: w, Reps: reps}
+			if rpe, err := strconv.Atoi(strings.TrimSpace(s.rpe)); err == nil && rpe > 0 {
+				ws.RPE = &rpe
+			}
+			sets = append(sets, ws)
 		}
 	}
 	return func() tea.Msg {
@@ -280,9 +286,13 @@ func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 	case "k", "up":
 		l.moveSet(-1)
 	case "h", "left":
-		l.col = colWeight
+		if l.col > colWeight {
+			l.col--
+		}
 	case "l", "right":
-		l.col = colReps
+		if l.col < colRPE {
+			l.col++
+		}
 	case "r":
 		l.rest.active = false
 	case "i", "enter":
@@ -317,11 +327,14 @@ func (l Log) updateEditing(m tea.KeyPressMsg) (Log, tea.Cmd) {
 			l.col = colWeight
 			return l.beginEdit(editCell)
 		case editCell:
-			if l.col == colWeight {
+			switch l.col {
+			case colWeight:
 				l.col = colReps
 				return l.beginEdit(editCell)
+			case colReps:
+				return l.completeSet()
 			}
-			return l.completeSet()
+			return l, nil // colRPE is optional; close the editor
 		}
 		return l, nil
 	case "tab":
@@ -329,10 +342,8 @@ func (l Log) updateEditing(m tea.KeyPressMsg) (Log, tea.Cmd) {
 		l.editing = false
 		if l.target == editName {
 			l.col = colWeight
-		} else if l.col == colWeight {
-			l.col = colReps
 		} else {
-			l.col = colWeight
+			l.col = (l.col + 1) % 3 // weight → reps → rpe → weight
 		}
 		return l.beginEdit(editCell)
 	}
@@ -476,6 +487,7 @@ func (l *Log) loadForEdit(m editLogMsg) {
 		g.sets = append(g.sets, setEntry{
 			weight: trimNum(float64(st.WeightKg)),
 			reps:   strconv.Itoa(st.Reps),
+			rpe:    rpeString(st.RPE),
 			done:   true,
 		})
 	}
@@ -503,12 +515,16 @@ func (l Log) beginEdit(t editTarget) (Log, tea.Cmd) {
 		ti.SetValue(l.groups[l.gi].name)
 	case editCell:
 		s := l.groups[l.gi].sets[l.si]
-		if l.col == colWeight {
+		switch l.col {
+		case colWeight:
 			ti.SetWidth(6)
 			ti.SetValue(s.weight)
-		} else {
+		case colReps:
 			ti.SetWidth(4)
 			ti.SetValue(s.reps)
+		case colRPE:
+			ti.SetWidth(3)
+			ti.SetValue(s.rpe)
 		}
 	}
 	l.edit, l.editing, l.target = ti, true, t
@@ -521,10 +537,13 @@ func (l *Log) writeEdit() {
 	case editName:
 		l.groups[l.gi].name = v
 	case editCell:
-		if l.col == colWeight {
+		switch l.col {
+		case colWeight:
 			l.groups[l.gi].sets[l.si].weight = v
-		} else {
+		case colReps:
 			l.groups[l.gi].sets[l.si].reps = v
+		case colRPE:
+			l.groups[l.gi].sets[l.si].rpe = v
 		}
 	}
 }
@@ -633,6 +652,15 @@ func (l Log) renderSet(gi, si int, s setEntry) string {
 	rcell := l.setCell(active, colReps, orDot(s.reps), 3)
 	sep := lipgloss.NewStyle().Foreground(theme.Dim).Render(" × ")
 
+	// RPE: an editable cell when the RPE column is active here, otherwise shown
+	// only when a value exists (optional metric, never forced).
+	rpe := "    " // reserved 4-col slot so done/e1rm stay aligned across sets
+	if active && l.col == colRPE {
+		rpe = lipgloss.NewStyle().Foreground(theme.Dim).Render(" @") + l.setCell(active, colRPE, orDot(s.rpe), 2)
+	} else if s.rpe != "" {
+		rpe = lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" @%-2s", s.rpe))
+	}
+
 	done := lipgloss.NewStyle().Foreground(theme.Ghost).Render("·")
 	if s.done {
 		done = lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone)
@@ -641,7 +669,7 @@ func (l Log) renderSet(gi, si int, s setEntry) string {
 	if v := setE1rm(s); v > 0 {
 		e1rm = lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" e%.0f", v))
 	}
-	return marker + wcell + sep + rcell + "   " + done + e1rm
+	return marker + wcell + sep + rcell + rpe + "   " + done + e1rm
 }
 
 func (l Log) setCell(active bool, c logCol, text string, width int) string {
@@ -706,6 +734,13 @@ func orDot(s string) string {
 		return "·"
 	}
 	return s
+}
+
+func rpeString(rpe *int) string {
+	if rpe == nil || *rpe <= 0 {
+		return ""
+	}
+	return strconv.Itoa(*rpe)
 }
 
 func setE1rm(s setEntry) float64 {
