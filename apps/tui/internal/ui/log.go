@@ -176,6 +176,14 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		l.status, l.statusErr = summarizePRs(m.detail), false
 		l.groups, l.gi, l.si = nil, 0, 0
 		return l, nil
+	case pickedMsg:
+		if m.tag == "exercise" && strings.TrimSpace(m.value) != "" {
+			l.groups = append(l.groups, exGroup{name: m.value, sets: []setEntry{{}}})
+			l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
+			nl, cmd := l.beginEdit(editCell)
+			return nl, cmd
+		}
+		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
 			nl, cmd := l.updateEditing(m)
@@ -206,11 +214,11 @@ func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 		l.rest.active = false
 	case "i", "enter":
 		if len(l.groups) == 0 {
-			return l.addExercise()
+			return l, openExercisePickerCmd(l.client)
 		}
 		return l.beginEdit(editCell)
 	case "e":
-		return l.addExercise()
+		return l, openExercisePickerCmd(l.client)
 	case "x":
 		return l.toggleDone()
 	case "o":
@@ -280,15 +288,22 @@ func (l *Log) moveSet(dir int) {
 	}
 }
 
-func (l Log) addExercise() (Log, tea.Cmd) {
-	l.groups = append(l.groups, exGroup{sets: []setEntry{{}}})
-	l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
-	return l.beginEdit(editName)
+// openExercisePickerCmd fetches the exercise dictionary and asks the frame to
+// open a fuzzy picker tagged "exercise".
+func openExercisePickerCmd(c *api.Client) tea.Cmd {
+	return func() tea.Msg {
+		exs, _ := c.Exercises(context.Background(), "")
+		items := make([]pickerItem, len(exs))
+		for i, e := range exs {
+			items[i] = pickerItem{label: e.Name, value: e.Name}
+		}
+		return openPickerMsg{prompt: "운동 ", tag: "exercise", items: items}
+	}
 }
 
 func (l Log) addSet() (Log, tea.Cmd) {
 	if len(l.groups) == 0 {
-		return l.addExercise()
+		return l, openExercisePickerCmd(l.client)
 	}
 	at := l.si + 1
 	sets := l.groups[l.gi].sets
@@ -570,6 +585,8 @@ func hint(k, label string) string {
 }
 
 func joinHints(parts ...string) string { return strings.Join(parts, "  ") }
+
+func dim(s string) string { return lipgloss.NewStyle().Foreground(theme.Dim).Render(s) }
 
 func truncate(s string, n int) string {
 	r := []rune(s)

@@ -66,6 +66,19 @@ type confirmMsg struct {
 	onYes  tea.Cmd
 }
 
+// openPickerMsg lets a view request a tagged fuzzy picker (e.g. exercise select).
+type openPickerMsg struct {
+	prompt string
+	tag    string
+	items  []pickerItem
+}
+
+// pickedMsg carries a tagged picker selection back to the active view.
+type pickedMsg struct {
+	tag   string
+	value string
+}
+
 // Frame is the root chrome: a pure buffer area, a bottom region (hint line, goto
 // menu, or command palette), and a statusline. No tab bar, no top chrome.
 type Frame struct {
@@ -121,6 +134,10 @@ func (f Frame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case confirmMsg:
 		f.confirmPrompt, f.confirmCmd, f.overlay = msg.prompt, msg.onYes, overlayConfirm
 		return f, nil
+	case openPickerMsg:
+		f.picker = newPicker(msg.prompt, msg.tag, msg.items)
+		f.overlay = overlayPicker
+		return f, f.picker.input.Focus()
 	case tea.KeyPressMsg:
 		return f.handleKey(msg)
 	}
@@ -153,7 +170,7 @@ func (f Frame) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		f.overlay, f.gotoSel, f.flash = overlayGoto, int(f.active), ""
 		return f, nil
 	case ":":
-		f.picker = newPicker(":", commandItems())
+		f.picker = newPicker(":", "", commandItems())
 		f.overlay, f.flash = overlayPicker, ""
 		return f, f.picker.input.Focus()
 	case "?":
@@ -231,11 +248,18 @@ func (f Frame) handlePickerKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return f, nil
 	case "enter":
 		items := f.picker.filtered()
+		tag := f.picker.tag
 		f.overlay = overlayNone
+		val := strings.TrimSpace(f.picker.input.Value())
 		if len(items) > 0 && f.picker.sel < len(items) {
-			return f.runCommand(items[f.picker.sel].value)
+			val = items[f.picker.sel].value
 		}
-		return f.runCommand(strings.TrimSpace(f.picker.input.Value()))
+		if tag == "" {
+			return f.runCommand(val)
+		}
+		nv, cmd := f.views[f.active].Update(pickedMsg{tag: tag, value: val})
+		f.views[f.active] = nv
+		return f, cmd
 	}
 	var cmd tea.Cmd
 	f.picker.input, cmd = f.picker.input.Update(msg)

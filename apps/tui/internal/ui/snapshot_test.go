@@ -85,7 +85,7 @@ func renderGotoScenario(w, h int) string {
 
 func renderPaletteScenario(w, h int) string {
 	f := sampleTodayFrame()
-	f.picker = newPicker(":", commandItems())
+	f.picker = newPicker(":", "", commandItems())
 	f.picker.input.SetValue("s")
 	f.overlay = overlayPicker
 	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})

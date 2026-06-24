@@ -53,6 +53,7 @@ type Stats struct {
 	lift     int
 	rangeIdx int
 	braille  bool
+	custom   string // exercise chosen via the picker (overrides the prs cycle)
 	err      string
 	w, h     int
 }
@@ -62,6 +63,9 @@ func NewStats(c *api.Client) Stats { return Stats{client: c, braille: true, rang
 func (s Stats) Init() tea.Cmd { return statsBundleCmd(s.client) }
 
 func (s Stats) currentLift() string {
+	if s.custom != "" {
+		return s.custom
+	}
 	if s.bundle == nil || s.lift >= len(s.bundle.Prs90d) {
 		return ""
 	}
@@ -97,6 +101,12 @@ func (s Stats) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		s.e1rm, s.err = m.e1rm, ""
 		return s, nil
+	case pickedMsg:
+		if m.tag == "exercise" && strings.TrimSpace(m.value) != "" {
+			s.custom, s.e1rm = m.value, nil
+			return s, statsE1rmCmd(s.client, m.value, statsRanges[s.rangeIdx].days)
+		}
+		return s, nil
 	case tea.KeyPressMsg:
 		return s.handleKey(m)
 	}
@@ -109,13 +119,17 @@ func (s Stats) handleKey(m tea.KeyPressMsg) (Screen, tea.Cmd) {
 		n = len(s.bundle.Prs90d)
 	}
 	switch m.String() {
+	case "/":
+		return s, openExercisePickerCmd(s.client)
 	case "j", "down", "n":
 		if n > 0 {
+			s.custom = ""
 			s.lift = (s.lift + 1) % n
 			return s.reload()
 		}
 	case "k", "up", "p":
 		if n > 0 {
+			s.custom = ""
 			s.lift = (s.lift - 1 + n) % n
 			return s.reload()
 		}
@@ -157,7 +171,7 @@ func (s Stats) StatusRight() string {
 func (s Stats) Editing() bool { return false }
 
 func (s Stats) Hints(int) string {
-	return joinHints(hint("jk", "운동"), hint("[ ]", "범위"), hint("b", "차트"))
+	return joinHints(hint("jk", "운동"), hint("/", "검색"), hint("[ ]", "범위"), hint("b", "차트"))
 }
 
 func (s Stats) Body(w, h int) string {
@@ -167,8 +181,8 @@ func (s Stats) Body(w, h int) string {
 	if s.bundle == nil {
 		return centered("불러오는 중…", theme.Dim, w, h)
 	}
-	if len(s.bundle.Prs90d) == 0 {
-		return centered("기록이 충분하지 않습니다", theme.Ghost, w, h)
+	if len(s.bundle.Prs90d) == 0 && s.custom == "" {
+		return centered("기록이 충분하지 않습니다 (/ 운동 검색)", theme.Ghost, w, h)
 	}
 
 	var b strings.Builder
@@ -212,21 +226,25 @@ func (s Stats) chart(w, h int) string {
 }
 
 func (s Stats) summary() string {
-	pr := s.bundle.Prs90d[s.lift]
-	best := lipgloss.NewStyle().Foreground(theme.Gold).Render(fmt.Sprintf("best %.0f", float64(pr.Best.E1rm)))
-	imp := ""
-	if pr.Improvement != 0 {
-		sign := "+"
-		if pr.Improvement < 0 {
-			sign = ""
-		}
-		tone := theme.Green
-		if pr.Improvement < 0 {
-			tone = theme.Red
-		}
-		imp = "  " + lipgloss.NewStyle().Foreground(theme.Dim).Render("·") + "  " +
-			lipgloss.NewStyle().Foreground(tone).Render(fmt.Sprintf("%s%.0f", sign, float64(pr.Improvement)))
+	if s.e1rm == nil || len(s.e1rm.Series) == 0 {
+		return ""
 	}
-	vol := "  " + lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf("·  30d %.0ft", float64(s.bundle.Tonnage30d)/1000))
-	return best + imp + vol
+	best, first := 0.0, float64(s.e1rm.Series[0].E1rm)
+	for _, p := range s.e1rm.Series {
+		if v := float64(p.E1rm); v > best {
+			best = v
+		}
+	}
+	out := lipgloss.NewStyle().Foreground(theme.Gold).Render(fmt.Sprintf("best %.0f", best))
+	if imp := best - first; imp != 0 {
+		tone, sign := theme.Green, "+"
+		if imp < 0 {
+			tone, sign = theme.Red, ""
+		}
+		out += "  " + dim("·") + "  " + lipgloss.NewStyle().Foreground(tone).Render(fmt.Sprintf("%s%.0f", sign, imp))
+	}
+	if s.bundle != nil {
+		out += "  " + dim(fmt.Sprintf("·  30d %.0ft", float64(s.bundle.Tonnage30d)/1000))
+	}
+	return out
 }

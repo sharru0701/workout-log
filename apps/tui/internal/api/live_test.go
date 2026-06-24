@@ -268,3 +268,35 @@ func TestLiveHistory(t *testing.T) {
 	}
 	t.Logf("ListLogs: %d log(s), first has %d set(s)", len(logs), len(logs[0].Sets))
 }
+
+// TestLiveExercises verifies the exercise dictionary endpoint parses. Skipped
+// without the env var.
+func TestLiveExercises(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live exercises test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-ex+%d@example.com", time.Now().UnixNano())
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: "spike-passw0rd"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	if _, err := c.CreateLog(ctx, CreateLogRequest{
+		PerformedAt: time.Now(),
+		Sets:        []WorkoutSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5}},
+	}); err != nil {
+		t.Fatalf("CreateLog: %v", err)
+	}
+	exs, err := c.Exercises(ctx, "")
+	if err != nil {
+		t.Fatalf("Exercises: %v", err)
+	}
+	t.Logf("exercises: %d", len(exs))
+	if len(exs) == 0 {
+		t.Error("expected the dictionary to contain at least the logged exercise")
+	}
+}

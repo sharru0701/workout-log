@@ -16,18 +16,19 @@ type pickerItem struct{ label, desc, value string }
 // style) — never a centered modal.
 type picker struct {
 	prompt string
+	tag    string // "" = command palette; otherwise routed to the active view
 	input  textinput.Model
 	items  []pickerItem
 	sel    int
 }
 
-func newPicker(prompt string, items []pickerItem) picker {
+func newPicker(prompt, tag string, items []pickerItem) picker {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.SetVirtualCursor(true)
 	ti.SetWidth(18)
 	ti.Focus()
-	return picker{prompt: prompt, input: ti, items: items}
+	return picker{prompt: prompt, tag: tag, input: ti, items: items}
 }
 
 func (p picker) filtered() []pickerItem {

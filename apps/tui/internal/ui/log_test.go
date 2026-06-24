@@ -91,13 +91,14 @@ func TestLogContext(t *testing.T) {
 	}
 }
 
-func TestLogAddExercise(t *testing.T) {
-	l2, cmd := NewLog(nil).addExercise()
-	if len(l2.groups) != 1 || len(l2.groups[0].sets) != 1 {
-		t.Fatalf("expected 1 group with 1 set, got %+v", l2.groups)
+func TestLogExercisePicked(t *testing.T) {
+	next, cmd := NewLog(nil).Update(pickedMsg{tag: "exercise", value: "Squat"})
+	l := next.(Log)
+	if len(l.groups) != 1 || l.groups[0].name != "Squat" {
+		t.Fatalf("expected a Squat group, got %+v", l.groups)
 	}
-	if !l2.editing || l2.target != editName {
-		t.Error("expected to be editing the new exercise name")
+	if !l.editing || l.col != colWeight {
+		t.Error("expected to be editing the weight cell after picking")
 	}
 	if cmd == nil {
 		t.Error("expected a focus command")

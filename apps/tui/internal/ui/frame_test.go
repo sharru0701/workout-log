@@ -53,7 +53,7 @@ func TestFrameQuitCommand(t *testing.T) {
 
 func TestFramePickerFilter(t *testing.T) {
 	f := NewFrame(nil)
-	f.picker = newPicker(":", commandItems())
+	f.picker = newPicker(":", "", commandItems())
 	f.overlay = overlayPicker
 	f.picker.input.SetValue("st")
 	found := false
@@ -67,6 +67,17 @@ func TestFramePickerFilter(t *testing.T) {
 	}
 	if !strings.Contains(renderFrame(f, 60, 20), "stats") {
 		t.Error("command palette render missing stats")
+	}
+}
+
+func TestFrameOpenPicker(t *testing.T) {
+	m, _ := NewFrame(nil).Update(openPickerMsg{prompt: "운동 ", tag: "exercise", items: []pickerItem{{label: "Squat", value: "Squat"}}})
+	f := m.(Frame)
+	if f.overlay != overlayPicker {
+		t.Error("expected the picker overlay to open")
+	}
+	if f.picker.tag != "exercise" {
+		t.Errorf("picker tag = %q, want exercise", f.picker.tag)
 	}
 }
 
