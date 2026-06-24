@@ -166,6 +166,29 @@ func (f Frame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		f.picker = newPicker(msg.prompt, msg.tag, msg.items)
 		f.overlay = overlayPicker
 		return f, f.picker.input.Focus()
+	case exportDoneMsg:
+		if msg.err != nil {
+			f.flash = "내보내기 실패: " + msg.err.Error()
+		} else {
+			f.flash = "저장됨: " + msg.path
+		}
+		return f, nil
+	case importDryRunMsg:
+		if msg.err != nil {
+			f.flash = "가져오기 실패: " + humanizeImportErr(msg.err)
+			return f, nil
+		}
+		f.confirmPrompt = "기존 데이터 삭제 후 가져옴 (" + summarizeImport(msg.summary) + ")"
+		f.confirmCmd = importReplaceCmd(f.client, msg.path)
+		f.overlay = overlayConfirm
+		return f, nil
+	case importDoneMsg:
+		if msg.err != nil {
+			f.flash = "가져오기 실패: " + humanizeImportErr(msg.err)
+		} else {
+			f.flash = "가져옴: " + summarizeImport(msg.summary)
+		}
+		return f, nil
 	case planActivatedMsg:
 		f.activePlanID, f.activePlanName = msg.id, msg.name
 		f.active = vToday
@@ -332,6 +355,17 @@ func (f Frame) runCommand(cmd string) (tea.Model, tea.Cmd) {
 		return f.switchTo(vSettings)
 	case "x", "ex", "exercise", "exercises":
 		return f.switchTo(vExercises)
+	case "export":
+		f.flash = "내보내는 중…"
+		return f, exportCmd(f.client)
+	case "import":
+		path := strings.TrimSpace(strings.TrimPrefix(cmd, word))
+		if path == "" {
+			f.flash = "사용법: import <파일경로>"
+			return f, nil
+		}
+		f.flash = "검증 중…"
+		return f, importDryRunCmd(f.client, path)
 	}
 	f.flash = "알 수 없는 명령: " + word
 	return f, nil
@@ -444,6 +478,8 @@ func commandItems() []pickerItem {
 		{"programs", "프로그램", "programs"},
 		{"exercises", "운동 관리", "exercises"},
 		{"settings", "설정", "settings"},
+		{"export", "데이터 내보내기", "export"},
+		{"import", "데이터 가져오기 (import <경로>)", "import"},
 		{"logout", "로그아웃", "logout"},
 		{"quit", "종료", "quit"},
 	}

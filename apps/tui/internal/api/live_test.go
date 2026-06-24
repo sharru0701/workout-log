@@ -742,6 +742,56 @@ func TestLiveExerciseCRUD(t *testing.T) {
 	t.Logf("exercise CRUD ok: create→rename→alias→delete (%s)", renamed)
 }
 
+// TestLiveExportImport proves the export → dryRun → replace round-trip: export
+// the user's data, validate it via dryRun (no apply), then replace. Uses a
+// throwaway account so the destructive replace is self-contained. Skipped
+// without env.
+func TestLiveExportImport(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live export/import test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Signup(ctx, SignupRequest{Email: fmt.Sprintf("tui-io+%d@example.com", time.Now().UnixNano()), Password: "spike-passw0rd"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	if _, err := c.CreateLog(ctx, CreateLogRequest{
+		PerformedAt: time.Now(),
+		Sets:        []WorkoutSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5}},
+	}); err != nil {
+		t.Fatalf("CreateLog: %v", err)
+	}
+
+	data, err := c.ExportData(ctx, "json")
+	if err != nil {
+		t.Fatalf("ExportData: %v", err)
+	}
+	if !json.Valid(data) {
+		t.Fatalf("export is not valid JSON (%d bytes)", len(data))
+	}
+
+	dry, err := c.ImportData(ctx, json.RawMessage(data), false)
+	if err != nil {
+		t.Fatalf("ImportData dryRun: %v", err)
+	}
+	if dry.Applied {
+		t.Error("dryRun must not apply changes")
+	}
+
+	rep, err := c.ImportData(ctx, json.RawMessage(data), true)
+	if err != nil {
+		t.Fatalf("ImportData replace: %v", err)
+	}
+	if !rep.Applied {
+		t.Error("replace must apply")
+	}
+	t.Logf("export/import ok: export %dB, dryRun summary=%v, replace applied=%v", len(data), dry.Summary, rep.Applied)
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")
