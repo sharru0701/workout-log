@@ -13,35 +13,45 @@
 
 ## 설치
 
-### 1. 릴리스 바이너리 (빌드 불필요, 권장)
-
-[GitHub Releases](https://github.com/sharru0701/workout-log/releases)에서 OS/아키텍처에 맞는 아카이브를 받습니다. 태그 `v*` push 시 GitHub Actions(GoReleaser)가 linux·macOS·Windows × amd64·arm64 바이너리를 자동 빌드해 첨부합니다.
+### 1. 설치 스크립트 (linux/macOS — 가장 쉬움)
 
 ```bash
-# 예: 리눅스 arm64 (VPS) — 버전은 Releases에서 확인
-curl -sL https://github.com/sharru0701/workout-log/releases/latest/download/ironlog_<VERSION>_linux_arm64.tar.gz | tar xz
-./ironlog --version
-IRONLOG_API_URL=https://your-app.vercel.app ./ironlog
+curl -fsSL https://raw.githubusercontent.com/sharru0701/workout-log/main/apps/tui/install.sh | sh
 ```
 
-> macOS 아카이브는 `..._macos_...`, Windows는 `.zip`.
+OS/아키텍처를 자동 감지해 **최신 릴리스 바이너리**를 PATH(`/usr/local/bin`, 없으면 `~/.local/bin`)에 설치합니다. 버전/위치 고정:
 
-### 2. go install (Go 환경)
+```bash
+curl -fsSL .../install.sh | IRONLOG_VERSION=0.1.0 IRONLOG_INSTALL_DIR=~/.local/bin sh
+```
+
+### 2. 릴리스 바이너리 직접 다운로드
+
+[GitHub Releases](https://github.com/sharru0701/workout-log/releases)에서 받습니다. 태그 `v*` push 시 GoReleaser가 linux·macOS·Windows × amd64·arm64 아카이브를 자동 빌드합니다. (macOS=`..._macos_...`, Windows=`.zip`)
+
+```bash
+curl -sL https://github.com/sharru0701/workout-log/releases/download/v0.1.0/ironlog_0.1.0_linux_arm64.tar.gz | tar xz
+./ironlog --version
+```
+
+### 3. go install (Go 환경)
 
 ```bash
 go install github.com/sharru0701/workout-log/apps/tui@latest   # 바이너리명: tui
 ```
 
-### 3. iPhone 등 원격에서 보기 (VPS + SSH)
+### 4. iPhone 등 원격에서 보기 (VPS + SSH)
 
-TUI는 터미널 앱이라 웹 URL이 아닌 **SSH로 접속**합니다. iOS는 바이너리를 직접 실행할 수 없으므로:
+TUI는 터미널 앱이라 웹 URL이 아닌 **SSH로 접속**합니다. iOS는 바이너리를 직접 실행할 수 없으므로 VPS에 두고 붙습니다:
 
-1. 클라우드 VPS(linux)에 위 릴리스 바이너리를 받습니다.
-2. `tmux`로 세션을 유지하며 실행:
-   ```bash
-   IRONLOG_API_URL=https://your-app.vercel.app tmux new -s ironlog ./ironlog
-   ```
-3. iPhone [Termius](https://termius.com) 등 SSH 앱으로 VPS에 접속 → `tmux attach -t ironlog`.
+```bash
+# 1) 클라우드 VPS(linux)에서 — 한 줄 설치
+curl -fsSL https://raw.githubusercontent.com/sharru0701/workout-log/main/apps/tui/install.sh | sh
+# 2) tmux로 세션 유지하며 실행
+IRONLOG_API_URL=https://your-app.vercel.app tmux new -s ironlog ironlog
+```
+
+iPhone [Termius](https://termius.com) 등 SSH 앱으로 VPS에 접속 → `tmux attach -t ironlog`.
 
 ## 빌드 (소스에서)
 
