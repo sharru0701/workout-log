@@ -15,7 +15,7 @@ func TestSnapshot(t *testing.T) {
 	if out == "" {
 		t.Skip("set IRONLOG_SNAPSHOT=<path> to dump a layout snapshot")
 	}
-	frame := ansi.Strip(render(NewShell(), 60, 18))
+	frame := ansi.Strip(renderLogin(NewLogin(nil), 60, 18))
 	if err := os.WriteFile(out, []byte(frame), 0o644); err != nil {
 		t.Fatal(err)
 	}

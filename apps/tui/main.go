@@ -8,12 +8,26 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/sharru0701/workout-log/apps/tui/internal/api"
+	"github.com/sharru0701/workout-log/apps/tui/internal/config"
 	"github.com/sharru0701/workout-log/apps/tui/internal/ui"
 )
 
 func main() {
-	if _, err := tea.NewProgram(ui.NewShell()).Run(); err != nil {
-		fmt.Fprintln(os.Stderr, "ironlog: error:", err)
-		os.Exit(1)
+	cfg, err := config.Load()
+	if err != nil {
+		fail(err)
 	}
+	client, err := api.New(cfg.BaseURL)
+	if err != nil {
+		fail(err)
+	}
+	if _, err := tea.NewProgram(ui.NewApp(cfg, client)).Run(); err != nil {
+		fail(err)
+	}
+}
+
+func fail(err error) {
+	fmt.Fprintln(os.Stderr, "ironlog:", err)
+	os.Exit(1)
 }
