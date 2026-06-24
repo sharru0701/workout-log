@@ -17,10 +17,19 @@ import (
 
 const defaultRestSeconds = 90
 
-type setRow struct {
+type logCol int
+
+const (
+	colExercise logCol = iota
+	colWeight
+	colReps
+)
+
+type logRow struct {
 	exercise string
-	weight   float64
-	reps     int
+	weight   string // kept as text for inline editing
+	reps     string
+	done     bool
 }
 
 type restState struct {
@@ -34,11 +43,7 @@ type saveResultMsg struct {
 	err    error
 }
 
-func saveCmd(c *api.Client, rows []setRow) tea.Cmd {
-	sets := make([]api.WorkoutSet, len(rows))
-	for i, r := range rows {
-		sets[i] = api.WorkoutSet{ExerciseName: r.exercise, Reps: r.reps, WeightKg: r.weight}
-	}
+func saveCmd(c *api.Client, sets []api.WorkoutSet) tea.Cmd {
 	now := time.Now()
 	return func() tea.Msg {
 		id, err := c.CreateLog(context.Background(), api.CreateLogRequest{Sets: sets, PerformedAt: now})
@@ -50,16 +55,16 @@ func saveCmd(c *api.Client, rows []setRow) tea.Cmd {
 	}
 }
 
-// Log is the hero workout-logging view (2:log). Free-form for the MVP: add sets
-// (exercise · weight · reps), rest between them, then save to POST /api/logs.
+// Log is the hero workout-logging view (2:log): a spreadsheet-style focus-chain
+// table. Navigate rows (j/k) and cells (h/l) in NORMAL; edit a cell inline in
+// INSERT. Completing a set arms the rest gauge and drops a fresh row.
 type Log struct {
 	client    *api.Client
-	rows      []setRow
-	exercise  textinput.Model
-	weight    textinput.Model
-	reps      textinput.Model
-	focus     int // 0 exercise, 1 weight, 2 reps
+	rows      []logRow
+	row       int
+	col       logCol
 	editing   bool
+	edit      textinput.Model
 	rest      restState
 	saving    bool
 	status    string
@@ -68,31 +73,13 @@ type Log struct {
 }
 
 func NewLog(client *api.Client) Log {
-	ex := textinput.New()
-	ex.Placeholder = "exercise"
-	ex.Prompt = ""
-	ex.SetVirtualCursor(true)
-	ex.SetWidth(18)
-
-	wt := textinput.New()
-	wt.Placeholder = "kg"
-	wt.Prompt = ""
-	wt.SetVirtualCursor(true)
-	wt.SetWidth(6)
-
-	rp := textinput.New()
-	rp.Placeholder = "reps"
-	rp.Prompt = ""
-	rp.SetVirtualCursor(true)
-	rp.SetWidth(5)
-
-	return Log{client: client, exercise: ex, weight: wt, reps: rp}
+	return Log{client: client, rows: []logRow{{}}}
 }
 
-// Editing reports whether the entry bar owns keyboard input (INSERT mode).
+// Editing reports whether a cell is being edited (so the shell hands every key
+// to this view instead of treating digits as tab switches).
 func (l Log) Editing() bool { return l.editing }
 
-// Mode is the status-bar label/tone derived from the log state.
 func (l Log) Mode() Mode {
 	switch {
 	case l.rest.active:
@@ -100,18 +87,33 @@ func (l Log) Mode() Mode {
 	case l.saving:
 		return Mode{Label: "SAVING", Tone: theme.Amber}
 	case l.editing:
-		return Mode{Label: "LOGGING", Tone: theme.Amber}
+		return Mode{Label: "INSERT", Tone: theme.Amber}
 	default:
 		return ModeNormal
 	}
 }
 
-// StatusRight is the right-aligned status text (set count).
 func (l Log) StatusRight() string {
-	if len(l.rows) == 0 {
+	done := 0
+	for _, r := range l.rows {
+		if r.done {
+			done++
+		}
+	}
+	if done == 0 {
 		return ""
 	}
-	return fmt.Sprintf("%d set%s", len(l.rows), plural(len(l.rows)))
+	return fmt.Sprintf("%d set%s", done, plural(done))
+}
+
+func (l Log) Hints(w int) string {
+	if l.editing {
+		return joinHints(hint("⏎", "완료"), hint("tab", "셀"), hint("esc", "취소"))
+	}
+	if w < 46 {
+		return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("s", "저장"))
+	}
+	return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("o", "행"), hint("s", "저장"), hint("hjkl", "이동"))
 }
 
 func (l Log) Update(msg tea.Msg) (Log, tea.Cmd) {
@@ -128,7 +130,8 @@ func (l Log) Update(msg tea.Msg) (Log, tea.Cmd) {
 		}
 		l.status = summarizePRs(m.detail)
 		l.statusErr = false
-		l.rows = nil
+		l.rows = []logRow{{}}
+		l.row, l.col = 0, colExercise
 		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
@@ -136,35 +139,44 @@ func (l Log) Update(msg tea.Msg) (Log, tea.Cmd) {
 		}
 		return l.updateNormal(m)
 	}
-
 	if l.editing {
-		return l.forwardToField(msg)
+		var cmd tea.Cmd
+		l.edit, cmd = l.edit.Update(msg)
+		return l, cmd
 	}
 	return l, nil
 }
 
 func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 	switch m.String() {
-	case "i", "a":
-		l.editing = true
-		l.focus = 0
-		return l, l.refocusEntry()
+	case "j", "down":
+		if l.row < len(l.rows)-1 {
+			l.row++
+		}
+	case "k", "up":
+		if l.row > 0 {
+			l.row--
+		}
+	case "h", "left":
+		if l.col > colExercise {
+			l.col--
+		}
+	case "l", "right":
+		if l.col < colReps {
+			l.col++
+		}
+	case "i", "enter":
+		return l.beginEdit()
+	case " ":
+		return l.toggleDone()
+	case "o":
+		return l.addRow(), nil
+	case "d":
+		return l.deleteRow(), nil
 	case "s":
-		if len(l.rows) == 0 || l.saving {
-			return l, nil
-		}
-		l.saving = true
-		l.status = ""
-		l.statusErr = false
-		return l, saveCmd(l.client, l.rows)
-	case "x":
-		if len(l.rows) > 0 {
-			l.rows = l.rows[:len(l.rows)-1]
-		}
-		return l, nil
+		return l.save()
 	case "r":
 		l.rest.active = false
-		return l, nil
 	}
 	return l, nil
 }
@@ -173,69 +185,147 @@ func (l Log) updateEditing(m tea.KeyPressMsg) (Log, tea.Cmd) {
 	switch m.String() {
 	case "esc":
 		l.editing = false
-		l.exercise.Blur()
-		l.weight.Blur()
-		l.reps.Blur()
 		return l, nil
-	case "tab", "down":
-		l.focus = (l.focus + 1) % 3
-		return l, l.refocusEntry()
-	case "shift+tab", "up":
-		l.focus = (l.focus + 2) % 3
-		return l, l.refocusEntry()
 	case "enter":
-		return l.commitSet()
+		l.writeCell()
+		l.editing = false
+		if l.col == colReps {
+			return l.completeRow()
+		}
+		l.col++
+		return l.beginEdit()
+	case "tab":
+		l.writeCell()
+		l.editing = false
+		if l.col < colReps {
+			l.col++
+		} else {
+			l.col = colExercise
+		}
+		return l.beginEdit()
 	}
-	return l.forwardToField(m)
-}
-
-func (l Log) forwardToField(msg tea.Msg) (Log, tea.Cmd) {
 	var cmd tea.Cmd
-	switch l.focus {
-	case 0:
-		l.exercise, cmd = l.exercise.Update(msg)
-	case 1:
-		l.weight, cmd = l.weight.Update(msg)
-	default:
-		l.reps, cmd = l.reps.Update(msg)
-	}
+	l.edit, cmd = l.edit.Update(m)
 	return l, cmd
 }
 
-func (l Log) commitSet() (Log, tea.Cmd) {
-	ex := strings.TrimSpace(l.exercise.Value())
-	w, werr := strconv.ParseFloat(strings.TrimSpace(l.weight.Value()), 64)
-	r, rerr := strconv.Atoi(strings.TrimSpace(l.reps.Value()))
-	if ex == "" || werr != nil || rerr != nil || r <= 0 || w < 0 {
-		l.status = "운동명·무게·reps(>0)를 정확히 입력하세요"
+func (l Log) beginEdit() (Log, tea.Cmd) {
+	ti := textinput.New()
+	ti.Prompt = ""
+	ti.SetVirtualCursor(true)
+	r := l.rows[l.row]
+	switch l.col {
+	case colExercise:
+		ti.SetWidth(13)
+		ti.SetValue(r.exercise)
+	case colWeight:
+		ti.SetWidth(7)
+		ti.SetValue(r.weight)
+	case colReps:
+		ti.SetWidth(4)
+		ti.SetValue(r.reps)
+	}
+	l.edit = ti
+	l.editing = true
+	return l, l.edit.Focus()
+}
+
+func (l *Log) writeCell() {
+	v := strings.TrimSpace(l.edit.Value())
+	switch l.col {
+	case colExercise:
+		l.rows[l.row].exercise = v
+	case colWeight:
+		l.rows[l.row].weight = v
+	case colReps:
+		l.rows[l.row].reps = v
+	}
+}
+
+func (l Log) completeRow() (Log, tea.Cmd) {
+	r := l.rows[l.row]
+	if strings.TrimSpace(r.exercise) == "" || !validNum(r.weight) || !validInt(r.reps) {
+		l.status = "운동·무게·reps를 정확히 입력하세요"
 		l.statusErr = true
 		return l, nil
 	}
-	l.rows = append(l.rows, setRow{exercise: ex, weight: w, reps: r})
-	l.status = ""
-	l.statusErr = false
+	l.rows[l.row].done = true
+	l.status, l.statusErr = "", false
 	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
-	l.weight.SetValue("")
-	l.reps.SetValue("")
-	l.focus = 1 // keep exercise, jump to weight for the next set
-	return l, l.refocusEntry()
+	l.rows = append(l.rows, logRow{exercise: r.exercise})
+	l.row = len(l.rows) - 1
+	l.col = colWeight
+	return l.beginEdit()
 }
 
-func (l *Log) refocusEntry() tea.Cmd {
-	l.exercise.Blur()
-	l.weight.Blur()
-	l.reps.Blur()
-	switch l.focus {
-	case 0:
-		return l.exercise.Focus()
-	case 1:
-		return l.weight.Focus()
-	default:
-		return l.reps.Focus()
+func (l Log) toggleDone() (Log, tea.Cmd) {
+	if l.rows[l.row].done {
+		l.rows[l.row].done = false
+		return l, nil
 	}
+	r := l.rows[l.row]
+	if strings.TrimSpace(r.exercise) == "" || !validNum(r.weight) || !validInt(r.reps) {
+		l.status = "완료하려면 운동·무게·reps가 필요합니다"
+		l.statusErr = true
+		return l, nil
+	}
+	l.rows[l.row].done = true
+	l.status, l.statusErr = "", false
+	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
+	return l, nil
 }
 
-// tickRest advances the rest countdown one second (driven by the shell clock).
+func (l Log) addRow() Log {
+	ex := l.rows[l.row].exercise
+	at := l.row + 1
+	rows := make([]logRow, 0, len(l.rows)+1)
+	rows = append(rows, l.rows[:at]...)
+	rows = append(rows, logRow{exercise: ex})
+	rows = append(rows, l.rows[at:]...)
+	l.rows = rows
+	l.row, l.col = at, colWeight
+	return l
+}
+
+func (l Log) deleteRow() Log {
+	if len(l.rows) <= 1 {
+		l.rows = []logRow{{}}
+		l.row, l.col = 0, colExercise
+		return l
+	}
+	rows := make([]logRow, 0, len(l.rows)-1)
+	rows = append(rows, l.rows[:l.row]...)
+	rows = append(rows, l.rows[l.row+1:]...)
+	l.rows = rows
+	if l.row >= len(l.rows) {
+		l.row = len(l.rows) - 1
+	}
+	return l
+}
+
+func (l Log) save() (Log, tea.Cmd) {
+	if l.saving {
+		return l, nil
+	}
+	var sets []api.WorkoutSet
+	for _, r := range l.rows {
+		if !r.done {
+			continue
+		}
+		w, _ := strconv.ParseFloat(r.weight, 64)
+		reps, _ := strconv.Atoi(r.reps)
+		sets = append(sets, api.WorkoutSet{ExerciseName: strings.TrimSpace(r.exercise), WeightKg: w, Reps: reps})
+	}
+	if len(sets) == 0 {
+		l.status = "완료된 세트가 없습니다 ([space]로 완료)"
+		l.statusErr = true
+		return l, nil
+	}
+	l.saving = true
+	l.status, l.statusErr = "", false
+	return l, saveCmd(l.client, sets)
+}
+
 func (l Log) tickRest() Log {
 	if l.rest.active && l.rest.remaining > 0 {
 		l.rest.remaining--
@@ -246,23 +336,13 @@ func (l Log) tickRest() Log {
 	return l
 }
 
-// Hints returns the mode-aware key hints for the shell footer.
-func (l Log) Hints() string {
-	if l.editing {
-		return joinHints(hint("⏎", "세트추가"), hint("tab", "이동"), hint("esc", "나가기"))
-	}
-	return joinHints(hint("i", "입력"), hint("s", "저장"), hint("x", "삭제"), hint("1-5", "탭"), hint("q", "종료"))
-}
+// --- rendering ---
 
-// Body renders the pane content sized to w×h (embedded in the shell ViewPane).
 func (l Log) Body(w, h int) string {
 	var b strings.Builder
-	b.WriteString(l.table())
+	b.WriteString(l.renderTable(w))
 	if l.rest.active {
-		b.WriteString("\n\n" + l.restBar())
-	}
-	if l.editing {
-		b.WriteString("\n\n" + l.entryBar())
+		b.WriteString("\n\n" + l.restBar(w))
 	}
 	if l.status != "" {
 		tone := theme.Green
@@ -274,25 +354,90 @@ func (l Log) Body(w, h int) string {
 	return lipgloss.NewStyle().Width(w).Height(h).Padding(1, 1).Render(b.String())
 }
 
-func (l Log) table() string {
-	rows := []string{tableRow(dim("SET"), dim("EXERCISE"), dim("WEIGHT"), dim("REPS"), dim("✓"))}
-	if len(l.rows) == 0 {
-		rows = append(rows, lipgloss.NewStyle().Foreground(theme.Ghost).Render("(세트 없음 — [i] 입력 시작)"))
+func (l Log) renderTable(w int) string {
+	showE1rm := w >= 46
+	exW := 13
+	if !showE1rm {
+		exW = 15
 	}
+	lines := []string{l.tableHeader(exW, showE1rm)}
+	prevEx := ""
 	for i, r := range l.rows {
-		rows = append(rows, tableRow(
-			lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf("%02d", i+1)),
-			lipgloss.NewStyle().Foreground(theme.Fg).Render(truncate(r.exercise, 14)),
-			lipgloss.NewStyle().Foreground(theme.Cyan).Render(fmtKg(r.weight)),
-			lipgloss.NewStyle().Foreground(theme.Fg).Render(strconv.Itoa(r.reps)),
-			lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone),
-		))
+		lines = append(lines, l.tableRow(i, r, prevEx, exW, showE1rm))
+		prevEx = r.exercise
 	}
-	return strings.Join(rows, "\n")
+	return strings.Join(lines, "\n")
 }
 
-func (l Log) restBar() string {
-	const cells = 16
+func (l Log) tableHeader(exW int, showE1rm bool) string {
+	d := lipgloss.NewStyle().Foreground(theme.Dim)
+	cells := []string{
+		d.Width(3).Render("#"),
+		d.Width(exW).Render("EXERCISE"),
+		d.Width(7).Render("WEIGHT"),
+		d.Width(4).Render("REPS"),
+	}
+	if showE1rm {
+		cells = append(cells, d.Width(5).Render("e1RM"))
+	}
+	cells = append(cells, d.Render("✓"))
+	return "  " + strings.Join(cells, " ")
+}
+
+func (l Log) tableRow(i int, r logRow, prevEx string, exW int, showE1rm bool) string {
+	marker := "  "
+	if i == l.row {
+		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render("▸ ")
+	}
+
+	idx := lipgloss.NewStyle().Foreground(theme.Dim).Width(3).Render(fmt.Sprintf("%02d", i+1))
+
+	exText, exStyle := r.exercise, lipgloss.NewStyle().Foreground(theme.Fg)
+	if r.exercise == "" {
+		exText, exStyle = "운동?", lipgloss.NewStyle().Foreground(theme.Ghost)
+	} else if r.exercise == prevEx {
+		exText, exStyle = "〃", lipgloss.NewStyle().Foreground(theme.Ghost)
+	}
+	ex := l.cell(i, colExercise, exText, exW, exStyle)
+
+	wt := l.cell(i, colWeight, orDot(r.weight), 7, lipgloss.NewStyle().Foreground(theme.Cyan))
+	rp := l.cell(i, colReps, orDot(r.reps), 4, lipgloss.NewStyle().Foreground(theme.Fg))
+
+	cells := []string{idx, ex, wt, rp}
+	if showE1rm {
+		e := ""
+		if v := rowE1rm(r); v > 0 {
+			e = fmt.Sprintf("%.0f", v)
+		}
+		cells = append(cells, lipgloss.NewStyle().Foreground(theme.Dim).Width(5).Render(e))
+	}
+	mark := lipgloss.NewStyle().Foreground(theme.Ghost).Render("·")
+	if r.done {
+		mark = lipgloss.NewStyle().Foreground(theme.Green).Render(theme.GlyphDone)
+	}
+	cells = append(cells, mark)
+
+	return marker + strings.Join(cells, " ")
+}
+
+// cell renders one table cell, showing the inline editor when it is the active
+// cell in INSERT, an amber highlight when active in NORMAL, else plain.
+func (l Log) cell(i int, c logCol, text string, width int, base lipgloss.Style) string {
+	active := i == l.row && c == l.col
+	if active && l.editing {
+		return l.edit.View()
+	}
+	if active {
+		return lipgloss.NewStyle().Foreground(theme.Amber).Width(width).Render(truncate(text, width))
+	}
+	return base.Width(width).Render(truncate(text, width))
+}
+
+func (l Log) restBar(w int) string {
+	cells := 16
+	if w < 44 {
+		cells = 12
+	}
 	frac := 0.0
 	if l.rest.total > 0 {
 		frac = float64(l.rest.remaining) / float64(l.rest.total)
@@ -300,7 +445,7 @@ func (l Log) restBar() string {
 	if frac < 0 {
 		frac = 0
 	}
-	filled := int(frac * cells)
+	filled := int(frac * float64(cells))
 	tone := theme.Green
 	if frac < 0.5 {
 		tone = theme.Amber
@@ -309,29 +454,12 @@ func (l Log) restBar() string {
 		tone = theme.Red
 	}
 	gauge := lipgloss.NewStyle().Foreground(tone).Render(strings.Repeat("█", filled) + strings.Repeat("░", cells-filled))
-	label := lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" REST %ds  [r] skip", l.rest.remaining))
+	label := lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" rest %d:%02d  [r]skip", l.rest.remaining/60, l.rest.remaining%60))
 	return "▕" + gauge + "▏" + label
 }
 
-func (l Log) entryBar() string {
-	field := func(label string, ti textinput.Model, focused bool) string {
-		labelTone := theme.Dim
-		if focused {
-			labelTone = theme.Amber
-		}
-		return lipgloss.NewStyle().Foreground(labelTone).Render(label+" ") +
-			lipgloss.NewStyle().Foreground(theme.Cyan).Render("["+ti.View()+"]")
-	}
-	return field("ex", l.exercise, l.focus == 0) + "  " +
-		field("wt", l.weight, l.focus == 1) + "  " +
-		field("reps", l.reps, l.focus == 2)
-}
-
 func summarizePRs(log *api.LogDetail) string {
-	if log == nil {
-		return theme.GlyphDone + " 저장됨"
-	}
-	if len(log.PersonalRecords) == 0 {
+	if log == nil || len(log.PersonalRecords) == 0 {
 		return theme.GlyphDone + " 저장됨"
 	}
 	parts := make([]string, 0, len(log.PersonalRecords))
@@ -342,33 +470,50 @@ func summarizePRs(log *api.LogDetail) string {
 	return "[PR] " + strings.Join(parts, "   ")
 }
 
-// --- small render helpers ---
+// --- helpers ---
 
-func tableRow(set, ex, wt, reps, done string) string {
-	col := func(s string, n int) string { return lipgloss.NewStyle().Width(n).Render(s) }
-	return col(set, 4) + col(ex, 16) + col(wt, 9) + col(reps, 6) + done
+func orDot(s string) string {
+	if strings.TrimSpace(s) == "" {
+		return "·"
+	}
+	return s
+}
+
+func rowE1rm(r logRow) float64 {
+	w, err1 := strconv.ParseFloat(strings.TrimSpace(r.weight), 64)
+	reps, err2 := strconv.Atoi(strings.TrimSpace(r.reps))
+	if err1 != nil || err2 != nil || reps <= 0 {
+		return 0
+	}
+	return w * (1 + float64(reps)/30.0) // Epley estimate (display only)
+}
+
+func validNum(s string) bool {
+	v, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
+	return err == nil && v >= 0
+}
+
+func validInt(s string) bool {
+	v, err := strconv.Atoi(strings.TrimSpace(s))
+	return err == nil && v > 0
 }
 
 func dim(s string) string { return lipgloss.NewStyle().Foreground(theme.Dim).Render(s) }
 
 func hint(k, label string) string {
 	return lipgloss.NewStyle().Foreground(theme.Cyan).Render("["+k+"]") +
-		lipgloss.NewStyle().Foreground(theme.Dim).Render(" "+label)
+		lipgloss.NewStyle().Foreground(theme.Dim).Render(label)
 }
 
 func joinHints(parts ...string) string { return strings.Join(parts, "  ") }
-
-func fmtKg(w float64) string {
-	if w == float64(int64(w)) {
-		return strconv.FormatInt(int64(w), 10) + "kg"
-	}
-	return strconv.FormatFloat(w, 'f', 1, 64) + "kg"
-}
 
 func truncate(s string, n int) string {
 	r := []rune(s)
 	if len(r) <= n {
 		return s
+	}
+	if n <= 1 {
+		return string(r[:n])
 	}
 	return string(r[:n-1]) + "…"
 }

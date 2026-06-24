@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/sharru0701/workout-log/apps/tui/internal/api"
 	"github.com/sharru0701/workout-log/apps/tui/internal/theme"
@@ -143,11 +144,11 @@ func (m Shell) View() tea.View {
 	mode, right := m.statusContext()
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
-		m.titleBar(w),
-		m.tabStrip(),
+		fitLine(m.titleBar(w), w),
+		fitLine(m.tabStrip(), w),
 		m.paneBody(w, bodyH),
-		m.statusBar(w, mode, right),
-		m.keyHint(),
+		fitLine(m.statusBar(w, mode, right), w),
+		fitLine(m.keyHint(w), w),
 	)
 
 	v := tea.NewView(content)
@@ -204,9 +205,9 @@ func (m Shell) statusBar(w int, mode Mode, right string) string {
 	return justify(pill, rightText, w)
 }
 
-func (m Shell) keyHint() string {
+func (m Shell) keyHint(w int) string {
 	if m.active == TabLog {
-		return m.log.Hints()
+		return m.log.Hints(w)
 	}
 	return joinHints(hint("1-5", "탭"), hint("?", "help"), hint("q", "종료"))
 }
@@ -218,4 +219,13 @@ func justify(left, right string, w int) string {
 		gap = 1
 	}
 	return left + strings.Repeat(" ", gap) + right
+}
+
+// fitLine hard-caps a line to w display columns (CJK-aware) so no chrome line
+// ever overflows a narrow terminal and forces a wrap.
+func fitLine(s string, w int) string {
+	if lipgloss.Width(s) <= w {
+		return s
+	}
+	return ansi.Truncate(s, w, "")
 }

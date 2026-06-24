@@ -16,7 +16,7 @@ func render(m Shell, w, h int) string {
 func TestShellRenders(t *testing.T) {
 	out := render(NewShell(nil), 80, 24)
 	// chrome (tabs, status) + the default log pane (table header) + footer hint
-	for _, want := range []string{"ironlog", "home", "log", "stats", "cal", "set", "NORMAL", "EXERCISE", "종료"} {
+	for _, want := range []string{"ironlog", "home", "log", "stats", "cal", "set", "NORMAL", "EXERCISE", "저장"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("shell output missing %q", want)
 		}
