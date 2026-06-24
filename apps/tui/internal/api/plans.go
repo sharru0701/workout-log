@@ -21,6 +21,11 @@ func (c *Client) Plans(ctx context.Context) ([]Plan, error) {
 	return out.Items, nil
 }
 
+// RenamePlan changes a plan's name (empty name is rejected with 400).
+func (c *Client) RenamePlan(ctx context.Context, id, name string) error {
+	return c.do(ctx, "PATCH", "/api/plans/"+id, map[string]string{"name": name}, nil)
+}
+
 // DeletePlan removes a plan and its logs.
 func (c *Client) DeletePlan(ctx context.Context, id string) error {
 	return c.do(ctx, "DELETE", "/api/plans/"+id, nil, nil)

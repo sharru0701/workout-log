@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
@@ -52,6 +53,14 @@ func createPlanCmd(c *api.Client, req api.CreatePlanRequest) tea.Cmd {
 	}
 }
 
+type planRenamedMsg struct{ err error }
+
+func renamePlanCmd(c *api.Client, id, name string) tea.Cmd {
+	return func() tea.Msg {
+		return planRenamedMsg{err: c.RenamePlan(context.Background(), id, name)}
+	}
+}
+
 // Programs is the plans buffer: a navigable list of training plans. enter sets
 // the active plan (loads today's session), d deletes (confirm).
 type Programs struct {
@@ -60,6 +69,8 @@ type Programs struct {
 	templates []api.Template
 	activeID  string
 	sel       int
+	renaming  bool
+	input     textinput.Model
 	loaded    bool
 	err       string
 	w, h      int
@@ -112,6 +123,12 @@ func (s Programs) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return s, nil
 		}
 		return s, plansLoadCmd(s.client)
+	case planRenamedMsg:
+		if m.err != nil {
+			s.err = humanizeAuthErr(m.err)
+			return s, nil
+		}
+		return s, plansLoadCmd(s.client)
 	case pickedMsg:
 		if m.tag == "template" {
 			for _, t := range s.templates {
@@ -128,7 +145,15 @@ func (s Programs) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		return s, nil
 	case tea.KeyPressMsg:
+		if s.renaming {
+			return s.updateRename(m)
+		}
 		return s.handleKey(m)
+	}
+	if s.renaming {
+		var cmd tea.Cmd
+		s.input, cmd = s.input.Update(msg)
+		return s, cmd
 	}
 	return s, nil
 }
@@ -161,14 +186,49 @@ func (s Programs) handleKey(m tea.KeyPressMsg) (Screen, tea.Cmd) {
 	case "n":
 		return s, templatesLoadCmd(s.client)
 	case "r":
-		return s, plansLoadCmd(s.client)
+		return s.beginRename()
 	}
 	return s, nil
+}
+
+func (s Programs) beginRename() (Screen, tea.Cmd) {
+	if len(s.plans) == 0 {
+		return s, nil
+	}
+	ti := textinput.New()
+	ti.Prompt = ""
+	ti.SetVirtualCursor(true)
+	ti.SetWidth(24)
+	ti.SetValue(s.plans[s.sel].Name)
+	s.input, s.renaming = ti, true
+	return s, ti.Focus()
+}
+
+func (s Programs) updateRename(m tea.KeyPressMsg) (Screen, tea.Cmd) {
+	switch m.String() {
+	case "esc":
+		s.renaming = false
+		return s, nil
+	case "enter":
+		s.renaming = false
+		name := strings.TrimSpace(s.input.Value())
+		p := s.plans[s.sel]
+		if name == "" || name == p.Name {
+			return s, nil
+		}
+		return s, renamePlanCmd(s.client, p.ID, name)
+	}
+	var cmd tea.Cmd
+	s.input, cmd = s.input.Update(m)
+	return s, cmd
 }
 
 func (s Programs) Mode() Mode {
 	if !s.loaded && s.err == "" {
 		return Mode{Label: "LOADING", Tone: theme.Cyan}
+	}
+	if s.renaming {
+		return Mode{Label: "INSERT", Tone: theme.Amber}
 	}
 	return ModeNormal
 }
@@ -187,10 +247,13 @@ func (s Programs) StatusRight() string {
 	return fmt.Sprintf("%d 플랜", len(s.plans))
 }
 
-func (s Programs) Editing() bool { return false }
+func (s Programs) Editing() bool { return s.renaming }
 
 func (s Programs) Hints(int) string {
-	return joinHints(hint("jk", "이동"), hint("⏎", "활성"), hint("n", "새플랜"), hint("d", "삭제"))
+	if s.renaming {
+		return joinHints(hint("⏎", "이름변경"), hint("esc", "취소"))
+	}
+	return joinHints(hint("jk", "이동"), hint("⏎", "활성"), hint("r", "이름"), hint("n", "새플랜"), hint("d", "삭제"))
 }
 
 func (s Programs) Body(w, h int) string {
@@ -215,6 +278,10 @@ func (s Programs) Body(w, h int) string {
 		bullet := lipgloss.NewStyle().Foreground(theme.Ghost).Render("○")
 		if p.ID == s.activeID {
 			bullet = lipgloss.NewStyle().Foreground(theme.Green).Render("●")
+		}
+		if i == s.sel && s.renaming {
+			lines = append(lines, marker+bullet+" "+lipgloss.NewStyle().Foreground(theme.Amber).Render("["+s.input.View()+"]"))
+			continue
 		}
 		sub := lipgloss.NewStyle().Foreground(theme.Dim).Render(programSubtitle(p))
 		left := marker + bullet + " " + nameStyle.Render(truncate(p.Name, w-22))

@@ -379,6 +379,25 @@ func TestLivePlanFlow(t *testing.T) {
 		t.Fatalf("GenerateSession: %v", err)
 	}
 	t.Logf("generated session: %d exercises", len(sess.Snapshot.Exercises))
+
+	// rename the plan and confirm it sticks
+	if err := c.RenamePlan(ctx, plans[0].ID, "Renamed Plan"); err != nil {
+		t.Fatalf("RenamePlan: %v", err)
+	}
+	after, err := c.Plans(ctx)
+	if err != nil {
+		t.Fatalf("Plans after rename: %v", err)
+	}
+	renamed := false
+	for _, p := range after {
+		if p.ID == plans[0].ID && p.Name == "Renamed Plan" {
+			renamed = true
+		}
+	}
+	if !renamed {
+		t.Error("plan rename not reflected in the list")
+	}
+	t.Log("plan rename ok")
 }
 
 // TestLiveChangePassword proves the password-change round-trip: signup, change
