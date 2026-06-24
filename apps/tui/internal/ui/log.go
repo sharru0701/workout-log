@@ -116,10 +116,21 @@ func (l Log) Hints(w int) string {
 	return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("o", "행"), hint("s", "저장"), hint("hjkl", "이동"))
 }
 
-func (l Log) Update(msg tea.Msg) (Log, tea.Cmd) {
+// Init satisfies Screen; the log loads no remote data on entry.
+func (l Log) Init() tea.Cmd { return nil }
+
+func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 	switch m := msg.(type) {
 	case tea.WindowSizeMsg:
 		l.w, l.h = m.Width, m.Height
+		return l, nil
+	case tickMsg:
+		if l.rest.active && l.rest.remaining > 0 {
+			l.rest.remaining--
+			if l.rest.remaining <= 0 {
+				l.rest.active = false
+			}
+		}
 		return l, nil
 	case saveResultMsg:
 		l.saving = false
@@ -135,9 +146,11 @@ func (l Log) Update(msg tea.Msg) (Log, tea.Cmd) {
 		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
-			return l.updateEditing(m)
+			nl, cmd := l.updateEditing(m)
+			return nl, cmd
 		}
-		return l.updateNormal(m)
+		nl, cmd := l.updateNormal(m)
+		return nl, cmd
 	}
 	if l.editing {
 		var cmd tea.Cmd
@@ -324,16 +337,6 @@ func (l Log) save() (Log, tea.Cmd) {
 	l.saving = true
 	l.status, l.statusErr = "", false
 	return l, saveCmd(l.client, sets)
-}
-
-func (l Log) tickRest() Log {
-	if l.rest.active && l.rest.remaining > 0 {
-		l.rest.remaining--
-		if l.rest.remaining <= 0 {
-			l.rest.active = false
-		}
-	}
-	return l
 }
 
 // --- rendering ---

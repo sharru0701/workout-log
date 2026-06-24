@@ -139,3 +139,44 @@ func TestLiveCreateLog(t *testing.T) {
 	}
 	t.Logf("list shows %d log(s) after create", len(logs))
 }
+
+// TestLiveHome verifies the dashboard DTO parses against a real /api/home
+// response (nested structs + numeric fields). Skipped without the env var.
+func TestLiveHome(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live home test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	email := fmt.Sprintf("tui-home+%d@example.com", time.Now().UnixNano())
+	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: "spike-passw0rd", DisplayName: "TUI Home"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	if _, err := c.CreateLog(ctx, CreateLogRequest{
+		PerformedAt: time.Now(),
+		Sets: []WorkoutSet{
+			{ExerciseName: "Squat", WeightKg: 100, Reps: 5},
+			{ExerciseName: "Squat", WeightKg: 102.5, Reps: 5},
+		},
+	}); err != nil {
+		t.Fatalf("CreateLog: %v", err)
+	}
+
+	d, err := c.Home(ctx, "")
+	if err != nil {
+		t.Fatalf("Home: %v", err)
+	}
+	t.Logf("home: streak=%d sessions=%d weeklyDays=%d volumeTrend=%d strength=%d recent=%d",
+		d.QuickStats.CurrentStreak, d.QuickStats.TotalSessions, len(d.WeeklySummary.Days),
+		len(d.VolumeTrend), len(d.StrengthProgress), len(d.RecentSessions))
+	if d.QuickStats.TotalSessions < 1 {
+		t.Errorf("expected at least 1 session, got %d", d.QuickStats.TotalSessions)
+	}
+	if len(d.WeeklySummary.Days) != 7 {
+		t.Errorf("expected 7 weekly days, got %d", len(d.WeeklySummary.Days))
+	}
+}

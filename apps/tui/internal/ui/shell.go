@@ -45,19 +45,32 @@ type Mode struct {
 // ModeNormal is the idle auto-label (NORMAL is a state label, not a vim mode).
 var ModeNormal = Mode{Label: "NORMAL", Tone: theme.Dim}
 
-// Shell is the persistent top-level chrome that hosts swappable view panes.
+// Shell is the persistent top-level chrome that hosts swappable screens.
 type Shell struct {
-	width  int
-	height int
-	now    time.Time
-	active Tab
-	client *api.Client
-	log    Log
+	width   int
+	height  int
+	now     time.Time
+	active  Tab
+	client  *api.Client
+	screens map[Tab]Screen
+	seen    map[Tab]bool
 }
 
 // NewShell builds the shell with the log tab focused by default.
 func NewShell(client *api.Client) Shell {
-	return Shell{active: TabLog, now: time.Now(), client: client, log: NewLog(client)}
+	return Shell{
+		active: TabLog,
+		now:    time.Now(),
+		client: client,
+		screens: map[Tab]Screen{
+			TabHome:     NewHome(client),
+			TabLog:      NewLog(client),
+			TabStats:    placeholder{name: "stats"},
+			TabCal:      placeholder{name: "cal"},
+			TabSettings: placeholder{name: "set"},
+		},
+		seen: map[Tab]bool{TabLog: true},
+	}
 }
 
 type tickMsg time.Time
@@ -66,60 +79,63 @@ func tick() tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg { return tickMsg(t) })
 }
 
-// Init starts the 1s clock tick (also drives the rest countdown).
-func (m Shell) Init() tea.Cmd { return tick() }
+// Init starts the clock tick and the initial screen's load.
+func (m Shell) Init() tea.Cmd {
+	return tea.Batch(tick(), m.screens[m.active].Init())
+}
 
 func (m Shell) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width, m.height = msg.Width, msg.Height
-		var cmd tea.Cmd
-		m.log, cmd = m.log.Update(msg)
-		return m, cmd
+		for t, s := range m.screens {
+			ns, _ := s.Update(msg)
+			m.screens[t] = ns
+		}
+		return m, nil
 	case tickMsg:
 		m.now = time.Time(msg)
-		m.log = m.log.tickRest()
-		return m, tick()
+		ns, cmd := m.screens[m.active].Update(msg)
+		m.screens[m.active] = ns
+		return m, tea.Batch(tick(), cmd)
 	case tea.KeyPressMsg:
-		// In INSERT mode the log view owns every key (so digits edit fields
-		// rather than switching tabs).
-		if m.active == TabLog && m.log.Editing() {
-			var cmd tea.Cmd
-			m.log, cmd = m.log.Update(msg)
-			return m, cmd
+		// In an editing/INSERT screen, every key belongs to that screen.
+		if m.screens[m.active].Editing() {
+			return m.route(msg)
 		}
 		switch msg.String() {
 		case "q":
 			return m, tea.Quit
 		case "1":
-			m.active = TabHome
-			return m, nil
+			return m.activate(TabHome)
 		case "2":
-			m.active = TabLog
-			return m, nil
+			return m.activate(TabLog)
 		case "3":
-			m.active = TabStats
-			return m, nil
+			return m.activate(TabStats)
 		case "4":
-			m.active = TabCal
-			return m, nil
+			return m.activate(TabCal)
 		case "5":
-			m.active = TabSettings
-			return m, nil
+			return m.activate(TabSettings)
 		}
-		if m.active == TabLog {
-			var cmd tea.Cmd
-			m.log, cmd = m.log.Update(msg)
-			return m, cmd
-		}
-		return m, nil
+		return m.route(msg)
 	}
+	return m.route(msg)
+}
 
-	// other messages (save result, cursor blink, …) → active view
-	if m.active == TabLog {
-		var cmd tea.Cmd
-		m.log, cmd = m.log.Update(msg)
-		return m, cmd
+// route forwards a message to the active screen and stores the result.
+func (m Shell) route(msg tea.Msg) (tea.Model, tea.Cmd) {
+	ns, cmd := m.screens[m.active].Update(msg)
+	m.screens[m.active] = ns
+	return m, cmd
+}
+
+// activate switches tabs, dispatching the screen's Init the first time it is
+// shown (lazy data load).
+func (m Shell) activate(t Tab) (tea.Model, tea.Cmd) {
+	m.active = t
+	if !m.seen[t] {
+		m.seen[t] = true
+		return m, m.screens[t].Init()
 	}
 	return m, nil
 }
@@ -141,38 +157,20 @@ func (m Shell) View() tea.View {
 		bodyH = 1
 	}
 
-	mode, right := m.statusContext()
+	s := m.screens[m.active]
 	content := lipgloss.JoinVertical(
 		lipgloss.Left,
 		fitLine(m.titleBar(w), w),
 		fitLine(m.tabStrip(), w),
-		m.paneBody(w, bodyH),
-		fitLine(m.statusBar(w, mode, right), w),
-		fitLine(m.keyHint(w), w),
+		s.Body(w, bodyH),
+		fitLine(m.statusBar(w, s.Mode(), s.StatusRight()), w),
+		fitLine(s.Hints(w), w),
 	)
 
 	v := tea.NewView(content)
 	v.BackgroundColor = theme.Bg
 	v.AltScreen = true
 	return v
-}
-
-func (m Shell) statusContext() (Mode, string) {
-	if m.active == TabLog {
-		return m.log.Mode(), m.log.StatusRight()
-	}
-	return ModeNormal, ""
-}
-
-func (m Shell) paneBody(w, h int) string {
-	if m.active == TabLog {
-		return m.log.Body(w, h)
-	}
-	heading := lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).
-		Render("  " + strings.ToUpper(tabMeta[m.active].name))
-	sub := lipgloss.NewStyle().Foreground(theme.Ghost).Render("  (곧 제공 — post-MVP)")
-	body := "\n" + heading + "\n\n" + sub
-	return lipgloss.NewStyle().Width(w).Height(h).Render(body)
 }
 
 func (m Shell) titleBar(w int) string {
@@ -203,13 +201,6 @@ func (m Shell) statusBar(w int, mode Mode, right string) string {
 	pill := lipgloss.NewStyle().Foreground(mode.Tone).Bold(true).Render("-- " + mode.Label + " --")
 	rightText := lipgloss.NewStyle().Foreground(theme.Dim).Render(right)
 	return justify(pill, rightText, w)
-}
-
-func (m Shell) keyHint(w int) string {
-	if m.active == TabLog {
-		return m.log.Hints(w)
-	}
-	return joinHints(hint("1-5", "탭"), hint("?", "help"), hint("q", "종료"))
 }
 
 // justify places left and right text on one line padded to width w.
