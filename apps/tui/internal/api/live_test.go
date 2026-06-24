@@ -672,6 +672,76 @@ func TestLiveLogRPE(t *testing.T) {
 	t.Fatalf("created log %s not found", id)
 }
 
+// TestLiveExerciseCRUD proves rename/alias/delete against a uniquely-named
+// exercise auto-registered by a log (so it never touches the shared seed
+// catalog), then deletes it to leave the catalog clean. Skipped without env.
+func TestLiveExerciseCRUD(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live exercise-CRUD test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Signup(ctx, SignupRequest{Email: fmt.Sprintf("tui-ex+%d@example.com", time.Now().UnixNano()), Password: "spike-passw0rd"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+
+	uniq := fmt.Sprintf("ZzTui%d", time.Now().UnixNano())
+	id, err := c.CreateExercise(ctx, uniq)
+	if err != nil {
+		t.Fatalf("CreateExercise: %v", err)
+	}
+	if id == "" {
+		t.Fatal("CreateExercise returned an empty id")
+	}
+
+	find := func(name string) (Exercise, bool) {
+		exs, _ := c.Exercises(ctx, name)
+		for _, e := range exs {
+			if e.ID == id {
+				return e, true
+			}
+		}
+		return Exercise{}, false
+	}
+	if _, ok := find(uniq); !ok {
+		t.Fatal("created exercise not found in the catalog")
+	}
+
+	renamed := uniq + "B"
+	if err := c.RenameExercise(ctx, id, renamed); err != nil {
+		t.Fatalf("RenameExercise: %v", err)
+	}
+	if ex, ok := find(renamed); !ok || ex.Name != renamed {
+		t.Errorf("rename not reflected: ok=%v name=%q", ok, ex.Name)
+	}
+
+	if err := c.AddAlias(ctx, id, uniq+"Alias"); err != nil {
+		t.Fatalf("AddAlias: %v", err)
+	}
+	ex, _ := find(renamed)
+	aliasFound := false
+	for _, a := range ex.Aliases {
+		if a == uniq+"Alias" {
+			aliasFound = true
+		}
+	}
+	if !aliasFound {
+		t.Errorf("alias not reflected in catalog: %v", ex.Aliases)
+	}
+
+	if err := c.DeleteExercise(ctx, id); err != nil {
+		t.Fatalf("DeleteExercise: %v", err)
+	}
+	if _, ok := find(renamed); ok {
+		t.Error("exercise should be gone after delete")
+	}
+	t.Logf("exercise CRUD ok: create→rename→alias→delete (%s)", renamed)
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")

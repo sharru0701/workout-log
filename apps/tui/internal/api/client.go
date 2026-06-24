@@ -90,6 +90,12 @@ func IsRateLimited(err error) bool {
 	return errors.As(err, &ae) && ae.Status == http.StatusTooManyRequests
 }
 
+// IsConflict reports whether err is a 409 (duplicate name/alias).
+func IsConflict(err error) bool {
+	var ae *APIError
+	return errors.As(err, &ae) && ae.Status == http.StatusConflict
+}
+
 func (c *Client) do(ctx context.Context, method, path string, body, out any) error {
 	var reqBody io.Reader
 	if body != nil {

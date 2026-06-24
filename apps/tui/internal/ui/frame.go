@@ -31,17 +31,19 @@ const (
 	vHistory
 	vPrograms
 	vSettings
+	vExercises
 )
 
 var viewMeta = map[ViewKind]struct{ key, name string }{
-	vToday:    {"t", "today"},
-	vStats:    {"s", "stats"},
-	vHistory:  {"h", "history"},
-	vPrograms: {"p", "programs"},
-	vSettings: {",", "settings"},
+	vToday:     {"t", "today"},
+	vStats:     {"s", "stats"},
+	vHistory:   {"h", "history"},
+	vPrograms:  {"p", "programs"},
+	vSettings:  {",", "settings"},
+	vExercises: {"x", "exercises"},
 }
 
-var gotoOrder = []ViewKind{vToday, vStats, vHistory, vPrograms, vSettings}
+var gotoOrder = []ViewKind{vToday, vStats, vHistory, vPrograms, vSettings, vExercises}
 
 // Mode is the statusline mode label and its tone color.
 type Mode struct {
@@ -128,11 +130,12 @@ func NewFrame(client *api.Client) Frame {
 		now:    time.Now(),
 		active: vToday,
 		views: map[ViewKind]Screen{
-			vToday:    NewLog(client),
-			vStats:    NewStats(client),
-			vHistory:  NewHistory(client),
-			vPrograms: NewPrograms(client),
-			vSettings: NewSettings(client),
+			vToday:     NewLog(client),
+			vStats:     NewStats(client),
+			vHistory:   NewHistory(client),
+			vPrograms:  NewPrograms(client),
+			vSettings:  NewSettings(client),
+			vExercises: NewExercises(client),
 		},
 		seen: map[ViewKind]bool{vToday: true},
 	}
@@ -214,7 +217,7 @@ func (f Frame) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return f, nil
 	case "q":
 		return f, tea.Quit
-	case "1", "2", "3", "4", "5":
+	case "1", "2", "3", "4", "5", "6":
 		if idx := int(msg.String()[0] - '1'); idx >= 0 && idx < len(gotoOrder) {
 			return f.switchTo(gotoOrder[idx])
 		}
@@ -327,6 +330,8 @@ func (f Frame) runCommand(cmd string) (tea.Model, tea.Cmd) {
 		return f.switchTo(vPrograms)
 	case ",", "set", "settings":
 		return f.switchTo(vSettings)
+	case "x", "ex", "exercise", "exercises":
+		return f.switchTo(vExercises)
 	}
 	f.flash = "알 수 없는 명령: " + word
 	return f, nil
@@ -437,6 +442,7 @@ func commandItems() []pickerItem {
 		{"stats", "통계", "stats"},
 		{"history", "기록", "history"},
 		{"programs", "프로그램", "programs"},
+		{"exercises", "운동 관리", "exercises"},
 		{"settings", "설정", "settings"},
 		{"logout", "로그아웃", "logout"},
 		{"quit", "종료", "quit"},
