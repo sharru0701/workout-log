@@ -29,6 +29,25 @@ type statsE1rmMsg struct {
 	err  error
 }
 
+type statsVolumeMsg struct {
+	volume *api.VolumeSeries
+	err    error
+}
+
+type statsView int
+
+const (
+	vwE1rm statsView = iota
+	vwVolume
+)
+
+func statsVolumeCmd(c *api.Client, rangeDays int) tea.Cmd {
+	return func() tea.Msg {
+		v, err := c.VolumeSeries(context.Background(), rangeDays)
+		return statsVolumeMsg{volume: v, err: err}
+	}
+}
+
 func statsBundleCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
 		b, err := c.Bundle(context.Background(), 90)
@@ -50,6 +69,8 @@ type Stats struct {
 	client   *api.Client
 	bundle   *api.StatsBundle
 	e1rm     *api.E1rmResult
+	volume   *api.VolumeSeries
+	view     statsView
 	lift     int
 	rangeIdx int
 	braille  bool
@@ -73,6 +94,10 @@ func (s Stats) currentLift() string {
 }
 
 func (s Stats) reload() (Stats, tea.Cmd) {
+	if s.view == vwVolume {
+		s.volume = nil
+		return s, statsVolumeCmd(s.client, statsRanges[s.rangeIdx].days)
+	}
 	lift := s.currentLift()
 	if lift == "" {
 		return s, nil
@@ -101,6 +126,13 @@ func (s Stats) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		s.e1rm, s.err = m.e1rm, ""
 		return s, nil
+	case statsVolumeMsg:
+		if m.err != nil {
+			s.err = humanizeAuthErr(m.err)
+			return s, nil
+		}
+		s.volume, s.err = m.volume, ""
+		return s, nil
 	case pickedMsg:
 		if m.tag == "exercise" && strings.TrimSpace(m.value) != "" {
 			s.custom, s.e1rm = m.value, nil
@@ -119,16 +151,25 @@ func (s Stats) handleKey(m tea.KeyPressMsg) (Screen, tea.Cmd) {
 		n = len(s.bundle.Prs90d)
 	}
 	switch m.String() {
+	case "v":
+		if s.view == vwE1rm {
+			s.view = vwVolume
+		} else {
+			s.view = vwE1rm
+		}
+		return s.reload()
 	case "/":
-		return s, openExercisePickerCmd(s.client)
+		if s.view == vwE1rm {
+			return s, openExercisePickerCmd(s.client)
+		}
 	case "j", "down", "n":
-		if n > 0 {
+		if s.view == vwE1rm && n > 0 {
 			s.custom = ""
 			s.lift = (s.lift + 1) % n
 			return s.reload()
 		}
 	case "k", "up", "p":
-		if n > 0 {
+		if s.view == vwE1rm && n > 0 {
 			s.custom = ""
 			s.lift = (s.lift - 1 + n) % n
 			return s.reload()
@@ -155,6 +196,9 @@ func (s Stats) Mode() Mode {
 }
 
 func (s Stats) Context() string {
+	if s.view == vwVolume {
+		return "주간 볼륨"
+	}
 	if lift := s.currentLift(); lift != "" {
 		return truncate(lift, 14)
 	}
@@ -171,7 +215,10 @@ func (s Stats) StatusRight() string {
 func (s Stats) Editing() bool { return false }
 
 func (s Stats) Hints(int) string {
-	return joinHints(hint("jk", "운동"), hint("/", "검색"), hint("[ ]", "범위"), hint("b", "차트"))
+	if s.view == vwVolume {
+		return joinHints(hint("v", "e1RM"), hint("[ ]", "범위"), hint("b", "차트"))
+	}
+	return joinHints(hint("jk", "운동"), hint("/", "검색"), hint("[ ]", "범위"), hint("b", "차트"), hint("v", "볼륨"))
 }
 
 func (s Stats) Body(w, h int) string {
@@ -181,19 +228,23 @@ func (s Stats) Body(w, h int) string {
 	if s.bundle == nil {
 		return centered("불러오는 중…", theme.Dim, w, h)
 	}
-	if len(s.bundle.Prs90d) == 0 && s.custom == "" {
-		return centered("기록이 충분하지 않습니다 (/ 운동 검색)", theme.Ghost, w, h)
-	}
-
 	var b strings.Builder
-	b.WriteString(s.header(w) + "\n\n")
-	b.WriteString(s.chart(w-2, h-6) + "\n")
-	b.WriteString(s.summary())
+	if s.view == vwVolume {
+		b.WriteString(s.volumeHeader(w) + "\n\n")
+		b.WriteString(s.volumeChart(w-2, h-6) + "\n")
+		b.WriteString(s.volumeSummary())
+	} else {
+		if len(s.bundle.Prs90d) == 0 && s.custom == "" {
+			return centered("기록이 충분하지 않습니다 (/ 운동 검색)", theme.Ghost, w, h)
+		}
+		b.WriteString(s.header(w) + "\n\n")
+		b.WriteString(s.chart(w-2, h-6) + "\n")
+		b.WriteString(s.summary())
+	}
 	return lipgloss.NewStyle().Width(w).Height(h).Padding(1, 1).Render(b.String())
 }
 
-func (s Stats) header(w int) string {
-	left := lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("e1RM " + strings.ToUpper(s.currentLift()))
+func (s Stats) rangeTabs() string {
 	var tabs []string
 	for i, r := range statsRanges {
 		if i == s.rangeIdx {
@@ -202,7 +253,56 @@ func (s Stats) header(w int) string {
 			tabs = append(tabs, lipgloss.NewStyle().Foreground(theme.Dim).Render(r.label))
 		}
 	}
-	return justify(left, strings.Join(tabs, " "), w-2)
+	return strings.Join(tabs, " ")
+}
+
+func (s Stats) header(w int) string {
+	left := lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("e1RM " + strings.ToUpper(s.currentLift()))
+	return justify(left, s.rangeTabs(), w-2)
+}
+
+func (s Stats) volumeHeader(w int) string {
+	left := lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render("VOLUME 주간")
+	return justify(left, s.rangeTabs(), w-2)
+}
+
+func (s Stats) volumeChart(w, h int) string {
+	if h < 2 {
+		h = 2
+	}
+	if s.volume == nil {
+		return lipgloss.NewStyle().Foreground(theme.Dim).Render("불러오는 중…")
+	}
+	vals := make([]float64, len(s.volume.Series))
+	for i, p := range s.volume.Series {
+		vals[i] = float64(p.Tonnage)
+	}
+	if len(vals) == 0 {
+		return lipgloss.NewStyle().Foreground(theme.Ghost).Render("이 범위에 데이터 없음")
+	}
+	if len(vals) == 1 {
+		return lipgloss.NewStyle().Foreground(theme.Green).Render(fmt.Sprintf("● %.1ft  (1주)", vals[0]/1000))
+	}
+	return lineChart(vals, w, h, s.braille)
+}
+
+func (s Stats) volumeSummary() string {
+	if s.volume == nil || len(s.volume.Series) == 0 {
+		return ""
+	}
+	total, max := 0.0, 0.0
+	for _, p := range s.volume.Series {
+		t := float64(p.Tonnage)
+		total += t
+		if t > max {
+			max = t
+		}
+	}
+	avg := total / float64(len(s.volume.Series))
+	out := lipgloss.NewStyle().Foreground(theme.Gold).Render(fmt.Sprintf("합 %.1ft", total/1000))
+	out += "  " + dim("·") + "  " + lipgloss.NewStyle().Foreground(theme.Cyan).Render(fmt.Sprintf("평균 %.1ft/주", avg/1000))
+	out += "  " + dim("·") + "  " + dim(fmt.Sprintf("최대 %.1ft", max/1000))
+	return out
 }
 
 func (s Stats) chart(w, h int) string {

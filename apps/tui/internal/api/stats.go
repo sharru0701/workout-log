@@ -60,3 +60,32 @@ func (c *Client) Bundle(ctx context.Context, days int) (*StatsBundle, error) {
 	}
 	return &out, nil
 }
+
+// VolumePoint is one bucket's training volume (tonnage = Σ weight×reps).
+type VolumePoint struct {
+	Period  string  `json:"period"`
+	Tonnage Float64 `json:"tonnage"`
+	Reps    int     `json:"reps"`
+	Sets    int     `json:"sets"`
+}
+
+// VolumeSeries is the /api/stats/volume-series payload (weekly buckets).
+type VolumeSeries struct {
+	Bucket string        `json:"bucket"`
+	Series []VolumePoint `json:"series"`
+}
+
+// VolumeSeries fetches weekly training-volume buckets over rangeDays (0 = the
+// server's default window).
+func (c *Client) VolumeSeries(ctx context.Context, rangeDays int) (*VolumeSeries, error) {
+	q := url.Values{}
+	q.Set("bucket", "week")
+	if rangeDays > 0 {
+		q.Set("rangeDays", fmt.Sprintf("%d", rangeDays))
+	}
+	var out VolumeSeries
+	if err := c.do(ctx, "GET", "/api/stats/volume-series?"+q.Encode(), nil, &out); err != nil {
+		return nil, err
+	}
+	return &out, nil
+}

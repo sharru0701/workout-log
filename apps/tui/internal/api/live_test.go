@@ -811,6 +811,45 @@ func TestLiveExportImport(t *testing.T) {
 	t.Logf("export/import ok: export %dB, dryRun summary=%v, replace applied=%v", len(data), dry.Summary, rep.Applied)
 }
 
+// TestLiveVolumeSeries verifies the weekly volume series parses and carries a
+// positive tonnage after a logged session. Skipped without env.
+func TestLiveVolumeSeries(t *testing.T) {
+	base := os.Getenv("IRONLOG_SPIKE_URL")
+	if base == "" {
+		t.Skip("set IRONLOG_SPIKE_URL to run the live volume-series test")
+	}
+	ctx := context.Background()
+	c, err := New(base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := c.Signup(ctx, SignupRequest{Email: fmt.Sprintf("tui-vol+%d@example.com", time.Now().UnixNano()), Password: "spike-passw0rd"}); err != nil {
+		t.Fatalf("Signup: %v", err)
+	}
+	if _, err := c.CreateLog(ctx, CreateLogRequest{
+		PerformedAt: time.Now(),
+		Sets:        []WorkoutSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5}, {ExerciseName: "Squat", WeightKg: 100, Reps: 5}},
+	}); err != nil {
+		t.Fatalf("CreateLog: %v", err)
+	}
+
+	vs, err := c.VolumeSeries(ctx, 90)
+	if err != nil {
+		t.Fatalf("VolumeSeries: %v", err)
+	}
+	if len(vs.Series) == 0 {
+		t.Fatal("expected at least one weekly bucket")
+	}
+	total := 0.0
+	for _, p := range vs.Series {
+		total += float64(p.Tonnage)
+	}
+	if total <= 0 {
+		t.Errorf("expected positive total tonnage, got %.0f", total)
+	}
+	t.Logf("volume series: %d week(s), total %.0fkg, bucket=%s", len(vs.Series), total, vs.Bucket)
+}
+
 // TestLiveSettings verifies settings GET + PATCH round-trip. Skipped without env.
 func TestLiveSettings(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")
