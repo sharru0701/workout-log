@@ -102,7 +102,7 @@ func TestLogLoadSnapshot(t *testing.T) {
 			}},
 			{ExerciseName: "Bench Press", Role: "MAIN", Sets: []api.PlannedSet{{Reps: 5, TargetWeightKg: 70}}},
 		},
-	})
+	}, map[string]string{"squat": "100×5"})
 	if len(l.groups) != 2 {
 		t.Fatalf("expected 2 groups, got %d", len(l.groups))
 	}
@@ -114,6 +114,19 @@ func TestLogLoadSnapshot(t *testing.T) {
 	}
 	if l.groups[0].tgt != "102.5×5" {
 		t.Errorf("tgt = %q, want 102.5×5", l.groups[0].tgt)
+	}
+	if l.groups[0].prev != "100×5" {
+		t.Errorf("prev = %q, want 100×5", l.groups[0].prev)
+	}
+}
+
+func TestBuildPrevMap(t *testing.T) {
+	m := buildPrevMap([]api.LogItem{
+		{Sets: []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 102.5, Reps: 5}, {ExerciseName: "Squat", WeightKg: 100, Reps: 5}}},
+		{Sets: []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 90, Reps: 5}}}, // older, ignored
+	})
+	if m["squat"] != "102.5×5" {
+		t.Errorf("prev squat = %q, want 102.5×5 (top set of most recent)", m["squat"])
 	}
 }
 

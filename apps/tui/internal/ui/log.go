@@ -82,6 +82,7 @@ func saveCmd(c *api.Client, groups []exGroup) tea.Cmd {
 
 type sessionLoadedMsg struct {
 	snapshot *api.SessionSnapshot
+	prev     map[string]string // exerciseName(lower) → "weight×reps" last performance
 	err      error
 }
 
@@ -91,8 +92,33 @@ func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
 		if err != nil {
 			return sessionLoadedMsg{err: err}
 		}
-		return sessionLoadedMsg{snapshot: &s.Snapshot}
+		logs, _ := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 50})
+		return sessionLoadedMsg{snapshot: &s.Snapshot, prev: buildPrevMap(logs)}
 	}
+}
+
+// buildPrevMap maps each exercise (lowercased) to its top set in the most
+// recent session that contained it: "weight×reps".
+func buildPrevMap(logs []api.LogItem) map[string]string {
+	m := map[string]string{}
+	for _, lg := range logs { // newest first
+		top := map[string]api.LoggedSet{}
+		for _, st := range lg.Sets {
+			n := strings.ToLower(strings.TrimSpace(st.ExerciseName))
+			if n == "" {
+				continue
+			}
+			if b, ok := top[n]; !ok || float64(st.WeightKg) > float64(b.WeightKg) {
+				top[n] = st
+			}
+		}
+		for n, st := range top {
+			if _, seen := m[n]; !seen {
+				m[n] = fmt.Sprintf("%s×%d", trimNum(float64(st.WeightKg)), st.Reps)
+			}
+		}
+	}
+	return m
 }
 
 // Log is the today buffer: exercises grouped (a section header per exercise),
@@ -206,7 +232,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			l.status, l.statusErr = "세션 로드 실패: "+humanizeAuthErr(m.err), true
 			return l, nil
 		}
-		l.loadSnapshot(m.snapshot)
+		l.loadSnapshot(m.snapshot, m.prev)
 		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
@@ -446,13 +472,13 @@ func (l *Log) writeEdit() {
 
 // loadSnapshot replaces today's groups with a plan's generated session,
 // pre-filling each set's weight with its target and showing tgt in the header.
-func (l *Log) loadSnapshot(s *api.SessionSnapshot) {
+func (l *Log) loadSnapshot(s *api.SessionSnapshot, prev map[string]string) {
 	if s == nil {
 		return
 	}
 	var groups []exGroup
 	for _, ex := range s.Exercises {
-		g := exGroup{name: ex.ExerciseName}
+		g := exGroup{name: ex.ExerciseName, prev: prev[strings.ToLower(strings.TrimSpace(ex.ExerciseName))]}
 		maxTgt, tgtReps := 0.0, 0
 		for _, st := range ex.Sets {
 			w := float64(st.TargetWeightKg)
