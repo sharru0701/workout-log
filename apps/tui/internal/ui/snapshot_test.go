@@ -32,6 +32,10 @@ func TestSnapshot(t *testing.T) {
 		frame = ansi.Strip(renderTodayScenario(w, h))
 	case "goto":
 		frame = ansi.Strip(renderGotoScenario(w, h))
+	case "palette":
+		frame = ansi.Strip(renderPaletteScenario(w, h))
+	case "help":
+		frame = ansi.Strip(renderHelpScenario(w, h))
 	default:
 		frame = ansi.Strip(renderLogin(NewLogin(nil), w, h))
 	}
@@ -66,6 +70,22 @@ func renderGotoScenario(w, h int) string {
 	f := sampleTodayFrame()
 	f.overlay = overlayGoto
 	f.gotoSel = int(vStats)
+	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return nf.(Frame).View().Content
+}
+
+func renderPaletteScenario(w, h int) string {
+	f := sampleTodayFrame()
+	f.picker = newPicker(":", commandItems())
+	f.picker.input.SetValue("s")
+	f.overlay = overlayPicker
+	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return nf.(Frame).View().Content
+}
+
+func renderHelpScenario(w, h int) string {
+	f := sampleTodayFrame()
+	f.overlay = overlayHelp
 	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
 	return nf.(Frame).View().Content
 }

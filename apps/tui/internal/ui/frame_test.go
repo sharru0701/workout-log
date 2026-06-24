@@ -50,3 +50,33 @@ func TestFrameQuitCommand(t *testing.T) {
 		t.Error("expected :q to return a quit command")
 	}
 }
+
+func TestFramePickerFilter(t *testing.T) {
+	f := NewFrame(nil)
+	f.picker = newPicker(":", commandItems())
+	f.overlay = overlayPicker
+	f.picker.input.SetValue("st")
+	found := false
+	for _, it := range f.picker.filtered() {
+		if it.value == "stats" {
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected 'stats' to survive the 'st' filter")
+	}
+	if !strings.Contains(renderFrame(f, 60, 20), "stats") {
+		t.Error("command palette render missing stats")
+	}
+}
+
+func TestFrameHelp(t *testing.T) {
+	f := NewFrame(nil)
+	f.overlay = overlayHelp
+	out := renderFrame(f, 60, 20)
+	for _, want := range []string{"GLOBAL", "TODAY", "닫기"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("help overlay missing %q", want)
+		}
+	}
+}

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
@@ -15,7 +14,7 @@ import (
 )
 
 // ViewKind identifies a buffer. There is no tab bar; views are switched via the
-// space-leader goto menu, the `:` command line, or 1-5 accelerators.
+// space-leader goto menu, the `:` command palette, or 1-5 accelerators.
 type ViewKind int
 
 const (
@@ -56,11 +55,12 @@ type overlayKind int
 const (
 	overlayNone overlayKind = iota
 	overlayGoto
-	overlayCmd
+	overlayPicker
+	overlayHelp
 )
 
-// Frame is the root chrome: a pure buffer area, a bottom region (hint line,
-// command line, or the goto menu), and a statusline. No tab bar, no top chrome.
+// Frame is the root chrome: a pure buffer area, a bottom region (hint line, goto
+// menu, or command palette), and a statusline. No tab bar, no top chrome.
 type Frame struct {
 	client  *api.Client
 	views   map[ViewKind]Screen
@@ -70,7 +70,7 @@ type Frame struct {
 	now     time.Time
 	overlay overlayKind
 	gotoSel int
-	cmd     textinput.Model
+	picker  picker
 	flash   string
 }
 
@@ -122,29 +122,29 @@ func (f Frame) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return f, tea.Quit
 	}
 	switch f.overlay {
-	case overlayCmd:
-		return f.handleCmdKey(msg)
+	case overlayPicker:
+		return f.handlePickerKey(msg)
 	case overlayGoto:
 		return f.handleGotoKey(msg)
+	case overlayHelp:
+		f.overlay = overlayNone // any key closes help
+		return f, nil
 	}
-	// A view in INSERT/editing owns every key (digits, space in names, …).
+	// A view in INSERT/editing owns every key (digits, spaces in names, …).
 	if f.views[f.active].Editing() {
 		return f.routeKey(msg)
 	}
 	switch msg.String() {
 	case " ":
-		f.overlay = overlayGoto
-		f.gotoSel = int(f.active)
-		f.flash = ""
+		f.overlay, f.gotoSel, f.flash = overlayGoto, int(f.active), ""
 		return f, nil
 	case ":":
-		ti := textinput.New()
-		ti.Prompt = ""
-		ti.SetVirtualCursor(true)
-		f.cmd = ti
-		f.overlay = overlayCmd
-		f.flash = ""
-		return f, f.cmd.Focus()
+		f.picker = newPicker(":", commandItems())
+		f.overlay, f.flash = overlayPicker, ""
+		return f, f.picker.input.Focus()
+	case "?":
+		f.overlay = overlayHelp
+		return f, nil
 	case "q":
 		return f, tea.Quit
 	case "1", "2", "3", "4", "5":
@@ -189,18 +189,34 @@ func (f Frame) handleGotoKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return f, nil
 }
 
-func (f Frame) handleCmdKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+func (f Frame) handlePickerKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		f.overlay = overlayNone
 		return f, nil
+	case "up", "ctrl+k", "ctrl+p":
+		if f.picker.sel > 0 {
+			f.picker.sel--
+		}
+		return f, nil
+	case "down", "ctrl+j", "ctrl+n":
+		if f.picker.sel < len(f.picker.filtered())-1 {
+			f.picker.sel++
+		}
+		return f, nil
 	case "enter":
-		cmd := strings.TrimSpace(f.cmd.Value())
+		items := f.picker.filtered()
 		f.overlay = overlayNone
-		return f.runCommand(cmd)
+		if len(items) > 0 && f.picker.sel < len(items) {
+			return f.runCommand(items[f.picker.sel].value)
+		}
+		return f.runCommand(strings.TrimSpace(f.picker.input.Value()))
 	}
 	var cmd tea.Cmd
-	f.cmd, cmd = f.cmd.Update(msg)
+	f.picker.input, cmd = f.picker.input.Update(msg)
+	if f.picker.sel >= len(f.picker.filtered()) {
+		f.picker.sel = 0
+	}
 	return f, cmd
 }
 
@@ -230,8 +246,7 @@ func (f Frame) runCommand(cmd string) (tea.Model, tea.Cmd) {
 }
 
 func (f Frame) switchTo(vk ViewKind) (tea.Model, tea.Cmd) {
-	f.active = vk
-	f.flash = ""
+	f.active, f.flash = vk, ""
 	if !f.seen[vk] {
 		f.seen[vk] = true
 		return f, f.views[vk].Init()
@@ -239,7 +254,7 @@ func (f Frame) switchTo(vk ViewKind) (tea.Model, tea.Cmd) {
 	return f, nil
 }
 
-// View renders the frame: buffer · region · statusline.
+// View renders the frame: buffer · region · statusline (or help · statusline).
 func (f Frame) View() tea.View {
 	w := f.w
 	if w <= 0 {
@@ -251,18 +266,24 @@ func (f Frame) View() tea.View {
 	}
 	s := f.views[f.active]
 
-	region, regionH := f.region(w, s)
-	bodyH := h - regionH - 1 // 1 = statusline
-	if bodyH < 1 {
-		bodyH = 1
+	var content string
+	if f.overlay == overlayHelp {
+		content = lipgloss.JoinVertical(lipgloss.Left,
+			helpBody(w, h-1),
+			fitLine(f.statusline(w, s), w),
+		)
+	} else {
+		region, regionH := f.region(w, s)
+		bodyH := h - regionH - 1
+		if bodyH < 1 {
+			bodyH = 1
+		}
+		content = lipgloss.JoinVertical(lipgloss.Left,
+			s.Body(w, bodyH),
+			region,
+			fitLine(f.statusline(w, s), w),
+		)
 	}
-
-	content := lipgloss.JoinVertical(
-		lipgloss.Left,
-		s.Body(w, bodyH),
-		region,
-		fitLine(f.statusline(w, s), w),
-	)
 
 	v := tea.NewView(content)
 	v.BackgroundColor = theme.Bg
@@ -294,12 +315,12 @@ func (f Frame) statusline(w int, s Screen) string {
 
 func (f Frame) region(w int, s Screen) (string, int) {
 	switch f.overlay {
-	case overlayCmd:
-		return lipgloss.NewStyle().Foreground(theme.Cyan).Bold(true).Render(":") + f.cmd.View(), 1
+	case overlayPicker:
+		return f.picker.render(w)
 	case overlayGoto:
 		return f.gotoMenu(), len(gotoOrder) + 1
 	default:
-		globals := lipgloss.NewStyle().Foreground(theme.Dim).Render("   ") + hint("space", "이동") + "  " + hint(":", "명령")
+		globals := lipgloss.NewStyle().Foreground(theme.Dim).Render("   ") + hint("space", "이동") + "  " + hint(":", "명령") + "  " + hint("?", "도움")
 		return fitLine(s.Hints(w)+globals, w), 1
 	}
 }
@@ -317,6 +338,42 @@ func (f Frame) gotoMenu() string {
 		}
 	}
 	return strings.Join(lines, "\n")
+}
+
+func commandItems() []pickerItem {
+	return []pickerItem{
+		{"today", "오늘 운동", "today"},
+		{"stats", "통계", "stats"},
+		{"history", "기록", "history"},
+		{"programs", "프로그램", "programs"},
+		{"settings", "설정", "settings"},
+		{"quit", "종료", "quit"},
+	}
+}
+
+// helpBody renders the full keymap reference in the buffer area.
+func helpBody(w, h int) string {
+	kv := func(pairs ...[2]string) string {
+		parts := make([]string, len(pairs))
+		for i, p := range pairs {
+			parts[i] = hint(p[0], p[1])
+		}
+		return "  " + strings.Join(parts, "   ")
+	}
+	title := func(s string) string { return lipgloss.NewStyle().Foreground(theme.Amber).Bold(true).Render(s) }
+
+	body := strings.Join([]string{
+		title("GLOBAL"),
+		kv([2]string{"space", "이동"}, [2]string{":", "명령"}, [2]string{"?", "도움"}, [2]string{"q", "종료"}),
+		"",
+		title("TODAY"),
+		kv([2]string{"i", "편집"}, [2]string{"e", "운동"}, [2]string{"x", "완료"}),
+		kv([2]string{"o", "세트"}, [2]string{"d", "삭제"}, [2]string{"s", "저장"}),
+		kv([2]string{"hjkl", "이동"}, [2]string{"r", "휴식 건너뛰기"}),
+		"",
+		lipgloss.NewStyle().Foreground(theme.Dim).Render("  esc 닫기"),
+	}, "\n")
+	return lipgloss.NewStyle().Width(w).Height(h).Padding(1, 1).Render(body)
 }
 
 // justify places left and right text on one line padded to width w.
