@@ -80,6 +80,21 @@ func saveCmd(c *api.Client, groups []exGroup) tea.Cmd {
 	}
 }
 
+type sessionLoadedMsg struct {
+	snapshot *api.SessionSnapshot
+	err      error
+}
+
+func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
+	return func() tea.Msg {
+		s, err := c.GenerateSession(context.Background(), planID)
+		if err != nil {
+			return sessionLoadedMsg{err: err}
+		}
+		return sessionLoadedMsg{snapshot: &s.Snapshot}
+	}
+}
+
 // Log is the today buffer: exercises grouped (a section header per exercise),
 // each holding its sets. Navigate sets with j/k, cells (weight/reps) with h/l,
 // edit inline in INSERT. `e` starts a new exercise.
@@ -183,6 +198,15 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			nl, cmd := l.beginEdit(editCell)
 			return nl, cmd
 		}
+		return l, nil
+	case planActivatedMsg:
+		return l, loadSessionCmd(l.client, m.id)
+	case sessionLoadedMsg:
+		if m.err != nil {
+			l.status, l.statusErr = "세션 로드 실패: "+humanizeAuthErr(m.err), true
+			return l, nil
+		}
+		l.loadSnapshot(m.snapshot)
 		return l, nil
 	case tea.KeyPressMsg:
 		if l.editing {
@@ -418,6 +442,38 @@ func (l *Log) writeEdit() {
 			l.groups[l.gi].sets[l.si].reps = v
 		}
 	}
+}
+
+// loadSnapshot replaces today's groups with a plan's generated session,
+// pre-filling each set's weight with its target and showing tgt in the header.
+func (l *Log) loadSnapshot(s *api.SessionSnapshot) {
+	if s == nil {
+		return
+	}
+	var groups []exGroup
+	for _, ex := range s.Exercises {
+		g := exGroup{name: ex.ExerciseName}
+		maxTgt, tgtReps := 0.0, 0
+		for _, st := range ex.Sets {
+			w := float64(st.TargetWeightKg)
+			g.sets = append(g.sets, setEntry{weight: trimNum(w), reps: ""})
+			if w >= maxTgt {
+				maxTgt, tgtReps = w, st.Reps
+			}
+		}
+		if len(g.sets) == 0 {
+			g.sets = []setEntry{{}}
+		}
+		if maxTgt > 0 {
+			g.tgt = fmt.Sprintf("%s×%d", trimNum(maxTgt), tgtReps)
+		}
+		groups = append(groups, g)
+	}
+	if len(groups) == 0 {
+		return
+	}
+	l.groups, l.gi, l.si, l.col = groups, 0, 0, colWeight
+	l.status, l.statusErr = theme.GlyphDone+" 플랜 세션 로드됨", false
 }
 
 // --- rendering ---

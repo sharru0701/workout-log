@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/charmbracelet/x/ansi"
+
+	"github.com/sharru0701/workout-log/apps/tui/internal/api"
 )
 
 func sampleLog() Log {
@@ -88,6 +90,30 @@ func TestLogBodyGrouped(t *testing.T) {
 func TestLogContext(t *testing.T) {
 	if got := sampleLog().Context(); got != "Squat 3/3" {
 		t.Errorf("Context = %q, want Squat 3/3", got)
+	}
+}
+
+func TestLogLoadSnapshot(t *testing.T) {
+	l := NewLog(nil)
+	l.loadSnapshot(&api.SessionSnapshot{
+		Exercises: []api.PlannedExercise{
+			{ExerciseName: "Squat", Role: "MAIN", Sets: []api.PlannedSet{
+				{Reps: 5, TargetWeightKg: 100}, {Reps: 5, TargetWeightKg: 100}, {Reps: 5, TargetWeightKg: 102.5},
+			}},
+			{ExerciseName: "Bench Press", Role: "MAIN", Sets: []api.PlannedSet{{Reps: 5, TargetWeightKg: 70}}},
+		},
+	})
+	if len(l.groups) != 2 {
+		t.Fatalf("expected 2 groups, got %d", len(l.groups))
+	}
+	if l.groups[0].name != "Squat" || len(l.groups[0].sets) != 3 {
+		t.Errorf("unexpected squat group: %+v", l.groups[0])
+	}
+	if l.groups[0].sets[0].weight != "100" {
+		t.Errorf("expected pre-filled target weight 100, got %q", l.groups[0].sets[0].weight)
+	}
+	if l.groups[0].tgt != "102.5×5" {
+		t.Errorf("tgt = %q, want 102.5×5", l.groups[0].tgt)
 	}
 }
 
