@@ -17,6 +17,7 @@ type Screen interface {
 	Update(tea.Msg) (Screen, tea.Cmd)
 	Body(w, h int) string
 	Mode() Mode
+	Context() string // statusline middle segment
 	StatusRight() string
 	Hints(w int) string
 	Editing() bool
@@ -28,6 +29,7 @@ type placeholder struct{ name string }
 func (p placeholder) Init() tea.Cmd                    { return nil }
 func (p placeholder) Update(tea.Msg) (Screen, tea.Cmd) { return p, nil }
 func (p placeholder) Mode() Mode                       { return ModeNormal }
+func (p placeholder) Context() string                  { return "" }
 func (p placeholder) StatusRight() string              { return "" }
 func (p placeholder) Editing() bool                    { return false }
 func (p placeholder) Hints(int) string                 { return joinHints(hint("1-5", "탭"), hint("q", "종료")) }

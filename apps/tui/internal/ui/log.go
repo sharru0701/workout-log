@@ -106,14 +106,34 @@ func (l Log) StatusRight() string {
 	return fmt.Sprintf("%d set%s", done, plural(done))
 }
 
-func (l Log) Hints(w int) string {
+// Context is the statusline middle: current exercise and set position.
+func (l Log) Context() string {
+	if len(l.rows) == 0 {
+		return ""
+	}
+	ex := strings.TrimSpace(l.rows[l.row].exercise)
+	if ex == "" {
+		return ""
+	}
+	total, pos := 0, 0
+	for i, r := range l.rows {
+		if strings.EqualFold(strings.TrimSpace(r.exercise), ex) {
+			total++
+			if i == l.row {
+				pos = total
+			}
+		}
+	}
+	return fmt.Sprintf("%s %d/%d", truncate(ex, 12), pos, total)
+}
+
+func (l Log) Hints(int) string {
 	if l.editing {
 		return joinHints(hint("⏎", "완료"), hint("tab", "셀"), hint("esc", "취소"))
 	}
-	if w < 46 {
-		return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("s", "저장"))
-	}
-	return joinHints(hint("i", "편집"), hint("⎵", "완료"), hint("o", "행"), hint("s", "저장"), hint("hjkl", "이동"), hint("1-5", "탭"))
+	// The full keymap (o/d/hjkl/r) is in the ? help overlay; the hint line keeps
+	// only the essentials so the frame's space/: globals always fit.
+	return joinHints(hint("i", "편집"), hint("x", "완료"), hint("s", "저장"))
 }
 
 // Init satisfies Screen; the log loads no remote data on entry.
@@ -180,7 +200,7 @@ func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 		}
 	case "i", "enter":
 		return l.beginEdit()
-	case " ":
+	case "x":
 		return l.toggleDone()
 	case "o":
 		return l.addRow(), nil
