@@ -44,10 +44,11 @@ const (
 )
 
 type setEntry struct {
-	weight string
-	reps   string
-	rpe    string // optional RPE 1–10
-	done   bool
+	weight  string
+	reps    string
+	rpe     string // optional RPE 1–10
+	done    bool
+	tgtReps int // planned reps, shown dimmed as a placeholder while reps is empty
 }
 
 type exGroup struct {
@@ -83,9 +84,10 @@ type restState struct {
 }
 
 type saveResultMsg struct {
-	detail *api.LogDetail
-	err    error
-	edited bool
+	detail      *api.LogDetail
+	err         error
+	edited      bool
+	performedAt time.Time // when the saved log is dated, for the edit banner
 }
 
 // saveCmd persists the done sets: PATCH when editID is set (editing a past
@@ -124,7 +126,7 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 			return saveResultMsg{err: err, edited: editID != ""}
 		}
 		detail, err := c.GetLog(context.Background(), id)
-		return saveResultMsg{detail: detail, err: err, edited: editID != ""}
+		return saveResultMsg{detail: detail, err: err, edited: editID != "", performedAt: at}
 	}
 }
 
@@ -156,6 +158,13 @@ func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
 // no active plan it returns noPlan so the buffer prompts for a program instead.
 func autoloadCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
+		// An existing log for today → restore it for editing (web parity), so a
+		// re-open shows what was already done instead of a fresh blank session.
+		today := time.Now().Format("2006-01-02")
+		if logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Date: today, Limit: 1}); err == nil && len(logs) > 0 {
+			lg := logs[0]
+			return editLogMsg{id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets}
+		}
 		plans, err := c.Plans(context.Background())
 		if err != nil {
 			return sessionLoadedMsg{err: err}
@@ -297,9 +306,15 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			l.status, l.statusErr = verb+" 실패: "+humanizeAuthErr(m.err), true
 			return l, nil
 		}
-		l.status, l.statusErr = summarizePRs(m.detail, m.edited), false
-		l.groups, l.gi, l.si = nil, 0, 0
-		l.editID, l.performedAt = "", time.Time{}
+		// Keep the saved session on screen (done sets only) and switch to PATCH,
+		// so it reads as "today's record" instead of a blank canvas; re-saving
+		// edits the same log.
+		l.status, l.statusErr = summarizeSaved(l.groups, m.detail, m.edited), false
+		l.keepDoneOnly()
+		if m.detail != nil {
+			l.editID = m.detail.ID
+		}
+		l.performedAt = m.performedAt
 		l.load, l.undo = loadIdle, nil
 		return l, nil
 	case editLogMsg:
@@ -581,7 +596,7 @@ func (l *Log) loadForEdit(m editLogMsg) {
 	l.editing, l.target = false, editNone
 	l.editID, l.performedAt = m.id, m.performedAt
 	l.rest.active = false
-	l.undo = nil
+	l.load, l.undo = loadIdle, nil
 	l.status, l.statusErr = theme.GlyphDone+" 편집 로드됨 — s로 저장", false
 }
 
@@ -640,7 +655,7 @@ func (l *Log) loadSnapshot(s *api.SessionSnapshot, prev map[string]string) {
 		maxTgt, tgtReps := 0.0, 0
 		for _, st := range ex.Sets {
 			w := float64(st.TargetWeightKg)
-			g.sets = append(g.sets, setEntry{weight: trimNum(w), reps: ""})
+			g.sets = append(g.sets, setEntry{weight: trimNum(w), reps: "", tgtReps: st.Reps})
 			if w >= maxTgt {
 				maxTgt, tgtReps = w, st.Reps
 			}
@@ -748,7 +763,7 @@ func (l Log) renderSet(gi, si int, s setEntry) string {
 		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render(" › ")
 	}
 	wcell := l.setCell(active, colWeight, orDot(s.weight), 6)
-	rcell := l.setCell(active, colReps, orDot(s.reps), 3)
+	rcell := l.repsCell(active, s)
 	sep := lipgloss.NewStyle().Foreground(theme.Dim).Render(" × ")
 
 	// RPE: an editable cell when the RPE column is active here, otherwise shown
@@ -785,6 +800,17 @@ func (l Log) setCell(active bool, c logCol, text string, width int) string {
 	return base.Width(width).Render(truncate(text, width))
 }
 
+// repsCell renders the reps column, showing the planned reps as a dim
+// placeholder when empty and unfocused (plan session). Mirrors the web's
+// placeholder={plannedReps} so each set's target is visible inline, while the
+// actual value stays empty until the user types it.
+func (l Log) repsCell(active bool, s setEntry) string {
+	if !active && strings.TrimSpace(s.reps) == "" && s.tgtReps > 0 {
+		return lipgloss.NewStyle().Foreground(theme.Ghost).Width(3).Render(strconv.Itoa(s.tgtReps))
+	}
+	return l.setCell(active, colReps, orDot(s.reps), 3)
+}
+
 func (l Log) restBar(w int) string {
 	cells := 16
 	if w < 44 {
@@ -810,20 +836,55 @@ func (l Log) restBar(w int) string {
 	return "▕" + gauge + "▏" + clock + hint("r", "skip")
 }
 
-func summarizePRs(log *api.LogDetail, edited bool) string {
+// summarizeSaved builds the post-save status line: a count + tonnage headline
+// plus any server-detected PRs. Keeps the "저장됨/수정됨" verb the rest of the
+// UI expects.
+func summarizeSaved(groups []exGroup, detail *api.LogDetail, edited bool) string {
+	n := 0
+	vol := 0.0
+	for _, g := range groups {
+		for _, s := range g.sets {
+			if !s.done {
+				continue
+			}
+			n++
+			w, _ := strconv.ParseFloat(s.weight, 64)
+			r, _ := strconv.Atoi(s.reps)
+			vol += w * float64(r)
+		}
+	}
 	verb := "저장됨"
 	if edited {
 		verb = "수정됨"
 	}
-	if log == nil || len(log.PersonalRecords) == 0 {
-		return theme.GlyphDone + " " + verb
+	head := fmt.Sprintf("%s %s · %d세트 · %skg", theme.GlyphDone, verb, n, trimNum(vol))
+	if detail != nil && len(detail.PersonalRecords) > 0 {
+		parts := make([]string, 0, len(detail.PersonalRecords))
+		for _, pr := range detail.PersonalRecords {
+			parts = append(parts, fmt.Sprintf("%s %s e1RM %.1f", theme.GlyphPeak, pr.ExerciseName, float64(pr.EstOneRm)))
+		}
+		head += "   [PR] " + strings.Join(parts, "  ")
 	}
-	parts := make([]string, 0, len(log.PersonalRecords))
-	for _, pr := range log.PersonalRecords {
-		parts = append(parts, fmt.Sprintf("%s %s e1RM %.1f (+%.1f)",
-			theme.GlyphPeak, pr.ExerciseName, float64(pr.EstOneRm), float64(pr.DeltaE1rm)))
+	return head
+}
+
+// keepDoneOnly drops not-done sets (and now-empty groups) so the saved session
+// stays on screen as just the completed work.
+func (l *Log) keepDoneOnly() {
+	var groups []exGroup
+	for _, g := range l.groups {
+		var sets []setEntry
+		for _, s := range g.sets {
+			if s.done {
+				sets = append(sets, s)
+			}
+		}
+		if len(sets) > 0 {
+			g.sets = sets
+			groups = append(groups, g)
+		}
 	}
-	return "[PR] " + strings.Join(parts, "   ")
+	l.groups, l.gi, l.si, l.col = groups, 0, 0, colWeight
 }
 
 // --- helpers ---
