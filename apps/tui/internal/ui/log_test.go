@@ -115,10 +115,14 @@ func TestLogLoadForEditRPE(t *testing.T) {
 	}
 }
 
-func TestLogEditSaveClears(t *testing.T) {
+func TestLogEditSaveKeepsSession(t *testing.T) {
 	l := NewLog(nil)
 	l.saving, l.editID = true, "log-9"
-	scr, _ := l.Update(saveResultMsg{edited: true})
+	l.groups = []exGroup{{name: "Squat", sets: []setEntry{
+		{weight: "100", reps: "5", done: true},
+		{weight: "100", reps: "5"}, // not done — dropped by keepDoneOnly
+	}}}
+	scr, _ := l.Update(saveResultMsg{edited: true, detail: &api.LogDetail{ID: "log-9"}})
 	l = scr.(Log)
 	if l.saving {
 		t.Error("saving should clear")
@@ -126,8 +130,11 @@ func TestLogEditSaveClears(t *testing.T) {
 	if !strings.Contains(l.status, "수정됨") {
 		t.Errorf("status = %q, want 수정됨", l.status)
 	}
-	if l.editID != "" {
-		t.Error("editID should clear after a successful edit save")
+	if l.editID != "log-9" {
+		t.Error("editID should persist after save so re-saving PATCHes the same log")
+	}
+	if len(l.groups) != 1 || len(l.groups[0].sets) != 1 {
+		t.Fatalf("saved session should keep only the 1 done set on screen, got %+v", l.groups)
 	}
 }
 
@@ -190,6 +197,26 @@ func TestLogLoadSnapshot(t *testing.T) {
 	}
 	if l.groups[0].prev != "100×5" {
 		t.Errorf("prev = %q, want 100×5", l.groups[0].prev)
+	}
+}
+
+func TestLogRepsPlaceholder(t *testing.T) {
+	l := NewLog(nil)
+	l.loadSnapshot(&api.SessionSnapshot{
+		Exercises: []api.PlannedExercise{
+			{ExerciseName: "Squat", Sets: []api.PlannedSet{{Reps: 5, TargetWeightKg: 100}}},
+		},
+	}, nil)
+	if got := l.groups[0].sets[0].tgtReps; got != 5 {
+		t.Fatalf("tgtReps not stored from the plan: %d, want 5", got)
+	}
+	// an empty, unfocused reps cell shows the target as a dim placeholder
+	if cell := ansi.Strip(l.repsCell(false, l.groups[0].sets[0])); !strings.Contains(cell, "5") {
+		t.Errorf("empty reps cell should show target 5 as placeholder, got %q", cell)
+	}
+	// once a value is entered, the actual value shows (not the placeholder)
+	if typed := ansi.Strip(l.repsCell(false, setEntry{reps: "3", tgtReps: 5})); !strings.Contains(typed, "3") {
+		t.Errorf("entered reps should show the actual value, got %q", typed)
 	}
 }
 
