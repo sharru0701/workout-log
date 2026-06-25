@@ -13,8 +13,12 @@ const (
 	sessionFile = "session"
 	baseURLFile = "base_url"
 	envBaseURL  = "IRONLOG_API_URL"
-	defaultBase = "http://localhost:3000"
 )
+
+// defaultBase is the fallback API URL when neither $IRONLOG_API_URL nor a saved
+// config is present. Release builds inject the production URL via -ldflags
+// (see apps/tui/.goreleaser.yaml); a plain `go build` keeps localhost for dev.
+var defaultBase = "http://localhost:3000"
 
 // Config holds runtime configuration for the TUI.
 type Config struct {
