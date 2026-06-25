@@ -158,12 +158,15 @@ func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
 // no active plan it returns noPlan so the buffer prompts for a program instead.
 func autoloadCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
-		// An existing log for today → restore it for editing (web parity), so a
-		// re-open shows what was already done instead of a fresh blank session.
-		today := time.Now().Format("2006-01-02")
-		if logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Date: today, Limit: 1}); err == nil && len(logs) > 0 {
-			lg := logs[0]
-			return editLogMsg{id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets}
+		// An existing log dated today (local) → restore it for editing (web
+		// parity), so a re-open shows what was already done. Filter client-side
+		// on each log's local date instead of a server date= query, so the day
+		// boundary follows the user's timezone rather than the server's UTC
+		// interpretation (an evening log won't slip to "yesterday").
+		if logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 5}); err == nil {
+			if lg, ok := todaysLog(logs, time.Now()); ok {
+				return editLogMsg{id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets}
+			}
 		}
 		plans, err := c.Plans(context.Background())
 		if err != nil {
@@ -175,6 +178,20 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 		}
 		return generatedSessionMsg(c, p.ID)
 	}
+}
+
+// todaysLog returns the first log whose performedAt falls on now's local
+// calendar day. Comparing local dates (rather than a server date= filter) keeps
+// the day boundary in the user's timezone, so a UTC-stored evening log still
+// counts as "today".
+func todaysLog(logs []api.LogItem, now time.Time) (api.LogItem, bool) {
+	today := now.Local().Format("2006-01-02")
+	for _, lg := range logs {
+		if lg.PerformedAt.Local().Format("2006-01-02") == today {
+			return lg, true
+		}
+	}
+	return api.LogItem{}, false
 }
 
 // buildPrevMap maps each exercise (lowercased) to its top set in the most

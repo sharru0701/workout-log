@@ -317,6 +317,32 @@ func TestLogUndoRestoresRemovedGroup(t *testing.T) {
 	}
 }
 
+func TestTodaysLog(t *testing.T) {
+	loc := time.Local
+	now := time.Date(2026, 6, 26, 14, 0, 0, 0, loc)
+	logs := []api.LogItem{
+		{ID: "yesterday", PerformedAt: time.Date(2026, 6, 25, 14, 0, 0, 0, loc)},
+		{ID: "today", PerformedAt: time.Date(2026, 6, 26, 8, 0, 0, 0, loc)},
+	}
+	if lg, ok := todaysLog(logs, now); !ok || lg.ID != "today" {
+		t.Fatalf("want today's log, got id=%q ok=%v", lg.ID, ok)
+	}
+	if _, ok := todaysLog(logs[:1], now); ok {
+		t.Error("a yesterday-only list should not match today")
+	}
+}
+
+func TestTodaysLogConvertsUTC(t *testing.T) {
+	// a log stored in UTC still counts as today once converted to local time —
+	// this is the timezone-correctness the .Local() comparison buys.
+	now := time.Date(2026, 6, 26, 14, 0, 0, 0, time.Local)
+	utcStored := now.Add(-1 * time.Hour).UTC()
+	logs := []api.LogItem{{ID: "t", PerformedAt: utcStored}}
+	if lg, ok := todaysLog(logs, now); !ok || lg.ID != "t" {
+		t.Fatalf("UTC-stored log 1h ago should match today after .Local(), got ok=%v", ok)
+	}
+}
+
 func TestLogAddExerciseKeyAliases(t *testing.T) {
 	// e (exercise) and n (new) both open the exercise picker — n matches the
 	// create-key used by programs/exercises buffers.
