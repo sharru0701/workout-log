@@ -6,6 +6,13 @@ import (
 	"testing"
 )
 
+func TestDefaultBase(t *testing.T) {
+	if defaultBase == "" {
+		t.Fatal("defaultBase must not be empty (release builds inject production via -ldflags)")
+	}
+	t.Logf("defaultBase (runtime) = %q", defaultBase)
+}
+
 func TestSaveBaseURL(t *testing.T) {
 	dir := t.TempDir()
 	c := Config{dir: dir}

@@ -26,6 +26,8 @@ builds:
       - -X main.version={{ .Version }}
       - -X main.commit={{ .ShortCommit }}
       - -X main.date={{ .Date }}
+      # 릴리스 바이너리의 기본 서버 = 프로덕션 (env/--set-server로 오버라이드 가능)
+      - -X github.com/sharru0701/workout-log/apps/tui/internal/config.defaultBase=https://workout-log-two-bice.vercel.app
 
 archives:
   - id: ironlog
