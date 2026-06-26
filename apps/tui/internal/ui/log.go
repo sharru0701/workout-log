@@ -131,10 +131,12 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 }
 
 type sessionLoadedMsg struct {
-	snapshot *api.SessionSnapshot
-	prev     map[string]string // exerciseName(lower) → "weight×reps" last performance
-	noPlan   bool              // auto-load found no active plan
-	err      error
+	snapshot   *api.SessionSnapshot
+	prev       map[string]string // exerciseName(lower) → "weight×reps" last performance
+	planName   string            // plan/program name for the today header
+	sessionKey string            // generated-session key for the header label
+	noPlan     bool              // auto-load found no active plan
+	err        error
 }
 
 // generatedSessionMsg generates a plan's session and pairs it with the prev-map
@@ -146,7 +148,12 @@ func generatedSessionMsg(c *api.Client, planID string) sessionLoadedMsg {
 		return sessionLoadedMsg{err: err}
 	}
 	logs, _ := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 50})
-	return sessionLoadedMsg{snapshot: &s.Snapshot, prev: buildPrevMap(logs)}
+	return sessionLoadedMsg{
+		snapshot:   &s.Snapshot,
+		prev:       buildPrevMap(logs),
+		planName:   s.Snapshot.Plan.Name,
+		sessionKey: s.SessionKey,
+	}
 }
 
 func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
@@ -158,6 +165,10 @@ func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
 // no active plan it returns noPlan so the buffer prompts for a program instead.
 func autoloadCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
+		// Resolve plans up front so both branches can name the session: the
+		// restore branch maps a log's planId → name, the generate branch picks
+		// the active plan.
+		plans, plansErr := c.Plans(context.Background())
 		// An existing log dated today (local) → restore it for editing (web
 		// parity), so a re-open shows what was already done. Filter client-side
 		// on each log's local date instead of a server date= query, so the day
@@ -165,12 +176,14 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 		// interpretation (an evening log won't slip to "yesterday").
 		if logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 5}); err == nil {
 			if lg, ok := todaysLog(logs, time.Now()); ok {
-				return editLogMsg{id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets}
+				return editLogMsg{
+					id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets,
+					planName: planNameByID(plans, lg.PlanID), sessionKey: sessionKeyOf(lg),
+				}
 			}
 		}
-		plans, err := c.Plans(context.Background())
-		if err != nil {
-			return sessionLoadedMsg{err: err}
+		if plansErr != nil {
+			return sessionLoadedMsg{err: plansErr}
 		}
 		p, ok := api.ActivePlan(plans)
 		if !ok {
@@ -178,6 +191,27 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 		}
 		return generatedSessionMsg(c, p.ID)
 	}
+}
+
+// planNameByID finds a plan's name by id (nil-safe); "" when not found.
+func planNameByID(plans []api.Plan, id *string) string {
+	if id == nil {
+		return ""
+	}
+	for _, p := range plans {
+		if p.ID == *id {
+			return p.Name
+		}
+	}
+	return ""
+}
+
+// sessionKeyOf returns a log's generated-session key, or "" when absent.
+func sessionKeyOf(lg api.LogItem) string {
+	if lg.GeneratedSession != nil {
+		return lg.GeneratedSession.SessionKey
+	}
+	return ""
 }
 
 // todaysLog returns the first log whose performedAt falls on now's local
@@ -233,6 +267,8 @@ type Log struct {
 	saving      bool
 	editID      string        // non-empty when editing a past log (saves via PATCH)
 	performedAt time.Time     // preserved on edit; zero = now (new log)
+	planName    string        // active plan/program name for today's session header
+	sessionKey  string        // generated-session key (e.g. "C2W6D1") for the header label
 	load        loadState     // boot-time auto-load of today's session
 	undo        *undoSnapshot // last delete, restorable with `u`
 	status      string
@@ -358,6 +394,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			l.load = loadNoPlan
 			return l, nil
 		}
+		l.planName, l.sessionKey = m.planName, m.sessionKey
 		l.loadSnapshot(m.snapshot, m.prev)
 		return l, nil
 	case tea.KeyPressMsg:
@@ -612,6 +649,7 @@ func (l *Log) loadForEdit(m editLogMsg) {
 	l.groups, l.gi, l.si, l.col = groups, 0, 0, colWeight
 	l.editing, l.target = false, editNone
 	l.editID, l.performedAt = m.id, m.performedAt
+	l.planName, l.sessionKey = m.planName, m.sessionKey
 	l.rest.active = false
 	l.load, l.undo = loadIdle, nil
 	l.status, l.statusErr = theme.GlyphDone+" 편집 로드됨 — s로 저장", false
@@ -703,15 +741,19 @@ func (l Log) Body(w, h int) string {
 		inner = 1
 	}
 
-	// Pinned chrome: the edit banner sticks to the top; the rest gauge and the
-	// status line stick to the bottom so a live countdown / save confirmation
-	// stays visible no matter how many exercises scroll between them.
+	// Pinned chrome: the session header (plan name + cycle label) and edit banner
+	// stick to the top; the rest gauge and status line stick to the bottom so a
+	// live countdown / save confirmation stays visible no matter how many
+	// exercises scroll between them.
 	var head, foot []string
+	if sh := l.sessionHeader(); sh != "" {
+		head = append(head, sh)
+	}
 	if l.editID != "" {
 		head = append(head, lipgloss.NewStyle().Foreground(theme.Amber).Render("■ 편집 중 · "+l.performedAt.Format("2006-01-02")))
-		if !compact {
-			head = append(head, "")
-		}
+	}
+	if len(head) > 0 && !compact {
+		head = append(head, "")
 	}
 	if l.rest.active {
 		foot = append(foot, l.restBar(w))
@@ -760,6 +802,20 @@ func (l Log) groupLines(w int, compact bool) (lines []string, active int) {
 		}
 	}
 	return lines, active
+}
+
+// sessionHeader renders today's header — the active plan/program name and the
+// cycle session label (e.g. "5/3/1 Leader · C2W6D1") — so it's clear which plan
+// and which session today is. Empty when neither is known.
+func (l Log) sessionHeader() string {
+	var parts []string
+	if name := strings.TrimSpace(l.planName); name != "" {
+		parts = append(parts, lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).Render(name))
+	}
+	if lab := sessionLabel(l.sessionKey); lab != "" {
+		parts = append(parts, lipgloss.NewStyle().Foreground(theme.Cyan).Bold(true).Render(lab))
+	}
+	return strings.Join(parts, lipgloss.NewStyle().Foreground(theme.Dim).Render(" · "))
 }
 
 // renderEmpty draws the empty-buffer state: a loading line while today's

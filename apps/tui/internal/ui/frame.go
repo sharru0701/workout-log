@@ -134,6 +134,8 @@ type editLogMsg struct {
 	id          string
 	performedAt time.Time
 	sets        []api.LoggedSet
+	planName    string // plan/program name for the today header (may be empty)
+	sessionKey  string // generated-session key for the header label (may be empty)
 }
 
 // Frame is the root chrome: a pure buffer area, a bottom region (hint line, goto
