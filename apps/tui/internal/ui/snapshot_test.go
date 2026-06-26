@@ -57,6 +57,10 @@ func TestSnapshot(t *testing.T) {
 		frame = ansi.Strip(renderSettingsScenario(w, h))
 	case "exercises":
 		frame = ansi.Strip(renderExercisesScenario(w, h))
+	case "programs-empty":
+		frame = ansi.Strip(renderProgramsEmptyScenario(w, h))
+	case "store":
+		frame = ansi.Strip(renderStoreScenario(w, h))
 	default:
 		frame = ansi.Strip(renderLogin(NewLogin(nil), w, h))
 	}
@@ -160,6 +164,30 @@ func renderProgramsScenario(w, h int) string {
 	pr.activeID = "1"
 	f.views[vPrograms] = pr
 	f.active = vPrograms
+	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return nf.(Frame).View().Content
+}
+
+func renderProgramsEmptyScenario(w, h int) string {
+	f := NewFrame(nil)
+	pr := NewPrograms(nil)
+	pr.loaded = true
+	pr.plans = nil
+	f.views[vPrograms] = pr
+	f.active = vPrograms
+	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return nf.(Frame).View().Content
+}
+
+func renderStoreScenario(w, h int) string {
+	f := NewFrame(nil)
+	f.active = vPrograms
+	f.picker = newPicker("프로그램 스토어 ", "template", []pickerItem{
+		{label: "5/3/1 BBB", desc: "single", value: "1"},
+		{label: "Starting Strength", desc: "single", value: "2"},
+		{label: "GZCLP", desc: "single", value: "3"},
+	})
+	f.overlay = overlayPicker
 	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
 	return nf.(Frame).View().Content
 }
