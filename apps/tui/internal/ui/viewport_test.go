@@ -23,6 +23,7 @@ func sampleLongLog() Log {
 	}
 	l.load = loadIdle
 	l.gi, l.si, l.col = 2, 2, colWeight
+	l.planName, l.sessionKey = "5/3/1 Leader", "C2W6D1"
 	return l
 }
 

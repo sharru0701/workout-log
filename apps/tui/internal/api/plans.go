@@ -121,14 +121,24 @@ type PlannedExercise struct {
 	Sets         []PlannedSet `json:"sets"`
 }
 
-// SessionSnapshot is the materialized planned session.
-type SessionSnapshot struct {
-	Exercises []PlannedExercise `json:"exercises"`
+// SnapshotPlan is the plan identity carried inside a session snapshot.
+type SnapshotPlan struct {
+	Name string `json:"name"`
 }
 
-// GeneratedSession wraps the snapshot returned by POST /api/plans/[id]/generate.
+// SessionSnapshot is the materialized planned session.
+type SessionSnapshot struct {
+	SessionKey string            `json:"sessionKey"`
+	Plan       SnapshotPlan      `json:"plan"`
+	Exercises  []PlannedExercise `json:"exercises"`
+}
+
+// GeneratedSession wraps the saved session row returned by POST
+// /api/plans/[id]/generate ({session}). SessionKey (e.g. "C2W6D1") is the
+// top-level key; the snapshot also carries it plus the plan name.
 type GeneratedSession struct {
-	Snapshot SessionSnapshot `json:"snapshot"`
+	SessionKey string          `json:"sessionKey"`
+	Snapshot   SessionSnapshot `json:"snapshot"`
 }
 
 // GenerateSession generates (and saves) today's session for a plan.

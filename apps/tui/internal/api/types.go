@@ -54,12 +54,19 @@ type LoggedSet struct {
 	RPE          *int    `json:"rpe,omitempty"`
 }
 
+// GeneratedSessionRef is the session-key reference embedded in a log item
+// (present when includeGeneratedSession is on, which is the API default).
+type GeneratedSessionRef struct {
+	SessionKey string `json:"sessionKey"`
+}
+
 // LogItem is one workout session in a list response.
 type LogItem struct {
-	ID          string      `json:"id"`
-	PlanID      *string     `json:"planId"`
-	PerformedAt time.Time   `json:"performedAt"`
-	Sets        []LoggedSet `json:"sets"`
+	ID               string               `json:"id"`
+	PlanID           *string              `json:"planId"`
+	PerformedAt      time.Time            `json:"performedAt"`
+	Sets             []LoggedSet          `json:"sets"`
+	GeneratedSession *GeneratedSessionRef `json:"generatedSession"`
 }
 
 // CreateLogRequest is the POST /api/logs body.

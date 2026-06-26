@@ -82,6 +82,7 @@ func sampleTodayFrame() Frame {
 	}
 	l.gi, l.si, l.col = 0, 2, colReps
 	l.rest = restState{active: true, remaining: 48, total: 90}
+	l.planName, l.sessionKey = "5/3/1 Leader", "C2W6D1"
 	f.views[vToday] = l
 	return f
 }
@@ -141,9 +142,11 @@ func renderHistoryScenario(w, h int) string {
 	hi := NewHistory(nil)
 	hi.loaded = true
 	now := time.Now()
+	pid := "p1"
+	hi.planNames = map[string]string{pid: "5/3/1 Leader"}
 	hi.build([]api.LogItem{
-		{ID: "1", PerformedAt: now, Sets: []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 102.5, Reps: 5}, {ExerciseName: "Bench Press", WeightKg: 70, Reps: 5}}},
-		{ID: "2", PerformedAt: now.AddDate(0, 0, -2), Sets: []api.LoggedSet{{ExerciseName: "Deadlift", WeightKg: 140, Reps: 3}}},
+		{ID: "1", PlanID: &pid, PerformedAt: now, GeneratedSession: &api.GeneratedSessionRef{SessionKey: "C2W6D1"}, Sets: []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 102.5, Reps: 5}, {ExerciseName: "Bench Press", WeightKg: 70, Reps: 5}}},
+		{ID: "2", PlanID: &pid, PerformedAt: now.AddDate(0, 0, -2), GeneratedSession: &api.GeneratedSessionRef{SessionKey: "C2W5D3"}, Sets: []api.LoggedSet{{ExerciseName: "Deadlift", WeightKg: 140, Reps: 3}}},
 		{ID: "3", PerformedAt: now.AddDate(0, 0, -4), Sets: []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5}, {ExerciseName: "OHP", WeightKg: 50, Reps: 5}}},
 	})
 	f.views[vHistory] = hi

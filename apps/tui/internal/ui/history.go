@@ -14,8 +14,9 @@ import (
 )
 
 type historyLoadedMsg struct {
-	logs []api.LogItem
-	err  error
+	logs  []api.LogItem
+	plans []api.Plan
+	err   error
 }
 
 type logDeletedMsg struct {
@@ -25,7 +26,8 @@ type logDeletedMsg struct {
 func historyLoadCmd(c *api.Client) tea.Cmd {
 	return func() tea.Msg {
 		logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 100})
-		return historyLoadedMsg{logs: logs, err: err}
+		plans, _ := c.Plans(context.Background()) // best-effort; plan names omitted on error
+		return historyLoadedMsg{logs: logs, plans: plans, err: err}
 	}
 }
 
@@ -41,20 +43,32 @@ type sessionRow struct {
 	performedAt time.Time
 	summary     string
 	volume      float64
+	planName    string // owning plan's name; "" for ad-hoc logs
+	sessionKey  string // generated-session key (e.g. "C2W6D1"); "" for ad-hoc logs
 	sets        []api.LoggedSet
 }
 
 // History is the history buffer: a recent-days heatmap strip + a navigable
 // session list (j/k · enter detail · d delete). List-driven, terminal-native.
 type History struct {
-	client   *api.Client
-	rows     []sessionRow
-	dayVol   map[string]float64
-	sel      int
-	expanded bool
-	err      string
-	loaded   bool
-	w, h     int
+	client    *api.Client
+	rows      []sessionRow
+	dayVol    map[string]float64
+	sel       int
+	expanded  bool
+	err       string
+	loaded    bool
+	planNames map[string]string // planId → name, for the row's plan label
+	w, h      int
+}
+
+// planNameMap indexes plans by id for O(1) row labeling.
+func planNameMap(plans []api.Plan) map[string]string {
+	m := make(map[string]string, len(plans))
+	for _, p := range plans {
+		m[p.ID] = p.Name
+	}
+	return m
 }
 
 func NewHistory(c *api.Client) History { return History{client: c} }
@@ -73,6 +87,7 @@ func (s History) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return s, nil
 		}
 		s.err = ""
+		s.planNames = planNameMap(m.plans)
 		s.build(m.logs)
 		if s.sel >= len(s.rows) {
 			s.sel = 0
@@ -110,7 +125,7 @@ func (s History) handleKey(m tea.KeyPressMsg) (Screen, tea.Cmd) {
 		}
 		r := s.rows[s.sel]
 		return s, func() tea.Msg {
-			return editLogMsg{id: r.id, performedAt: r.performedAt, sets: r.sets}
+			return editLogMsg{id: r.id, performedAt: r.performedAt, sets: r.sets, planName: r.planName, sessionKey: r.sessionKey}
 		}
 	case "d":
 		if len(s.rows) == 0 {
@@ -131,12 +146,18 @@ func (s *History) build(logs []api.LogItem) {
 	s.dayVol = make(map[string]float64)
 	for _, lg := range logs {
 		summary, vol := summarizeSets(lg.Sets)
+		planName := ""
+		if lg.PlanID != nil {
+			planName = s.planNames[*lg.PlanID]
+		}
 		s.rows = append(s.rows, sessionRow{
 			id:          lg.ID,
 			date:        lg.PerformedAt.Format("01-02"),
 			performedAt: lg.PerformedAt,
 			summary:     summary,
 			volume:      vol,
+			planName:    planName,
+			sessionKey:  sessionKeyOf(lg),
 			sets:        lg.Sets,
 		})
 		s.dayVol[lg.PerformedAt.Format("2006-01-02")] += vol
@@ -275,8 +296,34 @@ func (s History) list(w, h int) string {
 			dateStyle = lipgloss.NewStyle().Foreground(theme.Amber)
 		}
 		date := dateStyle.Render(r.date)
+		label := sessionLabel(r.sessionKey)
 		vol := lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf("%.1ft", r.volume/1000))
-		left := marker + date + "  " + lipgloss.NewStyle().Foreground(theme.Fg).Render(truncate(r.summary, w-16))
+
+		// Prefer plan + cycle label (the meaningful "which session" info); fall
+		// back to the exercise summary for ad-hoc logs that have neither. Exercise
+		// detail stays available by expanding the row (enter).
+		var mid string
+		if r.planName != "" || label != "" {
+			labW := 0
+			if label != "" {
+				labW = lipgloss.Width(label) + 1
+			}
+			nameW := w - 16 - labW
+			if nameW < 6 {
+				nameW = 6
+			}
+			var parts []string
+			if r.planName != "" {
+				parts = append(parts, lipgloss.NewStyle().Foreground(theme.Fg).Render(truncate(r.planName, nameW)))
+			}
+			if label != "" {
+				parts = append(parts, lipgloss.NewStyle().Foreground(theme.Cyan).Render(label))
+			}
+			mid = strings.Join(parts, " ")
+		} else {
+			mid = lipgloss.NewStyle().Foreground(theme.Fg).Render(truncate(r.summary, w-16))
+		}
+		left := marker + date + "  " + mid
 		lines = append(lines, justify(left, vol, w))
 		if i == s.sel && s.expanded {
 			lines = append(lines, s.detail(r, w)...)
