@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
@@ -48,7 +49,8 @@ type setEntry struct {
 	reps    string
 	rpe     string // optional RPE 1–10
 	done    bool
-	tgtReps int // planned reps, shown dimmed as a placeholder while reps is empty
+	tgtReps int     // planned reps, shown dimmed as a placeholder while reps is empty
+	total   float64 // bodyweight-inclusive total load (>0 only for bodyweight sets)
 }
 
 type exGroup struct {
@@ -104,6 +106,14 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 			w, _ := strconv.ParseFloat(s.weight, 64)
 			reps, _ := strconv.Atoi(s.reps)
 			ws := api.WorkoutSet{ExerciseName: name, WeightKg: w, Reps: reps}
+			if isBodyweightExercise(name) && s.total > 0 {
+				// weightKg is the external added weight; attach bodyweight meta so
+				// the total load survives (server stores meta as-is).
+				ws.Meta = &api.SetMeta{
+					BodyweightKg: api.Float64(round2(s.total - w)),
+					TotalLoadKg:  api.Float64(s.total),
+				}
+			}
 			if rpe, err := strconv.Atoi(strings.TrimSpace(s.rpe)); err == nil && rpe > 0 {
 				ws.RPE = &rpe
 			}
@@ -135,6 +145,7 @@ type sessionLoadedMsg struct {
 	prev       map[string]string // exerciseName(lower) → "weight×reps" last performance
 	planName   string            // plan/program name for the today header
 	sessionKey string            // generated-session key for the header label
+	bodyweight float64           // user bodyweight for bodyweight-exercise load math
 	noPlan     bool              // auto-load found no active plan
 	err        error
 }
@@ -153,7 +164,33 @@ func generatedSessionMsg(c *api.Client, planID string) sessionLoadedMsg {
 		prev:       buildPrevMap(logs),
 		planName:   s.Snapshot.Plan.Name,
 		sessionKey: s.SessionKey,
+		bodyweight: fetchBodyweight(c),
 	}
+}
+
+// fetchBodyweight reads the user's bodyweight (kg) from settings
+// (prefs.bodyweight.kg). 0 when unset/unavailable — bodyweight load math then
+// falls back to showing the raw prescribed total (no breakdown).
+func fetchBodyweight(c *api.Client) float64 {
+	vals, err := c.Settings(context.Background())
+	if err != nil {
+		return 0
+	}
+	raw, ok := vals["prefs.bodyweight.kg"]
+	if !ok {
+		return 0
+	}
+	var f float64
+	if json.Unmarshal(raw, &f) == nil {
+		return f
+	}
+	var str string
+	if json.Unmarshal(raw, &str) == nil {
+		if v, err := strconv.ParseFloat(strings.TrimSpace(str), 64); err == nil {
+			return v
+		}
+	}
+	return 0
 }
 
 func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
@@ -179,6 +216,7 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 				return editLogMsg{
 					id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets,
 					planName: planNameByID(plans, lg.PlanID), sessionKey: sessionKeyOf(lg),
+					bodyweight: fetchBodyweight(c),
 				}
 			}
 		}
@@ -234,18 +272,20 @@ func buildPrevMap(logs []api.LogItem) map[string]string {
 	m := map[string]string{}
 	for _, lg := range logs { // newest first
 		top := map[string]api.LoggedSet{}
+		topLoad := map[string]float64{}
 		for _, st := range lg.Sets {
 			n := strings.ToLower(strings.TrimSpace(st.ExerciseName))
 			if n == "" {
 				continue
 			}
-			if b, ok := top[n]; !ok || float64(st.WeightKg) > float64(b.WeightKg) {
-				top[n] = st
+			load := loggedTotalLoad(st.ExerciseName, float64(st.WeightKg), st.Meta)
+			if _, ok := top[n]; !ok || load > topLoad[n] {
+				top[n], topLoad[n] = st, load
 			}
 		}
-		for n, st := range top {
+		for n := range top {
 			if _, seen := m[n]; !seen {
-				m[n] = fmt.Sprintf("%s×%d", trimNum(float64(st.WeightKg)), st.Reps)
+				m[n] = fmt.Sprintf("%s×%d", trimNum(topLoad[n]), top[n].Reps)
 			}
 		}
 	}
@@ -269,6 +309,7 @@ type Log struct {
 	performedAt time.Time     // preserved on edit; zero = now (new log)
 	planName    string        // active plan/program name for today's session header
 	sessionKey  string        // generated-session key (e.g. "C2W6D1") for the header label
+	bodyweight  float64       // user bodyweight (kg) for bodyweight-exercise load math
 	load        loadState     // boot-time auto-load of today's session
 	undo        *undoSnapshot // last delete, restorable with `u`
 	status      string
@@ -395,6 +436,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return l, nil
 		}
 		l.planName, l.sessionKey = m.planName, m.sessionKey
+		l.bodyweight = m.bodyweight
 		l.loadSnapshot(m.snapshot, m.prev)
 		return l, nil
 	case tea.KeyPressMsg:
@@ -632,11 +674,16 @@ func (l *Log) loadForEdit(m editLogMsg) {
 			g = byEx[n]
 			order = append(order, n)
 		}
+		setTotal := 0.0
+		if isBodyweightExercise(n) && st.Meta != nil && float64(st.Meta.TotalLoadKg) > 0 {
+			setTotal = round2(float64(st.Meta.TotalLoadKg)) // weightKg is the external added weight
+		}
 		g.sets = append(g.sets, setEntry{
 			weight: trimNum(float64(st.WeightKg)),
 			reps:   strconv.Itoa(st.Reps),
 			rpe:    rpeString(st.RPE),
 			done:   true,
+			total:  setTotal,
 		})
 	}
 	groups := make([]exGroup, 0, len(order))
@@ -650,6 +697,9 @@ func (l *Log) loadForEdit(m editLogMsg) {
 	l.editing, l.target = false, editNone
 	l.editID, l.performedAt = m.id, m.performedAt
 	l.planName, l.sessionKey = m.planName, m.sessionKey
+	if m.bodyweight > 0 {
+		l.bodyweight = m.bodyweight
+	}
 	l.rest.active = false
 	l.load, l.undo = loadIdle, nil
 	l.status, l.statusErr = theme.GlyphDone+" 편집 로드됨 — s로 저장", false
@@ -681,6 +731,21 @@ func (l Log) beginEdit(t editTarget) (Log, tea.Cmd) {
 	return l, l.edit.Focus()
 }
 
+// recomputeTotal refreshes a set's bodyweight-inclusive total after its external
+// weight changes: total = bodyweight + external for bodyweight lifts, else 0.
+func (l *Log) recomputeTotal(gi, si int) {
+	g := &l.groups[gi]
+	if !isBodyweightExercise(g.name) || l.bodyweight <= 0 {
+		g.sets[si].total = 0
+		return
+	}
+	ext, _ := strconv.ParseFloat(strings.TrimSpace(g.sets[si].weight), 64)
+	if ext < 0 {
+		ext = 0
+	}
+	g.sets[si].total = round2(l.bodyweight + ext)
+}
+
 func (l *Log) writeEdit() {
 	v := strings.TrimSpace(l.edit.Value())
 	switch l.target {
@@ -690,6 +755,7 @@ func (l *Log) writeEdit() {
 		switch l.col {
 		case colWeight:
 			l.groups[l.gi].sets[l.si].weight = v
+			l.recomputeTotal(l.gi, l.si)
 		case colReps:
 			l.groups[l.gi].sets[l.si].reps = v
 		case colRPE:
@@ -708,11 +774,19 @@ func (l *Log) loadSnapshot(s *api.SessionSnapshot, prev map[string]string) {
 	for _, ex := range s.Exercises {
 		g := exGroup{name: ex.ExerciseName, prev: prev[strings.ToLower(strings.TrimSpace(ex.ExerciseName))]}
 		maxTgt, tgtReps := 0.0, 0
+		bw := isBodyweightExercise(ex.ExerciseName)
 		for _, st := range ex.Sets {
-			w := float64(st.TargetWeightKg)
-			g.sets = append(g.sets, setEntry{weight: trimNum(w), reps: "", tgtReps: st.Reps})
-			if w >= maxTgt {
-				maxTgt, tgtReps = w, st.Reps
+			// targetWeightKg is bodyweight-INCLUSIVE total for bodyweight lifts;
+			// store the external added weight (total-bw) as the editable value and
+			// keep the total for display.
+			total := float64(st.TargetWeightKg)
+			w, setTotal := total, 0.0
+			if bw && l.bodyweight > 0 {
+				w, setTotal = bwExternalFromTotal(total, l.bodyweight), total
+			}
+			g.sets = append(g.sets, setEntry{weight: trimNum(w), reps: "", tgtReps: st.Reps, total: setTotal})
+			if total >= maxTgt {
+				maxTgt, tgtReps = total, st.Reps
 			}
 		}
 		if len(g.sets) == 0 {
@@ -870,7 +944,19 @@ func (l Log) renderSet(gi, si int, s setEntry) string {
 	if active {
 		marker = lipgloss.NewStyle().Foreground(theme.Amber).Render(" › ")
 	}
-	wcell := l.setCell(active, colWeight, orDot(s.weight), 6)
+	// Bodyweight lifts: the cell shows the bodyweight-inclusive total, with the
+	// external added weight broken out as a "(+20)" / "(체중)" suffix at the row
+	// end (mirrors the web). While editing the weight, the cell shows the raw
+	// external input instead and the suffix is hidden.
+	wText, suffix := orDot(s.weight), ""
+	if isBodyweightExercise(l.groups[gi].name) && s.total > 0 {
+		wText = trimNum(s.total)
+		if !(active && l.editing && l.col == colWeight) {
+			added, _ := strconv.ParseFloat(strings.TrimSpace(s.weight), 64)
+			suffix = " " + lipgloss.NewStyle().Foreground(theme.Dim).Render(addedSuffix(added))
+		}
+	}
+	wcell := l.setCell(active, colWeight, wText, 6)
 	rcell := l.repsCell(active, s)
 	sep := lipgloss.NewStyle().Foreground(theme.Dim).Render(" × ")
 
@@ -891,7 +977,7 @@ func (l Log) renderSet(gi, si int, s setEntry) string {
 	if v := setE1rm(s); v > 0 {
 		e1rm = lipgloss.NewStyle().Foreground(theme.Dim).Render(fmt.Sprintf(" e%.0f", v))
 	}
-	return marker + wcell + sep + rcell + rpe + "   " + done + e1rm
+	return marker + wcell + sep + rcell + rpe + "   " + done + e1rm + suffix
 }
 
 func (l Log) setCell(active bool, c logCol, text string, width int) string {
@@ -956,9 +1042,8 @@ func summarizeSaved(groups []exGroup, detail *api.LogDetail, edited bool) string
 				continue
 			}
 			n++
-			w, _ := strconv.ParseFloat(s.weight, 64)
 			r, _ := strconv.Atoi(s.reps)
-			vol += w * float64(r)
+			vol += setLoad(s) * float64(r)
 		}
 	}
 	verb := "저장됨"
@@ -1012,9 +1097,12 @@ func rpeString(rpe *int) string {
 }
 
 func setE1rm(s setEntry) float64 {
-	w, e1 := strconv.ParseFloat(strings.TrimSpace(s.weight), 64)
-	reps, e2 := strconv.Atoi(strings.TrimSpace(s.reps))
-	if e1 != nil || e2 != nil || reps <= 0 {
+	reps, err := strconv.Atoi(strings.TrimSpace(s.reps))
+	if err != nil || reps <= 0 {
+		return 0
+	}
+	w := setLoad(s) // bodyweight-inclusive total for bodyweight lifts
+	if w <= 0 {
 		return 0
 	}
 	return w * (1 + float64(reps)/30.0) // Epley estimate (display only)

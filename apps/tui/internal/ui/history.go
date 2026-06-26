@@ -174,7 +174,7 @@ func summarizeSets(sets []api.LoggedSet) (string, float64) {
 			seen[n] = true
 			names = append(names, n)
 		}
-		vol += float64(st.WeightKg) * float64(st.Reps)
+		vol += loggedTotalLoad(st.ExerciseName, float64(st.WeightKg), st.Meta) * float64(st.Reps)
 	}
 	disp := names
 	extra := ""
@@ -344,7 +344,11 @@ func (s History) detail(r sessionRow, w int) []string {
 		if _, ok := byEx[n]; !ok {
 			order = append(order, n)
 		}
-		byEx[n] = append(byEx[n], fmt.Sprintf("%s×%d", trimNum(float64(st.WeightKg)), st.Reps))
+		cell := fmt.Sprintf("%s×%d", trimNum(loggedTotalLoad(st.ExerciseName, float64(st.WeightKg), st.Meta)), st.Reps)
+		if isBodyweightExercise(st.ExerciseName) && st.Meta != nil && float64(st.Meta.TotalLoadKg) > 0 {
+			cell += addedSuffix(float64(st.WeightKg)) // external added weight
+		}
+		byEx[n] = append(byEx[n], cell)
 	}
 	var out []string
 	for _, n := range order {

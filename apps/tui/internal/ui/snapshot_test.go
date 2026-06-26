@@ -39,6 +39,8 @@ func TestSnapshot(t *testing.T) {
 		f.views[vToday] = sampleLongLog()
 		nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
 		frame = ansi.Strip(nf.(Frame).View().Content)
+	case "today-bw":
+		frame = ansi.Strip(renderTodayBwScenario(w, h))
 	case "goto":
 		frame = ansi.Strip(renderGotoScenario(w, h))
 	case "palette":
@@ -167,6 +169,28 @@ func renderProgramsScenario(w, h int) string {
 	pr.activeID = "1"
 	f.views[vPrograms] = pr
 	f.active = vPrograms
+	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
+	return nf.(Frame).View().Content
+}
+
+func renderTodayBwScenario(w, h int) string {
+	f := NewFrame(nil)
+	l := f.views[vToday].(Log)
+	l.load = loadIdle
+	l.bodyweight = 74
+	l.planName, l.sessionKey = "5/3/1 Leader", "C2W6D1"
+	l.groups = []exGroup{
+		{name: "Back Squat", prev: "100×5", tgt: "102.5×5", sets: []setEntry{
+			{weight: "102.5", reps: "5", done: true},
+		}},
+		{name: "Weighted Pull-Up", prev: "80×5", tgt: "80×5", sets: []setEntry{
+			{weight: "6", reps: "5", total: 80, done: true},
+			{weight: "8", reps: "5", total: 82, done: true},
+			{weight: "0", reps: "", tgtReps: 5, total: 74},
+		}},
+	}
+	l.gi, l.si, l.col = 1, 2, colWeight
+	f.views[vToday] = l
 	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
 	return nf.(Frame).View().Content
 }
