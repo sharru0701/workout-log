@@ -123,7 +123,7 @@ func (s Programs) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			}
 			items = append(items, pickerItem{label: t.Name, desc: strings.ToLower(t.Type), value: t.ID})
 		}
-		return s, func() tea.Msg { return openPickerMsg{prompt: "프로그램 ", tag: "template", items: items} }
+		return s, func() tea.Msg { return openPickerMsg{prompt: "프로그램 스토어 ", tag: "template", items: items} }
 	case planCreatedMsg:
 		if m.err != nil {
 			s.err = humanizeAuthErr(m.err)
@@ -271,7 +271,7 @@ func (s Programs) Body(w, h int) string {
 		return centered("불러오는 중…", theme.Dim, w, h)
 	}
 	if len(s.plans) == 0 {
-		return centered("플랜이 없습니다", theme.Ghost, w, h)
+		return s.renderEmpty(w, h)
 	}
 
 	lines := make([]string, 0, len(s.plans))
@@ -304,6 +304,17 @@ func (s Programs) Body(w, h int) string {
 		avail = 1
 	}
 	return lipgloss.NewStyle().Width(w).Height(h).Padding(pad, 1).Render(strings.Join(windowLines(lines, active, avail), "\n"))
+}
+
+// renderEmpty draws the no-plans state with a prompt to open the program store
+// (the n → template picker), so a fresh user knows where plans come from instead
+// of facing a bare "플랜이 없습니다".
+func (s Programs) renderEmpty(w, h int) string {
+	ghost := lipgloss.NewStyle().Foreground(theme.Ghost)
+	dim := lipgloss.NewStyle().Foreground(theme.Dim)
+	guide := ghost.Render("플랜이 없습니다.") + "\n\n" +
+		hint("n", "프로그램 스토어") + dim.Render(" 열기")
+	return lipgloss.Place(w, h, lipgloss.Center, lipgloss.Center, guide)
 }
 
 func programSubtitle(p api.Plan) string {
