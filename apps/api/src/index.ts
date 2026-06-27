@@ -8,8 +8,13 @@ import { verifyPassword } from "@/server/auth/password";
 import { createSession, findUserById } from "@/server/auth/session";
 
 import { requireAuth, type AppEnv } from "./auth";
+import { apiLogger } from "./lib/http";
+import { logsRoutes } from "./routes/logs";
 
 const app = new Hono<AppEnv>();
+
+// Request logging for every route (the Hono replacement for withApiLogging).
+app.use("*", apiLogger);
 
 // --- health (no auth, no DB) ---
 app.get("/health", (c) => c.json({ ok: true, service: "ironlog-api" }));
@@ -75,6 +80,10 @@ app.get("/api/plans", requireAuth, async (c) => {
     .where(eq(plan.userId, c.get("userId")));
   return c.json({ items });
 });
+
+// --- logs group (GET/POST /api/logs, GET /api/logs/calendar, GET/PATCH/DELETE
+// /api/logs/:logId) ---
+app.route("/api/logs", logsRoutes);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {
