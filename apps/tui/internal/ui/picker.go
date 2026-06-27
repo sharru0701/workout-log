@@ -86,7 +86,11 @@ func (p picker) render(w, h int) (string, int) {
 
 	var body []string
 	if len(shown) == 0 {
-		body = []string{lipgloss.NewStyle().Foreground(theme.Ghost).Render("  일치 없음")}
+		msg := "일치 없음"
+		if len(p.items) == 0 { // free-text prompt (no source items) — e.g. accessory sets
+			msg = "입력 후 ⏎"
+		}
+		body = []string{lipgloss.NewStyle().Foreground(theme.Ghost).Render("  " + msg)}
 	} else {
 		body = windowLines(itemLines, p.sel, rows)
 	}
