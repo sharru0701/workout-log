@@ -54,10 +54,12 @@ type setEntry struct {
 }
 
 type exGroup struct {
-	name string
-	prev string // "100×5" previous performance (filled when a plan/session loads)
-	tgt  string // target weight
-	sets []setEntry
+	name        string
+	prev        string // "100×5" previous performance (filled when a plan/session loads)
+	tgt         string // target weight
+	blockTarget string // snapshot sourceBlockTarget (e.g. "SQUAT"); enables REPLACE_EXERCISE override
+	role        string // MAIN | ASSIST | … (from the snapshot)
+	sets        []setEntry
 }
 
 // undoSnapshot is the pre-delete buffer state restored by `u`. Today logging is
@@ -145,6 +147,7 @@ type sessionLoadedMsg struct {
 	prev       map[string]string // exerciseName(lower) → "weight×reps" last performance
 	planName   string            // plan/program name for the today header
 	sessionKey string            // generated-session key for the header label
+	planID     string            // active plan id, for session overrides
 	bodyweight float64           // user bodyweight for bodyweight-exercise load math
 	noPlan     bool              // auto-load found no active plan
 	err        error
@@ -164,6 +167,7 @@ func generatedSessionMsg(c *api.Client, planID string) sessionLoadedMsg {
 		prev:       buildPrevMap(logs),
 		planName:   s.Snapshot.Plan.Name,
 		sessionKey: s.SessionKey,
+		planID:     planID,
 		bodyweight: fetchBodyweight(c),
 	}
 }
@@ -197,6 +201,59 @@ func loadSessionCmd(c *api.Client, planID string) tea.Cmd {
 	return func() tea.Msg { return generatedSessionMsg(c, planID) }
 }
 
+// overrideDoneMsg reports the result of a session override (보강/교체); on success
+// the today buffer regenerates so the change appears.
+type overrideDoneMsg struct {
+	err    error
+	planID string
+	desc   string
+}
+
+func addAccessoryCmd(c *api.Client, planID, sessionKey, name string, sets []api.OverrideSet) tea.Cmd {
+	return func() tea.Msg {
+		err := c.AddAccessory(context.Background(), planID, sessionKey, name, sets)
+		return overrideDoneMsg{err: err, planID: planID, desc: "보강 " + name}
+	}
+}
+
+func replaceExerciseCmd(c *api.Client, planID, sessionKey, blockTarget, name string) tea.Cmd {
+	return func() tea.Msg {
+		err := c.ReplaceExercise(context.Background(), planID, sessionKey, blockTarget, name)
+		return overrideDoneMsg{err: err, planID: planID, desc: "교체 → " + name}
+	}
+}
+
+// parseAccessorySets parses a compact "NxR" / "NxR@W" spec into N sets of R reps
+// at optional weight W. Blank or unparseable → a 3×10 default.
+func parseAccessorySets(spec string) []api.OverrideSet {
+	n, reps, weight := 3, 10, 0.0
+	if s := strings.TrimSpace(spec); s != "" {
+		body, w, hasW := strings.Cut(s, "@")
+		if hasW {
+			if v, err := strconv.ParseFloat(strings.TrimSpace(w), 64); err == nil && v >= 0 {
+				weight = v
+			}
+		}
+		ns, rs, ok := strings.Cut(strings.TrimSpace(body), "x")
+		if !ok {
+			ns, rs, ok = strings.Cut(strings.TrimSpace(body), "×")
+		}
+		if ok {
+			if v, err := strconv.Atoi(strings.TrimSpace(ns)); err == nil && v > 0 {
+				n = v
+			}
+			if v, err := strconv.Atoi(strings.TrimSpace(rs)); err == nil && v > 0 {
+				reps = v
+			}
+		}
+	}
+	sets := make([]api.OverrideSet, n)
+	for i := range sets {
+		sets[i] = api.OverrideSet{Reps: reps, WeightKg: weight}
+	}
+	return sets
+}
+
 // autoloadCmd boots today's buffer: resolve the active plan and generate its
 // session, mirroring the web bootstrap so today is never a blank canvas. With
 // no active plan it returns noPlan so the buffer prompts for a program instead.
@@ -216,7 +273,7 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 				return editLogMsg{
 					id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets,
 					planName: planNameByID(plans, lg.PlanID), sessionKey: sessionKeyOf(lg),
-					bodyweight: fetchBodyweight(c),
+					planID: strOr(lg.PlanID), bodyweight: fetchBodyweight(c),
 				}
 			}
 		}
@@ -248,6 +305,13 @@ func planNameByID(plans []api.Plan, id *string) string {
 func sessionKeyOf(lg api.LogItem) string {
 	if lg.GeneratedSession != nil {
 		return lg.GeneratedSession.SessionKey
+	}
+	return ""
+}
+
+func strOr(s *string) string {
+	if s != nil {
+		return *s
 	}
 	return ""
 }
@@ -309,6 +373,9 @@ type Log struct {
 	performedAt time.Time     // preserved on edit; zero = now (new log)
 	planName    string        // active plan/program name for today's session header
 	sessionKey  string        // generated-session key (e.g. "C2W6D1") for the header label
+	planID      string        // active plan id, for session overrides (보강/교체)
+	pendAccsry  string        // accessory exercise awaiting its sets input (override flow)
+	pendBlock   string        // block target awaiting its replacement exercise (override flow)
 	bodyweight  float64       // user bodyweight (kg) for bodyweight-exercise load math
 	load        loadState     // boot-time auto-load of today's session
 	undo        *undoSnapshot // last delete, restorable with `u`
@@ -362,7 +429,11 @@ func (l Log) Hints() []hintItem {
 	if l.editing {
 		return []hintItem{{"⏎", "다음"}, {"tab", "셀"}, {"esc", "취소"}}
 	}
-	return []hintItem{{"i", "편집"}, {"e", "운동"}, {"s", "저장"}}
+	h := []hintItem{{"i", "편집"}, {"e", "운동"}, {"s", "저장"}}
+	if l.planID != "" && l.sessionKey != "" {
+		h = append(h, hintItem{"a", "보강"}, hintItem{"c", "교체"})
+	}
+	return h
 }
 
 func (l Log) doneCount() int {
@@ -415,13 +486,49 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		l.loadForEdit(m)
 		return l, nil
 	case pickedMsg:
-		if m.tag == "exercise" && strings.TrimSpace(m.value) != "" {
-			l.groups = append(l.groups, exGroup{name: m.value, sets: []setEntry{{}}})
-			l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
-			nl, cmd := l.beginEdit(editCell)
-			return nl, cmd
+		switch m.tag {
+		case "exercise":
+			if strings.TrimSpace(m.value) != "" {
+				l.groups = append(l.groups, exGroup{name: m.value, sets: []setEntry{{}}})
+				l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
+				return l.beginEdit(editCell)
+			}
+		case "accessory":
+			if name := strings.TrimSpace(m.value); name != "" {
+				l.pendAccsry = name
+				l.status, l.statusErr = "보강: "+name, false
+				// second step: free-text sets prompt (an item-less picker returns
+				// whatever the user types).
+				return l, func() tea.Msg {
+					return openPickerMsg{prompt: "세트 (예 3x10@20) ", tag: "accessory-sets"}
+				}
+			}
+		case "accessory-sets":
+			name := l.pendAccsry
+			l.pendAccsry = ""
+			if name == "" {
+				return l, nil
+			}
+			l.status, l.statusErr = "보강 추가 중…", false
+			return l, addAccessoryCmd(l.client, l.planID, l.sessionKey, name, parseAccessorySets(m.value))
+		case "replace":
+			name, bt := strings.TrimSpace(m.value), l.pendBlock
+			l.pendBlock = ""
+			if name == "" || bt == "" {
+				return l, nil
+			}
+			l.status, l.statusErr = "교체 중…", false
+			return l, replaceExerciseCmd(l.client, l.planID, l.sessionKey, bt, name)
 		}
 		return l, nil
+	case overrideDoneMsg:
+		if m.err != nil {
+			l.status, l.statusErr = "변경 실패: "+humanizeAuthErr(m.err), true
+			return l, nil
+		}
+		l.status, l.statusErr = theme.GlyphDone+" "+m.desc+" — 세션 재생성", false
+		l.load = loadPending
+		return l, loadSessionCmd(l.client, m.planID)
 	case planActivatedMsg:
 		l.load = loadPending
 		return l, loadSessionCmd(l.client, m.id)
@@ -435,7 +542,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			l.load = loadNoPlan
 			return l, nil
 		}
-		l.planName, l.sessionKey = m.planName, m.sessionKey
+		l.planName, l.sessionKey, l.planID = m.planName, m.sessionKey, m.planID
 		l.bodyweight = m.bodyweight
 		l.loadSnapshot(m.snapshot, m.prev)
 		return l, nil
@@ -478,6 +585,10 @@ func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
 		return l.beginEdit(editCell)
 	case "e", "n":
 		return l, openExercisePickerCmd(l.client)
+	case "a":
+		return l.beginAccessory()
+	case "c":
+		return l.beginReplace()
 	case "x":
 		return l.toggleDone()
 	case "o":
@@ -552,15 +663,48 @@ func (l *Log) moveSet(dir int) {
 
 // openExercisePickerCmd fetches the exercise dictionary and asks the frame to
 // open a fuzzy picker tagged "exercise".
-func openExercisePickerCmd(c *api.Client) tea.Cmd {
+func openExercisePickerCmd(c *api.Client) tea.Cmd { return exercisePickerCmd(c, "운동 ", "exercise") }
+
+// exercisePickerCmd opens an exercise picker with a custom prompt and routing
+// tag (exercise add, accessory override, replace override).
+func exercisePickerCmd(c *api.Client, prompt, tag string) tea.Cmd {
 	return func() tea.Msg {
 		exs, _ := c.Exercises(context.Background(), "")
 		items := make([]pickerItem, len(exs))
 		for i, e := range exs {
 			items[i] = pickerItem{label: e.Name, value: e.Name}
 		}
-		return openPickerMsg{prompt: "운동 ", tag: "exercise", items: items}
+		return openPickerMsg{prompt: prompt, tag: tag, items: items}
 	}
+}
+
+// beginAccessory starts the 보강 (ADD_ACCESSORY) override flow: pick an exercise,
+// then enter its sets. Only valid on a generated plan session.
+func (l Log) beginAccessory() (Log, tea.Cmd) {
+	if l.planID == "" || l.sessionKey == "" {
+		l.status, l.statusErr = "보강은 플랜 세션에서만 가능합니다", true
+		return l, nil
+	}
+	return l, exercisePickerCmd(l.client, "보강 운동 ", "accessory")
+}
+
+// beginReplace starts the 교체 (REPLACE_EXERCISE) override flow for the selected
+// MAIN exercise's block target.
+func (l Log) beginReplace() (Log, tea.Cmd) {
+	if l.planID == "" || l.sessionKey == "" {
+		l.status, l.statusErr = "교체는 플랜 세션에서만 가능합니다", true
+		return l, nil
+	}
+	if l.gi >= len(l.groups) {
+		return l, nil
+	}
+	g := l.groups[l.gi]
+	if g.role != "MAIN" || g.blockTarget == "" {
+		l.status, l.statusErr = "메인 운동에서만 교체할 수 있습니다", true
+		return l, nil
+	}
+	l.pendBlock = g.blockTarget
+	return l, exercisePickerCmd(l.client, "교체할 운동 ", "replace")
 }
 
 func (l Log) addSet() (Log, tea.Cmd) {
@@ -696,7 +840,7 @@ func (l *Log) loadForEdit(m editLogMsg) {
 	l.groups, l.gi, l.si, l.col = groups, 0, 0, colWeight
 	l.editing, l.target = false, editNone
 	l.editID, l.performedAt = m.id, m.performedAt
-	l.planName, l.sessionKey = m.planName, m.sessionKey
+	l.planName, l.sessionKey, l.planID = m.planName, m.sessionKey, m.planID
 	if m.bodyweight > 0 {
 		l.bodyweight = m.bodyweight
 	}
@@ -772,7 +916,7 @@ func (l *Log) loadSnapshot(s *api.SessionSnapshot, prev map[string]string) {
 	}
 	var groups []exGroup
 	for _, ex := range s.Exercises {
-		g := exGroup{name: ex.ExerciseName, prev: prev[strings.ToLower(strings.TrimSpace(ex.ExerciseName))]}
+		g := exGroup{name: ex.ExerciseName, prev: prev[strings.ToLower(strings.TrimSpace(ex.ExerciseName))], blockTarget: ex.SourceBlockTarget, role: ex.Role}
 		maxTgt, tgtReps := 0.0, 0
 		bw := isBodyweightExercise(ex.ExerciseName)
 		for _, st := range ex.Sets {

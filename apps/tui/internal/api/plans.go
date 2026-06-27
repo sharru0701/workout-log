@@ -116,9 +116,10 @@ type PlannedSet struct {
 
 // PlannedExercise is one exercise in a generated session snapshot.
 type PlannedExercise struct {
-	ExerciseName string       `json:"exerciseName"`
-	Role         string       `json:"role"`
-	Sets         []PlannedSet `json:"sets"`
+	ExerciseName      string       `json:"exerciseName"`
+	Role              string       `json:"role"`              // MAIN | ASSIST | ...
+	SourceBlockTarget string       `json:"sourceBlockTarget"` // e.g. "SQUAT" — for REPLACE_EXERCISE overrides
+	Sets              []PlannedSet `json:"sets"`
 }
 
 // SnapshotPlan is the plan identity carried inside a session snapshot.
