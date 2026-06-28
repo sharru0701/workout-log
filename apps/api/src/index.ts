@@ -12,6 +12,7 @@ import { apiLogger } from "./lib/http";
 import { logsRoutes } from "./routes/logs";
 import { statsRoutes } from "./routes/stats";
 import { exercisesRoutes } from "./routes/exercises";
+import { settingsRoutes } from "./routes/settings";
 
 const app = new Hono<AppEnv>();
 
@@ -94,6 +95,10 @@ app.route("/api/stats", statsRoutes);
 // --- exercises group (GET/POST /api/exercises, GET /api/exercises/categories,
 // POST /api/exercises/alias, PATCH/DELETE /api/exercises/:exerciseId) ---
 app.route("/api/exercises", exercisesRoutes);
+
+// --- settings group (GET/PATCH /api/settings, POST /api/settings/clear-cache,
+// POST /api/settings/app-reset) ---
+app.route("/api/settings", settingsRoutes);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {
