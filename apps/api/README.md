@@ -5,7 +5,7 @@ shared business logic in `web/src/server/**` and exposes it with **token (Bearer
 auth** — so non-browser clients (the Go TUI in `apps/tui`) authenticate cleanly
 without the cookie-scraping hack.
 
-## Status: B1 in progress (logs + stats + exercises + settings groups ported)
+## Status: B1 in progress (logs + stats + exercises + settings + plans groups ported)
 - Reuses `web/src/server` source via the `@/*` → `../../web/src/*` tsconfig alias.
   Web stays untouched apart from **additive, non-breaking** shared helpers
   (`server/db/ops.ts`, `getSettingsSnapshotForUser`) and one resilience tweak
@@ -15,7 +15,7 @@ without the cookie-scraping hack.
   validated by the existing `auth_session` token (`findActiveSession`).
 - Routes:
   - `GET /health`, `POST /api/auth/login` (mints + returns a token),
-    `GET /api/auth/me`, `GET /api/plans`.
+    `GET /api/auth/me`.
   - **logs** (`src/routes/logs.ts`): `GET`/`POST /api/logs`,
     `GET /api/logs/calendar`, `GET`/`PATCH`/`DELETE /api/logs/:logId` —
     cursor list, create/replace (shared `upsertWorkoutLogService`), month
@@ -37,11 +37,20 @@ without the cookie-scraping hack.
     `POST /api/settings/clear-cache` (invalidate stats cache),
     `POST /api/settings/app-reset` (destructive hard reset + reseed, confirmToken
     guarded — ported for parity, never exercised by the smoke test).
+  - **plans** (`src/routes/plans.ts`): `GET`/`POST /api/plans`,
+    `PATCH`/`DELETE /api/plans/:planId`, `POST /api/plans/:planId/generate`
+    (session generation via the Next-free program-engine),
+    `POST /api/plans/:planId/overrides` — the TUI-critical plan workflow
+    (replaces the B0 vertical-slice `GET /api/plans`). Deferred to a later
+    sub-group (TUI-unused): `progression-state`, `runtime-targets`,
+    `cycle-overview`.
 - Next-isms are replaced by `src/lib/http.ts`: `requireAuth` supplies the user
   id (no `cookies()`), `apiError`/`resolveLocale`/`normalizeTimezone` stand in
   for `apiErrorResponse`/`resolveRequestLocale`, and `apiLogger` replaces the
   `withApiLogging` request wrapper.
-- Remaining B1 groups: plans CRUD, and misc.
+- Remaining B1: misc (home, generated-sessions, templates, export, import,
+  program-versions, ux-events) + the deferred sub-groups (stats UX telemetry,
+  plans progression-state/runtime-targets/cycle-overview).
 
 ## Run
 ```bash
@@ -54,6 +63,6 @@ DATABASE_URL=... pnpm -C apps/api start   # PORT defaults to 8787
 `DATABASE_URL` is the same Postgres connection string the web app uses.
 
 ## Roadmap
-- **B1**: port the remaining routes — logs ✅, stats ✅ (core; UX telemetry deferred), exercises ✅, settings ✅, then plans CRUD, misc.
+- **B1**: port the remaining routes — logs ✅, stats ✅ (core; UX telemetry deferred), exercises ✅, settings ✅, plans ✅ (core; progression-state/runtime-targets/cycle-overview deferred), then misc.
 - **B2**: deploy independently (VPS/Railway) + point the TUI at it via Bearer; optionally migrate web client calls.
 - **B-extract**: move `web/src/server` → `packages/core` for a clean shared package (repo-wide import rewrite).
