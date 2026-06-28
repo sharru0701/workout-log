@@ -69,7 +69,8 @@ without the cookie-scraping hack.
     `GET /api/export` (JSON/CSV), `POST /api/me/import` (dryRun/replace),
     `PUT /api/program-versions/:id` (edit owned version),
     `GET /api/generated-sessions`, `POST /api/ux-events` (telemetry ingest).
-    Still deferred (web-only): `ops/*`, stats UX telemetry.
+  - **ops** (`src/routes/ops.ts`, WORKOUT_OPS_TOKEN admin auth, not user-scoped):
+    `GET`/`POST /api/ops/sessions/prune` (count / delete expired sessions — cron).
 - Next-isms are replaced by `src/lib/http.ts`: `requireAuth` supplies the user
   id (no `cookies()`), `apiError`/`resolveLocale`/`normalizeTimezone` stand in
   for `apiErrorResponse`/`resolveRequestLocale`, and `apiLogger` replaces the
@@ -77,11 +78,13 @@ without the cookie-scraping hack.
 - **Every route the TUI calls is ported** (B2 TUI Bearer cutover proven). Web-only
   routes are being ported for a complete backend: plans
   progression-state/runtime-targets/cycle-overview ✅, templates delete/fork ✅,
-  program-versions ✅, generated-sessions ✅, ux-events ✅; still to do — `ops/*`
-  and the stats UX telemetry (ux-snapshot/funnel/events-summary/migration-telemetry,
-  large web-only dashboards). The auth browser/OAuth flows (email/verify, google/*,
-  oauth/*, password/reset/confirm, password/setup) are redirect/cookie flows that
-  don't fit a headless token API — left to the web.
+  program-versions ✅, generated-sessions ✅, ux-events ✅, ops/sessions/prune ✅.
+  Intentionally **not** ported (don't fit a headless token API / web-deploy
+  specific): `ops/migrations` (reads `process.cwd()/src/.../migrations` — web
+  layout), the stats UX telemetry dashboards (ux-snapshot/funnel/events-summary/
+  migration-telemetry, ~1.6k lines of web-only analytics), and the auth
+  browser/OAuth flows (email/verify, google/*, oauth/*, password/reset/confirm,
+  password/setup — redirect/cookie flows). These stay in the web app.
 
 ## Run
 ```bash

@@ -18,6 +18,7 @@ import {
   generatedSessionsRoutes,
   uxEventsRoutes,
 } from "./routes/misc";
+import { opsRoutes } from "./routes/ops";
 
 const app = new Hono<AppEnv>();
 
@@ -59,6 +60,7 @@ app.route("/api/me/import", importRoutes); // POST — data import (dryRun/repla
 app.route("/api/program-versions", programVersionsRoutes); // PUT — edit version
 app.route("/api/generated-sessions", generatedSessionsRoutes); // GET — session list
 app.route("/api/ux-events", uxEventsRoutes); // POST — UX telemetry ingest
+app.route("/api/ops", opsRoutes); // GET/POST /sessions/prune — infra (WORKOUT_OPS_TOKEN)
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {
