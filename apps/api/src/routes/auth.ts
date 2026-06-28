@@ -179,11 +179,17 @@ authRoutes.post("/signup", async (c) => {
   }
 });
 
-// GET /api/auth/me — the authenticated user.
-authRoutes.get("/me", requireAuth, async (c) => {
+// GET /api/auth/me — the current user, or { user: null } (200) when there's no
+// valid session. Mirrors the web contract (no 401) so clients can probe a
+// persisted token on startup without treating "logged out" as an error.
+authRoutes.get("/me", async (c) => {
   try {
-    const user = await findUserById(c.get("userId"));
-    return c.json({ user });
+    const token = sessionToken(c);
+    const session = token ? await findActiveSession(token) : null;
+    if (!session) return c.json({ user: null });
+    const user = await findUserById(session.userId);
+    if (!user) return c.json({ user: null });
+    return c.json({ user: { ...user, fallback: false } });
   } catch (e) {
     return apiError(c, e);
   }

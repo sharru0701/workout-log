@@ -5,7 +5,16 @@ shared business logic in `web/src/server/**` and exposes it with **token (Bearer
 auth** — so non-browser clients (the Go TUI in `apps/tui`) authenticate cleanly
 without the cookie-scraping hack.
 
-## Status: B1 — all TUI-used routes ported (ready for B2 deploy + cutover)
+## Status: B1 done + B2 TUI Bearer cutover proven (deploy is the remaining step)
+> The TUI's `api` client now authenticates via Bearer (token captured from the
+> login/signup/password response body), verified end-to-end: the full
+> `apps/tui` `live_test` suite (auth, logs, stats, plans, exercises, settings,
+> sessions, password rotation, account deletion, export/import) passes against
+> apps/api. `GET /api/auth/me` returns `{user:null}` (200, not 401) to match the
+> web contract so a persisted token can be probed on startup. What's left for B2:
+> deploy apps/api (container + DATABASE_URL/DB_SCHEMA/WORKOUT_APP_URL/RESEND_*)
+> and flip the TUI's default server URL (ldflags) to it.
+
 - Reuses `web/src/server` source via the `@/*` → `../../web/src/*` tsconfig alias.
   Web stays untouched apart from **additive, non-breaking** shared helpers
   (`server/db/ops.ts`, `getSettingsSnapshotForUser`) and one resilience tweak
@@ -83,5 +92,5 @@ DATABASE_URL=... pnpm -C apps/api start   # PORT defaults to 8787
 
 ## Roadmap
 - **B1** ✅: logs, stats (core), exercises, settings, plans (core), misc (templates/home/export/import), auth — **all TUI-used routes ported**.
-- **B2**: deploy independently (VPS/Railway) + point the TUI at it via Bearer; optionally migrate web client calls.
+- **B2**: TUI Bearer client ✅ (dual-mode: Bearer for apps/api, cookie for Next; live_test verified) — remaining: deploy independently (VPS/Railway) + flip the TUI default server URL to it. Optionally migrate web client calls.
 - **B-extract**: move `web/src/server` → `packages/core` for a clean shared package (repo-wide import rewrite).
