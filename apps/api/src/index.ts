@@ -10,6 +10,7 @@ import { createSession, findUserById } from "@/server/auth/session";
 import { requireAuth, type AppEnv } from "./auth";
 import { apiLogger } from "./lib/http";
 import { logsRoutes } from "./routes/logs";
+import { statsRoutes } from "./routes/stats";
 
 const app = new Hono<AppEnv>();
 
@@ -84,6 +85,10 @@ app.get("/api/plans", requireAuth, async (c) => {
 // --- logs group (GET/POST /api/logs, GET /api/logs/calendar, GET/PATCH/DELETE
 // /api/logs/:logId) ---
 app.route("/api/logs", logsRoutes);
+
+// --- stats group (GET /api/stats/{e1rm,bundle,volume-series,prs,
+// strength-summary,volume}) ---
+app.route("/api/stats", statsRoutes);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {
