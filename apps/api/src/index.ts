@@ -3,7 +3,7 @@ import { Hono } from "hono";
 
 import { db } from "@/server/db/client";
 import { eq } from "@/server/db/ops";
-import { appUser, plan } from "@/server/db/schema";
+import { appUser } from "@/server/db/schema";
 import { verifyPassword } from "@/server/auth/password";
 import { createSession, findUserById } from "@/server/auth/session";
 
@@ -13,6 +13,7 @@ import { logsRoutes } from "./routes/logs";
 import { statsRoutes } from "./routes/stats";
 import { exercisesRoutes } from "./routes/exercises";
 import { settingsRoutes } from "./routes/settings";
+import { plansRoutes } from "./routes/plans";
 
 const app = new Hono<AppEnv>();
 
@@ -69,21 +70,6 @@ app.get("/api/auth/me", requireAuth, async (c) => {
   return c.json({ user });
 });
 
-// --- plans (vertical-slice data read; proves authed DB access) ---
-app.get("/api/plans", requireAuth, async (c) => {
-  const items = await db
-    .select({
-      id: plan.id,
-      name: plan.name,
-      type: plan.type,
-      isArchived: plan.isArchived,
-      createdAt: plan.createdAt,
-    })
-    .from(plan)
-    .where(eq(plan.userId, c.get("userId")));
-  return c.json({ items });
-});
-
 // --- logs group (GET/POST /api/logs, GET /api/logs/calendar, GET/PATCH/DELETE
 // /api/logs/:logId) ---
 app.route("/api/logs", logsRoutes);
@@ -99,6 +85,10 @@ app.route("/api/exercises", exercisesRoutes);
 // --- settings group (GET/PATCH /api/settings, POST /api/settings/clear-cache,
 // POST /api/settings/app-reset) ---
 app.route("/api/settings", settingsRoutes);
+
+// --- plans group (GET/POST /api/plans, PATCH/DELETE /api/plans/:planId,
+// POST /api/plans/:planId/{generate,overrides}) ---
+app.route("/api/plans", plansRoutes);
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {
