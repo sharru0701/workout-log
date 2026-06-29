@@ -785,9 +785,9 @@ func (l Log) completeSet() (Log, tea.Cmd) {
 	l.groups[l.gi].sets[l.si].done = true
 	l.status, l.statusErr = "", false
 	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
-	l.groups[l.gi].sets = append(l.groups[l.gi].sets, setEntry{})
-	l.si, l.col = len(l.groups[l.gi].sets)-1, colWeight
-	return l.beginEdit(editCell)
+	// 세트 추가는 addSet("o")로만 — reps 엔터는 현재 세트 완료까지만 하고
+	// 빈 세트를 자동으로 덧붙이지 않는다.
+	return l, nil
 }
 
 func (l Log) save() (Log, tea.Cmd) {

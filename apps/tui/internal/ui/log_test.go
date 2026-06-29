@@ -33,8 +33,8 @@ func TestLogCompleteSet(t *testing.T) {
 	if !l2.rest.active {
 		t.Error("expected rest armed")
 	}
-	if len(l2.groups[0].sets) != 4 {
-		t.Errorf("expected an appended empty set, got %d", len(l2.groups[0].sets))
+	if len(l2.groups[0].sets) != 3 {
+		t.Errorf("completeSet must not append a set (sets are added only via addSet/\"o\"); got %d", len(l2.groups[0].sets))
 	}
 }
 
