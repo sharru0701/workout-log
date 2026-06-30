@@ -769,6 +769,39 @@ export function plannedExercisesFromManualSession(
   return out;
 }
 
+// operator manual 정책: 데드리프트/오버헤드프레스가 직접 무게를 갖지 않으면(미입력), 같은 세션에서
+// 이미 처방된 스쿼트/벤치의 "그 주차 작업무게"에서 파생한다 — 데드 = 스쿼트 처방 × 1.0,
+// 오프 = 벤치 처방 × 0.5. reps·세트수도 원본을 그대로 따라간다(예: 스쿼트 100×3 → 데드 100×3,
+// 벤치 90×3 → 오프 45×3). TM·주차%를 다시 계산하지 않고 "이미 계산된 처방"에 종속시키므로,
+// 스쿼트/벤치가 override 등으로 바뀌면 자동으로 함께 움직인다. 직접 무게를 넣은 행은 손대지 않는다.
+const DERIVED_MAIN_LIFT: Record<string, { from: ProgressionTarget; ratio: number }> = {
+  DEADLIFT: { from: "SQUAT", ratio: 1 },
+  OHP: { from: "BENCH", ratio: 0.5 },
+};
+
+function applyDerivedMainLifts(planned: PlannedExercise[]): PlannedExercise[] {
+  const byTarget = new Map<string, PlannedExercise>();
+  for (const ex of planned) {
+    if (ex.progressionTarget) byTarget.set(ex.progressionTarget, ex);
+  }
+  for (const ex of planned) {
+    const rule = ex.progressionTarget ? DERIVED_MAIN_LIFT[ex.progressionTarget] : undefined;
+    if (!rule) continue;
+    // 이미 무게가 잡혀 있으면(자체 TM 처방 또는 사용자 직접 입력) 파생하지 않는다.
+    if (!ex.sets.every((s) => !s.targetWeightKg)) continue;
+    const src = byTarget.get(rule.from);
+    if (!src || src.sets.length === 0) continue;
+    ex.sets = src.sets.map((s) => ({
+      ...s,
+      targetWeightKg:
+        typeof s.targetWeightKg === "number"
+          ? roundToNearest2p5(s.targetWeightKg * rule.ratio)
+          : undefined,
+    }));
+  }
+  return planned;
+}
+
 export function plannedExercisesFromOperatorManualSession(
   manualSession: any,
   week: number,
@@ -785,7 +818,7 @@ export function plannedExercisesFromOperatorManualSession(
   // (ASSIST·progressionTarget 미보장). EX_ progressionKey는 그대로 두되 plannedRef엔 안 실린다.
   const enforceReps = (effectiveParams as Record<string, unknown>)?.progressionModel === "v2";
 
-  return items
+  const planned = items
     .map((item: any, index: number) => {
       const exerciseName = String(item?.exerciseName ?? item?.name ?? "").trim();
       if (!exerciseName) return null;
@@ -822,29 +855,11 @@ export function plannedExercisesFromOperatorManualSession(
       }
 
       const setRows = Array.isArray(item?.sets) && item.sets.length > 0 ? item.sets : [item];
-      const isAssist = item?.role === "ASSIST";
-      let sets: ReturnType<typeof mapManualSet>[] = setRows.map(mapManualSet);
-      // CUSTOM 행이라도 메인 리프트(progressionTarget 보유)인데 무게가 전부 비어(0/미입력)
-      // 있으면, AUTO 행과 동일하게 operator 주차%×TM(인접 리프트 폴백 포함)으로 처방한다.
-      // 사용자가 직접 넣은 무게가 하나라도 있으면 그 행은 손대지 않는다.
-      if (progressionTarget && !isAssist && sets.every((s) => !s.targetWeightKg)) {
-        const tm = resolveOperatorExerciseTrainingMax({
-          effectiveParams,
-          baseParams,
-          defaults,
-          exerciseName,
-          fallbackTarget: progressionTarget,
-        });
-        if (tm !== null) {
-          const weight = roundToNearest2p5(tm * scheme.percent);
-          sets = sets.map((s) => ({ ...s, percent: scheme.percent, targetWeightKg: weight }));
-        }
-      }
       return {
         exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
         exerciseName,
-        role: isAssist ? "ASSIST" : "MAIN",
-        sets,
+        role: item?.role === "ASSIST" ? "ASSIST" : "MAIN",
+        sets: setRows.map(mapManualSet),
         sourceBlockTarget: progressionTarget ?? "CUSTOM",
         order: toNumberOrNull(item?.order) ?? index,
         rowType: rowType ?? "CUSTOM",
@@ -853,6 +868,8 @@ export function plannedExercisesFromOperatorManualSession(
       } satisfies PlannedExercise;
     })
     .filter((exercise: PlannedExercise | null): exercise is PlannedExercise => Boolean(exercise));
+  // 데드/오프 등 무게 미입력 보조 메인 리프트를 같은 세션 스쿼트/벤치 처방에서 파생.
+  return applyDerivedMainLifts(planned);
 }
 
 // 슬롯형(asymptote) 커스터마이즈 프로그램의 처방. generateAsymptote(LOGIC 경로)와 동일한 사이클
