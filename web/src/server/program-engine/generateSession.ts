@@ -339,7 +339,13 @@ function resolveOperatorExerciseTrainingMax(input: {
 
   const effectiveFamilyTm = pickTrainingMaxKg(input.effectiveParams, input.defaults, input.fallbackTarget);
   if (exactTm === null) {
-    return effectiveFamilyTm;
+    // 운동별 TM도 family TM도 없으면 인접 메인 리프트로 추정(데드←스쿼트, 오프←벤치×0.5).
+    // 런타임 머지된 effectiveParams를 우선 보고, 거기에도 없으면 plan baseParams로 폴백.
+    return (
+      effectiveFamilyTm ??
+      crossLiftFallbackTm(input.fallbackTarget, input.effectiveParams, input.defaults) ??
+      crossLiftFallbackTm(input.fallbackTarget, input.baseParams, input.defaults)
+    );
   }
 
   if (effectiveFamilyTm === null) {
@@ -534,7 +540,9 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
 
   return targets.map((target, i) => {
     const setCount = target === "DEADLIFT" ? deadliftSets : mainSets;
-    const tm = pickTrainingMaxKg(ctx.params, ctx.defaults, target);
+    const tm =
+      pickTrainingMaxKg(ctx.params, ctx.defaults, target) ??
+      crossLiftFallbackTm(target, ctx.params, ctx.defaults);
     return {
       exerciseName: defaultExerciseNameForTarget(target),
       role: "MAIN" as const,
@@ -552,6 +560,21 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
   });
 }
 
+// TB 계열(operator·asymptote) 공통 폴백: 직접 TM이 없는 보조 리프트를 인접 메인
+// 리프트에서 추정한다. 데드리프트는 스쿼트 TM을, 오버헤드프레스는 벤치 TM의 50%
+// (2.5kg 내림)를 차용한다. 사용자가 메인 3리프트(스쿼트/벤치/풀)의 TM만 입력해도
+// 데드/오프 처방이 0으로 비지 않도록 하는 안전망 — 직접 TM이 있으면 호출부에서
+// 항상 그쪽을 우선하므로 이 추정은 "직접 입력이 아예 없을 때"만 작동한다.
+function crossLiftFallbackTm(target: string, params: any, defaults: any): number | null {
+  if (target === "DEADLIFT") return pickTrainingMaxKg(params, defaults, "SQUAT");
+  if (target === "OHP") {
+    const bpTm = pickTrainingMaxKg(params, defaults, "BENCH");
+    if (bpTm === null) return null;
+    return Math.floor((bpTm * 0.5) / 2.5) * 2.5;
+  }
+  return null;
+}
+
 function resolveAsymptoteTm(
   target: ProgressionTarget,
   params: any,
@@ -560,17 +583,8 @@ function resolveAsymptoteTm(
   if (target === "SQUAT" || target === "BENCH" || target === "PULL") {
     return pickTrainingMaxKg(params, defaults, target);
   }
-  if (target === "DEADLIFT") {
-    const explicit = pickTrainingMaxKg(params, defaults, target);
-    if (explicit !== null) return explicit;
-    return pickTrainingMaxKg(params, defaults, "SQUAT");
-  }
-  if (target === "OHP") {
-    const explicit = pickTrainingMaxKg(params, defaults, target);
-    if (explicit !== null) return explicit;
-    const bpTm = pickTrainingMaxKg(params, defaults, "BENCH");
-    if (bpTm === null) return null;
-    return Math.floor((bpTm * 0.5) / 2.5) * 2.5;
+  if (target === "DEADLIFT" || target === "OHP") {
+    return pickTrainingMaxKg(params, defaults, target) ?? crossLiftFallbackTm(target, params, defaults);
   }
   return null;
 }
