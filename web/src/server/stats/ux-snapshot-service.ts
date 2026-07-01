@@ -1,14 +1,14 @@
-import { NextResponse, after } from "next/server";
+// UX snapshot analytics — the Next-free logic behind GET /api/stats/ux-snapshot
+// (funnel + per-window UX event summaries + thresholds). Extracted verbatim from
+// the former web route so apps/api can serve it with a thin handler. Pure logic +
+// userId-parameterized DB queries; no Next-isms (locale/auth/response are the
+// caller's concern). Web files may import "drizzle-orm" directly.
+
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { generatedSession, uxEventLog, workoutLog, workoutSet } from "@/server/db/schema";
-import { parseDateRangeFromSearchParams } from "@/server/stats/range";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
-import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
-import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { resolveRequestLocale } from "@/lib/i18n/messages";
-import { apiErrorResponse } from "@/app/api/_utils/error-response";
+
+type Locale = "ko" | "en";
 
 type FunnelStep = {
   id: "generated_sessions" | "saved_logs" | "saved_logs_with_extra";
@@ -118,13 +118,13 @@ type UxThreshold = {
   hint: string;
 };
 
-type UxThresholdTargets = {
+export type UxThresholdTargets = {
   saveFromGenerate: number;
   saveSuccessFromClicks7d: number;
   addAfterSheetOpen14d: number;
 };
 
-type UxSnapshotPayload = {
+export type UxSnapshotPayload = {
   exportedAt: string;
   filters: {
     from: string;
@@ -158,7 +158,7 @@ function parseThresholdTarget(raw: string | null, fallback: number) {
   return Math.max(0.05, Math.min(0.99, parsed));
 }
 
-function parseThresholdTargets(searchParams: URLSearchParams): UxThresholdTargets {
+export function parseThresholdTargets(searchParams: URLSearchParams): UxThresholdTargets {
   return {
     saveFromGenerate: parseThresholdTarget(
       searchParams.get("targetSaveFromGenerate"),
@@ -175,7 +175,7 @@ function parseThresholdTargets(searchParams: URLSearchParams): UxThresholdTarget
   };
 }
 
-function parseWindowDays(raw: string | null): number[] {
+export function parseWindowDays(raw: string | null): number[] {
   if (!raw) return [1, 7, 14];
   const parsed = raw
     .split(",")
@@ -191,7 +191,7 @@ function parseWindowDays(raw: string | null): number[] {
   return unique.length ? unique : [1, 7, 14];
 }
 
-function buildSteps(totals: FunnelTotals, locale: "ko" | "en"): FunnelStep[] {
+function buildSteps(totals: FunnelTotals, locale: Locale): FunnelStep[] {
   return [
     {
       id: "generated_sessions",
@@ -276,7 +276,7 @@ function buildThresholds(input: {
   funnel: UxFunnelSnapshot;
   windows: UxSummaryWindow[];
   targets: UxThresholdTargets;
-  locale: "ko" | "en";
+  locale: Locale;
 }): UxThreshold[] {
   const { funnel, windows, targets, locale } = input;
   const sevenDay = windows.find((window) => window.days === 7) ?? windows[0];
@@ -330,7 +330,7 @@ function csvEscape(value: string | number | null | undefined) {
   return `"${raw.replaceAll("\"", "\"\"")}"`;
 }
 
-function payloadToCsv(payload: UxSnapshotPayload) {
+export function uxSnapshotToCsv(payload: UxSnapshotPayload) {
   const lines: string[] = ["section,metric,value"];
   lines.push(`meta,exported_at,${csvEscape(payload.exportedAt)}`);
   lines.push(`meta,from,${csvEscape(payload.filters.from)}`);
@@ -561,151 +561,84 @@ async function buildWindowSummary(input: {
   };
 }
 
-async function GETImpl(req: Request) {
-  try {
-    const locale = await resolveRequestLocale();
-    const { searchParams } = new URL(req.url);
-    const userId = await requireAuthenticatedUserId();
-    const { from, to, rangeDays } = parseDateRangeFromSearchParams(searchParams, 30);
-    const planId = searchParams.get("planId")?.trim() || null;
-    const comparePrev = searchParams.get("comparePrev") === "1";
-    const windowDays = parseWindowDays(searchParams.get("windows"));
-    const thresholdTargets = parseThresholdTargets(searchParams);
-    const format = (searchParams.get("format") ?? "json").toLowerCase();
+/**
+ * Assemble the full UX snapshot payload (funnel + per-window summaries +
+ * thresholds). Mirrors the former web route's build block; the caller supplies
+ * parsed inputs (locale, window days, threshold targets) and handles caching.
+ */
+export async function buildUxSnapshotPayload(input: {
+  userId: string;
+  from: Date;
+  to: Date;
+  rangeDays: number;
+  planId: string | null;
+  comparePrev: boolean;
+  windowDays: number[];
+  thresholdTargets: UxThresholdTargets;
+  locale: Locale;
+}): Promise<UxSnapshotPayload> {
+  const { userId, from, to, rangeDays, planId, comparePrev, windowDays, thresholdTargets, locale } = input;
 
-    if (format !== "json" && format !== "csv") {
-      return NextResponse.json(
-        { error: locale === "ko" ? "format은 json 또는 csv여야 합니다." : "format must be json or csv." },
-        { status: 400 },
-      );
-    }
+  const totals = await computeFunnelTotals({ userId, from, to, planId });
+  const steps = buildSteps(totals, locale);
+  const rates = buildFunnelRates(totals, rangeDays);
+  const dropoff = buildDropoff(steps);
 
-    const cacheParams = {
+  let previous: { totals: FunnelTotals; rates: FunnelRates } | undefined;
+  let trend:
+    | {
+        generatedSessionsDelta: number;
+        savedLogsDelta: number;
+        saveFromGenerateDelta: number;
+        extraFromSavedDelta: number;
+      }
+    | undefined;
+
+  if (comparePrev) {
+    const rangeMs = Math.max(1, to.getTime() - from.getTime());
+    const prevTo = new Date(from.getTime() - 1);
+    const prevFrom = new Date(prevTo.getTime() - rangeMs);
+    const prevTotals = await computeFunnelTotals({ userId, from: prevFrom, to: prevTo, planId });
+    const prevRates = buildFunnelRates(prevTotals, rangeDays);
+    previous = { totals: prevTotals, rates: prevRates };
+    trend = {
+      generatedSessionsDelta: totals.generatedSessions - prevTotals.generatedSessions,
+      savedLogsDelta: totals.savedLogs - prevTotals.savedLogs,
+      saveFromGenerateDelta: rates.saveFromGenerate - prevRates.saveFromGenerate,
+      extraFromSavedDelta: rates.extraFromSaved - prevRates.extraFromSaved,
+    };
+  }
+
+  const funnel: UxFunnelSnapshot = {
+    from: from.toISOString(),
+    to: to.toISOString(),
+    rangeDays,
+    planId,
+    totals,
+    steps,
+    rates,
+    dropoff,
+    previous,
+    trend,
+  };
+
+  const windows = await Promise.all(
+    windowDays.map((days) => buildWindowSummary({ userId, days, anchorTo: to, comparePrev })),
+  );
+
+  return {
+    exportedAt: new Date().toISOString(),
+    filters: {
       from: from.toISOString(),
       to: to.toISOString(),
+      rangeDays,
       planId,
       comparePrev,
-      windowDays: windowDays.join(","),
+      windowDays,
       thresholdTargets,
-    };
-
-    let payload = await getStatsCache<UxSnapshotPayload>({
-      userId,
-      metric: "ux_snapshot",
-      params: cacheParams,
-      maxAgeSeconds: 120,
-    });
-
-    if (!payload) {
-      const totals = await computeFunnelTotals({ userId, from, to, planId });
-      const steps = buildSteps(totals, locale);
-      const rates = buildFunnelRates(totals, rangeDays);
-      const dropoff = buildDropoff(steps);
-
-      let previous:
-        | {
-            totals: FunnelTotals;
-            rates: FunnelRates;
-          }
-        | undefined;
-      let trend:
-        | {
-            generatedSessionsDelta: number;
-            savedLogsDelta: number;
-            saveFromGenerateDelta: number;
-            extraFromSavedDelta: number;
-          }
-        | undefined;
-
-      if (comparePrev) {
-        const rangeMs = Math.max(1, to.getTime() - from.getTime());
-        const prevTo = new Date(from.getTime() - 1);
-        const prevFrom = new Date(prevTo.getTime() - rangeMs);
-        const prevTotals = await computeFunnelTotals({ userId, from: prevFrom, to: prevTo, planId });
-        const prevRates = buildFunnelRates(prevTotals, rangeDays);
-        previous = {
-          totals: prevTotals,
-          rates: prevRates,
-        };
-        trend = {
-          generatedSessionsDelta: totals.generatedSessions - prevTotals.generatedSessions,
-          savedLogsDelta: totals.savedLogs - prevTotals.savedLogs,
-          saveFromGenerateDelta: rates.saveFromGenerate - prevRates.saveFromGenerate,
-          extraFromSavedDelta: rates.extraFromSaved - prevRates.extraFromSaved,
-        };
-      }
-
-      const funnel: UxFunnelSnapshot = {
-        from: from.toISOString(),
-        to: to.toISOString(),
-        rangeDays,
-        planId,
-        totals,
-        steps,
-        rates,
-        dropoff,
-        previous,
-        trend,
-      };
-
-      const windows = await Promise.all(
-        windowDays.map((days) =>
-          buildWindowSummary({
-            userId,
-            days,
-            anchorTo: to,
-            comparePrev,
-          }),
-        ),
-      );
-
-      payload = {
-        exportedAt: new Date().toISOString(),
-        filters: {
-          from: from.toISOString(),
-          to: to.toISOString(),
-          rangeDays,
-          planId,
-          comparePrev,
-          windowDays,
-          thresholdTargets,
-        },
-        funnel,
-        windows,
-        thresholds: buildThresholds({
-          funnel,
-          windows,
-          targets: thresholdTargets,
-          locale,
-        }),
-      };
-
-      // PERF: after()로 캐시 쓰기를 응답 전송 후 처리 → API 응답 지연 제거
-    after(() => setStatsCache({
-        userId,
-        metric: "ux_snapshot",
-        params: cacheParams,
-        payload,
-      }));
-    }
-
-    if (format === "csv") {
-      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-      return new Response(payloadToCsv(payload), {
-        status: 200,
-        headers: {
-          "content-type": "text/csv; charset=utf-8",
-          "content-disposition": `attachment; filename="workout-log-${userId}-ux-snapshot-${stamp}.csv"`,
-          "cache-control": "no-store",
-        },
-      });
-    }
-
-    return NextResponse.json(payload);
-  } catch (error: unknown) {
-    logError("api.handler_error", { error });
-    return apiErrorResponse(error);
-  }
+    },
+    funnel,
+    windows,
+    thresholds: buildThresholds({ funnel, windows, targets: thresholdTargets, locale }),
+  };
 }
-
-export const GET = withApiLogging(GETImpl);

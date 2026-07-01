@@ -15,9 +15,16 @@ import {
   fetchVolumeSeries,
   type VolumeBucket,
 } from "@/server/stats/volume-series-service";
+import {
+  buildUxSnapshotPayload,
+  parseThresholdTargets,
+  parseWindowDays,
+  uxSnapshotToCsv,
+  type UxSnapshotPayload,
+} from "@/server/stats/ux-snapshot-service";
 
 import { requireAuth, type AppEnv } from "../auth";
-import { apiError } from "../lib/http";
+import { apiError, resolveLocale } from "../lib/http";
 
 /** The request's raw URLSearchParams (parseDateRangeFromSearchParams takes one). */
 function searchParams(c: { req: { url: string } }): URLSearchParams {
@@ -38,9 +45,11 @@ const CACHE_HEADER = "private, max-age=60, stale-while-revalidate=300";
 // do; the two inline routes (strength-summary, volume) are ported verbatim with
 // Next-isms (NextResponse, after, cookie auth) swapped for Hono equivalents.
 //
-// Scope: the user-facing stats. Deferred to a later sub-group — page-bootstrap
-// (SSR bootstrap, cookie-coupled, unused by the TUI) and the UX telemetry
-// endpoints (ux-snapshot / ux-funnel / ux-events-summary / migration-telemetry).
+// Scope: the user-facing stats + the ux-snapshot debug dashboard (migrated here;
+// logic in ux-snapshot-service). Web-resident by design: page-bootstrap (SSR,
+// cookie-coupled) and migration-telemetry (reads migration files from web/Vercel's
+// filesystem, where migrations run). ux-funnel / ux-events-summary were dead and
+// were deleted.
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const statsRoutes = new Hono<AppEnv>();
@@ -478,5 +487,79 @@ statsRoutes.get("/volume", async (c) => {
     return c.json(payload);
   } catch (e) {
     return apiError(c, e);
+  }
+});
+
+// GET /api/stats/ux-snapshot — UX funnel + per-window event summaries + thresholds
+// (debug dashboard). Ported from the web route; the Next-free logic lives in the
+// shared ux-snapshot-service. Next-isms swapped: NextResponse→c.json/c.body,
+// after()→fire-forget, resolveRequestLocale→resolveLocale, cookie auth→requireAuth.
+statsRoutes.get("/ux-snapshot", async (c) => {
+  const locale = resolveLocale(c);
+  try {
+    const userId = c.get("userId");
+    const sp = searchParams(c);
+    const { from, to, rangeDays } = parseDateRangeFromSearchParams(sp, 30);
+    const planId = c.req.query("planId")?.trim() || null;
+    const comparePrev = c.req.query("comparePrev") === "1";
+    const windowDays = parseWindowDays(c.req.query("windows") ?? null);
+    const thresholdTargets = parseThresholdTargets(sp);
+    const format = (c.req.query("format") ?? "json").toLowerCase();
+
+    if (format !== "json" && format !== "csv") {
+      return c.json(
+        {
+          error:
+            locale === "ko" ? "format은 json 또는 csv여야 합니다." : "format must be json or csv.",
+        },
+        400,
+      );
+    }
+
+    const cacheParams = {
+      from: from.toISOString(),
+      to: to.toISOString(),
+      planId,
+      comparePrev,
+      windowDays: windowDays.join(","),
+      thresholdTargets,
+    };
+
+    let payload = await getStatsCache<UxSnapshotPayload>({
+      userId,
+      metric: "ux_snapshot",
+      params: cacheParams,
+      maxAgeSeconds: 120,
+    });
+
+    if (!payload) {
+      payload = await buildUxSnapshotPayload({
+        userId,
+        from,
+        to,
+        rangeDays,
+        planId,
+        comparePrev,
+        windowDays,
+        thresholdTargets,
+        locale,
+      });
+      setStatsCache({ userId, metric: "ux_snapshot", params: cacheParams, payload }).catch((err) =>
+        logError("api.stats.ux_snapshot.cache_write_failed", { error: err }),
+      );
+    }
+
+    if (format === "csv") {
+      const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+      return c.body(uxSnapshotToCsv(payload), 200, {
+        "content-type": "text/csv; charset=utf-8",
+        "content-disposition": `attachment; filename="workout-log-${userId}-ux-snapshot-${stamp}.csv"`,
+        "cache-control": "no-store",
+      });
+    }
+
+    return c.json(payload);
+  } catch (e) {
+    return apiError(c, e, locale);
   }
 });

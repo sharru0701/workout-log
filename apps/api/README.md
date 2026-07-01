@@ -41,9 +41,10 @@ without the cookie-scraping hack.
   - **stats** (`src/routes/stats.ts`, all GET): `e1rm`, `bundle`,
     `volume-series`, `prs`, `strength-summary`, `volume` — the user-facing
     stats (service-backed where the web routes are; the two inline routes are
-    ported verbatim). Deferred to a later sub-group: `page-bootstrap` (SSR
-    aggregator, cookie-coupled, unused by the TUI) and the UX telemetry
-    endpoints (`ux-snapshot`/`ux-funnel`/`ux-events-summary`/`migration-telemetry`).
+    ported verbatim), plus `ux-snapshot` (migrated; logic in ux-snapshot-service).
+    Web-resident by design: `page-bootstrap` (SSR aggregator, cookie-coupled) and
+    `migration-telemetry` (reads migration files from web/Vercel's filesystem, where
+    migrations run). `ux-funnel`/`ux-events-summary` were dead code and were deleted.
   - **exercises** (`src/routes/exercises.ts`): `GET`/`POST /api/exercises`,
     `GET /api/exercises/categories`, `POST /api/exercises/alias`,
     `PATCH`/`DELETE /api/exercises/:exerciseId` — the global exercise dictionary

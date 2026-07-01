@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - **앱 코드**: `web/` 디렉터리 (Next.js App Router)
 - **로컬 실행**: `pnpm -C web dev` (Next.js dev 서버), 접속 `http://localhost:3000`. Postgres 접속 정보는 `web/.env.local`의 `DATABASE_URL`로 전달. 배포는 Vercel(웹앱) + Supabase(Postgres).
-  - ⚠️ **web 데이터 API는 apps/api(Hono 백엔드)로 프록시 cutover됨**([`web/src/app/api/[...path]/route.ts`](web/src/app/api/[...path]/route.ts)): 브라우저 `/api/*` same-origin 호출 → web이 `wl_session` 쿠키를 `Authorization: Bearer`로 변환해 `APPS_API_BASE`로 포워딩(동일 `auth_session` 토큰). 로컬 dev에서 데이터 라우트가 작동하려면 **apps/api 동반 실행** 필요: `web/.env.local`에 `APPS_API_BASE=http://127.0.0.1:8787` + 별도 터미널 `cd apps/api && set -a; . ../../web/.env.local; set +a; DB_SCHEMA=dev pnpm dev`. **실제 로그인**으로 `wl_session` 쿠키 획득(apps/api는 `WORKOUT_AUTH_USER_ID` fallback 없음). `auth`·`ops`·미이식(stats UX텔레메트리[ux-snapshot·migration-telemetry]·page-bootstrap·health)은 web 자체 처리(구체적 route가 catch-all보다 우선). 상세: [`apps/api/deploy/DEPLOY.md`](apps/api/deploy/DEPLOY.md).
+  - ⚠️ **web 데이터 API는 apps/api(Hono 백엔드)로 프록시 cutover됨**([`web/src/app/api/[...path]/route.ts`](web/src/app/api/[...path]/route.ts)): 브라우저 `/api/*` same-origin 호출 → web이 `wl_session` 쿠키를 `Authorization: Bearer`로 변환해 `APPS_API_BASE`로 포워딩(동일 `auth_session` 토큰). 로컬 dev에서 데이터 라우트가 작동하려면 **apps/api 동반 실행** 필요: `web/.env.local`에 `APPS_API_BASE=http://127.0.0.1:8787` + 별도 터미널 `cd apps/api && set -a; . ../../web/.env.local; set +a; DB_SCHEMA=dev pnpm dev`. **실제 로그인**으로 `wl_session` 쿠키 획득(apps/api는 `WORKOUT_AUTH_USER_ID` fallback 없음). `auth`·`ops`·web잔류(stats migration-telemetry[FS결합, 마이그레이션 실행지]·page-bootstrap·health)은 web 자체 처리(구체적 route가 catch-all보다 우선; ux-snapshot은 apps/api로 이식됨). 상세: [`apps/api/deploy/DEPLOY.md`](apps/api/deploy/DEPLOY.md).
 
 ## 핵심 문서
 
