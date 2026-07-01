@@ -91,7 +91,7 @@ server/               DB(Drizzle) 접근 + 서버 도메인 엔진 (progression,
 |------|------|---------|
 | **데이터 33개** — logs·plans·stats·settings·exercises·home·export·templates·generated-sessions·program-versions·ux-events·me/import | **① catch-all 프록시** → apps/api | apps/api가 |
 | **auth/\*** — login·signup·logout·me·password·sessions·OAuth·reset (쿠키 Set-Cookie·CSRF) | **② web route** | web 직접 |
-| **미이식** — ops/\*·me/security/events·health·stats/ux-\*·page-bootstrap | **② web route** | web 직접 |
+| **web 잔류** — ops/\*·health·stats/migration-telemetry·stats/page-bootstrap | **② web route** | web 직접 |
 | **페이지 SSR** — `/`·`/workout/log`·`/stats`·`/plans` … | **③ RSC가 `@/server` 직접 import** | web 직접 |
 
 이식된 데이터 라우트의 `web/src/app/api/**/route.ts`는 삭제됐고, catch-all([`app/api/[...path]/route.ts`](../src/app/api/%5B...path%5D/route.ts))이 받아 apps/api로 포워딩한다. auth·ops·미이식은 더 구체적인 route라 Next 라우팅상 자동 우선 → web이 직접 처리.
