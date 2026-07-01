@@ -339,13 +339,15 @@ function resolveOperatorExerciseTrainingMax(input: {
 
   const effectiveFamilyTm = pickTrainingMaxKg(input.effectiveParams, input.defaults, input.fallbackTarget);
   if (exactTm === null) {
-    // 운동별 TM도 family TM도 없으면 인접 메인 리프트로 추정(데드←스쿼트, 오프←벤치×0.5).
-    // 런타임 머지된 effectiveParams를 우선 보고, 거기에도 없으면 plan baseParams로 폴백.
-    return (
-      effectiveFamilyTm ??
-      crossLiftFallbackTm(input.fallbackTarget, input.effectiveParams, input.defaults) ??
-      crossLiftFallbackTm(input.fallbackTarget, input.baseParams, input.defaults)
-    );
+    // 운동별 TM도 family TM도 없으면 여기서 무게를 짓지 않고 null을 반환한다(family TM이 있으면
+    // 그건 직접 입력이므로 사용). 호출부가 reps-only 행으로 만들고, applyDerivedMainLifts가
+    // "같은 세션 스쿼트/벤치 처방"에서 파생한다(데드←스쿼트×1.0, 오프←벤치×0.5). 예전엔
+    // crossLiftFallbackTm으로 TM을 추정했으나, 그 경로는 처방무게가 아닌 TM에서 반내림해 같은
+    // 오프라도 AUTO 행과 CUSTOM(0무게) 행이 최대 2.5kg 다르게 처방되는 발산을 만들었다. 파생
+    // 정책을 applyDerivedMainLifts 하나로 통일한다(#476 후속): 소스가 같은 세션에 있으면 그
+    // 처방에서, 없으면(프레스 데이 등) applyDerivedMainLifts 2순위가 crossLiftFallbackTm TM 추정으로
+    // 처방하므로 rowType과 무관하게 같은 결과가 된다.
+    return effectiveFamilyTm;
   }
 
   if (effectiveFamilyTm === null) {
@@ -781,7 +783,14 @@ const DERIVED_MAIN_LIFT: Record<string, { from: ProgressionTarget; ratio: number
   OHP: { from: "BENCH", ratio: 0.5 },
 };
 
-function applyDerivedMainLifts(planned: PlannedExercise[]): PlannedExercise[] {
+function applyDerivedMainLifts(
+  planned: PlannedExercise[],
+  week: number,
+  effectiveParams: any,
+  baseParams: any,
+  defaults: any,
+): PlannedExercise[] {
+  const scheme = operatorSchemeByWeek(week);
   const byTarget = new Map<string, PlannedExercise>();
   for (const ex of planned) {
     if (ex.progressionTarget) byTarget.set(ex.progressionTarget, ex);
@@ -791,15 +800,33 @@ function applyDerivedMainLifts(planned: PlannedExercise[]): PlannedExercise[] {
     if (!rule) continue;
     // 이미 무게가 잡혀 있으면(자체 TM 처방 또는 사용자 직접 입력) 파생하지 않는다.
     if (!ex.sets.every((s) => !s.targetWeightKg)) continue;
-    // operator 메인은 전 세트 균일 처방이므로 첫 세트를 대표로 사용한다.
-    const srcSet = byTarget.get(rule.from)?.sets[0];
-    if (!srcSet) continue;
-    const targetWeightKg =
-      typeof srcSet.targetWeightKg === "number"
-        ? roundToNearest2p5(srcSet.targetWeightKg * rule.ratio)
-        : undefined;
-    // 세트수는 원래 커스터마이즈한 구성을 유지하고, 각 세트의 횟수(reps)·무게만 추종한다.
-    ex.sets = ex.sets.map((s) => ({ ...s, reps: srcSet.reps, percent: srcSet.percent, targetWeightKg }));
+
+    const srcEx = byTarget.get(rule.from);
+    if (srcEx) {
+      // (1순위) 파생 소스(스쿼트/벤치)가 같은 세션에 있으면 그 "처방"을 따른다 — 런타임 override로
+      // 소스가 바뀌면 함께 움직인다. operator 메인은 전 세트 균일 처방이라 첫 세트를 대표로 쓴다.
+      // 소스가 아직 무게가 없으면(자체 TM 없어 rep-only) 무게는 비우되 reps는 그대로 추종한다.
+      // 세트수는 원래 커스터마이즈한 구성을 유지하고, 각 세트의 횟수(reps)·무게만 추종한다.
+      const srcSet = srcEx.sets[0];
+      const targetWeightKg =
+        srcSet && typeof srcSet.targetWeightKg === "number"
+          ? roundToNearest2p5(srcSet.targetWeightKg * rule.ratio)
+          : undefined;
+      ex.sets = ex.sets.map((s) => ({ ...s, reps: srcSet?.reps, percent: srcSet?.percent, targetWeightKg }));
+      continue;
+    }
+
+    // (2순위) 소스가 세션에 없으면(override로 스쿼트/벤치를 뺀 프레스 데이 등) 인접 메인 리프트
+    // TM으로 추정 처방한다(데드←스쿼트 TM, 오프←벤치 TM×0.5 = crossLiftFallbackTm). 예전엔
+    // resolveOperatorExerciseTrainingMax가 AUTO 행에만 이 추정을 적용해 CUSTOM(0무게, 처방 파생)
+    // 행과 최대 2.5kg 어긋났다 — 안전망을 여기로 모아 rowType 무관 동일 결과를 낸다. TM도 없으면
+    // rep-only로 남긴다.
+    const fallbackTm =
+      crossLiftFallbackTm(ex.progressionTarget!, effectiveParams, defaults) ??
+      crossLiftFallbackTm(ex.progressionTarget!, baseParams, defaults);
+    if (fallbackTm === null) continue;
+    const targetWeightKg = roundToNearest2p5(fallbackTm * scheme.percent);
+    ex.sets = ex.sets.map((s) => ({ ...s, reps: scheme.reps, percent: scheme.percent, targetWeightKg }));
   }
   return planned;
 }
@@ -870,8 +897,9 @@ export function plannedExercisesFromOperatorManualSession(
       } satisfies PlannedExercise;
     })
     .filter((exercise: PlannedExercise | null): exercise is PlannedExercise => Boolean(exercise));
-  // 데드/오프 등 무게 미입력 보조 메인 리프트를 같은 세션 스쿼트/벤치 처방에서 파생.
-  return applyDerivedMainLifts(planned);
+  // 데드/오프 등 무게 미입력 보조 메인 리프트를 같은 세션 스쿼트/벤치 처방에서 파생(소스가 세션에
+  // 없으면 인접 메인 TM 추정으로 폴백).
+  return applyDerivedMainLifts(planned, week, effectiveParams, baseParams, defaults);
 }
 
 // 슬롯형(asymptote) 커스터마이즈 프로그램의 처방. generateAsymptote(LOGIC 경로)와 동일한 사이클
