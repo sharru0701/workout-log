@@ -1,3 +1,5 @@
+"use client";
+
 import type { ChangeEvent } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { V2Card } from "@/components/v2/primitives";

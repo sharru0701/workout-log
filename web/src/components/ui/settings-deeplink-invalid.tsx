@@ -1,3 +1,5 @@
+"use client";
+
 import type { SettingsDeepLinkErrorCode } from "@/lib/settings/settings-deeplink";
 import { useLocale } from "@/components/locale-provider";
 import { V2NavRow } from "@/components/v2/primitives";
