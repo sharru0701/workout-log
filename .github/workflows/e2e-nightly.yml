@@ -1,0 +1,77 @@
+name: E2E Nightly (full suite)
+
+# 감사 2026-07 §4.2(R3): 14개 Playwright 스펙 중 smoke 1개만 CI 게이트였다.
+# 나머지(auth-recovery·data-export-import·oauth·pr-history·workout-log-rpe·
+# stats-1rm-async-continuity·design-harmonization 등)를 nightly로 편입해 커버리지
+# 공백을 표면화한다. PR 게이트에는 넣지 않는다(비침습) — 실패는 트리아지 대상이며
+# 병합 파이프라인을 막지 않는다. 일부 스펙은 기능 플래그/OAuth 미설정 시 skip될 수 있다.
+on:
+  schedule:
+    - cron: "0 18 * * *" # 매일 03:00 KST (UTC 18:00)
+  workflow_dispatch: {}
+
+concurrency:
+  group: e2e-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  e2e-full:
+    name: E2E Full Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: workout_log_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm-node
+      - uses: ./.github/actions/playwright-install
+
+      - name: Run DB migrations
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+        run: pnpm db:migrate
+
+      - name: Seed DB
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          WORKOUT_AUTH_USER_ID: ci-user
+        run: pnpm db:seed
+
+      - name: Run full E2E suite
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          WORKOUT_AUTH_USER_ID: ci-user
+          NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+          NEXT_TELEMETRY_DISABLED: "1"
+          PLAYWRIGHT_SERVER_MODE: dev
+          CI: "true"
+        run: pnpm exec playwright test --project chromium
+
+      - name: Upload Playwright artifacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-nightly-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            web/playwright-report
+            web/test-results
+          if-no-files-found: ignore
+          retention-days: 14
