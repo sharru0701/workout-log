@@ -1,6 +1,10 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
+import { db } from "@/server/db/client";
+import { sql } from "@/server/db/ops";
+import { logError } from "@/server/observability/logger";
+
 import { type AppEnv } from "./auth";
 import { apiLogger } from "./lib/http";
 import { authRoutes } from "./routes/auth";
@@ -25,8 +29,18 @@ const app = new Hono<AppEnv>();
 // Request logging for every route (the Hono replacement for withApiLogging).
 app.use("*", apiLogger);
 
-// --- health (no auth, no DB) ---
-app.get("/health", (c) => c.json({ ok: true, service: "ironlog-api" }));
+// --- health (no auth) — pings the DB so monitors don't read healthy while every
+// real request 500s. systemd uses process liveness (Type=simple), not this
+// endpoint, so a DB blip here won't trigger a restart loop. ---
+app.get("/health", async (c) => {
+  try {
+    await db.execute(sql`select 1`);
+    return c.json({ ok: true, service: "ironlog-api", db: "ok" });
+  } catch (e) {
+    logError("api.health_db_check_failed", { error: e });
+    return c.json({ ok: false, service: "ironlog-api", db: "down" }, 503);
+  }
+});
 
 // --- auth group (login/signup/me/logout/password/account/password-reset/
 // email-verification/sessions) ---
@@ -61,6 +75,18 @@ app.route("/api/program-versions", programVersionsRoutes); // PUT — edit versi
 app.route("/api/generated-sessions", generatedSessionsRoutes); // GET — session list
 app.route("/api/ux-events", uxEventsRoutes); // POST — UX telemetry ingest
 app.route("/api/ops", opsRoutes); // GET/POST /sessions/prune — infra (WORKOUT_OPS_TOKEN)
+
+// --- consistent JSON for unmatched routes + any error that escapes a handler's
+// own try/catch (e.g. a DB failure inside requireAuth/apiLogger middleware). ---
+app.notFound((c) => c.json({ error: "Not found" }, 404));
+app.onError((err, c) => {
+  logError("api.unhandled_error", {
+    error: err,
+    method: c.req.method,
+    route: new URL(c.req.url).pathname,
+  });
+  return c.json({ error: "Internal server error" }, 500);
+});
 
 const port = Number(process.env.PORT ?? 8787);
 serve({ fetch: app.fetch, port }, (info) => {

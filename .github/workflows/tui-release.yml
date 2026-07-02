@@ -25,6 +25,16 @@ jobs:
           go-version-file: apps/tui/go.mod
           cache-dependency-path: apps/tui/go.sum
 
+      # Gate the release on the test suite — a tag must not publish a broken
+      # binary. live_test.go is env-gated (IRONLOG_SPIKE_URL) and skips here.
+      - name: Vet
+        working-directory: apps/tui
+        run: go vet ./...
+
+      - name: Test
+        working-directory: apps/tui
+        run: go test ./...
+
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
