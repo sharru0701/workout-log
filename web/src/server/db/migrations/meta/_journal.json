@@ -127,6 +127,13 @@
       "when": 1778138734431,
       "tag": "0017_add-oauth-account",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1782967182000,
+      "tag": "0018_perf_plan_scoped_indexes",
+      "breakpoints": true
     }
   ]
 }
