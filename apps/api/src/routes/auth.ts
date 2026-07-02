@@ -33,15 +33,17 @@ import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 
 import { requireAuth, sessionToken, type AppEnv } from "../auth";
 import { apiError } from "../lib/http";
+import { enforceAuthRateLimit, getClientIp } from "../lib/rate-limit";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Auth — mounted at /api/auth. Ported from web/src/app/api/auth/**, adapted to
 // the Bearer/token model: session tokens are returned in the response BODY (not
 // Set-Cookie), and the "current session" is read from the Authorization header
-// via sessionToken(c) rather than a cookie. Two web-isms are intentionally
-// dropped for token clients: assertSameOrigin (CSRF origin check — Bearer tokens
-// aren't auto-sent by browsers) and per-route IP rate limiting (consistent with
-// apiLogger omitting it; logAuthEvent still records IP/UA from the raw request).
+// via sessionToken(c) rather than a cookie. One web-ism is intentionally dropped
+// for token clients: assertSameOrigin (CSRF origin check — Bearer tokens aren't
+// auto-sent by browsers). Per-IP/per-email rate limiting IS enforced on the
+// public login/signup endpoints (see lib/rate-limit), matching the web routes;
+// logAuthEvent still records IP/UA from the raw request.
 // Deferred (browser/OAuth flows, TUI-unused): email/verify, google/*, oauth/*,
 // password/reset/confirm, password/setup.
 // ─────────────────────────────────────────────────────────────────────────────
@@ -67,6 +69,13 @@ authRoutes.post("/login", async (c) => {
     if (!email || !password) {
       return c.json({ error: "Email and password required" }, 400);
     }
+    // Rate limit: 10/min per IP, 5/min per email (mirrors the web login route).
+    const ip = getClientIp(c.req.raw);
+    const limited = await enforceAuthRateLimit(c, [
+      { key: `login:ip:${ip}`, max: 10, windowMs: 60_000 },
+      { key: `login:email:${email}`, max: 5, windowMs: 60_000 },
+    ]);
+    if (limited) return limited;
     const rows = await db
       .select({
         id: appUser.id,
@@ -111,6 +120,15 @@ authRoutes.post("/login", async (c) => {
 // POST /api/auth/signup — create an account + mint a token (returned in body).
 authRoutes.post("/signup", async (c) => {
   try {
+    // Rate limit: 5/hour per IP (mirrors the web signup route).
+    const ip = getClientIp(c.req.raw);
+    const limited = await enforceAuthRateLimit(
+      c,
+      [{ key: `signup:ip:${ip}`, max: 5, windowMs: 60 * 60_000 }],
+      "Too many signups from this IP. Try again later.",
+    );
+    if (limited) return limited;
+
     const body = (await c.req.json().catch(() => null)) as
       | { email?: unknown; password?: unknown; displayName?: unknown; claimDevData?: unknown }
       | null;

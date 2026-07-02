@@ -19,10 +19,12 @@ Type=simple
 User=ironlog
 WorkingDirectory=/opt/workout-log/apps/api
 EnvironmentFile=/opt/workout-log/apps/api/.env
-# `pnpm start` == `tsx src/index.ts`. pnpm + node must be on the service PATH.
-# If pnpm isn't found, set the absolute path (run `which pnpm`) or add it to PATH below.
+# Run tsx directly, NOT `pnpm start`: under this systemd sandbox pnpm's
+# deps-status check fails and exits 1 before the server starts (see DEPLOY.md §1).
+# tsx applies the @/* alias + transpiles at runtime; node must be on PATH.
+# Adjust the path if the repo isn't at /opt/workout-log.
 Environment=PATH=/usr/local/bin:/usr/bin:/bin
-ExecStart=/usr/bin/env pnpm start
+ExecStart=/opt/workout-log/apps/api/node_modules/.bin/tsx src/index.ts
 Restart=always
 RestartSec=3
 

@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - "web/**"
+      - "apps/**"
       - ".github/workflows/**"
       - ".github/actions/**"
       - "deploy/**"
@@ -61,6 +62,54 @@ jobs:
         env:
           DATABASE_URL: postgres://ci:ci@127.0.0.1:5432/ci_extra
         run: pnpm test:extra
+
+  # ──────────────────────────────────────────────
+  # Job: apps/api typecheck
+  # apps/api reuses web/src via @/* alias + runs on tsx (no compile step), so a
+  # web/src/server refactor can break the production backend with no other gate.
+  # Needs web deps installed (drizzle/pg types resolve from web/node_modules).
+  # ──────────────────────────────────────────────
+  apps-api:
+    name: apps/api Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-pnpm-node # installs web deps (@/* → web/src)
+
+      - name: Install apps/api deps
+        working-directory: apps/api
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck apps/api
+        working-directory: apps/api
+        run: pnpm typecheck
+
+  # ──────────────────────────────────────────────
+  # Job: TUI (apps/tui) build · vet · test
+  # Go tests were previously developer-run only (never gated). live_test.go is
+  # env-gated (IRONLOG_SPIKE_URL) and skips here — unit/snapshot tests run.
+  # ──────────────────────────────────────────────
+  tui:
+    name: TUI Build · Vet · Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: apps/tui/go.mod
+          cache-dependency-path: apps/tui/go.sum
+
+      - name: Build
+        working-directory: apps/tui
+        run: go build ./...
+
+      - name: Vet
+        working-directory: apps/tui
+        run: go vet ./...
+
+      - name: Test
+        working-directory: apps/tui
+        run: go test ./...
 
   # ──────────────────────────────────────────────
   # Job 2: Playwright smoke E2E

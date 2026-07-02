@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { findActiveSession, SESSION_COOKIE_NAME } from "@/server/auth/session";
+import { logError } from "@/server/observability/logger";
 
 // Variables set on the Hono context by requireAuth.
 export type AppEnv = { Variables: { userId: string } };
@@ -28,7 +29,19 @@ export function sessionToken(c: Context): string {
 /** requireAuth rejects with 401 unless the request carries a valid session. */
 export async function requireAuth(c: Context<AppEnv>, next: Next) {
   const token = sessionToken(c);
-  const session = token ? await findActiveSession(token) : null;
+  if (!token) {
+    return c.json({ error: "Unauthorized" }, 401);
+  }
+  let session: Awaited<ReturnType<typeof findActiveSession>>;
+  try {
+    session = await findActiveSession(token);
+  } catch (e) {
+    // A DB/network failure during session lookup is not an auth failure. Return
+    // 503 (not 401) so clients — notably the TUI — don't misread a transient
+    // outage as "logged out" and drop a valid session.
+    logError("api.session_lookup_failed", { error: e });
+    return c.json({ error: "Service temporarily unavailable" }, 503);
+  }
   if (!session) {
     return c.json({ error: "Unauthorized" }, 401);
   }

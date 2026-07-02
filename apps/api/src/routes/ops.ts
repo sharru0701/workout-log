@@ -9,17 +9,25 @@ import { apiError } from "../lib/http";
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Ops — infra/cron endpoints (NOT user-scoped). Auth is the WORKOUT_OPS_TOKEN
-// admin secret via Authorization: Bearer, matching the web route; if the env var
-// is unset the endpoint is open (dev convenience — set it in production). Ported
+// admin secret via Authorization: Bearer, matching the web route. These endpoints
+// are destructive (delete expired sessions) and publicly reachable, so the gate
+// FAILS CLOSED: if WORKOUT_OPS_TOKEN is unset the endpoint is denied. For local
+// dev, set WORKOUT_OPS_ALLOW_NO_TOKEN=1 to opt into the old open behavior. Ported
 // from web/src/app/api/ops/sessions/prune. (ops/migrations is intentionally not
 // ported: it reads the migrations dir from process.cwd(), which is web-layout
 // specific, and is a web-deployment health check.)
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** WORKOUT_OPS_TOKEN gate: 401 only when the env var is set and the Bearer token mismatches. */
+/**
+ * WORKOUT_OPS_TOKEN gate. Fails closed: an unset token denies access (return
+ * false) unless WORKOUT_OPS_ALLOW_NO_TOKEN=1 is explicitly set for local dev.
+ * When the token is set, the Bearer value must match.
+ */
 function opsTokenOk(c: Context): boolean {
   const expected = (process.env.WORKOUT_OPS_TOKEN ?? "").trim();
-  if (!expected) return true;
+  if (!expected) {
+    return (process.env.WORKOUT_OPS_ALLOW_NO_TOKEN ?? "").trim() === "1";
+  }
   const auth = c.req.header("authorization") ?? "";
   const provided = auth.startsWith("Bearer ") ? auth.slice(7).trim() : "";
   return provided === expected;
