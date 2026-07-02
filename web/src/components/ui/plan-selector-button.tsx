@@ -1,3 +1,5 @@
+"use client";
+
 import type { ComponentPropsWithoutRef } from "react";
 import { useLocale } from "@/components/locale-provider";
 import { V2Icon } from "@/components/v2/primitives/v2-icon";
