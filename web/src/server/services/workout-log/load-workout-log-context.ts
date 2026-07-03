@@ -3,12 +3,12 @@
  * DB를 직접 쿼리해서 SSR에서 클라이언트 API 호출 없이 컨텍스트를 반환합니다.
  */
 import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   generatedSession,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import {
   createWorkoutRecordDraft,
   createWorkoutRecordDraftFromLog,

@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { sql } from "drizzle-orm";
-import { db } from "./client";
+import { db } from "@workout/core/db/client";
 
 function parsePositiveInt(raw: string | undefined, fallback: number) {
   const parsed = Number(raw);

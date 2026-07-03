@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { getTableColumns, getTableName, is, Table } from "drizzle-orm";
-import * as schema from "../db/schema";
+import * as schema from "@workout/core/db/schema";
 
 // audit §3.1: user_id를 가진 모든 테이블이 "계정 삭제 시 어떻게 정리되는지"를 명시 분류한다.
 // 새 user-scoped 테이블이 추가되면 이 테스트가 실패 → deleteUserDomainData 또는

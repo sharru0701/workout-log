@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import type { Context } from "hono";
 
-import { db } from "@/server/db/client";
-import { lt } from "@/server/db/ops";
-import { authSession } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { lt } from "@workout/core/db/ops";
+import { authSession } from "@workout/core/db/schema";
 
 import { apiError } from "../lib/http";
 

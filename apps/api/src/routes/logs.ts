@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   and,
   asc,
@@ -12,7 +12,7 @@ import {
   ne,
   or,
   sql,
-} from "@/server/db/ops";
+} from "@workout/core/db/ops";
 import {
   exercise,
   exerciseAlias,
@@ -20,7 +20,7 @@ import {
   planProgressEvent,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import {
   buildProgressionSummary,
   readProgressEventByLog,

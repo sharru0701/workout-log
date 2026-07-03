@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { and, asc, desc, eq, gt, inArray, or } from "@/server/db/ops";
+import { db } from "@workout/core/db/client";
+import { and, asc, desc, eq, gt, inArray, or } from "@workout/core/db/ops";
 import {
   generatedSession,
   plan,
@@ -9,7 +9,7 @@ import {
   programTemplate,
   programVersion,
   uxEventLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import { getHomeData } from "@/server/home/home-service";
 import { buildUserDataExport, buildWorkoutSetCsv } from "@/server/export/userExport";
 import { importUserData, type ImportMode } from "@/server/import/userImport";

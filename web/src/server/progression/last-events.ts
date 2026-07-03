@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { planProgressEvent } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { planProgressEvent } from "@workout/core/db/schema";
 
 export type LastTargetEvent = {
   lastDeltaKg: number | null;

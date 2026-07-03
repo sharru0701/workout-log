@@ -1,6 +1,6 @@
 import { and, eq, gt } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { authSession, appUser } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { authSession, appUser } from "@workout/core/db/schema";
 import {
   SESSION_IDLE_TTL_MS,
   SESSION_ABSOLUTE_MAX_MS,

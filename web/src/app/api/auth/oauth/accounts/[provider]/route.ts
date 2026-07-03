@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { appUser, authOauthAccount } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser, authOauthAccount } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { assertSameOrigin } from "@/server/auth/origin";
 import { logAuthEvent } from "@/server/auth/security-events";

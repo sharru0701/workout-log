@@ -1,8 +1,8 @@
 import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { sql } from "@/server/db/ops";
+import { db } from "@workout/core/db/client";
+import { sql } from "@workout/core/db/ops";
 import { logError } from "@/server/observability/logger";
 
 import { type AppEnv } from "./auth";

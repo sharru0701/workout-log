@@ -5,8 +5,8 @@
 // caller's concern). Web files may import "drizzle-orm" directly.
 
 import { and, eq, gte, lte, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { generatedSession, uxEventLog, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { generatedSession, uxEventLog, workoutLog, workoutSet } from "@workout/core/db/schema";
 
 type Locale = "ko" | "en";
 

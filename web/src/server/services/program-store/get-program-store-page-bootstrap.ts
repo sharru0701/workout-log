@@ -3,13 +3,13 @@
  * DB를 직접 쿼리해서 클라이언트 API 호출 없이 초기 데이터를 반환합니다.
  */
 import { and, asc, desc, eq, inArray, or } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   exercise,
   plan,
   programTemplate,
   programVersion,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import type { ProgramTemplate } from "@workout/core/program-store/model";
 import type { ExerciseOption, PlanItem } from "@/features/program-store/model/types";

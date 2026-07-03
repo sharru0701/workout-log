@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, isNotNull, lte, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   exercise,
   plan,
@@ -7,7 +7,7 @@ import {
   programVersion,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import { generateAndSaveSession } from "@/server/program-engine/generateSession";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import {

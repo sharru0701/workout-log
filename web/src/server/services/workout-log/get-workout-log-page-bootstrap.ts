@@ -1,7 +1,7 @@
 import { and, desc, eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import { db } from "@/server/db/client";
-import { plan, userSetting, workoutLog } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { plan, userSetting, workoutLog } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { generateAndSaveSession } from "@/server/program-engine/generateSession";

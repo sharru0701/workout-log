@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { and, eq, inArray, isNotNull, ne, sql } from "@/server/db/ops";
-import { exercise, exerciseAlias } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { and, eq, inArray, isNotNull, ne, sql } from "@workout/core/db/ops";
+import { exercise, exerciseAlias } from "@workout/core/db/schema";
 
 import { requireAuth, type AppEnv } from "../auth";
 import { apiError, resolveLocale } from "../lib/http";

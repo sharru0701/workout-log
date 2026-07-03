@@ -1,5 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   exercise,
   generatedSession,
@@ -11,7 +11,7 @@ import {
   programVersion,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import type { UserDataExport } from "@/server/export/userExport";
 import { validateExportShape } from "@/server/import/validateExportShape";
 import { deleteUserDomainData } from "@/server/data/deleteUserData";

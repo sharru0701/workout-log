@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { appUser } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser } from "@workout/core/db/schema";
 import { consumeEmailVerificationToken } from "@/server/auth/email-verification";
 import { logAuthEvent } from "@/server/auth/security-events";
 

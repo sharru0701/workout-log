@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import type { ProgressionSummaryPayload, ProgressionTargetDecisionPayload } from "@workout/core/progression/summary";
-import { planProgressEvent } from "@/server/db/schema";
+import { planProgressEvent } from "@workout/core/db/schema";
 
 type ProgressionEventRow = {
   id: string;

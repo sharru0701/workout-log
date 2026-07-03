@@ -1,6 +1,6 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import {
   aggregateMuscleVolumeRows,
   type MuscleVolumeTotal,

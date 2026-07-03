@@ -3,8 +3,8 @@
  * 클라이언트 API 호출 없이 DB에서 직접 설정을 읽어 SSR에 사용합니다.
  */
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { userSetting } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { userSetting } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import type { SettingValue } from "@/lib/settings/update-setting";
 

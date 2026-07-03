@@ -1,5 +1,5 @@
 import { eq, inArray } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   generatedSession,
   plan,
@@ -10,7 +10,7 @@ import {
   programVersion,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 
 type AnyExecutor = typeof db | Parameters<Parameters<typeof db.transaction>[0]>[0];
 

@@ -3,8 +3,8 @@ import { eq } from "drizzle-orm";
 import { createEmailVerificationToken } from "../src/server/auth/email-verification";
 import { createPasswordResetToken } from "../src/server/auth/password-reset";
 import { sha256Hex } from "../src/server/auth/token";
-import { db } from "../src/server/db/client";
-import { appUser, passwordResetToken } from "../src/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser, passwordResetToken } from "@workout/core/db/schema";
 
 test.describe("auth recovery and email verification", () => {
   test("reset request is generic for unknown emails", async ({ request }) => {
