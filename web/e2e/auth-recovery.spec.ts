@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import { eq } from "drizzle-orm";
-import { createEmailVerificationToken } from "../src/server/auth/email-verification";
-import { createPasswordResetToken } from "../src/server/auth/password-reset";
-import { sha256Hex } from "../src/server/auth/token";
+import { createEmailVerificationToken } from "@workout/core/auth/email-verification";
+import { createPasswordResetToken } from "@workout/core/auth/password-reset";
+import { sha256Hex } from "@workout/core/auth/token";
 import { db } from "@workout/core/db/client";
 import { appUser, passwordResetToken } from "@workout/core/db/schema";
 

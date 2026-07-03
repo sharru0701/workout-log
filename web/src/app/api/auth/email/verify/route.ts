@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { appUser } from "@workout/core/db/schema";
-import { consumeEmailVerificationToken } from "@/server/auth/email-verification";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { consumeEmailVerificationToken } from "@workout/core/auth/email-verification";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 
 export async function GET(req: Request) {
   const url = new URL(req.url);

@@ -2,18 +2,18 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { appUser } from "@workout/core/db/schema";
-import { hashPassword } from "@/server/auth/password";
+import { hashPassword } from "@workout/core/auth/password";
 import {
   createSession,
   SESSION_COOKIE_NAME,
-} from "@/server/auth/session";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
+} from "@workout/core/auth/session";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { claimEnvFallbackData } from "@/server/auth/claim-fallback";
-import { createEmailVerificationToken } from "@/server/auth/email-verification";
-import { sendEmailVerificationEmail } from "@/server/auth/auth-email";
-import { logAuthEvent } from "@/server/auth/security-events";
-import { getRequestOrigin } from "@/server/email/sender";
+import { claimEnvFallbackData } from "@workout/core/auth/claim-fallback";
+import { createEmailVerificationToken } from "@workout/core/auth/email-verification";
+import { sendEmailVerificationEmail } from "@workout/core/auth/auth-email";
+import { logAuthEvent } from "@workout/core/auth/security-events";
+import { getRequestOrigin } from "@workout/core/email/sender";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

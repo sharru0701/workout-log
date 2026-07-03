@@ -4,10 +4,10 @@ import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { authSession } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { SESSION_COOKIE_NAME } from "@/server/auth/session";
+import { SESSION_COOKIE_NAME } from "@workout/core/auth/session";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { logError } from "@workout/core/observability/logger";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import { assertSameOrigin } from "@/server/auth/origin";
 

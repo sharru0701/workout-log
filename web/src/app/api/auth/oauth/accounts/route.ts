@@ -4,7 +4,7 @@ import { db } from "@workout/core/db/client";
 import { appUser, authOauthAccount } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 const PASSWORD_HASH_PREFIX = "pbkdf2$";

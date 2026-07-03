@@ -1,4 +1,4 @@
-import { sendEmail } from "@/server/email/sender";
+import { sendEmail } from "../email/sender";
 
 function escapeHtml(value: string): string {
   return value

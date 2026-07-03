@@ -52,7 +52,8 @@ async function callPipeline(
       "content-type": "application/json",
     },
     body: JSON.stringify(commands),
-    cache: "no-store",
+    // DOM lib 없는 core에서 undici RequestInit 타입에 cache가 없어 캐스트(런타임 동일).
+    ...({ cache: "no-store" } as RequestInit),
   });
   if (!response.ok) {
     throw new Error(`upstash pipeline failed (${response.status})`);

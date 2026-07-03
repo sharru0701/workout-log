@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { upsertWorkoutLogService, type UpsertWorkoutLogInput } from "@/server/services/workout-log/upsert-log";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 
 export async function submitWorkoutLogAction(
   payload: Omit<UpsertWorkoutLogInput, "userId" | "locale">

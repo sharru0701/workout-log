@@ -1,6 +1,6 @@
 import type { Context } from "hono";
 
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
 
 export { getClientIp };
 
@@ -13,7 +13,7 @@ export { getClientIp };
  * credential stuffing and signup abuse — this restores the same limits.
  *
  * apps/api runs as a single always-on process, so the in-memory limiter in
- * `@/server/auth/rate-limit` is effective here (unlike per-instance serverless,
+ * `@workout/core/auth/rate-limit` is effective here (unlike per-instance serverless,
  * where each cold container starts with an empty map). Upstash Redis is used
  * automatically when its env vars are configured.
  *

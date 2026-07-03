@@ -1,5 +1,5 @@
 import type { Context, Next } from "hono";
-import { logError, logInfo } from "@/server/observability/logger";
+import { logError, logInfo } from "@workout/core/observability/logger";
 
 export type Locale = "ko" | "en";
 

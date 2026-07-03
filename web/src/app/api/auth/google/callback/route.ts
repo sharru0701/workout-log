@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import {
   exchangeGoogleCode,
@@ -11,8 +11,8 @@ import {
   type GoogleUserInfo,
 } from "@/server/auth/oauth-google";
 import { findOrCreateUserFromOAuth } from "@/server/auth/oauth-link";
-import { createSession, SESSION_COOKIE_NAME } from "@/server/auth/session";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { createSession, SESSION_COOKIE_NAME } from "@workout/core/auth/session";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 import { isSafeRelativePath } from "@/server/auth/oauth-state";
 
 const STATE_COOKIE = "wl_oauth_state";

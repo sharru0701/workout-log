@@ -4,11 +4,11 @@ import { db } from "@workout/core/db/client";
 import { appUser } from "@workout/core/db/schema";
 import { assertSameOrigin } from "@/server/auth/origin";
 import { tryAuthenticatedUserId } from "@/server/auth/user";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
-import { createEmailVerificationToken } from "@/server/auth/email-verification";
-import { sendEmailVerificationEmail } from "@/server/auth/auth-email";
-import { getRequestOrigin } from "@/server/email/sender";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
+import { createEmailVerificationToken } from "@workout/core/auth/email-verification";
+import { sendEmailVerificationEmail } from "@workout/core/auth/auth-email";
+import { getRequestOrigin } from "@workout/core/email/sender";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 
 export async function POST(req: Request) {
   const originErr = assertSameOrigin(req);

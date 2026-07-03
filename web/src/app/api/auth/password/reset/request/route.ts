@@ -3,11 +3,11 @@ import { eq } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { appUser } from "@workout/core/db/schema";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
-import { createPasswordResetToken } from "@/server/auth/password-reset";
-import { sendPasswordResetEmail } from "@/server/auth/auth-email";
-import { logAuthEvent } from "@/server/auth/security-events";
-import { getRequestOrigin } from "@/server/email/sender";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
+import { createPasswordResetToken } from "@workout/core/auth/password-reset";
+import { sendPasswordResetEmail } from "@workout/core/auth/auth-email";
+import { logAuthEvent } from "@workout/core/auth/security-events";
+import { getRequestOrigin } from "@workout/core/email/sender";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 

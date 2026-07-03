@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 import {
   buildGoogleAuthorizeUrl,

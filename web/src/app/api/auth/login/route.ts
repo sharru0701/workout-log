@@ -6,14 +6,14 @@ import {
   verifyPassword,
   hashPassword,
   passwordNeedsRehash,
-} from "@/server/auth/password";
+} from "@workout/core/auth/password";
 import {
   createSession,
   SESSION_COOKIE_NAME,
-} from "@/server/auth/session";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
+} from "@workout/core/auth/session";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 
 export async function POST(req: Request) {
   const originErr = assertSameOrigin(req);

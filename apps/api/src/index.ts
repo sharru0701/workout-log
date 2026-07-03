@@ -3,7 +3,7 @@ import { Hono } from "hono";
 
 import { db } from "@workout/core/db/client";
 import { sql } from "@workout/core/db/ops";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 
 import { type AppEnv } from "./auth";
 import { apiLogger } from "./lib/http";
