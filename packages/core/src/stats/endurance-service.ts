@@ -1,7 +1,7 @@
 import { and, eq, gte, lte, sql } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { workoutLog, workoutSet } from "@workout/core/db/schema";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "./cache";
 
 export type EnduranceWeekPoint = {
   weekStart: string;

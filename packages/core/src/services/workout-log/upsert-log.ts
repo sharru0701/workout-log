@@ -5,7 +5,7 @@ import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/r
 import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
 import type { ProgressionTargetDecision } from "@workout/core/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@workout/core/progression/progress-events";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { invalidateStatsCacheForUser } from "../../stats/cache";
 
 
 export type UpsertWorkoutLogInput = {

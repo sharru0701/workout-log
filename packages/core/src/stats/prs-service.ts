@@ -2,9 +2,9 @@ import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { db } from "@workout/core/db/client";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
-import { resolveRequestLocale } from "@/lib/i18n/messages";
+import type { AppLocale } from "../locale";
 import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "./cache";
 
 function epley1RM(weightKg: number, reps: number) {
   return weightKg * (1 + reps / 30);
@@ -50,6 +50,7 @@ export async function fetchPrsList({
   exerciseId,
   exerciseName,
   limit,
+  locale,
 }: {
   userId: string;
   from: Date;
@@ -58,8 +59,8 @@ export async function fetchPrsList({
   exerciseId?: string | null;
   exerciseName?: string | null;
   limit: number;
+  locale: AppLocale;
 }): Promise<FetchPrsResult> {
-  const locale = await resolveRequestLocale();
   const normalizedExerciseId = exerciseId?.trim() ?? "";
   const normalizedExerciseName = exerciseName?.trim() ?? "";
 

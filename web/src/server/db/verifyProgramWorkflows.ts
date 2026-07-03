@@ -4,7 +4,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { plan as planTable, planProgressEvent, planRuntimeState, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { generateAndSaveSession } from "@workout/core/program-engine/generateSession";
-import { upsertWorkoutLogService } from "../services/workout-log/upsert-log";
+import { upsertWorkoutLogService } from "@workout/core/services/workout-log/upsert-log";
 
 type PlannedSet = {
   reps?: number;

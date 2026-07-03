@@ -1,6 +1,7 @@
 import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { fetchStats1RMFilterOptions } from "@/server/stats/e1rm-service";
-import { fetchPrsList, type PrItem } from "@/server/stats/prs-service";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import { fetchStats1RMFilterOptions } from "@workout/core/stats/e1rm-service";
+import { fetchPrsList, type PrItem } from "@workout/core/stats/prs-service";
 
 export type PrHistoryDaysPreset = 30 | 90 | 365 | "all";
 
@@ -73,6 +74,7 @@ export async function getPrHistoryBootstrap(
       rangeDays,
       exerciseId: requestedExerciseId || null,
       limit: PR_LIMIT,
+      locale: await resolveRequestLocale(),
     }),
   ]);
 

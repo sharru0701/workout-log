@@ -2,9 +2,9 @@
 
 import { V2Card } from "@/components/v2/primitives";
 import { useLocale } from "@/components/locale-provider";
-import type { EnduranceResult } from "@/server/stats/endurance-service";
-import type { MuscleVolumeResult } from "@/server/stats/muscle-volume-service";
-import type { StrengthScoreResult } from "@/server/stats/strength-score-service";
+import type { EnduranceResult } from "@workout/core/stats/endurance-service";
+import type { MuscleVolumeResult } from "@workout/core/stats/muscle-volume-service";
+import type { StrengthScoreResult } from "@workout/core/stats/strength-score-service";
 import type { TrainingGoalKey } from "@/lib/settings/workout-preferences";
 import type { HomeData } from "@/lib/home/home-data-source";
 

@@ -1,9 +1,9 @@
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
-import { resolveRequestLocale } from "@/lib/i18n/messages";
+import type { AppLocale } from "../locale";
 import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "./cache";
 
 export type VolumeBucket = "day" | "week" | "month";
 
@@ -42,6 +42,7 @@ export async function fetchVolumeSeries({
   exerciseName,
   perExercise = false,
   maxExercises = 12,
+  locale,
 }: {
   userId: string;
   from: Date;
@@ -52,8 +53,8 @@ export async function fetchVolumeSeries({
   exerciseName?: string | null;
   perExercise?: boolean;
   maxExercises?: number;
+  locale: AppLocale;
 }): Promise<VolumeSeriesResult> {
-  const locale = await resolveRequestLocale();
   const normalizedExerciseId = exerciseId?.trim() ?? "";
   const normalizedExerciseName = exerciseName?.trim() ?? "";
 

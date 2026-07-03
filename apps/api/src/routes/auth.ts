@@ -32,8 +32,8 @@ import {
 } from "@workout/core/auth/auth-email";
 import { logAuthEvent } from "@workout/core/auth/security-events";
 import { getRequestOrigin } from "@workout/core/email/sender";
-import { deleteUserDomainData } from "@/server/data/deleteUserData";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { deleteUserDomainData } from "@workout/core/data/deleteUserData";
+import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 
 import { requireAuth, sessionToken, type AppEnv } from "../auth";
 import { apiError } from "../lib/http";

@@ -6,22 +6,22 @@ import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { logError } from "@workout/core/observability/logger";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
-import { parseDateRangeFromSearchParams } from "@/server/stats/range";
-import { fetchE1rmStats } from "@/server/stats/e1rm-service";
-import { fetchStatsBundle } from "@/server/stats/bundle-service";
-import { fetchPrsList } from "@/server/stats/prs-service";
+import { getStatsCache, setStatsCache } from "@workout/core/stats/cache";
+import { parseDateRangeFromSearchParams } from "@workout/core/stats/range";
+import { fetchE1rmStats } from "@workout/core/stats/e1rm-service";
+import { fetchStatsBundle } from "@workout/core/stats/bundle-service";
+import { fetchPrsList } from "@workout/core/stats/prs-service";
 import {
   fetchVolumeSeries,
   type VolumeBucket,
-} from "@/server/stats/volume-series-service";
+} from "@workout/core/stats/volume-series-service";
 import {
   buildUxSnapshotPayload,
   parseThresholdTargets,
   parseWindowDays,
   uxSnapshotToCsv,
   type UxSnapshotPayload,
-} from "@/server/stats/ux-snapshot-service";
+} from "@workout/core/stats/ux-snapshot-service";
 
 import { requireAuth, type AppEnv } from "../auth";
 import { apiError, resolveLocale } from "../lib/http";
@@ -96,7 +96,7 @@ statsRoutes.get("/bundle", async (c) => {
     const daysParam = c.req.query("days");
     const days = daysParam != null ? parseInt(daysParam, 10) : 30;
 
-    const payload = await fetchStatsBundle({ userId, days });
+    const payload = await fetchStatsBundle({ userId, days, locale: resolveLocale(c) });
 
     c.header("Cache-Control", CACHE_HEADER);
     return c.json(payload);
@@ -133,6 +133,7 @@ statsRoutes.get("/volume-series", async (c) => {
       exerciseName,
       perExercise,
       maxExercises,
+      locale: resolveLocale(c),
     });
 
     return c.json(result);
@@ -163,6 +164,7 @@ statsRoutes.get("/prs", async (c) => {
       exerciseId,
       exerciseName,
       limit,
+      locale: resolveLocale(c),
     });
 
     return c.json({

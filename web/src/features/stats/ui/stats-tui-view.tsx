@@ -14,7 +14,7 @@ import { clampIndex } from "@/features/stats/ui/e1rm-interactive-chart";
 import { Stats1RMOverlaySheets } from "@/features/stats/ui/stats-1rm-overlay-sheets";
 import type { RangePreset } from "@/features/stats/model/stats-1rm-types";
 import type { StatsPageBootstrap } from "@/server/services/stats/get-stats-page-bootstrap";
-import type { AsymptoteMonitorResult } from "@/server/stats/asymptote-monitor-service";
+import type { AsymptoteMonitorResult } from "@workout/core/stats/asymptote-monitor-service";
 import type {
   DriverKey,
   DriverTrendDirection,

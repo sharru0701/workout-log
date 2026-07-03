@@ -2,33 +2,35 @@ import { asc } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { exercise } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
+import { resolveRequestLocale } from "@/lib/i18n/messages";
+import type { AppLocale } from "@workout/core/locale";
 import {
   readWorkoutPreferences,
   type TrainingGoalKey,
 } from "@/lib/settings/workout-preferences";
 import { getSettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
-import { fetchStatsBundle } from "@/server/stats/bundle-service";
+import { fetchStatsBundle } from "@workout/core/stats/bundle-service";
 import {
   fetchE1rmStats,
   fetchStats1RMFilterOptions,
-} from "@/server/stats/e1rm-service";
+} from "@workout/core/stats/e1rm-service";
 import {
   fetchEnduranceStats,
   type EnduranceResult,
-} from "@/server/stats/endurance-service";
+} from "@workout/core/stats/endurance-service";
 import {
   fetchMuscleVolume,
   type MuscleVolumeResult,
-} from "@/server/stats/muscle-volume-service";
+} from "@workout/core/stats/muscle-volume-service";
 import {
   fetchStrengthScore,
   type StrengthScoreResult,
-} from "@/server/stats/strength-score-service";
-import { fetchVolumeSeries, type VolumeSeriesResult } from "@/server/stats/volume-series-service";
+} from "@workout/core/stats/strength-score-service";
+import { fetchVolumeSeries, type VolumeSeriesResult } from "@workout/core/stats/volume-series-service";
 import {
   fetchAsymptoteDriverMonitor,
   type AsymptoteMonitorResult,
-} from "@/server/stats/asymptote-monitor-service";
+} from "@workout/core/stats/asymptote-monitor-service";
 
 type SearchParams = Record<string, string | string[] | undefined>;
 
@@ -61,6 +63,7 @@ function createWeeklyVolumeRange() {
 
 async function fetchWeeklyVolumeForBootstrap(
   userId: string,
+  locale: AppLocale,
 ): Promise<VolumeSeriesResult> {
   const { from, to, rangeDays } = createWeeklyVolumeRange();
   return fetchVolumeSeries({
@@ -70,6 +73,7 @@ async function fetchWeeklyVolumeForBootstrap(
     rangeDays,
     bucket: "week",
     perExercise: false,
+    locale,
   });
 }
 
@@ -140,6 +144,7 @@ export async function getStatsPageBootstrap(
   const { from, to, rangeDays } = createDefaultStatsRange();
 
   const settings = await getSettingsSnapshot();
+  const locale = await resolveRequestLocale();
   const prefs = readWorkoutPreferences(settings);
   const goal = prefs.trainingGoalPrimary;
   const goalMetricsPromise = fetchStatsGoalMetrics(userId, goal, prefs.bodyweightKg);
@@ -151,8 +156,8 @@ export async function getStatsPageBootstrap(
 
   if (defer1rmBootstrap) {
     const [bundle, volumeWeekly, goalMetrics, asymptoteMonitor] = await Promise.all([
-      fetchStatsBundle({ userId, days: 90 }),
-      fetchWeeklyVolumeForBootstrap(userId),
+      fetchStatsBundle({ userId, days: 90, locale }),
+      fetchWeeklyVolumeForBootstrap(userId, locale),
       goalMetricsPromise,
       asymptoteMonitorPromise,
     ]);
@@ -173,7 +178,7 @@ export async function getStatsPageBootstrap(
   // PERF: exerciseId/exerciseName이 URL에 이미 있으면 4개 fetch를 모두 병렬로 실행
   if (selectedExerciseId || selectedExerciseName) {
     const [bundle, filterOptions, initialE1rm, volumeWeekly, goalMetrics, asymptoteMonitor] = await Promise.all([
-      fetchStatsBundle({ userId, days: 90 }),
+      fetchStatsBundle({ userId, days: 90, locale }),
       fetchStats1RMFilterOptions(userId),
       fetchE1rmStats({
         userId,
@@ -184,7 +189,7 @@ export async function getStatsPageBootstrap(
         to,
         rangeDays,
       }),
-      fetchWeeklyVolumeForBootstrap(userId),
+      fetchWeeklyVolumeForBootstrap(userId, locale),
       goalMetricsPromise,
       asymptoteMonitorPromise,
     ]);
@@ -213,7 +218,7 @@ export async function getStatsPageBootstrap(
   const initialExerciseId = firstExerciseRows[0]?.id ?? "";
 
   const [bundle, filterOptions, initialE1rm, volumeWeekly, goalMetrics, asymptoteMonitor] = await Promise.all([
-    fetchStatsBundle({ userId, days: 90 }),
+    fetchStatsBundle({ userId, days: 90, locale }),
     fetchStats1RMFilterOptions(userId),
     initialExerciseId
       ? fetchE1rmStats({
@@ -226,7 +231,7 @@ export async function getStatsPageBootstrap(
           rangeDays,
         })
       : Promise.resolve(null),
-    fetchWeeklyVolumeForBootstrap(userId),
+    fetchWeeklyVolumeForBootstrap(userId, locale),
     goalMetricsPromise,
     asymptoteMonitorPromise,
   ]);

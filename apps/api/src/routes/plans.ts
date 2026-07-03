@@ -28,7 +28,7 @@ import {
   type LastTargetEvent,
 } from "@workout/core/progression/last-events";
 import { applyManualRuntimeAdjustment } from "@workout/core/progression/autoProgression";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 import { buildSessionKey } from "@workout/core/session-key";
 
 import { requireAuth, type AppEnv } from "../auth";

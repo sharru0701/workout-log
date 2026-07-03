@@ -1,7 +1,7 @@
 "use client";
 
 import { V2Card, V2Chip, type V2ChipTone } from "@/components/v2/primitives";
-import type { AsymptoteMonitorResult } from "@/server/stats/asymptote-monitor-service";
+import type { AsymptoteMonitorResult } from "@workout/core/stats/asymptote-monitor-service";
 import type { DriverKey, DriverTrendDirection } from "@workout/core/program-engine/asymptote-monitor";
 
 type Locale = "ko" | "en";

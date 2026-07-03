@@ -10,10 +10,10 @@ import {
   programVersion,
   uxEventLog,
 } from "@workout/core/db/schema";
-import { getHomeData } from "@/server/home/home-service";
-import { buildUserDataExport, buildWorkoutSetCsv } from "@/server/export/userExport";
-import { importUserData, type ImportMode } from "@/server/import/userImport";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { getHomeData } from "@workout/core/home/home-service";
+import { buildUserDataExport, buildWorkoutSetCsv } from "@workout/core/export/userExport";
+import { importUserData, type ImportMode } from "@workout/core/import/userImport";
+import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 
 import { requireAuth, type AppEnv } from "../auth";
 import { apiError, normalizeTimezone, resolveLocale } from "../lib/http";

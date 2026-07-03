@@ -2,8 +2,8 @@ import { db } from "@workout/core/db/client";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { and, count, eq, gte, lte, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
-import { resolveRequestLocale } from "@/lib/i18n/messages";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import type { AppLocale } from "../locale";
+import { getStatsCache, setStatsCache } from "./cache";
 
 // ─── 1RM Helpers ──────────────────────────────────────────────────────────────
 
@@ -48,8 +48,7 @@ async function fetchVolumeTonnage(userId: string, from: Date, to: Date): Promise
   return Number(rows[0]?.tonnage ?? 0);
 }
 
-async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Promise<PrItem[]> {
-  const locale = await resolveRequestLocale();
+async function fetchPrs(userId: string, from: Date, to: Date, limit: number, locale: AppLocale): Promise<PrItem[]> {
   const rows = await db
     .select({
       performedAt: workoutLog.performedAt,
@@ -136,9 +135,11 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number): Pr
 export async function fetchStatsBundle({
   userId,
   days,
+  locale,
 }: {
   userId: string;
   days: number;
+  locale: AppLocale;
 }): Promise<StatsBundleResult> {
   const to = new Date();
   const from = days > 0 ? new Date(to.getTime() - days * 86_400_000) : new Date(0);
@@ -162,7 +163,7 @@ export async function fetchStatsBundle({
   const [sessions30d, tonnage30d, prs90d] = await Promise.all([
     fetchSavedLogs(userId, from, to),
     fetchVolumeTonnage(userId, from, to),
-    fetchPrs(userId, from, to, 10),
+    fetchPrs(userId, from, to, 10, locale),
   ]);
 
   const payload: StatsBundleResult = { sessions30d, tonnage30d, prs90d };

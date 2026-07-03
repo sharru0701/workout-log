@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { getHomeData } from "@/server/home/home-service";
+import { getHomeData } from "@workout/core/home/home-service";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { V2HomeDashboard } from "@/components/v2/v2-home-dashboard";
