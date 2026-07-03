@@ -27,7 +27,9 @@ export default function RootError({
       : normalizeLocalePreference(document.documentElement.lang);
 
   return (
-    <div style={{ padding: "var(--v2-s-5)" }}>
+    // data-app-error-boundary: E2E 스모크가 렌더 크래시(에러 바운더리 노출)를 명확히 감지하는
+    // 전용 마커. "다시 시도" 텍스트는 정상 retry UI에도 쓰여 false-positive라 텍스트 대신 이 속성으로 게이트.
+    <div data-app-error-boundary="segment" style={{ padding: "var(--v2-s-5)" }}>
       <V2Card tone="paper" padding="var(--v2-s-5)">
         <div
           role="alert"
