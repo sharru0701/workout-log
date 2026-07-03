@@ -2,16 +2,16 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { appUser } from "@workout/core/db/schema";
-import { hashPassword } from "@/server/auth/password";
+import { hashPassword } from "@workout/core/auth/password";
 import {
   createSession,
   deleteSessionsForUser,
   SESSION_COOKIE_NAME,
-} from "@/server/auth/session";
-import { consumePasswordResetToken } from "@/server/auth/password-reset";
+} from "@workout/core/auth/session";
+import { consumePasswordResetToken } from "@workout/core/auth/password-reset";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 
 export async function POST(req: Request) {
   const originErr = assertSameOrigin(req);

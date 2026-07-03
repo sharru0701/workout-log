@@ -4,9 +4,9 @@ import {
   deleteSession,
   findActiveSession,
   SESSION_COOKIE_NAME,
-} from "@/server/auth/session";
+} from "@workout/core/auth/session";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 
 export async function POST(req: Request) {
   const originErr = assertSameOrigin(req);

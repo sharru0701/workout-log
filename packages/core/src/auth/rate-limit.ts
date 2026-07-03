@@ -11,7 +11,7 @@
 import {
   isRedisRateLimitConfigured,
   redisRateLimit,
-} from "@/server/auth/rate-limit-redis";
+} from "./rate-limit-redis";
 
 type Bucket = { timestamps: number[] };
 

@@ -10,16 +10,16 @@ import {
   userSetting,
   uxEventLog,
 } from "@workout/core/db/schema";
-import { verifyPassword } from "@/server/auth/password";
+import { verifyPassword } from "@workout/core/auth/password";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { SESSION_COOKIE_NAME } from "@/server/auth/session";
+import { SESSION_COOKIE_NAME } from "@workout/core/auth/session";
 import { assertSameOrigin } from "@/server/auth/origin";
-import { getClientIp, rateLimit } from "@/server/auth/rate-limit";
-import { logAuthEvent } from "@/server/auth/security-events";
+import { getClientIp, rateLimit } from "@workout/core/auth/rate-limit";
+import { logAuthEvent } from "@workout/core/auth/security-events";
 import { deleteUserDomainData } from "@/server/data/deleteUserData";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { withApiLogging } from "@/server/observability/apiRoute";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 type DeleteAccountBody = {

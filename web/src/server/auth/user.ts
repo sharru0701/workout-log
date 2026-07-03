@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { findActiveSession, SESSION_COOKIE_NAME } from "./session";
+import { findActiveSession, SESSION_COOKIE_NAME } from "@workout/core/auth/session";
 
 /**
  * 인증된 사용자가 없을 때 던지는 에러. API 에러 핸들러가 이를 HTTP 401로

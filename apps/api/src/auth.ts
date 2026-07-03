@@ -1,6 +1,6 @@
 import type { Context, Next } from "hono";
-import { findActiveSession, SESSION_COOKIE_NAME } from "@/server/auth/session";
-import { logError } from "@/server/observability/logger";
+import { findActiveSession, SESSION_COOKIE_NAME } from "@workout/core/auth/session";
+import { logError } from "@workout/core/observability/logger";
 
 // Variables set on the Hono context by requireAuth.
 export type AppEnv = { Variables: { userId: string } };

@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 
-import { SESSION_COOKIE_NAME } from "@/server/auth/session";
+import { SESSION_COOKIE_NAME } from "@workout/core/auth/session";
 
 // Catch-all proxy: forwards web /api/* to the standalone apps/api (Hono) backend.
 // The browser keeps calling same-origin /api/* (httpOnly wl_session cookie sent

@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { db } from "@workout/core/db/client";
 import { and, desc, eq, gte, lte, or, sql } from "@workout/core/db/ops";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
-import { logError } from "@/server/observability/logger";
+import { logError } from "@workout/core/observability/logger";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";

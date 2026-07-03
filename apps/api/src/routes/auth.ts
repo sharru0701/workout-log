@@ -15,23 +15,23 @@ import {
   hashPassword,
   verifyPassword,
   passwordNeedsRehash,
-} from "@/server/auth/password";
+} from "@workout/core/auth/password";
 import {
   createSession,
   deleteSession,
   deleteSessionsForUser,
   findActiveSession,
   findUserById,
-} from "@/server/auth/session";
-import { claimEnvFallbackData } from "@/server/auth/claim-fallback";
-import { createEmailVerificationToken } from "@/server/auth/email-verification";
-import { createPasswordResetToken } from "@/server/auth/password-reset";
+} from "@workout/core/auth/session";
+import { claimEnvFallbackData } from "@workout/core/auth/claim-fallback";
+import { createEmailVerificationToken } from "@workout/core/auth/email-verification";
+import { createPasswordResetToken } from "@workout/core/auth/password-reset";
 import {
   sendEmailVerificationEmail,
   sendPasswordResetEmail,
-} from "@/server/auth/auth-email";
-import { logAuthEvent } from "@/server/auth/security-events";
-import { getRequestOrigin } from "@/server/email/sender";
+} from "@workout/core/auth/auth-email";
+import { logAuthEvent } from "@workout/core/auth/security-events";
+import { getRequestOrigin } from "@workout/core/email/sender";
 import { deleteUserDomainData } from "@/server/data/deleteUserData";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 

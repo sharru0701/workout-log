@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { logError, logInfo } from "@/server/observability/logger";
+import { logError, logInfo } from "@workout/core/observability/logger";
 import { checkIpRateLimit } from "@/server/security/rateLimit";
 import { UnauthorizedError } from "@/server/auth/user";
 

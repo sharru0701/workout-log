@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import {
   findUserById,
-} from "@/server/auth/session";
+} from "@workout/core/auth/session";
 import { tryAuthenticatedUserId } from "@/server/auth/user";
 
 export async function GET() {
