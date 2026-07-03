@@ -112,15 +112,18 @@ jobs:
         run: go test ./...
 
   # ──────────────────────────────────────────────
-  # Job 2: Playwright smoke E2E
-  # quality 통과 후 실행. PostgreSQL 서비스 컨테이너 + next dev 서버.
-  # 빌드 검증은 Vercel Preview 빌드가 담당 (이중 빌드 회피)
+  # Job 2: Playwright smoke E2E (프로덕션 빌드 대상)
+  # quality 통과 후 실행. PostgreSQL 서비스 컨테이너 + `next build && next start`.
+  # 과거엔 next dev로 돌려 빌드 시간을 아꼈으나(빌드는 Vercel Preview가 담당), dev는
+  # 관대해 RSC 직렬화 크래시 등 "프로덕션 빌드에서만 터지는 렌더 에러"를 못 잡았다
+  # (#491 F4 사고: AppCopy를 서버→클라 prop으로 넘겨 홈 SSR 크래시, dev·번들 grep·Vercel
+  # 빌드 모두 통과 → prod에서만 노출). 스모크를 prod 빌드로 돌려 이 클래스를 머지 전에 게이트.
   # ──────────────────────────────────────────────
   e2e-smoke:
     name: E2E Smoke
     needs: quality
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     services:
       postgres:
         image: postgres:16
@@ -154,13 +157,15 @@ jobs:
           WORKOUT_AUTH_USER_ID: ci-user
         run: pnpm db:seed
 
-      - name: Run smoke E2E tests
+      # PLAYWRIGHT_SERVER_MODE=prod → webServer가 `pnpm build && pnpm start`(프로덕션 런타임).
+      # build가 migrate를 재실행하나 멱등(위 seed는 여전히 필요). prod 렌더 크래시를 여기서 게이트.
+      - name: Run smoke E2E tests (prod build)
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
           WORKOUT_AUTH_USER_ID: ci-user
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           NEXT_TELEMETRY_DISABLED: "1"
-          PLAYWRIGHT_SERVER_MODE: dev
+          PLAYWRIGHT_SERVER_MODE: prod
           CI: "true"
         run: pnpm exec playwright test e2e/smoke.spec.ts --project chromium
 
