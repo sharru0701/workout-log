@@ -5,8 +5,8 @@ import {
   aggregateMuscleVolumeRows,
   type MuscleVolumeTotal,
   type MuscleVolumeWeekPoint,
-} from "@/server/stats/muscle-volume-aggregate";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+} from "./muscle-volume-aggregate";
+import { getStatsCache, setStatsCache } from "./cache";
 
 export type { MuscleVolumeTotal, MuscleVolumeWeekPoint };
 export type MuscleVolumeResult = {

@@ -6,7 +6,7 @@ import { useLocale } from "@/components/locale-provider";
 import { SectionHeading, StateBlock } from "@/components/ui/page-layout";
 import { V2SectionHeader } from "@/components/v2/primitives";
 import { APP_ROUTES } from "@/lib/app-routes";
-import type { StatsBundleResult } from "@/server/stats/bundle-service";
+import type { StatsBundleResult } from "@workout/core/stats/bundle-service";
 
 export function StatsPageHeader() {
   const { locale } = useLocale();

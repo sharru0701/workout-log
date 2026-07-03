@@ -12,9 +12,9 @@ import {
   workoutLog,
   workoutSet,
 } from "@workout/core/db/schema";
-import type { UserDataExport } from "@/server/export/userExport";
-import { validateExportShape } from "@/server/import/validateExportShape";
-import { deleteUserDomainData } from "@/server/data/deleteUserData";
+import type { UserDataExport } from "../export/userExport";
+import { validateExportShape } from "./validateExportShape";
+import { deleteUserDomainData } from "../data/deleteUserData";
 
 export { validateExportShape };
 

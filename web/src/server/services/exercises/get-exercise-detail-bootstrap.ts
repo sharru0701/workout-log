@@ -3,9 +3,9 @@ import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { db } from "@workout/core/db/client";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { fetchE1rmStats } from "@/server/stats/e1rm-service";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
-import type { E1RMPoint, E1RMResponse } from "@/server/stats/e1rm-service";
+import { fetchE1rmStats } from "@workout/core/stats/e1rm-service";
+import { getStatsCache, setStatsCache } from "@workout/core/stats/cache";
+import type { E1RMPoint, E1RMResponse } from "@workout/core/stats/e1rm-service";
 
 const LOOKBACK_DAYS = 90;
 const RECENT_SETS_LIMIT = 30;

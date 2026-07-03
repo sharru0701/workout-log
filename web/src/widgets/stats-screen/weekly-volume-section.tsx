@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { V2Card, V2Chip } from "@/components/v2/primitives";
-import type { VolumeSeriesResult } from "@/server/stats/volume-series-service";
+import type { VolumeSeriesResult } from "@workout/core/stats/volume-series-service";
 
 const TARGET_WEEKS = 8;
 

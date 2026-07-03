@@ -26,10 +26,10 @@ import {
   readProgressEventByLog,
 } from "@workout/core/progression/progress-events";
 import { rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
-import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
-import { getSettingsSnapshotForUser } from "@/server/services/settings/get-settings-snapshot";
-import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
+import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
+import { upsertWorkoutLogService } from "@workout/core/services/workout-log/upsert-log";
+import { getSettingsSnapshotForUser } from "@workout/core/services/settings/settings-snapshot";
+import { readWorkoutPreferences } from "@workout/core/settings/workout-preferences";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 
 import { requireAuth, type AppEnv } from "../auth";

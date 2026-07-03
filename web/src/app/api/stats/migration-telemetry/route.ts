@@ -7,7 +7,7 @@ import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readMigrationLedgerSnapshot } from "@/server/db/migrationLedger";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@workout/core/observability/logger";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "@workout/core/stats/cache";
 import { apiErrorResponse } from "@/app/api/_utils/error-response";
 
 const MIGRATIONS_DIR = path.join(process.cwd(), "src/server/db/migrations");

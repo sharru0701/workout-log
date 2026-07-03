@@ -3,7 +3,7 @@ import { Hono } from "hono";
 import { db } from "@workout/core/db/client";
 import { eq } from "@workout/core/db/ops";
 import { userSetting } from "@workout/core/db/schema";
-import { invalidateStatsCacheForUser } from "@/server/stats/cache";
+import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 import { runSeed } from "@workout/core/db/seed";
 
 import { requireAuth, type AppEnv } from "../auth";

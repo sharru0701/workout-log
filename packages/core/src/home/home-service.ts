@@ -9,20 +9,20 @@ import {
   workoutSet,
 } from "@workout/core/db/schema";
 import { generateAndSaveSession } from "@workout/core/program-engine/generateSession";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "../stats/cache";
 import {
   fetchEnduranceStats,
   type EnduranceResult,
-} from "@/server/stats/endurance-service";
+} from "../stats/endurance-service";
 import {
   fetchMuscleVolume,
   type MuscleVolumeResult,
-} from "@/server/stats/muscle-volume-service";
+} from "../stats/muscle-volume-service";
 import {
   fetchStrengthScore,
   type StrengthScoreResult,
-} from "@/server/stats/strength-score-service";
-import { getSettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
+} from "../stats/strength-score-service";
+import { getSettingsSnapshotForUser } from "../services/settings/settings-snapshot";
 import { resolveLoggedTotalLoadKg, bodyweightAddedSuffix } from "@workout/core/bodyweight-load";
 import {
   formatPerformedHistoryCompact,
@@ -31,9 +31,9 @@ import {
 import {
   readWorkoutPreferences,
   type TrainingGoalKey,
-} from "@/lib/settings/workout-preferences";
+} from "../settings/workout-preferences";
 import { buildTodayLogHref, toLocalDateKey } from "@workout/core/workout-links";
-import type { AppLocale } from "@/lib/i18n/messages";
+import type { AppLocale } from "../locale";
 
 // ─── Types ──────────────────────────────────────────────────────────
 
@@ -246,7 +246,7 @@ export async function getHomeData(params: {
   const now = new Date();
   const todayKey = dateOnlyInTimezone(now, timezone);
 
-  const settings = await getSettingsSnapshot();
+  const settings = await getSettingsSnapshotForUser(userId);
   const prefs = readWorkoutPreferences(settings);
   const goal = prefs.trainingGoalPrimary;
   const bodyweightKg = prefs.bodyweightKg;

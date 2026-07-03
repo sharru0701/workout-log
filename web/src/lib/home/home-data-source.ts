@@ -1,6 +1,6 @@
 import { apiGet } from "@/lib/api";
 import type { AppLocale } from "@/lib/i18n/messages";
-import type { HomeData } from "@/server/home/home-service";
+import type { HomeData } from "@workout/core/home/home-service";
 
 export type {
   HomeData,
@@ -14,7 +14,7 @@ export type {
   HomeRecentSession,
   HomeStrengthItem,
   HomeVolumeTrendPoint,
-} from "@/server/home/home-service";
+} from "@workout/core/home/home-service";
 
 export interface HomeDataSource {
   load(): Promise<HomeData>;

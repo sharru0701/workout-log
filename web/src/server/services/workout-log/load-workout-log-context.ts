@@ -26,7 +26,7 @@ import type {
 } from "@/features/workout-log/model/types";
 import type { GeneratedSessionLike } from "@/entities/workout-record";
 import type { WorkoutLogInitialContext } from "./get-workout-log-page-bootstrap";
-import { shouldBlockAutoProgressionNewLog } from "./logging-policy";
+import { shouldBlockAutoProgressionNewLog } from "@workout/core/services/workout-log/logging-policy";
 
 // ─── DB 헬퍼 ─────────────────────────────────────────────────────────────────
 

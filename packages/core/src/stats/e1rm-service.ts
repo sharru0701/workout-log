@@ -3,7 +3,7 @@ import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { db } from "@workout/core/db/client";
 import { exercise, plan, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
-import { getStatsCache, setStatsCache } from "@/server/stats/cache";
+import { getStatsCache, setStatsCache } from "./cache";
 
 export type E1RMPoint = {
   date: string;
