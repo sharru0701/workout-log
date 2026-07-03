@@ -1,6 +1,6 @@
 import { and, eq, gt, isNull } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { emailVerificationToken } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { emailVerificationToken } from "@workout/core/db/schema";
 import { generateAuthTokenPair, sha256Hex } from "./token";
 
 const TOKEN_TTL_MS = 60 * 60_000;

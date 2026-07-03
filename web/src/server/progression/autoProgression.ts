@@ -7,7 +7,7 @@ import {
   programVersion,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import {
   LoggedSetInput,
   ProgressionEventType,

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   generatedSession,
   plan,
@@ -9,7 +9,7 @@ import {
   userSetting,
   uxEventLog,
   workoutLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 
 /**
  * env fallback userId(WORKOUT_AUTH_USER_ID, 기본 "dev")로 쌓여 있던

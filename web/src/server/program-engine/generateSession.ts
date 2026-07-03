@@ -1,6 +1,6 @@
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { buildSessionKey } from "@workout/core/session-key";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   generatedSession,
   plan as planTable,
@@ -10,7 +10,7 @@ import {
   programTemplate,
   programVersion,
   workoutLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import { extractTrainingMaxOverridesFromState, extractStageOverridesFromState } from "@/server/progression/reducer";
 import {
   ASYMPTOTE_CYCLE_COEF,

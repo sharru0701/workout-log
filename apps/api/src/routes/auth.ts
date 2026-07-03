@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { and, desc, eq, ne } from "@/server/db/ops";
+import { db } from "@workout/core/db/client";
+import { and, desc, eq, ne } from "@workout/core/db/ops";
 import {
   appUser,
   authOauthAccount,
@@ -10,7 +10,7 @@ import {
   passwordResetToken,
   userSetting,
   uxEventLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import {
   hashPassword,
   verifyPassword,

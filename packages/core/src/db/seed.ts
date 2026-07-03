@@ -1,4 +1,3 @@
-import "dotenv/config";
 import { pathToFileURL } from "node:url";
 import { db } from "./client";
 import {

@@ -1,4 +1,6 @@
-import { runSeed } from "./seed";
+import "dotenv/config";
+
+import { runSeed } from "@workout/core/db/seed";
 
 runSeed({
   shouldHardReset: process.env.WORKOUT_SEED_RESET_ALL === "1",

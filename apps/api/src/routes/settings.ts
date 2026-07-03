@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { eq } from "@/server/db/ops";
-import { userSetting } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { eq } from "@workout/core/db/ops";
+import { userSetting } from "@workout/core/db/schema";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
-import { runSeed } from "@/server/db/seed";
+import { runSeed } from "@workout/core/db/seed";
 
 import { requireAuth, type AppEnv } from "../auth";
 import { apiError, resolveLocale } from "../lib/http";

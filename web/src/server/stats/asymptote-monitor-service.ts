@@ -3,8 +3,8 @@
 // 7세션 이동평균 추세를 산출한다. 순수 집계/추세 로직은 program-engine/asymptote-monitor에 위임.
 
 import { and, desc, eq, gte, or, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { plan, programTemplate, programVersion, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { plan, programTemplate, programVersion, workoutLog, workoutSet } from "@workout/core/db/schema";
 import {
   ASYMPTOTE_DRIVERS,
   ASYMPTOTE_MONITOR_WINDOW,

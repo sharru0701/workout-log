@@ -1,7 +1,7 @@
 import { createHash } from "crypto";
 import { and, eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { statsCache } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { statsCache } from "@workout/core/db/schema";
 
 // PERF: DB statsCache 위에 얹는 in-process 메모리 캐시.
 // 동일 서버리스 컨테이너 내 반복 요청에서 DB 쿼리 1회 제거.

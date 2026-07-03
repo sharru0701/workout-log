@@ -1,6 +1,6 @@
 import { and, eq, gte, lte, or, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";

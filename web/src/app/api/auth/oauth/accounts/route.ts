@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { appUser, authOauthAccount } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser, authOauthAccount } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { withApiLogging } from "@/server/observability/apiRoute";
 import { logError } from "@/server/observability/logger";

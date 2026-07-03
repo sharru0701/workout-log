@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { and, desc, eq, gte, lte, or, sql } from "@/server/db/ops";
-import { exercise, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { and, desc, eq, gte, lte, or, sql } from "@workout/core/db/ops";
+import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { logError } from "@/server/observability/logger";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";

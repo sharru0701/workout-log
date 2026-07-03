@@ -31,10 +31,20 @@ importers:
         version: 5.9.3
 
   packages/core:
+    dependencies:
+      drizzle-orm:
+        specifier: 0.45.1
+        version: 0.45.1(@types/pg@8.16.0)(pg@8.18.0)
+      pg:
+        specifier: 8.18.0
+        version: 8.18.0
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.0
+      '@types/pg':
+        specifier: 8.16.0
+        version: 8.16.0
       tsx:
         specifier: ^4.21.0
         version: 4.22.4

@@ -1,6 +1,6 @@
 import { eq, sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { exercise, exerciseAlias } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { exercise, exerciseAlias } from "@workout/core/db/schema";
 
 export type ResolvedExercise = {
   id: string;

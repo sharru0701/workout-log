@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
-import { db } from "@/server/db/client";
-import { and, desc, eq, inArray, isNotNull, max, or } from "@/server/db/ops";
+import { db } from "@workout/core/db/client";
+import { and, desc, eq, inArray, isNotNull, max, or } from "@workout/core/db/ops";
 import {
   generatedSession,
   plan as planTable,
@@ -12,7 +12,7 @@ import {
   programTemplate,
   programVersion,
   workoutLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import {
   generateAndSaveSession,
   previewSessionExercises,

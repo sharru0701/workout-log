@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { lt } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { authSession } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { authSession } from "@workout/core/db/schema";
 import { withApiLogging } from "@/server/observability/apiRoute";
 
 /**

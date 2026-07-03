@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 
 const MIGRATION_TABLE_NAME = "__drizzle_migrations";
 const IDENTIFIER_PATTERN = /^[a-zA-Z_][a-zA-Z0-9_]*$/;

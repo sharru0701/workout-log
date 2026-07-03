@@ -1,5 +1,5 @@
-import { db } from "@/server/db/client";
-import { plan, generatedSession, workoutLog, workoutSet } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { plan, generatedSession, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { and, eq, gt, lt, ne } from "drizzle-orm";
 import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
 import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";

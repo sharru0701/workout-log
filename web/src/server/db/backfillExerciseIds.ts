@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 
 /**
  * Backfill workout_set.exercise_id by exact exercise_name match.

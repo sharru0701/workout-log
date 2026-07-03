@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   appUser,
   authOauthAccount,
@@ -9,7 +9,7 @@ import {
   passwordResetToken,
   userSetting,
   uxEventLog,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 import { verifyPassword } from "@/server/auth/password";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { SESSION_COOKIE_NAME } from "@/server/auth/session";

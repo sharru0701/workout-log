@@ -1,6 +1,6 @@
 import { asc } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { exercise } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { exercise } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import {
   readWorkoutPreferences,

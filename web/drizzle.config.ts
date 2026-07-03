@@ -7,7 +7,7 @@ import type { Config } from "drizzle-kit";
 const schemaName = process.env.DB_SCHEMA?.trim() || undefined;
 
 export default {
-  schema: "./src/server/db/schema.ts",
+  schema: "../packages/core/src/db/schema.ts",
   out: schemaName
     ? `./src/server/db/migrations-${schemaName}`
     : "./src/server/db/migrations",

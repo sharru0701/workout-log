@@ -1,5 +1,5 @@
-import { db } from "@/server/db/client";
-import { plan, programTemplate, programVersion, workoutLog } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { plan, programTemplate, programVersion, workoutLog } from "@workout/core/db/schema";
 import { and, desc, eq, inArray, isNotNull, max } from "drizzle-orm";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";

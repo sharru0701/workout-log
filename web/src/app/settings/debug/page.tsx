@@ -1,6 +1,6 @@
 import { desc, eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { plan } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { plan } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { getSettingsSnapshot } from "@/server/services/settings/get-settings-snapshot";
 import { DebugContent } from "./debug-content";

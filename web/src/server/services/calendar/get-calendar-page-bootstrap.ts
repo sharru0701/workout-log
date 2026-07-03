@@ -1,8 +1,8 @@
 import { cookies } from "next/headers";
 import { and, desc, eq, gte } from "drizzle-orm";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
-import { db } from "@/server/db/client";
-import { generatedSession, plan, workoutLog } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { generatedSession, plan, workoutLog } from "@workout/core/db/schema";
 
 type SerializedPlan = {
   id: string;

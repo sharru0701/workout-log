@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "@/server/db/client";
-import { appUser } from "@/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser } from "@workout/core/db/schema";
 import { hashPassword } from "@/server/auth/password";
 import {
   createSession,

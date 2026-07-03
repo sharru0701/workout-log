@@ -10,8 +10,8 @@
  */
 import { eq } from "drizzle-orm";
 import { expect, test } from "@playwright/test";
-import { db } from "../src/server/db/client";
-import { appUser } from "../src/server/db/schema";
+import { db } from "@workout/core/db/client";
+import { appUser } from "@workout/core/db/schema";
 
 test.describe("email verification resend", () => {
   test("authenticated unverified user gets ok=true", async ({ request }) => {

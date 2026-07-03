@@ -1,5 +1,5 @@
 import { asc, eq, inArray } from "drizzle-orm";
-import { db } from "@/server/db/client";
+import { db } from "@workout/core/db/client";
 import {
   exercise,
   exerciseAlias,
@@ -11,7 +11,7 @@ import {
   programVersion,
   workoutLog,
   workoutSet,
-} from "@/server/db/schema";
+} from "@workout/core/db/schema";
 
 export type UserDataExport = {
   version: 1;
