@@ -16,18 +16,18 @@ import {
 import {
   generateAndSaveSession,
   previewSessionExercises,
-} from "@/server/program-engine/generateSession";
+} from "@workout/core/program-engine/generateSession";
 import {
   readIncrementOverride,
   resolveAutoProgressionProgram,
   rulesFor,
   targetsFor,
-} from "@/server/progression/reducer";
+} from "@workout/core/progression/reducer";
 import {
   readLastTargetEvents,
   type LastTargetEvent,
-} from "@/server/progression/last-events";
-import { applyManualRuntimeAdjustment } from "@/server/progression/autoProgression";
+} from "@workout/core/progression/last-events";
+import { applyManualRuntimeAdjustment } from "@workout/core/progression/autoProgression";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { buildSessionKey } from "@workout/core/session-key";
 

@@ -2,7 +2,7 @@ import { and, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { db } from "@workout/core/db/client";
 import { workoutLog, workoutSet } from "@workout/core/db/schema";
-import { resolveExerciseByName } from "@/server/exercise/resolve";
+import { resolveExerciseByName } from "@workout/core/exercise/resolve";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 
 export const BIG_THREE_CANONICAL_NAMES = ["Back Squat", "Bench Press", "Deadlift"] as const;

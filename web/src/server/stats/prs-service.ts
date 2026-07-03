@@ -3,7 +3,7 @@ import { resolveLoggedTotalLoadKg } from "@workout/core/bodyweight-load";
 import { db } from "@workout/core/db/client";
 import { exercise, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
-import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
+import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 
 function epley1RM(weightKg: number, reps: number) {

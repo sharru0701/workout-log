@@ -6,7 +6,7 @@ import {
   plannedExercisesFromSlottedLpManualSession,
   resolveManualEntry,
 } from "./generateSession";
-import { resolveAutoProgressionProgram } from "@/server/progression/reducer";
+import { resolveAutoProgressionProgram } from "../progression/reducer";
 import {
   inferSessionDraftsFromTemplate,
   toManualDefinition,

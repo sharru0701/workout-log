@@ -9,7 +9,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/session-key.test.ts src/bodyweight-load.test.ts src/workout-notation/format.test.ts src/muscle-groups/category-to-muscle.test.ts src/strength-engine/target-mapping.test.ts src/program-store/model.test.ts src/auth/password.test.ts src/auth/token.test.ts src/auth/rate-limit.test.ts src/auth/session-policy.test.ts src/fixtures.test.ts"
+    "test": "DATABASE_URL=\"${DATABASE_URL:-postgres://test:test@127.0.0.1:5432/test}\" tsx --test $(find src -name '*.test.ts' | sort)"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

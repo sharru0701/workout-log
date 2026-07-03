@@ -3,7 +3,7 @@ import { mapExerciseNameToTarget as mapExerciseToTarget } from "@workout/core/st
 import {
   ASYMPTOTE_AMRAP_TARGETS_BY_SESSION,
   deriveAsymptoteAuxTms,
-} from "@/server/program-engine/asymptote";
+} from "../program-engine/asymptote";
 
 export type ProgressionProgram =
   | "operator"

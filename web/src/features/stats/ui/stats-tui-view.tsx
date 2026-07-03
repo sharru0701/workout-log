@@ -18,7 +18,7 @@ import type { AsymptoteMonitorResult } from "@/server/stats/asymptote-monitor-se
 import type {
   DriverKey,
   DriverTrendDirection,
-} from "@/server/program-engine/asymptote-monitor";
+} from "@workout/core/program-engine/asymptote-monitor";
 
 // terminal(ironlog) stats 뷰 — paper StatsScreen/Stats1RMDetailed의 terminal 대응(P2-b).
 // useStats1RMController(presentation-agnostic) + Stats1RMOverlaySheets(시트)를 그대로

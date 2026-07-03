@@ -13,7 +13,7 @@ import {
   type DriverKey,
   type DriverTrendDirection,
   type LoggedSetRow,
-} from "@/server/program-engine/asymptote-monitor";
+} from "@workout/core/program-engine/asymptote-monitor";
 
 export type AsymptoteMonitorDriver = {
   target: DriverKey;
