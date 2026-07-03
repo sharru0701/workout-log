@@ -8,7 +8,7 @@ import {
   workoutLog,
   workoutSet,
 } from "@workout/core/db/schema";
-import { generateAndSaveSession } from "@/server/program-engine/generateSession";
+import { generateAndSaveSession } from "@workout/core/program-engine/generateSession";
 import { getStatsCache, setStatsCache } from "@/server/stats/cache";
 import {
   fetchEnduranceStats,

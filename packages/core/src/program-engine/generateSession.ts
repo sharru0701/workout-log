@@ -11,7 +11,7 @@ import {
   programVersion,
   workoutLog,
 } from "@workout/core/db/schema";
-import { extractTrainingMaxOverridesFromState, extractStageOverridesFromState } from "@/server/progression/reducer";
+import { extractTrainingMaxOverridesFromState, extractStageOverridesFromState } from "../progression/reducer";
 import {
   ASYMPTOTE_CYCLE_COEF,
   ASYMPTOTE_LIGHT_CYCLE_COEF,

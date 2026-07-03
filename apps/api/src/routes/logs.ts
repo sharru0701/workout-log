@@ -24,8 +24,8 @@ import {
 import {
   buildProgressionSummary,
   readProgressEventByLog,
-} from "@/server/progression/summary";
-import { rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
+} from "@workout/core/progression/progress-events";
+import { rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 import { upsertWorkoutLogService } from "@/server/services/workout-log/upsert-log";
 import { getSettingsSnapshotForUser } from "@/server/services/settings/get-settings-snapshot";

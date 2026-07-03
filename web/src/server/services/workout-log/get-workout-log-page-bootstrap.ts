@@ -4,7 +4,7 @@ import { db } from "@workout/core/db/client";
 import { plan, userSetting, workoutLog } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { generateAndSaveSession } from "@/server/program-engine/generateSession";
+import { generateAndSaveSession } from "@workout/core/program-engine/generateSession";
 import { loadWorkoutContextServer } from "./load-workout-log-context";
 import type {
   WorkoutRecordDraft,

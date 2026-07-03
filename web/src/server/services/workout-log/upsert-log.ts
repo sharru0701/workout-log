@@ -1,10 +1,10 @@
 import { db } from "@workout/core/db/client";
 import { plan, generatedSession, workoutLog, workoutSet } from "@workout/core/db/schema";
 import { and, eq, gt, lt, ne } from "drizzle-orm";
-import { getExerciseById, resolveExerciseByName } from "@/server/exercise/resolve";
-import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@/server/progression/autoProgression";
-import type { ProgressionTargetDecision } from "@/server/progression/autoProgression";
-import { buildProgressionSummary, readProgressEventByLog } from "@/server/progression/summary";
+import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/resolve";
+import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
+import type { ProgressionTargetDecision } from "@workout/core/progression/autoProgression";
+import { buildProgressionSummary, readProgressEventByLog } from "@workout/core/progression/progress-events";
 import { invalidateStatsCacheForUser } from "@/server/stats/cache";
 
 

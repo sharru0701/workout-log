@@ -4,7 +4,7 @@ import {
   resolveManualEntry,
   applyManualRuntimeWeightOverrides,
 } from "./generateSession";
-import { resolveAutoProgressionProgram } from "@/server/progression/reducer";
+import { resolveAutoProgressionProgram } from "../progression/reducer";
 
 // uniform LP(greyskull/SS/SL) 커스터마이즈 보존의 핵심:
 // fork는 새 slug를 받지만 programFamily가 박혀 있어, slug가 아니라 family로 무게 override가 적용된다.

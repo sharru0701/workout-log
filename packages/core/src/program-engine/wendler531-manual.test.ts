@@ -4,7 +4,7 @@ import {
   plannedExercisesFrom531ManualSession,
   resolveManualEntry,
 } from "./generateSession";
-import { resolveAutoProgressionProgram } from "@/server/progression/reducer";
+import { resolveAutoProgressionProgram } from "../progression/reducer";
 
 // 531 슬롯형 커스터마이즈 — 운동명을 바꿔도 슬롯(메인/FSL/BBB)의 주차 흐름이 그대로 적용되고,
 // 무게가 원본 generate531과 일치하는지 검증한다.
