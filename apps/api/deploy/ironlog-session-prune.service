@@ -1,0 +1,24 @@
+# systemd oneshot: 만료된 auth_session 행 삭제 (ironlog-session-prune.timer가 매일 호출).
+# apps/api의 POST /api/ops/sessions/prune을 WORKOUT_OPS_TOKEN(Bearer)으로 때린다 —
+# 별도 DB 접속 없이 API의 fail-closed ops 게이트를 재사용.
+# Install: ironlog-api.service와 같은 방식으로 경로/User를 환경에 맞게 수정 후
+#   sudo cp ironlog-session-prune.{service,timer} /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now ironlog-session-prune.timer
+# Check:  systemctl list-timers ironlog-session-prune.timer
+# Logs:   journalctl -u ironlog-session-prune  (응답 JSON {deleted:N}이 stdout으로 남는다)
+
+[Unit]
+Description=ironlog-api expired session prune (POST /api/ops/sessions/prune)
+# API가 떠 있어야 의미 있다. Requisite: API inactive면 시작하지 않고 실패로 남겨
+# (systemctl --failed로 보이게) 다음 날 타이머가 재시도한다.
+After=ironlog-api.service
+Requisite=ironlog-api.service
+
+[Service]
+Type=oneshot
+# ironlog-api.service와 동일하게 맞출 것:
+User=ironlog
+# API env를 재사용해 WORKOUT_OPS_TOKEN을 읽는다(ops Bearer secret).
+EnvironmentFile=/opt/workout-log/apps/api/.env
+# curl -f: 401/5xx 등 비2xx면 exit 22 → 유닛 실패로 기록.
+ExecStart=/usr/bin/curl -fsS -m 30 -X POST -H "Authorization: Bearer ${WORKOUT_OPS_TOKEN}" http://127.0.0.1:8787/api/ops/sessions/prune

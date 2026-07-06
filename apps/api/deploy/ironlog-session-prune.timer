@@ -1,0 +1,15 @@
+# 만료 세션 prune 스케줄 — ironlog-session-prune.service를 매일 1회 실행.
+# Install: ironlog-session-prune.service 헤더 참고.
+
+[Unit]
+Description=Daily expired-session prune for ironlog-api
+
+[Timer]
+# 서버 로컬 시각 04:30 (lightsail VPS는 Asia/Seoul) — 저트래픽 시간대.
+OnCalendar=*-*-* 04:30:00
+# 예정 시각에 서버가 꺼져 있었으면 다음 부팅 때 보충 실행.
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target
