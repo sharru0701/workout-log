@@ -1,0 +1,2 @@
+CREATE INDEX IF NOT EXISTS "plan_progress_event_log_idx" ON "dev"."plan_progress_event" USING btree ("log_id");--> statement-breakpoint
+CREATE INDEX IF NOT EXISTS "workout_log_user_plan_performed_idx" ON "dev"."workout_log" USING btree ("user_id","plan_id","performed_at");
