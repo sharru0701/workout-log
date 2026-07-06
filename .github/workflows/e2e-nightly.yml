@@ -55,15 +55,39 @@ jobs:
           WORKOUT_AUTH_USER_ID: ci-user
         run: pnpm db:seed
 
+      # 데이터 라우트는 web이 apps/api로 프록시하므로(catch-all route.ts) 백엔드가
+      # 없으면 data-export-import·workout-log-rpe 등 실계정(signup 쿠키) 스펙이
+      # 구조적으로 실패한다. 같은 CI postgres를 보는 apps/api를 동반 기동한다.
+      - name: Start apps/api (proxy backend)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          PORT: "8787"
+        run: |
+          nohup node node_modules/.bin/tsx src/index.ts > /tmp/apps-api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health > /dev/null 2>&1; then
+              echo "apps/api up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "apps/api failed to start"; cat /tmp/apps-api.log; exit 1
+
       - name: Run full E2E suite
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
           WORKOUT_AUTH_USER_ID: ci-user
+          APPS_API_BASE: http://127.0.0.1:8787
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           NEXT_TELEMETRY_DISABLED: "1"
           PLAYWRIGHT_SERVER_MODE: dev
           CI: "true"
         run: pnpm exec playwright test --project chromium
+
+      - name: Dump apps/api log
+        if: ${{ always() }}
+        working-directory: .
+        run: tail -100 /tmp/apps-api.log || true
 
       - name: Upload Playwright artifacts
         if: ${{ always() }}
