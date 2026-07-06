@@ -9,7 +9,7 @@ import {
   mergeRowSubtitle,
 } from "@/components/v2/settings/section";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
-import { formatCopy } from "@/lib/i18n/messages";
+import { formatCopy } from "@/lib/i18n/format";
 import { useLocale } from "@/components/locale-provider";
 import { NoticeStateRows } from "@/components/ui/settings-state";
 import { V2SecondaryBtn } from "@/components/v2/primitives";
