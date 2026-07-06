@@ -8,6 +8,13 @@
       "when": 1780978776556,
       "tag": "0000_rare_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1783303217126,
+      "tag": "0001_perf_plan_scoped_indexes",
+      "breakpoints": true
     }
   ]
 }
