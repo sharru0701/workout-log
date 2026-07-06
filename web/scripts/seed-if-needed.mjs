@@ -28,7 +28,8 @@ function toShortHash(value) {
 }
 
 function parseTrackedFiles(raw) {
-  const values = (raw ?? "src/server/db/seed.ts")
+  // seed 본체는 packages/core로 이동(#499) — web cwd 기준 상대 경로로 추적한다.
+  const values = (raw ?? "../packages/core/src/db/seed.ts")
     .split(/[\n,]/)
     .map((value) => value.trim())
     .filter(Boolean);
@@ -204,9 +205,11 @@ async function releaseAdvisoryLock(client, lockHeld) {
 }
 
 async function runSeedScript() {
-  // Prefer pre-compiled JS if a build step produced it; otherwise run seed.ts via tsx.
+  // Prefer pre-compiled JS if a build step produced it; otherwise run the seed
+  // CLI entry via tsx. 본체(seed.ts)는 @workout/core로 이동 — 실행 진입점은 web의
+  // seed-runner.ts(package.json db:seed와 동일 경로)로 일원화됐다.
   const compiledPath = path.resolve(process.cwd(), "scripts/seed-compiled.cjs");
-  const seedScriptPath = path.resolve(process.cwd(), "src/server/db/seed.ts");
+  const seedScriptPath = path.resolve(process.cwd(), "src/server/db/seed-runner.ts");
 
   let scriptArgs;
   if (existsSync(compiledPath)) {
