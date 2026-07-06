@@ -86,6 +86,8 @@ jobs:
           # prod 빌드는 세션 쿠키를 Secure로 굽는데 CI는 http://127.0.0.1 구동이라
           # 쿠키가 저장되지 않아 실계정 스펙 전부 401 → CI 한정 옵트아웃(session-cookie.ts).
           WORKOUT_ALLOW_INSECURE_COOKIES: "1"
+          # 실계정 스펙 25+개가 한 러너 IP에서 signup → 5/hr 한도 429. CI 한정 해제.
+          WORKOUT_DISABLE_RATE_LIMIT: "1"
           CI: "true"
         run: pnpm exec playwright test --project chromium
 
