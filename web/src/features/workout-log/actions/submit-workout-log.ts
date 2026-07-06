@@ -1,3 +1,4 @@
+import { errorMessage } from "@/lib/error-message";
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -31,11 +32,11 @@ export async function submitWorkoutLogAction(
       success: true,
       data: result,
     };
-  } catch (error: any) {
+  } catch (error) {
     logError("action.submit_workout_log_error", { error });
     return {
       success: false,
-      error: error?.message ?? "Failed to save the workout log.",
+      error: errorMessage(error) ?? "Failed to save the workout log.",
     };
   }
 }
