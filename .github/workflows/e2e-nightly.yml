@@ -64,7 +64,7 @@ jobs:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
           PORT: "8787"
         run: |
-          nohup node node_modules/.bin/tsx src/index.ts > /tmp/apps-api.log 2>&1 &
+          nohup node_modules/.bin/tsx src/index.ts > /tmp/apps-api.log 2>&1 &
           for i in $(seq 1 30); do
             if curl -fsS http://127.0.0.1:8787/health > /dev/null 2>&1; then
               echo "apps/api up"; exit 0
