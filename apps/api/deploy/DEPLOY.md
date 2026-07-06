@@ -122,10 +122,30 @@ sudo install -m 755 apps/api/deploy/ilapi /usr/local/bin/ilapi
 | `ilapi logs` \| `tail [N]` \| `errors [since]` | journalctl follow / 최근 N줄 / 경고+에러만 |
 | `ilapi restart` \| `start` \| `stop` | 서비스 제어 |
 | `ilapi cutover {local\|prod}` | ironlog 접속 서버 전환(local=apps/api, prod=프로덕션 Vercel) + tmux 재시작 |
+| `ilapi prune` | 만료 세션 수동 prune — dry-run 카운트 → 삭제 → 타이머 상태 |
 
 **수동(ilapi 없이)**: `cd <repo> && git pull && pnpm install && sudo systemctl restart ironlog-api`.
 롤백은 `git checkout <태그/커밋>` 후 동일. Docker는 `git pull && docker compose -f apps/api/deploy/compose.yaml up -d --build`.
 (DB 마이그레이션은 web 쪽에서 관리 — 하위호환 유지 시 백엔드만 롤백 안전.)
+
+## 5.5 만료 세션 자동 prune (systemd timer)
+
+sliding 만료(#495)로 세션이 연장되지만, 만료된 `auth_session` 행은 스스로 지워지지 않는다 —
+`ironlog-session-prune.timer`가 매일 04:30(서버 로컬)에 `POST /api/ops/sessions/prune`을 호출해 정리한다.
+토큰은 API와 같은 `.env`의 `WORKOUT_OPS_TOKEN`을 재사용(별도 시크릿 없음).
+
+```bash
+# 유닛 안 User/EnvironmentFile 경로를 ironlog-api.service와 동일하게 수정한 뒤:
+sudo cp apps/api/deploy/ironlog-session-prune.{service,timer} /etc/systemd/system/
+sudo systemctl daemon-reload && sudo systemctl enable --now ironlog-session-prune.timer
+
+# 확인
+systemctl list-timers ironlog-session-prune.timer   # 다음 실행 시각
+sudo systemctl start ironlog-session-prune.service  # 즉시 1회 실행(검증)
+journalctl -u ironlog-session-prune -n 5            # 응답 JSON {deleted:N}
+```
+
+실패 시(비2xx → curl exit 22) 유닛이 failed로 남아 `systemctl --failed`로 보이고, 다음 날 타이머가 재시도한다.
 
 ## 6. 관측성(권장, 선택)
 

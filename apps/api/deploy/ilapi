@@ -86,6 +86,16 @@ case "$cmd" in
     ironlog_restart
     ;;
   ironlog-restart) ironlog_restart ;;
+  prune)
+    # 만료 세션 수동 prune(dry-run 카운트 → 삭제). 평시엔 ironlog-session-prune.timer가 매일 04:30 실행.
+    tok=$(sed -n 's/^WORKOUT_OPS_TOKEN=//p' "$REPO/apps/api/.env" | tr -d '"' | head -1)
+    [ -n "$tok" ] || { err "WORKOUT_OPS_TOKEN 없음 ($REPO/apps/api/.env)"; exit 1; }
+    info "만료 세션 카운트 (dry-run)"
+    curl -fsS -m 30 -H "Authorization: Bearer $tok" "$LOCAL/api/ops/sessions/prune"; echo
+    info "prune 실행"
+    curl -fsS -m 30 -X POST -H "Authorization: Bearer $tok" "$LOCAL/api/ops/sessions/prune"; echo
+    systemctl list-timers ironlog-session-prune.timer --no-pager 2>/dev/null | head -2 || true
+    ;;
   *)
     cat <<USAGE
 ilapi — ironlog-api 운영 CLI
@@ -98,6 +108,7 @@ ilapi — ironlog-api 운영 CLI
   errors [since]      경고+에러만 (기본 '1 day ago')
   cutover {local|prod}  ironlog 접속 서버 전환 + tmux 재시작
   ironlog-restart     ironlog tmux 세션만 재시작
+  prune               만료 세션 수동 prune (dry-run 카운트 → 삭제 → 타이머 상태)
 USAGE
     ;;
 esac
