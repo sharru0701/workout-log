@@ -159,14 +159,15 @@ type Frame struct {
 	activePlanName string
 }
 
-// NewFrame builds the frame booted into the today (workout) buffer.
-func NewFrame(client *api.Client) Frame {
+// NewFrame builds the frame booted into the today (workout) buffer. drafts
+// enables the today buffer's crash-recovery persistence (nil = disabled).
+func NewFrame(client *api.Client, drafts draftStore) Frame {
 	return Frame{
 		client: client,
 		now:    time.Now(),
 		active: vToday,
 		views: map[ViewKind]Screen{
-			vToday:     NewLog(client),
+			vToday:     NewLog(client).withDrafts(drafts),
 			vStats:     NewStats(client),
 			vHistory:   NewHistory(client),
 			vPrograms:  NewPrograms(client),

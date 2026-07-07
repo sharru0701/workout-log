@@ -77,7 +77,7 @@ func NewApp(cfg config.Config, client *api.Client) App {
 		cfg:    cfg,
 		client: client,
 		login:  NewLogin(client),
-		frame:  NewFrame(client),
+		frame:  NewFrame(client, cfg),
 	}
 	if tok := cfg.SessionToken(); tok != "" {
 		client.SetSessionToken(tok)

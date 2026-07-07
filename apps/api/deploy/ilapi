@@ -28,7 +28,22 @@ install_deps(){ # 워크스페이스 루트 install 한 번(web·apps/api·packa
   [ -x "$REPO/apps/api/node_modules/.bin/tsx" ] || { err "workspace install 실패 (apps/api tsx 없음)"; exit 1; }
 }
 
-ironlog_restart(){
+# ironlog tmux는 사용자가 폰으로 상시 쓰는 프로덕션 클라이언트다. 재시작은 미저장
+# 세트를 날릴 수 있으므로(2026-07-06 기록 유실 사고) 사용 흔적이 보이면 거부한다.
+# 릴리스/배포 검증은 이 세션을 건드리지 말고 별도 세션에서:
+#   tmux new -d -s ironlog-verify "$IRONLOG"
+ironlog_restart(){ # $1: --force 로 가드 생략(사용자 확인 후에만)
+  if [ "${1:-}" != "--force" ] && tmux has-session -t ironlog 2>/dev/null; then
+    local clients pane
+    clients=$(tmux list-clients -t ironlog 2>/dev/null | wc -l)
+    pane=$(tmux capture-pane -t ironlog -p 2>/dev/null || true)
+    # 완료 세트가 있으면 상태줄 우측에 "N set(s)"가 뜬다(미저장 진행 중 신호).
+    if [ "$clients" -gt 0 ] || printf '%s' "$pane" | grep -qE '[0-9]+ sets? '; then
+      err "ironlog 세션 사용 중 신호 감지 (attach ${clients}건, 완료 세트 표시 여부는 pane 확인)"
+      err "운동 중 재시작은 미저장 기록을 날린다 — 사용자 확인 후: ilapi ironlog-restart --force"
+      exit 1
+    fi
+  fi
   tmux kill-session -t ironlog 2>/dev/null || true
   tmux new -d -s ironlog "$IRONLOG"
   sleep 2
@@ -81,11 +96,11 @@ case "$cmd" in
     case "${2:-}" in
       local) "$IRONLOG" --set-server "$LOCAL" >/dev/null; ok "ironlog 대상 → apps/api (local)";;
       prod)  rm -f ~/.config/ironlog/base_url;            ok "ironlog 대상 → 기본(프로덕션 Vercel)";;
-      *) err "usage: ilapi cutover {local|prod}"; exit 1;;
+      *) err "usage: ilapi cutover {local|prod} [--force]"; exit 1;;
     esac
-    ironlog_restart
+    ironlog_restart "${3:-}"
     ;;
-  ironlog-restart) ironlog_restart ;;
+  ironlog-restart) ironlog_restart "${2:-}" ;;
   prune)
     # 만료 세션 수동 prune(dry-run 카운트 → 삭제). 평시엔 ironlog-session-prune.timer가 매일 04:30 실행.
     tok=$(sed -n 's/^WORKOUT_OPS_TOKEN=//p' "$REPO/apps/api/.env" | tr -d '"' | head -1)
@@ -106,8 +121,10 @@ ilapi — ironlog-api 운영 CLI
   logs                실시간 로그 (journalctl -f)
   tail [N]            최근 N줄 로그 (기본 80)
   errors [since]      경고+에러만 (기본 '1 day ago')
-  cutover {local|prod}  ironlog 접속 서버 전환 + tmux 재시작
-  ironlog-restart     ironlog tmux 세션만 재시작
+  cutover {local|prod} [--force]  ironlog 접속 서버 전환 + tmux 재시작
+  ironlog-restart [--force]       ironlog tmux 세션만 재시작
+                      ⚠ 사용 중 신호(attach/완료 세트)가 있으면 거부 — 사용자 확인 후 --force.
+                        검증은 별도 세션에서: tmux new -d -s ironlog-verify \$IRONLOG
   prune               만료 세션 수동 prune (dry-run 카운트 → 삭제 → 타이머 상태)
 USAGE
     ;;
