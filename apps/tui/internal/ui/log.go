@@ -257,8 +257,10 @@ func parseAccessorySets(spec string) []api.OverrideSet {
 // autoloadCmd boots today's buffer: resolve the active plan and generate its
 // session, mirroring the web bootstrap so today is never a blank canvas. With
 // no active plan it returns noPlan so the buffer prompts for a program instead.
-func autoloadCmd(c *api.Client) tea.Cmd {
+// A crash-recovery draft from today takes precedence per classifyBootDraft.
+func autoloadCmd(c *api.Client, drafts draftStore) tea.Cmd {
 	return func() tea.Msg {
+		draft, hasDraft := loadTodayDraft(drafts, time.Now())
 		// Resolve plans up front so both branches can name the session: the
 		// restore branch maps a log's planId → name, the generate branch picks
 		// the active plan.
@@ -268,13 +270,29 @@ func autoloadCmd(c *api.Client) tea.Cmd {
 		// on each log's local date instead of a server date= query, so the day
 		// boundary follows the user's timezone rather than the server's UTC
 		// interpretation (an evening log won't slip to "yesterday").
-		if logs, err := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 5}); err == nil {
+		logs, logsErr := c.ListLogs(context.Background(), api.ListLogsParams{Limit: 5})
+		var todayLog *api.LogItem
+		if logsErr == nil {
 			if lg, ok := todaysLog(logs, time.Now()); ok {
-				return editLogMsg{
-					id: lg.ID, performedAt: lg.PerformedAt, sets: lg.Sets,
-					planName: planNameByID(plans, lg.PlanID), sessionKey: sessionKeyOf(lg),
-					planID: strOr(lg.PlanID), bodyweight: fetchBodyweight(c),
-				}
+				todayLog = &lg
+			}
+		}
+		switch classifyBootDraft(hasDraft, draft.EditID, todayLog, logsErr == nil) {
+		case draftRestore:
+			return draftRestoredMsg{draft: draft}
+		case draftRestoreAsNew:
+			draft.EditID = ""
+			return draftRestoredMsg{draft: draft}
+		case draftDrop:
+			if drafts != nil {
+				_ = drafts.ClearDraft()
+			}
+		}
+		if todayLog != nil {
+			return editLogMsg{
+				id: todayLog.ID, performedAt: todayLog.PerformedAt, sets: todayLog.Sets,
+				planName: planNameByID(plans, todayLog.PlanID), sessionKey: sessionKeyOf(*todayLog),
+				planID: strOr(todayLog.PlanID), bodyweight: fetchBodyweight(c),
 			}
 		}
 		if plansErr != nil {
@@ -361,6 +379,7 @@ func buildPrevMap(logs []api.LogItem) map[string]string {
 // edit inline in INSERT. `e` starts a new exercise.
 type Log struct {
 	client      *api.Client
+	drafts      draftStore // crash-recovery persistence for unsaved sets (nil = off)
 	groups      []exGroup
 	gi, si      int // active group / set index
 	col         logCol
@@ -388,8 +407,15 @@ type Log struct {
 // session" rather than the empty-canvas hint while autoloadCmd runs.
 func NewLog(client *api.Client) Log { return Log{client: client, load: loadPending} }
 
+// withDrafts enables crash-recovery draft persistence (frame wiring; tests use
+// the zero value = disabled).
+func (l Log) withDrafts(d draftStore) Log {
+	l.drafts = d
+	return l
+}
+
 func (l Log) Editing() bool { return l.editing }
-func (l Log) Init() tea.Cmd { return autoloadCmd(l.client) }
+func (l Log) Init() tea.Cmd { return autoloadCmd(l.client, l.drafts) }
 
 func (l Log) Mode() Mode {
 	switch {
@@ -481,9 +507,13 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		l.performedAt = m.performedAt
 		l.load, l.undo = loadIdle, nil
+		l.clearDraft() // 서버 상태 == 버퍼 — draft는 역할 종료
 		return l, nil
 	case editLogMsg:
 		l.loadForEdit(m)
+		return l, nil
+	case draftRestoredMsg:
+		l.loadFromDraft(m.draft)
 		return l, nil
 	case pickedMsg:
 		switch m.tag {
@@ -491,6 +521,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			if strings.TrimSpace(m.value) != "" {
 				l.groups = append(l.groups, exGroup{name: m.value, sets: []setEntry{{}}})
 				l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
+				l.persistDraft()
 				return l.beginEdit(editCell)
 			}
 		case "accessory":
@@ -719,6 +750,7 @@ func (l Log) addSet() (Log, tea.Cmd) {
 	ns = append(ns, sets[at:]...)
 	l.groups[l.gi].sets = ns
 	l.si, l.col = at, colWeight
+	l.persistDraft()
 	return l, nil
 }
 
@@ -736,6 +768,7 @@ func (l Log) deleteSet() (Log, tea.Cmd) {
 			l.gi = 0
 		}
 		l.si = 0
+		l.persistDraft()
 		return l, nil
 	}
 	sets := l.groups[l.gi].sets
@@ -743,6 +776,7 @@ func (l Log) deleteSet() (Log, tea.Cmd) {
 	if l.si >= len(l.groups[l.gi].sets) {
 		l.si = len(l.groups[l.gi].sets) - 1
 	}
+	l.persistDraft()
 	return l, nil
 }
 
@@ -754,6 +788,7 @@ func (l Log) undoDelete() (Log, tea.Cmd) {
 	l.groups, l.gi, l.si, l.col = l.undo.groups, l.undo.gi, l.undo.si, colWeight
 	l.undo = nil
 	l.status, l.statusErr = theme.GlyphDone+" 삭제 되돌림", false
+	l.persistDraft()
 	return l, nil
 }
 
@@ -764,6 +799,7 @@ func (l Log) toggleDone() (Log, tea.Cmd) {
 	s := &l.groups[l.gi].sets[l.si]
 	if s.done {
 		s.done = false
+		l.persistDraft()
 		return l, nil
 	}
 	if strings.TrimSpace(l.groups[l.gi].name) == "" || !validNum(s.weight) || !validInt(s.reps) {
@@ -773,6 +809,7 @@ func (l Log) toggleDone() (Log, tea.Cmd) {
 	s.done = true
 	l.status, l.statusErr = "", false
 	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
+	l.persistDraft()
 	return l, nil
 }
 
@@ -785,6 +822,7 @@ func (l Log) completeSet() (Log, tea.Cmd) {
 	l.groups[l.gi].sets[l.si].done = true
 	l.status, l.statusErr = "", false
 	l.rest = restState{active: true, remaining: defaultRestSeconds, total: defaultRestSeconds}
+	l.persistDraft()
 	// 세트 추가는 addSet("o")로만 — reps 엔터는 현재 세트 완료까지만 하고
 	// 빈 세트를 자동으로 덧붙이지 않는다.
 	return l, nil
@@ -906,6 +944,7 @@ func (l *Log) writeEdit() {
 			l.groups[l.gi].sets[l.si].rpe = v
 		}
 	}
+	l.persistDraft()
 }
 
 // loadSnapshot replaces today's groups with a plan's generated session,

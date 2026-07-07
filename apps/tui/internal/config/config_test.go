@@ -41,3 +41,35 @@ func TestSaveBaseURL(t *testing.T) {
 		t.Errorf("clearing absent file should not error: %v", err)
 	}
 }
+
+func TestDraftRoundTrip(t *testing.T) {
+	c := Config{dir: t.TempDir()}
+
+	// absent draft is (nil, nil), and clearing it is not an error
+	if b, err := c.LoadDraft(); b != nil || err != nil {
+		t.Fatalf("LoadDraft(absent) = %v, %v; want nil, nil", b, err)
+	}
+	if err := c.ClearDraft(); err != nil {
+		t.Fatalf("ClearDraft(absent): %v", err)
+	}
+
+	want := []byte(`{"date":"2026-07-06"}`)
+	if err := c.SaveDraft(want); err != nil {
+		t.Fatalf("SaveDraft: %v", err)
+	}
+	got, err := c.LoadDraft()
+	if err != nil || string(got) != string(want) {
+		t.Fatalf("LoadDraft = %q, %v; want %q", got, err, want)
+	}
+	// atomic write leaves no tmp file behind
+	if _, err := os.Stat(filepath.Join(c.dir, draftFile+".tmp")); !os.IsNotExist(err) {
+		t.Error("SaveDraft must not leave a .tmp file")
+	}
+
+	if err := c.ClearDraft(); err != nil {
+		t.Fatalf("ClearDraft: %v", err)
+	}
+	if b, _ := c.LoadDraft(); b != nil {
+		t.Error("draft should be gone after ClearDraft")
+	}
+}

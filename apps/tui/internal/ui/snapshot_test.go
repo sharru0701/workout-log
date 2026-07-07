@@ -35,7 +35,7 @@ func TestSnapshot(t *testing.T) {
 	case "today", "log":
 		frame = ansi.Strip(renderTodayScenario(w, h))
 	case "today-long":
-		f := NewFrame(nil)
+		f := NewFrame(nil, nil)
 		f.views[vToday] = sampleLongLog()
 		nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
 		frame = ansi.Strip(nf.(Frame).View().Content)
@@ -72,7 +72,7 @@ func TestSnapshot(t *testing.T) {
 }
 
 func sampleTodayFrame() Frame {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	l := f.views[vToday].(Log)
 	l.groups = []exGroup{
 		{name: "Squat", prev: "100×5", tgt: "102.5", sets: []setEntry{
@@ -130,7 +130,7 @@ func sampleStats() Stats {
 }
 
 func renderStatsScenario(w, h int, braille bool) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	st := sampleStats()
 	st.braille = braille
 	f.views[vStats] = st
@@ -140,7 +140,7 @@ func renderStatsScenario(w, h int, braille bool) string {
 }
 
 func renderHistoryScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	hi := NewHistory(nil)
 	hi.loaded = true
 	now := time.Now()
@@ -158,7 +158,7 @@ func renderHistoryScenario(w, h int) string {
 }
 
 func renderProgramsScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	pr := NewPrograms(nil)
 	pr.loaded = true
 	pr.plans = []api.Plan{
@@ -174,7 +174,7 @@ func renderProgramsScenario(w, h int) string {
 }
 
 func renderTodayBwScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	l := f.views[vToday].(Log)
 	l.load = loadIdle
 	l.bodyweight = 74
@@ -196,7 +196,7 @@ func renderTodayBwScenario(w, h int) string {
 }
 
 func renderProgramsEmptyScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	pr := NewPrograms(nil)
 	pr.loaded = true
 	pr.plans = nil
@@ -207,7 +207,7 @@ func renderProgramsEmptyScenario(w, h int) string {
 }
 
 func renderStoreScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.active = vPrograms
 	names := []string{
 		"Asymptote Protocol (Base)", "Greyskull LP (Base)", "GZCLP (Base T1/T2/T3)",
@@ -227,7 +227,7 @@ func renderStoreScenario(w, h int) string {
 }
 
 func renderExercisesScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.views[vExercises] = sampleExercises()
 	f.active = vExercises
 	nf, _ := f.Update(tea.WindowSizeMsg{Width: w, Height: h})
@@ -235,7 +235,7 @@ func renderExercisesScenario(w, h int) string {
 }
 
 func renderSettingsScenario(w, h int) string {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	st := NewSettings(nil)
 	st.loaded = true
 	st.values = map[string]json.RawMessage{

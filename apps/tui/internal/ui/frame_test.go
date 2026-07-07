@@ -14,7 +14,7 @@ func renderFrame(f Frame, w, h int) string {
 }
 
 func TestFrameBootsToday(t *testing.T) {
-	out := renderFrame(NewFrame(nil), 60, 20)
+	out := renderFrame(NewFrame(nil, nil), 60, 20)
 	// boots into the today buffer auto-loading today's session: LOADING mode +
 	// the loading line + statusline (buffer name) + hint globals
 	for _, want := range []string{"운동", "LOADING", "불러오는 중", "today", "space", "이동"} {
@@ -25,7 +25,7 @@ func TestFrameBootsToday(t *testing.T) {
 }
 
 func TestFrameGotoMenu(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.overlay = overlayGoto
 	out := renderFrame(f, 60, 20)
 	for _, want := range []string{"이동", "stats", "history", "programs", "settings"} {
@@ -36,30 +36,30 @@ func TestFrameGotoMenu(t *testing.T) {
 }
 
 func TestFrameRunCommand(t *testing.T) {
-	m, _ := NewFrame(nil).runCommand("stats")
+	m, _ := NewFrame(nil, nil).runCommand("stats")
 	if m.(Frame).active != vStats {
 		t.Errorf("expected switch to stats, got active=%d", m.(Frame).active)
 	}
-	m2, _ := NewFrame(nil).runCommand("zzz")
+	m2, _ := NewFrame(nil, nil).runCommand("zzz")
 	if m2.(Frame).flash == "" {
 		t.Error("expected a flash message on an unknown command")
 	}
 }
 
 func TestFrameQuitCommand(t *testing.T) {
-	if _, cmd := NewFrame(nil).runCommand("q"); cmd == nil {
+	if _, cmd := NewFrame(nil, nil).runCommand("q"); cmd == nil {
 		t.Error("expected :q to return a quit command")
 	}
 }
 
 func TestFrameLogoutCommand(t *testing.T) {
-	if _, cmd := NewFrame(nil).runCommand("logout"); cmd == nil {
+	if _, cmd := NewFrame(nil, nil).runCommand("logout"); cmd == nil {
 		t.Error("expected :logout to return a command")
 	}
 }
 
 func TestFramePickerFilter(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.picker = newPicker(":", "", commandItems())
 	f.overlay = overlayPicker
 	f.picker.input.SetValue("st")
@@ -78,7 +78,7 @@ func TestFramePickerFilter(t *testing.T) {
 }
 
 func TestFrameOpenPicker(t *testing.T) {
-	m, _ := NewFrame(nil).Update(openPickerMsg{prompt: "운동 ", tag: "exercise", items: []pickerItem{{label: "Squat", value: "Squat"}}})
+	m, _ := NewFrame(nil, nil).Update(openPickerMsg{prompt: "운동 ", tag: "exercise", items: []pickerItem{{label: "Squat", value: "Squat"}}})
 	f := m.(Frame)
 	if f.overlay != overlayPicker {
 		t.Error("expected the picker overlay to open")
@@ -89,7 +89,7 @@ func TestFrameOpenPicker(t *testing.T) {
 }
 
 func TestFrameHelp(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.overlay = overlayHelp
 	out := renderFrame(f, 60, 36)
 	// every buffer's keymap + the common ("어디서나") layer is documented
@@ -101,7 +101,7 @@ func TestFrameHelp(t *testing.T) {
 }
 
 func TestFrameHelpContextFirst(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.active = vStats
 	f.overlay = overlayHelp
 	out := renderFrame(f, 60, 36)
@@ -117,7 +117,7 @@ func TestFrameHelpContextFirst(t *testing.T) {
 func TestFrameGlobalHintsShowKeymapEntry(t *testing.T) {
 	// the ? keymap entry is always in the bottom global hints, so the full
 	// keymap is discoverable without already knowing the key
-	out := renderFrame(NewFrame(nil), 60, 20)
+	out := renderFrame(NewFrame(nil, nil), 60, 20)
 	if !strings.Contains(out, "키맵") {
 		t.Errorf("global hints should surface the ? 키맵 entry:\n%s", out)
 	}

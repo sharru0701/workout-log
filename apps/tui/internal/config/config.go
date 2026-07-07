@@ -12,6 +12,7 @@ const (
 	appDir      = "ironlog"
 	sessionFile = "session"
 	baseURLFile = "base_url"
+	draftFile   = "draft.json"
 	envBaseURL  = "IRONLOG_API_URL"
 )
 
@@ -83,6 +84,37 @@ func (c Config) SaveSessionToken(tok string) error {
 // ClearSession removes the persisted token (logout). Missing file is not an error.
 func (c Config) ClearSession() error {
 	err := os.Remove(filepath.Join(c.dir, sessionFile))
+	if os.IsNotExist(err) {
+		return nil
+	}
+	return err
+}
+
+// LoadDraft returns the persisted today-buffer draft (crash recovery), or nil
+// when none exists. The draft schema is owned by the ui package — config only
+// stores bytes.
+func (c Config) LoadDraft() ([]byte, error) {
+	b, err := os.ReadFile(filepath.Join(c.dir, draftFile))
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	return b, err
+}
+
+// SaveDraft persists the today-buffer draft atomically (tmp + rename), so a
+// crash mid-write can't corrupt the previous draft.
+func (c Config) SaveDraft(data []byte) error {
+	p := filepath.Join(c.dir, draftFile)
+	tmp := p + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err != nil {
+		return err
+	}
+	return os.Rename(tmp, p)
+}
+
+// ClearDraft removes the draft (after a successful save). Missing file is fine.
+func (c Config) ClearDraft() error {
+	err := os.Remove(filepath.Join(c.dir, draftFile))
 	if os.IsNotExist(err) {
 		return nil
 	}

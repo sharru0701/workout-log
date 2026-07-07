@@ -37,7 +37,7 @@ func TestFooterKeepsGlobalsWhenNarrow(t *testing.T) {
 		vPrograms: "programs", vSettings: "settings", vExercises: "exercises",
 	}
 	for vk, name := range screens {
-		f := NewFrame(nil)
+		f := NewFrame(nil, nil)
 		f.active = vk
 		out := renderFrame(f, w, h)
 		for _, want := range []string{"space", "?"} {
@@ -58,7 +58,7 @@ func TestFooterKeepsGlobalsWhenNarrow(t *testing.T) {
 // and mode line stay on screen, the active exercise stays visible, and the
 // clipped rows are signaled with an overflow marker.
 func TestTodayViewportKeepsFooter(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.views[vToday] = sampleLongLog()
 	const w, h = 58, 22
 	out := renderFrame(f, w, h)
@@ -80,7 +80,7 @@ func TestTodayViewportKeepsFooter(t *testing.T) {
 // width the clock (right edge) must survive — the old code right-truncated the
 // whole line and cut the time first.
 func TestStatuslineKeepsClockWhenNarrow(t *testing.T) {
-	f := NewFrame(nil)
+	f := NewFrame(nil, nil)
 	f.views[vToday] = sampleLongLog() // long context "Bench Press 3/3" + "12 sets"
 	f.now = time.Date(2026, 1, 2, 7, 42, 0, 0, time.UTC)
 	const w, h = 40, 22

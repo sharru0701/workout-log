@@ -121,12 +121,26 @@ sudo install -m 755 apps/api/deploy/ilapi /usr/local/bin/ilapi
 | `ilapi status` | 서비스 active / local·public health / 현재 커밋 / ironlog 대상 한눈에 |
 | `ilapi logs` \| `tail [N]` \| `errors [since]` | journalctl follow / 최근 N줄 / 경고+에러만 |
 | `ilapi restart` \| `start` \| `stop` | 서비스 제어 |
-| `ilapi cutover {local\|prod}` | ironlog 접속 서버 전환(local=apps/api, prod=프로덕션 Vercel) + tmux 재시작 |
+| `ilapi cutover {local\|prod} [--force]` | ironlog 접속 서버 전환(local=apps/api, prod=프로덕션 Vercel) + tmux 재시작(가드 §5.1) |
+| `ilapi ironlog-restart [--force]` | ironlog tmux 세션만 재시작(가드 §5.1) |
 | `ilapi prune` | 만료 세션 수동 prune — dry-run 카운트 → 삭제 → 타이머 상태 |
 
 **수동(ilapi 없이)**: `cd <repo> && git pull && pnpm install && sudo systemctl restart ironlog-api`.
 롤백은 `git checkout <태그/커밋>` 후 동일. Docker는 `git pull && docker compose -f apps/api/deploy/compose.yaml up -d --build`.
 (DB 마이그레이션은 web 쪽에서 관리 — 하위호환 유지 시 백엔드만 롤백 안전.)
+
+## 5.1 ⚠ ironlog tmux = 사용자 라이브 세션 — 무단 재시작 금지
+
+VPS의 `tmux -s ironlog`는 데모가 아니라 **사용자가 폰 SSH로 상시 쓰는 프로덕션 클라이언트**다.
+2026-07-06, 릴리스 검증이 사용자 운동 도중 이 세션을 재시작해 미저장 세트가 전부 유실됐다
+(TUI 버퍼는 당시 메모리에만 존재; v0.10.3부터 draft 영속화로 완화되지만 규칙은 유지).
+
+- **릴리스/업데이트 검증은 별도 세션에서**: `tmux new -d -s ironlog-verify "$IRONLOG"` —
+  사용자 세션(`-s ironlog`)은 건드리지 않는다. 검증 후 `tmux kill-session -t ironlog-verify`.
+- 사용자 세션 재시작이 꼭 필요하면(예: cutover): `tmux list-clients -t ironlog`(attach 여부)와
+  `tmux capture-pane -t ironlog -p`(완료 세트·편집 중 표시)를 확인하고 **사용자에게 물어본 뒤**
+  진행한다. `ironlog_restart` 가드가 사용 신호를 감지하면 거부하며, 확인 후에만 `--force`.
+- 사용자 운동 시간대(주로 저녁 KST)는 확인 없이는 절대 재시작하지 않는다.
 
 ## 5.5 만료 세션 자동 prune (systemd timer)
 
