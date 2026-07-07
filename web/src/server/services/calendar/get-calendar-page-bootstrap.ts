@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { and, desc, eq, gte } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { db } from "@workout/core/db/client";
 import { generatedSession, plan, workoutLog } from "@workout/core/db/schema";
@@ -53,43 +53,50 @@ export async function getCalendarPageBootstrap(): Promise<CalendarPageBootstrap>
 
   const now = new Date();
   const today = dateOnlyInTimezone(now, timezone);
-  const threeMonthsAgo = new Date(now);
-  threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-  const [plans, recentSessions, recentLogs] = await Promise.all([
-    db
-      .select()
-      .from(plan)
-      .where(eq(plan.userId, userId))
-      .orderBy(desc(plan.createdAt)),
-    db
-      .select({
-        id: generatedSession.id,
-        sessionKey: generatedSession.sessionKey,
-        updatedAt: generatedSession.updatedAt,
-      })
-      .from(generatedSession)
-      .where(
-        and(
-          eq(generatedSession.userId, userId),
-          gte(generatedSession.updatedAt, threeMonthsAgo),
-        ),
-      )
-      .orderBy(desc(generatedSession.updatedAt))
-      .limit(300),
-    db
-      .select({
-        id: workoutLog.id,
-        performedAt: workoutLog.performedAt,
-        generatedSessionId: workoutLog.generatedSessionId,
-      })
-      .from(workoutLog)
-      .where(
-        and(eq(workoutLog.userId, userId), gte(workoutLog.performedAt, threeMonthsAgo)),
-      )
-      .orderBy(desc(workoutLog.performedAt))
-      .limit(300),
-  ]);
+  const plans = await db
+    .select()
+    .from(plan)
+    .where(eq(plan.userId, userId))
+    .orderBy(desc(plan.createdAt));
+
+  // 캘린더는 플랜 스코프 화면: 컨트롤러가 initialPlans[0]을 기본 선택하고 이후
+  // refetch(/api/generated-sessions·/api/logs)를 planId로 필터하므로 SSR도 같은
+  // 스코프여야 한다. 유저 전체를 내려보내면 다른 플랜 기록이 선택 플랜명으로
+  // 라벨링되고 isLatestLog(삭제/날짜이동 허용) 판정도 오판한다. limit 100은 라우트 상한.
+  const defaultPlanId = plans[0]?.id ?? null;
+
+  const [recentSessions, recentLogs] = defaultPlanId
+    ? await Promise.all([
+        db
+          .select({
+            id: generatedSession.id,
+            sessionKey: generatedSession.sessionKey,
+            updatedAt: generatedSession.updatedAt,
+          })
+          .from(generatedSession)
+          .where(
+            and(
+              eq(generatedSession.userId, userId),
+              eq(generatedSession.planId, defaultPlanId),
+            ),
+          )
+          .orderBy(desc(generatedSession.updatedAt))
+          .limit(100),
+        db
+          .select({
+            id: workoutLog.id,
+            performedAt: workoutLog.performedAt,
+            generatedSessionId: workoutLog.generatedSessionId,
+          })
+          .from(workoutLog)
+          .where(
+            and(eq(workoutLog.userId, userId), eq(workoutLog.planId, defaultPlanId)),
+          )
+          .orderBy(desc(workoutLog.performedAt), desc(workoutLog.id))
+          .limit(100),
+      ])
+    : [[], []];
 
   return {
     initialPlans: plans.map((entry) => ({
