@@ -5,6 +5,7 @@ import { getExerciseById, resolveExerciseByName } from "@workout/core/exercise/r
 import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
 import type { ProgressionTargetDecision } from "@workout/core/progression/autoProgression";
 import { buildProgressionSummary, readProgressEventByLog } from "@workout/core/progression/progress-events";
+import { buildProgressionFeedbackFromEvent } from "@workout/core/progression/feedback-catalog";
 import { invalidateStatsCacheForUser } from "../../stats/cache";
 import { invalidatePersonalRecordsFrom } from "./personal-records";
 
@@ -270,11 +271,16 @@ export async function upsertWorkoutLogService({
 
     return {
       log,
-      progression: buildProgressionSummary({
-        mode: needsRebuild ? "upsert" : (logId ? "replay" : "upsert"),
-        applyResult: progressionResult,
-        eventRow: progressionEvent,
-      }),
+      progression: {
+        ...buildProgressionSummary({
+          mode: needsRebuild ? "upsert" : (logId ? "replay" : "upsert"),
+          applyResult: progressionResult,
+          eventRow: progressionEvent,
+        }),
+        // 서버 조립 피드백(판정 카드·조기 디로드 배너) — web·TUI가 같은 문구를 그대로 출력.
+        // 저장 직후 경로라 state 미제공(F1은 reason만으로 즉시 노출).
+        feedback: buildProgressionFeedbackFromEvent({ eventRow: progressionEvent }, locale),
+      },
     };
   });
 

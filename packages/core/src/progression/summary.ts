@@ -28,6 +28,9 @@ export type ProgressionSummaryPayload = {
   eventType: string | null;
   programSlug: string | null;
   event: ProgressionEventPayload | null;
+  // 서버 조립 피드백(판정 카드·배너) — feedback-catalog가 로케일 문구까지 만들어 싣는다.
+  // 응답 부착 시점에만 채워지는 additive 필드(빌더 자체는 세팅하지 않음).
+  feedback?: import("./feedback-catalog").ProgressionFeedbackPayload | null;
 };
 
 type ProgressionLocale = "ko" | "en";
