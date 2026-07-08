@@ -101,124 +101,20 @@ export function lightBlockBadgeCopy(locale: Locale) {
   };
 }
 
-// ── F2. 블록 판정 리포트 ─────────────────────────────────────────────────────
+// ── F2. 진행 판정 리포트(프로그램 공통) ─────────────────────────────────────
+// v0.5.1의 asymptote 전용 블록 판정 카드를 패밀리별 카탈로그로 일반화했다 —
+// reason→문구 매핑·폴백·리포트 조립은 progression-feedback-catalog.ts(단일 진실원).
+// 기존 소비자 호환을 위해 여기서 re-export 한다.
 
-type DecisionLike = {
-  progressionTarget?: unknown;
-  target?: unknown;
-  reason?: unknown;
-  before?: { workKg?: unknown };
-  after?: { workKg?: unknown };
-};
-
-const AMRAP_REASON_RE = /^(increase|hold|reset):amrap-(\d+)reps/;
-
-function formatKg(value: number): string {
-  return Number.isInteger(value) ? String(value) : String(Math.round(value * 100) / 100);
-}
-
-function toKg(value: unknown): number | null {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-export type BlockJudgmentRow = { target: string; text: string };
-
-// 판정 조합별 문구(스펙 §F2 — 치트시트 상황판단표 톤):
-//   +2.5 → `SQ — AMRAP 9렙 → TM 90 → 92.5 (+2.5)`
-//   유지  → `BP — AMRAP 6렙 → TM 유지 · 같은 무게 재도전`
-//   −2.5 → `SQ — AMRAP 4렙 → TM 90 → 87.5 (−2.5) · 재조준`
-//   −5   → `SQ — AMRAP 2렙 → TM 90 → 85 (−5) · 다음 블록 라이트(회복)`
-//   연기  → `PULL — 판정 연기 — TM 유지`  (침묵 금지)
-export function buildBlockJudgmentRow(decision: DecisionLike, locale: Locale): BlockJudgmentRow | null {
-  const target = String(decision.progressionTarget ?? decision.target ?? "").toUpperCase();
-  if (!target) return null;
-  const abbrev = TARGET_ABBREV[target] ?? target;
-  const reason = String(decision.reason ?? "");
-
-  if (reason === "hold:amrap-missing") {
-    return {
-      target,
-      text:
-        locale === "ko"
-          ? `${abbrev} — 판정 연기 — TM 유지`
-          : `${abbrev} — judgment deferred — TM unchanged`,
-    };
-  }
-
-  const match = AMRAP_REASON_RE.exec(reason);
-  if (!match) return null;
-  const kind = match[1]!;
-  const reps = Number(match[2]);
-  const before = toKg(decision.before?.workKg);
-  const after = toKg(decision.after?.workKg);
-  const repsLabel = locale === "ko" ? `AMRAP ${reps}렙` : `AMRAP ${reps} reps`;
-
-  if (kind === "hold") {
-    return {
-      target,
-      text:
-        locale === "ko"
-          ? `${abbrev} — ${repsLabel} → TM 유지 · 같은 무게 재도전`
-          : `${abbrev} — ${repsLabel} → TM held · retry at the same weight`,
-    };
-  }
-
-  const deltaText =
-    before !== null && after !== null ? ` (${after >= before ? "+" : "−"}${formatKg(Math.abs(after - before))})` : "";
-  const range =
-    before !== null && after !== null
-      ? ` → TM ${formatKg(before)} → ${formatKg(after)}${deltaText}`
-      : "";
-
-  if (kind === "increase") {
-    return { target, text: `${abbrev} — ${repsLabel}${range}` };
-  }
-
-  // reset: −2.5(재조준) / −5+light(회복 블록)
-  const isLight = reason.includes("+light");
-  const suffix =
-    locale === "ko"
-      ? isLight
-        ? " · 다음 블록 라이트(회복)"
-        : " · 재조준"
-      : isLight
-        ? " · next block light (recovery)"
-        : " · re-aim";
-  return { target, text: `${abbrev} — ${repsLabel}${range}${suffix}` };
-}
-
-export type BlockJudgmentReport = { eventId: string; rows: BlockJudgmentRow[] };
-
-// 최신 이벤트가 블록 판정(사이클3 AMRAP → TM 변동)일 때만 리포트를 만든다.
-// 드라이버(SQ/BP/PULL) 고정 순서, 판정 없는 리프트도 연기로 명시(침묵 금지).
-export function buildBlockJudgmentReport(
-  lastEvent: ProgressionLastEvent | null | undefined,
-  locale: Locale,
-): BlockJudgmentReport | null {
-  if (!lastEvent || !Array.isArray(lastEvent.targetDecisions)) return null;
-  const decisions = lastEvent.targetDecisions.filter(
-    (d): d is DecisionLike => Boolean(d) && typeof d === "object",
-  );
-  const isBlockJudgment = decisions.some((d) => {
-    const reason = String(d.reason ?? "");
-    return AMRAP_REASON_RE.test(reason) || reason === "hold:amrap-missing";
-  });
-  if (!isBlockJudgment) return null;
-
-  const rows: BlockJudgmentRow[] = [];
-  for (const driver of DRIVER_ORDER) {
-    const decision = decisions.find(
-      (d) => String(d.progressionTarget ?? d.target ?? "").toUpperCase() === driver,
-    );
-    const row = decision ? buildBlockJudgmentRow(decision, locale) : null;
-    rows.push(
-      row ??
-        buildBlockJudgmentRow({ progressionTarget: driver, reason: "hold:amrap-missing" }, locale)!,
-    );
-  }
-  return { eventId: lastEvent.id, rows };
-}
+export {
+  buildProgressReport,
+  buildCatalogRow,
+  fallbackRow,
+  parseBlockFreezeReason,
+  type FeedbackDecision,
+  type ProgressReport,
+  type ProgressReportRow,
+} from "./progression-feedback-catalog";
 
 // ── F5. AMRAP 전날 예고 ──────────────────────────────────────────────────────
 

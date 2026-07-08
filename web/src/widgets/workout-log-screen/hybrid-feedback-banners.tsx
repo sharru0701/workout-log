@@ -2,7 +2,7 @@
 
 import { V2Card, V2SecondaryBtn } from "@/components/v2/primitives";
 import { useThemeSkin } from "@/components/use-theme-skin";
-import type { BlockJudgmentRow } from "@/features/workout-log/model/progression-feedback";
+import type { ProgressReportRow } from "@/features/workout-log/model/progression-feedback";
 
 type Locale = "ko" | "en";
 type NoticeTone = "warning" | "info" | "recovery";
@@ -66,13 +66,14 @@ export function SessionFeedbackNotice({ tone, title, body }: NoticeProps) {
 
 type BlockJudgmentCardProps = {
   locale: Locale;
-  rows: BlockJudgmentRow[];
+  // 프로그램 공통화: 제목은 패밀리 카탈로그가 결정해 내려준다(asymptote 하드코딩 금지).
+  title: string;
+  rows: ProgressReportRow[];
   onDismiss: () => void;
 };
 
-export function BlockJudgmentCard({ locale, rows, onDismiss }: BlockJudgmentCardProps) {
+export function BlockJudgmentCard({ locale, title, rows, onDismiss }: BlockJudgmentCardProps) {
   const skin = useThemeSkin();
-  const title = locale === "ko" ? "블록 판정 — TM 변경 요약" : "Block judgment — TM changes";
   const dismissLabel = locale === "ko" ? "확인" : "Got it";
 
   if (skin === "terminal") {
