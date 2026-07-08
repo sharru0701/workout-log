@@ -28,6 +28,7 @@ import {
   type LastTargetEvent,
 } from "@workout/core/progression/last-events";
 import { applyManualRuntimeAdjustment } from "@workout/core/progression/autoProgression";
+import { buildProgressionFeedbackFromEvent } from "@workout/core/progression/feedback-catalog";
 import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 import { buildSessionKey } from "@workout/core/session-key";
 
@@ -680,7 +681,19 @@ plansRoutes.get("/:planId/progression-state", async (c) => {
         }
       : null;
 
-    return c.json({ program, state, effectiveRules, targetsLastEvent, lastEvent });
+    // 서버 조립 피드백(판정 카드·조기 디로드 배너) — 로케일 문구까지 여기서 만든다.
+    // web·TUI가 같은 문구를 그대로 출력(클라이언트 카탈로그 복제 금지).
+    // programSlug 대신 이미 해석된 program을 쓰고, state로 F1 노출(week4 진행 중)을 판정한다.
+    const feedback = buildProgressionFeedbackFromEvent(
+      {
+        eventRow: lastEventRow ? { ...lastEventRow, programSlug: template.slug } : null,
+        state: (state ?? null) as { week?: unknown } | null,
+        definition: version.definition,
+      },
+      locale === "ko" ? "ko" : "en",
+    );
+
+    return c.json({ program, state, effectiveRules, targetsLastEvent, lastEvent, feedback });
   } catch (e) {
     return apiError(c, e, locale);
   }

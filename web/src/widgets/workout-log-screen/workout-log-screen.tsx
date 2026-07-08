@@ -31,7 +31,6 @@ import { BlockJudgmentCard, SessionFeedbackNotice } from "./hybrid-feedback-bann
 import {
   amrapDeferredBannerCopy,
   amrapEveNoticeCopy,
-  earlyDeloadBannerCopy,
   lightBlockBadgeCopy,
   shouldShowAmrapEveNotice,
 } from "@/features/workout-log/model/progression-feedback";
@@ -342,10 +341,12 @@ function WorkoutLogScreenContent({
     });
   const feedbackNotices = (
     <>
-      {progressionFeedback.showEarlyDeloadBanner ? (
+      {progressionFeedback.earlyDeloadBanner ? (
+        // 문구는 서버 조립(feedback-catalog) — 그대로 출력(TUI와 동일 문구 보장).
         <SessionFeedbackNotice
           tone="warning"
-          {...earlyDeloadBannerCopy(progressionFeedback.earlyDeloadReason, locale)}
+          title={progressionFeedback.earlyDeloadBanner.title}
+          body={progressionFeedback.earlyDeloadBanner.body}
         />
       ) : null}
       {progressionFeedback.blockReport ? (

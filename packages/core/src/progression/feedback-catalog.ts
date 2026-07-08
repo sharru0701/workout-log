@@ -1,9 +1,15 @@
-// 프로그램 공통 피드백 레이어 — 패밀리별 reason→문구 카탈로그.
-// `web/docs/program-feedback-coverage.md`의 표출 아키텍처 구현. 원칙:
-//   1) 판정 로직은 읽기만 한다(plan_progress_event의 reason·targetDecisions가 유일한 입력).
-//   2) 미등록 reason은 eventType 기반 기본 문구로 폴백 — 새 reason이 추가돼도 UI가 깨지지 않는다.
+// 프로그램 공통 피드백 카탈로그 — reason→사용자 문구의 단일 진실원(서버 조립).
+// `web/docs/program-feedback-coverage.md`의 표출 아키텍처. 원래 web에 있던 것을 core로 이동해
+// apps/api가 로케일 문구까지 조립해 내려주고, web·TUI가 같은 문구를 그대로 소비한다
+// (클라이언트별 문구 복제 금지 — 이중 유지보수 원천 차단). 원칙:
+//   1) 판정 로직은 읽기만 한다(plan_progress_event의 reason·meta.targetDecisions가 유일한 입력).
+//   2) 미등록 reason은 eventType 기반 기본 문구로 폴백 — 새 reason이 추가돼도 표출이 깨지지 않는다.
 //   3) 블록 중간 스트릭 HOLD(hold:block-*·hold:*-streak)는 노이즈로 표출하지 않는다.
-// React 무의존(유닛 테스트 대상).
+// summary.ts(저장 직후 한 줄 요약)와 역할 분리: 여기는 판정 카드·세션 배너용 구조화 문구.
+
+import { resolveAutoProgressionProgram } from "./reducer";
+
+export type FeedbackLocale = "ko" | "en";
 
 export type FeedbackDecision = {
   progressionTarget?: unknown;
@@ -24,17 +30,22 @@ export type ProgressFeedbackEvent = {
 
 export type ProgressReportRow = { target: string; text: string };
 export type ProgressReport = { eventId: string; title: string; rows: ProgressReportRow[] };
+export type FeedbackBanner = { title: string; body: string };
 
-type Locale = "ko" | "en";
+// 서버가 응답에 싣는 조립 완료 피드백 — web 배너/카드·TUI 상태 라인이 그대로 출력한다.
+export type ProgressionFeedbackPayload = {
+  report: ProgressReport | null;
+  earlyDeloadBanner: FeedbackBanner | null;
+};
 
 // ── 공통 유틸 ────────────────────────────────────────────────────────────────
 
-const LIFT_LABEL: Record<Locale, Record<string, string>> = {
+const LIFT_LABEL: Record<FeedbackLocale, Record<string, string>> = {
   ko: { SQUAT: "스쿼트", BENCH: "벤치프레스", DEADLIFT: "데드리프트", OHP: "오버헤드프레스", PULL: "풀업" },
   en: { SQUAT: "Squat", BENCH: "Bench", DEADLIFT: "Deadlift", OHP: "OHP", PULL: "Pull-up" },
 };
 
-// asymptote 카드(v0.5.1)의 축약 표기 — 스펙 §F2 형식 보존.
+// asymptote 카드(v0.5.1 §F2)의 축약 표기 — 스펙 형식 보존.
 const TARGET_ABBREV: Record<string, string> = {
   SQUAT: "SQ",
   BENCH: "BP",
@@ -48,7 +59,7 @@ function canonicalTarget(decision: FeedbackDecision): string {
 }
 
 // 표시명: canonical 리프트면 로케일 라벨, 아니면(슬롯 키 등) 이벤트의 display target 그대로.
-function displayLabel(decision: FeedbackDecision, locale: Locale): string {
+function displayLabel(decision: FeedbackDecision, locale: FeedbackLocale): string {
   const canonical = canonicalTarget(decision);
   const byLift = LIFT_LABEL[locale][canonical];
   if (byLift) return byLift;
@@ -82,15 +93,17 @@ function parseIncrementFromReason(reason: string): string | null {
 // ── 기본 폴백(미등록 reason·패밀리) ─────────────────────────────────────────
 
 // HOLD는 기본 미표출(스트릭 노이즈). INCREASE/RESET만 기본 문구 생성.
-export function fallbackRow(decision: FeedbackDecision, locale: Locale): string | null {
+export function fallbackRow(decision: FeedbackDecision, locale: FeedbackLocale): string | null {
   const eventType = String(decision.eventType ?? "").toUpperCase();
   if (eventType !== "INCREASE" && eventType !== "RESET") return null;
   const label = displayLabel(decision, locale);
   const range = deltaSuffix(decision);
-  const inc = range ? "" : (() => {
-    const parsed = parseIncrementFromReason(String(decision.reason ?? ""));
-    return parsed ? ` (${parsed})` : "";
-  })();
+  const inc = range
+    ? ""
+    : (() => {
+        const parsed = parseIncrementFromReason(String(decision.reason ?? ""));
+        return parsed ? ` (${parsed})` : "";
+      })();
   if (eventType === "INCREASE") {
     return locale === "ko" ? `${label} — 증량${range}${inc}` : `${label} — increased${range}${inc}`;
   }
@@ -103,12 +116,16 @@ type FamilyCatalog = {
   // 카드 노출 트리거에 포함할 "판정성 HOLD" 판별(기본: HOLD는 노이즈로 제외).
   isNotableHold?: (reason: string) => boolean;
   // reason별 문구. null 반환 시 기본 폴백 사용.
-  buildRow?: (decision: FeedbackDecision, locale: Locale) => string | null;
+  buildRow?: (decision: FeedbackDecision, locale: FeedbackLocale) => string | null;
   // 리포트 후처리(정렬·결측 채움 등). 기본은 그대로.
-  finalizeRows?: (rows: ProgressReportRow[], decisions: FeedbackDecision[], locale: Locale) => ProgressReportRow[];
-  title?: (locale: Locale) => string;
+  finalizeRows?: (
+    rows: ProgressReportRow[],
+    decisions: FeedbackDecision[],
+    locale: FeedbackLocale,
+  ) => ProgressReportRow[];
+  title?: (locale: FeedbackLocale) => string;
   // freeze:block:failed=<...> 집계 이벤트의 문구.
-  freezeRow?: (failed: string[], locale: Locale) => string;
+  freezeRow?: (failed: string[], locale: FeedbackLocale) => string;
 };
 
 const AMRAP_REASON_RE = /^(increase|hold|reset):amrap-(\d+)reps/;
@@ -168,7 +185,7 @@ const asymptoteCatalog: FamilyCatalog = {
     return `${abbrev} — ${repsLabel}${range}${suffix}`;
   },
   // 드라이버 고정 순서(SQ→BP→PULL) + 결측 리프트 연기 명시(침묵 금지) + 파생(DL/OHP)은 뒤에.
-  finalizeRows: (rows, decisions, locale) => {
+  finalizeRows: (rows, _decisions, locale) => {
     const byTarget = new Map(rows.map((row) => [row.target, row]));
     const out: ProgressReportRow[] = [];
     for (const driver of ASYMPTOTE_DRIVERS) {
@@ -212,7 +229,7 @@ const blockLpCatalog: FamilyCatalog = {
     return `${label} +${inc}${streakLabel}`;
   },
   freezeRow: (failed, locale) => {
-    const labels = failed.map((target) => LIFT_LABEL[locale === "ko" ? "ko" : "en"][target] ?? target);
+    const labels = failed.map((target) => LIFT_LABEL[locale][target] ?? target);
     return locale === "ko"
       ? `블록 완주 — 증량 동결 · TM 유지 (실패 누적: ${labels.join(", ")})`
       : `Block complete — increase frozen · TM unchanged (failed: ${labels.join(", ")})`;
@@ -266,20 +283,20 @@ const CATALOGS: Record<string, FamilyCatalog> = {
   operator: blockLpCatalog,
   "wendler-531": blockLpCatalog,
   gzclp: gzclpCatalog,
-  // texas-method·greyskull-lp·starting-strength-lp·stronglifts-5x5 등은 기본 폴백으로 커버(③).
+  // texas-method·greyskull-lp·starting-strength-lp·stronglifts-5x5 등은 기본 폴백으로 커버.
 };
 
 // 단일 decision의 문구 — 카탈로그 우선, 미등록이면 기본 폴백(테스트·개별 표출용).
 export function buildCatalogRow(
   program: string | null | undefined,
   decision: FeedbackDecision,
-  locale: Locale,
+  locale: FeedbackLocale,
 ): string | null {
   const catalog = CATALOGS[String(program ?? "")] ?? null;
   return catalog?.buildRow?.(decision, locale) ?? fallbackRow(decision, locale);
 }
 
-// ── 집계(freeze) reason 파싱 ────────────────────────────────────────────────
+// ── 집계 reason 파싱 ────────────────────────────────────────────────────────
 
 export function parseBlockFreezeReason(reason: string | null | undefined): string[] | null {
   const raw = String(reason ?? "");
@@ -292,6 +309,44 @@ export function parseBlockFreezeReason(reason: string | null | undefined): strin
   return list.length > 0 ? list : null;
 }
 
+// reducer가 기록한 `deload:trigger:regressed=SQUAT,PULL`에서 드라이버 목록을 복원(F1).
+export function parseEarlyDeloadReason(reason: string | null | undefined): string[] | null {
+  const raw = String(reason ?? "");
+  if (!raw.startsWith("deload:trigger:regressed=")) return null;
+  const list = raw
+    .slice("deload:trigger:regressed=".length)
+    .split(",")
+    .map((item) => item.trim().toUpperCase())
+    .filter(Boolean);
+  return list.length > 0 ? list : null;
+}
+
+// ── F1. 조기 디로드 배너(문구+노출 판정) ────────────────────────────────────
+
+export function buildEarlyDeloadBanner(
+  input: {
+    program: string | null | undefined;
+    reason: string | null | undefined;
+    // progression-state 경로: 아직 디로드 사이클(week 4) 진행 중일 때만 노출.
+    // 저장 직후 경로(state 미제공): 방금 발동한 이벤트이므로 reason만으로 노출.
+    state?: { week?: unknown } | null;
+  },
+  locale: FeedbackLocale,
+): FeedbackBanner | null {
+  if (input.program !== "asymptote") return null;
+  const drivers = parseEarlyDeloadReason(input.reason);
+  if (!drivers) return null;
+  if (input.state && Math.floor(Number(input.state.week)) !== 4) return null;
+  const abbrev = drivers.map((d) => TARGET_ABBREV[d] ?? d).join("·");
+  return {
+    title: locale === "ko" ? "⚠️ 조기 디로드 발동" : "⚠️ Early deload triggered",
+    body:
+      locale === "ko"
+        ? `메인 리프트 2개에서 렙 급감이 누적돼 회복 사이클로 점프했어요${abbrev ? ` (${abbrev})` : ""}. TM은 유지됩니다.`
+        : `Rep regression stacked up on two main lifts${abbrev ? ` (${abbrev})` : ""} — jumped to the recovery cycle. TM is unchanged.`,
+  };
+}
+
 // ── 진행 판정 리포트(프로그램 공통) ─────────────────────────────────────────
 
 // 최신 이벤트에 "주목할 판정"(INCREASE/RESET, 판정성 HOLD, 블록 동결)이 있을 때만 카드를 만든다.
@@ -299,7 +354,7 @@ export function parseBlockFreezeReason(reason: string | null | undefined): strin
 export function buildProgressReport(
   program: string | null | undefined,
   lastEvent: ProgressFeedbackEvent | null | undefined,
-  locale: Locale,
+  locale: FeedbackLocale,
 ): ProgressReport | null {
   if (!lastEvent) return null;
   const catalog = CATALOGS[String(program ?? "")] ?? null;
@@ -331,6 +386,50 @@ export function buildProgressReport(
   if (rows.length === 0) return null;
 
   const title =
-    catalog?.title?.(locale) ?? (locale === "ko" ? "진행 판정 — 무게 변경 요약" : "Progression — weight changes");
+    catalog?.title?.(locale) ??
+    (locale === "ko" ? "진행 판정 — 무게 변경 요약" : "Progression — weight changes");
   return { eventId: lastEvent.id, title, rows };
+}
+
+// ── 서버 조립 진입점 — plan_progress_event 행에서 바로 피드백을 만든다 ─────
+
+// programSlug(이벤트 행에 저장된 템플릿 slug) → 카탈로그 키(ProgressionProgram) 매핑 포함.
+// apps/api(progression-state)와 core 저장 서비스(logs upsert)가 같은 함수를 호출해
+// web·TUI가 동일한 조립 문구를 받는다.
+export function buildProgressionFeedbackFromEvent(
+  input: {
+    eventRow: {
+      id: string;
+      eventType: string;
+      reason: string | null;
+      meta: unknown;
+      createdAt: Date | string;
+      programSlug?: string | null;
+    } | null;
+    // progression-state 경로에서만 전달 — F1 노출 판정(week 4 진행 중)에 사용.
+    state?: { week?: unknown } | null;
+    definition?: unknown;
+  },
+  locale: FeedbackLocale,
+): ProgressionFeedbackPayload {
+  const row = input.eventRow;
+  if (!row) return { report: null, earlyDeloadBanner: null };
+
+  const program = resolveAutoProgressionProgram(String(row.programSlug ?? ""), input.definition);
+  const meta = (row.meta ?? {}) as Record<string, unknown>;
+  const event: ProgressFeedbackEvent = {
+    id: row.id,
+    eventType: row.eventType,
+    reason: row.reason ?? null,
+    createdAt: typeof row.createdAt === "string" ? row.createdAt : row.createdAt.toISOString(),
+    targetDecisions: Array.isArray(meta.targetDecisions) ? meta.targetDecisions : [],
+  };
+
+  return {
+    report: buildProgressReport(program, event, locale),
+    earlyDeloadBanner: buildEarlyDeloadBanner(
+      { program, reason: event.reason, state: input.state ?? null },
+      locale,
+    ),
+  };
 }
