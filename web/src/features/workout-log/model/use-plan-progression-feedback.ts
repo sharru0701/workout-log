@@ -1,13 +1,13 @@
 // v0.5.1 실패 프로토콜 피드백 훅 — progression-state 1회 fetch로 F1(조기 디로드 배너)·
-// F2(블록 판정 카드)·F4(라이트 블록 배지)의 표출 상태를 파생한다. 판정 파생은 전부
-// progression-feedback.ts(순수·테스트 대상)에 위임하고, 여기는 fetch·dismiss 영속화만 담당.
+// F2(진행 판정 카드)·F4(라이트 블록 배지)의 표출 상태를 얻는다. 배너·카드 문구는
+// **서버가 조립**(feedback 필드 — core feedback-catalog 단일 진실원)하고, 여기는
+// fetch·dismiss 영속화만 담당한다. TUI도 같은 서버 문구를 소비한다.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet } from "@/lib/api";
 import {
-  buildProgressReport,
   isLightBlockActive,
-  shouldShowEarlyDeloadBanner,
+  type FeedbackBanner,
   type ProgressReport,
   type ProgressionStateResponse,
 } from "./progression-feedback";
@@ -56,40 +56,33 @@ export function usePlanProgressionFeedback(input: {
     };
   }, [planId, input.refreshKey]);
 
-  const lastEvent = data?.lastEvent ?? null;
+  const feedback = data?.feedback ?? null;
   const isAsymptote = data?.program === "asymptote";
 
-  const showEarlyDeloadBanner = shouldShowEarlyDeloadBanner({
-    program: data?.program ?? null,
-    state: data?.state ?? null,
-    lastEvent,
-  });
-
+  const earlyDeloadBanner: FeedbackBanner | null = feedback?.earlyDeloadBanner ?? null;
   const showLightBlockBadge = isAsymptote && isLightBlockActive(data?.state ?? null);
 
-  // 진행 판정 카드 — 프로그램 공통(패밀리별 카탈로그 + 폴백). 노이즈 필터링·문구는
-  // buildProgressReport가 담당하므로 여기서 패밀리를 가리지 않는다.
   const blockReport: ProgressReport | null = useMemo(() => {
-    const report = buildProgressReport(data?.program ?? null, lastEvent, input.locale);
+    const report = feedback?.report ?? null;
     if (!report) return null;
     void dismissTick; // dismiss 직후 재파생
     return isReportDismissed(report.eventId) ? null : report;
-  }, [data?.program, lastEvent, input.locale, dismissTick]);
+  }, [feedback?.report, dismissTick]);
 
   const dismissBlockReport = useCallback(() => {
-    if (!lastEvent) return;
+    const eventId = feedback?.report?.eventId;
+    if (!eventId) return;
     try {
-      window.localStorage.setItem(DISMISS_PREFIX + lastEvent.id, "1");
+      window.localStorage.setItem(DISMISS_PREFIX + eventId, "1");
     } catch {
       // storage 불가 환경(사파리 프라이빗 등)이면 세션 내 상태로만 닫는다.
     }
     setDismissTick((tick) => tick + 1);
-  }, [lastEvent]);
+  }, [feedback?.report?.eventId]);
 
   return {
     program: data?.program ?? null,
-    earlyDeloadReason: lastEvent?.reason ?? null,
-    showEarlyDeloadBanner,
+    earlyDeloadBanner,
     showLightBlockBadge,
     blockReport,
     dismissBlockReport,

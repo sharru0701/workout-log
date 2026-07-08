@@ -25,6 +25,7 @@ import {
   buildProgressionSummary,
   readProgressEventByLog,
 } from "@workout/core/progression/progress-events";
+import { buildProgressionFeedbackFromEvent } from "@workout/core/progression/feedback-catalog";
 import { rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
 import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 import { upsertWorkoutLogService } from "@workout/core/services/workout-log/upsert-log";
@@ -487,7 +488,14 @@ logsRoutes.get("/:logId", async (c) => {
       logId,
     });
     const progressionSummary = progressionEvent
-      ? buildProgressionSummary({ mode: "upsert", eventRow: progressionEvent })
+      ? {
+          ...buildProgressionSummary({ mode: "upsert", eventRow: progressionEvent }),
+          // 서버 조립 피드백 — 저장 응답과 동일 문구(로그 상세 재방문에서도 같은 카드 데이터).
+          feedback: buildProgressionFeedbackFromEvent(
+            { eventRow: progressionEvent },
+            locale === "ko" ? "ko" : "en",
+          ),
+        }
       : null;
 
     const personalRecords = await getOrFreezePersonalRecords({

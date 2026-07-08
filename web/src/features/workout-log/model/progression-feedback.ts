@@ -1,74 +1,31 @@
-// v0.5.1 실패 프로토콜 피드백(F1~F5) — 순수 파생 로직.
-// `web/docs/asymptote-hybrid-v0.5.1-feedback-patch.md` 기준. 엔진 판정 로직은 읽기만 하고
-// 절대 바꾸지 않는다. React 무의존(테스트는 tsx --test 유닛으로 고정), 훅/컴포넌트가 소비한다.
+// v0.5.1 실패 프로토콜 피드백(F1~F5) — 웹 쪽 파생 로직.
+// reason→문구 카탈로그(판정 카드·조기 디로드 배너)는 **서버 조립 공용화**로
+// @workout/core/progression/feedback-catalog(단일 진실원)로 이동했고, apps/api가
+// progression-state·저장 응답의 `feedback`에 로케일 문구까지 실어 내려준다 —
+// 웹은 그대로 출력만 한다(TUI와 문구 동일 보장, 클라이언트 카탈로그 복제 금지).
+// 여기 남는 것은 세션 스코프의 정적 카피(F3·F4·F5)와 그 노출 판정뿐.
 
 import {
   asymptoteIsJudgmentSession,
   asymptoteNextPosition,
 } from "@workout/core/program-engine/asymptote";
+import type {
+  FeedbackBanner,
+  ProgressReport,
+  ProgressReportRow,
+  ProgressionFeedbackPayload,
+} from "@workout/core/progression/feedback-catalog";
 
-export type ProgressionLastEvent = {
-  id: string;
-  eventType: string;
-  reason: string | null;
-  createdAt: string;
-  targetDecisions: unknown[];
-};
+export type { FeedbackBanner, ProgressReport, ProgressReportRow, ProgressionFeedbackPayload };
 
 export type ProgressionStateResponse = {
   program: string | null;
   state: { week?: number; day?: number; lightBlockMode?: boolean } | null;
-  lastEvent?: ProgressionLastEvent | null;
+  // 서버 조립 피드백 — apps/api progression-state가 로케일 문구까지 만들어 내려준다.
+  feedback?: ProgressionFeedbackPayload | null;
 };
 
 type Locale = "ko" | "en";
-
-const TARGET_ABBREV: Record<string, string> = {
-  SQUAT: "SQ",
-  BENCH: "BP",
-  PULL: "PULL",
-  DEADLIFT: "DL",
-  OHP: "OHP",
-};
-
-const DRIVER_ORDER = ["SQUAT", "BENCH", "PULL"] as const;
-
-// ── F1. 조기 디로드 배너 ─────────────────────────────────────────────────────
-
-// reducer가 기록한 `deload:trigger:regressed=SQUAT,PULL`에서 드라이버 목록을 복원.
-export function parseEarlyDeloadReason(reason: string | null | undefined): string[] | null {
-  const raw = String(reason ?? "");
-  if (!raw.startsWith("deload:trigger:regressed=")) return null;
-  const list = raw
-    .slice("deload:trigger:regressed=".length)
-    .split(",")
-    .map((item) => item.trim().toUpperCase())
-    .filter(Boolean);
-  return list.length > 0 ? list : null;
-}
-
-// 노출: 최신 이벤트가 조기 디로드 사유이고, 아직 그 디로드 사이클(week 4) 진행 중일 때.
-export function shouldShowEarlyDeloadBanner(input: {
-  program: string | null | undefined;
-  state: { week?: number } | null | undefined;
-  lastEvent: { reason?: string | null } | null | undefined;
-}): boolean {
-  if (input.program !== "asymptote") return false;
-  if (Math.floor(Number(input.state?.week)) !== 4) return false;
-  return parseEarlyDeloadReason(input.lastEvent?.reason) !== null;
-}
-
-export function earlyDeloadBannerCopy(reason: string | null | undefined, locale: Locale) {
-  const drivers = parseEarlyDeloadReason(reason) ?? [];
-  const abbrev = drivers.map((d) => TARGET_ABBREV[d] ?? d).join("·");
-  return {
-    title: locale === "ko" ? "⚠️ 조기 디로드 발동" : "⚠️ Early deload triggered",
-    body:
-      locale === "ko"
-        ? `메인 리프트 2개에서 렙 급감이 누적돼 회복 사이클로 점프했어요${abbrev ? ` (${abbrev})` : ""}. TM은 유지됩니다.`
-        : `Rep regression stacked up on two main lifts${abbrev ? ` (${abbrev})` : ""} — jumped to the recovery cycle. TM is unchanged.`,
-  };
-}
 
 // ── F3. AMRAP 보류 세션 배너 ─────────────────────────────────────────────────
 
@@ -101,21 +58,6 @@ export function lightBlockBadgeCopy(locale: Locale) {
   };
 }
 
-// ── F2. 진행 판정 리포트(프로그램 공통) ─────────────────────────────────────
-// v0.5.1의 asymptote 전용 블록 판정 카드를 패밀리별 카탈로그로 일반화했다 —
-// reason→문구 매핑·폴백·리포트 조립은 progression-feedback-catalog.ts(단일 진실원).
-// 기존 소비자 호환을 위해 여기서 re-export 한다.
-
-export {
-  buildProgressReport,
-  buildCatalogRow,
-  fallbackRow,
-  parseBlockFreezeReason,
-  type FeedbackDecision,
-  type ProgressReport,
-  type ProgressReportRow,
-} from "./progression-feedback-catalog";
-
 // ── F5. AMRAP 전날 예고 ──────────────────────────────────────────────────────
 
 // 방금 저장한(또는 보고 있는 오늘의) 세션 위치 기준: 다음 세션이 판정(AMRAP) 세션이면
@@ -135,7 +77,8 @@ export function shouldShowAmrapEveNotice(input: {
 
 export function amrapEveNoticeCopy(locale: Locale) {
   return {
-    title: locale === "ko" ? "🎯 다음 세션은 AMRAP(판정)입니다" : "🎯 Next session is an AMRAP (judgment) session",
+    title:
+      locale === "ko" ? "🎯 다음 세션은 AMRAP(판정)입니다" : "🎯 Next session is an AMRAP (judgment) session",
     body:
       locale === "ko"
         ? "내일 치면 보류됩니다. 하루 쉬고 치면 판정 가능."
