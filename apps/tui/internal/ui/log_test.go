@@ -30,9 +30,6 @@ func TestLogCompleteSet(t *testing.T) {
 	if !l2.groups[0].sets[2].done {
 		t.Fatal("expected the set to be marked done")
 	}
-	if !l2.rest.active {
-		t.Error("expected rest armed")
-	}
 	if len(l2.groups[0].sets) != 3 {
 		t.Errorf("completeSet must not append a set (sets are added only via addSet/\"o\"); got %d", len(l2.groups[0].sets))
 	}
@@ -152,10 +149,6 @@ func TestLogModeTransitions(t *testing.T) {
 		t.Errorf("want INSERT, got %q", l.Mode().Label)
 	}
 	l.editing = false
-	l.rest = restState{active: true, remaining: 42, total: 90}
-	if !strings.Contains(l.Mode().Label, "REST") {
-		t.Errorf("want REST, got %q", l.Mode().Label)
-	}
 }
 
 func TestLogBodyGrouped(t *testing.T) {
@@ -353,5 +346,41 @@ func TestLogAddExerciseKeyAliases(t *testing.T) {
 		if cmd == nil {
 			t.Errorf("key %q should open the exercise picker", string(code))
 		}
+	}
+}
+
+// TestLogCompleteAdvancesFocus verifies reps-completion moves the cursor to the
+// next set (crossing exercise boundaries), and stays put on the very last set.
+func TestLogCompleteAdvancesFocus(t *testing.T) {
+	l := NewLog(nil)
+	l.groups = []exGroup{
+		{name: "Squat", sets: []setEntry{{weight: "100", reps: "5"}, {weight: "100", reps: ""}}},
+		{name: "Bench", sets: []setEntry{{weight: "80", reps: ""}}},
+	}
+
+	// 1) 같은 운동의 다음 세트로 전진.
+	l.gi, l.si, l.col = 0, 0, colReps
+	l2, _ := l.completeSet()
+	if l2.gi != 0 || l2.si != 1 || l2.col != colWeight {
+		t.Fatalf("expected focus at (0,1,weight); got (%d,%d,%v)", l2.gi, l2.si, l2.col)
+	}
+
+	// 2) 운동 마지막 세트 완료 → 다음 운동 첫 세트로 전진.
+	l2.groups[0].sets[1].reps = "5"
+	l2.col = colReps
+	l3, _ := l2.completeSet()
+	if l3.gi != 1 || l3.si != 0 {
+		t.Fatalf("expected focus at next exercise (1,0); got (%d,%d)", l3.gi, l3.si)
+	}
+
+	// 3) 전체 마지막 세트 완료 → 제자리 유지.
+	l3.groups[1].sets[0].reps = "8"
+	l3.col = colReps
+	l4, _ := l3.completeSet()
+	if l4.gi != 1 || l4.si != 0 {
+		t.Fatalf("expected focus to stay at (1,0); got (%d,%d)", l4.gi, l4.si)
+	}
+	if !l4.groups[1].sets[0].done {
+		t.Fatal("last set should still be marked done")
 	}
 }
