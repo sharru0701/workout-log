@@ -200,6 +200,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     setIncrementDraft,
     incrementLoading,
     progressPosition,
+    lightBlockActive,
     showStartingBaseline,
     setShowStartingBaseline,
     showIncrementSettings,
@@ -493,14 +494,22 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   <span className="v2-eyebrow" style={{ color: "var(--v2-ink-3)" }}>
                     {copy.plansManage.currentProgress}
                   </span>
-                  {progressPosition ? (
-                    <span
-                      className="v2-mono-label"
-                      style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-eyebrow)" }}
-                    >
-                      {`C${progressPosition.cycle}W${progressPosition.week}D${progressPosition.day}`}
-                    </span>
-                  ) : null}
+                  <span style={{ display: "inline-flex", alignItems: "baseline", gap: "var(--v2-s-2)" }}>
+                    {lightBlockActive ? (
+                      // v0.5.1 F4: 라이트 블록(회복) 지속 배지 — 플래그 해제 시 자동 소멸.
+                      <V2Chip tone="info">
+                        {locale === "ko" ? "🌙 라이트 블록" : "🌙 Light block"}
+                      </V2Chip>
+                    ) : null}
+                    {progressPosition ? (
+                      <span
+                        className="v2-mono-label"
+                        style={{ color: "var(--v2-ink-3)", fontSize: "var(--v2-t-eyebrow)" }}
+                      >
+                        {`C${progressPosition.cycle}W${progressPosition.week}D${progressPosition.day}`}
+                      </span>
+                    ) : null}
+                  </span>
                 </div>
                 <div
                   style={{

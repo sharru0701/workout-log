@@ -94,8 +94,9 @@ type PlannedSet = {
   // 하이브리드(Asymptote × Async): AMRAP이 아닌 작업 세트의 "그라인딩 정지" 가이드.
   // true면 UI/유저는 렙 타겟을 다 못 채워도 바가 느려지는 첫 렙에서 멈춘다(자동 보정).
   stopOnGrind?: boolean;
-  // v0.5 프라이밍 탑세트 마킹(meta.topSet) — UI 배지·분석용 표식일 뿐 진행 로직은 읽지 않는다.
-  meta?: { topSet?: true };
+  // v0.5 프라이밍 탑세트(topSet)·v0.5.1 AMRAP 보류(amrapDeferred) 마킹 —
+  // UI 배지/배너·분석용 표식일 뿐 진행 로직은 읽지 않는다.
+  meta?: { topSet?: true; amrapDeferred?: true };
 };
 
 export type PlannedExercise = {
@@ -626,6 +627,16 @@ function buildAsymptoteTopSet(input: {
   return set;
 }
 
+// v0.5.1 F3: 처방에 보류된 AMRAP 세트가 있는지 — snapshot.amrapDeferred 승격의 단일 판정원.
+export function plannedExercisesHaveDeferredAmrap(exercises: unknown): boolean {
+  if (!Array.isArray(exercises)) return false;
+  return exercises.some(
+    (exercise) =>
+      Array.isArray((exercise as PlannedExercise)?.sets) &&
+      (exercise as PlannedExercise).sets.some((set) => set?.meta?.amrapDeferred === true),
+  );
+}
+
 function generateAsymptote(_def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
   // Asymptote Protocol: ctx.week ∈ {1..4} = 블록 내 사이클, ctx.day ∈ {1..3} = 세션 A/B/C.
   // ctx.params.lightBlockMode === true 면 light 계수 사용 (이전 블록 AMRAP ≤2 트리거).
@@ -676,6 +687,8 @@ function generateAsymptote(_def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedE
       if (cycleBaseRpe !== null && !isAmrapSet) set.rpe = cycleBaseRpe;
       // 비-AMRAP 작업 세트는 그라인딩-정지 가이드(자동 보정 밸브).
       if (!isAmrapSet) set.stopOnGrind = true;
+      // v0.5.1 F3: 보류된 AMRAP을 세트 메타로 마킹 — 세션 수준 배너(snapshot.amrapDeferred)의 근거.
+      if (deferAmrap) set.meta = { amrapDeferred: true };
       return set;
     });
     // v0.5 프라이밍 탑세트: 작업 세트 앞(선두)에 삽입 — AMRAP은 마지막 세트 판정이라 무간섭.
@@ -1013,6 +1026,8 @@ export function plannedExercisesFromAsymptoteManualSession(
           if (workingWeightKg !== null) set.targetWeightKg = workingWeightKg;
           if (cycleBaseRpe !== null && !isAmrapSet) set.rpe = cycleBaseRpe;
           if (!isAmrapSet) set.stopOnGrind = true;
+          // v0.5.1 F3: 보류된 AMRAP 마킹 — LOGIC 경로와 동일 규칙.
+          if (deferAmrap) set.meta = { amrapDeferred: true };
           return set;
         });
         // v0.5 프라이밍 탑세트 — LOGIC 경로(generateAsymptote)와 동일 규칙(§A.3: 두 경로 일치
@@ -1836,6 +1851,14 @@ export async function generateAndSaveSession(input: {
       );
       snapshot = applyOverridesToSnapshot(snapshot, overrides);
     }
+  }
+
+  // v0.5.1 F3·F4: 세션 수준 피드백 메타 승격 — UI가 세트를 뒤지지 않고 배너/배지를 판단한다.
+  // amrapDeferred = 처방 세트 중 보류된 AMRAP 존재(F3 배너), lightBlockMode = 이번 세션이
+  // 라이트(회복) 계수로 처방됨(F4 배지). 둘 다 표식일 뿐 판정 로직은 읽지 않는다.
+  if (plannedExercisesHaveDeferredAmrap(snapshot.exercises)) snapshot.amrapDeferred = true;
+  if ((effectivePlanParams as Record<string, unknown>)?.lightBlockMode === true) {
+    snapshot.lightBlockMode = true;
   }
 
   // 원자적 upsert: (plan_id, session_key) 유니크 제약 기준 INSERT-or-UPDATE.

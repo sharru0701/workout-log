@@ -27,6 +27,8 @@ export type ProgressionStateApiResponse = {
     cycle: number;
     week: number;
     day: number;
+    // v0.5.1 F4: 라이트 블록(회복) 진행 중 여부 — asymptote 하이브리드 전용 플래그.
+    lightBlockMode?: boolean;
     targets: Record<string, { workKg: number; progressionTarget?: string; failureStreak: number; successStreak: number }>;
   } | null;
   effectiveRules?: Record<

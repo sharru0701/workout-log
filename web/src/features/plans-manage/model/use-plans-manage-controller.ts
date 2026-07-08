@@ -61,6 +61,8 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     day: number;
   } | null>(null);
   const [lastEvents, setLastEvents] = useState<Record<string, TargetLastEvent>>({});
+  // v0.5.1 F4: 라이트 블록(회복) 진행 중 배지 — progression-state의 lightBlockMode 파생.
+  const [lightBlockActive, setLightBlockActive] = useState(false);
   const [showStartingBaseline, setShowStartingBaseline] = useState(false);
   const [showIncrementSettings, setShowIncrementSettings] = useState(false);
   const [adjustOpen, setAdjustOpen] = useState(false);
@@ -198,6 +200,7 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     setIncrementDraft({});
     setProgressPosition(null);
     setLastEvents({});
+    setLightBlockActive(false);
     setShowStartingBaseline(false);
     setShowIncrementSettings(false);
     setAdjustOpen(false);
@@ -240,6 +243,7 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
         });
       }
       setLastEvents(res.targetsLastEvent ?? {});
+      setLightBlockActive(res.program === "asymptote" && res.state?.lightBlockMode === true);
     } catch {
       setIncrementDraft({});
     } finally {
@@ -495,6 +499,7 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     setIncrementDraft,
     incrementLoading,
     progressPosition,
+    lightBlockActive,
     lastEvents,
     showStartingBaseline,
     setShowStartingBaseline,

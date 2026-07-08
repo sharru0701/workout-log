@@ -567,6 +567,9 @@ export function reduceProgressionState(input: {
       ? Array.from(new Set([...Object.keys(state.targets), ...Array.from(outcomes.keys())]))
       : targetsFor(input.program);
   const decisions: TargetDecision[] = [];
+  // F1(v0.5.1): 조기 디로드 점프가 발동하면 어떤 드라이버의 렙 급감 때문이었는지 기록한다.
+  // 판정에는 쓰지 않는다 — 결과 reason(plan_progress_event)으로만 흘러 UI 배너의 근거가 된다.
+  let earlyDeloadRegressed: ProgressionTarget[] | null = null;
   const amrapRepsByKey =
     input.program === "asymptote"
       ? collectAsymptoteAmrapReps(input.sets, state.week, state.day)
@@ -1004,11 +1007,12 @@ export function reduceProgressionState(input: {
     // 사이클4(바닥 보험)는 유지하되 트리거가 그것을 앞당기는 천장 역할. 정상 진행(streak 0)엔 미발동.
     if (!completedBlock && loggedTargets.length > 0 && state.week >= 1 && state.week < 4) {
       const drivers: ProgressionTarget[] = ["SQUAT", "BENCH", "PULL"];
-      const regressed = drivers.filter((d) => (state.targets[d]?.failureStreak ?? 0) >= 2).length;
-      if (regressed >= 2) {
+      const regressed = drivers.filter((d) => (state.targets[d]?.failureStreak ?? 0) >= 2);
+      if (regressed.length >= 2) {
         // 디로드 사이클 선두로 점프. 블록은 week4/day3에서 평소대로 완료(TM 유지)된다.
         state.week = 4;
         state.day = 1;
+        earlyDeloadRegressed = regressed;
       }
     }
 
@@ -1155,9 +1159,11 @@ export function reduceProgressionState(input: {
   const reason =
     eventType === "INCREASE" || eventType === "RESET"
       ? decisions.find((decision) => decision.eventType === eventType)?.reason ?? eventType.toLowerCase()
-      : didAdvanceSession
-        ? "advance:session"
-        : eventType.toLowerCase();
+      : earlyDeloadRegressed
+        ? `deload:trigger:regressed=${earlyDeloadRegressed.join(",")}`
+        : didAdvanceSession
+          ? "advance:session"
+          : eventType.toLowerCase();
   const outcomeObject = Object.fromEntries(outcomes.entries());
 
   return {
