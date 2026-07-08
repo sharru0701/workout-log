@@ -651,7 +651,36 @@ plansRoutes.get("/:planId/progression-state", async (c) => {
       targetsLastEvent[key] = lastByTarget.get(pt) ?? { lastDeltaKg: null, lastEventType: null };
     }
 
-    return c.json({ program, state, effectiveRules, targetsLastEvent });
+    // v0.5.1: 최신 진행 이벤트 1건 — F1 조기 디로드 배너(reason)·F2 블록 판정 카드
+    // (meta.targetDecisions)의 데이터원. additive 필드라 기존 소비자 무영향.
+    const lastEventRows = await db
+      .select({
+        id: planProgressEvent.id,
+        eventType: planProgressEvent.eventType,
+        reason: planProgressEvent.reason,
+        meta: planProgressEvent.meta,
+        createdAt: planProgressEvent.createdAt,
+      })
+      .from(planProgressEvent)
+      .where(eq(planProgressEvent.planId, planId))
+      .orderBy(desc(planProgressEvent.createdAt))
+      .limit(1);
+    const lastEventRow = lastEventRows[0] ?? null;
+    const lastEvent = lastEventRow
+      ? {
+          id: lastEventRow.id,
+          eventType: lastEventRow.eventType,
+          reason: lastEventRow.reason ?? null,
+          createdAt: lastEventRow.createdAt.toISOString(),
+          targetDecisions: Array.isArray(
+            (lastEventRow.meta as Record<string, unknown> | null)?.targetDecisions,
+          )
+            ? ((lastEventRow.meta as Record<string, unknown>).targetDecisions as unknown[])
+            : [],
+        }
+      : null;
+
+    return c.json({ program, state, effectiveRules, targetsLastEvent, lastEvent });
   } catch (e) {
     return apiError(c, e, locale);
   }

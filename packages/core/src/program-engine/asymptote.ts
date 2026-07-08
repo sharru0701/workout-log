@@ -131,6 +131,26 @@ export function asymptoteSetGuidance(input: {
   return input.amrapEligible && !asymptoteShouldDeferAmrap(input) ? "AMRAP" : "STOP_ON_GRIND";
 }
 
+// ──────────────────────────────────────────────────────────────────────────────
+// v0.5.1 F5 — AMRAP 전날 예고용 파생 헬퍼. 판정 로직이 아니라 "다음 세션이 판정(AMRAP)
+// 세션인가"를 기존 상태·블루프린트에서 읽기 전용으로 파생한다.
+// ──────────────────────────────────────────────────────────────────────────────
+
+// 블록 내 세션 전진 규칙(리듀서와 동일: day 1→2→3, day 3 이후 다음 week; week 4 이후 다음 블록 week 1).
+export function asymptoteNextPosition(week: number, day: number): { week: number; day: number } {
+  const safeWeek = Math.max(1, Math.floor(week) || 1);
+  const safeDay = Math.max(1, Math.floor(day) || 1);
+  if (safeDay < 3) return { week: safeWeek, day: safeDay + 1 };
+  return { week: safeWeek >= 4 ? 1 : safeWeek + 1, day: 1 };
+}
+
+// 해당 위치가 판정(AMRAP) 세션인가 — 사이클3이고 그 세션에 AMRAP 슬롯이 존재(세션 A·C).
+export function asymptoteIsJudgmentSession(week: number, day: number): boolean {
+  if (Math.floor(week) !== 3) return false;
+  const targets = ASYMPTOTE_AMRAP_TARGETS_BY_SESSION[Math.floor(day)];
+  return Array.isArray(targets) && targets.length > 0;
+}
+
 // 두 'YYYY-MM-DD'(plan timezone 기준) 날짜 사이의 일(日) 간격. 연속일 AMRAP 가드의 restDayGap 입력.
 // lastDate 미상/파싱 불가/미래(음수)면 null(가드 비활성). 처방 레이어가 직전 세션 날짜와 함께 호출한다.
 export function asymptoteDayGap(sessionDate: string, lastDate: string | null | undefined): number | null {

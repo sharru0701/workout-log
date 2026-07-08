@@ -27,6 +27,15 @@ import { sessionHasBodyweightExercise } from "@workout/core/bodyweight-load";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { apiPatch } from "@/lib/api";
 import { BodyweightCheckBanner } from "./bodyweight-check-banner";
+import { BlockJudgmentCard, SessionFeedbackNotice } from "./hybrid-feedback-banners";
+import {
+  amrapDeferredBannerCopy,
+  amrapEveNoticeCopy,
+  earlyDeloadBannerCopy,
+  lightBlockBadgeCopy,
+  shouldShowAmrapEveNotice,
+} from "@/features/workout-log/model/progression-feedback";
+import { usePlanProgressionFeedback } from "@/features/workout-log/model/use-plan-progression-feedback";
 import { formatDateFriendly } from "@/lib/workout-record/last-session-summary";
 import { parseSessionKey } from "@workout/core/session-key";
 import { WorkoutLogOverlaySheets } from "@/features/workout-log/ui/workout-log-overlay-sheets";
@@ -303,6 +312,60 @@ function WorkoutLogScreenContent({
   const sessionDate = draft?.session.sessionDate ?? "";
   // draft 가 없는 blocked 상태에서도 날짜 이동이 가능하도록 query.date 로 폴백한다.
   const navDateKey = sessionDate || query.date;
+
+  // ── v0.5.1 실패 프로토콜 피드백(F1~F5) ──────────────────────────────────────
+  // 판정 파생은 전부 모델(progression-feedback.ts + 훅)에 위임 — 여기는 표출 조립만.
+  const progressionFeedback = usePlanProgressionFeedback({
+    planId: selectedPlan?.id ?? null,
+    // 저장 후 컨텍스트가 로그 뷰로 바뀔 때 최신 이벤트를 다시 읽는다(F1·F2 트리거).
+    refreshKey: draft?.session.logId ?? null,
+    locale,
+  });
+  const todayDateKey = useMemo(
+    () =>
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: browserTimezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date()),
+    [browserTimezone],
+  );
+  // F5: 오늘 세션을 저장한 상태에서 다음 세션이 판정(AMRAP) 세션이면 예고(정보만, 차단 아님).
+  const showAmrapEveNotice =
+    Boolean(draft?.session.logId) &&
+    sessionDate === todayDateKey &&
+    shouldShowAmrapEveNotice({
+      program: progressionFeedback.program,
+      week: draft?.session.week ?? null,
+      day: draft?.session.day ?? null,
+    });
+  const feedbackNotices = (
+    <>
+      {progressionFeedback.showEarlyDeloadBanner ? (
+        <SessionFeedbackNotice
+          tone="warning"
+          {...earlyDeloadBannerCopy(progressionFeedback.earlyDeloadReason, locale)}
+        />
+      ) : null}
+      {progressionFeedback.blockReport ? (
+        <BlockJudgmentCard
+          locale={locale}
+          rows={progressionFeedback.blockReport.rows}
+          onDismiss={progressionFeedback.dismissBlockReport}
+        />
+      ) : null}
+      {draft?.session.amrapDeferred === true ? (
+        <SessionFeedbackNotice tone="info" {...amrapDeferredBannerCopy(locale)} />
+      ) : null}
+      {progressionFeedback.showLightBlockBadge ? (
+        <SessionFeedbackNotice tone="recovery" {...lightBlockBadgeCopy(locale)} />
+      ) : null}
+      {showAmrapEveNotice ? (
+        <SessionFeedbackNotice tone="info" {...amrapEveNoticeCopy(locale)} />
+      ) : null}
+    </>
+  );
   const sessionLabel = useMemo(() => {
     const key = draft?.session.sessionKey;
     if (!key) return null;
@@ -370,6 +433,7 @@ function WorkoutLogScreenContent({
           //    DateNav·헤더는 후속. 시트/toast는 게이트 밖에서 양쪽 공유. ──
           draft ? (
             <>
+              {feedbackNotices}
               {showBodyweightCheck ? (
                 <BodyweightCheckBanner
                   currentKg={bodyweightKg}
@@ -418,6 +482,8 @@ function WorkoutLogScreenContent({
             titleAriaExpanded={!isEditingExistingLog && planSheetOpen}
             titleAriaHasPopup="dialog"
           />
+
+          {feedbackNotices}
 
           {showBodyweightCheck ? (
             <BodyweightCheckBanner

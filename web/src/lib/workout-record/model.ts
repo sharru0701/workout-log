@@ -68,6 +68,9 @@ export type WorkoutSessionModel = {
   sessionType: string;
   estimatedE1rmKg: number | null;
   estimatedTmKg: number | null;
+  // v0.5.1: 세션 수준 피드백 메타(snapshot에서 승격) — F3 AMRAP 보류 배너·F4 라이트 블록 배지.
+  amrapDeferred?: boolean;
+  lightBlockMode?: boolean;
   note: WorkoutNoteModel;
 };
 
@@ -840,6 +843,8 @@ export function createWorkoutRecordDraft(
       sessionType: toSessionType(day, snapshot, planName, resolvedSessionKey, options.planSchedule),
       estimatedE1rmKg: estimate.estimatedE1rmKg,
       estimatedTmKg: estimate.estimatedTmKg,
+      amrapDeferred: snapshot.amrapDeferred === true,
+      lightBlockMode: snapshot.lightBlockMode === true,
       note: { memo: "" },
     },
     seedExercises: exercises.map(toSeedExercise),
@@ -896,6 +901,8 @@ export function createWorkoutRecordDraftFromLog(
       sessionType: toSessionType(day, snapshot, planName, resolvedSessionKey, options.planSchedule),
       estimatedE1rmKg: estimateFromLog.estimatedE1rmKg ?? estimateFromSnapshot.estimatedE1rmKg,
       estimatedTmKg: estimateFromSnapshot.estimatedTmKg,
+      amrapDeferred: snapshot.amrapDeferred === true,
+      lightBlockMode: snapshot.lightBlockMode === true,
       note: {
         memo: typeof log.notes === "string" ? log.notes.trim() : "",
       },
