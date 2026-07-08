@@ -351,6 +351,7 @@ function WorkoutLogScreenContent({
       {progressionFeedback.blockReport ? (
         <BlockJudgmentCard
           locale={locale}
+          title={progressionFeedback.blockReport.title}
           rows={progressionFeedback.blockReport.rows}
           onDismiss={progressionFeedback.dismissBlockReport}
         />

@@ -5,10 +5,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiGet } from "@/lib/api";
 import {
-  buildBlockJudgmentReport,
+  buildProgressReport,
   isLightBlockActive,
   shouldShowEarlyDeloadBanner,
-  type BlockJudgmentReport,
+  type ProgressReport,
   type ProgressionStateResponse,
 } from "./progression-feedback";
 
@@ -67,13 +67,14 @@ export function usePlanProgressionFeedback(input: {
 
   const showLightBlockBadge = isAsymptote && isLightBlockActive(data?.state ?? null);
 
-  const blockReport: BlockJudgmentReport | null = useMemo(() => {
-    if (!isAsymptote) return null;
-    const report = buildBlockJudgmentReport(lastEvent, input.locale);
+  // 진행 판정 카드 — 프로그램 공통(패밀리별 카탈로그 + 폴백). 노이즈 필터링·문구는
+  // buildProgressReport가 담당하므로 여기서 패밀리를 가리지 않는다.
+  const blockReport: ProgressReport | null = useMemo(() => {
+    const report = buildProgressReport(data?.program ?? null, lastEvent, input.locale);
     if (!report) return null;
     void dismissTick; // dismiss 직후 재파생
     return isReportDismissed(report.eventId) ? null : report;
-  }, [isAsymptote, lastEvent, input.locale, dismissTick]);
+  }, [data?.program, lastEvent, input.locale, dismissTick]);
 
   const dismissBlockReport = useCallback(() => {
     if (!lastEvent) return;

@@ -274,4 +274,7 @@ test("operator: unresolved failure in the final session should not auto-increase
   assert.notEqual(lastResult?.eventType, "INCREASE", "should not auto-increase on a failed final session");
   assert.equal(state.targets.SQUAT?.workKg, 150, "SQUAT TM must hold on final-session failure");
   assert.equal(state.targets.PULL?.workKg, 57.5, "PULL TM must hold");
+  // 공통 피드백 레이어: 블록 완주 동결은 기존 완전 무기록이었다 — 이제 원인 리프트가
+  // reason에 남는다(판정 불변: 위의 TM 유지·cycle 전진 단언이 그대로 통과해야 한다).
+  assert.equal(lastResult?.reason, "freeze:block:failed=SQUAT", "동결 사유 기록");
 });

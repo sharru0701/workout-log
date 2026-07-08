@@ -570,6 +570,9 @@ export function reduceProgressionState(input: {
   // F1(v0.5.1): 조기 디로드 점프가 발동하면 어떤 드라이버의 렙 급감 때문이었는지 기록한다.
   // 판정에는 쓰지 않는다 — 결과 reason(plan_progress_event)으로만 흘러 UI 배너의 근거가 된다.
   let earlyDeloadRegressed: ProgressionTarget[] | null = null;
+  // 공통 피드백 레이어: operator·531 블록 완주가 실패 누적으로 증량 동결될 때 어떤 리프트
+  // 때문이었는지 기록한다(기존 완전 무기록 — 조기 디로드와 같은 유형). 판정에는 쓰지 않는다.
+  let blockFreezeFailed: string[] | null = null;
   const amrapRepsByKey =
     input.program === "asymptote"
       ? collectAsymptoteAmrapReps(input.sets, state.week, state.day)
@@ -902,6 +905,10 @@ export function reduceProgressionState(input: {
           }
         }
       } else {
+        // 기록만: 동결의 원인 리프트(failureStreak>0)를 리셋 전에 수집 — 판정(동결) 자체는 불변.
+        blockFreezeFailed = targetEntries
+          .filter(([, targetState]) => (targetState?.failureStreak ?? 0) > 0)
+          .map(([key, targetState]) => String(targetState?.progressionTarget ?? key));
         for (const [key, current] of Object.entries(state.targets)) {
           state.targets[key] = {
             ...current,
@@ -975,6 +982,10 @@ export function reduceProgressionState(input: {
           }
         }
       } else {
+        // 기록만: operator와 동일 — 동결 원인 리프트를 리셋 전에 수집(판정 불변).
+        blockFreezeFailed = targetEntries
+          .filter(([, targetState]) => (targetState?.failureStreak ?? 0) > 0)
+          .map(([key, targetState]) => String(targetState?.progressionTarget ?? key));
         for (const [key, current] of Object.entries(state.targets)) {
           state.targets[key] = { ...current, successStreak: 0, failureStreak: 0 };
         }
@@ -1161,9 +1172,11 @@ export function reduceProgressionState(input: {
       ? decisions.find((decision) => decision.eventType === eventType)?.reason ?? eventType.toLowerCase()
       : earlyDeloadRegressed
         ? `deload:trigger:regressed=${earlyDeloadRegressed.join(",")}`
-        : didAdvanceSession
-          ? "advance:session"
-          : eventType.toLowerCase();
+        : blockFreezeFailed && blockFreezeFailed.length > 0
+          ? `freeze:block:failed=${blockFreezeFailed.join(",")}`
+          : didAdvanceSession
+            ? "advance:session"
+            : eventType.toLowerCase();
   const outcomeObject = Object.fromEntries(outcomes.entries());
 
   return {
