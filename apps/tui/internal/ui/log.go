@@ -838,6 +838,11 @@ func (l Log) completeSet() (Log, tea.Cmd) {
 	l.persistDraft()
 	// 세트 추가는 addSet("o")로만 — reps 엔터는 현재 세트 완료까지만 하고
 	// 빈 세트를 자동으로 덧붙이지 않는다.
+	// 입력 리듬: reps 완료 = 세트 완료이므로 커서를 다음 세트로 옮겨(운동 경계 넘어감)
+	// 휴식 후 엔터 한 번으로 바로 이어 입력하게 한다. 마지막 세트면 제자리(moveSet이 no-op).
+	// 에디터를 자동으로 열지는 않는다 — 휴식 중 j/k/s 키를 편집기가 삼키면 안 된다.
+	l.moveSet(1)
+	l.col = colWeight
 	return l, nil
 }
 
