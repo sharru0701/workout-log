@@ -324,7 +324,14 @@ func (s Stats) chart(w, h int) string {
 	if len(vals) == 1 {
 		return lipgloss.NewStyle().Foreground(theme.Green).Render(fmt.Sprintf("● %.0f  (1 세션)", vals[0]))
 	}
-	return lineChart(vals, w, h, s.braille)
+	// best e1RM = the PR high point; highlight it gold on the trend (§5 "gold ★ PR").
+	peakIdx := 0
+	for i, v := range vals {
+		if v > vals[peakIdx] {
+			peakIdx = i
+		}
+	}
+	return lineChartMarked(vals, w, h, s.braille, peakIdx)
 }
 
 func (s Stats) summary() string {
@@ -337,7 +344,7 @@ func (s Stats) summary() string {
 			best = v
 		}
 	}
-	out := lipgloss.NewStyle().Foreground(theme.Gold).Render(fmt.Sprintf("best %.0f", best))
+	out := lipgloss.NewStyle().Foreground(theme.Gold).Render(fmt.Sprintf("%s best %.0f", theme.GlyphPeak, best))
 	if imp := best - first; imp != 0 {
 		tone, sign := theme.Green, "+"
 		if imp < 0 {

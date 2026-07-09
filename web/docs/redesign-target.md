@@ -157,7 +157,7 @@ font-variant-ligatures: none;
 |---|---|---|
 | **P0 Foundation** | 이중속성 리팩터 + `--term-*` 토큰 + Sarasa/Nerd self-host + `TermShell` 골격 + 설정 2단 + **실기기 글리프 프로토타입(R3)** | paper 무회귀 + terminal 토큰 + **실기기 박스/브레일 렌더 확인** |
 | **P1 운동 로그**(히어로) | TermTable/Sparkline/Progress/KeyHint/Log + mode-accent | preview 스샷 |
-| P2 stats/1RM | braille 차트(+block fb, 미세선 SVG) | |
+| P2 stats/1RM | braille 차트(+block fb, 미세선 SVG) | ✅ 완료(2026-07-09): 웹=inline SVG `TermLineChart`(★ peak), Go TUI=ntcharts braille+block fb에 gold peak(PR) 하이라이트 |
 | P3 calendar/history · P4 settings(섬 정리 동시) · P5 auth/onboarding(부팅 연출) | | |
 | **PX 인체공학 패스** | 44px·네이티브 input·a11y·high-contrast 서브모드 | 모바일 사용성 회복 |
 
