@@ -21,7 +21,7 @@
 - **`TermTable`+`TermSetRow`** (make-or-break): box 프레임은 **CSS 그리드 뒤의 장식 텍스트**(글리프 안에 input 넣지 않음). 패널 타이틀행(한글 운동명+배지, 탭→PlanSheet 복제) → 컬럼헤더 `SET WT REPS RPE ✓`(단위는 헤더 1회) → N×row(기존 `ROW_GRID` 재사용, 셀=**공유 `CellInput` 재사용**=iOS draft/snap/blur 보존, focus ring amber). 상태 글리프 set-row:76–82 그대로(`✗/✓/▮/·`). **focus chain 재사용**(동일 `registerCell` 키, 같은 `SetRowFocusChainProvider` 안에서 mount). 44px 유지(글리프 밀집해도 hit=44px). 카드액션=44px keyhint 버튼.
   - P1 갭: warmup `W`는 스키마 없음→**P1 생략**(전부 working). PREV vs RPE→**RPE in-grid, PREV는 박스 위 dim 라인**. reps 소스 이원(`programEntryState` 스레드).
 - **`TermProgress`**: btop식 그라디언트 바(green→amber→red), 텍스트 바 위 오버레이. P1: **sets/COMPLETE 바 완전배선**(신규데이터 0) + **rest 바 + 소형 `useRestTimer`**(start on ✓, ±15s, client-only).
-- **`TermSparkline`**: block-eighths 인라인 미니(gold `★` PR). P1=미니만, **braille 40-col 차트는 P2**(stats 배선 회피).
+- **`TermSparkline`**: block-eighths 인라인 미니(gold `★` PR). P1=미니만, **braille 40-col 차트는 P2**(stats 배선 회피). — **✅ P2 완료(2026-07-09)**: 웹 terminal은 §5 그라운딩대로 braille 대신 **inline SVG `TermLineChart`**(모바일 tofu 회피, 추세선+★ peak+min/max), Go TUI stats는 **ntcharts braille+block fallback**에 **gold peak(PR) 하이라이트**를 더해 §5 "gold ★ PR" 충족.
 - **`TermBadge`**: `[PR]`gold(예약)·`[e1RM]`cyan·`[+5kg]`green·`[FAIL]`red·tag amber. 리터럴 bracket, 박스/보더 없음. 한글배지→`[AUTO]` 등 Latin.
 - **`TermLog`**: 2–3줄 combat log(`‹time› ‹ex› ‹wt×reps› ‹badge›`), 완료/저장 이벤트 파생, ephemeral. 한글 허용(박스 아님).
 - **TermShell 확장**: `clock`(client tick) · `mode` accent(`workflowState`+완료+rest에서 파생: SAVING/LOGGING amber/REST cyan/PR! gold/NORMAL) · `TermKeyHintProvider`(`V2BottomDockProvider` 패턴 미러, `[⏎]log`=저장) · `statusRight`(rolling stat + 세션 path).
