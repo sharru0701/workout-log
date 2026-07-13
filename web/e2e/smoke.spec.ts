@@ -10,6 +10,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 // CI에서 서버가 응답하기까지 여유를 줌
 const NAV_TIMEOUT = 30_000;
+const IS_EXTERNAL_E2E = Boolean(process.env.PLAYWRIGHT_BASE_URL);
 
 function expectSuccessfulPageResponse(
   response: Awaited<ReturnType<Page["goto"]>>,
@@ -46,7 +47,11 @@ test.describe("smoke — core pages render", () => {
   test("통계 페이지 정상 로드", async ({ page }) => {
     const response = await page.goto("/stats", { timeout: NAV_TIMEOUT });
     expectSuccessfulPageResponse(response);
-    await expect(page).toHaveURL(/\/?deck=stats$/);
+    // Preview E2E에는 인증 사용자가 없어 /login으로 이동한다. /stats → stats deck
+    // 호환 리다이렉트는 로컬 production smoke의 인증 fallback 환경에서 검증한다.
+    if (!IS_EXTERNAL_E2E) {
+      await expect(page).toHaveURL(/\/?deck=stats$/);
+    }
     await expectNoRenderCrash(page);
   });
 
@@ -90,11 +95,20 @@ test.describe("smoke — API health", () => {
 
 test.describe("smoke — core navigation flow", () => {
   test("홈에서 운동 기록으로 이동", async ({ page }) => {
+    test.skip(IS_EXTERNAL_E2E, "외부 Preview에는 인증 테스트 사용자가 없습니다.");
+
     await page.goto("/", { timeout: NAV_TIMEOUT });
     // 앱이 로드될 때까지 대기
     await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {
       // networkidle이 오래 걸릴 수 있어 timeout 무시
     });
+
+    // 빈 CI seed에서는 첫 방문 온보딩이 정상 노출된다. 실제 닫기 흐름을 거쳐
+    // 온보딩 상태 저장과 홈 복귀까지 확인한 뒤 하단 내비게이션을 검증한다.
+    if (new URL(page.url()).pathname === "/onboarding") {
+      await page.getByRole("button", { name: /닫기|Close/ }).click();
+      await expect(page).toHaveURL(/\/$/);
+    }
 
     // 실제 하단 내비게이션을 눌러 AppShell의 클라이언트 전환까지 검증한다.
     await page.getByRole("link", { name: /기록|Log/ }).click();
@@ -103,6 +117,8 @@ test.describe("smoke — core navigation flow", () => {
   });
 
   test("프로그램 스토어 화면 밖 카드가 스크롤 시 렌더", async ({ page }) => {
+    test.skip(IS_EXTERNAL_E2E, "외부 Preview에는 인증 테스트 사용자가 없습니다.");
+
     const response = await page.goto("/program-store", {
       timeout: NAV_TIMEOUT,
     });
