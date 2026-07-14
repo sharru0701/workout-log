@@ -565,8 +565,8 @@ export function useProgramStoreStartProgramController({
       if (ref5 && !ref5Config) {
         setError(
           locale === "ko"
-            ? "REF5 v1.1 고정 시작 설정을 불러오지 못했습니다."
-            : "The fixed REF5 v1.1 start configuration is unavailable.",
+            ? "REF5 고정 시작 설정을 불러오지 못했습니다."
+            : "The fixed REF5 start configuration is unavailable.",
         );
         return;
       }
@@ -652,8 +652,8 @@ export function useProgramStoreStartProgramController({
     if (isRef5Start && !ref5PlanParams) {
       setError(
         locale === "ko"
-          ? "REF5 v1.1 시작 설정이 올바르지 않습니다."
-          : "The REF5 v1.1 start configuration is invalid.",
+          ? "REF5 시작 설정이 올바르지 않습니다."
+          : "The REF5 start configuration is invalid.",
       );
       return;
     }

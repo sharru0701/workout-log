@@ -63,8 +63,8 @@ export const StartProgramSheet = memo(function StartProgramSheet({
       description={
         isRef5
           ? locale === "ko"
-            ? "1RM이나 TM을 입력하지 않습니다. v1.1의 고정 kg 기준으로 시작합니다."
-            : "No 1RM or training max is entered. REF5 starts from its fixed v1.1 kg baselines."
+            ? "1RM이나 TM을 입력하지 않습니다. 고정 kg 기준으로 시작합니다."
+            : "No 1RM or training max is entered. REF5 starts from fixed kg baselines."
           : locale === "ko"
             ? "모든 종목의 1RM 입력이 필수입니다."
             : "A 1RM entry is required for each lift."
