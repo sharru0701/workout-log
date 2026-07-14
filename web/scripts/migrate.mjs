@@ -25,7 +25,11 @@ const originalEnvKeys = new Set(Object.keys(process.env));
 preloadEnvFile(".env", originalEnvKeys);
 preloadEnvFile(".env.local", originalEnvKeys);
 
-const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0";
+// A Vercel Preview is untrusted pre-merge code. It must never mutate the
+// production database merely because Preview inherited DATABASE_URL. Schema
+// changes are applied only by the explicit DB workflow or a Production build.
+const isVercelPreview = (process.env.VERCEL_ENV ?? "").trim().toLowerCase() === "preview";
+const migrateEnabled = process.env.DB_MIGRATE_ENABLED !== "0" && !isVercelPreview;
 const connectionString = process.env.DATABASE_URL;
 
 // DB_SCHEMA가 설정되면(예: "dev") 해당 스키마 전용 마이그레이션 폴더/추적 테이블을
@@ -37,7 +41,11 @@ const migrationsFolder = dbSchema
 const migrationsSchema = dbSchema ? `drizzle_${dbSchema}` : "drizzle";
 
 if (!migrateEnabled) {
-  console.log("[migrate] DB_MIGRATE_ENABLED=0, skipping migrations");
+  console.log(
+    isVercelPreview
+      ? "[migrate] VERCEL_ENV=preview, skipping migrations"
+      : "[migrate] DB_MIGRATE_ENABLED=0, skipping migrations",
+  );
   process.exit(0);
 }
 
