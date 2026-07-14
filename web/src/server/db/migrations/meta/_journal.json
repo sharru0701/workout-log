@@ -141,6 +141,20 @@
       "when": 1783322050129,
       "tag": "0019_workout_log_personal_records",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1783997981588,
+      "tag": "0020_lonely_vulcan",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1784000057182,
+      "tag": "0021_tricky_giant_man",
+      "breakpoints": true
     }
   ]
 }

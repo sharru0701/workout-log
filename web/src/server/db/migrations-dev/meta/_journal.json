@@ -22,6 +22,20 @@
       "when": 1783322051196,
       "tag": "0002_workout_log_personal_records",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783997986994,
+      "tag": "0003_white_wrecker",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1784000057187,
+      "tag": "0004_lying_hannibal_king",
+      "breakpoints": true
     }
   ]
 }
