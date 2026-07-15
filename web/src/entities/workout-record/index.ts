@@ -40,6 +40,7 @@ export type {
 } from "@/lib/workout-record/entry-state";
 
 export {
+  isWorkoutSetCompleted,
   prepareWorkoutRecordDraftForEntry,
   validateWorkoutRecordEntryState,
 } from "@/lib/workout-record/entry-state";

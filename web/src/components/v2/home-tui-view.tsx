@@ -9,6 +9,7 @@ import {
 } from "@/components/v2/terminal";
 import type { HomeData } from "@/lib/home/home-data-source";
 import type { AppLocale } from "@/lib/i18n/messages";
+import { isHomeWorkoutComplete } from "@/widgets/home-dashboard/home-status";
 
 // terminal(ironlog) home 뷰 — paper V2HomeDashboard의 terminal 대응(P-home).
 // 앱 오픈 랜딩: streak(gold)·주간 day 스트립·resume/next CTA·volume 스파크라인·
@@ -28,7 +29,7 @@ const PANEL: CSSProperties = {
 };
 
 export function HomeTuiView({ data }: { data: HomeData }) {
-  const { locale } = useLocale();
+  const { copy, locale } = useLocale();
   const ko = locale === "ko";
   const {
     quickStats,
@@ -42,8 +43,8 @@ export function HomeTuiView({ data }: { data: HomeData }) {
   } = data;
 
   const volSeries = volumeTrend.map((p) => p.tonnage).filter((v) => v > 0);
-  const resumeLabel = today.completedSets > 0
-    ? ko ? "이어가기" : "resume"
+  const resumeLabel = isHomeWorkoutComplete(today)
+    ? copy.home.protocol.logMore
     : today.hasPlan
       ? ko ? "시작" : "start"
       : ko ? "플랜 선택" : "select plan";

@@ -1,5 +1,10 @@
 import type { AppLocale } from "@/lib/i18n/messages";
-import type { WorkoutExerciseModel, WorkoutExerciseViewModel, WorkoutRecordDraft } from "./model";
+import type {
+  WorkoutExerciseModel,
+  WorkoutExerciseSource,
+  WorkoutExerciseViewModel,
+  WorkoutRecordDraft,
+} from "./model";
 
 export type WorkoutProgramExerciseEntryState = {
   repsInputs: string[];
@@ -9,6 +14,27 @@ export type WorkoutProgramExerciseEntryState = {
 };
 
 export type WorkoutProgramExerciseEntryStateMap = Record<string, WorkoutProgramExerciseEntryState>;
+
+export function isWorkoutSetCompleted(input: {
+  source: WorkoutExerciseSource;
+  isRef5: boolean;
+  repsInput?: string;
+  recordedReps: number | undefined;
+}) {
+  const rawValue = input.repsInput?.trim() ?? "";
+  if (input.source === "PROGRAM") {
+    if (rawValue === "") return false;
+    const actual = Number(rawValue);
+    return Number.isFinite(actual) && actual >= (input.isRef5 ? 0 : 1);
+  }
+
+  const actual = input.recordedReps;
+  return (
+    typeof actual === "number" &&
+    Number.isFinite(actual) &&
+    (input.isRef5 ? actual >= 0 : actual > 0)
+  );
+}
 
 export function createWorkoutProgramExerciseEntryState(
   exercise: Pick<WorkoutExerciseModel, "set" | "note">,

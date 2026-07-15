@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  isWorkoutSetCompleted,
   prepareWorkoutRecordDraftForEntry,
   validateWorkoutRecordEntryState,
 } from "./entry-state";
@@ -84,6 +85,38 @@ test("prepareWorkoutRecordDraftForEntry clears program memo values but keeps pla
     memoInput: "",
     memoPlaceholder: "Operator W1",
   });
+});
+
+test("saved REF5 user sets count as completed without transient entry state", () => {
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "USER",
+      isRef5: true,
+      recordedReps: 0,
+    }),
+    true,
+  );
+});
+
+test("new REF5 program sets require explicit reps, including an explicit zero", () => {
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "PROGRAM",
+      isRef5: true,
+      repsInput: "",
+      recordedReps: 3,
+    }),
+    false,
+  );
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "PROGRAM",
+      isRef5: true,
+      repsInput: "0",
+      recordedReps: 3,
+    }),
+    true,
+  );
 });
 
 test("validateWorkoutRecordEntryState requires explicit reps input for program sets", () => {

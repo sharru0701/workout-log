@@ -55,6 +55,7 @@ export type HomeTodaySummary = {
   headline: string;
   programName: string;
   hasPlan: boolean;
+  hasCompletedWorkout: boolean;
   meta: string;
   completedSets: number;
   href: string;
@@ -753,6 +754,7 @@ function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercise
     headline: copy.todayHeadline,
     programName: selectedProgramName,
     hasPlan: Boolean(activePlanId),
+    hasCompletedWorkout: todayLogCount > 0,
     meta,
     completedSets,
     href: activePlanId ? buildTodayLogHref({ planId: activePlanId, date: todayKey, autoGenerate: todayLogCount === 0 }) : "/program-store",
