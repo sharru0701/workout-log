@@ -23,6 +23,7 @@ import type {
   HomeTodaySummary,
   HomeWeeklySummary,
 } from "@/lib/home/home-data-source";
+import { isHomeWorkoutComplete } from "./home-status";
 import {
   V2Card,
   V2Chip,
@@ -546,9 +547,7 @@ function V2HomeDashboardPaper({ data }: { data: HomeData }) {
   }, [requestedDeck]);
 
   const hasPlan = data.planOverview.totalPlans > 0;
-  const isComplete =
-    data.today.totalPlannedSets > 0 &&
-    data.today.completedSets >= data.today.totalPlannedSets;
+  const isComplete = isHomeWorkoutComplete(data.today);
 
   const bottomDockTabs = useMemo(
     () => ({

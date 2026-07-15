@@ -47,7 +47,10 @@ export const makeProgramEntryStateAtom = (exerciseId: string) =>
 // Advanced Derived State Atoms
 import { formatKgValue } from "@workout/core/bodyweight-load";
 import { resolveMinimumPlateIncrement } from "@/lib/settings/workout-preferences";
-import { materializeWorkoutExercises } from "@/entities/workout-record";
+import {
+  isWorkoutSetCompleted,
+  materializeWorkoutExercises,
+} from "@/entities/workout-record";
 import { createFallbackProgramEntryState } from "@/features/workout-log/model/exercise-entry";
 
 export const visibleExercisesAtom = atom((get) => {
@@ -140,8 +143,12 @@ export const completedExercisesCountAtom = atom((get) => {
     return exercise.set.repsPerSet.some((setReps, index) => {
       const entryState = entryStateMap[exercise.id];
       const rawValue = entryState?.repsInputs[index]?.trim() ?? "";
-      const actual = exercise.source === "PROGRAM" ? Number(rawValue) : setReps;
-      return Number.isFinite(actual) && (exercise.ref5 ? rawValue !== "" && actual >= 0 : actual > 0);
+      return isWorkoutSetCompleted({
+        source: exercise.source,
+        isRef5: Boolean(exercise.ref5),
+        repsInput: rawValue,
+        recordedReps: setReps,
+      });
     });
   }).length;
 });
@@ -154,14 +161,12 @@ export const completedSetsCountAtom = atom((get) => {
     const entryState = entryStateMap[exercise.id];
     for (let i = 0; i < exercise.set.repsPerSet.length; i++) {
       const rawValue = entryState?.repsInputs[i]?.trim() ?? "";
-      const actual =
-        exercise.source === "PROGRAM"
-          ? Number(rawValue)
-          : exercise.set.repsPerSet[i];
-      if (
-        Number.isFinite(actual) &&
-        (exercise.ref5 ? rawValue !== "" && actual >= 0 : actual > 0)
-      ) count++;
+      if (isWorkoutSetCompleted({
+        source: exercise.source,
+        isRef5: Boolean(exercise.ref5),
+        repsInput: rawValue,
+        recordedReps: exercise.set.repsPerSet[i],
+      })) count++;
     }
   }
   return count;
