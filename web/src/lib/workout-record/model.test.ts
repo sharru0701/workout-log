@@ -22,6 +22,7 @@ import {
 } from "@/features/workout-log/model/exercise-entry";
 import { toDefaultWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { applyWorkoutLogWeightRulesToDraft } from "./weight-rules";
+import { Ref5StaleVersionError } from "@workout/core/program-engine/ref5";
 
 function makeRef5Session(): GeneratedSessionLike {
   return {
@@ -125,16 +126,42 @@ test("REF5 reload preserves frozen external PULL loads and bypasses generic plat
 test("REF5 local draft restore rejects stale protocol/concurrent-session caches", () => {
   const current = createWorkoutRecordDraft(makeRef5Session(), "REF5");
   const legacy = structuredClone(current);
-  legacy.session.ref5!.protocolVersion = "1.1";
+  (legacy.session.ref5 as { protocolVersion: string }).protocolVersion = "1.1";
   assert.equal(isWorkoutDraftProtocolCompatible(current, legacy), false);
 
   const sameLegacy = structuredClone(legacy);
-  assert.equal(isWorkoutDraftProtocolCompatible(legacy, sameLegacy), true);
+  assert.equal(isWorkoutDraftProtocolCompatible(legacy, sameLegacy), false);
 
   const otherTab = structuredClone(current);
   otherTab.session.generatedSessionId = "ref5-session-other-tab";
   assert.equal(isWorkoutDraftProtocolCompatible(current, otherTab), false);
   assert.equal(isWorkoutDraftProtocolCompatible(null, legacy), false);
+});
+
+test("REF5 v1.1 session metadata is rejected for creation and log restore", () => {
+  const legacySession = structuredClone(makeRef5Session());
+  legacySession.snapshot.protocolVersion = "1.1";
+  legacySession.snapshot.ref5.protocolVersion = "1.1";
+
+  assert.throws(
+    () => createWorkoutRecordDraft(legacySession, "REF5"),
+    Ref5StaleVersionError,
+  );
+  assert.throws(
+    () =>
+      createWorkoutRecordDraftFromLog(
+        {
+          id: "log-ref5-v1.1",
+          planId: legacySession.planId,
+          generatedSessionId: legacySession.id,
+          performedAt: "2026-07-13T09:00:00.000Z",
+          sets: [],
+          generatedSession: legacySession,
+        },
+        "REF5",
+      ),
+    Ref5StaleVersionError,
+  );
 });
 
 test("REF5 log edit round-trips arbitrary set metadata without recomputing bodyweight", () => {
@@ -155,6 +182,7 @@ test("REF5 log edit round-trips arbitrary set metadata without recomputing bodyw
     },
     "REF5",
   );
+  assert.equal(editedDraft.session.ref5?.protocolVersion, "1.2");
   assert.equal(editedDraft.session.estimatedE1rmKg, null);
   assert.equal(editedDraft.session.estimatedTmKg, null);
   const exerciseId = editedDraft.userExercises[0]!.id;

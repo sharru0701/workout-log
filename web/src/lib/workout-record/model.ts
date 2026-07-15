@@ -1,5 +1,10 @@
 import type { AppLocale } from "@/lib/i18n/messages";
-import { validateAndClassifyRef5Outcome } from "@workout/core/program-engine/ref5";
+import {
+  REF5_IDENTIFIERS,
+  REF5_PROTOCOL_VERSION,
+  Ref5StaleVersionError,
+  validateAndClassifyRef5Outcome,
+} from "@workout/core/program-engine/ref5";
 
 export type WorkoutWorkflowState = "idle" | "editing" | "saving" | "done";
 
@@ -46,7 +51,7 @@ export type WorkoutExerciseRef5Meta = {
 };
 
 export type WorkoutSessionRef5Meta = {
-  protocolVersion: "1.1" | "1.2";
+  protocolVersion: typeof REF5_PROTOCOL_VERSION;
   actualStartAt: string;
   startEventId: string;
   completionEventId: string;
@@ -122,9 +127,9 @@ export type WorkoutRecordDraft = {
 
 /**
  * A persisted REF5 editor draft may only be restored over the exact generated
- * session and protocol that the server just loaded. This is the browser-cache
- * boundary for upgrades and concurrent tabs; a v1.1 draft must never hydrate a
- * v1.2 session (and an in-progress v1.1 session remains resumable as v1.1).
+ * v1.2 session that the server just loaded. This is the browser-cache boundary
+ * for protocol upgrades and concurrent tabs; stale drafts must never hydrate an
+ * active session.
  */
 export function isWorkoutDraftProtocolCompatible(
   current: WorkoutRecordDraft | null,
@@ -135,8 +140,13 @@ export function isWorkoutDraftProtocolCompatible(
   const persistedRef5 = persisted.session.ref5 ?? null;
   if (!currentRef5 && !persistedRef5) return true;
   if (!currentSession || !currentRef5 || !persistedRef5) return false;
+  if (
+    String(currentRef5.protocolVersion) !== REF5_PROTOCOL_VERSION ||
+    String(persistedRef5.protocolVersion) !== REF5_PROTOCOL_VERSION
+  ) {
+    return false;
+  }
   return (
-    currentRef5.protocolVersion === persistedRef5.protocolVersion &&
     currentSession.generatedSessionId === persisted.session.generatedSessionId &&
     currentRef5.startEventId === persistedRef5.startEventId
   );
@@ -467,20 +477,16 @@ function toRef5TerminationReason(value: unknown): Ref5TerminationReason | null {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any -- versioned JSONB snapshot
 function readRef5SessionMeta(snapshot: any): WorkoutSessionRef5Meta | null {
   const raw = toRecord(snapshot?.ref5);
+  if (String(snapshot?.program?.slug ?? "") !== REF5_IDENTIFIERS.slug) return null;
   const protocolVersion = String(raw.protocolVersion ?? snapshot?.protocolVersion ?? "");
-  if (
-    (protocolVersion !== "1.1" && protocolVersion !== "1.2") ||
-    String(snapshot?.program?.slug ?? "") !== "ref5-adaptive-strength"
-  ) {
-    return null;
-  }
+  if (protocolVersion !== REF5_PROTOCOL_VERSION) throw new Ref5StaleVersionError(protocolVersion || null);
   const actualStartAt = String(raw.actualStartAt ?? snapshot?.actualStartAt ?? "").trim();
   const startEventId = String(raw.startEventId ?? snapshot?.startEventId ?? "").trim();
   if (!actualStartAt || !startEventId) return null;
   const before = Number(raw.runtimeRevisionBefore ?? 0);
   const after = Number(raw.runtimeRevisionAfter ?? before + 1);
   return {
-    protocolVersion,
+    protocolVersion: REF5_PROTOCOL_VERSION,
     actualStartAt,
     startEventId,
     // Deterministic across reloads/retries. The generated session is the idempotency anchor.

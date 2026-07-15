@@ -491,7 +491,7 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
               {locale === "ko" ? "뚜렷한 감속" : "CLEAR SLOWDOWN"}
             </option>
             <option value="FORCE_OR_TECHNIQUE">
-              {locale === "ko" ? "강제 반복/기술 붕괴" : "FORCE / TECHNIQUE"}
+              {locale === "ko" ? "힘 부족/기술 붕괴" : "FORCE / TECHNIQUE"}
             </option>
             <option value="SAFETY">{locale === "ko" ? "안전" : "SAFETY"}</option>
             <option value="EXTERNAL">{locale === "ko" ? "외부 사유" : "EXTERNAL"}</option>
