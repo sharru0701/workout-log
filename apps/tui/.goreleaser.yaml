@@ -47,9 +47,8 @@ checksum:
   name_template: checksums.txt
 
 release:
-  github:
-    owner: sharru0701
-    name: workout-log
+  # Infer the current repository from origin so an owner transfer cannot leave
+  # artifact uploads targeting a stale GitHub path.
   name_template: "ironlog {{ .Tag }}"
 
 changelog:
