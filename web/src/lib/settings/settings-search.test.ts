@@ -23,6 +23,21 @@ test("searchSettingsIndex prioritizes direct title match", () => {
   assert.ok(results[0]?.entry.key.startsWith("calendar."));
 });
 
+test("searchSettingsIndex finds independent light and dark themes", () => {
+  const lightResults = searchSettingsIndex(settingsSearchIndex, "GitHub Light");
+  const darkResults = searchSettingsIndex(settingsSearchIndex, "Catppuccin Mocha");
+  const extraLightResults = searchSettingsIndex(
+    settingsSearchIndex,
+    "Kanagawa Lotus",
+  );
+  const extraDarkResults = searchSettingsIndex(settingsSearchIndex, "Gruvbox Dark");
+
+  assert.equal(lightResults[0]?.entry.key, "settings.theme.light");
+  assert.equal(darkResults[0]?.entry.key, "settings.theme.dark");
+  assert.equal(extraLightResults[0]?.entry.key, "settings.theme.light");
+  assert.equal(extraDarkResults[0]?.entry.key, "settings.theme.dark");
+});
+
 test("searchSettingsIndex returns empty list when no match exists", () => {
   const results = searchSettingsIndex(settingsSearchIndex, "unmatchable-query-123");
   assert.equal(results.length, 0);

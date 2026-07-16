@@ -14,11 +14,15 @@ const expectedThemes = [
   "solarized-light",
   "catppuccin-latte",
   "tokyo-night-day",
+  "gruvbox-light",
+  "kanagawa-lotus",
   "obsidian",
   "github-dark",
   "solarized-dark",
   "catppuccin-mocha",
   "tokyo-night",
+  "gruvbox-dark",
+  "kanagawa-wave",
 ];
 
 const requiredTokens = [

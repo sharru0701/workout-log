@@ -12,13 +12,17 @@ export type LightColorTheme =
   | "GITHUB_LIGHT"
   | "SOLARIZED_LIGHT"
   | "CATPPUCCIN_LATTE"
-  | "TOKYO_NIGHT_DAY";
+  | "TOKYO_NIGHT_DAY"
+  | "GRUVBOX_LIGHT"
+  | "KANAGAWA_LOTUS";
 export type DarkColorTheme =
   | "OBSIDIAN"
   | "GITHUB_DARK"
   | "SOLARIZED_DARK"
   | "CATPPUCCIN_MOCHA"
-  | "TOKYO_NIGHT";
+  | "TOKYO_NIGHT"
+  | "GRUVBOX_DARK"
+  | "KANAGAWA_WAVE";
 export type LocalePreference = "ko" | "en";
 
 export const LIGHT_COLOR_THEMES: readonly LightColorTheme[] = [
@@ -27,6 +31,8 @@ export const LIGHT_COLOR_THEMES: readonly LightColorTheme[] = [
   "SOLARIZED_LIGHT",
   "CATPPUCCIN_LATTE",
   "TOKYO_NIGHT_DAY",
+  "GRUVBOX_LIGHT",
+  "KANAGAWA_LOTUS",
 ] as const;
 
 export const DARK_COLOR_THEMES: readonly DarkColorTheme[] = [
@@ -35,6 +41,8 @@ export const DARK_COLOR_THEMES: readonly DarkColorTheme[] = [
   "SOLARIZED_DARK",
   "CATPPUCCIN_MOCHA",
   "TOKYO_NIGHT",
+  "GRUVBOX_DARK",
+  "KANAGAWA_WAVE",
 ] as const;
 
 export type TrainingGoalKey =

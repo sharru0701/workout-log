@@ -28,6 +28,16 @@ test("resolveSettingsDeepLink resolves known key and row anchor", () => {
   }
 });
 
+test("resolveSettingsDeepLink resolves the theme settings entry", () => {
+  const resolved = resolveSettingsDeepLink({ key: "settings.theme" });
+
+  assert.equal(resolved.ok, true);
+  if (resolved.ok) {
+    assert.equal(resolved.entry.path, "/settings");
+    assert.equal(resolved.target, "/settings?source=deeplink");
+  }
+});
+
 test("resolveSettingsDeepLink rejects unknown key", () => {
   const resolved = resolveSettingsDeepLink({ key: "settings.unknown" });
   assert.equal(resolved.ok, false);

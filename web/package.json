@@ -15,6 +15,7 @@
     "lint:design:update": "node scripts/design-lint.mjs --update",
     "test:a11y:contrast": "node scripts/a11y-contrast-check.mjs",
     "test:a11y:runtime": "bash scripts/playwright-wrapper.sh test e2e/a11y-runtime.spec.ts --project chromium",
+    "test:theme": "playwright test e2e/color-themes.spec.ts --project chromium",
     "test:design:harmonization": "bash scripts/playwright-wrapper.sh test e2e/design-harmonization.spec.ts --project chromium",
     "test:design:harmonization:strict": "DESIGN_HARMONIZATION_VISUAL_STRICT=1 bash scripts/playwright-wrapper.sh test e2e/design-harmonization.spec.ts --project chromium",
     "test:design:harmonization:light": "DESIGN_HARMONIZATION_COLOR_SCHEMES=light bash scripts/playwright-wrapper.sh test e2e/design-harmonization.spec.ts --project chromium",

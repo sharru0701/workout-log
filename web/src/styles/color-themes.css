@@ -174,6 +174,74 @@
   --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 72%, transparent);
 }
 
+:root[data-color-theme="gruvbox-light"] {
+  --v2-bg: #ebdbb2;
+  --v2-paper: #fbf1c7;
+  --v2-paper-2: #f2e5bc;
+  --v2-paper-3: #d5c4a1;
+  --v2-paper-4: #bdae93;
+  --v2-ink: #282828;
+  --v2-ink-2: #3c3836;
+  --v2-ink-3: #665c54;
+  --v2-ink-4: #7c6f64;
+  --v2-ink-on-accent: #ffffff;
+  --v2-accent: #076678;
+  --v2-accent-2: #00576a;
+  --v2-accent-weak: #dce4cf;
+  --v2-accent-ink: #076678;
+  --v2-c-weight: #8f3f71;
+  --v2-c-reps: #3a7050;
+  --v2-c-volume: #af3a03;
+  --v2-c-onerm: #076678;
+  --v2-c-progress: #6c670c;
+  --v2-c-pr: #765800;
+  --v2-c-danger: #9d0006;
+  --v2-c-success: #6c670c;
+  --v2-c-info: #3a7050;
+  --v2-c-warning: #765800;
+  --v2-shadow-soft: rgba(40, 40, 40, 0.05);
+  --v2-shadow-med: rgba(40, 40, 40, 0.1);
+  --v2-shadow-strong: rgba(40, 40, 40, 0.16);
+  --v2-elev-sheet: 0 -8px 32px rgba(40, 40, 40, 0.18);
+  --v2-focus: rgba(7, 102, 120, 0.32);
+  --v2-overlay: rgba(40, 40, 40, 0.42);
+  --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 70%, transparent);
+}
+
+:root[data-color-theme="kanagawa-lotus"] {
+  --v2-bg: #e5ddb0;
+  --v2-paper: #f2ecbc;
+  --v2-paper-2: #e7dba0;
+  --v2-paper-3: #dcd5ac;
+  --v2-paper-4: #d5cea3;
+  --v2-ink: #43436c;
+  --v2-ink-2: #545464;
+  --v2-ink-3: #68655a;
+  --v2-ink-4: #8a8980;
+  --v2-ink-on-accent: #ffffff;
+  --v2-accent: #4d699b;
+  --v2-accent-2: #5d57a3;
+  --v2-accent-weak: #c7d7e0;
+  --v2-accent-ink: #4d699b;
+  --v2-c-weight: #624c83;
+  --v2-c-reps: #4f692f;
+  --v2-c-volume: #a44f00;
+  --v2-c-onerm: #4d699b;
+  --v2-c-progress: #4f692f;
+  --v2-c-pr: #6f5d26;
+  --v2-c-danger: #b22e42;
+  --v2-c-success: #4f692f;
+  --v2-c-info: #3f6978;
+  --v2-c-warning: #7a5700;
+  --v2-shadow-soft: rgba(67, 67, 108, 0.05);
+  --v2-shadow-med: rgba(67, 67, 108, 0.1);
+  --v2-shadow-strong: rgba(67, 67, 108, 0.16);
+  --v2-elev-sheet: 0 -8px 32px rgba(67, 67, 108, 0.18);
+  --v2-focus: rgba(77, 105, 155, 0.32);
+  --v2-overlay: rgba(67, 67, 108, 0.42);
+  --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 72%, transparent);
+}
+
 :root[data-color-theme="obsidian"] {
   --v2-bg: #0e0d12;
   --v2-paper: #16151c;
@@ -341,5 +409,73 @@
   --v2-elev-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6);
   --v2-focus: rgba(122, 162, 247, 0.36);
   --v2-overlay: rgba(0, 0, 0, 0.66);
+  --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 72%, transparent);
+}
+
+:root[data-color-theme="gruvbox-dark"] {
+  --v2-bg: #1d2021;
+  --v2-paper: #282828;
+  --v2-paper-2: #3c3836;
+  --v2-paper-3: #504945;
+  --v2-paper-4: #665c54;
+  --v2-ink: #fbf1c7;
+  --v2-ink-2: #ebdbb2;
+  --v2-ink-3: #d5c4a1;
+  --v2-ink-4: #a89984;
+  --v2-ink-on-accent: #1d2021;
+  --v2-accent: #83a598;
+  --v2-accent-2: #8ec07c;
+  --v2-accent-weak: rgba(131, 165, 152, 0.17);
+  --v2-accent-ink: #83a598;
+  --v2-c-weight: #d3869b;
+  --v2-c-reps: #8ec07c;
+  --v2-c-volume: #fe8019;
+  --v2-c-onerm: #83a598;
+  --v2-c-progress: #b8bb26;
+  --v2-c-pr: #fabd2f;
+  --v2-c-danger: #ff6655;
+  --v2-c-success: #b8bb26;
+  --v2-c-info: #8ec07c;
+  --v2-c-warning: #fabd2f;
+  --v2-shadow-soft: rgba(0, 0, 0, 0.3);
+  --v2-shadow-med: rgba(0, 0, 0, 0.42);
+  --v2-shadow-strong: rgba(0, 0, 0, 0.58);
+  --v2-elev-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  --v2-focus: rgba(131, 165, 152, 0.38);
+  --v2-overlay: rgba(29, 32, 33, 0.7);
+  --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 72%, transparent);
+}
+
+:root[data-color-theme="kanagawa-wave"] {
+  --v2-bg: #16161d;
+  --v2-paper: #1f1f28;
+  --v2-paper-2: #2a2a37;
+  --v2-paper-3: #363646;
+  --v2-paper-4: #54546d;
+  --v2-ink: #dcd7ba;
+  --v2-ink-2: #c8c093;
+  --v2-ink-3: #a6a186;
+  --v2-ink-4: #727169;
+  --v2-ink-on-accent: #16161d;
+  --v2-accent: #7e9cd8;
+  --v2-accent-2: #9cabca;
+  --v2-accent-weak: rgba(126, 156, 216, 0.16);
+  --v2-accent-ink: #9cabca;
+  --v2-c-weight: #b8b4d0;
+  --v2-c-reps: #98bb6c;
+  --v2-c-volume: #ffa066;
+  --v2-c-onerm: #7e9cd8;
+  --v2-c-progress: #98bb6c;
+  --v2-c-pr: #e6c384;
+  --v2-c-danger: #e46876;
+  --v2-c-success: #98bb6c;
+  --v2-c-info: #7fb4ca;
+  --v2-c-warning: #e6c384;
+  --v2-shadow-soft: rgba(0, 0, 0, 0.3);
+  --v2-shadow-med: rgba(0, 0, 0, 0.42);
+  --v2-shadow-strong: rgba(0, 0, 0, 0.58);
+  --v2-elev-sheet: 0 -8px 32px rgba(0, 0, 0, 0.6);
+  --v2-focus: rgba(126, 156, 216, 0.38);
+  --v2-overlay: rgba(22, 22, 29, 0.7);
   --v2-hairline: color-mix(in srgb, var(--v2-paper-4) 72%, transparent);
 }

@@ -432,6 +432,8 @@ function ThemeSettingsRows({
       { value: "SOLARIZED_LIGHT", label: "Solarized Light" },
       { value: "CATPPUCCIN_LATTE", label: "Catppuccin Latte" },
       { value: "TOKYO_NIGHT_DAY", label: "Tokyo Night Day" },
+      { value: "GRUVBOX_LIGHT", label: "Gruvbox Light" },
+      { value: "KANAGAWA_LOTUS", label: "Kanagawa Lotus" },
     ],
     [],
   );
@@ -445,6 +447,8 @@ function ThemeSettingsRows({
       { value: "SOLARIZED_DARK", label: "Solarized Dark" },
       { value: "CATPPUCCIN_MOCHA", label: "Catppuccin Mocha" },
       { value: "TOKYO_NIGHT", label: "Tokyo Night" },
+      { value: "GRUVBOX_DARK", label: "Gruvbox Dark" },
+      { value: "KANAGAWA_WAVE", label: "Kanagawa Wave" },
     ],
     [],
   );
