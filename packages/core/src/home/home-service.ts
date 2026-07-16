@@ -7,12 +7,18 @@ import {
 import {
   exercise,
   plan,
+  planRuntimeState,
   programTemplate,
   programVersion,
   workoutLog,
   workoutSet,
 } from "@workout/core/db/schema";
 import { generateSessionSnapshot } from "@workout/core/program-engine/generateSession";
+import { isRef5PlanParams } from "@workout/core/program-engine/ref5-integration";
+import {
+  buildRef5Status,
+  type Ref5Status,
+} from "@workout/core/program-engine/ref5-status";
 import { logInfo } from "@workout/core/observability/logger";
 import { runSingleFlight } from "@workout/core/performance/single-flight";
 import { getStatsCache, setStatsCache } from "../stats/cache";
@@ -160,6 +166,7 @@ export type HomeData = {
   quickStats: HomeQuickStats;
   goal: TrainingGoalKey;
   goalMetrics: HomeGoalMetrics;
+  ref5Status: Ref5Status | null;
 };
 
 type HomePlanRecord = {
@@ -167,6 +174,7 @@ type HomePlanRecord = {
   name: string;
   type: string;
   rootProgramVersionId: string | null;
+  params: unknown;
   createdAt: Date;
   baseProgramName: string;
   lastPerformedAt: Date | null;
@@ -345,6 +353,10 @@ async function loadHomeData(params: {
   // 타임아웃 시 snapshot=null로 빌드 → 오늘 계획 운동 목록만 비어있고 나머지 홈 데이터는 정상 표시.
   const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey);
   let snapshot = null;
+  const ref5StatusPromise: Promise<Ref5Status | null> =
+    highlightedPlan && isRef5PlanParams(highlightedPlan.params)
+      ? fetchRef5Status(userId, highlightedPlan.id).catch(() => null)
+      : Promise.resolve(null);
   const snapshotStartedAt = Date.now();
   if (highlightedPlan) {
     try {
@@ -362,6 +374,7 @@ async function loadHomeData(params: {
       // ignore
     }
   }
+  const ref5Status = await ref5StatusPromise;
   const snapshotMs = Date.now() - snapshotStartedAt;
 
   // 데이터 가공 및 빌드
@@ -378,6 +391,7 @@ async function loadHomeData(params: {
     goal,
     goalMetrics,
     bodyweightKg,
+    ref5Status,
   });
 
   // Keep the single-flight entry alive until the cache is visible. Otherwise a
@@ -455,6 +469,7 @@ async function fetchPlans(
       name: plan.name,
       type: plan.type,
       rootProgramVersionId: plan.rootProgramVersionId,
+      params: plan.params,
       createdAt: plan.createdAt,
       templateName: programTemplate.name,
       // Raw SQL aggregate values are not guaranteed to run through the
@@ -483,11 +498,30 @@ async function fetchPlans(
       name: row.name,
       type: row.type,
       rootProgramVersionId: row.rootProgramVersionId,
+      params: row.params,
       createdAt: requireDatabaseDate(row.createdAt, "plan.createdAt"),
       baseProgramName,
       lastPerformedAt: parseDatabaseDate(row.lastPerformedAt),
     };
   });
+}
+
+async function fetchRef5Status(
+  userId: string,
+  planId: string,
+): Promise<Ref5Status> {
+  const rows = await db
+    .select({ state: planRuntimeState.state })
+    .from(planRuntimeState)
+    .where(
+      and(
+        eq(planRuntimeState.userId, userId),
+        eq(planRuntimeState.planId, planId),
+      ),
+    )
+    .limit(1);
+
+  return buildRef5Status(rows[0]?.state ?? null);
 }
 
 async function fetchLogs(userId: string, limit: number) {
@@ -681,8 +715,9 @@ function buildHomeData(params: {
   goal: TrainingGoalKey;
   goalMetrics: HomeGoalMetrics;
   bodyweightKg: number | null;
+  ref5Status: Ref5Status | null;
 }): HomeData {
-  const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey, goal, goalMetrics, bodyweightKg } = params;
+  const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey, goal, goalMetrics, bodyweightKg, ref5Status } = params;
 
   const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } = buildPlannedExercises(snapshot, bodyweightKg, locale);
 
@@ -698,6 +733,7 @@ function buildHomeData(params: {
     quickStats: buildQuickStats(logs, todayKey),
     goal,
     goalMetrics,
+    ref5Status,
   };
 }
 

@@ -10,6 +10,7 @@ import {
 import type { HomeData } from "@/lib/home/home-data-source";
 import type { AppLocale } from "@/lib/i18n/messages";
 import { isHomeWorkoutComplete } from "@/widgets/home-dashboard/home-status";
+import { Ref5WindowProgressPanel } from "@/components/ref5/ref5-window-progress-panel";
 
 // terminal(ironlog) home 뷰 — paper V2HomeDashboard의 terminal 대응(P-home).
 // 앱 오픈 랜딩: streak(gold)·주간 day 스트립·resume/next CTA·volume 스파크라인·
@@ -152,6 +153,14 @@ export function HomeTuiView({ data }: { data: HomeData }) {
           [▶ {resumeLabel}]
         </div>
       </a>
+
+      {data.ref5Status ? (
+        <Ref5WindowProgressPanel
+          status={data.ref5Status}
+          locale={locale}
+          variant="terminal"
+        />
+      ) : null}
 
       {/* 오늘의 운동 목록 — paper "오늘의 세션" 카드 운동 리스트의 terminal 대응.
           운동별: 인덱스 · 운동명 · 세트 요약(summary or N sets) · [MAIN] 배지. */}

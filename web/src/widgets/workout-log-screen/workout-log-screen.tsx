@@ -62,6 +62,8 @@ import {
 } from "@/features/workout-log/store/workout-log-atoms";
 import WorkoutRecordLoading from "./workout-record-skeleton";
 import { Ref5SessionStartPanel } from "@/features/workout-log/ui/ref5-session-start-panel";
+import { Ref5WindowProgressPanel } from "@/components/ref5/ref5-window-progress-panel";
+import { isRef5PlanParams } from "@/lib/workout-record/ref5-plan";
 
 // 체중 확인 안내: 마지막 확인 시각 설정 키 + 스테일 임계(14일). 이 기간 내에 확인했으면 다시 안 묻는다.
 const BODYWEIGHT_CHECKED_AT_KEY = "prefs.bodyweight.checkedAtMs";
@@ -323,11 +325,27 @@ function WorkoutLogScreenContent({
   // ── v0.5.1 실패 프로토콜 피드백(F1~F5) ──────────────────────────────────────
   // 판정 파생은 전부 모델(progression-feedback.ts + 훅)에 위임 — 여기는 표출 조립만.
   const progressionFeedback = usePlanProgressionFeedback({
-    planId: selectedPlan?.id ?? null,
+    planId: selectedPlan?.id ?? ref5StartContext?.planId ?? null,
     // 저장 후 컨텍스트가 로그 뷰로 바뀔 때 최신 이벤트를 다시 읽는다(F1·F2 트리거).
     refreshKey: draft?.session.logId ?? null,
     locale,
   });
+  const isRef5SelectedPlan = Boolean(
+    ref5StartContext ||
+      draft?.session.ref5 ||
+      isRef5PlanParams(selectedPlan?.params),
+  );
+  const ref5WindowProgress = isRef5SelectedPlan ? (
+    <Ref5WindowProgressPanel
+      status={progressionFeedback.ref5Status}
+      locale={locale}
+      loading={
+        progressionFeedback.progressionStateLoading ||
+        !progressionFeedback.progressionStateSettled
+      }
+      variant={skin === "terminal" ? "terminal" : "paper"}
+    />
+  ) : null;
   const todayDateKey = useMemo(
     () =>
       new Intl.DateTimeFormat("en-CA", {
@@ -458,6 +476,7 @@ function WorkoutLogScreenContent({
             prevLabel={copy.workoutLog.dateNavPrev}
             nextLabel={copy.workoutLog.dateNavNext}
           />
+          {ref5WindowProgress}
           <Ref5SessionStartPanel
             key={`${ref5StartContext.planId}:${ref5StartContext.dateKey}`}
             planId={ref5StartContext.planId}
@@ -477,6 +496,7 @@ function WorkoutLogScreenContent({
           draft ? (
             <>
               {feedbackNotices}
+              {ref5WindowProgress}
               {showBodyweightCheck ? (
                 <BodyweightCheckBanner
                   currentKg={bodyweightKg}
@@ -527,6 +547,8 @@ function WorkoutLogScreenContent({
           />
 
           {feedbackNotices}
+
+          {ref5WindowProgress}
 
           {showBodyweightCheck ? (
             <BodyweightCheckBanner

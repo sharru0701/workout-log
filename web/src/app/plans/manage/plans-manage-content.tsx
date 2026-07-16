@@ -40,6 +40,7 @@ import {
   type Plan,
 } from "@/features/plans-manage/model/plan-view";
 import { usePlansManageController } from "@/features/plans-manage/model/use-plans-manage-controller";
+import { buildRef5WindowProgressRows } from "@/features/ref5/model/window-progress";
 
 
 function PlanCardV2({
@@ -179,14 +180,6 @@ function StrengthEditField({
   );
 }
 
-const REF5_WINDOW_LABELS = {
-  SQ: "SQ",
-  BP: "BP",
-  PULL: "PULL",
-  DL: "DL",
-  OHP: "OHP",
-} as const;
-
 function Ref5StatusPanel({
   status,
   locale,
@@ -237,6 +230,7 @@ function Ref5StatusPanel({
   const structureReviewLifts = (["SQ", "BP", "PULL"] as const).filter(
     (lift) => status.structureReview[lift],
   );
+  const windowProgressRows = buildRef5WindowProgressRows(status, locale);
 
   return (
     <V2Card tone="inset" padding="var(--v2-s-4)" radius="var(--v2-r-2)">
@@ -279,16 +273,13 @@ function Ref5StatusPanel({
             {locale === "ko" ? "진행 창" : "Progression windows"}
           </span>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(115px, 1fr))", gap: "var(--v2-s-2)" }}>
-            {(Object.keys(REF5_WINDOW_LABELS) as Array<keyof typeof REF5_WINDOW_LABELS>).map((key) => {
-              const window = status.windows[key];
-              return (
-                <PlanDetailRow
-                  key={key}
-                  label={REF5_WINDOW_LABELS[key]}
-                  value={`${window.current}/${window.threshold} · ${locale === "ko" ? "완료" : "done"} ${window.completed}`}
-                />
-              );
-            })}
+            {windowProgressRows.map((row) => (
+              <PlanDetailRow
+                key={row.key}
+                label={row.label}
+                value={`${row.current}/${row.threshold} · ${locale === "ko" ? "판정 완료" : "judged"} ${row.completed}`}
+              />
+            ))}
           </div>
         </V2Stack>
 
