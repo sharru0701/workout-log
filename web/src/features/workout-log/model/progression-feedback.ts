@@ -15,6 +15,7 @@ import type {
   ProgressReportRow,
   ProgressionFeedbackPayload,
 } from "@workout/core/progression/feedback-catalog";
+import type { Ref5Status } from "@workout/core/program-engine/ref5-status";
 
 export type { FeedbackBanner, ProgressReport, ProgressReportRow, ProgressionFeedbackPayload };
 
@@ -23,6 +24,7 @@ export type ProgressionStateResponse = {
   state: { week?: number; day?: number; lightBlockMode?: boolean } | null;
   // 서버 조립 피드백 — apps/api progression-state가 로케일 문구까지 만들어 내려준다.
   feedback?: ProgressionFeedbackPayload | null;
+  ref5Status?: Ref5Status | null;
 };
 
 type Locale = "ko" | "en";

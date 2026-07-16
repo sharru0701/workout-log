@@ -31,6 +31,7 @@ import {
 } from "@/components/v2/primitives";
 import { useV2BottomDockTabs } from "@/components/v2/v2-bottom-dock-context";
 import { HomeGoalSection } from "@/widgets/goal-aware/home-goal-section";
+import { Ref5WindowProgressPanel } from "@/components/ref5/ref5-window-progress-panel";
 
 const StatsContainer = dynamic(
   () =>
@@ -71,6 +72,7 @@ function TodayDeck({
   locale,
   isComplete,
   hasPlan,
+  ref5Status,
 }: {
   today: HomeTodaySummary;
   weekly: HomeWeeklySummary;
@@ -79,6 +81,7 @@ function TodayDeck({
   locale: AppLocale;
   isComplete: boolean;
   hasPlan: boolean;
+  ref5Status: HomeData["ref5Status"];
 }) {
   const greetingName = copy.home.welcome?.active ?? "";
   void greetingName;
@@ -275,6 +278,15 @@ function TodayDeck({
           </div>
         </V2Card>
       </div>
+
+      {ref5Status ? (
+        <div style={{ padding: "var(--v2-s-4) 0 0" }}>
+          <Ref5WindowProgressPanel
+            status={ref5Status}
+            locale={locale}
+          />
+        </div>
+      ) : null}
 
       {/* 보조 카드: 스트릭 + 이번 주 */}
       <div
@@ -577,6 +589,7 @@ function V2HomeDashboardPaper({ data }: { data: HomeData }) {
             locale={locale}
             isComplete={isComplete}
             hasPlan={hasPlan}
+            ref5Status={data.ref5Status}
           />
           <HomeGoalSection data={data} />
         </>

@@ -14,6 +14,12 @@ import {
 
 const DISMISS_PREFIX = "wl.blockReport.dismissed.";
 
+type ProgressionLoadState = {
+  planId: string;
+  data: ProgressionStateResponse | null;
+  status: "loading" | "settled";
+};
+
 function isReportDismissed(eventId: string): boolean {
   if (typeof window === "undefined") return true;
   try {
@@ -30,15 +36,20 @@ export function usePlanProgressionFeedback(input: {
   locale: "ko" | "en";
 }) {
   const planId = typeof input.planId === "string" ? input.planId : "";
-  const [data, setData] = useState<ProgressionStateResponse | null>(null);
+  const [loadState, setLoadState] = useState<ProgressionLoadState>(() => ({
+    planId,
+    data: null,
+    status: planId ? "loading" : "settled",
+  }));
   const [dismissTick, setDismissTick] = useState(0);
 
   useEffect(() => {
     if (!planId) {
-      setData(null);
+      setLoadState({ planId: "", data: null, status: "settled" });
       return;
     }
     let cancelled = false;
+    setLoadState({ planId, data: null, status: "loading" });
     (async () => {
       try {
         // 판정 직후의 배너/카드가 목적이라 캐시를 신뢰하지 않는다(network-only).
@@ -46,15 +57,21 @@ export function usePlanProgressionFeedback(input: {
           `/api/plans/${encodeURIComponent(planId)}/progression-state`,
           { cachePolicy: "network-only" },
         );
-        if (!cancelled) setData(res);
+        if (!cancelled) setLoadState({ planId, data: res, status: "settled" });
       } catch {
-        if (!cancelled) setData(null);
+        if (!cancelled) setLoadState({ planId, data: null, status: "settled" });
       }
     })();
     return () => {
       cancelled = true;
     };
   }, [planId, input.refreshKey]);
+
+  const currentLoadState: ProgressionLoadState =
+    loadState.planId === planId
+      ? loadState
+      : { planId, data: null, status: planId ? "loading" : "settled" };
+  const data = currentLoadState.data;
 
   const feedback = data?.feedback ?? null;
   const isAsymptote = data?.program === "asymptote";
@@ -82,6 +99,9 @@ export function usePlanProgressionFeedback(input: {
 
   return {
     program: data?.program ?? null,
+    ref5Status: data?.program === "ref5" ? data.ref5Status ?? null : null,
+    progressionStateLoading: currentLoadState.status === "loading",
+    progressionStateSettled: currentLoadState.status === "settled",
     earlyDeloadBanner,
     showLightBlockBadge,
     blockReport,
