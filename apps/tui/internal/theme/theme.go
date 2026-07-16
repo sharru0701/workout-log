@@ -1,13 +1,11 @@
-// Package theme codifies the ironlog terminal design language (term-* tokens,
-// glyph vocabulary) as Go/lipgloss constants so the TUI matches the existing
-// web "terminal" skin. See web/docs/redesign-target.md §5.
+// Package theme codifies the standalone ironlog terminal design language
+// (term-* tokens and glyph vocabulary) as Go/lipgloss constants.
 package theme
 
 import "charm.land/lipgloss/v2"
 
-// Palette — the ironlog/Modern-ANSI dark-only term-* tokens mapped to lipgloss
-// colors. Hex values are the single source of truth (mirror of the web CSS
-// custom properties --term-*).
+// Palette — the ironlog/Modern-ANSI dark-only term-* tokens mapped to lipgloss.
+// These hex values are the TUI color source of truth.
 var (
 	Bg    = lipgloss.Color("#0b0e0b") // term-bg     base background
 	Panel = lipgloss.Color("#11150f") // term-panel  raised surface
@@ -25,8 +23,7 @@ var (
 	Blue  = lipgloss.Color("#79c0ff") // term-blue   info
 )
 
-// Glyphs — Unicode / Nerd-Font vocabulary used for TUI data views. Allowed in
-// the terminal theme only (Material Symbols replace these in the paper theme).
+// Glyphs — Unicode / Nerd-Font vocabulary used for TUI data views.
 const (
 	GlyphDone   = "✓" // completed set
 	GlyphActive = "▶" // current focus

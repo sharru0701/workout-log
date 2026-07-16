@@ -4,16 +4,15 @@ import { useEffect } from "react";
 import { fetchSettingsSnapshot } from "@/lib/settings/settings-api";
 import {
   applyThemePreferenceToDocument,
-  applyThemeSkinToDocument,
+  clearLegacyThemeSkinPreference,
   readThemePreferenceFromLocalCache,
-  readThemeSkinFromLocalCache,
   readWorkoutPreferences,
 } from "@/lib/settings/workout-preferences";
 
 export function ThemePreferenceSync() {
   useEffect(() => {
+    clearLegacyThemeSkinPreference();
     applyThemePreferenceToDocument(readThemePreferenceFromLocalCache());
-    applyThemeSkinToDocument(readThemeSkinFromLocalCache());
 
     let cancelled = false;
     (async () => {
@@ -22,7 +21,6 @@ export function ThemePreferenceSync() {
         if (cancelled) return;
         const preferences = readWorkoutPreferences(snapshot);
         applyThemePreferenceToDocument(preferences.theme);
-        applyThemeSkinToDocument(preferences.themeSkin);
       } catch {
         // Ignore fetch failure and keep local/system theme.
       }

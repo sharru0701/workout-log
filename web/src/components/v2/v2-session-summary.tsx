@@ -2,15 +2,13 @@
 
 /**
  * 세션 요약 진입점(오케스트레이터). 로그 응답을 buildSummaryData로 접고 파생 라벨을 계산한 뒤
- * 스킨에 따라 paper / terminal 본문으로 분기(dispatch)한다.
+ * paper 본문에 전달한다.
  * - 로직: v2-session-summary.model.ts (React/DOM 무지, 유닛 테스트 대상)
  * - paper 본문: v2-session-summary-paper-view.tsx
- * - terminal 본문: v2-session-summary-tui-view.tsx
  */
 
 import { useMemo } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
 import { V2Card, V2Chip } from "./primitives";
 import {
   buildSummaryData,
@@ -20,7 +18,6 @@ import {
   resolveGoal,
 } from "./v2-session-summary.model";
 import { PaperSessionSummaryBody } from "./v2-session-summary-paper-view";
-import { SessionSummaryTuiView } from "./v2-session-summary-tui-view";
 
 export type {
   V2SummarySet,
@@ -39,7 +36,6 @@ export function V2SessionSummary({
   freshComplete?: boolean;
 }) {
   const { locale } = useLocale();
-  const skin = useThemeSkin();
 
   const summary = useMemo(() => (log ? buildSummaryData(log) : null), [log]);
 
@@ -66,9 +62,6 @@ export function V2SessionSummary({
     locale,
   };
 
-  if (skin === "terminal") {
-    return <SessionSummaryTuiView {...bodyProps} />;
-  }
   return <PaperSessionSummaryBody {...bodyProps} />;
 }
 

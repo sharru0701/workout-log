@@ -1,7 +1,6 @@
 "use client";
 
 import { forwardRef, useState, type KeyboardEvent } from "react";
-import { useThemeSkin } from "@/components/use-theme-skin";
 
 export type CellInputProps = {
   value: string;
@@ -12,14 +11,13 @@ export type CellInputProps = {
   onKeyDown: (e: KeyboardEvent<HTMLInputElement>) => void;
   allowDecimal?: boolean;
   readOnly?: boolean;
-  /** 셀 배경 — paper 기본값. terminal은 transparent 등으로 override. */
+  /** 셀 배경. */
   bg?: string;
-  /** focus ring 색 — paper 기본 --v2-accent. terminal은 --term-amber 등. */
+  /** focus ring 색. */
   focusRing?: string;
 };
 
-// 세트 행 숫자 입력 셀 — workout-set-row.tsx에서 추출(paper WorkoutSetRow +
-// terminal TermSetRow 공유). 스타일은 bg/focusRing props로만 분기, 동작은 동일.
+// 세트 행 숫자 입력 셀 — workout-set-row.tsx에서 추출.
 export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
   function CellInput(
     {
@@ -36,7 +34,6 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
     },
     ref,
   ) {
-    const terminal = useThemeSkin() === "terminal";
     const [focused, setFocused] = useState(false);
     // 입력 중에는 사용자가 친 raw 문자열(draft)을 그대로 표시한다.
     // store의 weightKg는 매 입력마다 최소 플레이트 단위로 스냅되는데(예: 8 → 7.5),
@@ -76,11 +73,11 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           setFocused(false);
           setDraft(null);
         }}
-        className={terminal ? undefined : "v2-num-sm"}
+        className="v2-num-sm"
         style={{
           width: "100%",
           minWidth: 0,
-          minHeight: terminal ? "var(--v2-s-7)" : "var(--v2-touch)",
+          minHeight: "var(--v2-touch)",
           padding: "var(--v2-s-1) var(--v2-s-2)",
           borderRadius: "var(--v2-r-1)",
           background: bg,
@@ -90,16 +87,6 @@ export const CellInput = forwardRef<HTMLInputElement, CellInputProps>(
           border: "none",
           outline: "none",
           boxShadow: focused ? `inset 0 0 0 2px ${focusRing}` : undefined,
-          // terminal: paper의 18px bold(v2-num-sm) 대신 mono. fontSize는 16px 고정 —
-          // iOS Safari는 input 폰트 <16px면 focus 시 화면을 자동 확대(줌)한다. dense는 행 높이(s-7)로.
-          ...(terminal
-            ? {
-                fontFamily: "var(--term-mono)",
-                fontSize: "var(--v2-t-16)",
-                fontWeight: 500,
-                fontVariantNumeric: "tabular-nums",
-              }
-            : {}),
         }}
       />
     );

@@ -185,17 +185,3 @@ export function planTypeLabel(type: Plan["type"], locale: "ko" | "en") {
   if (type === "MANUAL") return locale === "ko" ? "수동" : "Manual";
   return locale === "ko" ? "프로그램" : "Program";
 }
-
-// terminal TermBadge 톤 매핑(paper V2Chip 톤과 의미 정렬): 복합=cyan(info)·수동=dim·프로그램=amber(accent).
-export function planTypeTermTone(type: Plan["type"]): "info" | "accent" | "dim" {
-  if (type === "COMPOSITE") return "info";
-  if (type === "MANUAL") return "dim";
-  return "accent";
-}
-
-// terminal 배지에 쓸 짧은 대문자 토큰(paper의 한/영 라벨 대신 [PROGRAM]/[MANUAL]/[COMPOSITE]).
-export function planTypeTermLabel(type: Plan["type"]): string {
-  if (type === "COMPOSITE") return "COMPOSITE";
-  if (type === "MANUAL") return "MANUAL";
-  return "PROGRAM";
-}

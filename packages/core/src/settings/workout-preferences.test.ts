@@ -98,3 +98,12 @@ test("toDefaultWorkoutPreferences uses general primary and empty secondary", () 
   assert.equal(prefs.trainingGoalPrimary, "general");
   assert.deepEqual(prefs.trainingGoalSecondary, []);
 });
+
+test("layout theme is no longer part of the settings contract", () => {
+  assert.equal(
+    (Object.values(SETTINGS_KEYS) as string[]).includes("prefs.theme.skin"),
+    false,
+  );
+  const prefs = readWorkoutPreferences({ "prefs.theme.skin": "terminal" });
+  assert.equal("themeSkin" in prefs, false);
+});

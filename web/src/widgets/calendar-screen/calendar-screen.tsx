@@ -3,8 +3,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
-import { CalendarTuiView } from "@/features/calendar/ui/calendar-tui-view";
 import {
   dateOnlyInTimezone,
 } from "@/features/calendar/lib/format";
@@ -50,15 +48,7 @@ import { buildTodayLogHref } from "@workout/core/workout-links";
 
 type CalendarScreenProps = CalendarPageBootstrap;
 
-// skin 분기 래퍼 — terminal이면 CalendarTuiView, paper는 기존 트리(무수정).
-// 래퍼에서 분기해 컨트롤러가 한 쪽에서만 mount(이중 fetch 방지).
-export function CalendarScreen(props: CalendarScreenProps) {
-  const skin = useThemeSkin();
-  if (skin === "terminal") return <CalendarTuiView {...props} />;
-  return <CalendarScreenPaper {...props} />;
-}
-
-function CalendarScreenPaper({
+export function CalendarScreen({
   initialPlans,
   initialSessions,
   initialLogs,

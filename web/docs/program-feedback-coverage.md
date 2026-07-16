@@ -100,6 +100,6 @@
   `progression-feedback-catalog.ts`(패밀리별 reason→문구 카탈로그). 미등록 reason은
   eventType 기반 기본 문구 폴백 — 새 reason이 추가돼도 UI가 깨지지 않는다.
 - **컴포넌트**: `SessionFeedbackNotice`·`BlockJudgmentCard`(진행 판정 카드) — 프로그램 비종속
-  presentational, paper/terminal 스킨 분기.
+  웹 presentational 컴포넌트. Go TUI는 동일 서버 문구를 독립 렌더링한다.
 - **노출 판정**: `lastEvent.targetDecisions` 중 "주목할 판정"(INCREASE/RESET, 또는 카탈로그가
   판정성으로 등록한 HOLD)이 있을 때만 카드. 블록 중간 스트릭 HOLD는 노이즈로 제외.

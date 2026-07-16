@@ -7,8 +7,6 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { V2Card, V2Chip, V2Hairline, V2IconBtn } from "@/components/v2/primitives";
 import { AppPage } from "@/components/ui/page-layout";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
-import { PrHistoryTuiView } from "./pr-history-tui-view";
 import { APP_ROUTES } from "@/lib/app-routes";
 import type {
   PrHistoryBootstrap,
@@ -62,10 +60,9 @@ export function PrHistoryScreen({
 }: PrHistoryScreenProps) {
   const { locale } = useLocale();
   const router = useRouter();
-  const skin = useThemeSkin();
 
   // PERF: PR 목록을 useWindowVirtualizer로 뷰포트 내 항목만 렌더(exercise-catalog와 동일 패턴).
-  // 훅은 terminal 조기 반환 전에 무조건 호출(Rules of Hooks). 가변 높이는 measureElement가 실측.
+  // 가변 높이는 measureElement가 실측.
   const listContainerRef = useRef<HTMLDivElement>(null);
   // offset을 state로 두어 설정 시 re-render를 유발 → virtualizer가 올바른 scrollMargin을
   // 받게 함(render 중 ref.current를 읽으면 한 렌더 지연 + lint 위반).
@@ -81,18 +78,6 @@ export function PrHistoryScreen({
     overscan: 6,
     scrollMargin: listOffset,
   });
-
-  if (skin === "terminal") {
-    return (
-      <PrHistoryTuiView
-        exercises={exercises}
-        selected={selected}
-        prs={prs}
-        rangeFrom={rangeFrom}
-        rangeTo={rangeTo}
-      />
-    );
-  }
 
   return (
     <AppPage>

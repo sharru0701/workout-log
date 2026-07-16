@@ -6,18 +6,13 @@ export * from "@workout/core/settings/workout-preferences";
 import {
   DEFAULT_LOCALE_PREFERENCE,
   DEFAULT_THEME_PREFERENCE,
-  DEFAULT_THEME_SKIN,
   LOCAL_STORAGE_SETTING_PREFIX,
   SETTINGS_KEYS,
-  THEME_SKIN_COOKIE_NAME,
   normalizeLocalePreference,
   normalizeThemePreference,
-  normalizeThemeSkin,
   type LocalePreference,
   type ThemePreference,
-  type ThemeSkin,
 } from "@workout/core/settings/workout-preferences";
-import { setThemeSkin } from "./theme-skin-store";
 
 export function applyThemePreferenceToDocument(theme: ThemePreference) {
   if (typeof document === "undefined") return;
@@ -27,28 +22,17 @@ export function applyThemePreferenceToDocument(theme: ThemePreference) {
   document.querySelectorAll(`meta[name="theme-color"][data-dynamic]`).forEach(m => m.remove());
 }
 
-export function applyThemeSkinToDocument(skin: ThemeSkin) {
+/** 제거된 레이아웃 테마의 브라우저 캐시를 한 번 정리한다. */
+export function clearLegacyThemeSkinPreference() {
   if (typeof document === "undefined") return;
-  if (skin === "terminal") {
-    document.documentElement.setAttribute("data-theme", "terminal");
-  } else {
-    document.documentElement.removeAttribute("data-theme");
-  }
-  // SSR 첫 렌더 셸 선택용 쿠키에 미러링(서버 resolveRequestSkin이 읽음). 단일 write 경로이므로
-  // boot·설정토글·서버sync가 모두 여기서 쿠키를 최신화 → 다음 로드부터 per-load remount 0.
-  document.cookie = `${THEME_SKIN_COOKIE_NAME}=${skin}; path=/; max-age=31536000; samesite=lax`;
-  setThemeSkin(skin);
-}
-
-export function readThemeSkinFromLocalCache(): ThemeSkin {
-  if (typeof window === "undefined") return DEFAULT_THEME_SKIN;
-  const raw = window.localStorage.getItem(`${LOCAL_STORAGE_SETTING_PREFIX}${SETTINGS_KEYS.themeSkin}`);
-  if (!raw) return DEFAULT_THEME_SKIN;
+  document.documentElement.removeAttribute("data-theme");
+  document.cookie = "wl_skin=; path=/; max-age=0; samesite=lax";
   try {
-    const parsed = JSON.parse(raw) as { value?: unknown };
-    return normalizeThemeSkin(parsed.value);
+    window.localStorage.removeItem(
+      `${LOCAL_STORAGE_SETTING_PREFIX}prefs.theme.skin`,
+    );
   } catch {
-    return DEFAULT_THEME_SKIN;
+    // Storage가 차단된 환경에서도 paper 레이아웃은 그대로 유지한다.
   }
 }
 

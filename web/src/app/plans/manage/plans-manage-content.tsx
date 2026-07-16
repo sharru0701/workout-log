@@ -1,11 +1,9 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
 
 import { BottomSheet } from "@/components/ui/bottom-sheet";
-import { PlansManageTuiView } from "./plans-manage-tui-view";
 import { AppTextInput } from "@/components/ui/form-controls";
 import { NumberKeypadField } from "@/components/ui/number-keypad-field";
 import {
@@ -321,7 +319,6 @@ function Ref5StatusPanel({
 export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
   const { copy, locale } = useLocale();
   const localeKey: "ko" | "en" = locale === "ko" ? "ko" : "en";
-  const skin = useThemeSkin();
   const {
     plans,
     loading,
@@ -359,7 +356,6 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     ref5Status,
     currentProgressRows,
     filteredPlans,
-    planRows,
     heroMetrics,
     loadPlans,
     openManageSheet,
@@ -395,55 +391,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     [heroMetrics, locale],
   );
 
-  // terminal 필터 토글용 — paper V2Segmented는 라벨에 카운트를 합치지만, TUI는 [label N] 형태라 분리.
-  const termFilterOptions = useMemo(
-    () => [
-      { value: "ALL" as const, label: locale === "ko" ? "전체" : "all", count: heroMetrics.total },
-      { value: "RECENT" as const, label: locale === "ko" ? "최근" : "recent", count: heroMetrics.recent },
-      { value: "IDLE" as const, label: locale === "ko" ? "미수행" : "idle", count: heroMetrics.untouched },
-    ],
-    [heroMetrics, locale],
-  );
-
-  const openStore = useCallback(() => {
-    window.location.assign(APP_ROUTES.programStore);
-  }, []);
-
-  // ── 본문(hero·필터·목록)만 skin 분기 — 편집 시트/상태/다이얼로그는 분기 밖에서 공유 ──
-  // (paper 무회귀: terminal이 아니면 기존 본문을 그대로 렌더. 데이터/핸들러는 단일 컴포넌트가 소유.)
-  const body = skin === "terminal" ? (
-    <PlansManageTuiView
-      locale={localeKey}
-      heroMetrics={heroMetrics}
-      filterOptions={termFilterOptions}
-      activityFilter={activityFilter}
-      onChangeActivityFilter={setActivityFilter}
-      searchQuery={searchQuery}
-      onChangeSearchQuery={setSearchQuery}
-      showFilters={plans.length > 0 || searchQuery.trim().length > 0}
-      planRows={planRows}
-      isSettled={isSettled}
-      loading={loading}
-      error={error}
-      hasPlans={plans.length > 0}
-      onRetry={() => {
-        void loadPlans();
-      }}
-      onManage={openManageSheet}
-      onOpenStore={openStore}
-      copy={{
-        title: copy.plansManage.title,
-        searchPlaceholder: copy.plansManage.searchPlaceholder,
-        searchAriaLabel: copy.plansManage.searchAriaLabel,
-        loadError: copy.plansManage.loadError,
-        noPlans: copy.plansManage.noPlans,
-        noResults: copy.plansManage.noResults,
-        recentPerformedPrefix: copy.plansManage.recentPerformedPrefix,
-        noPerformedHistory: copy.plansManage.noPerformedHistory,
-        manage: copy.plansManage.manage,
-      }}
-    />
-  ) : (
+  const body = (
     <V2Stack gap={5}>
         {/* ── HERO ── */}
         <V2Card tone="paper" padding="var(--v2-s-5)" radius="var(--v2-r-3)">
