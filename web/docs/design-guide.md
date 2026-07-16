@@ -146,6 +146,8 @@
 | Solarized Light | Solarized Dark |
 | Catppuccin Latte | Catppuccin Mocha |
 | Tokyo Night Day | Tokyo Night |
+| Gruvbox Light | Gruvbox Dark |
+| Kanagawa Lotus | Kanagawa Wave |
 
 원본 개발 테마의 대표 팔레트를 앱의 semantic token에 매핑하되, 본문과 상태 텍스트는 WCAG AA 대비를 만족하도록 보정한다. 따라서 에디터 팔레트 값을 모든 역할에 그대로 복사하지 않는다.
 
@@ -156,7 +158,7 @@
 - 변경 허용: `--v2-bg`, `--v2-paper*`, `--v2-ink*`, accent/domain 색상, 색 기반 shadow/focus/overlay
 - 변경 금지: DOM 구조, 컴포넌트, spacing, typography, radius, motion
 - 초기 렌더 전에 로컬 캐시를 적용하고, 서버 설정 수신 후 canonical 값으로 동기화한다.
-- `pnpm -C web test:a11y:contrast`가 10개 스키마의 필수 토큰과 주요 텍스트 대비를 검사한다.
+- `pnpm -C web test:a11y:contrast`가 14개 스키마의 필수 토큰과 주요 텍스트 대비를 검사한다.
 
 ### 1-3. CSS 토큰 매핑 (앱 실제 사용)
 
