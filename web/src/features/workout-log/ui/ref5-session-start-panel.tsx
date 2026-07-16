@@ -372,7 +372,7 @@ export function Ref5SessionStartPanel({
               {locale === "ko" ? "수동 마이크로 세션" : "Manual micro session"}
             </span>
             <span className="v2-small" style={{ color: "var(--v2-ink-3)" }}>
-              {locale === "ko" ? "오늘 회복을 우선할 때 선택" : "Choose when recovery takes priority today"}
+              {locale === "ko" ? "오늘 시간 제약이 있을 때 선택" : "Choose when time is limited today"}
             </span>
           </span>
           <V2Switch
