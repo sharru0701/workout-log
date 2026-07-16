@@ -1,7 +1,7 @@
 /**
  * v2-session-summary 순수 모델 레이어 (React/DOM 무지).
  *
- * paper·terminal 뷰가 공유하는 타입과 도메인 로직 — 로그 응답을 요약 데이터(SummaryData)로
+ * 세션 요약 타입과 도메인 로직 — 로그 응답을 요약 데이터(SummaryData)로
  * 접는 buildSummaryData, PR 카드/운동별 집계/최고 e1RM 추정, goal 해석·히어로 카피 등.
  * 뷰는 이 결과만 받아 표현만 담당한다. 유닛 테스트는 이 파일을 직접 대상으로 한다.
  */
@@ -76,7 +76,7 @@ export type ExerciseSummary = {
 
 export type ResolvedGoal = "strength" | "hypertrophy" | "endurance" | "general";
 
-/** paper·terminal 뷰가 공유하는 세션 요약 파생 데이터. */
+/** 세션 요약 파생 데이터. */
 export type SummaryData = {
   exerciseSummaries: ExerciseSummary[];
   totalVolume: number;
@@ -275,7 +275,7 @@ export function getHeroCopy(
 }
 
 /**
- * 로그 응답을 paper·terminal 뷰 공용 요약 데이터로 접는다.
+ * 로그 응답을 웹 세션 요약 데이터로 접는다.
  * (기존 V2SessionSummary useMemo 본문을 순수 함수로 추출 — 동작 동일.)
  */
 export function buildSummaryData(log: V2SummaryLog): SummaryData {

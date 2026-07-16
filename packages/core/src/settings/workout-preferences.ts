@@ -7,7 +7,6 @@ export type SettingValue = string | number | boolean | null;
 export type SettingsSnapshot = Record<string, SettingValue>;
 
 export type ThemePreference = "SYSTEM" | "LIGHT" | "DARK";
-export type ThemeSkin = "paper" | "terminal";
 export type LocalePreference = "ko" | "en";
 
 export type TrainingGoalKey =
@@ -34,7 +33,6 @@ export type MinimumPlateRule = {
 export type WorkoutPreferences = {
   locale: LocalePreference;
   theme: ThemePreference;
-  themeSkin: ThemeSkin;
   minimumPlateDefaultKg: number;
   minimumPlateRules: MinimumPlateRule[];
   bodyweightKg: number | null;
@@ -50,7 +48,6 @@ export type ResolvedMinimumPlateIncrement = {
 export const SETTINGS_KEYS = {
   locale: "prefs.locale",
   theme: "prefs.theme.mode",
-  themeSkin: "prefs.theme.skin",
   minimumPlateDefaultKg: "prefs.minimumPlate.defaultKg",
   minimumPlateRulesJson: "prefs.minimumPlate.rulesJson",
   bodyweightKg: "prefs.bodyweight.kg",
@@ -60,10 +57,6 @@ export const SETTINGS_KEYS = {
 
 export const DEFAULT_LOCALE_PREFERENCE: LocalePreference = "ko";
 export const DEFAULT_THEME_PREFERENCE: ThemePreference = "SYSTEM";
-export const DEFAULT_THEME_SKIN: ThemeSkin = "paper";
-// SSR이 첫 렌더부터 올바른 셸(paper/terminal)을 선택하도록 skin을 미러링하는 쿠키.
-// 서버 resolveRequestSkin(theme-skin-server)이 읽음 — locale 쿠키와 동일 패턴.
-export const THEME_SKIN_COOKIE_NAME = "wl_skin";
 export const DEFAULT_MINIMUM_PLATE_KG = 2.5;
 export const DEFAULT_BODYWEIGHT_KG: number | null = null;
 export const DEFAULT_TRAINING_GOAL_PRIMARY: TrainingGoalKey = "general";
@@ -98,14 +91,6 @@ export function normalizeThemePreference(value: unknown): ThemePreference {
   if (normalized === "LIGHT") return "LIGHT";
   if (normalized === "DARK") return "DARK";
   return "SYSTEM";
-}
-
-export function normalizeThemeSkin(value: unknown): ThemeSkin {
-  const normalized = String(value ?? "")
-    .trim()
-    .toLowerCase();
-  if (normalized === "terminal") return "terminal";
-  return "paper";
 }
 
 export function normalizeLocalePreference(value: unknown): LocalePreference {
@@ -225,7 +210,6 @@ export function serializeMinimumPlateRules(rules: MinimumPlateRule[]): string {
 export function readWorkoutPreferences(snapshot: SettingsSnapshot): WorkoutPreferences {
   const locale = normalizeLocalePreference(snapshot[SETTINGS_KEYS.locale]);
   const theme = normalizeThemePreference(snapshot[SETTINGS_KEYS.theme]);
-  const themeSkin = normalizeThemeSkin(snapshot[SETTINGS_KEYS.themeSkin]);
   const minimumPlateDefaultKg = normalizeIncrementKg(
     snapshot[SETTINGS_KEYS.minimumPlateDefaultKg],
     DEFAULT_MINIMUM_PLATE_KG,
@@ -243,7 +227,6 @@ export function readWorkoutPreferences(snapshot: SettingsSnapshot): WorkoutPrefe
   return {
     locale,
     theme,
-    themeSkin,
     minimumPlateDefaultKg,
     minimumPlateRules,
     bodyweightKg,
@@ -256,7 +239,6 @@ export function toDefaultWorkoutPreferences(): WorkoutPreferences {
   return {
     locale: DEFAULT_LOCALE_PREFERENCE,
     theme: DEFAULT_THEME_PREFERENCE,
-    themeSkin: DEFAULT_THEME_SKIN,
     minimumPlateDefaultKg: DEFAULT_MINIMUM_PLATE_KG,
     minimumPlateRules: [],
     bodyweightKg: DEFAULT_BODYWEIGHT_KG,

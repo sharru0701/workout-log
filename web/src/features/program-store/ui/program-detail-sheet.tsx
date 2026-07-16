@@ -2,7 +2,6 @@
 
 import type { CSSProperties, ReactNode } from "react";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
 import { BottomSheet } from "@/components/ui/bottom-sheet";
 import {
   V2Chip,
@@ -322,177 +321,6 @@ function buildArchItems(
   return items;
 }
 
-// ─── terminal(ironlog) 본문 ─────────────────────────────────────────────────
-// paper 시트와 동일 데이터(info / archItems / logbookStats / sessions)를 받아 표현만 TUI로.
-// Material 아이콘·bento 카드 대신 글리프(▸ ▮▯ [..]) + mono dense row. BottomSheet 셸과
-// 헤더/푸터는 cascade로 리스킨(sharp·amber)되어 공유. --term-* 토큰만.
-
-type ProgramDetailInfo = ReturnType<typeof getProgramDetailInfo>;
-
-function TermRow({ label, value }: { label: string; value: string }) {
-  return (
-    <span
-      className="v2-mono-label"
-      style={{ display: "flex", justifyContent: "space-between", gap: "var(--v2-s-2)" }}
-    >
-      <span style={{ color: "var(--term-dim)" }}>{label}</span>
-      <span style={{ color: "var(--term-cyan)", textAlign: "right" }}>{value}</span>
-    </span>
-  );
-}
-
-const termEyebrow: CSSProperties = { display: "block", marginBottom: "var(--v2-s-1)" };
-
-function ProgramDetailTermBody({
-  primaryCell,
-  secondaryCell,
-  difficultyLevel,
-  programDescription,
-  archItems,
-  sessions,
-  logbookStats,
-  progressionNote,
-  locale,
-}: {
-  primaryCell: { value: string; label: string };
-  secondaryCell: { value: string; label: string };
-  difficultyLevel: string;
-  programDescription: string | null | undefined;
-  archItems: ArchItem[];
-  sessions: ProgramDetailInfo["sessions"];
-  logbookStats: ProgramDetailInfo["stats"];
-  progressionNote: string | null | undefined;
-  locale: ProgramStoreLocale;
-}) {
-  const ko = locale === "ko";
-  const filled = INTENSITY_MAP[difficultyLevel] ?? 3;
-  const intensity = [1, 2, 3, 4, 5].map((i) => (i <= filled ? "▮" : "▯")).join("");
-
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-5)" }}>
-      {/* 스탯 readout */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
-        <TermRow label={primaryCell.label} value={primaryCell.value} />
-        <TermRow label={secondaryCell.label} value={secondaryCell.value} />
-        <span
-          className="v2-mono-label"
-          style={{ display: "flex", justifyContent: "space-between", gap: "var(--v2-s-2)" }}
-        >
-          <span style={{ color: "var(--term-dim)" }}>{ko ? "강도" : "intensity"}</span>
-          <span>
-            <span style={{ color: "var(--term-amber)" }}>{intensity}</span>{" "}
-            <span style={{ color: "var(--term-fg)" }}>{difficultyLevel}</span>
-          </span>
-        </span>
-      </div>
-
-      {/* 소개 */}
-      {programDescription ? (
-        <div>
-          <span className="v2-eyebrow" style={termEyebrow}>
-            {ko ? "프로그램 소개" : "Overview"}
-          </span>
-          <p
-            className="v2-mono-label"
-            style={{ margin: 0, color: "var(--term-fg)", lineHeight: 1.6, whiteSpace: "pre-wrap" }}
-          >
-            {programDescription}
-          </p>
-        </div>
-      ) : null}
-
-      {/* 구성 */}
-      <div>
-        <span className="v2-eyebrow" style={termEyebrow}>
-          {ko ? "프로그램 구성" : "Architecture"}
-        </span>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-2)" }}>
-          {archItems.map((a) => (
-            <div
-              key={a.title}
-              style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}
-            >
-              <span className="v2-mono-label" style={{ color: "var(--term-cyan)" }}>
-                ▸ {a.title}
-              </span>
-              <span className="v2-mono-label" style={{ color: "var(--term-dim)", lineHeight: 1.5 }}>
-                {a.desc}
-              </span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 세션 */}
-      {sessions && sessions.length > 0 ? (
-        <div>
-          <span className="v2-eyebrow" style={termEyebrow}>
-            {ko ? "세션 구성" : "Sessions"}
-          </span>
-          <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-3)" }}>
-            {sessions.map((s) => (
-              <div
-                key={s.key}
-                style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}
-              >
-                <span className="v2-mono-label">
-                  <span style={{ color: "var(--term-amber)" }}>[{s.key}]</span>{" "}
-                  <span style={{ color: "var(--term-dim)" }}>
-                    {ko ? `세션 ${s.key}` : `Session ${s.key}`}
-                  </span>
-                </span>
-                {s.exercises.map((ex, i) => (
-                  <span
-                    key={i}
-                    className="v2-mono-label"
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      gap: "var(--v2-s-2)",
-                      paddingLeft: "var(--v2-s-2)",
-                    }}
-                  >
-                    <span
-                      style={{
-                        color: "var(--term-fg)",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {ex.name}
-                    </span>
-                    {ex.setsReps ? (
-                      <span style={{ color: "var(--term-cyan)", whiteSpace: "nowrap" }}>
-                        {ex.setsReps}
-                      </span>
-                    ) : null}
-                  </span>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
-
-      {/* 메타 */}
-      <div>
-        <span className="v2-eyebrow" style={termEyebrow}>
-          {ko ? "프로그램 메타" : "Metadata"}
-        </span>
-        <div style={{ display: "flex", flexDirection: "column", gap: "var(--v2-s-1)" }}>
-          {logbookStats.map((stat) => (
-            <TermRow key={stat.label} label={stat.label} value={stat.value} />
-          ))}
-          {progressionNote ? (
-            <TermRow label={ko ? "진행 설정" : "Progression"} value={progressionNote} />
-          ) : null}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export type ProgramDetailSheetCustomizeDraft = {
@@ -526,7 +354,6 @@ export function ProgramDetailSheet({
   onDelete,
 }: Props) {
   const { locale } = useLocale();
-  const skin = useThemeSkin();
   if (!item) return null;
 
   const info = getProgramDetailInfo(item.template, locale);
@@ -631,17 +458,10 @@ export function ProgramDetailSheet({
         </div>
         <div
           style={{
-            padding: skin === "terminal" ? 0 : "var(--v2-s-1) var(--v2-s-3)",
+            padding: "var(--v2-s-1) var(--v2-s-3)",
             borderRadius: "var(--v2-r-0)",
-            // terminal: 색틴트 배경+테두리 박스 대신 [LABEL] 색 텍스트(투명) — V2Chip 태그와 일관.
-            background:
-              skin === "terminal"
-                ? "transparent"
-                : `color-mix(in srgb, ${levelBadge.color} 14%, var(--v2-paper-2))`,
-            boxShadow:
-              skin === "terminal"
-                ? "none"
-                : `inset 0 0 0 1px color-mix(in srgb, ${levelBadge.color} 28%, transparent)`,
+            background: `color-mix(in srgb, ${levelBadge.color} 14%, var(--v2-paper-2))`,
+            boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${levelBadge.color} 28%, transparent)`,
             flexShrink: 0,
           }}
         >
@@ -654,7 +474,7 @@ export function ProgramDetailSheet({
               textTransform: "uppercase",
             }}
           >
-            {skin === "terminal" ? `[${levelBadge.label}]` : levelBadge.label}
+            {levelBadge.label}
           </span>
         </div>
       </div>
@@ -720,19 +540,6 @@ export function ProgramDetailSheet({
       header={header}
       footer={footer}
     >
-      {skin === "terminal" ? (
-        <ProgramDetailTermBody
-          primaryCell={primaryCell}
-          secondaryCell={secondaryCell}
-          difficultyLevel={difficultyLevel}
-          programDescription={programDescription}
-          archItems={archItems}
-          sessions={info.sessions}
-          logbookStats={logbookStats}
-          progressionNote={info.progressionNote}
-          locale={locale}
-        />
-      ) : (
       <div
         style={{
           display: "flex",
@@ -968,7 +775,6 @@ export function ProgramDetailSheet({
           </div>
         </div>
       </div>
-      )}
     </BottomSheet>
   );
 }

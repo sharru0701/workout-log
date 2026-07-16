@@ -4,7 +4,6 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
 import { useAppDialog } from "@/components/ui/app-dialog-provider";
 import { useQuerySettled } from "@/lib/ui/use-query-settled";
 import {
@@ -24,7 +23,6 @@ import { StartProgramSheet } from "@/features/program-store/ui/start-program-she
 import { CustomizeProgramSheet } from "@/features/program-store/ui/customize-program-sheet";
 import { CreateProgramSheet } from "@/features/program-store/ui/create-program-sheet";
 import { ProgramStoreBrowseContent } from "@/features/program-store/ui/program-store-browse-content";
-import { ProgramStoreTuiBrowse } from "@/features/program-store/ui/program-store-tui-browse";
 import type { ProgramTemplate } from "@workout/core/program-store/model";
 
 const ProgramDetailSheet = dynamic(
@@ -47,7 +45,6 @@ export function ProgramStoreScreen({
   initialExercises,
 }: ProgramStoreScreenProps = {}) {
   const { locale, copy } = useLocale();
-  const skin = useThemeSkin();
   const router = useRouter();
   const { confirm } = useAppDialog();
 
@@ -187,26 +184,7 @@ export function ProgramStoreScreen({
 
   return (
     <>
-      {skin === "terminal" ? (
-        <ProgramStoreTuiBrowse
-          locale={locale}
-          error={error}
-          notice={notice}
-          storeQuery={storeQuery}
-          categoryFilter={categoryFilter}
-          marketListItems={marketListItems}
-          customListItems={customListItems}
-          categoryOptions={categoryOptions}
-          isStoreSettled={isStoreSettled}
-          onChangeStoreQuery={setStoreQuery}
-          onChangeCategoryFilter={setCategoryFilter}
-          onSelectItem={(item) => {
-            setDetailTargetId(item.template.id);
-          }}
-          onOpenCreateSheet={openCreateSheet}
-        />
-      ) : (
-        <ProgramStoreBrowseContent
+      <ProgramStoreBrowseContent
           locale={locale}
           copy={copy.programStore}
           error={error}
@@ -231,8 +209,7 @@ export function ProgramStoreScreen({
             setDetailTargetId(item.template.id);
           }}
           onOpenCreateSheet={openCreateSheet}
-        />
-      )}
+      />
 
       <ProgramDetailSheet
         open={Boolean(detailTarget)}

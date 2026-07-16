@@ -2,7 +2,7 @@
 
 `workout-log` 웹앱의 **rich 터미널 클라이언트**. Go + [Bubble Tea v2](https://github.com/charmbracelet/bubbletea) (`charm.land/*/v2`) + Lip Gloss + Bubbles + [ntcharts](https://github.com/NimbleMarkets/ntcharts). 단일 바이너리.
 
-**TUI-first**: 웹과 같은 core 계약을 쓰는 독립 `apps/api` 백엔드에 붙습니다. 인증은 하나의 opaque `auth_session`을 Bearer 토큰(TUI 기본)과 `wl_session` 쿠키(Next 호환)로 함께 지원합니다. REF5·정확히 한 번 저장 계약은 API와 DB 마이그레이션을 포함하므로 새 TUI 릴리스 전에 해당 서버 버전이 먼저 배포되어야 합니다. 디자인 언어는 웹의 `terminal`(ironlog) 스킨을 그대로 옮겼습니다 — [redesign-target.md](../../web/docs/redesign-target.md) §5.
+**TUI-first**: 웹과 같은 core 계약을 쓰는 독립 `apps/api` 백엔드에 붙습니다. 인증은 하나의 opaque `auth_session`을 Bearer 토큰(TUI 기본)과 `wl_session` 쿠키(Next 호환)로 함께 지원합니다. REF5·정확히 한 번 저장 계약은 API와 DB 마이그레이션을 포함하므로 새 TUI 릴리스 전에 해당 서버 버전이 먼저 배포되어야 합니다. 터미널 디자인 언어는 `internal/theme`에서 독립 관리합니다.
 
 > **상태**: 가입 → 로깅(RPE) → 통계(e1RM·주간 볼륨) → 기록(편집) → 플랜 → 운동 CRUD → 설정·계정 → 백업/복원까지 **전 워크플로가 TUI만으로 동작**. REF5 v1.2의 미리보기·시작·재개·기록·상태 확인도 지원합니다. helix식 모달 앱(6버퍼).
 
@@ -134,7 +134,7 @@ main.go                 --version 플래그 · config 로드 → api.Client → 
 internal/
 ├── api/                HTTP 클라이언트 (cookiejar 세션; auth·logs·home·stats·plans·exercises·account·data)
 ├── config/             세션·base URL 영속
-├── theme/              term-* 팔레트 + 글리프 vocab (웹 terminal 스킨 미러)
+├── theme/              term-* 팔레트 + 글리프 vocab
 └── ui/                 App(인증↔프레임) · Frame(크롬·goto·팔레트·confirm) · 6버퍼 · Login
 ```
 

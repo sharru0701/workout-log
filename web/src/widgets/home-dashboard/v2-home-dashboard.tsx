@@ -14,8 +14,6 @@ import { APP_ROUTES } from "@/lib/app-routes";
 import { V2Hairline } from "@/components/v2/primitives";
 import { resolveStartHref } from "@/lib/workout/start-href";
 import { useLocale } from "@/components/locale-provider";
-import { useThemeSkin } from "@/components/use-theme-skin";
-import { HomeTuiView } from "@/components/v2/home-tui-view";
 import type { AppCopy, AppLocale } from "@/lib/i18n/messages";
 import type {
   HomeData,
@@ -522,23 +520,7 @@ const DECKS: { key: string; icon: string; label: string; labelEn: string }[] = [
 
 /* ─────────────────────────── Public API ─────────────────────────── */
 
-// skin 분기 래퍼 — terminal이면 HomeTuiView(또는 deck=stats 시 StatsContainer),
-// paper는 기존 대시보드(무수정). paper는 내부에서 deck를 bottom-dock 탭으로 토글하지만,
-// terminal은 셸 탭(stats href=/?deck=stats)으로 진입하므로 여기서 deck를 라우팅한다.
 export function V2HomeDashboard({ data }: { data: HomeData }) {
-  const skin = useThemeSkin();
-  const requestedDeck = useSearchParams().get("deck");
-  if (skin === "terminal") {
-    return requestedDeck === "stats" || requestedDeck === "progress" ? (
-      <StatsContainer />
-    ) : (
-      <HomeTuiView data={data} />
-    );
-  }
-  return <V2HomeDashboardPaper data={data} />;
-}
-
-function V2HomeDashboardPaper({ data }: { data: HomeData }) {
   const { copy, locale } = useLocale();
   const searchParams = useSearchParams();
   const requestedDeck = searchParams.get("deck");

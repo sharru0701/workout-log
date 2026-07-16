@@ -18,21 +18,12 @@ const BASE_DAMPING = 0.6;
  * - 동작: 임계값 이상 당기고 놓으면 `location.reload()` (SW network-first가 fresh 제공).
  * - 성능: 드래그 중 값은 React state 대신 CSS 변수(`--ptr-y`)로 DOM에 직접 반영.
  *
- * variant:
- * - "paper"(기본): document(body) 스크롤 최상단(`window.scrollY===0`)에서 추적,
- *   `.app-main`을 transform으로 함께 끌어내림, Material 아이콘(arrow_downward/progress_activity).
- * - "terminal": TermShell ViewPane(`.term-viewpane`, 자체 `overflow:auto`)이 스크롤하므로
- *   그 요소의 scrollTop===0에서 추적하고 그 요소를 transform. 인디케이터는 글리프(↓/⟳) —
- *   terminal은 애니메이션 kill이라 회전 없이 정적, 배지는 cascade로 term 색·사각·평면.
+ * document(body) 스크롤 최상단(`window.scrollY===0`)에서 추적하고,
+ * `.app-main`을 transform으로 함께 끌어내린다.
  */
-export function PullToRefresh({
-  variant = "paper",
-}: {
-  variant?: "paper" | "terminal";
-} = {}) {
+export function PullToRefresh() {
   const [active, setActive] = useState(false);
   const elRef = useRef<HTMLDivElement | null>(null);
-  const isTerminal = variant === "terminal";
 
   useEffect(() => {
     const isStandalone =
@@ -47,24 +38,13 @@ export function PullToRefresh({
     let refreshing = false;
     let resetTimer = 0;
 
-    // 최상단 판정 — terminal은 외곽 minHeight:100dvh라 콘텐츠가 길면 실제 스크롤이
-    // document(body)에서 일어나고 ViewPane은 늘어나 scrollTop이 0으로 고정될 수 있다.
-    // 어느 쪽이 스크롤 컨테이너든 안전하도록 window·ViewPane 둘 다 최상단일 때만 PTR.
-    const atTop = () => {
-      const winTop = (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
-      if (!isTerminal) return winTop;
-      const vp = document.querySelector<HTMLElement>(".term-viewpane");
-      return winTop && (vp?.scrollTop ?? 0) <= 0;
-    };
+    const atTop = () =>
+      (window.scrollY || document.documentElement.scrollTop || 0) <= 0;
 
     // 열려 있는(=비활성 inert가 아닌) 바텀시트/다이얼로그가 있으면 PTR을 멈춘다.
     const modalOpen = () => Boolean(document.querySelector(".mobile-bottom-sheet:not([inert])"));
 
-    // 당겨질 때 함께 끌려 내려오는 콘텐츠 — terminal은 ViewPane, paper는 .app-main.
-    const getPage = () =>
-      isTerminal
-        ? document.querySelector<HTMLElement>(".term-viewpane")
-        : document.querySelector<HTMLElement>(".app-main");
+    const getPage = () => document.querySelector<HTMLElement>(".app-main");
 
     // 손가락 이동량(dy) → 점진적 감쇠가 적용된 당김 거리. 당길수록 저항 증가.
     const damp = (dy: number) => {
@@ -140,13 +120,9 @@ export function PullToRefresh({
         else tracking = false;
         return;
       }
-      // terminal은 콘텐츠 스크롤 제스처와 구분하기 위해 작은 데드존(민감도 완화) —
-      // 데드존 안에서는 아직 당김으로 잡지 않고 대기(브라우저 스크롤에 맡김).
-      const deadzone = isTerminal ? 14 : 0;
-      if (dy <= deadzone) return;
-      // 최상단에서 데드존 이상 당기는 중 — 기본 스크롤/바운스 차단
+      // 최상단에서 아래로 당기는 중 — 기본 스크롤/바운스 차단
       e.preventDefault();
-      pull = damp(dy - deadzone);
+      pull = damp(dy);
       const node = elRef.current;
       if (node) {
         node.classList.add("is-dragging");
@@ -164,8 +140,7 @@ export function PullToRefresh({
         node.classList.remove("is-dragging", "is-ready");
         node.classList.add("is-refreshing");
         const icon = node.querySelector(".ptr__icon");
-        // terminal은 회전 애니메이션이 kill되므로 정적 글리프(⟳). paper는 Material 스피너.
-        if (icon) icon.textContent = isTerminal ? "⟳" : "progress_activity";
+        if (icon) icon.textContent = "progress_activity";
         node.style.setProperty("--ptr-y", `${THRESHOLD}px`);
         node.style.setProperty("--ptr-opacity", "1");
         // 페이지는 살짝 당겨진 상태에서 멈췄다가 새로고침되도록 임계값 위치로 정착.
@@ -197,24 +172,14 @@ export function PullToRefresh({
       document.removeEventListener("touchend", onEnd);
       document.removeEventListener("touchcancel", onEnd);
     };
-  }, [isTerminal]);
+  }, []);
 
   if (!active) return null;
 
   return (
     <div ref={elRef} className="ptr" aria-hidden="true">
       <div className="ptr__badge">
-        {isTerminal ? (
-          // terminal: 글리프 화살표(cyan·mono). is-ready 시 180° 뒤집(transition은 보존).
-          <span
-            className="ptr__icon"
-            style={{ fontFamily: "var(--term-mono)", color: "var(--term-cyan)" }}
-          >
-            ↓
-          </span>
-        ) : (
-          <span className="ptr__icon material-symbols-outlined">arrow_downward</span>
-        )}
+        <span className="ptr__icon material-symbols-outlined">arrow_downward</span>
       </div>
     </div>
   );

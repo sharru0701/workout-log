@@ -22,10 +22,7 @@ import {
   bodyweightExerciseNameForTargetKey,
   createStrengthBaselineDraft,
   daysSince,
-  formatRelativeDays,
   normalizeSearchText,
-  planTypeTermLabel,
-  planTypeTermTone,
   planWithPatchedFields,
   shortTargetLabel,
   targetLabelFromKey,
@@ -138,23 +135,6 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
       return normalizeSearchText(plan.name, plan.baseProgramName, plan.type).includes(normalizedQuery);
     });
   }, [activityFilter, plans, searchQuery]);
-
-  // terminal 목록 행 파생 — paper PlanCardV2가 인라인으로 계산하던 표시값(타입 라벨/톤,
-  // 상대 수행시각, 최근 여부)을 presentation-only 뷰에 넘기기 위해 한 번에 계산한다.
-  const planRows = useMemo(
-    () =>
-      filteredPlans.map((plan) => {
-        const days = daysSince(plan.lastPerformedAt);
-        return {
-          plan,
-          typeLabel: planTypeTermLabel(plan.type),
-          typeTone: planTypeTermTone(plan.type),
-          relText: formatRelativeDays(days, localeKey),
-          isFresh: typeof days === "number" && days <= RECENT_THRESHOLD_DAYS,
-        };
-      }),
-    [filteredPlans, localeKey],
-  );
 
   const heroMetrics = useMemo(() => {
     const total = plans.length;
@@ -535,7 +515,6 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     ref5Status,
     currentProgressRows,
     filteredPlans,
-    planRows,
     heroMetrics,
     loadPlans,
     openManageSheet,

@@ -24,7 +24,7 @@
 | **P0 즉시** | CI에 apps/api typecheck job + TUI `go test`/`go vet` job 추가 (릴리스 태그 포함) | S | `.github/workflows/ci.yml` · `tui-release.yml` |
 | **P1 다음** | 인덱스 2개 추가 + PR 감지 lookback 제한 + 렌더-시-쓰기 완화 | M | §5.2 |
 | **P1 다음** | `/health` DB 핑 + apps/api 에러 경계(`app.onError`) + systemd 유닛 수정 | S | §4.2 |
-| **P2 그다음** | terminal 테마 첫 렌더 분기 수정 + 폰트 로딩 정리 | M | `use-theme-skin.ts` · `font-stylesheet-loader.tsx` |
+| **완료 2026-07-16** | 웹 terminal 테마·전용 셸·폰트 자산 제거 | M | `app-shell.tsx` · `font-stylesheet-loader.tsx` |
 | **P2 그다음** | e2e 스펙 CI 편입(nightly) + Go/TS 파리티 golden fixture | M | §4.2, §4.5 |
 | **P3 중기** | `packages/core` 추출, PBKDF2 상향, 세션 슬라이딩 만료 | L | §6 |
 | **하지 말 것** | 프록시 토폴로지 재설계(수용된 구조적 비용), 레이어 린트 error 강제(선행 부채 존재) | — | §4.5 |
@@ -105,8 +105,8 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 
 | # | 문제 | 위치 |
 |---|---|---|
-| F1 | **terminal 테마 사용자의 전체 트리 리마운트**: `useThemeSkin()`이 SSR·첫 렌더에 무조건 `"paper"` 반환 → 하이드레이션 후 TermShell로 전환하며 children 언마운트/리마운트. 인라인 부트스트랩이 paint 전에 `data-theme`을 이미 설정하므로 거기서 읽으면 해결 | `components/use-theme-skin.ts:15-24` · `app-shell.tsx:137,160` · `layout.tsx:25-61` |
-| F2 | **폰트 3종(Pretendard·terminal-mono·Material Symbols)을 하이드레이션 후 useEffect 주입** → 한글 FOUT + 아이콘 플래시. `terminal-mono.css`는 주석("terminal 활성 시에만")과 달리 전 사용자 무조건 로드 | `components/font-stylesheet-loader.tsx:12-13,30-41` |
+| F1 | ✅ **해소(2026-07-16)**: 웹 terminal 테마와 조건부 셸을 제거해 `AppShell`이 단일 컴포넌트 트리만 렌더 | `components/app-shell.tsx` · `app/layout.tsx` |
+| F2 | **Pretendard·Material Symbols를 하이드레이션 후 useEffect 주입** → 한글 FOUT + 아이콘 플래시 가능성. terminal 전용 mono 폰트와 자산은 2026-07-16 제거됨 | `components/font-stylesheet-loader.tsx` |
 | F3 | 미가상화 성장 리스트: PR 히스토리·플랜 관리·캘린더 최근 로그 (가상화는 운동 카탈로그만) | `pr-history-screen.tsx:265` · `plans-manage-content.tsx:985` |
 | F4 | i18n `messages.ts` 1,319줄이 클라이언트 `LocaleProvider` 경유로 전 라우트 번들 포함 가능성 — 빌드 분석으로 확인 필요 | `web/src/lib/i18n/messages.ts` |
 
@@ -142,8 +142,8 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 
 ### 5.3 3단계 — 그다음 (체감 성능 + 게이트 완성)
 
-1. terminal 테마 첫 렌더 분기 수정 — `data-theme` 속성 읽기 (F1, 체감 최대 레버)
-2. 폰트 로딩 정리: 조건부 terminal-mono + `<link>` 선주입/preload (F2)
+1. ~~terminal 테마 첫 렌더 분기 수정~~ — 테마 제거로 해소 (F1, 2026-07-16)
+2. 폰트 로딩 정리: Pretendard·Material Symbols `<link>` 선주입/preload 검토 (F2)
 3. e2e 13스펙 CI 편입 — 최소 nightly 스케줄 (R3)
 4. Go/TS 파리티 golden fixture (session-key·bodyweight) (§4.5)
 5. TUI 401 → `loggedOutMsg` 발행 + 에러 문구 분리 (R7) · self-update 체크섬 hard-fail (S4)
