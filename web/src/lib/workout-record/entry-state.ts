@@ -18,6 +18,7 @@ export type WorkoutProgramExerciseEntryStateMap = Record<string, WorkoutProgramE
 export function isWorkoutSetCompleted(input: {
   source: WorkoutExerciseSource;
   isRef5: boolean;
+  isProgramPrescription?: boolean;
   repsInput?: string;
   recordedReps: number | undefined;
 }) {
@@ -25,14 +26,16 @@ export function isWorkoutSetCompleted(input: {
   if (input.source === "PROGRAM") {
     if (rawValue === "") return false;
     const actual = Number(rawValue);
-    return Number.isFinite(actual) && actual >= (input.isRef5 ? 0 : 1);
+    // 프로그램 처방은 1회 세트 실패도 기록해야 하므로 명시 입력한 0회를
+    // "미입력"이 아니라 수행 결과로 센다. 사용자 자유 추가 운동은 기존 1회 이상 유지.
+    return Number.isFinite(actual) && actual >= 0;
   }
 
   const actual = input.recordedReps;
   return (
     typeof actual === "number" &&
     Number.isFinite(actual) &&
-    (input.isRef5 ? actual >= 0 : actual > 0)
+    (input.isRef5 || input.isProgramPrescription ? actual >= 0 : actual > 0)
   );
 }
 
@@ -89,11 +92,11 @@ export function validateWorkoutRecordEntryState(
   const copy = locale === "ko"
     ? {
         missingReps: (name: string, setIndex: number) => `${name} ${setIndex + 1}세트 횟수를 입력하세요.`,
-        invalidReps: (name: string, setIndex: number) => `${name} ${setIndex + 1}세트 횟수는 1~100 범위여야 합니다.`,
+        invalidReps: (name: string, setIndex: number) => `${name} ${setIndex + 1}세트 횟수는 0~100 범위여야 합니다.`,
       }
     : {
         missingReps: (name: string, setIndex: number) => `Enter reps for ${name} set ${setIndex + 1}.`,
-        invalidReps: (name: string, setIndex: number) => `${name} set ${setIndex + 1} reps must be between 1 and 100.`,
+        invalidReps: (name: string, setIndex: number) => `${name} set ${setIndex + 1} reps must be between 0 and 100.`,
       };
   const errors: string[] = [];
 
@@ -110,8 +113,7 @@ export function validateWorkoutRecordEntryState(
       }
 
       const parsedValue = Number(rawValue);
-      const minimumReps = exercise.ref5 ? 0 : 1;
-      if (!Number.isFinite(parsedValue) || parsedValue < minimumReps || parsedValue > 100) {
+      if (!Number.isFinite(parsedValue) || parsedValue < 0 || parsedValue > 100) {
         errors.push(copy.invalidReps(exercise.exerciseName, setIndex));
       }
     });

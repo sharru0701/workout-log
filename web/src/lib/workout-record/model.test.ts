@@ -703,6 +703,107 @@ test("toWorkoutLogPayload: 슬롯형 progressionKey(_s)는 set.meta.plannedRef�
   assert.equal(metaLast.plannedRef?.amrap, true);
 });
 
+test("toWorkoutLogPayload: Texas v2 V/R은 progressionExcluded를 저장하고 재편집에도 보존", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-tx-volume",
+    planId: "plan-tx",
+    sessionKey: "2026-03-09@V",
+    snapshot: {
+      sessionKey: "2026-03-09@V",
+      sessionDate: "2026-03-09",
+      week: 1,
+      day: 1,
+      exercises: [{
+        exerciseName: "Back Squat",
+        rowType: "AUTO",
+        progressionTarget: "SQUAT",
+        texasRole: "volume",
+        skipProgression: true,
+        sets: [{ reps: 5, targetWeightKg: 90 }],
+      }],
+    },
+  };
+  const draft = createWorkoutRecordDraft(session, "Texas", { sessionDate: "2026-03-09", timezone: "Asia/Seoul" });
+  const payload = toWorkoutLogPayload(draft, {});
+  assert.equal((payload.sets[0]!.meta as { progressionExcluded?: boolean }).progressionExcluded, true);
+
+  const edited = createWorkoutRecordDraftFromLog({
+    id: "log-tx",
+    planId: "plan-tx",
+    generatedSessionId: "session-tx-volume",
+    performedAt: "2026-03-09T09:00:00.000Z",
+    sets: payload.sets,
+    generatedSession: session,
+  }, "Texas", { locale: "ko", timezone: "Asia/Seoul" });
+  const editedPayload = toWorkoutLogPayload(edited, {});
+  assert.equal((editedPayload.sets[0]!.meta as { progressionExcluded?: boolean }).progressionExcluded, true);
+});
+
+test("일반 프로그램의 0회 실패는 저장 후 재열기와 재편집에서도 유효하다", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-zero-failure",
+    planId: "plan-zero-failure",
+    sessionKey: "2026-03-09@D1",
+    snapshot: {
+      sessionKey: "2026-03-09@D1",
+      sessionDate: "2026-03-09",
+      week: 1,
+      day: 1,
+      exercises: [{
+        exerciseName: "Back Squat",
+        rowType: "AUTO",
+        progressionTarget: "SQUAT",
+        enforcePlannedReps: true,
+        sets: [{ reps: 1, targetWeightKg: 100 }],
+      }],
+    },
+  };
+  const initial = createWorkoutRecordDraft(session, "One-rep Plan", {
+    sessionDate: "2026-03-09",
+    timezone: "Asia/Seoul",
+  });
+  const failed = patchSeedExercise(initial, initial.seedExercises[0]!.id, {
+    set: { repsPerSet: [0] },
+  });
+  const saved = toWorkoutLogPayload(failed, {});
+  const reopened = createWorkoutRecordDraftFromLog({
+    id: "log-zero-failure",
+    planId: session.planId,
+    generatedSessionId: session.id,
+    performedAt: "2026-03-09T09:00:00.000Z",
+    sets: saved.sets,
+    generatedSession: session,
+  }, "One-rep Plan", { timezone: "Asia/Seoul" });
+
+  assert.equal(reopened.userExercises[0]?.source, "USER");
+  assert.deepEqual(reopened.userExercises[0]?.plannedSetMeta?.repsPerSet, [1]);
+  assert.deepEqual(reopened.userExercises[0]?.set.repsPerSet, [0]);
+  assert.equal(validateWorkoutDraft(reopened).valid, true);
+  assert.deepEqual(toWorkoutLogPayload(reopened).sets.map((set) => set.reps), [0]);
+});
+
+test("toWorkoutLogPayload: 531 FSL/BBB의 ASSIST 역할은 진행 판정에서 제외", () => {
+  const session: GeneratedSessionLike = {
+    id: "session-531-fsl",
+    planId: "plan-531",
+    sessionKey: "2026-03-09@D1",
+    snapshot: {
+      sessionKey: "2026-03-09@D1",
+      sessionDate: "2026-03-09",
+      week: 1,
+      day: 1,
+      exercises: [
+        { exerciseName: "Back Squat", role: "MAIN", sets: [{ reps: 5, targetWeightKg: 65 }] },
+        { exerciseName: "Back Squat", role: "ASSIST", sets: [{ reps: 5, targetWeightKg: 65 }] },
+      ],
+    },
+  };
+  const draft = createWorkoutRecordDraft(session, "531 FSL", { sessionDate: "2026-03-09", timezone: "Asia/Seoul" });
+  const payload = toWorkoutLogPayload(draft, {});
+  assert.notEqual((payload.sets[0]!.meta as { progressionExcluded?: boolean }).progressionExcluded, true);
+  assert.equal((payload.sets[1]!.meta as { progressionExcluded?: boolean }).progressionExcluded, true);
+});
+
 test("toWorkoutLogPayload: operator EX_키(family 1:1)는 plannedRef 미부착(전환 단절 방지)", () => {
   const session: GeneratedSessionLike = {
     id: "session-op",

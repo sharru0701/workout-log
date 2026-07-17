@@ -74,7 +74,7 @@ export function WorkoutSetRow({
   }, [exercise.set.rpePerSet, setIndex]);
 
   const repsNum = Number(repsRaw);
-  const hasReps = exercise.ref5
+  const hasReps = exercise.source === "PROGRAM" || exercise.ref5 || plannedReps > 0
     ? repsRaw !== "" && Number.isFinite(repsNum) && repsNum >= 0
     : !!repsRaw && Number.isFinite(repsNum) && repsNum > 0;
   const isFailure = hasReps && plannedReps > 0 && repsNum < plannedReps;

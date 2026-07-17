@@ -22,6 +22,7 @@ export function resolveWorkoutSetRepsEntry(
   setIndex: number,
   programInput = "",
 ) {
+  const frozenPlannedReps = Number(exercise.plannedSetMeta?.repsPerSet[setIndex] ?? 0);
   const plannedReps = exercise.ref5
     ? Number(
         exercise.plannedSetMeta?.repsPerSet[setIndex] ??
@@ -30,14 +31,16 @@ export function resolveWorkoutSetRepsEntry(
       )
     : exercise.source === "PROGRAM"
       ? Number(exercise.set.repsPerSet[setIndex] ?? 0)
-      : 0;
+      : Number.isFinite(frozenPlannedReps) && frozenPlannedReps > 0
+        ? frozenPlannedReps
+        : 0;
   if (exercise.source === "PROGRAM") {
     return { plannedReps, repsRaw: programInput.trim() };
   }
   const storedReps = Number(exercise.set.repsPerSet[setIndex] ?? 0);
   return {
     plannedReps,
-    repsRaw: exercise.ref5
+    repsRaw: exercise.ref5 || plannedReps > 0
       ? String(Math.max(0, storedReps))
       : storedReps > 0
         ? String(storedReps)

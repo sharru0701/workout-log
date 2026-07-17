@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 
 import { SESSION_COOKIE_NAME } from "@workout/core/auth/session";
+import { LOCALE_COOKIE_NAME } from "@/lib/i18n/locale-cookie";
 
 // Catch-all proxy: forwards web /api/* to the standalone apps/api (Hono) backend.
 // The browser keeps calling same-origin /api/* (httpOnly wl_session cookie sent
@@ -53,10 +54,19 @@ async function handler(req: Request): Promise<Response> {
     if (!STRIP_REQUEST_HEADERS.has(key.toLowerCase())) headers.set(key, value);
   });
 
-  const token = (await cookies()).get(SESSION_COOKIE_NAME)?.value;
+  const cookieStore = await cookies();
+  const token = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (token) headers.set("authorization", `Bearer ${token}`);
+  // 브라우저 OS 언어가 아니라 앱에서 고른 언어가 서버 조립 피드백·오류 문구의
+  // 기준이다. cutover 프록시가 이 값을 덮지 않으면 한국어 UI 안에 영어 API 카피가 섞인다.
+  const appLocale = cookieStore.get(LOCALE_COOKIE_NAME)?.value;
+  if (appLocale === "ko" || appLocale === "en") {
+    headers.set("accept-language", appLocale);
+  }
 
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
+  const isUxTelemetry =
+    url.pathname === "/api/ux-events" || url.pathname === "/api/ux-events/public";
 
   // `duplex: "half"` is required to stream a request body via undici (large
   // export/import without buffering); it isn't in the DOM RequestInit type yet.
@@ -68,8 +78,19 @@ async function handler(req: Request): Promise<Response> {
     signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
   };
   if (hasBody) {
-    init.body = req.body;
-    init.duplex = "half";
+    if (isUxTelemetry) {
+      try {
+        // pagehide keepalive 요청을 상류 스트림과 직접 결합하면 탭 종료 시 중간 abort가
+        // apps/api의 본문 파서를 5xx로 만들 수 있다. 작은 텔레메트리만 먼저 버퍼링한다.
+        init.body = await req.arrayBuffer();
+      } catch {
+        // 선택적 텔레메트리는 다음 동기화 때 재시도된다. 사용자 화면에는 오류를 남기지 않는다.
+        return new Response(null, { status: 204 });
+      }
+    } else {
+      init.body = req.body;
+      init.duplex = "half";
+    }
   }
 
   let upstream: Response;

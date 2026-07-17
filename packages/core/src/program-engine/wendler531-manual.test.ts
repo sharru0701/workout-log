@@ -60,11 +60,13 @@ test("531 보조: FSL=첫세트% 5×5, BBB=TM50% 5×10, 진행 추적 안 함(AS
   const fsl = plannedExercisesFrom531ManualSession(sessionD1("fsl"), 1, TM, {})[1]!;
   assert.equal(fsl.role, "ASSIST");
   assert.equal(fsl.progressionKey, null);
+  assert.equal(fsl.skipProgression, true);
   assert.equal(fsl.sets.length, 5);
   assert.equal(fsl.sets[0]!.reps, 5);
   assert.equal(fsl.sets[0]!.targetWeightKg, 130); // week1 첫세트 65% of 200
 
   const bbb = plannedExercisesFrom531ManualSession(sessionD1("bbb"), 1, TM, {})[1]!;
+  assert.equal(bbb.skipProgression, true);
   assert.equal(bbb.sets.length, 5);
   assert.equal(bbb.sets[0]!.reps, 10);
   assert.equal(bbb.sets[0]!.targetWeightKg, 100); // 50% of 200

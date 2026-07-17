@@ -365,7 +365,8 @@ test("PR-D gzclp(v2): T1/T2 실패 → 무게 유지 + stage++ (rep 스킴 강�
   });
   assert.equal(result.nextState.targets.D1_s0?.workKg, 100); // 무게 유지
   assert.equal(result.nextState.targets.D1_s0?.stage, 1); // stage++
-  assert.equal(result.eventType, "HOLD");
+  assert.equal(result.eventType, "ADVANCE_WEEK"); // HOLD 판정 + 다음 D2로 순환
+  assert.equal(result.targetDecisions[0]?.eventType, "HOLD");
 });
 
 test("PR-D gzclp(v2): stage 2 소진 후 실패 → 무게 리셋(*0.85) + stage 0", () => {
@@ -402,7 +403,8 @@ test("PR-D gzclp(v2): T3 amrap 마지막 세트 <25 → 유지(HOLD)", () => {
     sets: [gzSet("D3_s2", "BENCH", 20, 15, 50, true)],
   });
   assert.equal(result.nextState.targets.D3_s2?.workKg, 50); // 유지
-  assert.equal(result.eventType, "HOLD");
+  assert.equal(result.eventType, "ADVANCE_WEEK"); // HOLD 판정 + 다음 D2로 순환
+  assert.equal(result.targetDecisions[0]?.eventType, "HOLD");
 });
 
 test("PR-D gzclp(flag 없음): 기존 LP 유지 — stage 안 굴림(forward-only 회귀 가드)", () => {
@@ -431,6 +433,53 @@ test("PR-E texas(v2): I day 성공 → 즉시 증량(주간 1회)", () => {
   });
   assert.equal(result.nextState.targets.I_s0?.workKg, 102.5); // +2.5 즉시
   assert.equal(result.eventType, "INCREASE");
+});
+
+test("PR-E texas(v2): V/R 제외 세트는 I 중량을 바꾸지 않고 세션만 순환", () => {
+  const result = reduceProgressionState({
+    program: "texas-method",
+    previousState: { cycle: 1, week: 1, day: 1, targets: { SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 0 } }, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "log-tx-volume",
+    sets: [{ exerciseName: "Back Squat", reps: 5, weightKg: 90, meta: { progressionExcluded: true } }],
+  });
+  assert.deepEqual(result.targetDecisions, []);
+  assert.equal(result.nextState.targets.SQUAT?.workKg, 100);
+  assert.equal(result.nextState.day, 2);
+  assert.equal(result.didAdvanceSession, true);
+});
+
+test("순환형 프로그램: A/B, V/R/I, D1~D4를 저장마다 전진하고 주차를 넘긴다", () => {
+  for (const [program, day, expectedDay, expectedWeek] of [
+    ["starting-strength-lp", 1, 2, 1],
+    ["stronglifts-5x5", 2, 1, 2],
+    ["greyskull-lp", 2, 1, 2],
+    ["texas-method", 3, 1, 2],
+    ["gzclp", 4, 1, 2],
+  ] as const) {
+    const result = reduceProgressionState({
+      program,
+      previousState: { cycle: 1, week: 1, day, targets: {}, lastAppliedLogId: null },
+      planParams: {},
+      logId: `rotate-${program}`,
+      sets: [{ exerciseName: "Back Squat", reps: 5, weightKg: 100 }],
+    });
+    assert.equal(result.nextState.day, expectedDay, program);
+    assert.equal(result.nextState.week, expectedWeek, program);
+    assert.equal(result.didAdvanceSession, true, program);
+  }
+});
+
+test("순환형 프로그램: 0렙 실패도 수행한 세션으로 전진한다", () => {
+  const result = reduceProgressionState({
+    program: "gzclp",
+    previousState: { cycle: 1, week: 1, day: 1, targets: {}, lastAppliedLogId: null },
+    planParams: { progressionModel: "v2" },
+    logId: "rotate-zero-rep",
+    sets: [gzSet("D1_s0", "SQUAT", 0, 1, 100)],
+  });
+  assert.equal(result.nextState.day, 2);
+  assert.equal(result.didAdvanceSession, true);
 });
 
 test("PR-E texas(v2): I day 실패 누적 → reset(×0.9)", () => {
@@ -514,7 +563,8 @@ test("greyskull(v2): AMRAP <5 1회 → HOLD(디로드 아직, failureStreak 1)",
   });
   assert.equal(result.nextState.targets.SQUAT?.workKg, 100); // 무게 유지
   assert.equal(result.nextState.targets.SQUAT?.failureStreak, 1);
-  assert.equal(result.eventType, "HOLD");
+  assert.equal(result.eventType, "ADVANCE_WEEK"); // HOLD 판정 + 다음 B로 순환
+  assert.equal(result.targetDecisions[0]?.eventType, "HOLD");
 });
 
 test("greyskull(v2): AMRAP <5 2연속 → 디로드(×0.9)", () => {

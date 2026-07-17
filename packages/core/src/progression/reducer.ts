@@ -131,6 +131,10 @@ function progressionIdentityForSet(set: LoggedSetInput): {
   progressionTarget: ProgressionTarget;
   displayTarget: string;
 } | null {
+  // 처방에는 포함되지만 진행 판정의 기준이 아닌 세트. 예: Texas v2의 볼륨일/회복일은
+  // 강도일(I) 작업중량에서 파생될 뿐, 자체 성공으로 I 중량을 올리면 안 된다.
+  if (set.meta?.progressionExcluded === true) return null;
+
   const plannedRef = readPlannedRef(set.meta);
   const progressionTarget =
     parseProgressionTarget(plannedRef.progressionTarget) ??
@@ -761,7 +765,9 @@ export function reduceProgressionState(input: {
         eventType = "INCREASE";
         reason = isDouble
           ? `increase:amrap-${amrapReps}reps:double:+${inc}kg`
-          : `increase:+${inc}kg`;
+          : amrapReps !== null
+            ? `increase:amrap-${amrapReps}reps:single:+${inc}kg`
+            : `increase:+${inc}kg`;
       } else {
         next.failureStreak += 1;
         next.successStreak = 0;
@@ -840,6 +846,35 @@ export function reduceProgressionState(input: {
   }
 
   let didAdvanceSession = false;
+
+  // 세션 템플릿이 순환하는 선형 프로그램. 이들은 target 판정과 별개로 실제 프로그램 세트를
+  // 저장하면 다음 템플릿으로 이동해야 한다. 특히 Texas V/R처럼 progressionExcluded인 날과
+  // 0렙 실패 세션도 수행한 세션이므로 순환에 포함한다.
+  const rotatingSessionCount =
+    input.program === "starting-strength-lp" ||
+    input.program === "stronglifts-5x5" ||
+    input.program === "greyskull-lp"
+      ? 2
+      : input.program === "texas-method"
+        ? 3
+        : input.program === "gzclp"
+          ? 4
+          : null;
+  const hasLoggedProgramSet = input.sets.some((set) => {
+    if (set.isExtra) return false;
+    const reps = toFiniteNumber(set.reps);
+    return Boolean(String(set.exerciseName ?? "").trim()) && reps !== null && reps >= 0;
+  });
+
+  if (rotatingSessionCount !== null && hasLoggedProgramSet) {
+    state.day += 1;
+    if (state.day > rotatingSessionCount) {
+      state.day = 1;
+      state.week += 1;
+    }
+    didAdvanceSession = true;
+  }
+
   if (input.program === "operator") {
     const loggedTargets = Array.from(outcomes.keys()).filter((key) => outcomes.get(key)?.total);
     const completedBlock = state.week === 6 && state.day === 3;

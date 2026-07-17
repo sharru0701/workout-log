@@ -123,6 +123,9 @@ export type PlannedExercise = {
   // SS/StrongLifts 정석(v2): 메인 리프트가 고정 reps를 못 채우면 실패로 감지하도록 reps-only
   // plannedRef를 흘릴지 마킹. progressionKey 없이 reps만 흘려 family 진행은 유지한다(저장 경로에서 소비).
   enforcePlannedReps?: boolean;
+  // 처방/세션 수행에는 포함되지만 progression reducer의 중량 판정에서는 제외한다.
+  // Texas v2 V/R은 I 작업중량에서 파생되므로 I 세션만 진행 기준이다.
+  skipProgression?: boolean;
 };
 
 export type { PlannedSet };
@@ -495,6 +498,7 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
     exercises.push({
       exerciseName: defaultExerciseNameForTarget(target),
       role: "ASSIST",
+      skipProgression: true,
       sourceBlockTarget: `${target}_FSL`,
       order: ctx.orderBase + 1,
       sets: Array.from({ length: 5 }, () => ({
@@ -509,6 +513,7 @@ function generate531(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise
     exercises.push({
       exerciseName: defaultExerciseNameForTarget(target),
       role: "ASSIST",
+      skipProgression: true,
       sourceBlockTarget: `${target}_BBB`,
       order: ctx.orderBase + 1,
       sets: Array.from({ length: 5 }, () => ({
@@ -808,7 +813,15 @@ export function plannedExercisesFromManualSession(
       if (lastSet) (lastSet as PlannedSet).amrap = true;
     }
 
-    const progressionTarget = normalizeProgressionTarget(item?.progressionTarget ?? item?.meta?.progressionTarget);
+    const explicitProgressionTarget = normalizeProgressionTarget(
+      item?.progressionTarget ?? item?.meta?.progressionTarget,
+    );
+    // 공개 SS/StrongLifts seed는 운동명만 있고 progressionTarget 필드는 없다.
+    // v2 처방 reps 검증을 켠 경우 운동명에서 family target을 복원해야
+    // enforcePlannedReps → log.meta.plannedRef.reps 경로가 실제 seed에서도 이어진다.
+    const progressionTarget =
+      explicitProgressionTarget ??
+      (options?.enforcePlannedReps ? inferTargetFromExerciseName(exerciseName) : null);
 
     out.push({
       exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
@@ -1122,6 +1135,7 @@ export function plannedExercisesFrom531ManualSession(
           exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
           exerciseName,
           role: "ASSIST" as const,
+          skipProgression: true,
           sourceBlockTarget: progressionTarget ? `${progressionTarget}_${note}` : "ASSIST",
           order: toNumberOrNull(item?.order) ?? index,
           rowType: "AUTO" as const,
@@ -1257,8 +1271,8 @@ export function plannedExercisesFromSlottedLpManualSession(
           ? slot.texasRole
           : null;
       // texas 주간(v2) V/R: 같은 target의 I workKg × 계수(볼륨 0.9 / 회복 0.8)로 무게를 파생한다.
-      // progressionKey를 흘리지 않아(null) reducer는 I 슬롯만 굴린다 → I 무게가 오르면 다음 주
-      // V/R도 자동으로 따라 오른다. I workKg가 아직 없으면(첫 주기) seed 무게(effectiveKg) 폴백.
+      // progressionKey를 흘리지 않고 skipProgression으로 reducer 판정에서도 명시 제외한다.
+      // I 무게가 오르면 다음 주 V/R도 자동으로 따라 오른다. I workKg가 아직 없으면 seed 무게 폴백.
       if (txRole === "volume" || txRole === "recovery") {
         const iKg = Number(effectiveParams?.texasIntensityByTarget?.[progressionTarget ?? ""]) || 0;
         const factor = txRole === "volume" ? 0.9 : 0.8;
@@ -1281,6 +1295,7 @@ export function plannedExercisesFromSlottedLpManualSession(
           tier: null,
           stage: null,
           texasRole: txRole,
+          skipProgression: true,
         } satisfies PlannedExercise;
       }
 

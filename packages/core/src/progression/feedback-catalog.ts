@@ -16,8 +16,8 @@ export type FeedbackDecision = {
   target?: unknown;
   eventType?: unknown;
   reason?: unknown;
-  before?: { workKg?: unknown; successStreak?: unknown };
-  after?: { workKg?: unknown };
+  before?: { workKg?: unknown; successStreak?: unknown; failureStreak?: unknown };
+  after?: { workKg?: unknown; failureStreak?: unknown };
 };
 
 export type ProgressFeedbackEvent = {
@@ -95,6 +95,27 @@ function parseIncrementFromReason(reason: string): string | null {
 // HOLD는 기본 미표출(스트릭 노이즈). INCREASE/RESET만 기본 문구 생성.
 export function fallbackRow(decision: FeedbackDecision, locale: FeedbackLocale): string | null {
   const eventType = String(decision.eventType ?? "").toUpperCase();
+  const reason = String(decision.reason ?? "");
+  const isUserOverride = reason.startsWith("override:per-target:");
+  if (isUserOverride && (eventType === "INCREASE" || eventType === "HOLD" || eventType === "RESET")) {
+    const label = displayLabel(decision, locale);
+    const after = toKg(decision.after?.workKg);
+    const result =
+      eventType === "INCREASE"
+        ? locale === "ko"
+          ? "증량"
+          : "increase"
+        : eventType === "RESET"
+          ? locale === "ko"
+            ? "감소"
+            : "reduce"
+          : locale === "ko"
+            ? "유지"
+            : "hold";
+    return locale === "ko"
+      ? `${label} — 사용자 선택: ${result}${after !== null ? ` ${formatKg(after)}kg` : ""} · 다음 노출에 적용`
+      : `${label} — your choice: ${result}${after !== null ? ` at ${formatKg(after)}kg` : ""} · applies next exposure`;
+  }
   if (eventType !== "INCREASE" && eventType !== "RESET") return null;
   const label = displayLabel(decision, locale);
   const range = deltaSuffix(decision);
@@ -210,9 +231,16 @@ const asymptoteCatalog: FamilyCatalog = {
 
 // operator(TB Operator Custom)·wendler-531 — 블록 완주 증량 + 동결(freeze) 표출.
 const blockLpCatalog: FamilyCatalog = {
+  isNotableHold: (reason) => reason === "hold:block-failure",
   title: (locale) => (locale === "ko" ? "블록 완주 — 증량 판정" : "Block complete — progression"),
   buildRow: (decision, locale) => {
     const reason = String(decision.reason ?? "");
+    if (reason === "hold:block-failure") {
+      const label = displayLabel(decision, locale);
+      return locale === "ko"
+        ? `${label} — 처방 미달 기록 · 다음 노출 성공 시 해소, 블록 종료까지 남으면 전체 증량 보류`
+        : `${label} — prescription missed · clears on the next successful exposure; if unresolved at block end, all increases are held`;
+    }
     const match = /^increase:\+(\d+(?:\.\d+)?)kg$/.exec(reason);
     if (!match) return null;
     const label = displayLabel(decision, locale);
@@ -226,13 +254,107 @@ const blockLpCatalog: FamilyCatalog = {
         : streak > 0
           ? ` (${streak} in a row)`
           : " (block complete)";
-    return `${label} +${inc}${streakLabel}`;
+    return locale === "ko"
+      ? `${label} +${inc}${streakLabel} · 다음 블록 적용`
+      : `${label} +${inc}${streakLabel} · applies next block`;
   },
   freezeRow: (failed, locale) => {
     const labels = failed.map((target) => LIFT_LABEL[locale][target] ?? target);
     return locale === "ko"
-      ? `블록 완주 — 증량 동결 · TM 유지 (실패 누적: ${labels.join(", ")})`
-      : `Block complete — increase frozen · TM unchanged (failed: ${labels.join(", ")})`;
+      ? `블록 완주 — 증량 동결 · TM 유지 (처방 미달: ${labels.join(", ")}) · 다음 블록 동일 TM`
+      : `Block complete — increases frozen · TM unchanged (missed: ${labels.join(", ")}) · next block uses the same TMs`;
+  },
+};
+
+function failureCountAfterDecision(decision: FeedbackDecision, threshold: number) {
+  const after = Math.floor(Number(decision.after?.failureStreak));
+  if (Number.isFinite(after) && after > 0) return Math.min(threshold, after);
+  const before = Math.floor(Number(decision.before?.failureStreak));
+  return Number.isFinite(before) ? Math.min(threshold, Math.max(1, before + 1)) : threshold;
+}
+
+const greyskullCatalog: FamilyCatalog = {
+  isNotableHold: (reason) => reason === "hold:failure-streak",
+  title: (locale) => (locale === "ko" ? "Greyskull AMRAP 판정" : "Greyskull AMRAP judgment"),
+  buildRow: (decision, locale) => {
+    const reason = String(decision.reason ?? "");
+    const label = displayLabel(decision, locale);
+    const double = /^increase:amrap-(\d+)reps:double:/.exec(reason);
+    if (double) {
+      return locale === "ko"
+        ? `${label} — AMRAP ${double[1]}렙(10+) → 2단계 증량${deltaSuffix(decision)} · 다음 노출 새 무게 적용`
+        : `${label} — AMRAP ${double[1]} reps (10+) → double increase${deltaSuffix(decision)} · new weight applies next exposure`;
+    }
+    const single = /^increase:amrap-(\d+)reps:single:/.exec(reason);
+    if (single) {
+      return locale === "ko"
+        ? `${label} — AMRAP ${single[1]}렙(5–9) → 1단계 증량${deltaSuffix(decision)} · 다음 노출 새 무게 적용`
+        : `${label} — AMRAP ${single[1]} reps (5–9) → single increase${deltaSuffix(decision)} · new weight applies next exposure`;
+    }
+    if (reason === "hold:failure-streak") {
+      const count = failureCountAfterDecision(decision, 2);
+      return locale === "ko"
+        ? `${label} — AMRAP 5렙 미달 → 무게 유지 · 연속 미달 ${count}/2, 다음 노출 5렙 이상 목표`
+        : `${label} — AMRAP under 5 reps → weight held · miss ${count}/2, aim for 5+ next exposure`;
+    }
+    if (reason.startsWith("reset:")) {
+      return locale === "ko"
+        ? `${label} — AMRAP 5렙 미달 2회 연속 → 무게 리셋${deltaSuffix(decision)} · 다음 노출 새 무게로 재시작`
+        : `${label} — two consecutive AMRAP misses under 5 → weight reset${deltaSuffix(decision)} · restart at the new weight`;
+    }
+    return null;
+  },
+};
+
+const genericLpCatalog: FamilyCatalog = {
+  isNotableHold: (reason) => reason === "hold:failure-streak",
+  title: (locale) => (locale === "ko" ? "선형 진행 판정" : "Linear progression judgment"),
+  buildRow: (decision, locale) => {
+    const reason = String(decision.reason ?? "");
+    const label = displayLabel(decision, locale);
+    if (reason.startsWith("increase:")) {
+      return locale === "ko"
+        ? `${label} — 처방 세트 완료 → 증량${deltaSuffix(decision)} · 다음 노출 새 무게 적용`
+        : `${label} — prescribed sets completed → increased${deltaSuffix(decision)} · new weight applies next exposure`;
+    }
+    if (reason === "hold:failure-streak") {
+      const count = failureCountAfterDecision(decision, 3);
+      return locale === "ko"
+        ? `${label} — 처방 미달 → 무게 유지 · 연속 미달 ${count}/3, 다음 노출 같은 무게 재도전`
+        : `${label} — prescription missed → weight held · miss ${count}/3, retry the same weight next exposure`;
+    }
+    if (reason.startsWith("reset:")) {
+      return locale === "ko"
+        ? `${label} — 처방 미달 3회 연속 → 무게 리셋${deltaSuffix(decision)} · 다음 노출 새 무게로 재시작`
+        : `${label} — three consecutive prescription misses → weight reset${deltaSuffix(decision)} · restart at the new weight`;
+    }
+    return null;
+  },
+};
+
+const texasCatalog: FamilyCatalog = {
+  isNotableHold: (reason) => reason === "hold:intensity-fail",
+  title: (locale) => (locale === "ko" ? "Texas Method 주간 판정" : "Texas Method weekly judgment"),
+  buildRow: (decision, locale) => {
+    const reason = String(decision.reason ?? "");
+    const label = displayLabel(decision, locale);
+    if (reason.startsWith("increase:weekly:")) {
+      return locale === "ko"
+        ? `${label} — 강도일 처방 완료 → 주간 기준 증량${deltaSuffix(decision)} · 다음 주 볼륨·회복 무게도 연동`
+        : `${label} — intensity prescription completed → weekly base increased${deltaSuffix(decision)} · next week's volume and recovery loads follow`;
+    }
+    if (reason === "hold:intensity-fail") {
+      const count = failureCountAfterDecision(decision, 3);
+      return locale === "ko"
+        ? `${label} — 강도일 처방 미달 → 주간 기준 유지 · 연속 미달 ${count}/3, 다음 강도일 재도전`
+        : `${label} — intensity prescription missed → weekly base held · miss ${count}/3, retry next intensity day`;
+    }
+    if (reason.startsWith("reset:intensity-fail:")) {
+      return locale === "ko"
+        ? `${label} — 강도일 처방 미달 3회 연속 → 주간 기준 리셋${deltaSuffix(decision)} · 다음 주 파생 무게도 재계산`
+        : `${label} — three consecutive intensity misses → weekly base reset${deltaSuffix(decision)} · next week's derived loads are recalculated`;
+    }
+    return null;
   },
 };
 
@@ -283,7 +405,10 @@ const CATALOGS: Record<string, FamilyCatalog> = {
   operator: blockLpCatalog,
   "wendler-531": blockLpCatalog,
   gzclp: gzclpCatalog,
-  // texas-method·greyskull-lp·starting-strength-lp·stronglifts-5x5 등은 기본 폴백으로 커버.
+  "texas-method": texasCatalog,
+  "greyskull-lp": greyskullCatalog,
+  "starting-strength-lp": genericLpCatalog,
+  "stronglifts-5x5": genericLpCatalog,
 };
 
 // 단일 decision의 문구 — 카탈로그 우선, 미등록이면 기본 폴백(테스트·개별 표출용).
@@ -367,6 +492,7 @@ export function buildProgressReport(
     const eventType = String(decision.eventType ?? "").toUpperCase();
     if (eventType === "INCREASE" || eventType === "RESET") return true;
     const reason = String(decision.reason ?? "");
+    if (reason.startsWith("override:per-target:")) return true;
     return catalog?.isNotableHold?.(reason) === true;
   });
   if (notable.length === 0 && !freezeFailed) return null;
@@ -376,9 +502,11 @@ export function buildProgressReport(
     const text = (catalog?.freezeRow ?? blockLpCatalog.freezeRow!)(freezeFailed, locale);
     rows.push({ target: "__freeze__", text });
   }
-  for (const decision of notable) {
-    const text = catalog?.buildRow?.(decision, locale) ?? fallbackRow(decision, locale);
-    if (text) rows.push({ target: canonicalTarget(decision) || String(decision.target ?? "?"), text });
+  if (!freezeFailed) {
+    for (const decision of notable) {
+      const text = catalog?.buildRow?.(decision, locale) ?? fallbackRow(decision, locale);
+      if (text) rows.push({ target: canonicalTarget(decision) || String(decision.target ?? "?"), text });
+    }
   }
   if (catalog?.finalizeRows && !freezeFailed) {
     rows = catalog.finalizeRows(rows, decisions, locale);
