@@ -122,11 +122,13 @@ export function applyTargetDecisionsToReduced(
   }
 
   const nextTargets = { ...reduced.nextState.targets };
+  let hasMaterialOverride = false;
   for (const key of Object.keys(nextTargets)) {
     const target = nextTargets[key];
     if (!target) continue;
     const decision = readDecision(decisions, key, target.progressionTarget);
     if (!decision) continue;
+    if (decision.workKg !== target.workKg) hasMaterialOverride = true;
     nextTargets[key] = {
       ...target,
       workKg: decision.workKg,
@@ -137,6 +139,17 @@ export function applyTargetDecisionsToReduced(
   }
 
   if (Object.keys(appliedDecisions).length === 0) {
+    return {
+      nextState: reduced.nextState,
+      eventType: reduced.eventType,
+      reason: reduced.reason,
+      appliedDecisions,
+    };
+  }
+
+  // 추천값을 그대로 저장한 경우는 사용자 결정 자체는 replay용으로 보존하되,
+  // reducer의 전문 reason(블록 동결·AMRAP 판정 등)과 상태를 훼손하지 않는다.
+  if (!hasMaterialOverride) {
     return {
       nextState: reduced.nextState,
       eventType: reduced.eventType,
@@ -159,11 +172,43 @@ export function buildProgressionEventMeta(
   reduced: ReturnType<typeof reduceProgressionState>,
   appliedDecisions: Record<string, ProgressionTargetDecision>,
 ) {
+  const reducerMeta = toProgressionEventMeta(reduced);
+  const hasAppliedDecisions = Object.keys(appliedDecisions).length > 0;
+  if (!hasAppliedDecisions) return reducerMeta;
+
+  let hasMaterialOverride = false;
+  const effectiveTargetDecisions = reduced.targetDecisions.map((targetDecision) => {
+    const key = String(targetDecision.key ?? "");
+    const progressionTarget = String(targetDecision.progressionTarget ?? "");
+    const applied = readDecision(appliedDecisions, key, progressionTarget);
+    if (!applied || applied.workKg === targetDecision.after.workKg) return targetDecision;
+
+    hasMaterialOverride = true;
+    const beforeKg = targetDecision.before.workKg;
+    const eventType: "INCREASE" | "HOLD" | "RESET" =
+      applied.workKg > beforeKg
+        ? "INCREASE"
+        : applied.workKg < beforeKg
+          ? "RESET"
+          : "HOLD";
+    return {
+      ...targetDecision,
+      eventType,
+      reason: `override:per-target:${eventType.toLowerCase()}`,
+      after: {
+        ...targetDecision.after,
+        workKg: applied.workKg,
+        successStreak: 0,
+        failureStreak: 0,
+      },
+    };
+  });
+
   return {
-    ...toProgressionEventMeta(reduced),
-    ...(Object.keys(appliedDecisions).length > 0
-      ? { targetDecisionsOverride: appliedDecisions }
-      : {}),
+    ...reducerMeta,
+    targetDecisions: effectiveTargetDecisions,
+    ...(hasMaterialOverride ? { reducerTargetDecisions: reduced.targetDecisions } : {}),
+    targetDecisionsOverride: appliedDecisions,
   };
 }
 

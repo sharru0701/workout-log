@@ -95,6 +95,7 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
   const plannedSetCount = isProgramAuto
     ? (exercise.plannedSetMeta?.repsPerSet.length ?? 0)
     : 0;
+  const hasAmrapSet = exercise.plannedSetMeta?.amrapPerSet.some(Boolean) === true;
   const minSetCount = Math.max(1, plannedSetCount);
   const canRemoveSet = totalSets > minSetCount;
 
@@ -325,6 +326,7 @@ export function WorkoutExerciseCard({ exerciseId, onExerciseAction }: Props) {
                 {locale === "ko" ? "자동" : "AUTO"}
               </V2Chip>
             )}
+            {hasAmrapSet ? <V2Chip tone="accent">AMRAP</V2Chip> : null}
             {/* gzclp 정석(v2): 슬롯 계층(T1/T2/T3)과 현재 강등 단계. stage>0이면 무게를 유지한 채
                 rep 스킴이 하향(5×3→6×2→10×1)됐음을 알려, 유저가 세트 변화를 납득하게 한다. */}
             {exercise.tier ? (

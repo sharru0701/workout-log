@@ -112,3 +112,15 @@ test("REF5 existing-log entry displays zero reps and retains the frozen planned 
     repsRaw: "2",
   });
 });
+
+test("일반 프로그램 기존 기록도 0회와 고정 처방을 그대로 표시한다", () => {
+  const logged = exercise("NORMAL");
+  logged.source = "USER";
+  logged.ref5 = null;
+  logged.set.repsPerSet = [0, 3, 3];
+
+  assert.deepEqual(resolveWorkoutSetRepsEntry(logged, 0), {
+    plannedReps: 3,
+    repsRaw: "0",
+  });
+});

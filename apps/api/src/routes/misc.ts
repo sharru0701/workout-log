@@ -691,7 +691,19 @@ uxEventsRoutes.post("/public", async (c) => {
     return c.json({ error: "Telemetry payload is too large." }, 413);
   }
 
-  const rawBody = await c.req.text();
+  let rawBody: string;
+  try {
+    rawBody = await c.req.text();
+  } catch {
+    // Web Vitals는 pagehide에서 keepalive로 보내는 선택적 텔레메트리다. 탭 종료/빠른
+    // 화면 전환으로 본문 스트림이 중단돼도 사용자 요청 실패(500)로 승격하지 않고 폐기한다.
+    c.header("Cache-Control", "no-store");
+    return c.json({ acceptedIds: [], acceptedCount: 0, droppedCount: 0 });
+  }
+  if (!rawBody.trim()) {
+    c.header("Cache-Control", "no-store");
+    return c.json({ acceptedIds: [], acceptedCount: 0, droppedCount: 0 });
+  }
   if (Buffer.byteLength(rawBody, "utf8") > 16_384) {
     return c.json({ error: "Telemetry payload is too large." }, 413);
   }

@@ -354,11 +354,13 @@ test("PR-E texas(v2): V/R은 I workKg×계수(0.9/0.8)로 파생, progressionKey
   assert.equal(outV[0]!.sets[0]!.targetWeightKg, 90); // 100 × 0.9
   assert.equal(outV[0]!.progressionKey, null); // 진행 추적 안 함(reducer 미도달)
   assert.equal(outV[0]!.texasRole, "volume");
+  assert.equal(outV[0]!.skipProgression, true);
 
   const outR = plannedExercisesFromSlottedLpManualSession({ key: "R", items: [mk("recovery", "R", "R_s0")] }, params, {}, "texas-method");
   assert.equal(outR[0]!.sets[0]!.targetWeightKg, 80); // 100 × 0.8
   assert.equal(outR[0]!.progressionKey, null);
   assert.equal(outR[0]!.texasRole, "recovery");
+  assert.equal(outR[0]!.skipProgression, true);
 });
 
 test("PR-E texas(v2): I workKg 미존재(첫 주기)면 V는 seed 무게 폴백", () => {
@@ -418,14 +420,16 @@ test("SS/SL(enforcePlannedReps): MAIN+progressionTarget 행에만 마킹, ASSIST
   const session = {
     key: "A",
     items: [
-      { exerciseName: "Back Squat", role: "MAIN", progressionTarget: "SQUAT", sets: [{ reps: 5 }, { reps: 5 }, { reps: 5 }] },
+      // 실제 공개 seed처럼 progressionTarget 없이 운동명만 둔다.
+      { exerciseName: "Back Squat", role: "MAIN", sets: [{ reps: 5 }, { reps: 5 }, { reps: 5 }] },
       { exerciseName: "Chin-Up", role: "ASSIST", sets: [{ reps: 8 }, { reps: 8 }] },
       { exerciseName: "Mystery Lift", role: "MAIN", sets: [{ reps: 5 }] }, // MAIN이나 progressionTarget 미매핑
     ],
   };
 
   const v2 = plannedExercisesFromManualSession(session, { enforcePlannedReps: true });
-  assert.equal(v2[0]!.enforcePlannedReps, true); // MAIN + progressionTarget
+  assert.equal(v2[0]!.progressionTarget, "SQUAT"); // seed 운동명에서 복원
+  assert.equal(v2[0]!.enforcePlannedReps, true); // MAIN + 추론 progressionTarget
   assert.notEqual(v2[1]!.enforcePlannedReps, true); // ASSIST 제외
   assert.notEqual(v2[2]!.enforcePlannedReps, true); // progressionTarget 미매핑 제외(bodyweight 가드)
 

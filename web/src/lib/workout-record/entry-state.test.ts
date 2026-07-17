@@ -119,6 +119,48 @@ test("new REF5 program sets require explicit reps, including an explicit zero", 
   );
 });
 
+test("일반 프로그램도 1회 처방 실패를 명시한 0회를 완료 입력으로 센다", () => {
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "PROGRAM",
+      isRef5: false,
+      repsInput: "",
+      recordedReps: 1,
+    }),
+    false,
+  );
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "PROGRAM",
+      isRef5: false,
+      repsInput: "0",
+      recordedReps: 1,
+    }),
+    true,
+  );
+});
+
+test("저장된 일반 프로그램의 0회 실패도 재열기 후 완료 입력으로 센다", () => {
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "USER",
+      isRef5: false,
+      isProgramPrescription: true,
+      recordedReps: 0,
+    }),
+    true,
+  );
+  assert.equal(
+    isWorkoutSetCompleted({
+      source: "USER",
+      isRef5: false,
+      isProgramPrescription: false,
+      recordedReps: 0,
+    }),
+    false,
+  );
+});
+
 test("validateWorkoutRecordEntryState requires explicit reps input for program sets", () => {
   const errors = validateWorkoutRecordEntryState(
     [createVisibleProgramExercise()],
@@ -148,5 +190,21 @@ test("validateWorkoutRecordEntryState rejects non-numeric reps input", () => {
     },
   );
 
-  assert.deepEqual(errors, ["Back Squat 2세트 횟수는 1~100 범위여야 합니다."]);
+  assert.deepEqual(errors, ["Back Squat 2세트 횟수는 0~100 범위여야 합니다."]);
+});
+
+test("validateWorkoutRecordEntryState accepts an explicit zero as a failed program set", () => {
+  const errors = validateWorkoutRecordEntryState(
+    [createVisibleProgramExercise()],
+    {
+      "seed-1": {
+        repsInputs: ["5", "0", "5"],
+        plannedRepsPerSet: [5, 5, 5],
+        memoInput: "",
+        memoPlaceholder: "Operator W1",
+      },
+    },
+  );
+
+  assert.deepEqual(errors, []);
 });

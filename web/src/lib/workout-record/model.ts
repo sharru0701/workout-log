@@ -82,6 +82,8 @@ export type WorkoutExerciseModel = {
   // SS/StrongLifts 정석(v2): 고정 reps 미달을 실패로 감지하기 위해 reps-only plannedRef를
   // 흘릴지 마킹. progressionKey 없이 reps만 흘려 family 진행은 유지한다.
   enforcePlannedReps?: boolean;
+  // 처방에는 포함되지만 자동 진행 판정에서는 제외(Texas v2 V/R).
+  skipProgression?: boolean;
   ref5?: WorkoutExerciseRef5Meta | null;
   set: WorkoutSetModel;
   note: WorkoutNoteModel;
@@ -228,6 +230,7 @@ type SnapshotExercise = {
   exerciseId?: string | null;
   exerciseName?: string;
   name?: string;
+  role?: string | null;
   rowType?: string | null;
   slotRole?: string | null;
   progressionTarget?: string | null;
@@ -236,6 +239,7 @@ type SnapshotExercise = {
   stage?: number | null;
   texasRole?: string | null;
   enforcePlannedReps?: boolean;
+  skipProgression?: boolean;
   ref5?: unknown;
   sets?: SnapshotSet[];
 };
@@ -315,6 +319,7 @@ function toSnapshotExerciseBadge(exercise: SnapshotExercise): WorkoutExerciseBad
 type PlannedSnapshotLookupEntry = {
   plannedSetMeta: WorkoutPlannedSetMeta | null;
   badge: WorkoutExerciseBadge | null;
+  skipProgression: boolean;
 };
 
 function createPlannedSetMetaLookup(snapshotExercises: SnapshotExercise[]) {
@@ -326,6 +331,8 @@ function createPlannedSetMetaLookup(snapshotExercises: SnapshotExercise[]) {
     const entry: PlannedSnapshotLookupEntry = {
       plannedSetMeta: toPlannedSetMeta(exercise.sets),
       badge: toSnapshotExerciseBadge(exercise),
+      skipProgression:
+        exercise.skipProgression === true || String(exercise.role ?? "").toUpperCase() === "ASSIST",
     };
 
     const preferredKey = normalizeExerciseLookupKey(
@@ -718,6 +725,10 @@ function toSeedExercise(exercise: SnapshotExercise, index: number): WorkoutExerc
     stage: typeof exercise.stage === "number" ? exercise.stage : null,
     texasRole: typeof exercise.texasRole === "string" ? exercise.texasRole : null,
     enforcePlannedReps: exercise.enforcePlannedReps === true ? true : undefined,
+    skipProgression:
+      exercise.skipProgression === true || String(exercise.role ?? "").toUpperCase() === "ASSIST"
+        ? true
+        : undefined,
     ref5: readSnapshotRef5Exercise(exercise),
     set: {
       count: repsPerSet.length,
@@ -865,6 +876,7 @@ function groupLoggedExercises(
     memo: string;
     plannedSetMeta: WorkoutPlannedSetMeta | null;
     badge: WorkoutExerciseBadge;
+    skipProgression: boolean;
     ref5: WorkoutExerciseRef5Meta | null;
   }> = [];
 
@@ -913,6 +925,7 @@ function groupLoggedExercises(
       memo,
       plannedSetMeta: snapshotExerciseEntry?.plannedSetMeta ?? null,
       badge: snapshotExerciseEntry?.badge ?? (isExtra ? "ADDED" : "AUTO"),
+      skipProgression: snapshotExerciseEntry?.skipProgression === true,
       ref5:
         Object.keys(loggedRef5).length > 0
           ? {
@@ -932,6 +945,7 @@ function groupLoggedExercises(
     badge: exercise.badge,
     prescribedWeightKg: null,
     plannedSetMeta: exercise.plannedSetMeta,
+    skipProgression: exercise.skipProgression ? true : undefined,
     ref5: exercise.ref5,
     set: {
       count: exercise.repsPerSet.length,
@@ -1274,7 +1288,7 @@ export function validateWorkoutDraft(
       errors.push(copy.invalidSetShape(row));
     }
     repsPerSet.forEach((reps, setIndex) => {
-      const minimumReps = exercise.ref5 ? 0 : 1;
+      const minimumReps = exercise.source === "PROGRAM" || exercise.ref5 || exercise.plannedSetMeta ? 0 : 1;
       if (!Number.isFinite(reps) || reps < minimumReps || reps > 100) {
         errors.push(copy.invalidReps(row, setIndex));
       }
@@ -1349,6 +1363,9 @@ export function toWorkoutLogPayload(
       }
       if (amrapPerSet?.[index] === true) {
         meta.amrap = true;
+      }
+      if (exercise.skipProgression) {
+        meta.progressionExcluded = true;
       }
       if (exercise.ref5 && draft.session.ref5) {
         meta.ref5 = {

@@ -146,6 +146,7 @@ export const completedExercisesCountAtom = atom((get) => {
       return isWorkoutSetCompleted({
         source: exercise.source,
         isRef5: Boolean(exercise.ref5),
+        isProgramPrescription: Boolean(exercise.plannedSetMeta),
         repsInput: rawValue,
         recordedReps: setReps,
       });
@@ -164,6 +165,7 @@ export const completedSetsCountAtom = atom((get) => {
       if (isWorkoutSetCompleted({
         source: exercise.source,
         isRef5: Boolean(exercise.ref5),
+        isProgramPrescription: Boolean(exercise.plannedSetMeta),
         repsInput: rawValue,
         recordedReps: exercise.set.repsPerSet[i],
       })) count++;

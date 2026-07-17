@@ -192,3 +192,78 @@ test("applyTargetDecisionsToReduced: decisions 없으면 reducer 결과를 그�
   assert.equal(applied.eventType, reduced.eventType);
   assert.deepEqual(applied.appliedDecisions, {});
 });
+
+test("추천값 그대로 저장: 블록 동결 reason과 reducer 판정을 보존한다", () => {
+  const reduced = reduceProgressionState({
+    program: "operator",
+    previousState: {
+      cycle: 1,
+      week: 6,
+      day: 3,
+      lastAppliedLogId: "older-log",
+      targets: {
+        SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 2, failureStreak: 0 },
+        BENCH: { progressionTarget: "BENCH", workKg: 80, successStreak: 2, failureStreak: 0 },
+      },
+    },
+    planParams: { progressionModel: "v2" },
+    logId: "freeze-log",
+    sets: [
+      { exerciseName: "Back Squat", reps: 4, weightKg: 95, meta: { plannedRef: { reps: 5 } } },
+      { exerciseName: "Bench Press", reps: 5, weightKg: 75, meta: { plannedRef: { reps: 5 } } },
+    ],
+  });
+  assert.match(reduced.reason, /^freeze:block:failed=/);
+
+  const applied = applyTargetDecisionsToReduced(reduced, {
+    SQUAT: { mode: "hold", workKg: 100 },
+    BENCH: { mode: "hold", workKg: 80 },
+  });
+  assert.equal(applied.nextState, reduced.nextState);
+  assert.equal(applied.eventType, reduced.eventType);
+  assert.equal(applied.reason, reduced.reason);
+
+  const meta = buildProgressionEventMeta(reduced, applied.appliedDecisions) as Record<string, unknown>;
+  assert.deepEqual(meta.targetDecisions, reduced.targetDecisions);
+  assert.ok(meta.targetDecisionsOverride);
+  assert.equal(meta.reducerTargetDecisions, undefined);
+});
+
+test("사용자 HOLD override: meta.targetDecisions도 실제 유지 결과로 바뀐다", () => {
+  const reduced = reduceProgressionState({
+    program: "greyskull-lp",
+    previousState: {
+      cycle: 1,
+      week: 1,
+      day: 1,
+      lastAppliedLogId: "older-log",
+      targets: {
+        SQUAT: { progressionTarget: "SQUAT", workKg: 100, successStreak: 0, failureStreak: 1 },
+      },
+    },
+    planParams: { progressionModel: "v2" },
+    logId: "override-hold-log",
+    sets: [
+      { exerciseName: "Back Squat", reps: 5, weightKg: 100, meta: {} },
+      { exerciseName: "Back Squat", reps: 5, weightKg: 100, meta: {} },
+      { exerciseName: "Back Squat", reps: 3, weightKg: 100, meta: { amrap: true } },
+    ],
+  });
+  assert.equal(reduced.nextState.targets.SQUAT?.workKg, 90);
+
+  const applied = applyTargetDecisionsToReduced(reduced, {
+    SQUAT: { mode: "hold", workKg: 100 },
+  });
+  assert.equal(applied.nextState.targets.SQUAT?.workKg, 100);
+  assert.equal(applied.eventType, "HOLD");
+  assert.equal(applied.reason, "override:per-target:hold");
+
+  const meta = buildProgressionEventMeta(reduced, applied.appliedDecisions) as {
+    targetDecisions: Array<{ eventType: string; reason: string; after: { workKg: number } }>;
+    reducerTargetDecisions?: unknown[];
+  };
+  assert.equal(meta.targetDecisions[0]?.eventType, "HOLD");
+  assert.equal(meta.targetDecisions[0]?.reason, "override:per-target:hold");
+  assert.equal(meta.targetDecisions[0]?.after.workKg, 100);
+  assert.ok(meta.reducerTargetDecisions, "자동 리셋 원안은 감사용으로 보존");
+});
