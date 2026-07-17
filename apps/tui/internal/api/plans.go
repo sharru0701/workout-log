@@ -194,6 +194,7 @@ type PlannedExercise struct {
 	ProgressionTarget  string                `json:"progressionTarget,omitempty"`
 	ProgressionKey     string                `json:"progressionKey,omitempty"`
 	EnforcePlannedReps bool                  `json:"enforcePlannedReps,omitempty"`
+	SkipProgression    bool                  `json:"skipProgression,omitempty"`
 	SourceBlockTarget  string                `json:"sourceBlockTarget"` // e.g. "SQUAT" — for REPLACE_EXERCISE overrides
 	Ref5               *Ref5ExerciseMetadata `json:"ref5,omitempty"`
 	Sets               []PlannedSet          `json:"sets"`

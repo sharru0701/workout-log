@@ -40,6 +40,6 @@
 
 ## 검증
 
-- 단위: `packages/core/src/progression/feedback-catalog.test.ts`, `web/src/features/workout-log/model/progression-choice.test.ts`
+- 단위: `packages/core/src/progression/feedback-catalog.test.ts`, `web/src/features/workout-log/model/progression-choice.test.ts`, `apps/tui/internal/ui/progression_choice_test.go`
 - 화면 심층: `web/e2e/all-programs-protocol-journey.spec.ts`, `web/e2e/ref5-user-journey.spec.ts`
 - 2026-07-17 결과: 일반 심층 13/13, REF5 심층 11/11 통과. 상세는 [`all-programs-screen-simulation-test-report-2026-07-17.md`](all-programs-screen-simulation-test-report-2026-07-17.md).

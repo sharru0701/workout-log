@@ -40,7 +40,7 @@ type Log struct {
 	planID                    string    // active plan id, for session overrides (보강/교체)
 	generatedSessionID        string    // canonical log↔generated-session identity
 	genericDirty              bool      // unsaved non-REF5 input; blocks destructive buffer replacement
-	progressionChoicesChecked bool      // block-end choice gate resolved for the current payload
+	progressionChoicesChecked bool      // progression choice gate resolved for the current payload
 	progressionChoiceLoading  bool      // progression-state/detail request in flight
 	progressionDecisions      map[string]api.ProgressionTargetDecision
 	progressionChoice         *progressionChoiceFlow
@@ -257,12 +257,12 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		l.progressionChoiceLoading = false
 		if m.err != nil {
-			l.status, l.statusErr = "다음 사이클 무게 조회 실패: "+humanizeAuthErr(m.err), true
+			l.status, l.statusErr = "다음 적용 무게 조회 실패: "+humanizeAuthErr(m.err), true
 			return l, nil
 		}
-		targets, err := buildBlockCompletionChoices(l.sessionKey, m.state, m.beforeState, l.groups)
+		targets, err := buildProgressionChoices(l.sessionKey, m.state, m.beforeState, m.snapshot, l.groups)
 		if err != nil {
-			l.status, l.statusErr = "다음 사이클 무게 계산 실패: "+err.Error(), true
+			l.status, l.statusErr = "다음 적용 무게 계산 실패: "+err.Error(), true
 			return l, nil
 		}
 		if len(targets) == 0 {
@@ -273,7 +273,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			planID: l.planID, sessionKey: l.sessionKey, editID: l.editID,
 			targets: targets, decisions: make(map[string]api.ProgressionTargetDecision),
 		}
-		l.status, l.statusErr = "운동별 다음 사이클 무게를 확인하세요", false
+		l.status, l.statusErr = "운동별 다음 적용 무게를 확인하세요", false
 		return l, l.openProgressionWeightPicker()
 	case progressionChoiceConfirmedMsg:
 		flow := l.progressionChoice
@@ -299,7 +299,7 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		}
 		l.progressionChoice.index = 0
 		l.progressionChoice.decisions = make(map[string]api.ProgressionTargetDecision)
-		l.status, l.statusErr = "다음 사이클 무게를 다시 설정합니다", false
+		l.status, l.statusErr = "다음 적용 무게를 다시 설정합니다", false
 		return l, l.openProgressionWeightPicker()
 	case progressionChoiceCancelledMsg:
 		l.progressionChoice = nil

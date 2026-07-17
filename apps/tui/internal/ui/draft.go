@@ -43,6 +43,7 @@ type draftGroup struct {
 	ProgressionKey     string             `json:"progressionKey,omitempty"`
 	ProgressionTarget  string             `json:"progressionTarget,omitempty"`
 	EnforcePlannedReps bool               `json:"enforcePlannedReps,omitempty"`
+	SkipProgression    bool               `json:"skipProgression,omitempty"`
 	Sets               []draftSet         `json:"sets"`
 	Ref5               *ref5ExerciseEntry `json:"ref5,omitempty"`
 }
@@ -95,7 +96,7 @@ func draftFromLog(l *Log, now time.Time) todayDraft {
 			Name: g.name, Prev: g.prev, Tgt: g.tgt,
 			BlockTarget: g.blockTarget, Role: g.role, Sets: sets, Ref5: g.ref5,
 			ProgressionKey: g.progressionKey, ProgressionTarget: g.progressionTarget,
-			EnforcePlannedReps: g.enforcePlannedReps,
+			EnforcePlannedReps: g.enforcePlannedReps, SkipProgression: g.skipProgression,
 		})
 	}
 	draft := todayDraft{
@@ -243,7 +244,7 @@ func (l *Log) loadFromDraft(d todayDraft) {
 			name: g.Name, prev: g.Prev, tgt: g.Tgt,
 			blockTarget: g.BlockTarget, role: g.Role, sets: sets, ref5: g.Ref5,
 			progressionKey: g.ProgressionKey, progressionTarget: g.ProgressionTarget,
-			enforcePlannedReps: g.EnforcePlannedReps,
+			enforcePlannedReps: g.EnforcePlannedReps, skipProgression: g.SkipProgression,
 		})
 	}
 	l.groups, l.gi, l.si, l.col = groups, 0, 0, colWeight

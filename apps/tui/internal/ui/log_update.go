@@ -523,12 +523,13 @@ func (l Log) save() (Log, tea.Cmd) {
 		l.status, l.statusErr = "완료된 세트가 없습니다 (x로 완료)", true
 		return l, nil
 	}
-	if l.planID != "" && isPotentialBlockCompletionSession(l.sessionKey) && !l.progressionChoicesChecked {
+	requireProgressionEditSnapshot := l.editID != "" && l.generatedSessionID != ""
+	if l.planID != "" && shouldCheckProgressionChoices(l.sessionKey, l.groups, requireProgressionEditSnapshot) && !l.progressionChoicesChecked {
 		if l.progressionChoice != nil {
 			return l, l.openProgressionWeightPicker()
 		}
 		l.progressionChoiceLoading = true
-		l.status, l.statusErr = "다음 사이클 무게 불러오는 중…", false
+		l.status, l.statusErr = "다음 적용 무게 불러오는 중…", false
 		return l, loadProgressionChoiceCmd(l.client, l.planID, l.sessionKey, l.editID)
 	}
 	// New drafts have a server-enforced stable mutation key, so an uncertain
@@ -803,7 +804,7 @@ func (l *Log) loadSnapshot(s *api.SessionSnapshot, prev map[string]string) {
 			name: ex.ExerciseName, prev: prev[strings.ToLower(strings.TrimSpace(ex.ExerciseName))],
 			blockTarget: ex.SourceBlockTarget, role: ex.Role,
 			progressionKey: ex.ProgressionKey, progressionTarget: ex.ProgressionTarget,
-			enforcePlannedReps: ex.EnforcePlannedReps,
+			enforcePlannedReps: ex.EnforcePlannedReps, skipProgression: ex.SkipProgression,
 		}
 		maxTgt, tgtReps := 0.0, 0
 		bw := isBodyweightExercise(ex.ExerciseName)
