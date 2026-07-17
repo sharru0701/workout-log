@@ -177,7 +177,7 @@ type LogItem struct {
 	Progression        *ProgressionSummary  `json:"progression,omitempty"`
 }
 
-// ProgressionTargetDecision is an explicit absolute next-cycle weight choice.
+// ProgressionTargetDecision is an explicit absolute next-session/cycle weight choice.
 // The server derives the mode again from workKg, but keeping it in the request
 // mirrors the web save contract and makes user intent inspectable.
 type ProgressionTargetDecision struct {

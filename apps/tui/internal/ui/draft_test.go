@@ -47,6 +47,7 @@ func draftedLog(store draftStore) Log {
 	l := NewLog(nil).withDrafts(store)
 	l.groups = []exGroup{{
 		name: "Back Squat", prev: "100×5", tgt: "102.5×5", blockTarget: "SQUAT", role: "MAIN",
+		progressionTarget: "SQUAT", skipProgression: true,
 		sets: []setEntry{
 			{weight: "102.5", reps: "5", done: true, tgtReps: 5},
 			{weight: "102.5", reps: "", tgtReps: 5},
@@ -80,6 +81,9 @@ func TestDraftRoundTrip(t *testing.T) {
 	g := restored.groups[0]
 	if g.prev != "100×5" || g.tgt != "102.5×5" || g.blockTarget != "SQUAT" || g.role != "MAIN" {
 		t.Errorf("group header fields lost: %+v", g)
+	}
+	if g.progressionKey != "" || g.progressionTarget != "SQUAT" || g.enforcePlannedReps || !g.skipProgression {
+		t.Errorf("group progression fields lost: %+v", g)
 	}
 	if len(g.sets) != 2 || !g.sets[0].done || g.sets[0].weight != "102.5" || g.sets[1].tgtReps != 5 {
 		t.Errorf("sets not restored faithfully: %+v", g.sets)

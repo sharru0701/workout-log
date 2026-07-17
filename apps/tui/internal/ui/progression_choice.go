@@ -46,6 +46,7 @@ type progressionChoiceLoadedMsg struct {
 	planID, sessionKey, editID string
 	state                      *api.PlanProgressionState
 	beforeState                json.RawMessage
+	snapshot                   *api.SessionSnapshot
 	err                        error
 }
 
@@ -108,6 +109,10 @@ func loadProgressionChoiceCmd(c *api.Client, planID, sessionKey, editID string) 
 			if detail.Progression != nil && detail.Progression.Event != nil {
 				msg.beforeState = append(json.RawMessage(nil), detail.Progression.Event.BeforeState...)
 			}
+			if detail.GeneratedSession != nil {
+				snapshot := detail.GeneratedSession.Snapshot
+				msg.snapshot = &snapshot
+			}
 		}
 		state, err := c.PlanProgressionState(context.Background(), planID)
 		msg.state, msg.err = state, err
@@ -169,27 +174,76 @@ func plannedRepsFromSet(set setEntry) int {
 	return 0
 }
 
+func progressionOutcomeFromGroup(group exGroup) (target string, observed, failed bool) {
+	if group.skipProgression {
+		return "", false, false
+	}
+	target = progressionTargetFromGroup(group)
+	if target == "" {
+		return "", false, false
+	}
+	for _, set := range group.sets {
+		if !set.done || set.isExtra {
+			continue
+		}
+		planned := plannedRepsFromSet(set)
+		if planned <= 0 {
+			continue
+		}
+		actual, err := strconv.Atoi(strings.TrimSpace(set.reps))
+		if err != nil {
+			continue
+		}
+		observed = true
+		if actual < planned {
+			failed = true
+		}
+	}
+	return target, observed, failed
+}
+
 func observedAndFailedTargets(groups []exGroup) (map[string]bool, map[string]bool) {
 	observed := make(map[string]bool)
 	failed := make(map[string]bool)
 	for _, group := range groups {
-		target := progressionTargetFromGroup(group)
-		if target == "" {
+		target, groupObserved, groupFailed := progressionOutcomeFromGroup(group)
+		if !groupObserved {
 			continue
 		}
 		observed[target] = true
-		for _, set := range group.sets {
-			if !set.done || set.isExtra {
-				continue
-			}
-			planned := plannedRepsFromSet(set)
-			actual, err := strconv.Atoi(strings.TrimSpace(set.reps))
-			if err == nil && planned > 0 && actual < planned {
-				failed[target] = true
-			}
+		if groupFailed {
+			failed[target] = true
 		}
 	}
 	return observed, failed
+}
+
+type progressionFailureRef struct {
+	Key, Canonical, Label string
+}
+
+func failedProgressionRefs(groups []exGroup) []progressionFailureRef {
+	refs := make([]progressionFailureRef, 0)
+	seen := make(map[string]bool)
+	for _, group := range groups {
+		target, observed, failed := progressionOutcomeFromGroup(group)
+		if !observed || !failed {
+			continue
+		}
+		key := strings.TrimSpace(group.progressionKey)
+		identity := key
+		if identity == "" {
+			identity = target
+		}
+		if seen[identity] {
+			continue
+		}
+		seen[identity] = true
+		refs = append(refs, progressionFailureRef{
+			Key: key, Canonical: target, Label: strings.TrimSpace(group.name),
+		})
+	}
+	return refs
 }
 
 func progressionTargetLabel(target string) string {
@@ -230,6 +284,96 @@ func progressionTargetOrder(key, canonical string) int {
 	}
 }
 
+func progressionCanonicalTarget(key string, target progressionRuntimeTarget, rule api.ProgressionEffectiveRule) string {
+	canonical := strings.ToUpper(strings.TrimSpace(target.ProgressionTarget))
+	if canonical == "" {
+		canonical = strings.ToUpper(strings.TrimSpace(rule.ProgressionTarget))
+	}
+	if canonical == "" {
+		canonical = strings.ToUpper(strings.TrimSpace(key))
+	}
+	return canonical
+}
+
+func progressionRuntimeForChoice(
+	state *api.PlanProgressionState,
+	beforeState json.RawMessage,
+) (progressionRuntimeState, error) {
+	var runtime progressionRuntimeState
+	if state == nil {
+		return runtime, nil
+	}
+	rawState := state.State
+	if trimmed := strings.TrimSpace(string(beforeState)); trimmed != "" && trimmed != "null" && trimmed != "{}" {
+		rawState = beforeState
+	}
+	if trimmed := strings.TrimSpace(string(rawState)); trimmed == "" || trimmed == "null" || trimmed == "{}" {
+		return runtime, nil
+	}
+	if err := json.Unmarshal(rawState, &runtime); err != nil {
+		return runtime, fmt.Errorf("진행 상태 해석: %w", err)
+	}
+	return runtime, nil
+}
+
+func progressionGroupsWithSnapshot(groups []exGroup, snapshot *api.SessionSnapshot) []exGroup {
+	if snapshot == nil || len(snapshot.Exercises) == 0 {
+		return groups
+	}
+	enriched := cloneGroups(groups)
+	used := make([]bool, len(snapshot.Exercises))
+	for gi := range enriched {
+		match := -1
+		for i, exercise := range snapshot.Exercises {
+			if !used[i] && strings.EqualFold(strings.TrimSpace(exercise.ExerciseName), strings.TrimSpace(enriched[gi].name)) {
+				match = i
+				break
+			}
+		}
+		if match < 0 {
+			continue
+		}
+		used[match] = true
+		exercise := snapshot.Exercises[match]
+		group := &enriched[gi]
+		group.blockTarget = exercise.SourceBlockTarget
+		group.role = exercise.Role
+		group.progressionKey = exercise.ProgressionKey
+		group.progressionTarget = exercise.ProgressionTarget
+		group.enforcePlannedReps = exercise.EnforcePlannedReps
+		group.skipProgression = exercise.SkipProgression
+
+		plannedByNumber := make(map[int]api.PlannedSet, len(exercise.Sets))
+		for i, planned := range exercise.Sets {
+			number := planned.SetNumber
+			if number <= 0 {
+				number = i + 1
+			}
+			plannedByNumber[number] = planned
+		}
+		fallbackIndex := 0
+		for si := range group.sets {
+			set := &group.sets[si]
+			if set.isExtra {
+				continue
+			}
+			planned, ok := plannedByNumber[set.setNumber]
+			if !ok && fallbackIndex < len(exercise.Sets) {
+				planned = exercise.Sets[fallbackIndex]
+				ok = true
+			}
+			fallbackIndex++
+			if !ok {
+				continue
+			}
+			set.tgtReps = planned.Reps
+			set.amrap = planned.Amrap
+			set.prescribed = true
+		}
+	}
+	return enriched
+}
+
 func buildBlockCompletionChoices(
 	sessionKey string,
 	state *api.PlanProgressionState,
@@ -246,13 +390,9 @@ func buildBlockCompletionChoices(
 		return nil, nil
 	}
 
-	rawState := state.State
-	if trimmed := strings.TrimSpace(string(beforeState)); trimmed != "" && trimmed != "null" && trimmed != "{}" {
-		rawState = beforeState
-	}
-	var runtime progressionRuntimeState
-	if err := json.Unmarshal(rawState, &runtime); err != nil {
-		return nil, fmt.Errorf("진행 상태 해석: %w", err)
+	runtime, err := progressionRuntimeForChoice(state, beforeState)
+	if err != nil {
+		return nil, err
 	}
 	if len(runtime.Targets) == 0 {
 		return nil, nil
@@ -262,13 +402,7 @@ func buildBlockCompletionChoices(
 	freezeAll := false
 	for key, target := range runtime.Targets {
 		rule := state.EffectiveRules[key]
-		canonical := strings.ToUpper(strings.TrimSpace(target.ProgressionTarget))
-		if canonical == "" {
-			canonical = strings.ToUpper(strings.TrimSpace(rule.ProgressionTarget))
-		}
-		if canonical == "" {
-			canonical = strings.ToUpper(strings.TrimSpace(key))
-		}
+		canonical := progressionCanonicalTarget(key, target, rule)
 		failureCount := target.FailureStreak
 		if observed[canonical] {
 			failureCount = 0
@@ -289,13 +423,7 @@ func buildBlockCompletionChoices(
 			continue
 		}
 		rule, hasRule := state.EffectiveRules[key]
-		canonical := strings.ToUpper(strings.TrimSpace(target.ProgressionTarget))
-		if canonical == "" {
-			canonical = strings.ToUpper(strings.TrimSpace(rule.ProgressionTarget))
-		}
-		if canonical == "" {
-			canonical = strings.ToUpper(strings.TrimSpace(key))
-		}
+		canonical := progressionCanonicalTarget(key, target, rule)
 		increase := float64(rule.IncreaseKg)
 		if !hasRule {
 			increase = 2.5
@@ -321,6 +449,131 @@ func buildBlockCompletionChoices(
 		return targets[i].Key < targets[j].Key
 	})
 	return targets, nil
+}
+
+func failureResetChoiceConfig(program string) (threshold int, resetFactor float64, ok bool) {
+	switch strings.ToLower(strings.TrimSpace(program)) {
+	case "greyskull-lp":
+		return 2, 0.9, true
+	case "starting-strength-lp", "stronglifts-5x5", "texas-method":
+		return 3, 0.9, true
+	default:
+		return 0, 0, false
+	}
+}
+
+func resetProgressionWeight(current float64, rule api.ProgressionEffectiveRule, hasRule bool, fallbackFactor float64) float64 {
+	if hasRule && rule.DecreaseKg != nil {
+		return snapProgressionWeight(current - float64(*rule.DecreaseKg))
+	}
+	factor := fallbackFactor
+	if hasRule && float64(rule.ResetFactor) > 0 {
+		factor = float64(rule.ResetFactor)
+	}
+	return snapProgressionWeight(current * factor)
+}
+
+func buildFailureResetChoices(
+	state *api.PlanProgressionState,
+	beforeState json.RawMessage,
+	groups []exGroup,
+) ([]progressionChoiceTarget, error) {
+	if state == nil || state.Program == nil {
+		return nil, nil
+	}
+	threshold, resetFactor, ok := failureResetChoiceConfig(*state.Program)
+	if !ok {
+		return nil, nil
+	}
+	refs := failedProgressionRefs(groups)
+	if len(refs) == 0 {
+		return nil, nil
+	}
+	runtime, err := progressionRuntimeForChoice(state, beforeState)
+	if err != nil {
+		return nil, err
+	}
+	if len(runtime.Targets) == 0 {
+		return nil, nil
+	}
+
+	targets := make([]progressionChoiceTarget, 0, len(refs))
+	seenKeys := make(map[string]bool)
+	for _, ref := range refs {
+		key := ref.Key
+		target, found := runtime.Targets[key]
+		if key == "" || !found {
+			keys := make([]string, 0)
+			for candidateKey, candidate := range runtime.Targets {
+				rule := state.EffectiveRules[candidateKey]
+				if progressionCanonicalTarget(candidateKey, candidate, rule) == ref.Canonical {
+					keys = append(keys, candidateKey)
+				}
+			}
+			sort.Strings(keys)
+			if len(keys) == 0 {
+				continue
+			}
+			key = keys[0]
+			target = runtime.Targets[key]
+		}
+		if seenKeys[key] || target.FailureStreak+1 < threshold {
+			continue
+		}
+		seenKeys[key] = true
+		current := snapProgressionWeight(float64(target.WorkKg))
+		if current <= 0 {
+			continue
+		}
+		rule, hasRule := state.EffectiveRules[key]
+		canonical := progressionCanonicalTarget(key, target, rule)
+		label := ref.Label
+		if label == "" {
+			label = progressionTargetLabel(canonical)
+		}
+		targets = append(targets, progressionChoiceTarget{
+			Key: key, Canonical: canonical, Label: label,
+			CurrentWorkKg:     current,
+			RecommendedWorkKg: resetProgressionWeight(current, rule, hasRule, resetFactor),
+		})
+	}
+	sort.SliceStable(targets, func(i, j int) bool {
+		left := progressionTargetOrder(targets[i].Key, targets[i].Canonical)
+		right := progressionTargetOrder(targets[j].Key, targets[j].Canonical)
+		if left != right {
+			return left < right
+		}
+		return targets[i].Key < targets[j].Key
+	})
+	return targets, nil
+}
+
+func buildProgressionChoices(
+	sessionKey string,
+	state *api.PlanProgressionState,
+	beforeState json.RawMessage,
+	snapshot *api.SessionSnapshot,
+	groups []exGroup,
+) ([]progressionChoiceTarget, error) {
+	groups = progressionGroupsWithSnapshot(groups, snapshot)
+	targets, err := buildBlockCompletionChoices(sessionKey, state, beforeState, groups)
+	if err != nil || len(targets) > 0 {
+		return targets, err
+	}
+	return buildFailureResetChoices(state, beforeState, groups)
+}
+
+func shouldCheckProgressionChoices(sessionKey string, groups []exGroup, requireEditSnapshot bool) bool {
+	// History rows do not always retain enough planned-rep metadata locally
+	// (notably legacy Greyskull AMRAP rows). Fetch the immutable generated
+	// snapshot before deciding so an edit cannot silently bypass its threshold.
+	if requireEditSnapshot {
+		return true
+	}
+	if isPotentialBlockCompletionSession(sessionKey) {
+		return true
+	}
+	return len(failedProgressionRefs(groups)) > 0
 }
 
 func (l Log) openProgressionWeightPicker() tea.Cmd {

@@ -62,6 +62,7 @@ type exGroup struct {
 	progressionKey     string
 	progressionTarget  string
 	enforcePlannedReps bool
+	skipProgression    bool
 	sets               []setEntry
 	ref5               *ref5ExerciseEntry // non-nil means name/load/set shape are immutable
 }

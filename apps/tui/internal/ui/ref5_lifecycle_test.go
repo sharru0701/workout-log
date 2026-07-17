@@ -329,6 +329,9 @@ func TestGenericGeneratedSavePreservesEngineMetadataAndIdentity(t *testing.T) {
 	}}}, nil)
 	l.groups[0].sets[0].reps, l.groups[0].sets[0].done = "5", true
 	l.groups[1].sets[0].reps, l.groups[1].sets[0].done = "4", true
+	// This test isolates the final serialization step; progression choice loading
+	// is covered separately and is treated as already resolved here.
+	l.progressionChoicesChecked = true
 	_, save := l.save()
 	if save == nil {
 		t.Fatal("generic generated workout did not produce a save command")
