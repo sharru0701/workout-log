@@ -254,9 +254,19 @@ type Ref5Status struct {
 // PlanProgressionState keeps the full runtime JSON alongside the typed REF5
 // status so future engine fields are not lost at this transport boundary.
 type PlanProgressionState struct {
-	Program    *string         `json:"program"`
-	State      json.RawMessage `json:"state"`
-	Ref5Status *Ref5Status     `json:"ref5Status"`
+	Program        *string                             `json:"program"`
+	State          json.RawMessage                     `json:"state"`
+	EffectiveRules map[string]ProgressionEffectiveRule `json:"effectiveRules"`
+	Ref5Status     *Ref5Status                         `json:"ref5Status"`
+}
+
+type ProgressionEffectiveRule struct {
+	ProgressionTarget  string   `json:"progressionTarget"`
+	IncreaseKg         Float64  `json:"increaseKg"`
+	DecreaseKg         *Float64 `json:"decreaseKg"`
+	ResetFactor        Float64  `json:"resetFactor"`
+	DefaultIncreaseKg  Float64  `json:"defaultIncreaseKg"`
+	DefaultResetFactor Float64  `json:"defaultResetFactor"`
 }
 
 func (c *Client) PlanProgressionState(ctx context.Context, planID string) (*PlanProgressionState, error) {

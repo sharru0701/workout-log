@@ -128,7 +128,7 @@ func TestSaveWriteSuccessSurvivesDetailRefreshFailure(t *testing.T) {
 	l.load, l.genericDirty = loadIdle, true
 	l.groups = []exGroup{{name: "Back Squat", sets: []setEntry{{weight: "100", reps: "5", done: true}}}}
 	l.persistDraft()
-	msg := saveCmd(client, l.groups, "", time.Now(), "", "", "mutation-refresh")().(saveResultMsg)
+	msg := saveCmd(client, l.groups, "", time.Now(), "", "", "mutation-refresh", nil)().(saveResultMsg)
 	if msg.err != nil || msg.refreshErr == nil || msg.savedID != "log-written" {
 		t.Fatalf("write/read boundary result = %#v", msg)
 	}

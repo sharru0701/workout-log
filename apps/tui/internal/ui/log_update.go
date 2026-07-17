@@ -5,6 +5,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ import (
 )
 
 func (l Log) updateNormal(m tea.KeyPressMsg) (Log, tea.Cmd) {
-	if l.saving || l.pendingOverride {
+	if l.saving || l.pendingOverride || l.progressionChoiceLoading {
 		return l, nil
 	}
 	if l.load == loadPending {
@@ -152,7 +153,8 @@ func (l Log) hasBlockingRef5Work() bool {
 }
 
 func (l Log) hasBlockingReplacement() bool {
-	return l.saving || l.saveUncertain || l.pendingOverride || l.genericDirty || l.hasBlockingRef5Work()
+	return l.saving || l.saveUncertain || l.pendingOverride || l.progressionChoiceLoading ||
+		l.progressionChoice != nil || l.genericDirty || l.hasBlockingRef5Work()
 }
 
 // hasUnsettledServerMutation is narrower than unsaved local work: it marks
@@ -174,6 +176,10 @@ func (l *Log) resetForSessionLoad() {
 	l.editID, l.performedAt = "", time.Time{}
 	l.planID, l.planName, l.sessionKey, l.generatedSessionID = "", "", "", ""
 	l.clientMutationID = ""
+	l.progressionChoicesChecked = false
+	l.progressionChoiceLoading = false
+	l.progressionDecisions = nil
+	l.progressionChoice = nil
 	l.ref5, l.undo, l.feedback = nil, nil, nil
 	l.clearRef5WindowStatus()
 	l.pendAccsry, l.pendBlock = "", ""
@@ -378,6 +384,7 @@ func (l Log) addSet() (Log, tea.Cmd) {
 	ns = append(ns, sets[at:]...)
 	l.groups[l.gi].sets = ns
 	l.si, l.col = at, colWeight
+	l.invalidateProgressionChoices()
 	l.persistDraft()
 	return l, nil
 }
@@ -400,6 +407,7 @@ func (l Log) deleteSet() (Log, tea.Cmd) {
 			l.gi = 0
 		}
 		l.si = 0
+		l.invalidateProgressionChoices()
 		l.persistDraft()
 		return l, nil
 	}
@@ -408,6 +416,7 @@ func (l Log) deleteSet() (Log, tea.Cmd) {
 	if l.si >= len(l.groups[l.gi].sets) {
 		l.si = len(l.groups[l.gi].sets) - 1
 	}
+	l.invalidateProgressionChoices()
 	l.persistDraft()
 	return l, nil
 }
@@ -419,6 +428,7 @@ func (l Log) undoDelete() (Log, tea.Cmd) {
 	}
 	l.groups, l.gi, l.si, l.col = l.undo.groups, l.undo.gi, l.undo.si, colWeight
 	l.undo = nil
+	l.invalidateProgressionChoices()
 	l.status, l.statusErr = theme.GlyphDone+" 삭제 되돌림", false
 	l.persistDraft()
 	return l, nil
@@ -431,6 +441,7 @@ func (l Log) toggleDone() (Log, tea.Cmd) {
 	s := &l.groups[l.gi].sets[l.si]
 	if s.done {
 		s.done = false
+		l.invalidateProgressionChoices()
 		l.persistDraft()
 		return l, nil
 	}
@@ -439,6 +450,7 @@ func (l Log) toggleDone() (Log, tea.Cmd) {
 		return l, nil
 	}
 	s.done = true
+	l.invalidateProgressionChoices()
 	l.status, l.statusErr = "", false
 	l.persistDraft()
 	return l, nil
@@ -451,6 +463,7 @@ func (l Log) completeSet() (Log, tea.Cmd) {
 		return l, nil
 	}
 	l.groups[l.gi].sets[l.si].done = true
+	l.invalidateProgressionChoices()
 	l.status, l.statusErr = "", false
 	l.persistDraft()
 	// 세트 추가는 addSet("o")로만 — reps 엔터는 현재 세트 완료까지만 하고
@@ -480,9 +493,9 @@ func (l Log) save() (Log, tea.Cmd) {
 				return l, nil
 			}
 			if raw := strings.TrimSpace(set.rpe); raw != "" {
-				rpe, err := strconv.Atoi(raw)
-				if err != nil || rpe < 1 || rpe > 10 {
-					l.status, l.statusErr = fmt.Sprintf("%s #%d의 RPE는 1..10 정수여야 합니다", group.name, si+1), true
+				rpe, err := strconv.ParseFloat(raw, 64)
+				if err != nil || rpe < 1 || rpe > 10 || math.Abs(rpe*2-math.Round(rpe*2)) > 1e-9 {
+					l.status, l.statusErr = fmt.Sprintf("%s #%d의 RPE는 1..10 범위의 0.5 단위여야 합니다", group.name, si+1), true
 					return l, nil
 				}
 			}
@@ -509,6 +522,14 @@ func (l Log) save() (Log, tea.Cmd) {
 	if l.doneCount() == 0 {
 		l.status, l.statusErr = "완료된 세트가 없습니다 (x로 완료)", true
 		return l, nil
+	}
+	if l.planID != "" && isPotentialBlockCompletionSession(l.sessionKey) && !l.progressionChoicesChecked {
+		if l.progressionChoice != nil {
+			return l, l.openProgressionWeightPicker()
+		}
+		l.progressionChoiceLoading = true
+		l.status, l.statusErr = "다음 사이클 무게 불러오는 중…", false
+		return l, loadProgressionChoiceCmd(l.client, l.planID, l.sessionKey, l.editID)
 	}
 	// New drafts have a server-enforced stable mutation key, so an uncertain
 	// retry can safely re-POST the exact payload in one step. Only pre-key legacy
@@ -538,13 +559,17 @@ func (l Log) save() (Log, tea.Cmd) {
 	l.saving, l.status, l.statusErr = true, "", false
 	return l, saveCmd(
 		l.client, l.groups, l.editID, l.performedAt, l.planID, l.generatedSessionID,
-		l.clientMutationID, reconcileFirst,
+		l.clientMutationID, l.progressionDecisions, reconcileFirst,
 	)
 }
 
 // loadForEdit replaces today's buffer with a past session's sets (grouped by
 // exercise, every set pre-marked done) so the user can revise and PATCH it.
 func (l *Log) loadForEdit(m editLogMsg) {
+	l.progressionChoicesChecked = false
+	l.progressionChoiceLoading = false
+	l.progressionDecisions = nil
+	l.progressionChoice = nil
 	if m.generatedSession != nil && m.generatedSession.Snapshot.IsRef5() {
 		l.loadRef5ForEdit(m)
 		return
@@ -754,7 +779,16 @@ func (l *Log) writeEdit() {
 			l.groups[l.gi].sets[l.si].rpe = v
 		}
 	}
+	l.invalidateProgressionChoices()
 	l.persistDraft()
+}
+
+// A progression choice is derived from the completed-set payload. Any later
+// mutation must make the user review the weights again before saving.
+func (l *Log) invalidateProgressionChoices() {
+	l.progressionChoicesChecked = false
+	l.progressionDecisions = nil
+	l.progressionChoice = nil
 }
 
 // loadSnapshot replaces today's groups with a plan's generated session,

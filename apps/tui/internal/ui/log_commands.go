@@ -46,7 +46,7 @@ func setMetaExtra(meta **api.SetMeta, key string, value any) {
 // saveCmd persists the done sets: PATCH when editID is set (editing a past
 // session), POST otherwise. A zero performedAt means "now" (new log); editing
 // preserves the original timestamp.
-func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Time, planID, generatedSessionID, clientMutationID string, reconcileFirst ...bool) tea.Cmd {
+func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Time, planID, generatedSessionID, clientMutationID string, progressionDecisions map[string]api.ProgressionTargetDecision, reconcileFirst ...bool) tea.Cmd {
 	var sets []api.WorkoutSet
 	for gi, g := range groups {
 		name := strings.TrimSpace(g.name)
@@ -101,7 +101,7 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 				}
 				setMetaExtra(&ws.Meta, "plannedRef", plannedRef)
 			}
-			if rpe, err := strconv.Atoi(strings.TrimSpace(s.rpe)); err == nil && rpe > 0 {
+			if rpe, err := strconv.ParseFloat(strings.TrimSpace(s.rpe), 64); err == nil && rpe > 0 {
 				ws.RPE = &rpe
 			}
 			sets = append(sets, ws)
@@ -115,6 +115,7 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 		req := api.CreateLogRequest{
 			PlanID: planID, GeneratedSessionID: generatedSessionID,
 			ClientMutationID: clientMutationID, Sets: sets, PerformedAt: at,
+			ProgressionTargetDecisions: cloneProgressionDecisions(progressionDecisions),
 		}
 		if editID == "" && len(reconcileFirst) > 0 && reconcileFirst[0] {
 			existing, reconcileErr := findMatchingSavedLog(c, req)
@@ -165,11 +166,11 @@ func saveCmd(c *api.Client, groups []exGroup, editID string, performedAt time.Ti
 func requestSetFingerprints(sets []api.WorkoutSet) []string {
 	out := make([]string, 0, len(sets))
 	for _, set := range sets {
-		rpe := 0
+		rpe := 0.0
 		if set.RPE != nil {
 			rpe = *set.RPE
 		}
-		out = append(out, fmt.Sprintf("%s|%.6f|%d|%d|%t",
+		out = append(out, fmt.Sprintf("%s|%.6f|%d|%.1f|%t",
 			strings.TrimSpace(set.ExerciseName), set.WeightKg, set.Reps, rpe, set.IsExtra))
 	}
 	sort.Strings(out)
@@ -179,11 +180,11 @@ func requestSetFingerprints(sets []api.WorkoutSet) []string {
 func loggedSetFingerprints(sets []api.LoggedSet) []string {
 	out := make([]string, 0, len(sets))
 	for _, set := range sets {
-		rpe := 0
+		rpe := 0.0
 		if set.RPE != nil {
 			rpe = *set.RPE
 		}
-		out = append(out, fmt.Sprintf("%s|%.6f|%d|%d|%t",
+		out = append(out, fmt.Sprintf("%s|%.6f|%d|%.1f|%t",
 			strings.TrimSpace(set.ExerciseName), float64(set.WeightKg), set.Reps, rpe, set.IsExtra))
 	}
 	sort.Strings(out)
@@ -246,7 +247,7 @@ func draftSetFingerprints(draft todayDraft) []string {
 				Reps: reps, IsExtra: set.IsExtra,
 			}
 			if raw := strings.TrimSpace(set.RPE); raw != "" {
-				rpe, err := strconv.Atoi(raw)
+				rpe, err := strconv.ParseFloat(raw, 64)
 				if err != nil {
 					return nil
 				}

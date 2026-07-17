@@ -36,6 +36,13 @@
       "when": 1784000057187,
       "tag": "0004_lying_hannibal_king",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1784301066793,
+      "tag": "0005_fractional-rpe",
+      "breakpoints": true
     }
   ]
 }

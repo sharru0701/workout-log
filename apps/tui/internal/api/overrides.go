@@ -6,7 +6,7 @@ import "context"
 type OverrideSet struct {
 	Reps     int     `json:"reps,omitempty"`
 	WeightKg float64 `json:"weightKg"`
-	RPE      int     `json:"rpe,omitempty"`
+	RPE      float64 `json:"rpe,omitempty"`
 }
 
 // AddAccessory creates a SESSION-scoped ADD_ACCESSORY override: a recurring

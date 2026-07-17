@@ -100,15 +100,15 @@ func TestLogRPECell(t *testing.T) {
 }
 
 func TestLogLoadForEditRPE(t *testing.T) {
-	rpe := 8
+	rpe := 8.5
 	scr, _ := NewLog(nil).Update(editLogMsg{
 		id:          "x",
 		performedAt: time.Date(2026, 6, 20, 0, 0, 0, 0, time.UTC),
 		sets:        []api.LoggedSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5, RPE: &rpe}},
 	})
 	l := scr.(Log)
-	if got := l.groups[0].sets[0].rpe; got != "8" {
-		t.Errorf("rpe not restored on edit load: %q, want 8", got)
+	if got := l.groups[0].sets[0].rpe; got != "8.5" {
+		t.Errorf("rpe not restored on edit load: %q, want 8.5", got)
 	}
 }
 

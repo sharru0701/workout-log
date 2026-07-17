@@ -358,6 +358,8 @@ func (f Frame) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		f.views[vToday] = nv
 		return f, cmd
 	case saveResultMsg, draftRestoredMsg, overrideDoneMsg, sessionLoadedMsg,
+		progressionChoiceLoadedMsg, progressionChoiceConfirmedMsg,
+		progressionChoiceRestartMsg, progressionChoiceCancelledMsg,
 		ref5PreviewResultMsg, ref5StartConfirmedMsg, ref5StartResultMsg,
 		ref5ResumeResultMsg, ref5CloseExerciseMsg, ref5SaveConfirmedMsg,
 		ref5WindowStatusLoadedMsg, genericDiscardConfirmedMsg:

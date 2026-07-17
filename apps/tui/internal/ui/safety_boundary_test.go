@@ -34,7 +34,7 @@ func TestGenericSaveRejectsMalformedDoneSets(t *testing.T) {
 		{name: "fractional reps", mutate: func(_ *exGroup, s *setEntry) { s.reps = "2.5" }},
 		{name: "zero rpe", mutate: func(_ *exGroup, s *setEntry) { s.rpe = "0" }},
 		{name: "high rpe", mutate: func(_ *exGroup, s *setEntry) { s.rpe = "11" }},
-		{name: "fractional rpe", mutate: func(_ *exGroup, s *setEntry) { s.rpe = "8.5" }},
+		{name: "quarter-step rpe", mutate: func(_ *exGroup, s *setEntry) { s.rpe = "8.25" }},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -46,6 +46,16 @@ func TestGenericSaveRejectsMalformedDoneSets(t *testing.T) {
 				t.Fatalf("malformed set reached save command: status=%q cmd=%v", next.status, cmd != nil)
 			}
 		})
+	}
+}
+
+func TestGenericSaveAcceptsHalfStepRPE(t *testing.T) {
+	l := NewLog(nil)
+	l.load, l.groups = loadIdle, validGenericGroups()
+	l.groups[0].sets[0].rpe = "8.5"
+	next, cmd := l.save()
+	if cmd == nil || next.statusErr {
+		t.Fatalf("half-step RPE rejected: status=%q cmd=%v", next.status, cmd != nil)
 	}
 }
 
@@ -159,7 +169,7 @@ func TestUncertainSaveReconciliationNeedsAConclusiveRead(t *testing.T) {
 		http.Error(w, "offline", http.StatusServiceUnavailable)
 	})
 	client := newUITestClient(t, mux)
-	msg := saveCmd(client, validGenericGroups(), "", time.Now(), "", "", "mutation-verify", true)().(saveResultMsg)
+	msg := saveCmd(client, validGenericGroups(), "", time.Now(), "", "", "mutation-verify", nil, true)().(saveResultMsg)
 	if !msg.uncertain || msg.retryReady || msg.err == nil || postCount != 0 {
 		t.Fatalf("failed verification authorized retry: %#v posts=%d", msg, postCount)
 	}
@@ -186,7 +196,7 @@ func TestUncertainSaveReconciliationMatchAndNoMatch(t *testing.T) {
 				"id": "existing", "performedAt": at, "sets": []any{},
 			}})
 		})
-		msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", at, "plan-a", "session-a", "mutation-match", true)().(saveResultMsg)
+		msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", at, "plan-a", "session-a", "mutation-match", nil, true)().(saveResultMsg)
 		if msg.err != nil || msg.savedID != "existing" || msg.retryReady || postCount != 0 {
 			t.Fatalf("matching commit was not reconciled: %#v posts=%d", msg, postCount)
 		}
@@ -201,7 +211,7 @@ func TestUncertainSaveReconciliationMatchAndNoMatch(t *testing.T) {
 			}
 			writeUITestJSON(t, w, map[string]any{"items": []any{}})
 		})
-		msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", at, "", "", "mutation-no-match", true)().(saveResultMsg)
+		msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", at, "", "", "mutation-no-match", nil, true)().(saveResultMsg)
 		if msg.err != nil || !msg.retryReady || msg.uncertain || postCount != 0 {
 			t.Fatalf("conclusive no-match result = %#v posts=%d", msg, postCount)
 		}
@@ -228,7 +238,7 @@ func TestServerWriteErrorsKeepUnknownOutcomesLocked(t *testing.T) {
 				}
 				writeUITestJSON(t, w, map[string]any{"items": []any{}})
 			})
-			msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", time.Now(), "", "", "mutation-error")().(saveResultMsg)
+			msg := saveCmd(newUITestClient(t, mux), validGenericGroups(), "", time.Now(), "", "", "mutation-error", nil)().(saveResultMsg)
 			if msg.uncertain != tc.uncertain || msg.err == nil {
 				t.Fatalf("status %d result = %#v", tc.status, msg)
 			}

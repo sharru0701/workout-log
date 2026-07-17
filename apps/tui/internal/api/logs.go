@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"strconv"
@@ -71,6 +72,22 @@ type ProgressReport struct {
 type ProgressionFeedback struct {
 	Report            *ProgressReport `json:"report"`
 	EarlyDeloadBanner *FeedbackBanner `json:"earlyDeloadBanner"`
+}
+
+// ProgressionEvent is the event attached to a log detail/list row. The raw
+// before/after states are retained so an edited block-end log can offer choices
+// from the same pre-save weights instead of incrementing the already-advanced
+// runtime state a second time.
+type ProgressionEvent struct {
+	ID          string          `json:"id"`
+	EventType   string          `json:"eventType"`
+	ProgramSlug string          `json:"programSlug"`
+	BeforeState json.RawMessage `json:"beforeState"`
+	AfterState  json.RawMessage `json:"afterState"`
+}
+
+type ProgressionSummary struct {
+	Event *ProgressionEvent `json:"event"`
 }
 
 // saveResponse is the {log, progression} envelope shared by POST and PATCH.
