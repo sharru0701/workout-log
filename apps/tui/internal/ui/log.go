@@ -21,34 +21,38 @@ import (
 // each holding its sets. Navigate sets with j/k, cells (weight/reps) with h/l,
 // edit inline in INSERT. `e` starts a new exercise.
 type Log struct {
-	client             *api.Client
-	drafts             draftStore // crash-recovery persistence for unsaved sets (nil = off)
-	ownerID            string     // authenticated owner of the persisted draft
-	groups             []exGroup
-	gi, si             int // active group / set index
-	col                logCol
-	editing            bool
-	target             editTarget
-	edit               textinput.Model
-	saving             bool
-	saveUncertain      bool              // prior POST outcome unknown; next s reconciles before any retry
-	clientMutationID   string            // stable POST identity; server deduplicates retries across crashes/timeouts
-	editID             string            // non-empty when editing a past log (saves via PATCH)
-	performedAt        time.Time         // preserved on edit; zero = now (new log)
-	planName           string            // active plan/program name for today's session header
-	sessionKey         string            // generated-session key (e.g. "C2W6D1") for the header label
-	planID             string            // active plan id, for session overrides (보강/교체)
-	generatedSessionID string            // canonical log↔generated-session identity
-	genericDirty       bool              // unsaved non-REF5 input; blocks destructive buffer replacement
-	ref5               *ref5SessionState // REF5 start gate / frozen-session identity (nil for generic logs)
-	ref5Progress       ref5WindowProgressState
-	pendAccsry         string // accessory exercise awaiting its sets input (override flow)
-	pendBlock          string // block target awaiting its replacement exercise (override flow)
-	pendingOverride    bool   // server override in flight; locks/re-correlates Today
-	overridePlanID     string
-	bodyweight         float64       // user bodyweight (kg) for bodyweight-exercise load math
-	load               loadState     // boot-time auto-load of today's session
-	undo               *undoSnapshot // last delete, restorable with `u`
+	client                    *api.Client
+	drafts                    draftStore // crash-recovery persistence for unsaved sets (nil = off)
+	ownerID                   string     // authenticated owner of the persisted draft
+	groups                    []exGroup
+	gi, si                    int // active group / set index
+	col                       logCol
+	editing                   bool
+	target                    editTarget
+	edit                      textinput.Model
+	saving                    bool
+	saveUncertain             bool      // prior POST outcome unknown; next s reconciles before any retry
+	clientMutationID          string    // stable POST identity; server deduplicates retries across crashes/timeouts
+	editID                    string    // non-empty when editing a past log (saves via PATCH)
+	performedAt               time.Time // preserved on edit; zero = now (new log)
+	planName                  string    // active plan/program name for today's session header
+	sessionKey                string    // generated-session key (e.g. "C2W6D1") for the header label
+	planID                    string    // active plan id, for session overrides (보강/교체)
+	generatedSessionID        string    // canonical log↔generated-session identity
+	genericDirty              bool      // unsaved non-REF5 input; blocks destructive buffer replacement
+	progressionChoicesChecked bool      // block-end choice gate resolved for the current payload
+	progressionChoiceLoading  bool      // progression-state/detail request in flight
+	progressionDecisions      map[string]api.ProgressionTargetDecision
+	progressionChoice         *progressionChoiceFlow
+	ref5                      *ref5SessionState // REF5 start gate / frozen-session identity (nil for generic logs)
+	ref5Progress              ref5WindowProgressState
+	pendAccsry                string // accessory exercise awaiting its sets input (override flow)
+	pendBlock                 string // block target awaiting its replacement exercise (override flow)
+	pendingOverride           bool   // server override in flight; locks/re-correlates Today
+	overridePlanID            string
+	bodyweight                float64       // user bodyweight (kg) for bodyweight-exercise load math
+	load                      loadState     // boot-time auto-load of today's session
+	undo                      *undoSnapshot // last delete, restorable with `u`
 	// v0.5.1 피드백: 세션 태그(스냅샷 승격 메타)와 저장 직후 판정 라인(서버 조립 문구).
 	amrapDeferred bool     // 오늘 AMRAP 보류(연속일) — 헤더 태그
 	lightBlock    bool     // 라이트(회복) 블록 — 헤더 태그
@@ -87,6 +91,8 @@ func (l Log) Mode() Mode {
 		return Mode{Label: "VERIFY", Tone: theme.Amber}
 	case l.pendingOverride:
 		return Mode{Label: "SYNC", Tone: theme.Amber}
+	case l.progressionChoiceLoading || l.progressionChoice != nil:
+		return Mode{Label: "ADJUST", Tone: theme.Amber}
 	case l.editing:
 		return Mode{Label: "INSERT", Tone: theme.Amber}
 	case l.ref5 != nil && l.ref5.Phase == ref5Previewing:
@@ -243,6 +249,62 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 		if l.ref5 != nil && l.planID != "" {
 			return l, l.beginRef5WindowStatusLoad(l.planID)
 		}
+		return l, nil
+	case progressionChoiceLoadedMsg:
+		if !l.progressionChoiceLoading || m.planID != l.planID ||
+			m.sessionKey != l.sessionKey || m.editID != l.editID {
+			return l, nil
+		}
+		l.progressionChoiceLoading = false
+		if m.err != nil {
+			l.status, l.statusErr = "다음 사이클 무게 조회 실패: "+humanizeAuthErr(m.err), true
+			return l, nil
+		}
+		targets, err := buildBlockCompletionChoices(l.sessionKey, m.state, m.beforeState, l.groups)
+		if err != nil {
+			l.status, l.statusErr = "다음 사이클 무게 계산 실패: "+err.Error(), true
+			return l, nil
+		}
+		if len(targets) == 0 {
+			l.progressionChoicesChecked = true
+			return l.save()
+		}
+		l.progressionChoice = &progressionChoiceFlow{
+			planID: l.planID, sessionKey: l.sessionKey, editID: l.editID,
+			targets: targets, decisions: make(map[string]api.ProgressionTargetDecision),
+		}
+		l.status, l.statusErr = "운동별 다음 사이클 무게를 확인하세요", false
+		return l, l.openProgressionWeightPicker()
+	case progressionChoiceConfirmedMsg:
+		flow := l.progressionChoice
+		if flow == nil || m.planID != l.planID || m.sessionKey != l.sessionKey ||
+			m.editID != l.editID || flow.planID != m.planID || flow.sessionKey != m.sessionKey ||
+			flow.editID != m.editID {
+			l.status, l.statusErr = "무게 설정이 만료됨 · s로 다시 설정", true
+			return l, nil
+		}
+		l.progressionDecisions = cloneProgressionDecisions(m.decisions)
+		l.progressionChoicesChecked = true
+		l.progressionChoice = nil
+		l.genericDirty = true
+		if err := l.persistDraft(); err != nil {
+			l.progressionChoicesChecked = false
+			l.status, l.statusErr = "무게 설정 임시 저장 실패: "+err.Error(), true
+			return l, nil
+		}
+		return l.save()
+	case progressionChoiceRestartMsg:
+		if l.progressionChoice == nil {
+			return l, nil
+		}
+		l.progressionChoice.index = 0
+		l.progressionChoice.decisions = make(map[string]api.ProgressionTargetDecision)
+		l.status, l.statusErr = "다음 사이클 무게를 다시 설정합니다", false
+		return l, l.openProgressionWeightPicker()
+	case progressionChoiceCancelledMsg:
+		l.progressionChoice = nil
+		l.progressionChoiceLoading = false
+		l.status, l.statusErr = "저장 취소됨 · s로 다시 설정", false
 		return l, nil
 	case editLogMsg:
 		if l.hasBlockingReplacement() {
@@ -475,10 +537,13 @@ func (l Log) Update(msg tea.Msg) (Screen, tea.Cmd) {
 			return next, cmd
 		}
 		switch m.tag {
+		case "progression-weight":
+			return l.handleProgressionWeightPicked(m.value)
 		case "exercise":
 			if strings.TrimSpace(m.value) != "" {
 				l.groups = append(l.groups, exGroup{name: m.value, sets: []setEntry{{setNumber: 1, isExtra: true}}})
 				l.gi, l.si, l.col = len(l.groups)-1, 0, colWeight
+				l.invalidateProgressionChoices()
 				l.persistDraft()
 				return l.beginEdit(editCell)
 			}

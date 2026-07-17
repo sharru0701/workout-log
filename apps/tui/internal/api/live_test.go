@@ -647,7 +647,7 @@ func TestLiveEditLog(t *testing.T) {
 	t.Logf("edit ok: 1→2 sets, top 100→107.5, date %s preserved", edited.PerformedAt.Format("2006-01-02"))
 }
 
-// TestLiveLogRPE proves an RPE value round-trips: create a log with rpe=8 and
+// TestLiveLogRPE proves a fractional RPE round-trips: create a log with rpe=8.5 and
 // read it back from the list. Skipped without env.
 func TestLiveLogRPE(t *testing.T) {
 	base := os.Getenv("IRONLOG_SPIKE_URL")
@@ -663,7 +663,7 @@ func TestLiveLogRPE(t *testing.T) {
 	if _, err := c.Signup(ctx, SignupRequest{Email: email, Password: "spike-passw0rd"}); err != nil {
 		t.Fatalf("Signup: %v", err)
 	}
-	rpe := 8
+	rpe := 8.5
 	id, _, err := c.CreateLog(ctx, CreateLogRequest{
 		PerformedAt: time.Now(),
 		Sets:        []WorkoutSet{{ExerciseName: "Squat", WeightKg: 100, Reps: 5, RPE: &rpe}},
@@ -682,10 +682,10 @@ func TestLiveLogRPE(t *testing.T) {
 		if len(lg.Sets) == 0 || lg.Sets[0].RPE == nil {
 			t.Fatalf("RPE not persisted: %+v", lg.Sets)
 		}
-		if *lg.Sets[0].RPE != 8 {
-			t.Errorf("RPE = %d, want 8", *lg.Sets[0].RPE)
+		if *lg.Sets[0].RPE != 8.5 {
+			t.Errorf("RPE = %g, want 8.5", *lg.Sets[0].RPE)
 		}
-		t.Logf("RPE round-trip ok: rpe=%d", *lg.Sets[0].RPE)
+		t.Logf("RPE round-trip ok: rpe=%g", *lg.Sets[0].RPE)
 		return
 	}
 	t.Fatalf("created log %s not found", id)

@@ -137,7 +137,7 @@ type WorkoutSet struct {
 	SetNumber    int      `json:"setNumber,omitempty"`
 	Reps         int      `json:"reps"`
 	WeightKg     float64  `json:"weightKg"`
-	RPE          *int     `json:"rpe,omitempty"`
+	RPE          *float64 `json:"rpe,omitempty"`
 	IsExtra      bool     `json:"isExtra,omitempty"`
 	Meta         *SetMeta `json:"meta,omitempty"`
 }
@@ -151,7 +151,7 @@ type LoggedSet struct {
 	SetNumber    int      `json:"setNumber,omitempty"`
 	WeightKg     Float64  `json:"weightKg"`
 	Reps         int      `json:"reps"`
-	RPE          *int     `json:"rpe,omitempty"`
+	RPE          *float64 `json:"rpe,omitempty"`
 	IsExtra      bool     `json:"isExtra,omitempty"`
 	Meta         *SetMeta `json:"meta,omitempty"`
 }
@@ -174,19 +174,29 @@ type LogItem struct {
 	Tags               []string             `json:"tags,omitempty"`
 	Sets               []LoggedSet          `json:"sets"`
 	GeneratedSession   *GeneratedSessionRef `json:"generatedSession"`
+	Progression        *ProgressionSummary  `json:"progression,omitempty"`
+}
+
+// ProgressionTargetDecision is an explicit absolute next-cycle weight choice.
+// The server derives the mode again from workKg, but keeping it in the request
+// mirrors the web save contract and makes user intent inspectable.
+type ProgressionTargetDecision struct {
+	Mode   string  `json:"mode"`
+	WorkKg float64 `json:"workKg"`
 }
 
 // CreateLogRequest is the POST /api/logs body.
 type CreateLogRequest struct {
-	PlanID             string       `json:"planId,omitempty"`
-	GeneratedSessionID string       `json:"generatedSessionId,omitempty"`
-	ClientMutationID   string       `json:"clientMutationId,omitempty"`
-	Sets               []WorkoutSet `json:"sets"`
-	PerformedAt        time.Time    `json:"performedAt"`
-	Timezone           string       `json:"timezone,omitempty"`
-	DurationMinutes    *int         `json:"durationMinutes,omitempty"`
-	Notes              string       `json:"notes,omitempty"`
-	Tags               []string     `json:"tags,omitempty"`
+	PlanID                     string                               `json:"planId,omitempty"`
+	GeneratedSessionID         string                               `json:"generatedSessionId,omitempty"`
+	ClientMutationID           string                               `json:"clientMutationId,omitempty"`
+	Sets                       []WorkoutSet                         `json:"sets"`
+	PerformedAt                time.Time                            `json:"performedAt"`
+	Timezone                   string                               `json:"timezone,omitempty"`
+	DurationMinutes            *int                                 `json:"durationMinutes,omitempty"`
+	Notes                      string                               `json:"notes,omitempty"`
+	Tags                       []string                             `json:"tags,omitempty"`
+	ProgressionTargetDecisions map[string]ProgressionTargetDecision `json:"progressionTargetDecisions,omitempty"`
 }
 
 // PersonalRecord is a server-detected PR (Epley e1RM) returned on log create.
@@ -200,14 +210,15 @@ type PersonalRecord struct {
 
 // LogDetail is the GET /api/logs/[id] item, including server-detected PRs.
 type LogDetail struct {
-	ID                 string            `json:"id"`
-	PlanID             *string           `json:"planId"`
-	GeneratedSessionID *string           `json:"generatedSessionId"`
-	PerformedAt        time.Time         `json:"performedAt"`
-	DurationMinutes    *int              `json:"durationMinutes,omitempty"`
-	Notes              *string           `json:"notes,omitempty"`
-	Tags               []string          `json:"tags,omitempty"`
-	Sets               []LoggedSet       `json:"sets"`
-	GeneratedSession   *GeneratedSession `json:"generatedSession"`
-	PersonalRecords    []PersonalRecord  `json:"personalRecords"`
+	ID                 string              `json:"id"`
+	PlanID             *string             `json:"planId"`
+	GeneratedSessionID *string             `json:"generatedSessionId"`
+	PerformedAt        time.Time           `json:"performedAt"`
+	DurationMinutes    *int                `json:"durationMinutes,omitempty"`
+	Notes              *string             `json:"notes,omitempty"`
+	Tags               []string            `json:"tags,omitempty"`
+	Sets               []LoggedSet         `json:"sets"`
+	Progression        *ProgressionSummary `json:"progression,omitempty"`
+	GeneratedSession   *GeneratedSession   `json:"generatedSession"`
+	PersonalRecords    []PersonalRecord    `json:"personalRecords"`
 }

@@ -424,7 +424,9 @@ export const workoutSet = table(
     setNumber: integer("set_number").notNull().default(1),
     reps: integer("reps"),
     weightKg: numeric("weight_kg", { precision: 8, scale: 2, mode: "number" }),
-    rpe: integer("rpe"),
+    // RPE is recorded in 0.5 steps in both clients (for example 9.5).
+    // Keep one decimal place so the DB contract matches the input model.
+    rpe: numeric("rpe", { precision: 3, scale: 1, mode: "number" }),
     isExtra: boolean("is_extra").notNull().default(false),
 
     meta: jsonb("meta").notNull().default({}),

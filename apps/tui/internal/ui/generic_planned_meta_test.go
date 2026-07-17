@@ -10,7 +10,11 @@ import (
 	"github.com/sharru0701/workout-log/apps/tui/internal/api"
 )
 
-func captureGenericSaveRequest(t *testing.T, groups []exGroup) api.CreateLogRequest {
+func captureGenericSaveRequest(
+	t *testing.T,
+	groups []exGroup,
+	progressionDecisions ...map[string]api.ProgressionTargetDecision,
+) api.CreateLogRequest {
 	t.Helper()
 	var posted api.CreateLogRequest
 	mux := http.NewServeMux()
@@ -37,15 +41,36 @@ func captureGenericSaveRequest(t *testing.T, groups []exGroup) api.CreateLogRequ
 		t.Fatal(err)
 	}
 
+	var decisions map[string]api.ProgressionTargetDecision
+	if len(progressionDecisions) > 0 {
+		decisions = progressionDecisions[0]
+	}
 	msg := saveCmd(
 		client, groups, "", time.Date(2026, 7, 14, 0, 0, 0, 0, time.UTC),
-		"generic-plan", "generic-generated-session", "mutation-planned-meta",
+		"generic-plan", "generic-generated-session", "mutation-planned-meta", decisions,
 	)()
 	result, ok := msg.(saveResultMsg)
 	if !ok || result.err != nil {
 		t.Fatalf("save result = %#v", msg)
 	}
 	return posted
+}
+
+func TestGenericSaveCarriesFractionalRPEAndProgressionChoices(t *testing.T) {
+	groups := []exGroup{{
+		name: "Back Squat", progressionTarget: "SQUAT",
+		sets: []setEntry{{weight: "97.5", reps: "1", rpe: "9.5", done: true, setNumber: 1}},
+	}}
+	decisions := map[string]api.ProgressionTargetDecision{
+		"SQUAT": {Mode: "increase", WorkKg: 105},
+	}
+	req := captureGenericSaveRequest(t, groups, decisions)
+	if len(req.Sets) != 1 || req.Sets[0].RPE == nil || *req.Sets[0].RPE != 9.5 {
+		t.Fatalf("fractional RPE request = %#v", req.Sets)
+	}
+	if got := req.ProgressionTargetDecisions["SQUAT"]; got != decisions["SQUAT"] {
+		t.Fatalf("progression decision = %#v, want %#v", got, decisions["SQUAT"])
+	}
 }
 
 func decodePlannedRefForTest(t *testing.T, set api.WorkoutSet) (map[string]any, bool) {

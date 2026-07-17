@@ -58,19 +58,21 @@ type draftRef5State struct {
 // todayDraft is the serialized today buffer. Date is the local calendar day the
 // draft belongs to — a stale draft is never restored into a new day.
 type todayDraft struct {
-	UserID             string          `json:"userId,omitempty"`
-	Date               string          `json:"date"`
-	EditID             string          `json:"editId,omitempty"`
-	PerformedAt        time.Time       `json:"performedAt"`
-	PlanName           string          `json:"planName,omitempty"`
-	SessionKey         string          `json:"sessionKey,omitempty"`
-	PlanID             string          `json:"planId,omitempty"`
-	GeneratedSessionID string          `json:"generatedSessionId,omitempty"`
-	ClientMutationID   string          `json:"clientMutationId,omitempty"`
-	SaveUncertain      bool            `json:"saveUncertain,omitempty"`
-	Bodyweight         float64         `json:"bodyweight,omitempty"`
-	Groups             []draftGroup    `json:"groups"`
-	Ref5               *draftRef5State `json:"ref5,omitempty"`
+	UserID                    string                                   `json:"userId,omitempty"`
+	Date                      string                                   `json:"date"`
+	EditID                    string                                   `json:"editId,omitempty"`
+	PerformedAt               time.Time                                `json:"performedAt"`
+	PlanName                  string                                   `json:"planName,omitempty"`
+	SessionKey                string                                   `json:"sessionKey,omitempty"`
+	PlanID                    string                                   `json:"planId,omitempty"`
+	GeneratedSessionID        string                                   `json:"generatedSessionId,omitempty"`
+	ClientMutationID          string                                   `json:"clientMutationId,omitempty"`
+	SaveUncertain             bool                                     `json:"saveUncertain,omitempty"`
+	ProgressionChoicesChecked bool                                     `json:"progressionChoicesChecked,omitempty"`
+	ProgressionDecisions      map[string]api.ProgressionTargetDecision `json:"progressionDecisions,omitempty"`
+	Bodyweight                float64                                  `json:"bodyweight,omitempty"`
+	Groups                    []draftGroup                             `json:"groups"`
+	Ref5                      *draftRef5State                          `json:"ref5,omitempty"`
 }
 
 // draftRestoredMsg carries a restored draft into the today buffer at boot.
@@ -97,18 +99,20 @@ func draftFromLog(l *Log, now time.Time) todayDraft {
 		})
 	}
 	draft := todayDraft{
-		UserID:             l.ownerID,
-		Date:               now.Local().Format("2006-01-02"),
-		EditID:             l.editID,
-		PerformedAt:        l.performedAt,
-		PlanName:           l.planName,
-		SessionKey:         l.sessionKey,
-		PlanID:             l.planID,
-		GeneratedSessionID: l.generatedSessionID,
-		ClientMutationID:   l.clientMutationID,
-		SaveUncertain:      l.saveUncertain,
-		Bodyweight:         l.bodyweight,
-		Groups:             groups,
+		UserID:                    l.ownerID,
+		Date:                      now.Local().Format("2006-01-02"),
+		EditID:                    l.editID,
+		PerformedAt:               l.performedAt,
+		PlanName:                  l.planName,
+		SessionKey:                l.sessionKey,
+		PlanID:                    l.planID,
+		GeneratedSessionID:        l.generatedSessionID,
+		ClientMutationID:          l.clientMutationID,
+		SaveUncertain:             l.saveUncertain,
+		ProgressionChoicesChecked: l.progressionChoicesChecked,
+		ProgressionDecisions:      cloneProgressionDecisions(l.progressionDecisions),
+		Bodyweight:                l.bodyweight,
+		Groups:                    groups,
 	}
 	if l.ref5 != nil && (l.ref5.Session != nil || l.ref5.StartUncertain) {
 		draft.Ref5 = &draftRef5State{
@@ -249,6 +253,9 @@ func (l *Log) loadFromDraft(d todayDraft) {
 	l.generatedSessionID = d.GeneratedSessionID
 	l.clientMutationID = d.ClientMutationID
 	l.saveUncertain = d.SaveUncertain
+	l.progressionChoicesChecked = d.ProgressionChoicesChecked
+	l.progressionDecisions = cloneProgressionDecisions(d.ProgressionDecisions)
+	l.progressionChoiceLoading, l.progressionChoice = false, nil
 	if d.Ref5 != nil && d.Ref5.Session != nil {
 		l.ref5 = &ref5SessionState{
 			Phase: ref5Active, Plan: d.Ref5.Plan, Start: d.Ref5.Start,

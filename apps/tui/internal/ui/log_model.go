@@ -42,7 +42,7 @@ const (
 type setEntry struct {
 	weight       string
 	reps         string
-	rpe          string // optional RPE 1–10
+	rpe          string // optional RPE 1–10 in 0.5 steps
 	done         bool
 	tgtReps      int          // planned reps, shown dimmed as a placeholder while reps is empty
 	total        float64      // bodyweight-inclusive total load (>0 only for bodyweight sets)
@@ -202,11 +202,11 @@ func orDot(s string) string {
 	return s
 }
 
-func rpeString(rpe *int) string {
+func rpeString(rpe *float64) string {
 	if rpe == nil || *rpe <= 0 {
 		return ""
 	}
-	return strconv.Itoa(*rpe)
+	return trimNum(*rpe)
 }
 
 func setE1rm(s setEntry) float64 {

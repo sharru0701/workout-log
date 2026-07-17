@@ -1,0 +1,1 @@
+ALTER TABLE "workout_set" ALTER COLUMN "rpe" SET DATA TYPE numeric(3, 1);
