@@ -6,17 +6,10 @@ import { apiGet, isAbortError } from "@/lib/api";
 import { useLocale } from "@/components/locale-provider";
 import type { StatsPageBootstrap } from "@/server/services/stats/get-stats-page-bootstrap";
 import { StatsScreen } from "./stats-screen";
-
-function buildBootstrapPath(searchParams: URLSearchParams): string {
-  const allowed = ["exerciseId", "exercise", "exerciseName", "planId", "defer1rmBootstrap"];
-  const next = new URLSearchParams();
-  for (const key of allowed) {
-    const value = searchParams.get(key);
-    if (value) next.set(key, value);
-  }
-  const qs = next.toString();
-  return qs ? `/api/stats/page-bootstrap?${qs}` : "/api/stats/page-bootstrap";
-}
+import {
+  buildStatsBootstrapPath,
+  STATS_BOOTSTRAP_REQUEST_OPTIONS,
+} from "./stats-bootstrap-request";
 
 export function StatsContainer() {
   const { locale } = useLocale();
@@ -26,14 +19,13 @@ export function StatsContainer() {
 
   useEffect(() => {
     const controller = new AbortController();
-    const path = buildBootstrapPath(
+    const path = buildStatsBootstrapPath(
       new URLSearchParams(searchParams?.toString() ?? ""),
     );
     setError(null);
     apiGet<StatsPageBootstrap>(path, {
+      ...STATS_BOOTSTRAP_REQUEST_OPTIONS,
       signal: controller.signal,
-      maxAgeMs: 60_000,
-      staleWhileRevalidateMs: 300_000,
     })
       .then((data) => {
         setBootstrap(data);
