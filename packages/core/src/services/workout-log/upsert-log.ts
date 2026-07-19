@@ -7,6 +7,7 @@ import {
   getExerciseById,
   resolveExerciseByName,
   resolveExercisesByNames,
+  selectResolvedExerciseId,
 } from "@workout/core/exercise/resolve";
 import { LEGACY_EXERCISE_NAME_FALLBACKS } from "@workout/core/exercise/catalog";
 import { applyAutoProgressionFromLog, rebuildAutoProgressionForPlan } from "@workout/core/progression/autoProgression";
@@ -685,7 +686,6 @@ export async function upsertWorkoutLogService({
   const uniqueExerciseNames: string[] = Array.from(
     new Set(
       sets
-        .filter((s: any) => !(typeof s.exerciseId === "string" && s.exerciseId.trim()))
         .map((s: any) => String(s.exerciseName ?? "").trim().toLowerCase())
         .filter((n: string): n is string => n.length > 0),
     ),
@@ -698,7 +698,6 @@ export async function upsertWorkoutLogService({
     }),
     ...uniqueExerciseNames.map(async (nameLower) => {
       const found = await resolveExerciseByName(nameLower);
-      resolvedById.set(nameLower, found?.id ?? null);
       resolvedByName.set(nameLower, found?.id ?? null);
     }),
   ]);
@@ -784,12 +783,15 @@ export async function upsertWorkoutLogService({
 
         const submittedExerciseId = typeof s.exerciseId === "string" && s.exerciseId.trim() ? s.exerciseId.trim() : null;
 
-        let exerciseId: string | null = null;
-        if (submittedExerciseId) {
-          exerciseId = resolvedById.get(submittedExerciseId) ?? null;
-        } else {
-          exerciseId = resolvedByName.get(exerciseName.toLowerCase()) ?? null;
-        }
+        // A deployed client can briefly submit a now-merged exercise ID. If the
+        // ID no longer exists, resolve its still-valid label instead of writing
+        // a null identity that would split stats again.
+        const exerciseId = selectResolvedExerciseId({
+          submittedExerciseId,
+          exerciseName,
+          resolvedById,
+          resolvedByName,
+        });
 
         return {
           logId: log.id,

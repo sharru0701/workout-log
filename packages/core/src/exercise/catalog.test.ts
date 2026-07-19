@@ -5,6 +5,7 @@ import {
   EXERCISE_CATALOG,
   EXERCISE_NAMES,
   LEGACY_EXERCISE_NAME_FALLBACKS,
+  canonicalExerciseNameForInput,
 } from "./catalog";
 
 test("squat variants are separate canonical exercises", () => {
@@ -24,12 +25,21 @@ test("legacy Back Squat resolves only as a high-bar alias", () => {
   assert.deepEqual(owners.map((item) => item.name), [EXERCISE_NAMES.highBarBackSquat]);
 });
 
-test("weighted and unweighted pull-ups remain separate canonical exercises", () => {
+test("weighted and unweighted pull-ups share one canonical exercise", () => {
   const canonicalNames = new Set<string>(EXERCISE_CATALOG.map((item) => item.name));
 
   assert.ok(canonicalNames.has(EXERCISE_NAMES.pullUp));
-  assert.ok(canonicalNames.has(EXERCISE_NAMES.weightedPullUp));
-  assert.notEqual(EXERCISE_NAMES.pullUp, EXERCISE_NAMES.weightedPullUp);
+  assert.equal(canonicalNames.has(EXERCISE_NAMES.weightedPullUp), false);
+  for (const input of [
+    "Pull-Up",
+    "Pull Up",
+    "Weighted Pull-Up",
+    "Weighted Pull Up",
+    "중량 풀업",
+    "중량풀업",
+  ]) {
+    assert.equal(canonicalExerciseNameForInput(input), EXERCISE_NAMES.pullUp);
+  }
 });
 
 test("catalog aliases have one canonical owner", () => {

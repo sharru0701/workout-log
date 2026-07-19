@@ -169,6 +169,13 @@
       "when": 1784446339986,
       "tag": "0023_squat_exercise_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1784453256619,
+      "tag": "0024_merge_pull_up_identity",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,7 @@
 import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@workout/core/db/client";
 import { exercise, exerciseAlias } from "@workout/core/db/schema";
+import { canonicalExerciseNameForInput } from "@workout/core/exercise/catalog";
 
 export type ResolvedExercise = {
   id: string;
@@ -18,7 +19,20 @@ export async function resolveExercisesByNames(
   );
   if (names.length === 0) return new Map();
 
-  const lowerNames = Array.from(new Set(names.map((name) => name.toLowerCase())));
+  // Query both the submitted label and its catalog identity. During a code-first
+  // rollout the legacy direct row may still exist, so the canonical row must win.
+  const canonicalByInput = new Map(
+    names.map((name) => [name.toLowerCase(), canonicalExerciseNameForInput(name)]),
+  );
+  const lookupNames = Array.from(
+    new Set([
+      ...names,
+      ...Array.from(canonicalByInput.values()).filter(
+        (name): name is string => typeof name === "string",
+      ),
+    ]),
+  );
+  const lowerNames = Array.from(new Set(lookupNames.map((name) => name.toLowerCase())));
   const directRows = await dbi
     .select({ id: exercise.id, name: exercise.name })
     .from(exercise)
@@ -29,15 +43,37 @@ export async function resolveExercisesByNames(
     .innerJoin(exercise, eq(exerciseAlias.exerciseId, exercise.id))
     .where(inArray(sql<string>`lower(${exerciseAlias.alias})`, lowerNames));
 
-  const resolved = new Map<string, ResolvedExercise>();
+  const candidates = new Map<string, ResolvedExercise>();
   for (const row of directRows) {
-    resolved.set(row.name.trim().toLowerCase(), { id: row.id, name: row.name });
+    candidates.set(row.name.trim().toLowerCase(), { id: row.id, name: row.name });
   }
   for (const row of aliasRows) {
     const key = row.alias.trim().toLowerCase();
-    if (!resolved.has(key)) resolved.set(key, { id: row.id, name: row.name });
+    if (!candidates.has(key)) candidates.set(key, { id: row.id, name: row.name });
+  }
+
+  const resolved = new Map(candidates);
+  for (const name of names) {
+    const key = name.toLowerCase();
+    const canonicalName = canonicalByInput.get(key);
+    const match =
+      (canonicalName ? candidates.get(canonicalName.toLowerCase()) : null) ??
+      candidates.get(key);
+    if (match) resolved.set(key, match);
   }
   return resolved;
+}
+
+export function selectResolvedExerciseId(input: {
+  submittedExerciseId: string | null;
+  exerciseName: string;
+  resolvedById: ReadonlyMap<string, string | null>;
+  resolvedByName: ReadonlyMap<string, string | null>;
+}): string | null {
+  const bySubmittedId = input.submittedExerciseId
+    ? input.resolvedById.get(input.submittedExerciseId)
+    : null;
+  return bySubmittedId ?? input.resolvedByName.get(input.exerciseName.toLowerCase()) ?? null;
 }
 
 export async function resolveExerciseByName(
