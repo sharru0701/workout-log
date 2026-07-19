@@ -5,13 +5,13 @@ import { selectDefaultStatsExercise } from "./default-exercise";
 
 const at = (date: string) => new Date(`${date}T12:00:00.000Z`);
 
-test("workout history outranks an unrecorded squat", () => {
+test("an unrecorded squat outranks a recorded non-big-three exercise", () => {
   const selected = selectDefaultStatsExercise([
     { id: "squat", name: EXERCISE_NAMES.highBarBackSquat, lastPerformedAt: null },
     { id: "row", name: EXERCISE_NAMES.barbellRow, lastPerformedAt: at("2026-07-18") },
   ]);
 
-  assert.equal(selected?.id, "row");
+  assert.equal(selected?.id, "squat");
 });
 
 test("a recorded squat outranks other recorded exercises", () => {
@@ -23,13 +23,22 @@ test("a recorded squat outranks other recorded exercises", () => {
   assert.equal(selected?.id, "squat");
 });
 
-test("a recorded big-three lift outranks other recorded exercises", () => {
+test("an unrecorded big-three lift outranks a recorded non-big-three exercise", () => {
   const selected = selectDefaultStatsExercise([
     { id: "row", name: EXERCISE_NAMES.barbellRow, lastPerformedAt: at("2026-07-18") },
-    { id: "deadlift", name: EXERCISE_NAMES.deadlift, lastPerformedAt: at("2026-06-01") },
+    { id: "deadlift", name: EXERCISE_NAMES.deadlift, lastPerformedAt: null },
   ]);
 
   assert.equal(selected?.id, "deadlift");
+});
+
+test("workout history breaks ties within the squat tier", () => {
+  const selected = selectDefaultStatsExercise([
+    { id: "high-bar", name: EXERCISE_NAMES.highBarBackSquat, lastPerformedAt: null },
+    { id: "front", name: EXERCISE_NAMES.frontSquat, lastPerformedAt: at("2026-06-01") },
+  ]);
+
+  assert.equal(selected?.id, "front");
 });
 
 test("latest activity breaks ties within the same priority tier", () => {
@@ -39,6 +48,15 @@ test("latest activity breaks ties within the same priority tier", () => {
   ]);
 
   assert.equal(selected?.id, "deadlift");
+});
+
+test("workout history breaks ties between non-big-three exercises", () => {
+  const selected = selectDefaultStatsExercise([
+    { id: "press", name: EXERCISE_NAMES.overheadPress, lastPerformedAt: null },
+    { id: "row", name: EXERCISE_NAMES.barbellRow, lastPerformedAt: at("2026-07-18") },
+  ]);
+
+  assert.equal(selected?.id, "row");
 });
 
 test("high-bar squat is the deterministic fallback when there is no history", () => {
