@@ -90,12 +90,16 @@ export const EXERCISE_CATALOG = [
   {
     name: EXERCISE_NAMES.pullUp,
     category: "Back",
-    aliases: ["Pull Up", "풀업", "턱걸이"],
-  },
-  {
-    name: EXERCISE_NAMES.weightedPullUp,
-    category: "Back",
-    aliases: ["Weighted Pull Up", "Weighted Pullup", "중량 풀업", "중량풀업"],
+    aliases: [
+      "Pull Up",
+      "Weighted Pull-Up",
+      "Weighted Pull Up",
+      "Weighted Pullup",
+      "풀업",
+      "중량 풀업",
+      "중량풀업",
+      "턱걸이",
+    ],
   },
   {
     name: EXERCISE_NAMES.powerClean,
@@ -133,3 +137,17 @@ export const EXERCISE_CATALOG = [
     aliases: ["힙 쓰러스트"],
   },
 ] as const satisfies readonly ExerciseCatalogItem[];
+
+/** Resolve a user/program label to the catalog identity used for history and stats. */
+export function canonicalExerciseNameForInput(raw: string): string | null {
+  const normalized = raw.trim().toLowerCase();
+  if (!normalized) return null;
+
+  for (const item of EXERCISE_CATALOG) {
+    if (item.name.toLowerCase() === normalized) return item.name;
+    if (item.aliases.some((alias) => alias.toLowerCase() === normalized)) {
+      return item.name;
+    }
+  }
+  return null;
+}
