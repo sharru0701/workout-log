@@ -54,10 +54,10 @@ function compareCandidates(
   const leftHasHistory = leftPerformedAt !== null;
   const rightHasHistory = rightPerformedAt !== null;
 
-  if (leftHasHistory !== rightHasHistory) return leftHasHistory ? -1 : 1;
-
   const tierDifference = exerciseTier(left.name) - exerciseTier(right.name);
   if (tierDifference !== 0) return tierDifference;
+
+  if (leftHasHistory !== rightHasHistory) return leftHasHistory ? -1 : 1;
 
   if (leftPerformedAt !== rightPerformedAt) {
     return (rightPerformedAt ?? 0) - (leftPerformedAt ?? 0);
@@ -76,7 +76,7 @@ function compareCandidates(
 
 /**
  * Default stats filter priority:
- * workout history -> squat -> the other big-three lifts -> latest activity.
+ * squat -> the other big-three lifts -> workout history -> latest activity.
  */
 export function selectDefaultStatsExercise<T extends StatsDefaultExerciseCandidate>(
   candidates: readonly T[],
