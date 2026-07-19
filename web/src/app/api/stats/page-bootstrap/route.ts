@@ -15,7 +15,7 @@ async function GETImpl(req: Request) {
     const payload = await getStatsPageBootstrap(params);
 
     return NextResponse.json(payload, {
-      headers: { "Cache-Control": "private, max-age=60, stale-while-revalidate=300" },
+      headers: { "Cache-Control": "private, no-store" },
     });
   } catch (e) {
     logError("api.handler_error", { error: e });
