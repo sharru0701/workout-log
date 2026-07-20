@@ -25,7 +25,13 @@ export const Stats1RMControls = memo(function Stats1RMControls({
 }) {
   return (
     <>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--v2-s-2)" }}>
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+          gap: "var(--v2-s-2)",
+        }}
+      >
         <button
           type="button"
           onClick={onOpenExerciseSheet}
@@ -34,6 +40,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            minWidth: 0,
             padding: "12px var(--v2-s-4)",
             border: "none",
             borderRadius: "var(--v2-r-1)",
@@ -43,7 +50,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
             boxShadow: "var(--v2-elev-1)",
           }}
         >
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ minWidth: 0, overflow: "hidden" }}>
             <div className="v2-eyebrow" style={{ color: "var(--v2-ink-2)", marginBottom: 2 }}>
               {locale === "ko" ? "운동종목" : "Exercise"}
             </div>
@@ -77,6 +84,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
+            minWidth: 0,
             padding: "12px var(--v2-s-4)",
             border: "none",
             borderRadius: "var(--v2-r-1)",
@@ -86,7 +94,7 @@ export const Stats1RMControls = memo(function Stats1RMControls({
             boxShadow: "var(--v2-elev-1)",
           }}
         >
-          <div style={{ overflow: "hidden" }}>
+          <div style={{ minWidth: 0, overflow: "hidden" }}>
             <div className="v2-eyebrow" style={{ color: "var(--v2-ink-2)", marginBottom: 2 }}>
               {locale === "ko" ? "필터링" : "Filter"}
             </div>
