@@ -96,7 +96,7 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 | D2 | **인덱스 누락 2건**: ① `workout_log(user_id, plan_id, performed_at)` 복합 — 플랜 스코프 핫패스(`findLogIdForDate`, `fetchRecentLogsServer`, rebuild) 다수, ② `plan_progress_event(log_id)` 단독 — 로그 목록의 진행 이벤트 조회가 seq scan | `load-workout-log-context.ts:46,110,132` · `apps/api/src/routes/logs.ts:396-411` |
 | D3 | **읽기 렌더마다 대형 JSONB 쓰기**: 홈·운동기록 SSR이 매번 `generated_session.snapshot`을 full-row SELECT 후 재기록. 비트랜잭션 read-then-write → `(plan_id, session_key)` unique 레이스 | `generateSession.ts:1782-1807` · `home-service.ts:295-301` |
 | D4 | **무제한 in-JS 집계**: PR 목록·근육 볼륨이 LIMIT 없이 전 행을 Node로 집계. 플랜 관리 화면은 `max(performed_at)` 하나를 위해 유저 **전체 workout_log** 로드(SQL groupBy면 될 일) | `prs-service.ts:125-138` · `muscle-volume-service.ts:47-66` · `get-plans-for-manage.ts:52-62` |
-| D5 | 과거 로그 수정 시 **로그당 1 INSERT 순차 루프**로 이벤트 재구축(트랜잭션 점유, O(n) 왕복) + 쓰기마다 유저 stats_cache **전체 DELETE**(스탬피드) | `autoProgression.ts:597-621` · `cache.ts:113-119` |
+| D5 | 🔶 **절반 해소·나머지는 설계상 유지(2026-07-20 재확인)**: 이벤트 재구축은 이미 **멀티로우 배치 INSERT**로 바뀜(`autoProgression.ts:674` `values(eventRows)` 1회). stats_cache 유저 전체 DELETE는 잔존하나 **의도된 정확성 선택** — 로그 1건이 e1rm·volume·prs·strength-summary·muscle-volume을 모두 바꾸므로 메트릭 단위 무효화는 stale을 만든다. 반복 읽기는 in-process 메모리 캐시가 흡수(`cache.ts:6-14`). 남는 건 무효화 직후 동시 요청의 중복 재계산(single-flight)뿐이며, 1인 사용 트래픽에선 측정 가능한 비용이 아님 | `autoProgression.ts:674` · `cache.ts:113-120` |
 | D6 | **풀 `max:5`** — Vercel 서버리스용 튜닝인데 apps/api는 전 트래픽을 받는 상시 단일 프로세스. `statement_timeout` 미설정 | `web/src/server/db/client.ts:17-26` |
 | D7 | `GET /api/stats/strength-summary` N+1: 상위 N종목마다 최대 1000행 쿼리 (2026-05 감사에서 이월, §7) | `apps/api/src/routes/stats.ts:215-240` |
 | D8 | ✅ **해소(2026-07-20)**: 스냅샷 누락(0004–0010·0013)은 무해로 판명 — `drizzle-kit generate` 실측 결과 "No schema changes"(최신 스냅샷 0022가 현 schema.ts와 일치, 0023·0024는 데이터 전용 마이그레이션). 실제 결함은 **저널 0013 타임스탬프 역전 → prod 영구 스킵**이었다: drizzle은 루프 진입 전 읽은 `max(created_at)` **하나**와만 비교하므로(`pg-core/dialect.js`) `when`이 더 낮은 항목은 기존 DB에서 영원히 건너뛴다. 빈 DB는 전부 적용하므로 **CI는 통과하고 prod만 조용히 누락**. 실측: prod `__drizzle_migrations` 24행(저널 25개)·`created_at=1743548400000` 부재 = 0013 미적용, 인덱스는 수동 생성으로 존재. 타임스탬프 교정 + `scripts/migration-journal-guard.test.mjs`(단조 증가·idx 연속·저널↔.sql 양방향)를 `test:unit`에 편입해 재발 차단 | `web/src/server/db/migrations/meta/_journal.json` · `web/scripts/migration-journal-guard.test.mjs` |
@@ -117,7 +117,7 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 - **god-component**: `v2-session-summary.tsx`(1,423줄) · `plans-manage-content.tsx`(1,403줄, app/ 레이어에 뮤테이션+로직+렌더 동거) · TUI `log.go`(1,288줄, ~24필드 구조체). 분리 후보이나 응집도는 있음.
 - **`any` 201곳**(`: any` 179 + `as any` 22) — `no-explicit-any`가 eslint에서 꺼져 있어 집계조차 안 되는 상태. tsconfig는 `strict`만(추가 hardening 플래그 없음).
 - **레이어 린트 error 강제 불가 상태 유지**: `v2-home-dashboard` 상향 import(문서 기록됨) + cross-feature 1건 + server→features 런타임 import 1건(§7)이 선행 부채.
-- TUI 소소: `.goreleaser.yaml:30` prod URL 하드코딩, `archiveName`이 name_template 수동 복제(`selfupdate.go:120`), export 파일 0644 world-readable(`data.go:48`).
+- TUI 소소 (2026-07-20 재확인): export 파일 0644는 ✅ **해소**(`securefile.WriteFile` 0o600). `.goreleaser.yaml` prod URL은 **의도된 설계**(릴리스 바이너리 기본 서버를 ldflags로 주입, 주석 명시) — 부채 아님. `archiveName` 수동 복제는 ✅ **가드로 차단**: `goreleaser_contract_test.go`가 `.goreleaser.yaml`의 name_template을 실제로 렌더해 `archiveName()`과 대조한다(기존 `TestArchiveName`은 기대값이 하드코딩이라 코드와 함께 틀려도 통과했다 — 템플릿이 바뀌면 릴리스는 멀쩡한데 설치된 바이너리만 전부 404 나는 침묵 실패였음).
 
 ---
 
