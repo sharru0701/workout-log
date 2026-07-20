@@ -232,7 +232,8 @@ export async function runSeed(options: SeedRunOptions = {}) {
     visibility: "PUBLIC",
     description:
       "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
-    tags: ["strength", "barbell", "operator", "intermediate"],
+    // block-periodization: 6주 웨이브를 돌고 사이클 끝에 TM을 올린다(설명의 "6-week wave").
+    tags: ["strength", "barbell", "operator", "intermediate", "block-periodization"],
   });
 
   const templateOperatorV1 = await upsertVersion(templateOperator.id, 1, {
@@ -505,7 +506,8 @@ export async function runSeed(options: SeedRunOptions = {}) {
     visibility: "PUBLIC",
     description:
       "Cody LeFever's tiered linear progression built around T1, T2, and T3 work. T1 lifts emphasize heavy strength practice, T2 movements drive additional volume, and T3 slots add high-rep work capacity and hypertrophy. It is a good fit for beginners and early intermediates who want more exercise variety than classic novice LPs.",
-    tags: ["manual", "strength", "tiers", "top-set", "amrap", "novice"],
+    // linear: 설명이 직접 "tiered linear progression"이라 명시한다.
+    tags: ["manual", "strength", "tiers", "top-set", "amrap", "novice", "linear"],
   });
 
   const templateGzclpV1 = await upsertVersion(templateGzclp.id, 1, {
@@ -594,7 +596,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     visibility: "PUBLIC",
     description:
       "Jim Wendler's 5/3/1 base template with no additional assistance work. It runs a 4-week cycle using a 90% training max, builds around submaximal top sets, and finishes each main week with an AMRAP set to drive long-term progress. This version is clean and minimal: just the main work and the progression engine.",
-    tags: ["strength", "barbell", "5/3/1", "wendler", "intermediate"],
+    // block-periodization: 4주 사이클(5s/3s/5-3-1/deload) 후 TM 증가 — 주 단위로 강도가
+    // 오르내리지만 texas-method의 weekly-undulation(한 주 안에서 변동)과는 다른 구조다.
+    tags: ["strength", "barbell", "5/3/1", "wendler", "intermediate", "block-periodization"],
   });
 
   const template531V1 = await upsertVersion(template531.id, 1, {
@@ -616,7 +620,7 @@ export async function runSeed(options: SeedRunOptions = {}) {
     visibility: "PUBLIC",
     description:
       "A 5/3/1 variant that adds First Set Last work after the main sets. The first working-set load is repeated for 5x5, giving you extra technical practice and useful volume without losing the character of the original program. It is one of the most practical ways to make 5/3/1 feel more productive week to week.",
-    tags: ["strength", "barbell", "5/3/1", "wendler", "fsl", "intermediate"],
+    tags: ["strength", "barbell", "5/3/1", "wendler", "fsl", "intermediate", "block-periodization"],
   });
 
   const template531FSLV1 = await upsertVersion(template531FSL.id, 1, {
@@ -638,7 +642,16 @@ export async function runSeed(options: SeedRunOptions = {}) {
     visibility: "PUBLIC",
     description:
       "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
-    tags: ["strength", "barbell", "5/3/1", "wendler", "bbb", "hypertrophy", "intermediate"],
+    tags: [
+      "strength",
+      "barbell",
+      "5/3/1",
+      "wendler",
+      "bbb",
+      "hypertrophy",
+      "intermediate",
+      "block-periodization",
+    ],
   });
 
   const template531BBBV1 = await upsertVersion(template531BBB.id, 1, {
