@@ -99,7 +99,7 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 | D5 | 과거 로그 수정 시 **로그당 1 INSERT 순차 루프**로 이벤트 재구축(트랜잭션 점유, O(n) 왕복) + 쓰기마다 유저 stats_cache **전체 DELETE**(스탬피드) | `autoProgression.ts:597-621` · `cache.ts:113-119` |
 | D6 | **풀 `max:5`** — Vercel 서버리스용 튜닝인데 apps/api는 전 트래픽을 받는 상시 단일 프로세스. `statement_timeout` 미설정 | `web/src/server/db/client.ts:17-26` |
 | D7 | `GET /api/stats/strength-summary` N+1: 상위 N종목마다 최대 1000행 쿼리 (2026-05 감사에서 이월, §7) | `apps/api/src/routes/stats.ts:215-240` |
-| D8 | 마이그레이션 meta 스냅샷 누락(0004–0010, 0013) — 다음 `drizzle-kit generate`가 오래된 스냅샷과 diff할 위험. 저널 0013 타임스탬프 순서 역전(수편집 흔적) | `web/src/server/db/migrations/meta/` |
+| D8 | ✅ **해소(2026-07-20)**: 스냅샷 누락(0004–0010·0013)은 무해로 판명 — `drizzle-kit generate` 실측 결과 "No schema changes"(최신 스냅샷 0022가 현 schema.ts와 일치, 0023·0024는 데이터 전용 마이그레이션). 실제 결함은 **저널 0013 타임스탬프 역전 → prod 영구 스킵**이었다: drizzle은 루프 진입 전 읽은 `max(created_at)` **하나**와만 비교하므로(`pg-core/dialect.js`) `when`이 더 낮은 항목은 기존 DB에서 영원히 건너뛴다. 빈 DB는 전부 적용하므로 **CI는 통과하고 prod만 조용히 누락**. 실측: prod `__drizzle_migrations` 24행(저널 25개)·`created_at=1743548400000` 부재 = 0013 미적용, 인덱스는 수동 생성으로 존재. 타임스탬프 교정 + `scripts/migration-journal-guard.test.mjs`(단조 증가·idx 연속·저널↔.sql 양방향)를 `test:unit`에 편입해 재발 차단 | `web/src/server/db/migrations/meta/_journal.json` · `web/scripts/migration-journal-guard.test.mjs` |
 
 ### 4.4 P3 — 프론트 성능
 
@@ -147,7 +147,7 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 3. e2e 13스펙 CI 편입 — 최소 nightly 스케줄 (R3)
 4. Go/TS 파리티 golden fixture (session-key·bodyweight) (§4.5)
 5. TUI 401 → `loggedOutMsg` 발행 + 에러 문구 분리 (R7) · self-update 체크섬 hard-fail (S4)
-6. PR 히스토리 가상화 (F3) · i18n 번들 확인 (F4) · 마이그레이션 meta 스냅샷 보수 (D8)
+6. PR 히스토리 가상화 (F3) · i18n 번들 확인 (F4) · ~~마이그레이션 meta 스냅샷 보수~~ ✅ 완료(D8, 2026-07-20)
 
 ### 5.4 4단계 — 중기 (상업화/확장 대비)
 
