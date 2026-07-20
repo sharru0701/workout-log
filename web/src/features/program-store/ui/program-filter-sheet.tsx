@@ -73,6 +73,9 @@ export function ProgramFilterSheet({
       onClose={onClose}
       closeLabel={ko ? "닫기" : "Close"}
       title={ko ? "필터" : "Filters"}
+      // Five axes are ~13 rows; a content-height sheet made the third axis fall
+      // under the footer, so the panel claims most of the screen instead.
+      height="85dvh"
       description={
         ko
           ? "같은 항목에서 여러 개를 고를 수 있고, 항목끼리는 모두 만족하는 프로그램만 남습니다."

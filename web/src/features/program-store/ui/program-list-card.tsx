@@ -4,57 +4,17 @@ import {
   V2Chip,
   V2PrimaryBtn,
   V2SecondaryBtn,
-  type V2ChipTone,
 } from "@/components/v2/primitives";
 import { V2Icon } from "@/components/v2/primitives/v2-icon";
 import { formatProgramDisplayName } from "@/features/program-store/model/view";
 import {
+  deriveProgramFacets,
+  programFacetValueLabel,
+} from "@workout/core/program-store/facets";
+import {
   getProgramDetailInfo,
   type ProgramListItem,
 } from "@workout/core/program-store/model";
-
-function tagChipTone(tag: string): V2ChipTone {
-  const normalized = tag.toLowerCase().trim();
-  if (["manual", "fixed", "custom"].some((k) => normalized.includes(k))) {
-    return "neutral";
-  }
-  if (
-    ["beginner", "novice", "starter", "입문", "초보"].some((k) =>
-      normalized.includes(k),
-    )
-  ) {
-    return "info";
-  }
-  if (
-    ["amrap", "top-set", "topset", "top set", "rpe", "rir"].some((k) =>
-      normalized.includes(k),
-    )
-  ) {
-    return normalized.includes("amrap") ? "warning" : "onerm";
-  }
-  if (
-    ["strength", "power", "hypertrophy", "근력", "파워", "근비대"].some((k) =>
-      normalized.includes(k),
-    )
-  ) {
-    return "accent";
-  }
-  if (
-    ["linear", "progression", "wave", "periodization", "선형", "주기화"].some(
-      (k) => normalized.includes(k),
-    )
-  ) {
-    return "weight";
-  }
-  if (
-    ["base", "variant", "template", "library", "operator"].some((k) =>
-      normalized.includes(k),
-    )
-  ) {
-    return "accent";
-  }
-  return "neutral";
-}
 
 function programCardBadge(item: ProgramListItem, locale: "ko" | "en") {
   const tags = (item.template.tags ?? []).map((tag) => tag.toLowerCase());
@@ -94,7 +54,14 @@ export function ProgramListCard({
   onPress,
 }: ProgramListCardProps) {
   const info = getProgramDetailInfo(item.template, locale);
-  const tags = Array.isArray(item.template.tags) ? item.template.tags : [];
+  // The card used to chip the first two raw tags, which is "strength barbell"
+  // for nearly every seeded program — identical on every card, untranslated, and
+  // pushing the tags that actually distinguish a program (linear, block,
+  // adaptive) past the two-chip cut. Only the progression style earns a chip
+  // now; a program without one simply shows none.
+  const styleLabels = deriveProgramFacets(item.template).style.map((value) =>
+    programFacetValueLabel("style", value, locale),
+  );
   const isMarket = item.source === "MARKET";
   const badge = programCardBadge(item, locale);
 
@@ -204,7 +171,7 @@ export function ProgramListCard({
             </p>
           ) : null}
         </div>
-        {tags.length > 0 ? (
+        {styleLabels.length > 0 ? (
           <div
             style={{
               display: "flex",
@@ -215,9 +182,9 @@ export function ProgramListCard({
               marginLeft: "var(--v2-s-2)",
             }}
           >
-            {tags.slice(0, 2).map((tag) => (
-              <V2Chip key={tag} tone={tagChipTone(tag)}>
-                {tag}
+            {styleLabels.map((label) => (
+              <V2Chip key={label} tone="weight">
+                {label}
               </V2Chip>
             ))}
           </div>
