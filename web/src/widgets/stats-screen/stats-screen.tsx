@@ -372,7 +372,11 @@ export function StatsScreen({
         <WeeklyVolumeSection data={initialVolumeWeekly} locale={locale} />
 
         <section
-          style={{ display: "grid", gap: "var(--v2-s-3)" }}
+          style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1fr)",
+            gap: "var(--v2-s-3)",
+          }}
           ref={detailedSectionRef}
         >
           <SectionTitle
