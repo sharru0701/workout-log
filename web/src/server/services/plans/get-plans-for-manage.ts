@@ -1,5 +1,6 @@
 import { db } from "@workout/core/db/client";
 import { plan, programTemplate, programVersion, workoutLog } from "@workout/core/db/schema";
+import { isProgramTemplateAccessible } from "@workout/core/program-store/template-access";
 import { and, count, desc, eq, inArray, isNotNull, max } from "drizzle-orm";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
@@ -21,6 +22,11 @@ export type PlanForManage = {
   logCount: number;
   /** 보관된 플랜은 기록을 유지한 채 플랜 선택 목록에서만 빠진다. */
   isArchived: boolean;
+  /**
+   * 기반 프로그램을 지금도 프로그램 스토어에서 볼 수 있는지.
+   * false면 플랜은 정상 동작하지만 스토어를 통한 재시작/이어하기 진입로가 없다.
+   */
+  baseProgramAccessible: boolean;
 };
 
 export async function getPlansForManage(): Promise<PlanForManage[]> {
@@ -48,7 +54,12 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
   const [versionRows, logRows] = await Promise.all([
     rootVersionIds.length > 0
       ? db
-          .select({ versionId: programVersion.id, templateName: programTemplate.name })
+          .select({
+            versionId: programVersion.id,
+            templateName: programTemplate.name,
+            templateVisibility: programTemplate.visibility,
+            templateOwnerUserId: programTemplate.ownerUserId,
+          })
           .from(programVersion)
           .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
           .where(inArray(programVersion.id, rootVersionIds))
@@ -73,10 +84,18 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
   ]);
 
   const versionNameById = new Map<string, string>();
+  const versionAccessibleById = new Map<string, boolean>();
   for (const row of versionRows) {
     if (!row.versionId) continue;
     const label = String(row.templateName ?? "").trim();
     if (label) versionNameById.set(row.versionId, label);
+    versionAccessibleById.set(
+      row.versionId,
+      isProgramTemplateAccessible(
+        { visibility: row.templateVisibility, ownerUserId: row.templateOwnerUserId },
+        userId,
+      ),
+    );
   }
 
   const lastPerformedAtByPlanId = new Map<string, Date>();
@@ -106,6 +125,10 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
       lastPerformedAt: lastPerformedAt ? lastPerformedAt.toISOString() : null,
       logCount: logCountByPlanId.get(item.id) ?? 0,
       isArchived: item.isArchived,
+      // COMPOSITE는 root 버전이 없고 모듈별 프로그램을 쓰므로 이 경고 대상이 아니다.
+      baseProgramAccessible: item.rootProgramVersionId
+        ? (versionAccessibleById.get(item.rootProgramVersionId) ?? false)
+        : true,
     };
   });
 }

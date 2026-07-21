@@ -48,6 +48,7 @@ import {
   readRef5PlanStartConfig,
 } from "@workout/core/program-engine/ref5";
 import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
+import { isProgramTemplateAccessible } from "@workout/core/program-store/template-access";
 
 import { requireAuth, type AppEnv } from "../auth";
 import { apiError, normalizeTimezone, resolveLocale } from "../lib/http";
@@ -177,11 +178,23 @@ plansRoutes.get("/", async (c) => {
     const [versionRows, logRows] = await Promise.all([
       rootVersionIds.length > 0
         ? db
-            .select({ versionId: programVersion.id, templateName: programTemplate.name })
+            .select({
+              versionId: programVersion.id,
+              templateName: programTemplate.name,
+              templateVisibility: programTemplate.visibility,
+              templateOwnerUserId: programTemplate.ownerUserId,
+            })
             .from(programVersion)
             .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
             .where(inArray(programVersion.id, rootVersionIds))
-        : Promise.resolve([] as Array<{ versionId: string; templateName: string | null }>),
+        : Promise.resolve(
+            [] as Array<{
+              versionId: string;
+              templateName: string | null;
+              templateVisibility: string | null;
+              templateOwnerUserId: string | null;
+            }>,
+          ),
       // PERF: plan별 최근 수행일만 필요 → 전 로그를 당겨 JS로 첫 행을 취하지 않고
       // SQL max()+groupBy로 plan당 1행만 전송 (전송량이 학습 이력 밀도와 무관).
       // logCount는 같은 groupBy에 얹는 집계라 추가 왕복 없이 나온다 — 삭제 확인에서
@@ -204,11 +217,18 @@ plansRoutes.get("/", async (c) => {
     ]);
 
     const versionNameById = new Map<string, string>();
+    const versionAccessibleById = new Map<string, boolean>();
     for (const row of versionRows) {
       if (!row.versionId) continue;
       const label = String(row.templateName ?? "").trim();
-      if (!label) continue;
-      versionNameById.set(row.versionId, label);
+      if (label) versionNameById.set(row.versionId, label);
+      versionAccessibleById.set(
+        row.versionId,
+        isProgramTemplateAccessible(
+          { visibility: row.templateVisibility, ownerUserId: row.templateOwnerUserId },
+          userId,
+        ),
+      );
     }
     const lastPerformedAtByPlanId = new Map<string, Date>();
     const logCountByPlanId = new Map<string, number>();
@@ -234,6 +254,10 @@ plansRoutes.get("/", async (c) => {
         baseProgramName,
         lastPerformedAt: lastPerformedAtByPlanId.get(item.id) ?? null,
         logCount: logCountByPlanId.get(item.id) ?? 0,
+        // COMPOSITE는 root 버전이 없고 모듈별 프로그램을 쓰므로 이 경고 대상이 아니다.
+        baseProgramAccessible: item.rootProgramVersionId
+          ? (versionAccessibleById.get(item.rootProgramVersionId) ?? false)
+          : true,
       };
     });
 
