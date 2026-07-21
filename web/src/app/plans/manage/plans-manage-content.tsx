@@ -75,6 +75,11 @@ function PlanCardV2({
                 {locale === "ko" ? "보관됨" : "Archived"}
               </V2Chip>
             ) : null}
+            {plan.baseProgramAccessible === false ? (
+              <V2Chip tone="warning" icon="help">
+                {locale === "ko" ? "스토어에 없음" : "Not in store"}
+              </V2Chip>
+            ) : null}
             {isFresh ? (
               <V2Chip tone="success" icon="bolt">
                 {locale === "ko" ? "최근 수행" : "Recent"}
@@ -120,7 +125,15 @@ function PlanCardV2({
   );
 }
 
-function PlanDetailRow({ label, value }: { label: string; value: string }) {
+function PlanDetailRow({
+  label,
+  value,
+  note,
+}: {
+  label: string;
+  value: string;
+  note?: string;
+}) {
   return (
     <V2Card tone="inset" padding="var(--v2-s-3) var(--v2-s-4)" radius="var(--v2-r-2)">
       <p className="v2-eyebrow" style={{ margin: 0, color: "var(--v2-ink-3)" }}>
@@ -137,6 +150,19 @@ function PlanDetailRow({ label, value }: { label: string; value: string }) {
       >
         {value}
       </p>
+      {note ? (
+        <p
+          className="v2-small"
+          style={{
+            margin: 0,
+            marginTop: "var(--v2-s-2)",
+            color: "var(--v2-ink-2)",
+            wordBreak: "break-word",
+          }}
+        >
+          {note}
+        </p>
+      ) : null}
     </V2Card>
   );
 }
@@ -544,6 +570,15 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
               <PlanDetailRow
                 label={copy.plansManage.baseProgram}
                 value={managedPlan.baseProgramName ?? "-"}
+                // 플랜은 정상 동작하지만 스토어에 원본이 없으면 "이어서 하기" 진입로가
+                // 사라진다. 표시가 없으면 사용자가 원인을 짐작할 방법이 없다.
+                note={
+                  managedPlan.baseProgramAccessible === false
+                    ? locale === "ko"
+                      ? "이 프로그램은 프로그램 스토어에 없습니다(비공개이거나 삭제됨). 기록과 진행에는 영향이 없지만, 스토어에서 이 플랜을 이어서 시작할 수는 없습니다."
+                      : "This program is no longer in the program store (private or deleted). Your logs and progress are unaffected, but you cannot resume this plan from the store."
+                    : undefined
+                }
               />
               <PlanDetailRow
                 label={copy.plansManage.createdAt}
