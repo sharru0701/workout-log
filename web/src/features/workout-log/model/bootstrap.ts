@@ -1,4 +1,5 @@
 import { apiGet } from "@/shared/api";
+import { readActivePlanIdSetting, resolveActivePlan } from "@workout/core/active-plan";
 import {
   readWorkoutPreferences,
   toDefaultWorkoutPreferences,
@@ -94,8 +95,11 @@ export async function resolveWorkoutLogBootstrap(
     };
   }
 
-  const fallbackPlan = activePlans[0];
-  const plan = activePlans.find((entry) => entry.id === query.planId) ?? fallbackPlan;
+  // URL의 planId가 우선이고, 없으면 활성 플랜(홈·캘린더와 같은 규칙)으로 떨어진다.
+  const plan =
+    activePlans.find((entry) => entry.id === query.planId) ??
+    resolveActivePlan(activePlans, readActivePlanIdSetting(settingsSnapshot)) ??
+    activePlans[0];
 
   return {
     kind: "load-context",

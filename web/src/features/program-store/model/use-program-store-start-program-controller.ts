@@ -3,6 +3,7 @@ import { errorMessage } from "@/lib/error-message";
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { apiGet, apiPatch, apiPost, isAbortError } from "@/lib/api";
+import { ACTIVE_PLAN_SETTING_KEY } from "@workout/core/active-plan";
 import {
   ASYMPTOTE_HYBRID_TM_PERCENT,
   extractOneRmTargetsFromTemplate,
@@ -40,11 +41,33 @@ export type OneRmRecommendation = {
   latestDate: string;
 };
 
+/**
+ * 같은 프로그램의 플랜이 이미 있을 때 "시작"의 의미.
+ * - CONTINUE: 기존 플랜으로 이동만 한다(무게·주차 그대로). 서버 호출 없음.
+ * - NEW: 새 플랜을 만든다. 기존 플랜의 기록·진행은 그대로 보존된다.
+ * 예전에는 기존 플랜의 params를 덮어썼는데, runtime state가 params보다 우선이라
+ * 입력한 1RM이 처방에 반영되지 않는 "시작했는데 안 바뀜" 상태가 됐다.
+ */
+export type StartRestartMode = "CONTINUE" | "NEW";
+
+export type ExistingPlanProgress = {
+  lastPerformedAt: string | null;
+  targets: Array<{ label: string; workKg: number }>;
+};
+
 export type StartProgramDraft = {
   mode: "ONE_RM" | "REF5";
   template: ProgramTemplate;
   expectedPlanType: "SINGLE" | "MANUAL";
   existingPlanId: string | null;
+  existingPlanName: string | null;
+  restartMode: StartRestartMode;
+  existingProgress: ExistingPlanProgress | null;
+  existingProgressStatus: "idle" | "loading" | "ready" | "failed";
+  /** CONTINUE에서 보여줄 기존 플랜의 REF5 시작 기준(읽기 전용). */
+  ref5ExistingConfig: Ref5StartConfig | null;
+  /** NEW에서 쓸 템플릿 기본 REF5 시작 기준. */
+  ref5TemplateConfig: Ref5StartConfig | null;
   timezone: string;
   today: string;
   tmPercent: number;
@@ -108,6 +131,73 @@ function parsePositiveNumber(input: string) {
   const n = Number(input);
   if (!Number.isFinite(n) || n <= 0) return null;
   return Math.round(n * 100) / 100;
+}
+
+const PROGRESSION_TARGET_LABELS: Record<string, { ko: string; en: string }> = {
+  SQUAT: { ko: "스쿼트", en: "Squat" },
+  BENCH: { ko: "벤치 프레스", en: "Bench Press" },
+  DEADLIFT: { ko: "데드리프트", en: "Deadlift" },
+  OHP: { ko: "오버헤드 프레스", en: "Overhead Press" },
+  PULL: { ko: "풀업", en: "Pull-Up" },
+};
+
+type ProgressionStateResponse = {
+  state?: {
+    targets?: Record<string, { progressionTarget?: unknown; workKg?: unknown }>;
+  } | null;
+};
+
+/** progression-state의 runtime targets → 표시용 "현재 작업 중량" 목록(리프트별 1행). */
+export function readCurrentWorkKgTargets(
+  response: ProgressionStateResponse | null,
+  locale: "ko" | "en",
+): Array<{ label: string; workKg: number }> {
+  const targets = response?.state?.targets;
+  if (!targets || typeof targets !== "object") return [];
+  const out: Array<{ label: string; workKg: number }> = [];
+  const seen = new Set<string>();
+  for (const [key, value] of Object.entries(targets)) {
+    const workKg = Number((value as { workKg?: unknown })?.workKg);
+    if (!Number.isFinite(workKg) || workKg <= 0) continue;
+    const target = String((value as { progressionTarget?: unknown })?.progressionTarget ?? key)
+      .trim()
+      .toUpperCase();
+    if (seen.has(target)) continue;
+    seen.add(target);
+    out.push({
+      label: PROGRESSION_TARGET_LABELS[target]?.[locale] ?? target,
+      workKg,
+    });
+  }
+  return out;
+}
+
+/**
+ * 방금 시작한 플랜을 활성 플랜으로 표시한다. 홈·기록·캘린더가 모두 이 값을 먼저 보므로,
+ * 새 플랜을 시작한 뒤 홈이 옛 플랜을 계속 가리키던 문제가 여기서 끊긴다.
+ * 저장 실패는 치명적이지 않다(기존 휴리스틱으로 폴백) — 시작 자체를 막지 않는다.
+ */
+async function markPlanActive(planId: string) {
+  try {
+    await apiPatch(
+      "/api/settings",
+      { key: ACTIVE_PLAN_SETTING_KEY, value: planId },
+      { invalidateCachePrefixes: ["/api/settings", "/api/home"] },
+    );
+  } catch {
+    // 무시: 활성 플랜은 편의 기능이고, 실패해도 URL의 planId로 진입은 정상 동작한다.
+  }
+}
+
+/** 같은 이름의 플랜이 이미 있으면 뒤에 번호를 붙여 목록에서 구분되게 한다. */
+export function uniquePlanName(baseName: string, plans: Array<{ name: string }>) {
+  const taken = new Set(plans.map((plan) => plan.name.trim()));
+  if (!taken.has(baseName)) return baseName;
+  for (let suffix = 2; suffix <= 99; suffix += 1) {
+    const candidate = `${baseName} ${suffix}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  return `${baseName} ${Date.now()}`;
 }
 
 export function readRef5StartConfigFromTemplate(
@@ -680,6 +770,83 @@ export function useProgramStoreStartProgramController({
     setStartProgramDraft(null);
   }, []);
 
+  const loadExistingProgress = useCallback(
+    async (planId: string, lastPerformedAt: string | null) => {
+      try {
+        const response = await apiGet<ProgressionStateResponse>(
+          `/api/plans/${encodeURIComponent(planId)}/progression-state`,
+        );
+        setStartProgramDraft((prev) => {
+          if (!prev || prev.existingPlanId !== planId) return prev;
+          return {
+            ...prev,
+            existingProgress: {
+              lastPerformedAt,
+              targets: readCurrentWorkKgTargets(response, locale),
+            },
+            existingProgressStatus: "ready",
+          };
+        });
+      } catch {
+        // 진행 요약은 부가 정보다 — 실패해도 이어서 하기/새로 시작 선택은 계속 가능.
+        setStartProgramDraft((prev) => {
+          if (!prev || prev.existingPlanId !== planId) return prev;
+          return { ...prev, existingProgressStatus: "failed" };
+        });
+      }
+    },
+    [locale],
+  );
+
+  /**
+   * 이어서 하기 ↔ 새로 시작 전환. NEW로 처음 전환할 때만 추천값을 불러오고,
+   * REF5 시작 기준도 (기존 플랜 값 ↔ 템플릿 기본값)으로 함께 갈아끼운다.
+   */
+  const updateRestartMode = useCallback(
+    (mode: StartRestartMode) => {
+      const current = startProgramDraft;
+      if (!current || current.restartMode === mode) return;
+
+      if (mode === "CONTINUE") {
+        setStartProgramDraft((prev) =>
+          prev
+            ? {
+                ...prev,
+                restartMode: mode,
+                ref5Config: prev.ref5ExistingConfig ?? prev.ref5Config,
+                ref5SetupMode: "DIRECT",
+              }
+            : prev,
+        );
+        return;
+      }
+
+      const shouldLoadRecommendations = current.recommendationStatus === "idle";
+      setStartProgramDraft((prev) =>
+        prev
+          ? {
+              ...prev,
+              restartMode: mode,
+              ref5Config: prev.ref5TemplateConfig ?? prev.ref5Config,
+              ref5SetupMode: prev.mode === "REF5" ? "E1RM" : prev.ref5SetupMode,
+              ref5Calibration: null,
+              recommendationStatus: shouldLoadRecommendations
+                ? "loading"
+                : prev.recommendationStatus,
+            }
+          : prev,
+      );
+
+      if (!shouldLoadRecommendations) return;
+      if (current.mode === "REF5") {
+        void loadRef5Recommendations(current.template);
+      } else {
+        void loadOneRmRecommendations(current.template, current.targets);
+      }
+    },
+    [loadOneRmRecommendations, loadRef5Recommendations, startProgramDraft],
+  );
+
   const openStartProgramDraft = useCallback(
     (template: ProgramTemplate) => {
       if (!template.latestVersion) {
@@ -702,11 +869,12 @@ export function useProgramStoreStartProgramController({
             plan.type === expectedPlanType,
         ) ?? null;
       const ref5 = isRef5Template(template);
-      const ref5Config = ref5
-        ? existing
-          ? readRef5StartConfigFromPlanParams(existing.params)
-          : readRef5StartConfigFromTemplate(template)
-        : null;
+      const ref5TemplateConfig = ref5 ? readRef5StartConfigFromTemplate(template) : null;
+      const ref5ExistingConfig =
+        ref5 && existing ? readRef5StartConfigFromPlanParams(existing.params) : null;
+      // 기존 플랜이 있으면 기본은 "이어서 하기" — 새 플랜 생성은 명시적 선택일 때만.
+      const restartMode: StartRestartMode = existing ? "CONTINUE" : "NEW";
+      const ref5Config = ref5 ? (ref5ExistingConfig ?? ref5TemplateConfig) : null;
       if (ref5 && !ref5Config) {
         setError(
           locale === "ko"
@@ -737,6 +905,12 @@ export function useProgramStoreStartProgramController({
         template,
         expectedPlanType,
         existingPlanId: existing?.id ?? null,
+        existingPlanName: existing?.name ?? null,
+        restartMode,
+        existingProgress: null,
+        existingProgressStatus: existing ? "loading" : "idle",
+        ref5ExistingConfig,
+        ref5TemplateConfig,
         timezone,
         today,
         tmPercent,
@@ -753,15 +927,24 @@ export function useProgramStoreStartProgramController({
       });
       setError(null);
 
-      if (!existing) {
-        if (ref5) {
-          void loadRef5Recommendations(template);
-        } else {
-          void loadOneRmRecommendations(template, targets);
-        }
+      if (existing) {
+        // "이어서 하기"가 무엇을 이어가는지 보여주려면 params가 아니라 runtime state를
+        // 읽어야 한다 — 진행된 무게는 params.trainingMaxKg가 아니라 여기에 있다.
+        void loadExistingProgress(existing.id, existing.lastPerformedAt ?? null);
+      } else if (ref5) {
+        void loadRef5Recommendations(template);
+      } else {
+        void loadOneRmRecommendations(template, targets);
       }
     },
-    [loadOneRmRecommendations, loadRef5Recommendations, locale, plans, setError],
+    [
+      loadExistingProgress,
+      loadOneRmRecommendations,
+      loadRef5Recommendations,
+      locale,
+      plans,
+      setError,
+    ],
   );
 
   const updateOneRmInput = useCallback((targetKey: string, value: number) => {
@@ -780,7 +963,7 @@ export function useProgramStoreStartProgramController({
   const updateRef5StartingValue = useCallback(
     (field: Ref5StartField, value: number) => {
       setStartProgramDraft((prev) => {
-        if (!prev?.ref5Config || prev.existingPlanId) return prev;
+        if (!prev?.ref5Config || prev.restartMode !== "NEW") return prev;
         const startingValuesKg = {
           ...prev.ref5Config.startingValuesKg,
           [field]: value,
@@ -801,7 +984,7 @@ export function useProgramStoreStartProgramController({
 
   const updateRef5SetupMode = useCallback((mode: "E1RM" | "DIRECT") => {
     setStartProgramDraft((prev) => {
-      if (!prev || prev.mode !== "REF5" || prev.existingPlanId) return prev;
+      if (!prev || prev.mode !== "REF5" || prev.restartMode !== "NEW") return prev;
       if (mode === "DIRECT") return { ...prev, ref5SetupMode: mode };
       const calibration = deriveRef5StartCalibration(prev.ref5E1rmInputs);
       return {
@@ -815,7 +998,7 @@ export function useProgramStoreStartProgramController({
 
   const updateRef5E1rmInput = useCallback((lift: Ref5Lift, value: number) => {
     setStartProgramDraft((prev) => {
-      if (!prev || prev.mode !== "REF5" || prev.existingPlanId) return prev;
+      if (!prev || prev.mode !== "REF5" || prev.restartMode !== "NEW") return prev;
       const ref5E1rmInputs = {
         ...prev.ref5E1rmInputs,
         [lift]: Math.round(value * 10) / 10,
@@ -848,9 +1031,20 @@ export function useProgramStoreStartProgramController({
   const submitStartProgram = useCallback(async () => {
     if (!startProgramDraft) return;
 
+    // 이어서 하기: 기존 플랜은 무게·주차를 그대로 들고 있으므로 진행 상태는 건드리지 않고
+    // "지금 이 플랜으로 한다"는 선택만 기록한 뒤 이동한다.
+    if (startProgramDraft.restartMode === "CONTINUE" && startProgramDraft.existingPlanId) {
+      const planId = startProgramDraft.existingPlanId;
+      const date = startProgramDraft.today;
+      await markPlanActive(planId);
+      setStartProgramDraft(null);
+      onStarted(planId, date);
+      return;
+    }
+
     const isRef5Start = startProgramDraft.mode === "REF5";
     const ref5ValidationMessage = isRef5Start
-      ? startProgramDraft.ref5SetupMode === "E1RM" && !startProgramDraft.existingPlanId
+      ? startProgramDraft.ref5SetupMode === "E1RM"
         ? ref5E1rmValidationMessage(startProgramDraft.ref5E1rmInputs, locale)
         : startProgramDraft.ref5Config
           ? ref5StartConfigValidationMessage(startProgramDraft.ref5Config, locale)
@@ -912,17 +1106,13 @@ export function useProgramStoreStartProgramController({
       setSaving(true);
       setNotice(null);
 
-      const existing = startProgramDraft.existingPlanId
-        ? plans.find((plan) => plan.id === startProgramDraft.existingPlanId) ??
-          null
-        : null;
-
-      let targetPlanId = startProgramDraft.existingPlanId;
+      // 새로 시작은 언제나 새 플랜을 만든다. 기존 플랜의 params를 덮어쓰던 예전 경로는
+      // runtime state가 살아남아 새 1RM이 무시됐고, REF5는 params가 immutable이라
+      // 아무 변화도 없었다. 새 플랜이면 runtime state가 비어 입력값이 그대로 첫 처방이 된다.
       const defaultPlanParams = isRef5Start
         ? {}
         : defaultStartPlanParamsFromTemplate(startProgramDraft.template);
       const nextPlanParams = ref5PlanParams ?? {
-        ...(existing?.params ?? {}),
         ...defaultPlanParams,
         startDate: startProgramDraft.today,
         timezone: startProgramDraft.timezone,
@@ -931,36 +1121,27 @@ export function useProgramStoreStartProgramController({
         trainingMaxKg,
       };
 
-      if (existing && targetPlanId) {
-        if (!isRef5Start) {
-          await apiPatch<{ plan: PlanItem }>(
-            `/api/plans/${encodeURIComponent(targetPlanId)}`,
-            {
-              params: nextPlanParams,
-            },
-          );
-        }
-      } else {
-        const created = await apiPost<{ plan: PlanItem }>("/api/plans", {
-          name:
-            locale === "ko"
-              ? `${formatProgramDisplayName(startProgramDraft.template.name)} 프로그램`
-              : `${formatProgramDisplayName(startProgramDraft.template.name)} Program`,
-          type: startProgramDraft.expectedPlanType,
-          rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
-          params: nextPlanParams,
-        });
-        targetPlanId = created.plan.id;
-      }
+      const baseName =
+        locale === "ko"
+          ? `${formatProgramDisplayName(startProgramDraft.template.name)} 프로그램`
+          : `${formatProgramDisplayName(startProgramDraft.template.name)} Program`;
+      const created = await apiPost<{ plan: PlanItem }>("/api/plans", {
+        name: uniquePlanName(baseName, plans),
+        type: startProgramDraft.expectedPlanType,
+        rootProgramVersionId: startProgramDraft.template.latestVersion!.id,
+        params: nextPlanParams,
+      });
+      const targetPlanId = created.plan.id;
 
       if (!targetPlanId) {
         throw new Error(
           locale === "ko"
-            ? "플랜 생성/갱신 결과가 올바르지 않습니다."
-            : "The plan create/update result was invalid.",
+            ? "플랜 생성 결과가 올바르지 않습니다."
+            : "The plan create result was invalid.",
         );
       }
 
+      await markPlanActive(targetPlanId);
       void loadStore({ isRefresh: true });
       setStartProgramDraft(null);
       onStarted(targetPlanId, startProgramDraft.today);
@@ -989,6 +1170,7 @@ export function useProgramStoreStartProgramController({
     startProgramDraft,
     closeStartProgramDraft,
     openStartProgramDraft,
+    updateRestartMode,
     updateOneRmInput,
     updateRef5StartingValue,
     updateRef5SetupMode,

@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 
 import { db } from "@workout/core/db/client";
-import { and, desc, eq, inArray, isNotNull, max, or } from "@workout/core/db/ops";
+import { and, count, desc, eq, inArray, isNotNull, max, or } from "@workout/core/db/ops";
 import {
   generatedSession,
   plan as planTable,
@@ -29,6 +29,7 @@ import {
   type LastTargetEvent,
 } from "@workout/core/progression/last-events";
 import { applyManualRuntimeAdjustment } from "@workout/core/progression/autoProgression";
+import { rebuildRef5ProgressionForPlan } from "@workout/core/progression/ref5-auto-progression";
 import { buildProgressionFeedbackFromEvent } from "@workout/core/progression/feedback-catalog";
 import { invalidateStatsCacheForUser } from "@workout/core/stats/cache";
 import { buildSessionKey } from "@workout/core/session-key";
@@ -183,10 +184,13 @@ plansRoutes.get("/", async (c) => {
         : Promise.resolve([] as Array<{ versionId: string; templateName: string | null }>),
       // PERF: plan별 최근 수행일만 필요 → 전 로그를 당겨 JS로 첫 행을 취하지 않고
       // SQL max()+groupBy로 plan당 1행만 전송 (전송량이 학습 이력 밀도와 무관).
+      // logCount는 같은 groupBy에 얹는 집계라 추가 왕복 없이 나온다 — 삭제 확인에서
+      // "기록 N건이 함께 지워진다"를 사전에 보여주는 데 쓴다.
       db
         .select({
           planId: workoutLog.planId,
           lastPerformedAt: max(workoutLog.performedAt),
+          logCount: count(workoutLog.id),
         })
         .from(workoutLog)
         .where(
@@ -207,10 +211,12 @@ plansRoutes.get("/", async (c) => {
       versionNameById.set(row.versionId, label);
     }
     const lastPerformedAtByPlanId = new Map<string, Date>();
+    const logCountByPlanId = new Map<string, number>();
     for (const row of logRows) {
       const planId = row.planId;
-      if (!planId || !row.lastPerformedAt) continue;
-      lastPerformedAtByPlanId.set(planId, row.lastPerformedAt);
+      if (!planId) continue;
+      if (row.lastPerformedAt) lastPerformedAtByPlanId.set(planId, row.lastPerformedAt);
+      logCountByPlanId.set(planId, Number(row.logCount ?? 0));
     }
 
     const items = baseItems.map((item) => {
@@ -227,6 +233,7 @@ plansRoutes.get("/", async (c) => {
         ...item,
         baseProgramName,
         lastPerformedAt: lastPerformedAtByPlanId.get(item.id) ?? null,
+        logCount: logCountByPlanId.get(item.id) ?? 0,
       };
     });
 
@@ -398,6 +405,7 @@ plansRoutes.patch("/:planId", async (c) => {
       name?: unknown;
       params?: unknown;
       autoProgression?: unknown;
+      isArchived?: unknown;
     };
 
     const rows = await db.select().from(planTable).where(eq(planTable.id, planId)).limit(1);
@@ -427,7 +435,10 @@ plansRoutes.patch("/:planId", async (c) => {
         typeof body.params === "object" &&
         !Array.isArray(body.params)) ||
       typeof body.autoProgression === "boolean";
-    if (!hasNamePatch && !hasParamsPatch) {
+    // 보관은 기록을 지우지 않고 목록에서만 내리는 되돌릴 수 있는 상태 변경이라,
+    // params 불변(REF5) 규칙과 무관하게 모든 플랜에 허용된다.
+    const hasArchivePatch = typeof body.isArchived === "boolean";
+    if (!hasNamePatch && !hasParamsPatch && !hasArchivePatch) {
       return c.json(
         { error: locale === "ko" ? "수정할 내용이 없습니다." : "No patch payload." },
         400,
@@ -471,10 +482,17 @@ plansRoutes.patch("/:planId", async (c) => {
       .set({
         name: hasNamePatch ? nextName : undefined,
         params: hasParamsPatch ? nextParams : undefined,
+        isArchived: hasArchivePatch ? (body.isArchived as boolean) : undefined,
         updatedAt: new Date(),
       })
       .where(eq(planTable.id, planId))
       .returning();
+
+    // 홈 payload는 플랜 목록을 90초간 캐시한다. 보관/해제는 홈이 제안하는 플랜을
+    // 즉시 바꿔야 하므로 여기서 캐시를 비운다(이름/파라미터 수정은 홈 표시와 무관).
+    if (hasArchivePatch) {
+      await invalidateStatsCacheForUser(userId).catch(() => {});
+    }
 
     return c.json({ plan: updated }, 200);
   } catch (e) {
@@ -652,6 +670,81 @@ plansRoutes.get("/:planId/generated-sessions/:sessionId", async (c) => {
         409,
       );
     }
+    return apiError(c, e, locale);
+  }
+});
+
+// DELETE /api/plans/:planId/generated-sessions/:sessionId — cancel a REF5 session
+// that was started but never logged. Without this, a mistakenly started session
+// locks the plan selector for the rest of the calendar day: the session is
+// resumed on every visit and plan switching is blocked while it is open.
+plansRoutes.delete("/:planId/generated-sessions/:sessionId", async (c) => {
+  const locale = resolveLocale(c);
+  try {
+    const userId = c.get("userId");
+    const planId = c.req.param("planId");
+    const sessionId = c.req.param("sessionId");
+
+    const [planRows, sessionRows] = await Promise.all([
+      db
+        .select({ userId: planTable.userId, params: planTable.params })
+        .from(planTable)
+        .where(eq(planTable.id, planId))
+        .limit(1),
+      db
+        .select({ id: generatedSession.id })
+        .from(generatedSession)
+        .where(
+          and(
+            eq(generatedSession.id, sessionId),
+            eq(generatedSession.planId, planId),
+            eq(generatedSession.userId, userId),
+          ),
+        )
+        .limit(1),
+    ]);
+    const planRow = planRows[0];
+    if (!planRow || planRow.userId !== userId || !isRef5PlanParams(planRow.params)) {
+      return c.json(
+        { error: locale === "ko" ? "REF5 플랜을 찾을 수 없습니다." : "REF5 plan not found." },
+        404,
+      );
+    }
+    if (!sessionRows[0]) {
+      return c.json(
+        { error: locale === "ko" ? "세션을 찾을 수 없습니다." : "Session not found." },
+        404,
+      );
+    }
+
+    // 이미 기록이 붙은 세션은 취소 대상이 아니다 — 그건 기록 삭제로 처리해야 한다.
+    const loggedRows = await db
+      .select({ id: workoutLog.id })
+      .from(workoutLog)
+      .where(and(eq(workoutLog.generatedSessionId, sessionId), eq(workoutLog.userId, userId)))
+      .limit(1);
+    if (loggedRows[0]) {
+      return c.json(
+        {
+          error:
+            locale === "ko"
+              ? "이미 기록이 저장된 세션입니다. 기록을 먼저 삭제해 주세요."
+              : "This session already has a saved log. Delete the log first.",
+          code: "REF5_SESSION_ALREADY_LOGGED",
+        },
+        409,
+      );
+    }
+
+    await db.transaction(async (tx) => {
+      await tx.delete(generatedSession).where(eq(generatedSession.id, sessionId));
+      // 시작 이벤트가 전진시킨 runtime state를 남은 세션·기록으로 다시 접어 되돌린다.
+      await rebuildRef5ProgressionForPlan({ tx, userId, planId });
+      await invalidateStatsCacheForUser(userId, tx);
+    });
+
+    return c.json({ deleted: true, sessionId }, 200);
+  } catch (e) {
     return apiError(c, e, locale);
   }
 });

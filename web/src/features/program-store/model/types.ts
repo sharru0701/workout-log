@@ -6,6 +6,8 @@ export type PlanItem = {
   type: "SINGLE" | "COMPOSITE" | "MANUAL";
   rootProgramVersionId: string | null;
   params: Record<string, unknown> | null;
+  /** GET /api/plans가 함께 내려주는 진행 요약 — 재시작 시트의 "이어서 하기" 카드가 쓴다. */
+  lastPerformedAt?: string | null;
 };
 
 export type ExerciseOption = {

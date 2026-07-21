@@ -3,12 +3,14 @@ import test from "node:test";
 import type { ProgramTemplate } from "@workout/core/program-store/model";
 import {
   buildRef5StartPlanParams,
+  readCurrentWorkKgTargets,
   readRef5StartConfigFromTemplate,
   ref5E1rmValidationMessage,
   ref5StartConfigValidationMessage,
   requestOneRmStatsForProgramStart,
   requestRef5StartRecommendation,
   shouldLoadOneRmRecommendations,
+  uniquePlanName,
   type Ref5StartRecommendationResponse,
 } from "./use-program-store-start-program-controller";
 import { buildInitialCreateDraft } from "./use-program-store-sheet-entry-controller";
@@ -207,6 +209,43 @@ test("REF5 e1RM calibration requires all five positive inputs", () => {
     ),
     null,
   );
+});
+
+test("restarting a program creates a distinctly named plan instead of overwriting", () => {
+  const plans = [
+    { name: "Texas Method 프로그램" },
+    { name: "Texas Method 프로그램 2" },
+    { name: "GZCLP 프로그램" },
+  ];
+  assert.equal(uniquePlanName("StrongLifts 5x5 프로그램", plans), "StrongLifts 5x5 프로그램");
+  assert.equal(uniquePlanName("Texas Method 프로그램", plans), "Texas Method 프로그램 3");
+  assert.equal(uniquePlanName("Texas Method 프로그램", []), "Texas Method 프로그램");
+});
+
+test("continue summary reads progressed loads from runtime state, one row per lift", () => {
+  const targets = readCurrentWorkKgTargets(
+    {
+      state: {
+        targets: {
+          // 같은 리프트의 슬롯이 여러 개여도 한 줄만 보여준다.
+          I_s1: { progressionTarget: "SQUAT", workKg: 102.5 },
+          I_s2: { progressionTarget: "squat", workKg: 100 },
+          BENCH: { progressionTarget: "BENCH", workKg: 80 },
+          // 아직 진행 전(0kg)이면 표시하지 않는다.
+          DEADLIFT: { progressionTarget: "DEADLIFT", workKg: 0 },
+          OHP: { workKg: "not-a-number" },
+        },
+      },
+    },
+    "ko",
+  );
+
+  assert.deepEqual(targets, [
+    { label: "스쿼트", workKg: 102.5 },
+    { label: "벤치 프레스", workKg: 80 },
+  ]);
+  assert.deepEqual(readCurrentWorkKgTargets(null, "ko"), []);
+  assert.deepEqual(readCurrentWorkKgTargets({ state: null }, "en"), []);
 });
 
 test("REF5 is not offered as a generic official-template fork source", () => {

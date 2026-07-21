@@ -119,7 +119,8 @@ export function useCalendarDataController({
         const response = await apiGet<{ items: CalendarPlan[] }>("/api/plans");
         if (cancelled) return;
         plansLoadedRef.current = true;
-        setPlans(response.items);
+        // 보관된 플랜은 선택 목록에서 뺀다(기록은 그대로 남아 있고, 플랜 관리에서 되돌릴 수 있다).
+        setPlans(response.items.filter((plan) => plan.isArchived !== true));
         setPlanId((currentPlanId) => {
           if (
             currentPlanId &&

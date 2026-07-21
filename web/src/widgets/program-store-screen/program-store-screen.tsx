@@ -153,6 +153,7 @@ export function ProgramStoreScreen({
     startProgramDraft,
     closeStartProgramDraft,
     openStartProgramDraft,
+    updateRestartMode,
     updateOneRmInput,
     updateRef5StartingValue,
     updateRef5SetupMode,
@@ -282,6 +283,7 @@ export function ProgramStoreScreen({
         onSubmit={() => {
           void submitStartProgram();
         }}
+        onChangeRestartMode={updateRestartMode}
         onChangeOneRmInput={updateOneRmInput}
         onChangeRef5StartingValue={updateRef5StartingValue}
         onChangeRef5SetupMode={updateRef5SetupMode}

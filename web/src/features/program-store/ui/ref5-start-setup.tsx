@@ -42,7 +42,8 @@ export function Ref5StartSetup({
 
   const starts = config.startingValuesKg;
   const refs = config.controlRefsKg;
-  const editable = !draft.existingPlanId;
+  // 시작 기준은 새 플랜을 만들 때만 정할 수 있다(REF5 params는 생성 후 immutable).
+  const editable = draft.restartMode === "NEW";
   const caps = deriveRef5AuxiliaryCaps(starts);
   const directRows: Array<[Ref5StartField, string, number]> = [
     ["sqH3Kg", "SQ · 3×3", starts.sqH3Kg],

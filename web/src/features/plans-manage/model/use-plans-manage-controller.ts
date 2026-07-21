@@ -435,11 +435,67 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     }
   }
 
+  /**
+   * 보관 = "이 플랜은 그만한다". 기록·진행 상태는 그대로 두고 목록에서만 내린다.
+   * 삭제만 있던 시절에는 플랜을 정리하려다 운동기록까지 잃는 게 유일한 선택지였다.
+   */
+  async function toggleArchivePlan() {
+    if (!managedPlan) return;
+    const nextArchived = !managedPlan.isArchived;
+    if (nextArchived) {
+      const ok = await confirm({
+        title: "플랜 보관",
+        message: `'${managedPlan.name}' 플랜을 보관하시겠습니까?\n운동기록은 그대로 남고, 플랜 선택 목록에서만 사라집니다. 언제든 되돌릴 수 있습니다.`,
+        confirmText: "보관",
+        cancelText: "취소",
+      });
+      if (!ok) return;
+    }
+
+    try {
+      setSaving(true);
+      setError(null);
+      const res = await apiPatch<{ plan: Plan }>(
+        `/api/plans/${encodeURIComponent(managedPlan.id)}`,
+        { isArchived: nextArchived },
+        { invalidateCachePrefixes: ["/api/plans", "/api/home"] },
+      );
+      const updated = res?.plan;
+      setPlans((prev) =>
+        prev.map((item) =>
+          item.id === managedPlan.id
+            ? updated
+              ? planWithPatchedFields(item, updated)
+              : { ...item, isArchived: nextArchived }
+            : item,
+        ),
+      );
+      setManagePlanId("");
+    } catch (e) {
+      const message = errorMessage(e) ?? "플랜 보관 상태를 변경하지 못했습니다.";
+      setError(message);
+      await alert({
+        title: nextArchived ? "보관 실패" : "보관 해제 실패",
+        message,
+        buttonText: "확인",
+        tone: "danger",
+      });
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function deletePlan() {
     if (!managedPlan) return;
+    // 삭제는 플랜에 매달린 workout_log까지 함께 지운다(통계·1RM 추이에서도 사라짐).
+    // "세션/진행 상태"라고만 쓰면 기록 손실을 읽어낼 수 없어, 건수를 앞세워 경고한다.
+    const logCount = managedPlan.logCount ?? 0;
     const ok = await confirm({
       title: "플랜 삭제",
-      message: `'${managedPlan.name}' 플랜을 삭제하시겠습니까?\n생성된 세션/진행 상태가 함께 정리됩니다.`,
+      message:
+        logCount > 0
+          ? `'${managedPlan.name}' 플랜을 삭제하시겠습니까?\n\n이 플랜으로 남긴 운동기록 ${logCount}건이 함께 삭제되고 통계·1RM 추이에서도 사라집니다. 되돌릴 수 없습니다.\n\n기록을 남겨두려면 삭제 대신 보관을 사용하세요.`
+          : `'${managedPlan.name}' 플랜을 삭제하시겠습니까?\n생성된 세션·진행 상태가 함께 정리됩니다.`,
       confirmText: "삭제",
       cancelText: "취소",
       tone: "danger",
@@ -454,12 +510,18 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
       setManagePlanId("");
       setPlans((prev) => prev.filter((item) => item.id !== targetId));
 
-      await apiDelete<{ deleted: boolean; planId: string }>(
-        `/api/plans/${encodeURIComponent(targetId)}`,
-      );
+      const result = await apiDelete<{
+        deleted: boolean;
+        planId: string;
+        deletedLogCount?: number;
+      }>(`/api/plans/${encodeURIComponent(targetId)}`);
+      const deletedLogCount = Number(result?.deletedLogCount ?? 0);
       await alert({
         title: "삭제 완료",
-        message: `플랜이 삭제되었습니다.\n${managedPlan.name}`,
+        message:
+          deletedLogCount > 0
+            ? `플랜이 삭제되었습니다.\n${managedPlan.name} · 운동기록 ${deletedLogCount}건 삭제`
+            : `플랜이 삭제되었습니다.\n${managedPlan.name}`,
         buttonText: "확인",
       });
     } catch (e) {
@@ -522,5 +584,6 @@ export function usePlansManageController({ initialPlans }: { initialPlans: Plan[
     saveAdjustment,
     savePlanChanges,
     deletePlan,
+    toggleArchivePlan,
   };
 }

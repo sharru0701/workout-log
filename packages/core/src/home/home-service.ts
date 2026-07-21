@@ -46,6 +46,7 @@ import {
   type TrainingGoalKey,
 } from "../settings/workout-preferences";
 import { buildTodayLogHref, toLocalDateKey } from "@workout/core/workout-links";
+import { readActivePlanIdSetting, resolveActivePlan } from "../active-plan";
 import type { AppLocale } from "../locale";
 
 // ─── Types ──────────────────────────────────────────────────────────
@@ -329,6 +330,7 @@ async function loadHomeData(params: {
   const prefs = readWorkoutPreferences(settings);
   const goal = prefs.trainingGoalPrimary;
   const bodyweightKg = prefs.bodyweightKg;
+  const activePlanId = readActivePlanIdSetting(settings);
   const settingsMs = Date.now() - settingsStartedAt;
 
   const prRangeDays = 365;
@@ -352,7 +354,7 @@ async function loadHomeData(params: {
   // PERF: 홈은 읽기 전용 미리보기만 계산하고 generated_session을 쓰지 않는다.
   // 1.5초 안에 준비되지 않으면 나머지 홈 데이터를 먼저 제공한다.
   // 타임아웃 시 snapshot=null로 빌드 → 오늘 계획 운동 목록만 비어있고 나머지 홈 데이터는 정상 표시.
-  const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey);
+  const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey, activePlanId);
   let snapshot = null;
   const ref5StatusPromise: Promise<Ref5Status | null> =
     highlightedPlan && isRef5PlanParams(highlightedPlan.params)
@@ -393,6 +395,7 @@ async function loadHomeData(params: {
     goalMetrics,
     bodyweightKg,
     ref5Status,
+    activePlanId,
   });
 
   // Keep the single-flight entry alive until the cache is visible. Otherwise a
@@ -481,7 +484,8 @@ async function fetchPlans(
     .leftJoin(programVersion, eq(programVersion.id, plan.rootProgramVersionId))
     .leftJoin(programTemplate, eq(programTemplate.id, programVersion.templateId))
     .leftJoin(workoutLog, eq(workoutLog.planId, plan.id))
-    .where(eq(plan.userId, userId))
+    // 보관된 플랜은 "그만둔 플랜"이다 — 홈이 오늘의 운동으로 다시 제안해서는 안 된다.
+    .where(and(eq(plan.userId, userId), eq(plan.isArchived, false)))
     .groupBy(plan.id, programTemplate.name)
     .orderBy(desc(plan.createdAt));
 
@@ -722,14 +726,15 @@ function buildHomeData(params: {
   goalMetrics: HomeGoalMetrics;
   bodyweightKg: number | null;
   ref5Status: Ref5Status | null;
+  activePlanId: string | null;
 }): HomeData {
-  const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey, goal, goalMetrics, bodyweightKg, ref5Status } = params;
+  const { plans, logs, prs, volumeSeries, snapshot, recentLimit, locale, todayKey, goal, goalMetrics, bodyweightKg, ref5Status, activePlanId } = params;
 
   const { exercises: plannedExercises, totalSets: totalPlannedSets, plannedWeightByExercise } = buildPlannedExercises(snapshot, bodyweightKg, locale);
 
   return {
-    today: buildTodaySummary(plans, logs, plannedExercises, totalPlannedSets, locale, todayKey, bodyweightKg),
-    planOverview: buildPlanOverview(plans, locale),
+    today: buildTodaySummary(plans, logs, plannedExercises, totalPlannedSets, locale, todayKey, bodyweightKg, activePlanId),
+    planOverview: buildPlanOverview(plans, locale, activePlanId),
     weeklySummary: buildWeeklySummary(logs, locale, todayKey),
     recentLimit,
     recentSessions: buildRecentSessions(plans, logs, recentLimit, locale, todayKey),
@@ -747,27 +752,20 @@ function resolveHighlightedPlan(
   plans: HomePlanRecord[],
   logs: any[],
   todayKey: string,
+  activePlanId: string | null,
 ) {
   if (plans.length === 0) return null;
+  // 오늘 이미 기록한 플랜이 있으면 그 세션을 계속 보여주는 게 자연스럽다.
   const todayLog = logs.find((l) => toLocalDateKey(l.performedAt) === todayKey && l.planId) ?? null;
   if (todayLog?.planId) {
     const found = plans.find((p) => p.id === todayLog.planId);
     if (found) return found;
   }
-  const withLastPerformed = plans
-    .filter(
-      (candidate): candidate is HomePlanRecord & { lastPerformedAt: Date } =>
-        candidate.lastPerformedAt !== null,
-    )
-    .sort(
-      (a, b) =>
-        b.lastPerformedAt.getTime() - a.lastPerformedAt.getTime(),
-    );
-  if (withLastPerformed[0]) return withLastPerformed[0];
-  return [...plans].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null;
+  // 그 밖에는 기록/캘린더와 같은 규칙(활성 플랜 → 최근 수행 → 최근 생성)을 쓴다.
+  return resolveActivePlan(plans, activePlanId);
 }
 
-function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercises: any[], totalPlannedSets: number, locale: AppLocale, todayKey: string, bodyweightKg: number | null): HomeTodaySummary {
+function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercises: any[], totalPlannedSets: number, locale: AppLocale, todayKey: string, bodyweightKg: number | null, activePlanId: string | null): HomeTodaySummary {
   const copy = HOME_TEXT[locale];
   const plansById = new Map(plans.map((p) => [p.id, p.name]));
   const todayLogs = logs.filter((l) => toLocalDateKey(l.performedAt) === todayKey);
@@ -780,12 +778,12 @@ function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercise
     name: ex.name,
     bestSet: formatLoggedBestSet(ex.sets, ex.bestReps, ex.bestWeight, ex.name, bodyweightKg, locale),
   }));
-  const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey);
-  const activePlanId = latestToday?.planId ?? highlightedPlan?.id ?? null;
+  const highlightedPlan = resolveHighlightedPlan(plans, logs, todayKey, activePlanId);
+  const targetPlanId = latestToday?.planId ?? highlightedPlan?.id ?? null;
   const selectedProgramName = latestToday?.planId ? plansById.get(latestToday.planId) ?? copy.selectedProgram : highlightedPlan?.name ?? copy.planNeeded;
 
   let meta: string;
-  if (!activePlanId) meta = copy.noPlanMeta;
+  if (!targetPlanId) meta = copy.noPlanMeta;
   else if (todayLogCount > 0) meta = copy.completedMeta(todayLogCount, completedSets);
   else if (plannedExercises.length > 0) {
     const mainNames = plannedExercises.filter(e => e.role === "MAIN").slice(0, 3).map(e => e.name);
@@ -795,20 +793,20 @@ function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercise
   return {
     headline: copy.todayHeadline,
     programName: selectedProgramName,
-    hasPlan: Boolean(activePlanId),
+    hasPlan: Boolean(targetPlanId),
     hasCompletedWorkout: todayLogCount > 0,
     meta,
     completedSets,
-    href: activePlanId ? buildTodayLogHref({ planId: activePlanId, date: todayKey, autoGenerate: todayLogCount === 0 }) : "/program-store",
+    href: targetPlanId ? buildTodayLogHref({ planId: targetPlanId, date: todayKey, autoGenerate: todayLogCount === 0 }) : "/program-store",
     loggedExercises,
     plannedExercises,
     totalPlannedSets,
   };
 }
 
-function buildPlanOverview(plans: HomePlanRecord[], locale: AppLocale): HomePlanOverview {
+function buildPlanOverview(plans: HomePlanRecord[], locale: AppLocale, activePlanId: string | null): HomePlanOverview {
   if (plans.length === 0) return { totalPlans: 0, highlightedPlanId: null, highlightedPlanName: null, highlightedProgramName: null, lastPerformedAtLabel: null };
-  const highlightedPlan = resolveHighlightedPlan(plans, [], ""); // Simplified for overview
+  const highlightedPlan = resolveHighlightedPlan(plans, [], "", activePlanId); // 오늘 로그는 today 카드에서만 본다
   return {
     totalPlans: plans.length,
     highlightedPlanId: highlightedPlan?.id ?? null,

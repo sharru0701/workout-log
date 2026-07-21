@@ -70,6 +70,11 @@ function PlanCardV2({
             }}
           >
             <V2Chip tone={typeTone}>{typeText}</V2Chip>
+            {plan.isArchived ? (
+              <V2Chip tone="neutral" icon="inventory_2">
+                {locale === "ko" ? "보관됨" : "Archived"}
+              </V2Chip>
+            ) : null}
             {isFresh ? (
               <V2Chip tone="success" icon="bolt">
                 {locale === "ko" ? "최근 수행" : "Recent"}
@@ -363,6 +368,7 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
     saveAdjustment,
     savePlanChanges,
     deletePlan,
+    toggleArchivePlan,
   } = usePlansManageController({ initialPlans });
 
   const heroDescription = locale === "ko"
@@ -897,6 +903,22 @@ export function PlansManageContent({ initialPlans }: { initialPlans: Plan[] }) {
                   ? copy.plansManage.saveInProgress
                   : copy.plansManage.saveChanges}
               </V2PrimaryBtn>
+              <V2SecondaryBtn
+                full
+                icon={managedPlan.isArchived ? "unarchive" : "inventory_2"}
+                disabled={saving || deleting}
+                onClick={() => {
+                  void toggleArchivePlan();
+                }}
+              >
+                {managedPlan.isArchived
+                  ? locale === "ko"
+                    ? "보관 해제"
+                    : "Unarchive"
+                  : locale === "ko"
+                    ? "이 플랜 그만하기(보관)"
+                    : "Stop This Plan (Archive)"}
+              </V2SecondaryBtn>
               <V2SecondaryBtn
                 full
                 tone="danger"

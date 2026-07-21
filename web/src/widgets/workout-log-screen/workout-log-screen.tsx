@@ -24,7 +24,9 @@ import { applyWorkoutLogWeightRulesToDraft } from "@/lib/workout-record/weight-r
 import { migrateWorkoutRecordDraft } from "@/entities/workout-record";
 import { sessionHasBodyweightExercise } from "@workout/core/bodyweight-load";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { apiPatch } from "@/lib/api";
+import { apiDelete, apiPatch } from "@/lib/api";
+import { errorMessage } from "@/lib/error-message";
+import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
 import { BodyweightCheckBanner } from "./bodyweight-check-banner";
 import { BlockJudgmentCard, SessionFeedbackNotice } from "./hybrid-feedback-banners";
 import {
@@ -43,7 +45,7 @@ import {
 } from "@/features/workout-log/ui/workout-log-stacked-list";
 import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
 import { AppPage, StickyActionBar } from "@/components/ui/page-layout";
-import { V2SectionHeader } from "@/components/v2/primitives";
+import { V2SectionHeader, V2SecondaryBtn } from "@/components/v2/primitives";
 import type {
   WorkoutLogInitialContext,
   WorkoutLogPageBootstrap,
@@ -79,7 +81,7 @@ function WorkoutLogScreenContent({
   const router = useRouter();
   const pathname = usePathname();
   const { copy, locale } = useLocale();
-  const { alert } = useAppDialog();
+  const { alert, confirm } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     [],
@@ -258,6 +260,51 @@ function WorkoutLogScreenContent({
 
   const isEditingExistingLog = Boolean(query.logId);
   const isStartedRef5Session = Boolean(draft?.session.ref5);
+
+  // 시작된 REF5 세션은 저장 전까지 날짜·플랜 전환을 잠근다(스냅샷 불변성). 잘못 시작한
+  // 세션을 되돌릴 길이 없으면 그날 하루는 다른 플랜으로 갈 수 없으므로 취소를 제공한다.
+  const [cancellingRef5Session, setCancellingRef5Session] = useState(false);
+  const canCancelRef5Session =
+    isStartedRef5Session && !isEditingExistingLog && Boolean(query.sessionId && selectedPlanId);
+  const handleCancelRef5Session = useCallback(async () => {
+    if (!query.sessionId || !selectedPlanId) return;
+    const ok = await confirm({
+      title: locale === "ko" ? "세션 취소" : "Cancel Session",
+      message:
+        locale === "ko"
+          ? "시작한 REF5 세션을 취소합니다.\n입력 중이던 내용은 저장되지 않고, 진행 상태는 시작 전으로 되돌아갑니다."
+          : "This cancels the started REF5 session.\nUnsaved entries are discarded and progression returns to its pre-start state.",
+      confirmText: locale === "ko" ? "세션 취소" : "Cancel Session",
+      cancelText: locale === "ko" ? "닫기" : "Close",
+      tone: "danger",
+    });
+    if (!ok) return;
+
+    try {
+      setCancellingRef5Session(true);
+      await apiDelete(
+        `/api/plans/${encodeURIComponent(selectedPlanId)}/generated-sessions/${encodeURIComponent(query.sessionId)}`,
+      );
+      if (persistenceKey) {
+        await clearWorkoutDraft(persistenceKey).catch(() => {});
+      }
+      // 세션 컨텍스트(URL·SSR 부트스트랩·복원 draft)가 모두 얽혀 있어, 취소 후에는
+      // sessionId 없는 URL로 새로 진입시키는 편이 상태가 확실하다.
+      window.location.replace(
+        `/workout/log?planId=${encodeURIComponent(selectedPlanId)}&date=${encodeURIComponent(query.date)}`,
+      );
+    } catch (e) {
+      setCancellingRef5Session(false);
+      await alert({
+        title: locale === "ko" ? "세션 취소 실패" : "Could not cancel",
+        message:
+          errorMessage(e) ??
+          (locale === "ko" ? "세션을 취소하지 못했습니다." : "Could not cancel the session."),
+        buttonText: locale === "ko" ? "확인" : "OK",
+        tone: "danger",
+      });
+    }
+  }, [alert, confirm, locale, persistenceKey, query.date, query.sessionId, selectedPlanId]);
 
   // 체중 확인 안내(B): 중량풀업을 수행하는 모든 프로그램에서, 마지막 확인 후 14일+ 지났을 때만
   // "업데이트/유지"를 권고한다(매 세션 마찰 회피). "유지"도 확인 시각을 기록해 14일간 다시 안 묻는다.
@@ -542,6 +589,24 @@ function WorkoutLogScreenContent({
               disabled={isStartedRef5Session}
               style={{ flex: 1, minWidth: 0 }}
             />
+            {canCancelRef5Session ? (
+              <V2SecondaryBtn
+                tone="danger"
+                icon="close"
+                disabled={cancellingRef5Session}
+                onClick={() => {
+                  void handleCancelRef5Session();
+                }}
+              >
+                {cancellingRef5Session
+                  ? locale === "ko"
+                    ? "취소 중"
+                    : "Cancelling"
+                  : locale === "ko"
+                    ? "세션 취소"
+                    : "Cancel"}
+              </V2SecondaryBtn>
+            ) : null}
             {!isStartedRef5Session ? <button
               type="button"
               onClick={() => setSummaryOpen(true)}

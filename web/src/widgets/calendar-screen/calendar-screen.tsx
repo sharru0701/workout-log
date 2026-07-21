@@ -26,6 +26,7 @@ import {
   CalendarOverlaySheets,
 } from "@/features/calendar/ui/calendar-overlay-sheets";
 import { AppPage } from "@/components/ui/page-layout";
+import { ACTIVE_PLAN_SETTING_KEY } from "@workout/core/active-plan";
 import { V2SectionHeader } from "@/components/v2/primitives";
 import {
   CalendarFilterBar,
@@ -107,6 +108,21 @@ export function CalendarScreen({
     initialSessions,
     initialLogs,
   });
+
+  // 캘린더에서 고른 플랜도 "지금 이 플랜으로 한다"는 선택이다 — 홈·기록이 같은 플랜을
+  // 가리키도록 활성 플랜에 남긴다(실패해도 이 화면의 선택은 그대로 동작).
+  const selectAndRememberPlan = useCallback(
+    (nextPlanId: string) => {
+      setPlanId(nextPlanId);
+      void apiPatch(
+        "/api/settings",
+        { key: ACTIVE_PLAN_SETTING_KEY, value: nextPlanId },
+        { invalidateCachePrefixes: ["/api/settings", "/api/home"] },
+      ).catch(() => {});
+    },
+    [setPlanId],
+  );
+
   const {
     planSheetOpen,
     openPlanPicker,
@@ -115,7 +131,7 @@ export function CalendarScreen({
     selectPlan,
   } = useCalendarPlanPickerController({
     filteredPlans,
-    setPlanId,
+    setPlanId: selectAndRememberPlan,
     resetPlanQuery: () => setPlanQuery(""),
   });
   const currentLogKey = planId ? `${planId}|${selectedDate}` : "";

@@ -12,6 +12,12 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["-C", "web", "dev:webpack"],
       "port": 3000
+    },
+    {
+      "name": "API (Hono)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["-C", "apps/api", "dev:web"],
+      "port": 8787
     }
   ]
 }
