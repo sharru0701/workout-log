@@ -204,17 +204,47 @@ jobs:
           WORKOUT_AUTH_USER_ID: 00000000-0000-4000-8000-000000c1c1c1
         run: pnpm db:seed
 
+      # 프로그램 시작 흐름은 /api/plans 등 데이터 라우트를 타고, 그건 web이 apps/api로
+      # 프록시한다. 백엔드가 없으면 그 스펙은 구조적으로 못 돌아 nightly 전용이 되고,
+      # 실제로 버튼·운동명 개명 회귀가 PR을 그대로 통과했다(#582). 기동은 2초면 끝난다.
+      - name: Start apps/api (proxy backend)
+        working-directory: apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
+          PORT: "8787"
+          WORKOUT_DISABLE_RATE_LIMIT: "1"
+          WORKOUT_ALLOW_INSECURE_COOKIES: "1"
+        run: |
+          nohup node_modules/.bin/tsx src/index.ts > /tmp/apps-api.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8787/health > /dev/null 2>&1; then
+              echo "apps/api up"; exit 0
+            fi
+            sleep 1
+          done
+          echo "apps/api failed to start"; cat /tmp/apps-api.log; exit 1
+
       # PLAYWRIGHT_SERVER_MODE=prod → webServer가 `pnpm build && pnpm start`(프로덕션 런타임).
       # build가 migrate를 재실행하나 멱등(위 seed는 여전히 필요). prod 렌더 크래시를 여기서 게이트.
       - name: Run smoke + accessibility + theme E2E tests (prod build)
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/workout_log_ci
           WORKOUT_AUTH_USER_ID: 00000000-0000-4000-8000-000000c1c1c1
+          APPS_API_BASE: http://127.0.0.1:8787
           NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
           NEXT_TELEMETRY_DISABLED: "1"
           PLAYWRIGHT_SERVER_MODE: prod
+          # prod 빌드는 세션 쿠키를 Secure로 굽는데 CI는 http로 뜬다 — 실계정 스펙이
+          # 쿠키를 못 받아 전부 401이 되는 것을 CI 한정으로 푼다(nightly와 동일).
+          WORKOUT_ALLOW_INSECURE_COOKIES: "1"
+          WORKOUT_DISABLE_RATE_LIMIT: "1"
           CI: "true"
-        run: pnpm exec playwright test e2e/smoke.spec.ts e2e/a11y-runtime.spec.ts e2e/stale-session-redirect.spec.ts e2e/color-themes.spec.ts e2e/pull-to-refresh.spec.ts --project chromium
+        run: pnpm exec playwright test e2e/smoke.spec.ts e2e/program-start-smoke.spec.ts e2e/a11y-runtime.spec.ts e2e/stale-session-redirect.spec.ts e2e/color-themes.spec.ts e2e/pull-to-refresh.spec.ts --project chromium
+
+      - name: Dump apps/api log
+        if: ${{ always() }}
+        working-directory: .
+        run: tail -50 /tmp/apps-api.log || true
 
       # 실패 시 trace/screenshot/video를 artifact로 보관
       - name: Upload Playwright artifacts
