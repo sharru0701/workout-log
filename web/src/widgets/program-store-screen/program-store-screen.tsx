@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/components/locale-provider";
@@ -26,9 +26,14 @@ import { CreateProgramSheet } from "@/features/program-store/ui/create-program-s
 import { ProgramStoreBrowseContent } from "@/features/program-store/ui/program-store-browse-content";
 import { ProgramFilterSheet } from "@/features/program-store/ui/program-filter-sheet";
 import {
+  readEditableFacetSelection,
   toggleProgramFacet,
   type ProgramFacetSelection,
 } from "@workout/core/program-store/facets";
+import {
+  EditProgramMetaSheet,
+  type EditProgramMetaDraft,
+} from "@/features/program-store/ui/edit-program-meta-sheet";
 import type { ProgramTemplate } from "@workout/core/program-store/model";
 
 const ProgramDetailSheet = dynamic(
@@ -178,9 +183,11 @@ export function ProgramStoreScreen({
     deleteCustomTemplate,
     saveCustomizationDraft,
     saveCreateDraft,
+    saveProgramMetaDraft,
   } = useProgramStoreTemplateMutationController({
     locale,
     manualPublicTemplate,
+    templates,
     confirm,
     loadStore,
     closeStartProgramDraft,
@@ -192,6 +199,27 @@ export function ProgramStoreScreen({
     setCustomizeDraft,
     setCreateDraft,
   });
+
+  // 커스텀 프로그램의 이름·소개·태그 편집. 태그는 facet 선택으로 다루고, 저장할 때
+  // 편집 축 밖의 태그(manual·barbell 등)는 그대로 보존한다.
+  const [programMetaDraft, setProgramMetaDraft] = useState<EditProgramMetaDraft | null>(null);
+  const programMetaTagsRef = useRef<string[]>([]);
+  const openProgramMetaDraft = useCallback((template: ProgramTemplate) => {
+    const tags = Array.isArray(template.tags) ? template.tags.map(String) : [];
+    programMetaTagsRef.current = tags;
+    setError(null);
+    setProgramMetaDraft({
+      slug: template.slug,
+      name: template.name,
+      description: template.description ?? "",
+      facets: readEditableFacetSelection(tags),
+    });
+  }, []);
+  const submitProgramMetaDraft = useCallback(async () => {
+    if (!programMetaDraft) return;
+    const ok = await saveProgramMetaDraft(programMetaDraft, programMetaTagsRef.current);
+    if (ok) setProgramMetaDraft(null);
+  }, [programMetaDraft, saveProgramMetaDraft]);
 
   const isStoreSettled = useQuerySettled(storeLoadKey, loading);
   const hasStoreQuery = storeQuery.trim().length > 0;
@@ -273,6 +301,27 @@ export function ProgramStoreScreen({
               }
             : undefined
         }
+        onEditMeta={
+          detailTarget?.source === "CUSTOM"
+            ? () => {
+                openProgramMetaDraft(detailTarget.template);
+              }
+            : undefined
+        }
+      />
+
+      <EditProgramMetaSheet
+        locale={locale}
+        draft={programMetaDraft}
+        saving={saving}
+        error={error}
+        onClose={() => setProgramMetaDraft(null)}
+        onChange={(patch) =>
+          setProgramMetaDraft((current) => (current ? { ...current, ...patch } : current))
+        }
+        onSave={() => {
+          void submitProgramMetaDraft();
+        }}
       />
 
       <StartProgramSheet

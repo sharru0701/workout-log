@@ -341,6 +341,8 @@ type Props = {
   onStart: () => void;
   onCustomize: () => void;
   onDelete?: () => void;
+  /** 커스텀 프로그램만: 이름·소개·태그를 고친다(운동 구성은 커스터마이징에서). */
+  onEditMeta?: () => void;
 };
 
 const sectionEyebrowStyle: CSSProperties = {
@@ -358,6 +360,7 @@ export function ProgramDetailSheet({
   onStart,
   onCustomize,
   onDelete,
+  onEditMeta,
 }: Props) {
   const { locale } = useLocale();
   if (!item) return null;
@@ -547,6 +550,11 @@ export function ProgramDetailSheet({
               : "Customize Before Starting"}
         </V2SecondaryBtn>
       ) : null}
+      {isCustom && onEditMeta && (
+        <V2SecondaryBtn full icon="edit_note" onClick={onEditMeta}>
+          {locale === "ko" ? "이름·소개·태그 편집" : "Edit Name, Blurb & Tags"}
+        </V2SecondaryBtn>
+      )}
       {isCustom && onDelete && (
         <V2SecondaryBtn full tone="danger" onClick={onDelete}>
           {locale === "ko" ? "커스텀 프로그램 삭제" : "Delete Custom Program"}
