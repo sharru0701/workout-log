@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
+import { observeBrowser } from "./browser-failures";
+
 const PASSWORD = "All-protocols-e2e-password-17!";
 
 test.setTimeout(900_000);
@@ -150,20 +152,6 @@ function addDays(date: string, days: number) {
   const [year, month, day] = date.split("-").map(Number);
   const next = new Date(Date.UTC(year!, month! - 1, day! + days));
   return next.toISOString().slice(0, 10);
-}
-
-function observeBrowser(page: Page) {
-  const failures: string[] = [];
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 500) {
-      failures.push(`${response.status()} ${response.request().method()} ${response.url()}`);
-    }
-  });
-  return failures;
 }
 
 async function signup(page: Page, label: string) {

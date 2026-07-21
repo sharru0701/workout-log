@@ -1,5 +1,7 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
+import { observeBrowser } from "./browser-failures";
+
 const PASSWORD = "Ref5-e2e-password-17!";
 
 test.setTimeout(90_000);
@@ -30,20 +32,6 @@ function offsetLocalDateTime(startAt: string, minutes: number) {
   const date = new Date(startAt);
   date.setMinutes(date.getMinutes() + minutes);
   return formatLocalDateTime(date);
-}
-
-function observeBrowser(page: Page) {
-  const failures: string[] = [];
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 500) {
-      failures.push(`${response.status()} ${response.request().method()} ${response.url()}`);
-    }
-  });
-  return failures;
 }
 
 async function signupThroughUi(page: Page, label: string, testInfo: TestInfo) {

@@ -1,5 +1,7 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
+import { observeBrowser } from "./browser-failures";
+
 const PASSWORD = "All-programs-e2e-password-17!";
 
 test.setTimeout(120_000);
@@ -142,20 +144,6 @@ function uniqueEmail(label: string) {
 function formatLocalDateTime(date: Date) {
   const pad = (value: number) => String(value).padStart(2, "0");
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-}
-
-function observeBrowser(page: Page) {
-  const failures: string[] = [];
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 500) {
-      failures.push(`${response.status()} ${response.request().method()} ${response.url()}`);
-    }
-  });
-  return failures;
 }
 
 async function signupThroughUi(page: Page, label: string, testInfo: TestInfo) {
