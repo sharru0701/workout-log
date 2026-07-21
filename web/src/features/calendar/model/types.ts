@@ -5,6 +5,7 @@ export type CalendarPlan = {
   type: "SINGLE" | "COMPOSITE" | "MANUAL";
   params: Record<string, unknown> | null;
   createdAt: string;
+  isArchived?: boolean;
 };
 
 export type CalendarRecentGeneratedSession = {

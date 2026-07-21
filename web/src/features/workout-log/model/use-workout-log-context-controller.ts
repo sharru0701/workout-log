@@ -1,5 +1,7 @@
 "use client";
 import { errorMessage } from "@/lib/error-message";
+import { apiPatch } from "@/shared/api";
+import { ACTIVE_PLAN_SETTING_KEY } from "@workout/core/active-plan";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { resolveWorkoutLogBootstrap } from "@/features/workout-log/model/bootstrap";
@@ -374,6 +376,30 @@ export function useWorkoutLogContextController({
       const plan = plans.find((entry) => entry.id === planId);
       if (!plan) return;
       setSelectedPlanId(plan.id);
+
+      // 전환은 "이제부터 이 플랜으로 한다"는 선택이다. 메모리 상태만 바꾸면 새로고침·
+      // 뒤로가기에서 URL의 옛 planId로 되돌아가고, draft 저장 키(selectedPlanId 기반)와
+      // 복원 키가 어긋나 작성 중이던 기록이 사라진 것처럼 보인다.
+      const url = new URL(window.location.href);
+      url.searchParams.set("planId", plan.id);
+      if (query.date) url.searchParams.set("date", query.date);
+      url.searchParams.delete("logId");
+      url.searchParams.delete("sessionId");
+      window.history.replaceState(window.history.state, "", url.pathname + url.search);
+      setQuery((previous) => ({
+        ...previous,
+        planId: plan.id,
+        hasExplicitDate: previous.date ? true : previous.hasExplicitDate,
+        logId: null,
+        sessionId: null,
+      }));
+      // 홈·캘린더도 같은 플랜을 가리키도록 활성 플랜을 갱신한다. 실패해도 전환 자체는 유효.
+      void apiPatch(
+        "/api/settings",
+        { key: ACTIVE_PLAN_SETTING_KEY, value: plan.id },
+        { invalidateCachePrefixes: ["/api/settings", "/api/home"] },
+      ).catch(() => {});
+
       await loadWorkoutContext({
         planId: plan.id,
         planName: plan.name,
@@ -384,7 +410,16 @@ export function useWorkoutLogContextController({
         planParams: plan.params ?? null,
       });
     },
-    [plans, loadWorkoutContext, query.date, query.logId, query.sessionId, setSelectedPlanId, workoutPreferences],
+    [
+      plans,
+      loadWorkoutContext,
+      query.date,
+      query.logId,
+      query.sessionId,
+      setQuery,
+      setSelectedPlanId,
+      workoutPreferences,
+    ],
   );
 
   const retryCurrentContextLoad = useCallback(() => {

@@ -5,6 +5,7 @@ import { plan, userSetting, workoutLog } from "@workout/core/db/schema";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
 import { generateAndSaveSession } from "@workout/core/program-engine/generateSession";
+import { readActivePlanIdSetting, resolveActivePlan } from "@workout/core/active-plan";
 import { loadWorkoutContextServer } from "./load-workout-log-context";
 import type {
   WorkoutRecordDraft,
@@ -130,7 +131,11 @@ export async function getWorkoutLogPageBootstrap(
   // 가장 최근 로그가 today 이상이면 그 다음날로 redirect — URL 에 ?date= 를 박아
   // client matchKey 와 일치시킨다. redirect 는 try 바깥에서 호출해야 NEXT_REDIRECT
   // 에러가 catch 에 먹히지 않는다.
-  await maybeRedirectToNextSessionDate(userId, initialPlans, searchParams);
+  // 화면마다 다른 기본 플랜을 고르지 않도록 홈/캘린더와 같은 규칙을 쓴다.
+  // plans는 createdAt desc로 정렬돼 있어 활성 플랜 설정이 없을 때의 폴백도 그대로 유지된다.
+  const activePlanId = readActivePlanIdSetting(initialSettings);
+
+  await maybeRedirectToNextSessionDate(userId, initialPlans, searchParams, activePlanId);
 
   // ─── SSR 컨텍스트 로딩 ───────────────────────────────────────────────────
   const initialContext = await resolveInitialContext(
@@ -138,6 +143,7 @@ export async function getWorkoutLogPageBootstrap(
     initialPlans,
     initialSettings,
     searchParams,
+    activePlanId,
   );
 
   return { initialPlans, initialSettings, initialContext };
@@ -147,6 +153,7 @@ async function maybeRedirectToNextSessionDate(
   userId: string,
   plans: WorkoutLogPlanListItem[],
   searchParams: RawSearchParams,
+  activePlanId: string | null,
 ): Promise<void> {
   const rawPlanId = getString(searchParams, "planId");
   const rawDate = getString(searchParams, "date");
@@ -157,7 +164,7 @@ async function maybeRedirectToNextSessionDate(
   const activePlans = plans.filter((p) => !p.isArchived);
   const targetPlan =
     (rawPlanId ? activePlans.find((p) => p.id === rawPlanId) : null) ??
-    activePlans[0] ??
+    resolveActivePlan(activePlans, activePlanId) ??
     null;
   if (!targetPlan) return;
   // REF5 keys sessions by exact start + event id and intentionally permits
@@ -197,6 +204,7 @@ async function resolveInitialContext(
   plans: WorkoutLogPlanListItem[],
   settings: WorkoutLogSettingsSnapshot,
   searchParams: RawSearchParams,
+  activePlanId: string | null,
 ): Promise<WorkoutLogInitialContext | null> {
   try {
     const rawPlanId = getString(searchParams, "planId");
@@ -214,7 +222,7 @@ async function resolveInitialContext(
     const activePlans = plans.filter((p) => !p.isArchived);
     const plan =
       (rawPlanId ? activePlans.find((p) => p.id === rawPlanId) : null) ??
-      activePlans[0] ??
+      resolveActivePlan(activePlans, activePlanId) ??
       null;
     if (!plan) return null;
 

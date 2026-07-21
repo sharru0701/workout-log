@@ -1,6 +1,6 @@
 import { db } from "@workout/core/db/client";
 import { plan, programTemplate, programVersion, workoutLog } from "@workout/core/db/schema";
-import { and, desc, eq, inArray, isNotNull, max } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNotNull, max } from "drizzle-orm";
 import { requireAuthenticatedUserId } from "@/server/auth/user";
 import { resolveRequestLocale } from "@/lib/i18n/messages";
 
@@ -17,6 +17,10 @@ export type PlanForManage = {
   createdAt: string; // ISO 문자열 (클라이언트 직렬화 호환)
   baseProgramName: string | null;
   lastPerformedAt: string | null; // ISO 문자열
+  /** 이 플랜에 매달린 운동기록 수 — 삭제 확인에서 손실 범위를 미리 알린다. */
+  logCount: number;
+  /** 보관된 플랜은 기록을 유지한 채 플랜 선택 목록에서만 빠진다. */
+  isArchived: boolean;
 };
 
 export async function getPlansForManage(): Promise<PlanForManage[]> {
@@ -55,6 +59,7 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
       .select({
         planId: workoutLog.planId,
         lastPerformedAt: max(workoutLog.performedAt),
+        logCount: count(workoutLog.id),
       })
       .from(workoutLog)
       .where(
@@ -75,9 +80,11 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
   }
 
   const lastPerformedAtByPlanId = new Map<string, Date>();
+  const logCountByPlanId = new Map<string, number>();
   for (const row of logRows) {
-    if (!row.planId || !row.lastPerformedAt) continue;
-    lastPerformedAtByPlanId.set(row.planId, row.lastPerformedAt);
+    if (!row.planId) continue;
+    if (row.lastPerformedAt) lastPerformedAtByPlanId.set(row.planId, row.lastPerformedAt);
+    logCountByPlanId.set(row.planId, Number(row.logCount ?? 0));
   }
 
   return baseItems.map((item): PlanForManage => {
@@ -97,6 +104,8 @@ export async function getPlansForManage(): Promise<PlanForManage[]> {
       createdAt: item.createdAt.toISOString(),
       baseProgramName,
       lastPerformedAt: lastPerformedAt ? lastPerformedAt.toISOString() : null,
+      logCount: logCountByPlanId.get(item.id) ?? 0,
+      isArchived: item.isArchived,
     };
   });
 }
