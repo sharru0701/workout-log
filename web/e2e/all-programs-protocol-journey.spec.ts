@@ -1,5 +1,7 @@
 import { expect, test, type Locator, type Page, type TestInfo } from "@playwright/test";
 
+import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
+
 import { observeBrowser } from "./browser-failures";
 
 const PASSWORD = "All-protocols-e2e-password-17!";
@@ -442,7 +444,10 @@ test("Starting Strength: 성공 증량 → 실패 1/3·2/3 → 3/3 리셋 선택
     date: addDays(startDate, 2),
     repRule: failExercise(/Back Squat/),
   });
-  const firstMissSquatSets = firstMiss.log.item?.sets?.filter((set) => set.exerciseName === "Back Squat") ?? [];
+  const firstMissSquatSets =
+    firstMiss.log.item?.sets?.filter(
+      (set) => set.exerciseName === EXERCISE_NAMES.highBarBackSquat,
+    ) ?? [];
   expect(firstMissSquatSets.at(-1)?.reps).toBe(4);
   expect(firstMissSquatSets.at(-1)?.meta?.plannedRef?.reps).toBe(5);
   expect(firstMiss.progression.lastEvent?.targetDecisions.find((item) => item.progressionTarget === "SQUAT")?.reason).toBe("hold:failure-streak");
