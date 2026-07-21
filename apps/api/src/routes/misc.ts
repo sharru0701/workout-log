@@ -237,6 +237,98 @@ templatesRoutes.delete("/:slug", async (c) => {
 
 // POST /api/templates/:slug/fork — copy a template's latest version into a new
 // PRIVATE template you own. Web-only.
+// PATCH /api/templates/:slug — edit a custom program's name/description/tags.
+// The version editor only ever wrote `definition`, so a forked program kept its
+// source's blurb and tags forever — the store then described (and filtered) it
+// as something it no longer was.
+templatesRoutes.patch("/:slug", async (c) => {
+  const locale = resolveLocale(c);
+  try {
+    const userId = c.get("userId");
+    const slug = String(c.req.param("slug") ?? "").trim();
+    const body = (await c.req.json().catch(() => ({}))) as {
+      name?: unknown;
+      description?: unknown;
+      tags?: unknown;
+    };
+
+    const rows = await db
+      .select({
+        id: programTemplate.id,
+        visibility: programTemplate.visibility,
+        ownerUserId: programTemplate.ownerUserId,
+      })
+      .from(programTemplate)
+      .where(eq(programTemplate.slug, slug))
+      .limit(1);
+    const template = rows[0];
+    if (!template) {
+      return c.json(
+        { error: locale === "ko" ? "템플릿을 찾을 수 없습니다." : "Template not found." },
+        404,
+      );
+    }
+    if (template.visibility !== "PRIVATE") {
+      return c.json(
+        {
+          error:
+            locale === "ko"
+              ? "공개 템플릿은 수정할 수 없습니다."
+              : "Public templates cannot be edited.",
+        },
+        403,
+      );
+    }
+    if (template.ownerUserId !== userId) {
+      return c.json({ error: locale === "ko" ? "권한이 없습니다." : "Forbidden." }, 403);
+    }
+
+    const hasName = typeof body.name === "string";
+    const nextName = hasName ? String(body.name).trim() : "";
+    if (hasName && !nextName) {
+      return c.json(
+        {
+          error:
+            locale === "ko" ? "프로그램 이름은 비워둘 수 없습니다." : "The name must not be empty.",
+        },
+        400,
+      );
+    }
+    const hasDescription = typeof body.description === "string" || body.description === null;
+    const hasTags = Array.isArray(body.tags);
+    if (!hasName && !hasDescription && !hasTags) {
+      return c.json(
+        { error: locale === "ko" ? "수정할 내용이 없습니다." : "No patch payload." },
+        400,
+      );
+    }
+
+    const nextTags = hasTags
+      ? (body.tags as unknown[])
+          .map((tag) => String(tag).trim().toLowerCase())
+          .filter((tag) => tag.length > 0)
+          .slice(0, 20)
+      : undefined;
+    const nextDescription = hasDescription
+      ? (typeof body.description === "string" ? String(body.description).trim() || null : null)
+      : undefined;
+
+    const [updated] = await db
+      .update(programTemplate)
+      .set({
+        name: hasName ? nextName : undefined,
+        description: nextDescription,
+        tags: nextTags,
+      })
+      .where(eq(programTemplate.id, template.id))
+      .returning();
+
+    return c.json({ template: updated }, 200);
+  } catch (e) {
+    return apiError(c, e, locale);
+  }
+});
+
 templatesRoutes.post("/:slug/fork", async (c) => {
   const locale = resolveLocale(c);
   try {
@@ -299,6 +391,20 @@ templatesRoutes.post("/:slug/fork", async (c) => {
     const forkSlug = newSlug ?? `${slug}-${userId}-${Date.now()}`;
     const forkName = newName ?? `${sourceTemplate.name} (Fork)`;
 
+    // 소개·태그를 소스에서 그대로 물려받으면, 내용을 갈아엎은 뒤에도 남의 설명이
+    // 붙어 있게 된다(Operator 구성에 "AMRAP LP" 설명이 붙은 실제 사례). 호출자가
+    // 값을 주면 그것을 쓰고, 아무 말이 없을 때만 소스를 복사한다.
+    const hasDescriptionInput = typeof body.description === "string";
+    const forkDescription = hasDescriptionInput
+      ? (String(body.description).trim() || null)
+      : sourceTemplate.description;
+    const forkTags = Array.isArray(body.tags)
+      ? (body.tags as unknown[])
+          .map((tag) => String(tag).trim().toLowerCase())
+          .filter((tag) => tag.length > 0)
+          .slice(0, 20)
+      : sourceTemplate.tags;
+
     const created = await db.transaction(async (tx) => {
       const [t] = await tx
         .insert(programTemplate)
@@ -309,8 +415,8 @@ templatesRoutes.post("/:slug/fork", async (c) => {
           visibility: "PRIVATE",
           ownerUserId: userId,
           parentTemplateId: sourceTemplate.id,
-          description: sourceTemplate.description,
-          tags: sourceTemplate.tags,
+          description: forkDescription,
+          tags: forkTags,
         })
         .returning();
 

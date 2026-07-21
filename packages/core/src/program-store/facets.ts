@@ -235,6 +235,75 @@ export function matchesProgramFacets(
   });
 }
 
+/**
+ * 사용자가 직접 고를 수 있는 축. engine/frequency는 definition에서 계산되므로
+ * 태그로 저장하지 않는다 — 저장하면 실제 구성과 어긋난 값이 남을 수 있다.
+ */
+export const EDITABLE_PROGRAM_FACET_KEYS: readonly ProgramFacetKey[] = [
+  "goal",
+  "level",
+  "style",
+] as const;
+
+/** 저장할 때 쓸 대표 철자. 읽기는 모든 동의어를 받아들이고, 쓰기는 하나로 고정한다. */
+const CANONICAL_TAG: Record<string, Record<string, string>> = {
+  goal: { strength: "strength", hypertrophy: "hypertrophy", endurance: "endurance" },
+  level: { beginner: "novice", intermediate: "intermediate", advanced: "advanced" },
+  style: {
+    linear: "linear",
+    undulating: "weekly-undulation",
+    block: "block-periodization",
+    adaptive: "adaptive",
+  },
+};
+
+const VOCABULARY: Record<string, Record<string, string[]>> = {
+  goal: GOAL_TAGS,
+  level: LEVEL_TAGS,
+  style: STYLE_TAGS,
+};
+
+/** 현재 태그에서 편집 가능한 축의 선택 상태를 읽는다. */
+export function readEditableFacetSelection(tags: string[]): ProgramFacetSelection {
+  const selection: ProgramFacetSelection = {};
+  for (const key of EDITABLE_PROGRAM_FACET_KEYS) {
+    const values = matchTagValues(tags, VOCABULARY[key]!);
+    if (values.length > 0) selection[key] = values;
+  }
+  return selection;
+}
+
+/**
+ * 선택 상태를 태그 배열에 반영한다. 편집 축에 속한 기존 태그만 걷어내고 나머지
+ * (manual·barbell·operator 같은 자유 태그)는 그대로 둔다 — 편집 UI가 모르는 태그를
+ * 조용히 지워버리면 프로그램의 다른 정보가 사라진다.
+ */
+export function applyEditableFacetSelection(
+  tags: string[],
+  selection: ProgramFacetSelection,
+): string[] {
+  const managed = new Set<string>();
+  for (const key of EDITABLE_PROGRAM_FACET_KEYS) {
+    for (const spellings of Object.values(VOCABULARY[key]!)) {
+      for (const spelling of spellings) managed.add(spelling);
+    }
+  }
+
+  const kept = tags
+    .map((tag) => String(tag).trim())
+    .filter((tag) => tag && !managed.has(tag.toLowerCase()));
+
+  const added: string[] = [];
+  for (const key of EDITABLE_PROGRAM_FACET_KEYS) {
+    for (const value of selection[key] ?? []) {
+      const canonical = CANONICAL_TAG[key]?.[value];
+      if (canonical) added.push(canonical);
+    }
+  }
+
+  return [...new Set([...kept, ...added])];
+}
+
 export function countSelectedFacets(selection: ProgramFacetSelection): number {
   return PROGRAM_FACET_KEYS.reduce(
     (total, key) => total + (selection[key]?.length ?? 0),

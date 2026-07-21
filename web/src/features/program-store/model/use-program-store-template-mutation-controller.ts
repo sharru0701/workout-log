@@ -3,7 +3,9 @@ import { errorMessage } from "@/lib/error-message";
 
 import { useCallback } from "react";
 import type { AppConfirmOptions } from "@/components/ui/app-dialog-provider";
-import { apiDelete, apiPost, apiPut } from "@/lib/api";
+import { apiDelete, apiPatch, apiPost, apiPut } from "@/lib/api";
+import { applyEditableFacetSelection } from "@workout/core/program-store/facets";
+import type { EditProgramMetaDraft } from "@/features/program-store/ui/edit-program-meta-sheet";
 import {
   hasAtLeastOneExercise,
   isOperatorTemplate,
@@ -38,6 +40,20 @@ type DeleteTemplateResponse = {
   };
   deletedPlanCount: number;
 };
+
+/**
+ * 커스텀 프로그램이 물려받을 태그. 결과물은 항상 세션 고정(MANUAL)이므로 "manual"을
+ * 보장하고, 나머지는 사용자가 고른 기반 프로그램의 성격을 따른다. 기반이 없으면
+ * 빈 채로 두는 편이 낫다 — 없는 성격을 지어내면 스토어 필터가 거짓말을 한다.
+ */
+function customProgramTags(baseTemplate: ProgramTemplate | null | undefined): string[] {
+  const inherited = Array.isArray(baseTemplate?.tags) ? baseTemplate.tags : [];
+  return [
+    ...new Set(
+      ["manual", ...inherited.map((tag) => String(tag).trim().toLowerCase())].filter(Boolean),
+    ),
+  ];
+}
 
 function validateCustomSessions(
   sessions: ProgramSessionDraft[],
@@ -78,6 +94,8 @@ async function putProgramVersionDefinition(versionId: string, definition: unknow
 type UseProgramStoreTemplateMutationControllerInput = {
   locale: "ko" | "en";
   manualPublicTemplate: ProgramTemplate | null;
+  /** 새 프로그램이 물려받을 성격(태그)을 기반 프로그램에서 읽기 위해 필요하다. */
+  templates: ProgramTemplate[];
   confirm: (input: string | AppConfirmOptions) => Promise<boolean | null>;
   loadStore: (options?: { isRefresh?: boolean }) => void | Promise<void>;
   closeStartProgramDraft: () => void;
@@ -97,6 +115,7 @@ type UseProgramStoreTemplateMutationControllerInput = {
 export function useProgramStoreTemplateMutationController({
   locale,
   manualPublicTemplate,
+  templates,
   confirm,
   loadStore,
   closeStartProgramDraft,
@@ -218,6 +237,11 @@ export function useProgramStoreTemplateMutationController({
           {
             newName: draft.name.trim(),
             newSlug: makeForkSlug(draft.name),
+            // fork 소스는 세션을 담을 기술적 껍데기(Manual)일 뿐이고, 결과물의 정체성은
+            // 사용자가 고른 baseTemplate이다. 소스의 소개·태그를 물려받으면 Operator
+            // 구성에 "AMRAP LP" 설명이 붙는 식으로 어긋난다.
+            description: "",
+            tags: customProgramTags(draft.baseTemplate),
           },
         );
 
@@ -258,6 +282,60 @@ export function useProgramStoreTemplateMutationController({
       setSaving,
       setTemplates,
     ],
+  );
+
+  /**
+   * 커스텀 프로그램의 이름·소개·태그 저장. definition(운동 구성)은 커스터마이징이
+   * 담당하므로 여기서는 건드리지 않는다.
+   */
+  const saveProgramMetaDraft = useCallback(
+    async (draft: EditProgramMetaDraft, currentTags: string[]) => {
+      const name = draft.name.trim();
+      if (!name) {
+        setError(
+          locale === "ko" ? "프로그램 이름을 입력하세요." : "Enter a program name.",
+        );
+        return false;
+      }
+
+      try {
+        setSaving(true);
+        setError(null);
+        const res = await apiPatch<{ template: ProgramTemplate }>(
+          `/api/templates/${encodeURIComponent(draft.slug)}`,
+          {
+            name,
+            description: draft.description.trim(),
+            tags: applyEditableFacetSelection(currentTags, draft.facets),
+          },
+          { invalidateCachePrefixes: ["/api/templates", "/api/plans"] },
+        );
+        const updated = res?.template;
+        if (updated) {
+          setTemplates((prev) =>
+            prev.map((template) => (template.id === updated.id ? updated : template)),
+          );
+        }
+        setNotice(
+          locale === "ko"
+            ? `프로그램 정보를 저장했습니다: ${formatProgramDisplayName(name)}`
+            : `Saved program info: ${formatProgramDisplayName(name)}`,
+        );
+        void loadStore({ isRefresh: true });
+        return true;
+      } catch (error) {
+        setError(
+          errorMessage(error) ??
+            (locale === "ko"
+              ? "프로그램 정보를 저장하지 못했습니다."
+              : "Could not save the program info."),
+        );
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    },
+    [loadStore, locale, setError, setNotice, setSaving, setTemplates],
   );
 
   const saveCreateDraft = useCallback(
@@ -301,11 +379,15 @@ export function useProgramStoreTemplateMutationController({
       try {
         setSaving(true);
         setError(null);
+        const sourceTemplate =
+          templates.find((template) => template.slug === sourceSlug) ?? null;
         const fork = await apiPost<ForkResponse>(
           `/api/templates/${encodeURIComponent(sourceSlug!)}/fork`,
           {
             newName: draft.name.trim(),
             newSlug: makeForkSlug(draft.name),
+            description: "",
+            tags: customProgramTags(sourceTemplate),
           },
         );
 
@@ -335,6 +417,7 @@ export function useProgramStoreTemplateMutationController({
       loadStore,
       locale,
       manualPublicTemplate?.slug,
+      templates,
       setCreateDraft,
       setError,
       setNotice,
@@ -347,5 +430,6 @@ export function useProgramStoreTemplateMutationController({
     deleteCustomTemplate,
     saveCustomizationDraft,
     saveCreateDraft,
+    saveProgramMetaDraft,
   };
 }
