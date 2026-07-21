@@ -1,13 +1,18 @@
 import { expect, test, type Page, type TestInfo } from "@playwright/test";
 
+import { observeBrowser } from "./browser-failures";
+
 const PASSWORD = "Ref5-e2e-password-17!";
 
 test.setTimeout(90_000);
 
 test.use({
   viewport: { width: 390, height: 844 },
+  // 이 여정 스펙들은 한 테스트가 수십 초~수 분이라 실패 아티팩트가 무겁다. CI는
+  // 재시도가 2회여서 trace까지 retain-on-failure로 두면 실패 1건당 3벌이 쌓인다
+  // (실측: 실패 36건에 5GB). 첫 재시도 트레이스 1벌이면 원인 파악에 충분하다.
   video: "retain-on-failure",
-  trace: "retain-on-failure",
+  trace: "on-first-retry",
 });
 
 function uniqueEmail(label: string) {
@@ -30,20 +35,6 @@ function offsetLocalDateTime(startAt: string, minutes: number) {
   const date = new Date(startAt);
   date.setMinutes(date.getMinutes() + minutes);
   return formatLocalDateTime(date);
-}
-
-function observeBrowser(page: Page) {
-  const failures: string[] = [];
-  page.on("pageerror", (error) => failures.push(`pageerror: ${error.message}`));
-  page.on("console", (message) => {
-    if (message.type() === "error") failures.push(`console: ${message.text()}`);
-  });
-  page.on("response", (response) => {
-    if (response.status() >= 500) {
-      failures.push(`${response.status()} ${response.request().method()} ${response.url()}`);
-    }
-  });
-  return failures;
 }
 
 async function signupThroughUi(page: Page, label: string, testInfo: TestInfo) {
@@ -109,7 +100,7 @@ async function activateRef5ProgramThroughUi(
     await page.screenshot({ path: testInfo.outputPath("ref5-start-calibration.png"), fullPage: true });
   }
 
-  await page.getByRole("button", { name: "첫 처방으로 시작" }).click();
+  await page.getByRole("button", { name: /처방으로 시작|새 플랜으로 시작/ }).click();
   await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   const planId = new URL(page.url()).searchParams.get("planId");
   expect(planId).toBeTruthy();
@@ -146,7 +137,7 @@ async function activateOneRmProgramThroughUi(
   for (let index = 0; index < inputCount; index += 1) {
     await oneRmInputs.nth(index).fill("100");
   }
-  await page.getByRole("button", { name: "1RM 저장 후 시작" }).click();
+  await page.getByRole("button", { name: /1RM 저장 후 .*시작/ }).click();
   await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   const planId = new URL(page.url()).searchParams.get("planId");
   expect(planId).toBeTruthy();
