@@ -211,7 +211,7 @@ async function activateProgram(page: Page, scenario: ProgramScenario) {
     await expect(page.locator('input[aria-label$=" 1RM"]')).toHaveCount(0);
     await page.getByRole("radio", { name: "직접 입력 · 고급" }).click();
     await expect(page.locator('input[aria-label$="kg"]')).toHaveCount(5);
-    await page.getByRole("button", { name: "첫 처방으로 시작" }).click();
+    await page.getByRole("button", { name: /처방으로 시작|새 플랜으로 시작/ }).click();
     await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
     await expect(page.getByRole("heading", { name: "REF5 세션 결정" })).toBeVisible({
       timeout: 20_000,
@@ -225,7 +225,7 @@ async function activateProgram(page: Page, scenario: ProgramScenario) {
     for (let index = 0; index < scenario.expectedOneRmInputs; index += 1) {
       await oneRmInputs.nth(index).fill("100");
     }
-    await page.getByRole("button", { name: "1RM 저장 후 시작" }).click();
+    await page.getByRole("button", { name: /1RM 저장 후 .*시작/ }).click();
     await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   }
 

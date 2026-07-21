@@ -207,7 +207,7 @@ async function activateProgram(
   for (let index = 0; index < program.oneRmInputs; index += 1) {
     await inputs.nth(index).fill("100");
   }
-  await page.getByRole("button", { name: "1RM 저장 후 시작" }).click();
+  await page.getByRole("button", { name: /1RM 저장 후 .*시작/ }).click();
   await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   const url = new URL(page.url());
   const planId = url.searchParams.get("planId");

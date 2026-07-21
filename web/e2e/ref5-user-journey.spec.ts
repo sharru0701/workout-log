@@ -100,7 +100,7 @@ async function activateRef5ProgramThroughUi(
     await page.screenshot({ path: testInfo.outputPath("ref5-start-calibration.png"), fullPage: true });
   }
 
-  await page.getByRole("button", { name: "첫 처방으로 시작" }).click();
+  await page.getByRole("button", { name: /처방으로 시작|새 플랜으로 시작/ }).click();
   await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   const planId = new URL(page.url()).searchParams.get("planId");
   expect(planId).toBeTruthy();
@@ -137,7 +137,7 @@ async function activateOneRmProgramThroughUi(
   for (let index = 0; index < inputCount; index += 1) {
     await oneRmInputs.nth(index).fill("100");
   }
-  await page.getByRole("button", { name: "1RM 저장 후 시작" }).click();
+  await page.getByRole("button", { name: /1RM 저장 후 .*시작/ }).click();
   await expect(page).toHaveURL(/\/workout\/log\?/, { timeout: 20_000 });
   const planId = new URL(page.url()).searchParams.get("planId");
   expect(planId).toBeTruthy();
