@@ -6,7 +6,8 @@
 >
 > **⚠️ 이 문서는 2026-07-02 시점의 진단이다.** 개선 계획(§5)은 2026-07-22 재확인 기준 **거의 전부 실행 완료**됐고,
 > 각 항목에 ✅ 근거를 달아 두었다. 지금 열려 있는 일만 보려면 [§우선순위 요약](#우선순위-요약)의 진행 상태 박스를 볼 것 —
-> **남은 것은 god-component 분해와 DB 멀티유저 격리(의도적 이월) 둘뿐**이다. 발견 당시의 진단 표(§4)는 이력으로 보존한다.
+> **남은 것은 DB 멀티유저 격리(의도적 이월) 하나뿐**이다(god-component 분해는 2026-07-22 완료 — §5.4-4).
+> 발견 당시의 진단 표(§4)는 이력으로 보존한다.
 
 ---
 
@@ -23,9 +24,10 @@
 
 ### 우선순위 요약
 
-> **진행 상태 (2026-07-22 전수 재확인)**: 아래 P0~P3가 **전부 반영 완료**되었다. 코드에서 직접 확인한
-> 근거는 각 항목의 "현재" 칸과 §4.2·§4.3·§5에 적었다. **남은 것은 두 가지뿐** — god-component 분해(§5.4-4)와
-> DB 멀티유저 격리(§7, 의도적 이월). R8(사전 커밋 훅)은 미도입이나, 근거였던 CI 사각지대 R1~R3이 닫혀 위험도가 내려갔다.
+> **진행 상태 (2026-07-22 전수 재확인 → 같은 날 god-component 분해 완료)**: 아래 P0~P3가 **전부 반영 완료**되었다.
+> 코드에서 직접 확인한 근거는 각 항목의 "현재" 칸과 §4.2·§4.3·§5에 적었다. **이 문서의 개선 계획에서 남은 것은
+> DB 멀티유저 격리(§7, 의도적 이월) 하나뿐이다.** R8(사전 커밋 훅)은 미도입이나, 근거였던 CI 사각지대 R1~R3이
+> 닫혀 위험도가 내려갔다. `any` 감축(§4.5)은 warn 승격 후 201→146건으로 진행 중인 상시 과제다.
 
 | 우선도 | 작업 | 노력 | 현재 |
 |---|---|---|---|
@@ -36,7 +38,7 @@
 | **완료 2026-07-16** | 웹 terminal 테마·전용 셸·폰트 자산 제거 | M | `app-shell.tsx` · `font-stylesheet-loader.tsx` |
 | ~~P2 그다음~~ | e2e 스펙 CI 편입(nightly) + Go/TS 파리티 golden fixture | M | ✅ 완료 — `e2e-nightly.yml`이 22스펙 전체 실행 · `packages/core/fixtures` |
 | ~~P3 중기~~ | `packages/core` 추출, PBKDF2 상향, 세션 슬라이딩 만료 | L | ✅ 완료 — #497~#503 · `ITERATIONS = 600_000` · `auth/session-policy.ts` |
-| **남음** | god-component 분해(§5.4-4) — `v2-more-page` 1041줄 · `workout-log-screen` 930줄 | M | 진행 중 — `plans-manage`는 ✅ 완료(982줄 1파일 → `widgets/plans-manage-screen` 9파일, 최대 245줄) |
+| ~~남음~~ | god-component 분해(§5.4-4) — `v2-more-page` · `plans-manage-content` · `workout-log-screen` | M | ✅ **완료(2026-07-22, #589·#590·#591)** — 셋 다 위젯으로 분해, 최대 파일 560줄 |
 | **하지 말 것** | 프록시 토폴로지 재설계(수용된 구조적 비용), 레이어 린트 error 강제(선행 부채 존재) | — | §4.5 (레이어 린트는 부채 해소 후 2026-07-06 강제 전환됨) |
 
 ---
@@ -133,7 +135,7 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 
 - ~~**apps/api→web 65 import 결합**~~ ✅ **해소(2026-07-03, #497~#503)**: `packages/core`(@workout/core) 추출 완료 — 루트 pnpm 워크스페이스 + source-only 패키지. apps/api의 web/src import **65→0**, `@/*` alias·DOM lib 제거. core 경계 린트(`lint:boundary`) CI 게이트.
 - **Go/TS 복제 드리프트 이미 시작**: session-key는 Go가 TS 4개 kind 중 일부만 커버(plain-date 라벨 누락, 정규식 3개 verbatim 복제), bodyweight 키워드 리스트 두 언어 리터럴 중복, `buildSessionKey`는 사실상 3벌(TS lib·apps/api 재사용·Go 복제). **공용 golden fixture(JSON)를 양쪽 테스트가 읽게** 하면 CI에서 드리프트 검출(R2 선행 필요). | `apps/tui/internal/ui/session_label.go:9-13` ↔ `web/src/lib/session-key.ts:35-38` · `bodyweight.go:25` ↔ `bodyweight-load.ts:26-33`
-- **god-component**: `v2-session-summary.tsx`(1,423줄) · `plans-manage-content.tsx`(1,403줄, app/ 레이어에 뮤테이션+로직+렌더 동거) · TUI `log.go`(1,288줄, ~24필드 구조체). 분리 후보이나 응집도는 있음.
+- ~~**god-component**: `v2-session-summary.tsx`(1,423줄) · `plans-manage-content.tsx`(1,403줄, app/ 레이어에 뮤테이션+로직+렌더 동거) · TUI `log.go`(1,288줄, ~24필드 구조체)~~ ✅ **전부 해소** — `v2-session-summary`(→136줄)·TUI `log.go`(→656줄)는 그 사이 분해됐고, `plans-manage-content`를 포함한 웹 화면 셋은 2026-07-22 위젯 분해로 닫혔다(§5.4-4).
 - **`any` 201곳**(`: any` 179 + `as any` 22) — `no-explicit-any`가 eslint에서 꺼져 있어 집계조차 안 되는 상태. tsconfig는 `strict`만(추가 hardening 플래그 없음).
 - **레이어 린트 error 강제 불가 상태 유지**: `v2-home-dashboard` 상향 import(문서 기록됨) + cross-feature 1건 + server→features 런타임 import 1건(§7)이 선행 부채.
 - TUI 소소 (2026-07-20 재확인): export 파일 0644는 ✅ **해소**(`securefile.WriteFile` 0o600). `.goreleaser.yaml` prod URL은 **의도된 설계**(릴리스 바이너리 기본 서버를 ldflags로 주입, 주석 명시) — 부채 아님. `archiveName` 수동 복제는 ✅ **가드로 차단**: `goreleaser_contract_test.go`가 `.goreleaser.yaml`의 name_template을 실제로 렌더해 `archiveName()`과 대조한다(기존 `TestArchiveName`은 기대값이 하드코딩이라 코드와 함께 틀려도 통과했다 — 템플릿이 바뀌면 릴리스는 멀쩡한데 설치된 바이너리만 전부 404 나는 침묵 실패였음).
@@ -173,7 +175,15 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 1. ~~`packages/core` 추출~~ ✅ **완료(2026-07-03, #497~#503)** — 7개 PR 점진 추출: 워크스페이스 인프라 → 순수 lib(+Go/TS golden fixture, Stage 3 잔여 흡수) → db → auth → 도메인 엔진 → 서비스(locale 명시 인자화) → alias 제거/경계 린트. 부수 수정: TUI trimNum 정밀도, getHomeData 쿠키 스냅샷 오용(TUI 홈 설정 미반영).
 2. ~~PBKDF2 600k 상향 + 로그인 시 점진 재해시, 세션 슬라이딩 만료·자동 prune (S3)~~ ✅ 완료 — `auth/password.ts`(`ITERATIONS = 600_000`, 해시 포맷에 iterations 내장 → 검증 시 점진 재해시) · `auth/session-policy.ts`(sliding IDLE_TTL)
 3. ~~`no-explicit-any` warn 승격 · 레이어 린트 error 강제~~ ✅ **완료(2026-07-06, #509·#510)** — any warn 승격(85건 가시화, 점진 감축은 계속), 레이어 부채 3건+승격 중 발견 1건(widgets→app loading) 해소 후 방향 린트 error 강제(type-only·테스트 예외). 상세: [architecture-layers.md](../web/docs/architecture-layers.md) "강제 현황".
-4. god-component 분해: ~~`plans-manage-content` 로직의 `features/*/model` 이동부터~~ ✅ **plans-manage 완료** — 로직은 `features/plans-manage/model`(순수 모델 + 컨트롤러 훅), 뷰는 `widgets/plans-manage-screen`(화면·시트·섹션 4개·공용 행)으로 분해해 `app/` 레이어에서 뮤테이션+로직+렌더 동거를 해소했다. 남은 대상은 `v2-more-page`(1,041줄)·`workout-log-screen`(930줄).
+4. ~~god-component 분해~~ ✅ **완료(2026-07-22, #589·#590·#591)** — 셋 다 화면 조립기를 `widgets/`로 모으고 렌더 단위로 쪼갰다. 남은 최대 화면 파일은 `workout-log-screen` 560줄.
+
+   | 대상 | 전 | 후 | 한 일 |
+   |---|---|---|---|
+   | `plans-manage-content` | 982줄, `app/` | `widgets/plans-manage-screen` 10파일(최대 245줄) | 로직은 이미 `features/plans-manage/model`에 있었고, 뷰가 라우트 레이어에 남아 있던 것을 위젯으로 이동 후 시트·섹션 4개·공용 행으로 분해 |
+   | `v2-more-page` | 1,041줄, `components/v2/` | `widgets/more-screen` 12파일(최대 243줄) | 커널 디렉터리에 있던 화면 조립기를 위젯으로 옮기고 설정 행 단위로 분해. 단일 소비처였던 `v2-password-sheet`도 동반 이동 |
+   | `workout-log-screen` | 930줄, `widgets/` | 560줄 + 형제 7파일 | 레이어는 이미 맞아 화면 내부만 분리 — 뷰 4개(툴바·저장바·날짜네비·피드백 배너)와 로직 3개(`use-bodyweight-check`·`use-ref5-session-cancel`·`session-labels`+테스트) |
+
+   부수 발견: `web/package.json`의 `test:unit`이 테스트 파일을 손으로 나열해 **새 테스트가 자동으로 CI에 편입되지 않는다**(#591에서 `session-labels.test.ts`가 목록 누락으로 0개 집계). 고아 테스트 가드는 별도 과제.
 
 ---
 
@@ -221,3 +231,8 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 - 최대 파일: `generateSession.ts` 1,946 · `v2-session-summary.tsx` 1,423 · `plans-manage-content.tsx` 1,403 · TUI `log.go` 1,288
 - DB: 테이블 18(+auth) · 마이그레이션 18(meta 스냅샷 9개 누락) · 풀 max 5
 - 커밋: 1,168 (2026-02 이후 월평균 ~230)
+
+> **2026-07-22 델타** (위 수치는 발견 당시 기록이라 그대로 둔다):
+> `any` 201 → **146**(`: any` 124 + `as any` 22, warn 승격 후 점진 감축 중) ·
+> 최대 화면 파일 1,423 → **560**(`workout-log-screen`; 전체 최대는 도메인 엔진인 `generateSession.ts` 2,139) ·
+> CI 게이트 8종(web lint/typecheck/unit · packages/core · apps/api · TUI · E2E smoke · 번들 예산) + nightly 전체 e2e.
