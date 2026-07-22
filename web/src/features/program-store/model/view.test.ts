@@ -8,8 +8,10 @@ import {
   filterProgramListItemsByFacets,
   filterProgramListItemsBySearch,
   getProgramStoreDetailVariants,
+  getWendler531VariantPresentation,
   groupProgramStoreListItems,
   resolveProgramStoreSelection,
+  WENDLER_531_VARIANT_SLUGS,
   type ProgramStoreListItem,
 } from "./view";
 
@@ -87,6 +89,25 @@ const templates: ProgramTemplate[] = [
     visibility: "PRIVATE",
   }),
 ];
+
+// 변형 표시 문구는 슬러그 목록과 같은 테이블에서 나온다. 예전엔 목록과 라벨 분기가 따로였고
+// 분기가 모르는 슬러그를 전부 기본(Base)으로 처리해서, 변형을 추가하며 라벨을 빠뜨리면
+// 목록에 "기본"이 두 개 뜨는데도 타입 에러조차 없었다.
+
+test("등록된 5/3/1 변형은 슬러그별 고유 라벨을 갖는다", () => {
+  const labels = WENDLER_531_VARIANT_SLUGS.map(
+    (slug) => getWendler531VariantPresentation(slug, "ko")?.label,
+  );
+
+  assert.deepEqual(labels, ["기본", "FSL", "BBB"]);
+  // 라벨이 겹치면 사용자가 목록에서 두 변형을 구분할 수 없다.
+  assert.equal(new Set(labels).size, labels.length);
+});
+
+test("등록되지 않은 슬러그는 기본(Base) 문구로 위장하지 않고 null이다", () => {
+  assert.equal(getWendler531VariantPresentation("wendler-531-widowmaker", "ko"), null);
+  assert.equal(getWendler531VariantPresentation("gzclp", "en"), null);
+});
 
 test("공식 5/3/1 세 템플릿만 스토어에서 하나의 패밀리 카드로 묶는다", () => {
   const templateItems = toProgramListItems(templates, "ko");
