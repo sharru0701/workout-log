@@ -970,6 +970,177 @@ export async function runSeed(options: SeedRunOptions = {}) {
     changelog: "Canonical 5-day T1/T2 pairing with 95% AMRAP driver",
   });
 
+  // 7) Reddit PPL / PHUL — 근비대 편향 스플릿.
+  //
+  // 메인 리프트만 family LP로 굴리고 보조는 전부 `role: "ASSIST"`로 둔다. 처방 플래너가 ASSIST에
+  // skipProgression을 붙여, reducer가 운동명으로 family를 되짚어 Seated Row를 바벨로우 판정에
+  // 섞거나 Romanian Deadlift에 데드리프트 작업중량을 덮어쓰는 일을 막는다.
+  // 보조의 double progression(반복 먼저 → 중량)은 엔진이 중량만 추적하므로 자동화하지 않는다.
+  function mainItem(exerciseName: string, target: string, sets: number, weightKg: number) {
+    return {
+      exerciseName,
+      role: "MAIN" as const,
+      rowType: "AUTO" as const,
+      progressionTarget: target,
+      sets: repeatSetsWithLastNote(
+        sets,
+        { reps: 5, targetWeightKg: weightKg, note: "work set" },
+        "AMRAP 5+",
+      ),
+    };
+  }
+
+  function assistItem(exerciseName: string, sets: number, reps: number, weightKg?: number) {
+    return {
+      exerciseName,
+      role: "ASSIST" as const,
+      sets: repeatSets(sets, {
+        reps,
+        ...(weightKg !== undefined ? { targetWeightKg: weightKg } : {}),
+        note: "accessory",
+      }),
+    };
+  }
+
+  const pplPullAccessories = () => [
+    assistItem(EXERCISE_NAMES.latPulldown, 3, 8, 45),
+    assistItem(EXERCISE_NAMES.seatedRow, 3, 8, 45),
+    assistItem(EXERCISE_NAMES.facePull, 5, 15, 20),
+    assistItem(EXERCISE_NAMES.hammerCurl, 4, 8, 12),
+    assistItem(EXERCISE_NAMES.bicepCurl, 4, 8, 20),
+  ];
+  const pplPushAccessories = (secondaryPress: string, secondaryKg: number) => [
+    assistItem(secondaryPress, 3, 8, secondaryKg),
+    assistItem(EXERCISE_NAMES.inclineDumbbellBenchPress, 3, 8, 20),
+    assistItem(EXERCISE_NAMES.tricepsPushdown, 3, 8, 25),
+    assistItem(EXERCISE_NAMES.tricepsExtension, 3, 8, 20),
+    assistItem(EXERCISE_NAMES.lateralRaise, 6, 15, 7.5),
+  ];
+  const pplLegSession = (key: string) => ({
+    key,
+    items: [
+      mainItem(EXERCISE_NAMES.highBarBackSquat, "SQUAT", 3, 80),
+      assistItem(EXERCISE_NAMES.romanianDeadlift, 3, 8, 60),
+      assistItem(EXERCISE_NAMES.legPress, 3, 8, 120),
+      assistItem(EXERCISE_NAMES.legCurl, 3, 8, 35),
+      assistItem(EXERCISE_NAMES.calfRaise, 5, 8, 60),
+    ],
+  });
+
+  const templatePpl = await upsertTemplate("reddit-ppl-6day", {
+    slug: "reddit-ppl-6day",
+    name: "Reddit PPL (6-Day)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description:
+      "The r/Fitness push/pull/legs routine by u/Metallicadpa, run twice through in a six-day week. One barbell lift anchors each session and moves on plain linear progression, while the rest of the day is bodybuilding accessory work in the 8 to 15 rep range. It is the standard recommendation for lifters who want novice-style strength progress with far more volume for size.",
+    tags: ["manual", "hypertrophy", "ppl", "linear", "novice", "high-frequency"],
+  });
+
+  const templatePplV1 = await upsertVersion(templatePpl.id, 1, {
+    definition: {
+      kind: "manual",
+      programFamily: "reddit-ppl",
+      sessions: [
+        {
+          key: "D1",
+          items: [mainItem("Deadlift", "DEADLIFT", 1, 100), ...pplPullAccessories()],
+        },
+        {
+          key: "D2",
+          items: [
+            mainItem("Bench Press", "BENCH", 5, 60),
+            ...pplPushAccessories("Overhead Press", 30),
+          ],
+        },
+        pplLegSession("D3"),
+        {
+          key: "D4",
+          items: [mainItem("Barbell Row", "PULL", 5, 50), ...pplPullAccessories()],
+        },
+        {
+          key: "D5",
+          items: [
+            mainItem("Overhead Press", "OHP", 5, 40),
+            ...pplPushAccessories("Bench Press", 45),
+          ],
+        },
+        pplLegSession("D6"),
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical 6-day PPL with compound LP and accessory work",
+  });
+
+  const templatePhul = await upsertTemplate("phul", {
+    slug: "phul",
+    name: "PHUL (Power Hypertrophy Upper Lower)",
+    type: "MANUAL",
+    visibility: "PUBLIC",
+    description:
+      "A four-day upper/lower split that separates heavy work from volume work. Two power days drive the main barbell lifts in the 3 to 5 rep range, and two hypertrophy days chase size with moderate loads in the 8 to 12 range. Strength built on the power days raises what you can handle on the hypertrophy days, which is why it stays popular with intermediates who want both at once.",
+    tags: ["manual", "hypertrophy", "strength", "upper-lower", "intermediate", "phul"],
+  });
+
+  const templatePhulV1 = await upsertVersion(templatePhul.id, 1, {
+    definition: {
+      kind: "manual",
+      programFamily: "phul",
+      sessions: [
+        {
+          // 파워데이 메인은 3~5회 레인지의 **상단(5회)** 로 처방한다. PHUL의 증량 규칙이
+          // "레인지 상단을 전 세트 달성하면 +중량"이라, 상단을 처방해야 엔진의 LP가 그 규칙과 같아진다.
+          key: "UP",
+          items: [
+            mainItem("Bench Press", "BENCH", 3, 70),
+            mainItem("Barbell Row", "PULL", 3, 60),
+            mainItem("Overhead Press", "OHP", 3, 42.5),
+            assistItem(EXERCISE_NAMES.inclineDumbbellBenchPress, 3, 6, 22.5),
+            assistItem(EXERCISE_NAMES.latPulldown, 3, 6, 50),
+            assistItem(EXERCISE_NAMES.bicepCurl, 2, 6, 25),
+            assistItem(EXERCISE_NAMES.skullcrusher, 2, 6, 20),
+          ],
+        },
+        {
+          key: "LP",
+          items: [
+            mainItem(EXERCISE_NAMES.highBarBackSquat, "SQUAT", 3, 90),
+            mainItem("Deadlift", "DEADLIFT", 3, 110),
+            assistItem(EXERCISE_NAMES.legPress, 4, 10, 130),
+            assistItem(EXERCISE_NAMES.legCurl, 3, 6, 35),
+            assistItem(EXERCISE_NAMES.calfRaise, 4, 6, 60),
+          ],
+        },
+        {
+          // 근비대일은 전부 ASSIST — Incline Bench(BENCH)·Front Squat(SQUAT)이 파워데이와 같은
+          // family로 잡혀 한 주에 두 번 증량시키는 것을 막는다.
+          key: "UH",
+          items: [
+            assistItem(EXERCISE_NAMES.inclineBenchPress, 3, 8, 45),
+            assistItem(EXERCISE_NAMES.chestFly, 3, 8, 15),
+            assistItem(EXERCISE_NAMES.seatedRow, 3, 8, 45),
+            assistItem(EXERCISE_NAMES.dumbbellRow, 3, 8, 22.5),
+            assistItem(EXERCISE_NAMES.lateralRaise, 3, 8, 10),
+            assistItem(EXERCISE_NAMES.bicepCurl, 3, 8, 20),
+            assistItem(EXERCISE_NAMES.tricepsExtension, 3, 8, 20),
+          ],
+        },
+        {
+          key: "LH",
+          items: [
+            assistItem(EXERCISE_NAMES.frontSquat, 3, 8, 50),
+            assistItem(EXERCISE_NAMES.lunge, 3, 8, 30),
+            assistItem(EXERCISE_NAMES.legExtension, 3, 10, 40),
+            assistItem(EXERCISE_NAMES.legCurl, 3, 10, 30),
+            assistItem(EXERCISE_NAMES.calfRaise, 3, 8, 50),
+          ],
+        },
+      ],
+    },
+    defaults: {},
+    changelog: "Canonical 4-day power/hypertrophy split",
+  });
+
   for (const item of EXERCISE_CATALOG) {
     await upsertExercise(item);
   }
@@ -1119,6 +1290,38 @@ export async function runSeed(options: SeedRunOptions = {}) {
             [exerciseSlotKey(EXERCISE_NAMES.inclineBenchPress)]: NSUNS_TM_KG.incline,
             [exerciseSlotKey(EXERCISE_NAMES.closeGripBenchPress)]: NSUNS_TM_KG.closeGrip,
           },
+        },
+      });
+    }
+
+    if (templatePplV1?.id) {
+      await upsertPlanForUser(devUserId, "Program Reddit PPL", {
+        type: "MANUAL",
+        rootProgramVersionId: templatePplV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["D1", "D2", "D3", "D4", "D5", "D6"],
+          sessionKeyMode: "DATE",
+          autoProgression: true,
+          progressionModel: "v2",
+          trainingMaxKg: { SQUAT: 80, BENCH: 60, DEADLIFT: 100, OHP: 40, PULL: 50 },
+        },
+      });
+    }
+
+    if (templatePhulV1?.id) {
+      await upsertPlanForUser(devUserId, "Program PHUL", {
+        type: "MANUAL",
+        rootProgramVersionId: templatePhulV1.id,
+        params: {
+          timezone: "Asia/Seoul",
+          startDate: "2026-01-05",
+          schedule: ["UP", "LP", "UH", "LH"],
+          sessionKeyMode: "DATE",
+          autoProgression: true,
+          progressionModel: "v2",
+          trainingMaxKg: { SQUAT: 90, BENCH: 70, DEADLIFT: 110, OHP: 42.5, PULL: 60 },
         },
       });
     }

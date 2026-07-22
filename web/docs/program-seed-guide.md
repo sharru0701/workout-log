@@ -29,6 +29,8 @@
 | 6 | Greyskull LP | MANUAL | A/B 구조, 마지막 세트 AMRAP 5+ |
 | 7 | Madcow 5x5 | MANUAL | 주간 램프(퍼센트 파생), 금요일 PR 트리플 |
 | 8 | nSuns LP (5-Day) | MANUAL | %TM 고볼륨(T1 9세트 + T2 8세트), AMRAP 구간 증량 |
+| 9 | Reddit PPL (6-Day) | MANUAL | 근비대 편향 6일 PPL, 메인만 LP + 보조 다수 |
+| 10 | PHUL | MANUAL | 4일 상·하체 파워/근비대 분할, 파워데이만 LP |
 
 **선정 이유 요약**
 
@@ -52,6 +54,8 @@
 | Greyskull LP | 2x5 후 마지막 세트 5+ AMRAP, Deadlift 단일 고반복 | boostcamp.app, liftvault.com |
 | Madcow 5x5 | 12.5% 간격 램프 → 5회 탑세트, 금 1×3 @102.5% + 백오프 1×8 @75%, 2주 연속 실패 시 ×0.9 | stronglifts.com, liftvault.com, powerliftingtowin.com |
 | nSuns LP | TM=1RM×90%, T1 75/85/95 + 백오프 90→65, T2 50/60/70, 95% AMRAP reps로 TM 증량 | liftosaur.com, liftvault.com, thefitness.wiki |
+| Reddit PPL | 6일 PPL×2, 메인 5회(마지막 5+), 세션당 데드 10lb·나머지 5lb, 3연속 실패 시 -10% | liftosaur.com, liftvault.com, thefitness.wiki |
+| PHUL | 4일(상·하체 × 파워·근비대), 파워 3~5회·근비대 8~12회, 레인지 상단 달성 시 증량 | liftosaur.com, muscleandstrength.com |
 
 ---
 
@@ -131,6 +135,8 @@ pnpm db:verify:programs
 5. `greyskull-lp`
 6. `madcow-5x5`
 7. `nsuns-lp-5day`
+8. `reddit-ppl-6day`
+9. `phul`
 
 **검증용 플랜** (유저: `dev`):
 1. Program Tactical Barbell Operator
@@ -147,6 +153,10 @@ pnpm db:verify:programs
 - `Front Squat`
 - `Sumo Deadlift` (nSuns D2 T2)
 - `Close-Grip Bench Press` (nSuns D5 T2)
+- PPL·PHUL 보조 15종: `Seated Row` `Dumbbell Row` `Face Pull` `Lateral Raise` `Bicep Curl` `Hammer Curl`
+  `Triceps Pushdown` `Triceps Extension` `Skullcrusher` `Chest Fly` `Incline Dumbbell Bench Press`
+  `Leg Curl` `Leg Extension` `Calf Raise` `Lunge`
+  (근육군 기여도는 [`category-to-muscle.ts`](../../packages/core/src/muscle-groups/category-to-muscle.ts)에 이미 정의돼 있어 추가 매핑 불필요)
 
 별칭 보강:
 - `Overhead Press` → `Press` alias 추가
@@ -216,6 +226,30 @@ gzclp/texas는 이 목록에 없으므로 percent를 계속 무시한다(회귀 
 | nSuns | T1 마지막 백오프도 "5+/3+" | **95% 세트만** amrap 표시 | reducer는 amrap 세트의 마지막 실측값을 읽어, 둘 다 표시하면 65% 세트가 판정을 덮어씀 |
 | nSuns | 벤치 T1이 D1·D5 2회 | D5(5/3/1 데이)만 driver | 한 TM을 두 날이 굴리면 주 2회 증량 |
 | 둘 다 | — | 1RM을 **운동별**로 입력 | family로 뭉치면 Front Squat이 백스쿼트 TM을, Close-Grip이 벤치 TM을 물려받아 보조가 과중량 |
+
+### 5-5c. 보조 운동이 많은 프로그램 (PPL / PHUL)
+
+두 프로그램은 세션당 메인 1~3개 + 보조 4~7개 구성이라, 기존 uniform LP 계열(SS/StrongLifts/
+Greyskull)의 전제 — "세션의 모든 행이 메인" — 가 깨진다. 보조를 그냥 두면 두 곳에서 샌다.
+
+1. **진행 판정 오염**: reducer는 `plannedRef`에 진행 키가 없으면 **운동명으로 family를 되짚는다**
+   (`progressionIdentityForSet`). 그래서 `Seated Row`가 `Barbell Row`(PULL) 판정에, `Incline
+   Dumbbell Bench Press`가 `Bench Press`(BENCH) 판정에 섞인다.
+2. **무게 오버라이드 오염**: `applyManualRuntimeWeightOverrides`(family-target)도 운동명으로
+   family를 찾아 덮어쓴다. `Romanian Deadlift`가 데드리프트 작업중량을 그대로 받는다.
+
+그래서 처방 플래너가 **`role: "ASSIST"` 행에 `skipProgression`을 붙이고**, 오버라이드는
+`skipProgression` 행을 건너뛴다. 시드는 메인만 `role: "MAIN"`으로 두면 된다.
+
+PHUL의 근비대일(UH/LH)은 **전 행을 ASSIST**로 둔다. `Incline Bench Press`(BENCH)·`Front
+Squat`(SQUAT)이 파워데이와 같은 family로 잡혀 한 주에 두 번 증량시키기 때문이다.
+
+**원전 대비 각색**:
+
+| 프로그램 | 원전 | 앱 채택 | 이유 |
+|----------|------|---------|------|
+| PHUL | 파워 3~5회 레인지 안에서 반복 늘리다 상단 달성 시 +중량 | 처방을 **상단(5회) 고정** | 엔진이 중량만 추적한다. 상단을 처방해야 "전 세트 상단 달성=증량"이 double progression의 중량 스텝과 일치. 하단(3회)을 처방하면 3회만 해도 매 세션 증량된다 |
+| 둘 다 | 보조도 double progression(8→12회 후 +5lb) | **보조 자동 진행 없음** | 중량만 추적하는 엔진에서 보조를 LP에 태우면 레터럴 레이즈가 세션마다 +2.5kg이 된다. 보조 무게는 유저가 직전 기록을 보고 조정 |
 
 ### 5-6. 자동 진행 UX
 

@@ -126,6 +126,26 @@ export const PROGRAM_FAMILY_REGISTRY: ProgramFamilyEntry[] = [
     weightOverrideMode: "slotted-internal",
   },
   {
+    // reddit-ppl: 메인 리프트만 family LP로 굴리고 보조는 ASSIST(진행 제외)로 둔다.
+    family: "reddit-ppl",
+    slugs: ["reddit-ppl-6day"],
+    kinds: ["reddit-ppl"],
+    flowStyle: "uniform",
+    manualPlanner: "generic",
+    progressionProgram: "reddit-ppl",
+    weightOverrideMode: "family-target",
+  },
+  {
+    // phul: 파워데이 메인만 family LP. 근비대일은 전부 ASSIST라 같은 family를 두 번 굴리지 않는다.
+    family: "phul",
+    slugs: ["phul"],
+    kinds: ["phul"],
+    flowStyle: "uniform",
+    manualPlanner: "generic",
+    progressionProgram: "phul",
+    weightOverrideMode: "family-target",
+  },
+  {
     // nsuns: 운동별 슬롯(TM) — 같은 리프트가 T1/T2로 여러 날 등장해도 TM 하나를 공유한다.
     family: "nsuns-lp",
     slugs: ["nsuns-lp-5day"],

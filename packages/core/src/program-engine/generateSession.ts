@@ -842,6 +842,10 @@ export function plannedExercisesFromManualSession(
         options?.enforcePlannedReps === true && role === "MAIN" && Boolean(progressionTarget)
           ? true
           : undefined,
+      // 보조 운동은 진행 판정에서 뺀다. reducer는 plannedRef가 없으면 운동명으로 family를
+      // 되짚으므로(progressionIdentityForSet), 표시만 ASSIST로 두면 PPL의 Seated Row가
+      // Barbell Row(PULL) 판정에, Incline DB Bench가 Bench(BENCH) 판정에 섞인다.
+      skipProgression: role === "ASSIST" ? true : undefined,
     });
   }
 
@@ -1622,6 +1626,9 @@ export function applyManualRuntimeWeightOverrides(
   if (Object.keys(runtimeTrainingMax).length < 1) return exercises;
 
   return exercises.map((exercise) => {
+    // 진행에서 제외된 보조 행은 무게도 덮어쓰지 않는다. 운동명으로 family를 되짚는 방식이라
+    // 그냥 두면 Romanian Deadlift가 데드리프트 작업중량을, Seated Row가 바벨로우 중량을 받는다.
+    if (exercise.skipProgression === true) return exercise;
     const target = inferTargetFromExerciseName(exercise.exerciseName);
     if (!target) return exercise;
     const weight = runtimeTrainingMax[target];
@@ -1891,7 +1898,9 @@ async function buildSession(
             (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
           const enforceUniformLpReps =
             (manualEntry?.family === "starting-strength-lp" ||
-              manualEntry?.family === "stronglifts-5x5") &&
+              manualEntry?.family === "stronglifts-5x5" ||
+              manualEntry?.family === "reddit-ppl" ||
+              manualEntry?.family === "phul") &&
             (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
           snapshot.exercises = applyManualRuntimeWeightOverrides(
             manualEntry,
@@ -2092,7 +2101,9 @@ export function previewSessionExercises(
         (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
       const enforceUniformLpReps =
         (manualEntry?.family === "starting-strength-lp" ||
-          manualEntry?.family === "stronglifts-5x5") &&
+          manualEntry?.family === "stronglifts-5x5" ||
+          manualEntry?.family === "reddit-ppl" ||
+          manualEntry?.family === "phul") &&
         (effectivePlanParams as Record<string, unknown>)?.progressionModel === "v2";
       exercises = plannedExercisesFromManualSession(manualSession, {
         injectAmrapLastMainSet: injectGreyskullAmrap,

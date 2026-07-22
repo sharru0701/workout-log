@@ -25,7 +25,9 @@ export type ProgressionProgram =
   | "wendler-531"
   | "asymptote"
   | "madcow-5x5"
-  | "nsuns-lp";
+  | "nsuns-lp"
+  | "reddit-ppl"
+  | "phul";
 
 export type ProgressionEventType = "INCREASE" | "HOLD" | "RESET" | "ADVANCE_WEEK";
 
@@ -248,8 +250,10 @@ export function rulesFor(
       resetFactor: 0.95,
     };
   } else {
-    // greyskull-lp, starting-strength-lp, stronglifts-5x5:
-    // 매 세션 증량, 3회 연속 실패 시 10% 감소
+    // greyskull-lp, starting-strength-lp, stronglifts-5x5, reddit-ppl, phul:
+    // 매 세션 증량, 3회 연속 실패 시 10% 감소.
+    // reddit-ppl 원전(세션당 상체 5lb·데드 10lb, 3연속 실패 시 -10%)과 정확히 같은 규칙이고,
+    // phul은 "레인지 상단 달성 시 증량"이라 처방 reps를 상단(파워데이 5회)으로 두어 같은 규칙에 태운다.
     defaults = {
       increaseEverySuccesses: 1,
       failResetThreshold: 3,
@@ -440,6 +444,8 @@ export function resolveAutoProgressionProgram(programSlug: string, definition?: 
   if (slug === "asymptote-protocol" || slug === "asymptote") return "asymptote";
   if (slug === "madcow-5x5") return "madcow-5x5";
   if (slug === "nsuns-lp-5day") return "nsuns-lp";
+  if (slug === "reddit-ppl-6day") return "reddit-ppl";
+  if (slug === "phul") return "phul";
   if (kind === "operator" || family === "operator" || def.operatorStyle === true) return "operator";
   if (kind === "greyskull-lp" || family === "greyskull-lp") return "greyskull-lp";
   if (kind === "starting-strength-lp" || family === "starting-strength-lp") return "starting-strength-lp";
@@ -450,6 +456,8 @@ export function resolveAutoProgressionProgram(programSlug: string, definition?: 
   if (kind === "asymptote" || family === "asymptote") return "asymptote";
   if (kind === "madcow-5x5" || family === "madcow-5x5") return "madcow-5x5";
   if (kind === "nsuns-lp" || family === "nsuns-lp") return "nsuns-lp";
+  if (kind === "reddit-ppl" || family === "reddit-ppl") return "reddit-ppl";
+  if (kind === "phul" || family === "phul") return "phul";
   return null;
 }
 
@@ -966,7 +974,11 @@ export function reduceProgressionState(input: {
           ? 4
           : input.program === "nsuns-lp"
             ? 5
-            : null;
+            : input.program === "reddit-ppl"
+              ? 6
+              : input.program === "phul"
+                ? 4
+                : null;
   const hasLoggedProgramSet = input.sets.some((set) => {
     if (set.isExtra) return false;
     const reps = toFiniteNumber(set.reps);

@@ -197,6 +197,10 @@ const PROGRAM_DESCRIPTIONS: Record<ProgramStoreLocale, Partial<Record<string, st
       "메인 운동 뒤에 Boring But Big(BBB) 보조 운동을 더한 5/3/1 변형입니다. 이어지는 5×10 세트가 훨씬 큰 근비대·작업 능력 자극을 만들고, 핵심 진행은 여전히 5/3/1 톱세트에서 나옵니다. 스트렝스와 함께 더 큰 사이즈를 원하는 리프터를 위한 고볼륨 옵션입니다.",
     "greyskull-lp":
       "고전적인 바벨 기본기에 AMRAP 마지막 세트를 더한 초보자 선형 진행 프로그램입니다. 처음 두 작업 세트 뒤, 마지막 세트에서 최대한 많은 횟수를 시도해 그날 컨디션에 따라 볼륨이 자동으로 조절되도록 합니다. 진행은 단순하게 유지하면서도 초보자에게 더 많은 유연성과 선택적 보조 운동을 추가할 명확한 경로를 제공합니다.",
+    "reddit-ppl-6day":
+      "u/Metallicadpa가 만들어 r/Fitness 위키의 표준 추천이 된 푸시/풀/레그 루틴입니다. 6일 동안 푸시·풀·레그를 두 번 돌고, 각 세션은 바벨 메인 리프트 하나가 중심을 잡으며 단순 선형 증량으로 굴러갑니다. 나머지는 8~15회 구간의 보디빌딩 보조 운동이라, 초보자식 근력 진행을 유지하면서 사이즈를 위한 볼륨을 훨씬 많이 가져가고 싶은 사람에게 맞습니다.",
+    phul:
+      "무거운 훈련과 볼륨 훈련을 분리한 4일 상·하체 분할입니다. 파워데이 이틀은 메인 바벨 리프트를 3~5회 구간에서 밀어 근력을 올리고, 근비대일 이틀은 중간 강도 8~12회로 사이즈를 노립니다. 파워데이에서 쌓은 근력이 근비대일에 다룰 수 있는 무게를 끌어올리기 때문에, 근력과 사이즈를 동시에 원하는 중급자에게 꾸준히 인기 있는 구성입니다.",
     "madcow-5x5":
       "초보자 5×5를 졸업한 중급 리프터를 위한 고전적인 후속 프로그램입니다. 각 리프트는 12.5% 간격으로 램프해 5회 탑세트 하나에 도달하고, 한 주 전체가 그 무게 하나에 묶입니다. 월요일은 볼륨을 쌓고, 수요일은 가볍게 넘기며, 금요일은 월요일 탑세트를 넘어서는 새 트리플에 도전합니다. 증량이 세션마다가 아니라 주 1회로 느려지는 것이 바로 세션 단위 선형 증량이 끝난 뒤에도 이 프로그램이 굴러가는 이유입니다.",
     "nsuns-lp-5day":
@@ -227,6 +231,10 @@ const PROGRAM_DESCRIPTIONS: Record<ProgramStoreLocale, Partial<Record<string, st
       "A 5/3/1 variant that adds Boring But Big assistance after the main work. The follow-up 5x10 sets create a much larger hypertrophy and work-capacity stimulus while the core progression still comes from the 5/3/1 top sets. It is the volume-heavy option for lifters who want more size alongside strength.",
     "greyskull-lp":
       "A novice LP built on classic barbell basics with an AMRAP final set. After the first two work sets, the last set pushes for extra reps, letting volume auto-regulate based on how the athlete feels that day. It keeps progression simple while giving beginners more flexibility and a clearer path to adding optional assistance work.",
+    "reddit-ppl-6day":
+      "The r/Fitness push/pull/legs routine by u/Metallicadpa, run twice through in a six-day week. One barbell lift anchors each session and moves on plain linear progression, while the rest of the day is bodybuilding accessory work in the 8 to 15 rep range. It is the standard recommendation for lifters who want novice-style strength progress with far more volume for size.",
+    phul:
+      "A four-day upper/lower split that separates heavy work from volume work. Two power days drive the main barbell lifts in the 3 to 5 rep range, and two hypertrophy days chase size with moderate loads in the 8 to 12 range. Strength built on the power days raises what you can handle on the hypertrophy days, which is why it stays popular with intermediates who want both at once.",
     "madcow-5x5":
       "The classic intermediate successor to novice 5x5 programs. Each lift ramps in 12.5% steps to a single top set of five, and the whole week is anchored to that one number: Monday builds volume, Wednesday stays light, and Friday pushes past Monday's top set for a new weekly triple. Progression moves once per week instead of every session, which is exactly what makes it survivable once session-to-session linear gains are gone.",
     "nsuns-lp-5day":
