@@ -67,6 +67,16 @@ export type ProgramSlotMeta = {
   driver?: boolean;
 };
 
+// 세트별 처방 행. draft는 원래 운동당 (세트 수, reps) 두 숫자만 들고 있어서, 세트마다 퍼센트와
+// reps가 다른 프로그램(Madcow 램프 50/62.5/75/87.5/100%, nSuns T1 75/85/95→65%)을 fork하면
+// 구조가 균일 세트로 뭉개졌다. 그런 프로그램만 이 행을 함께 들고 다닌다.
+export type ProgramSetRowDraft = {
+  reps: number;
+  percent?: number;
+  note?: string;
+  amrap?: boolean;
+};
+
 export type ProgramExerciseDraft = {
   id: string;
   exerciseName: string;
@@ -78,6 +88,9 @@ export type ProgramExerciseDraft = {
   reps: number;
   note: string;
   slot?: ProgramSlotMeta | null; // 슬롯형 프로그램에서만 채워진다
+  // 퍼센트 파생 프로그램의 세트별 구조. 편집기에서 세트 수나 reps를 바꾸면 균일 처방으로
+  // 되돌아간다(toManualDefinition의 일치 검사) — 사용자가 명시적으로 손댄 결과이므로 의도된 동작.
+  setRows?: ProgramSetRowDraft[] | null;
 };
 
 export type ProgramSessionDraft = {
@@ -108,6 +121,10 @@ type ManualDefinitionSession = {
       reps: number;
       targetWeightKg: number;
       note?: string;
+      // 퍼센트 파생 프로그램(madcow/nsuns)의 세트별 처방. 무게는 슬롯 기준무게×percent로
+      // 계산되고, amrap은 nSuns T1의 판정 세트를 가리킨다.
+      percent?: number;
+      amrap?: boolean;
     }>;
   }>;
 };
@@ -957,6 +974,7 @@ function createFixedExerciseDraft(
   sets = 3,
   reps = 5,
   slot: ProgramSlotMeta | null = null,
+  setRows: ProgramSetRowDraft[] | null = null,
 ): ProgramExerciseDraft {
   return {
     id: uid("exercise"),
@@ -969,6 +987,7 @@ function createFixedExerciseDraft(
     reps,
     note: "",
     slot,
+    setRows,
   };
 }
 
@@ -1049,6 +1068,21 @@ export function buildSlottedLpSlot(
   return { role: { ko: label, en: texasRole ?? sessionKey }, sessionKey, texasRole, progressionKey, startWeightKg: startW };
 }
 
+/** 정의의 세트 배열 → draft 세트 행. 진행에 쓰이는 값(reps·percent·amrap)과 표시 note만 남긴다. */
+function toSetRowDrafts(sets: any[]): ProgramSetRowDraft[] | null {
+  if (!Array.isArray(sets) || sets.length === 0) return null;
+  return sets.map((set: any) => {
+    const percent = Number(set?.percent);
+    const note = typeof set?.note === "string" ? set.note.trim() : "";
+    return {
+      reps: Math.max(1, Math.round(Number(set?.reps) || 5)),
+      ...(Number.isFinite(percent) && percent > 0 ? { percent } : {}),
+      ...(note ? { note } : {}),
+      ...(set?.amrap === true ? { amrap: true } : {}),
+    };
+  });
+}
+
 function slottedLpSessionDrafts(sessions: any[], family: string): ProgramSessionDraft[] {
   return sessions.map((session: any) => {
     const sessionKey = String(session?.key ?? "").trim() || "D1";
@@ -1077,6 +1111,9 @@ function slottedLpSessionDrafts(sessions: any[], family: string): ProgramSession
           Math.max(1, setRows.length || 1),
           Math.max(1, Number(first?.reps) || 5),
           slot,
+          // 퍼센트 파생 family만 세트별 구조를 들고 다닌다. gzclp/texas는 세트가 균일해
+          // (setCount, reps)만으로 왕복이 되므로 굳이 늘리지 않는다.
+          usesPercentDerivedSets(family) ? toSetRowDrafts(setRows) : null,
         );
       }),
     };
@@ -1299,6 +1336,39 @@ export function reorderExercises(
   });
 }
 
+/**
+ * 세트별 구조를 그대로 되살린다 — 단, 편집기에서 손대지 않았을 때만.
+ *
+ * 편집기는 운동당 (세트 수, reps) 두 숫자만 노출하므로, 사용자가 그 값을 바꿨는지는
+ * 보존해 둔 행과 비교해서만 알 수 있다. 세트 수가 달라졌거나 reps가 첫 행과 달라졌으면
+ * 사용자가 명시적으로 바꾼 것이므로 균일 처방으로 되돌린다(편집이 조용히 무시되는 것보다 낫다).
+ */
+function preservedSetRows(exercise: ProgramExerciseDraft) {
+  const rows = exercise.setRows;
+  if (!Array.isArray(rows) || rows.length === 0) return null;
+  if (rows.length !== Math.max(1, exercise.sets)) return null;
+  if (Math.max(1, Math.round(exercise.reps)) !== Math.max(1, Math.round(rows[0]!.reps))) return null;
+
+  return rows.map((row, index) => ({
+    setNumber: index + 1,
+    reps: Math.max(1, Math.round(row.reps)),
+    // 무게는 슬롯 기준무게(startWeightKg/TM)×percent로 처방이 계산하므로 0으로 둔다.
+    targetWeightKg: 0,
+    ...(row.percent !== undefined ? { percent: row.percent } : {}),
+    ...(row.note ? { note: row.note } : {}),
+    ...(row.amrap === true ? { amrap: true } : {}),
+  }));
+}
+
+function uniformSetRows(exercise: ProgramExerciseDraft, note: string | undefined) {
+  return Array.from({ length: Math.max(1, exercise.sets) }, (_, index) => ({
+    setNumber: index + 1,
+    reps: Math.max(1, Math.round(exercise.reps)),
+    targetWeightKg: 0,
+    note,
+  }));
+}
+
 export function toManualDefinition(
   sessions: ProgramSessionDraft[],
   options?: { operatorStyle?: boolean; programFamily?: string | null },
@@ -1306,23 +1376,22 @@ export function toManualDefinition(
   const normalized: ManualDefinitionSession[] = sessions.map((session) => ({
     key: session.key,
     name: `Session ${session.key}`,
-    items: session.exercises.map((exercise) => ({
-      exerciseName: exercise.exerciseName.trim() || "Unnamed Exercise",
-      role: "MAIN",
-      rowType: exercise.rowType ?? undefined,
-      progressionTarget: exercise.progressionTarget ?? undefined,
-      slot: exercise.slot ?? undefined,
-      sets: Array.from({ length: Math.max(1, exercise.sets) }, (_, index) => ({
-        setNumber: index + 1,
-        reps: Math.max(1, Math.round(exercise.reps)),
-        targetWeightKg: 0,
-        note:
-          exercise.note.trim() ||
-          (exercise.mode === "MARKET" && exercise.marketTemplateSlug
-            ? `based-on:${exercise.marketTemplateSlug}`
-            : undefined),
-      })),
-    })),
+    items: session.exercises.map((exercise) => {
+      const fallbackNote =
+        exercise.note.trim() ||
+        (exercise.mode === "MARKET" && exercise.marketTemplateSlug
+          ? `based-on:${exercise.marketTemplateSlug}`
+          : undefined);
+
+      return {
+        exerciseName: exercise.exerciseName.trim() || "Unnamed Exercise",
+        role: "MAIN" as const,
+        rowType: exercise.rowType ?? undefined,
+        progressionTarget: exercise.progressionTarget ?? undefined,
+        slot: exercise.slot ?? undefined,
+        sets: preservedSetRows(exercise) ?? uniformSetRows(exercise, fallbackNote),
+      };
+    }),
   }));
 
   return {
