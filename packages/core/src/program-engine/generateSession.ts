@@ -28,6 +28,7 @@ import { mapExerciseNameToTarget as inferTargetFromExerciseName } from "@workout
 import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
 import {
   lookupProgramFamily,
+  usesPercentDerivedSets,
   type ProgramFamilyEntry,
 } from "@workout/core/program-store/program-registry";
 import { buildSlottedLpSlot } from "@workout/core/program-store/model";
@@ -1223,8 +1224,8 @@ export function plannedExercisesFromSlottedLpManualSession(
       if (!exerciseName) return null;
 
       // 원본(미-fork) 정의는 slot이 없다 → note/index에서 동적 생성(fork draft와 동일한 인덱스 진행키).
-      let slot: { progressionKey?: string; startWeightKg?: number; tier?: string; texasRole?: string } | null =
-        (item?.slot as { progressionKey?: string; startWeightKg?: number; tier?: string; texasRole?: string } | null) ?? null;
+      let slot: { progressionKey?: string; startWeightKg?: number; tier?: string; texasRole?: string; driver?: boolean } | null =
+        (item?.slot as { progressionKey?: string; startWeightKg?: number; tier?: string; texasRole?: string; driver?: boolean } | null) ?? null;
       if ((!slot || !slot.progressionKey) && family && sessionKey) {
         const firstSet = (Array.isArray(item?.sets) ? item.sets[0] : null) ?? {};
         const note = String(firstSet?.note ?? item?.note ?? "");
@@ -1263,6 +1264,50 @@ export function plannedExercisesFromSlottedLpManualSession(
           ? slot.startWeightKg
           : null;
       const effectiveKg = slotWorkKg !== null && slotWorkKg > 0 ? slotWorkKg : startWeightKg;
+
+      // madcow/nsuns: 세트 무게를 슬롯 workKg(주간 탑세트 / TM)의 퍼센트로 파생한다.
+      // 한 운동의 workKg를 여러 요일이 공유하므로, 진행 판정은 slot.driver 슬롯 하나만 맡고
+      // 나머지 행은 무게만 파생한 뒤 skipProgression으로 reducer에서 빠진다(texas V/R과 동일 전략).
+      if (usesPercentDerivedSets(family)) {
+        const isDriver = slot?.driver === true;
+        // 기준 무게 해석은 reducer와 같은 순서여야 한다(readTrainingMaxForKey: 슬롯 키 → family 키).
+        // 프로그램 시작 화면은 1RM을 운동별이 아니라 family 키(SQUAT/BENCH/…)로 저장하므로,
+        // 슬롯 키만 보면 첫 세션이 유저 입력 대신 seed 데모 무게로 처방된다.
+        const percentBaseKg =
+          pickTrainingMaxKgByKeys(effectiveParams, defaults, [slotKey, progressionTarget]) ??
+          (typeof slot?.startWeightKg === "number" && slot.startWeightKg > 0
+            ? slot.startWeightKg
+            : null);
+        const pctSets = setRows.map((s: any) => {
+          const base = mapManualSet(s);
+          const pct = toNumberOrNull(s?.percent);
+          if (percentBaseKg !== null && percentBaseKg > 0) {
+            base.targetWeightKg =
+              pct !== null && pct > 0
+                ? roundToNearest2p5(percentBaseKg * pct)
+                : roundToNearest2p5(percentBaseKg);
+          }
+          // mapManualSet은 amrap을 보존하지 않는다. nsuns T1의 95% 세트만 판정 세트이므로
+          // seed가 표시한 amrap을 그대로 흘려 reducer가 실측 reps로 TM 증가폭을 정한다.
+          if (s?.amrap === true) base.amrap = true;
+          return base;
+        });
+        return {
+          exerciseId: typeof item?.exerciseId === "string" ? item.exerciseId : null,
+          exerciseName,
+          role: "MAIN" as const,
+          sets: pctSets,
+          sourceBlockTarget: progressionTarget ?? "CUSTOM",
+          order: toNumberOrNull(item?.order) ?? index,
+          rowType: "AUTO" as const,
+          progressionTarget: progressionTarget ?? null,
+          progressionKey: isDriver ? slotKey : null,
+          tier: null,
+          stage: null,
+          texasRole: null,
+          skipProgression: isDriver ? undefined : true,
+        } satisfies PlannedExercise;
+      }
 
       // texas 주간(v2) 표시 역할 게이트.
       const isTexasV2 = family === "texas-method" && effectiveParams?.progressionModel === "v2";

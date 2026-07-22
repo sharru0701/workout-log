@@ -4,6 +4,8 @@ export const EXERCISE_NAMES = {
   frontSquat: "Front Squat",
   benchPress: "Bench Press",
   deadlift: "Deadlift",
+  sumoDeadlift: "Sumo Deadlift",
+  closeGripBenchPress: "Close-Grip Bench Press",
   overheadPress: "Overhead Press",
   barbellRow: "Barbell Row",
   pullUp: "Pull-Up",
@@ -76,6 +78,16 @@ export const EXERCISE_CATALOG = [
     name: EXERCISE_NAMES.deadlift,
     category: "Back",
     aliases: ["DL", "데드리프트"],
+  },
+  {
+    name: EXERCISE_NAMES.sumoDeadlift,
+    category: "Back",
+    aliases: ["Sumo DL", "스모 데드리프트"],
+  },
+  {
+    name: EXERCISE_NAMES.closeGripBenchPress,
+    category: "Chest",
+    aliases: ["CGBP", "Close Grip Bench Press", "클로즈그립 벤치"],
   },
   {
     name: EXERCISE_NAMES.overheadPress,
