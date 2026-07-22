@@ -20,32 +20,31 @@ import { useWorkoutLogKeyboardOpenEffect } from "@/features/workout-log/model/us
 import { useWorkoutLogPlanSheetController } from "@/features/workout-log/model/use-workout-log-plan-sheet-controller";
 import { readWorkoutLogQueryContext } from "@/lib/workout-record/query-context";
 import { useWorkoutLogSaveController } from "@/features/workout-log/model/use-workout-log-save-controller";
+import { useBodyweightCheck } from "@/features/workout-log/model/use-bodyweight-check";
+import { useRef5SessionCancel } from "@/features/workout-log/model/use-ref5-session-cancel";
+import {
+  addDaysToDateKey,
+  deriveSessionLabel,
+  deriveSessionTypeLabel,
+} from "@/features/workout-log/model/session-labels";
 import { applyWorkoutLogWeightRulesToDraft } from "@/lib/workout-record/weight-rules";
 import { migrateWorkoutRecordDraft } from "@/entities/workout-record";
-import { sessionHasBodyweightExercise } from "@workout/core/bodyweight-load";
-import { readWorkoutPreferences } from "@/lib/settings/workout-preferences";
-import { apiDelete, apiPatch } from "@/lib/api";
-import { errorMessage } from "@/lib/error-message";
-import { clearWorkoutDraft } from "@/lib/storage/workoutDraftStore";
 import { BodyweightCheckBanner } from "./bodyweight-check-banner";
-import { BlockJudgmentCard, SessionFeedbackNotice } from "./hybrid-feedback-banners";
-import {
-  amrapDeferredBannerCopy,
-  amrapEveNoticeCopy,
-  lightBlockBadgeCopy,
-  shouldShowAmrapEveNotice,
-} from "@/features/workout-log/model/progression-feedback";
+import { DateNav } from "./date-nav";
+import { SessionFeedbackNotices } from "./session-feedback-notices";
+import { SessionSaveBar } from "./session-save-bar";
+import { SessionToolbar } from "./session-toolbar";
+import { shouldShowAmrapEveNotice } from "@/features/workout-log/model/progression-feedback";
 import { usePlanProgressionFeedback } from "@/features/workout-log/model/use-plan-progression-feedback";
 import { formatDateFriendly } from "@/lib/workout-record/last-session-summary";
-import { parseSessionKey } from "@workout/core/session-key";
 import { WorkoutLogOverlaySheets } from "@/features/workout-log/ui/workout-log-overlay-sheets";
 import {
   WorkoutLogStackedList,
   type WorkoutLogStackedListHandle,
 } from "@/features/workout-log/ui/workout-log-stacked-list";
 import { WorkoutLogSummarySheet } from "@/features/workout-log/ui/workout-log-summary-sheet";
-import { AppPage, StickyActionBar } from "@/components/ui/page-layout";
-import { V2SectionHeader, V2SecondaryBtn } from "@/components/v2/primitives";
+import { AppPage } from "@/components/ui/page-layout";
+import { V2SectionHeader } from "@/components/v2/primitives";
 import type {
   WorkoutLogInitialContext,
   WorkoutLogPageBootstrap,
@@ -65,10 +64,6 @@ import { Ref5SessionStartPanel } from "@/features/workout-log/ui/ref5-session-st
 import { Ref5WindowProgressPanel } from "@/components/ref5/ref5-window-progress-panel";
 import { isRef5PlanParams } from "@/lib/workout-record/ref5-plan";
 
-// 체중 확인 안내: 마지막 확인 시각 설정 키 + 스테일 임계(14일). 이 기간 내에 확인했으면 다시 안 묻는다.
-const BODYWEIGHT_CHECKED_AT_KEY = "prefs.bodyweight.checkedAtMs";
-const BODYWEIGHT_CHECK_STALE_MS = 14 * 24 * 60 * 60 * 1000;
-
 type WorkoutRecordPageProps = WorkoutLogPageBootstrap & {
   initialContext?: WorkoutLogInitialContext | null;
 };
@@ -81,7 +76,7 @@ function WorkoutLogScreenContent({
   const router = useRouter();
   const pathname = usePathname();
   const { copy, locale } = useLocale();
-  const { alert, confirm } = useAppDialog();
+  const { alert } = useAppDialog();
   const browserTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     [],
@@ -115,6 +110,8 @@ function WorkoutLogScreenContent({
       ? `${selectedPlanId}:${query.date}:${query.sessionId ?? "new"}`
       : null;
   const isWorkoutLogRouteActive = pathname?.startsWith("/workout/log") ?? true;
+  const isEditingExistingLog = Boolean(query.logId);
+  const isStartedRef5Session = Boolean(draft?.session.ref5);
 
   const {
     pendingRestorePrompt,
@@ -220,13 +217,20 @@ function WorkoutLogScreenContent({
 
   useWorkoutLogKeyboardOpenEffect();
 
-  // 체중: (A) 저장 시 맨몸 운동 총중량(meta.totalLoadKg) 스탬프에 전달 + (B) 체중 확인 안내가 공유.
-  // 저장 컨트롤러보다 먼저 선언해 모든 프로그램의 중량풀업 로그에 총중량이 기록되도록 한다.
-  const [bodyweightKg, setBodyweightKg] = useState<number | null>(
-    () => readWorkoutPreferences(initialSettings as Record<string, string | number | boolean | null>).bodyweightKg,
-  );
-  const [bodyweightSubmitting, setBodyweightSubmitting] = useState(false);
-  const [bodyweightDismissedKey, setBodyweightDismissedKey] = useState<string | null>(null);
+  // 체중은 저장 컨트롤러가 총중량(meta.totalLoadKg) 스탬프에 쓰므로 그보다 먼저 읽는다.
+  const currentSessionKey = draft?.session.sessionKey ?? null;
+  const {
+    bodyweightKg,
+    submitting: bodyweightSubmitting,
+    showCheck: showBodyweightCheck,
+    handleUpdate: handleBodyweightUpdate,
+    handleKeep: handleBodyweightKeep,
+  } = useBodyweightCheck({
+    initialSettings: initialSettings as Record<string, unknown>,
+    sessionKey: currentSessionKey,
+    seedExercises: draft?.seedExercises ?? [],
+    enabled: !isEditingExistingLog && !isStartedRef5Session && Boolean(draft),
+  });
 
   const { failureProtocolSheet, handleFailureProtocolSelect, requestSave } =
     useWorkoutLogSaveController({
@@ -258,92 +262,18 @@ function WorkoutLogScreenContent({
       ),
     });
 
-  const isEditingExistingLog = Boolean(query.logId);
-  const isStartedRef5Session = Boolean(draft?.session.ref5);
-
-  // 시작된 REF5 세션은 저장 전까지 날짜·플랜 전환을 잠근다(스냅샷 불변성). 잘못 시작한
-  // 세션을 되돌릴 길이 없으면 그날 하루는 다른 플랜으로 갈 수 없으므로 취소를 제공한다.
-  const [cancellingRef5Session, setCancellingRef5Session] = useState(false);
-  const canCancelRef5Session =
-    isStartedRef5Session && !isEditingExistingLog && Boolean(query.sessionId && selectedPlanId);
-  const handleCancelRef5Session = useCallback(async () => {
-    if (!query.sessionId || !selectedPlanId) return;
-    const ok = await confirm({
-      title: locale === "ko" ? "세션 취소" : "Cancel Session",
-      message:
-        locale === "ko"
-          ? "시작한 REF5 세션을 취소합니다.\n입력 중이던 내용은 저장되지 않고, 진행 상태는 시작 전으로 되돌아갑니다."
-          : "This cancels the started REF5 session.\nUnsaved entries are discarded and progression returns to its pre-start state.",
-      confirmText: locale === "ko" ? "세션 취소" : "Cancel Session",
-      cancelText: locale === "ko" ? "닫기" : "Close",
-      tone: "danger",
-    });
-    if (!ok) return;
-
-    try {
-      setCancellingRef5Session(true);
-      await apiDelete(
-        `/api/plans/${encodeURIComponent(selectedPlanId)}/generated-sessions/${encodeURIComponent(query.sessionId)}`,
-      );
-      if (persistenceKey) {
-        await clearWorkoutDraft(persistenceKey).catch(() => {});
-      }
-      // 세션 컨텍스트(URL·SSR 부트스트랩·복원 draft)가 모두 얽혀 있어, 취소 후에는
-      // sessionId 없는 URL로 새로 진입시키는 편이 상태가 확실하다.
-      window.location.replace(
-        `/workout/log?planId=${encodeURIComponent(selectedPlanId)}&date=${encodeURIComponent(query.date)}`,
-      );
-    } catch (e) {
-      setCancellingRef5Session(false);
-      await alert({
-        title: locale === "ko" ? "세션 취소 실패" : "Could not cancel",
-        message:
-          errorMessage(e) ??
-          (locale === "ko" ? "세션을 취소하지 못했습니다." : "Could not cancel the session."),
-        buttonText: locale === "ko" ? "확인" : "OK",
-        tone: "danger",
-      });
-    }
-  }, [alert, confirm, locale, persistenceKey, query.date, query.sessionId, selectedPlanId]);
-
-  // 체중 확인 안내(B): 중량풀업을 수행하는 모든 프로그램에서, 마지막 확인 후 14일+ 지났을 때만
-  // "업데이트/유지"를 권고한다(매 세션 마찰 회피). "유지"도 확인 시각을 기록해 14일간 다시 안 묻는다.
-  const currentSessionKey = draft?.session.sessionKey ?? null;
-  const bodyweightCheckedAtMs =
-    Number((initialSettings as Record<string, unknown>)[BODYWEIGHT_CHECKED_AT_KEY]) || 0;
-  const isBodyweightStale = Date.now() - bodyweightCheckedAtMs >= BODYWEIGHT_CHECK_STALE_MS;
-  const showBodyweightCheck =
-    !isEditingExistingLog &&
-    !isStartedRef5Session &&
-    Boolean(draft) &&
-    currentSessionKey !== null &&
-    bodyweightDismissedKey !== currentSessionKey &&
-    isBodyweightStale &&
-    sessionHasBodyweightExercise(draft?.seedExercises ?? []);
-  const markBodyweightChecked = useCallback(() => {
-    // 확인 시각 기록(스테일 게이트). 실패는 무시 — 다음 세션에 다시 권고될 뿐.
-    void apiPatch("/api/settings", { key: BODYWEIGHT_CHECKED_AT_KEY, value: Date.now() }).catch(() => {});
-  }, []);
-  const handleBodyweightUpdate = useCallback(
-    async (kg: number) => {
-      setBodyweightSubmitting(true);
-      try {
-        await apiPatch("/api/settings", { key: "prefs.bodyweight.kg", value: kg });
-        setBodyweightKg(kg);
-        markBodyweightChecked();
-      } catch {
-        // 저장 실패해도 안내는 닫는다 — 다음 권고 시점에 다시 뜬다.
-      } finally {
-        setBodyweightSubmitting(false);
-        setBodyweightDismissedKey(currentSessionKey);
-      }
-    },
-    [currentSessionKey, markBodyweightChecked],
-  );
-  const handleBodyweightKeep = useCallback(() => {
-    markBodyweightChecked();
-    setBodyweightDismissedKey(currentSessionKey);
-  }, [currentSessionKey, markBodyweightChecked]);
+  const {
+    canCancel: canCancelRef5Session,
+    cancelling: cancellingRef5Session,
+    handleCancel: handleCancelRef5Session,
+  } = useRef5SessionCancel({
+    planId: selectedPlanId,
+    sessionId: query.sessionId,
+    dateKey: query.date,
+    persistenceKey,
+    enabled: isStartedRef5Session && !isEditingExistingLog,
+    locale,
+  });
 
   const handleDateChange = useCallback(
     (newDateKey: string) => {
@@ -409,65 +339,16 @@ function WorkoutLogScreenContent({
       week: draft?.session.week ?? null,
       day: draft?.session.day ?? null,
     });
-  const feedbackNotices = (
-    <>
-      {progressionFeedback.earlyDeloadBanner ? (
-        // 문구는 서버 조립(feedback-catalog) — 그대로 출력(TUI와 동일 문구 보장).
-        <SessionFeedbackNotice
-          tone="warning"
-          title={progressionFeedback.earlyDeloadBanner.title}
-          body={progressionFeedback.earlyDeloadBanner.body}
-        />
-      ) : null}
-      {progressionFeedback.blockReport ? (
-        <BlockJudgmentCard
-          locale={locale}
-          title={progressionFeedback.blockReport.title}
-          rows={progressionFeedback.blockReport.rows}
-          onDismiss={progressionFeedback.dismissBlockReport}
-        />
-      ) : null}
-      {draft?.session.amrapDeferred === true ? (
-        <SessionFeedbackNotice tone="info" {...amrapDeferredBannerCopy(locale)} />
-      ) : null}
-      {progressionFeedback.showLightBlockBadge ? (
-        <SessionFeedbackNotice tone="recovery" {...lightBlockBadgeCopy(locale)} />
-      ) : null}
-      {showAmrapEveNotice ? (
-        <SessionFeedbackNotice tone="info" {...amrapEveNoticeCopy(locale)} />
-      ) : null}
-    </>
-  );
-  const sessionLabel = useMemo(() => {
-    const key = draft?.session.sessionKey;
-    if (!key) return null;
-    const parsed = parseSessionKey(key);
-    if (!parsed) return null;
-    if (parsed.kind === "cycle-wave" || parsed.kind === "date-progression") {
-      return `C${parsed.cycle}W${parsed.week}D${parsed.day}`;
-    }
-    if (parsed.kind === "wave") {
-      return `W${parsed.week}D${parsed.day}`;
-    }
-    return null;
-  }, [draft?.session.sessionKey]);
-  const sessionTypeLabel = useMemo(() => {
-    const t = draft?.session.sessionType?.trim();
-    if (!t) return null;
-    if (sessionLabel && t === sessionLabel) return null;
-    if (sessionLabel && t.endsWith(`D${draft?.session.day ?? ""}`)) return null;
-    return t;
-  }, [draft?.session.sessionType, draft?.session.day, sessionLabel]);
+  const sessionLabel = deriveSessionLabel(draft?.session.sessionKey);
+  const sessionTypeLabel = deriveSessionTypeLabel({
+    sessionType: draft?.session.sessionType,
+    day: draft?.session.day,
+    sessionLabel,
+  });
   const shiftDate = useCallback(
     (delta: number) => {
-      const base = sessionDate || query.date;
-      if (!base) return;
-      const d = new Date(`${base}T00:00:00`);
-      d.setDate(d.getDate() + delta);
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
-      handleDateChange(`${y}-${m}-${dd}`);
+      const next = addDaysToDateKey(sessionDate || query.date, delta);
+      if (next) handleDateChange(next);
     },
     [sessionDate, query.date, handleDateChange],
   );
@@ -556,7 +437,12 @@ function WorkoutLogScreenContent({
             titleAriaHasPopup="dialog"
           />
 
-          {feedbackNotices}
+          <SessionFeedbackNotices
+            feedback={progressionFeedback}
+            amrapDeferred={draft?.session.amrapDeferred === true}
+            showAmrapEveNotice={showAmrapEveNotice}
+            locale={locale}
+          />
 
           {ref5WindowProgress}
 
@@ -570,88 +456,23 @@ function WorkoutLogScreenContent({
             />
           ) : null}
 
-          <div
-            style={{
-              display: "flex",
-              gap: "var(--v2-s-2)",
-              alignItems: "stretch",
+          <SessionToolbar
+            dateKey={navDateKey}
+            locale={locale}
+            copy={copy.workoutLog}
+            onShiftDate={shiftDate}
+            onPickDate={handleDateChange}
+            dateDisabled={isStartedRef5Session}
+            sessionLabel={sessionLabel}
+            canCancelSession={canCancelRef5Session}
+            cancelling={cancellingRef5Session}
+            onCancelSession={() => {
+              void handleCancelRef5Session();
             }}
-          >
-            <DateNav
-              dateKey={navDateKey}
-              label={formatDateFriendly(navDateKey, locale)}
-              onPrev={() => shiftDate(-1)}
-              onNext={() => shiftDate(1)}
-              onPick={handleDateChange}
-              ariaLabel={copy.workoutLog.dateChangeAriaLabel}
-              prevLabel={copy.workoutLog.dateNavPrev}
-              nextLabel={copy.workoutLog.dateNavNext}
-              disabled={isStartedRef5Session}
-              style={{ flex: 1, minWidth: 0 }}
-            />
-            {canCancelRef5Session ? (
-              <V2SecondaryBtn
-                tone="danger"
-                icon="close"
-                disabled={cancellingRef5Session}
-                onClick={() => {
-                  void handleCancelRef5Session();
-                }}
-              >
-                {cancellingRef5Session
-                  ? locale === "ko"
-                    ? "취소 중"
-                    : "Cancelling"
-                  : locale === "ko"
-                    ? "세션 취소"
-                    : "Cancel"}
-              </V2SecondaryBtn>
-            ) : null}
-            {!isStartedRef5Session ? <button
-              type="button"
-              onClick={() => setSummaryOpen(true)}
-              aria-label={
-                locale === "ko"
-                  ? `오늘의 운동 보기${sessionLabel ? ` · ${sessionLabel}` : ""}`
-                  : `View today's workout${sessionLabel ? ` · ${sessionLabel}` : ""}`
-              }
-              className="v2-font-display"
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "var(--v2-s-3)",
-                padding: "var(--v2-s-2) var(--v2-s-5)",
-                borderRadius: "var(--v2-r-2)",
-                background: "var(--v2-paper-2)",
-                color: "var(--v2-ink)",
-                border: "none",
-                cursor: "pointer",
-                minHeight: "var(--v2-s-8)",
-                flexShrink: 0,
-                fontWeight: 700,
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: "var(--v2-t-18)" }}
-                aria-hidden
-              >
-                list_alt
-              </span>
-              {sessionLabel ? (
-                <span
-                  className="v2-mono-label"
-                  style={{
-                    color: "var(--v2-ink)",
-                    fontSize: "var(--v2-t-12)",
-                    letterSpacing: "0.02em",
-                  }}
-                >
-                  {sessionLabel}
-                </span>
-              ) : null}
-            </button> : null}
-          </div>
+            onOpenSummary={
+              isStartedRef5Session ? null : () => setSummaryOpen(true)
+            }
+          />
 
           {!draft ? (
             <NoticeStateRows
@@ -664,119 +485,30 @@ function WorkoutLogScreenContent({
               }
             />
           ) : (
-          <>
-            <NoticeStateRows
-              message={ref5ResumeNotice}
-              tone="neutral"
-              preferInline
-              label={locale === "ko" ? "미완료 세션 재개" : "Unfinished session resumed"}
-              ariaLabel={locale === "ko" ? "REF5 세션 재개 안내" : "REF5 session resume notice"}
-            />
-            <WorkoutLogStackedList
-              ref={stackedListRef}
-              onExerciseAction={handleExerciseAction}
-              onOpenAddExerciseSheet={draft.session.ref5 ? undefined : openAddExerciseSheet}
-            />
+            <>
+              <NoticeStateRows
+                message={ref5ResumeNotice}
+                tone="neutral"
+                preferInline
+                label={locale === "ko" ? "미완료 세션 재개" : "Unfinished session resumed"}
+                ariaLabel={locale === "ko" ? "REF5 세션 재개 안내" : "REF5 session resume notice"}
+              />
+              <WorkoutLogStackedList
+                ref={stackedListRef}
+                onExerciseAction={handleExerciseAction}
+                onOpenAddExerciseSheet={draft.session.ref5 ? undefined : openAddExerciseSheet}
+              />
 
-          <StickyActionBar>
-            {totalSetsCount > 0 && (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "var(--v2-s-2)",
-                  paddingBottom: "var(--v2-s-2)",
-                }}
-                aria-label={
-                  locale === "ko"
-                    ? `세트 진행률 ${completedSetsCount}/${totalSetsCount}`
-                    : `Sets progress ${completedSetsCount}/${totalSetsCount}`
-                }
-                role="progressbar"
-                aria-valuemin={0}
-                aria-valuemax={totalSetsCount}
-                aria-valuenow={completedSetsCount}
-              >
-                <span
-                  className="v2-mono-label"
-                  style={{
-                    color:
-                      completedSetsCount >= totalSetsCount
-                        ? "var(--v2-c-success)"
-                        : "var(--v2-ink-3)",
-                    fontVariantNumeric: "tabular-nums",
-                    flexShrink: 0,
-                  }}
-                >
-                  {completedSetsCount}/{totalSetsCount}{" "}
-                  {locale === "ko" ? "세트" : "sets"}
-                </span>
-                <div
-                  style={{
-                    flex: 1,
-                    height: "var(--v2-s-1)",
-                    borderRadius: "var(--v2-r-pill)",
-                    background: "var(--v2-paper-2)",
-                    overflow: "hidden",
-                  }}
-                >
-                  <div
-                    style={{
-                      width: `${Math.min(100, (completedSetsCount / Math.max(1, totalSetsCount)) * 100)}%`,
-                      height: "100%",
-                      background:
-                        completedSetsCount >= totalSetsCount
-                          ? "var(--v2-c-success)"
-                          : "var(--v2-accent)",
-                      transition: "width 200ms ease, background 200ms ease",
-                    }}
-                  />
-                </div>
-              </div>
-            )}
-            <button
-              type="button"
-              onClick={requestSave}
-              disabled={workflowState === "saving"}
-              className="v2-font-display"
-              style={{
-                width: "100%",
-                display: "inline-flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: "var(--v2-s-2)",
-                padding: "var(--v2-s-3) var(--v2-s-4)",
-                borderRadius: "var(--v2-r-3)",
-                background:
-                  workflowState === "saving"
-                    ? "var(--v2-paper-2)"
-                    : "var(--v2-c-success)",
-                color:
-                  workflowState === "saving"
-                    ? "var(--v2-ink-3)"
-                    : "var(--v2-ink-on-accent)",
-                border: "none",
-                cursor:
-                  workflowState === "saving" ? "not-allowed" : "pointer",
-                fontWeight: 700,
-                minHeight: "var(--v2-s-8)",
-              }}
-            >
-              <span
-                className="material-symbols-outlined"
-                style={{ fontSize: "var(--v2-t-18)" }}
-                aria-hidden
-              >
-                done_all
-              </span>
-              {workflowState === "saving"
-                ? copy.workoutLog.saveInProgress
-                : isEditingExistingLog
-                  ? copy.workoutLog.saveEdited
-                  : copy.workoutLog.saveCreate}
-            </button>
-          </StickyActionBar>
-          </>
+              <SessionSaveBar
+                completedSetsCount={completedSetsCount}
+                totalSetsCount={totalSetsCount}
+                saving={workflowState === "saving"}
+                isEditingExistingLog={isEditingExistingLog}
+                onSave={requestSave}
+                locale={locale}
+                copy={copy.workoutLog}
+              />
+            </>
           )}
         </AppPage>
       ) : null}
@@ -816,108 +548,6 @@ function WorkoutLogScreenContent({
         onSelectFailureProtocol={handleFailureProtocolSelect}
       />
     </>
-  );
-}
-
-function DateNav({
-  dateKey,
-  label,
-  onPrev,
-  onNext,
-  onPick,
-  ariaLabel,
-  prevLabel,
-  nextLabel,
-  disabled = false,
-  style,
-}: {
-  dateKey: string;
-  label: string;
-  onPrev: () => void;
-  onNext: () => void;
-  onPick: (newDate: string) => void;
-  ariaLabel: string;
-  prevLabel: string;
-  nextLabel: string;
-  disabled?: boolean;
-  style?: React.CSSProperties;
-}) {
-  return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        gap: "var(--v2-s-1)",
-        padding: "var(--v2-s-1) var(--v2-s-3)",
-        borderRadius: "var(--v2-r-2)",
-        background: "var(--v2-paper-2)",
-        minHeight: "var(--v2-s-8)",
-        ...style,
-      }}
-    >
-      <button
-        type="button"
-        className="date-nav-btn"
-        aria-label={prevLabel}
-        onClick={onPrev}
-        disabled={disabled}
-      >
-        <span
-          className="material-symbols-outlined"
-          aria-hidden="true"
-          style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}
-        >
-          chevron_left
-        </span>
-      </button>
-      <label
-        className="v2-font-display"
-        style={{
-          position: "relative",
-          display: "flex",
-          alignItems: "center",
-          minHeight: "var(--v2-touch)",
-          fontWeight: 700,
-          color: "var(--v2-ink)",
-          opacity: disabled ? 0.72 : 1,
-        }}
-      >
-        <span aria-live="polite">{label}</span>
-        <input
-          type="date"
-          aria-label={ariaLabel}
-          value={dateKey}
-          disabled={disabled}
-          onChange={(e) => {
-            if (e.target.value) onPick(e.target.value);
-          }}
-          style={{
-            position: "absolute",
-            inset: 0,
-            opacity: 0,
-            width: "100%",
-            height: "100%",
-            cursor: disabled ? "default" : "pointer",
-          }}
-        />
-      </label>
-      <button
-        type="button"
-        className="date-nav-btn"
-        aria-label={nextLabel}
-        onClick={onNext}
-        disabled={disabled}
-      >
-        <span
-          className="material-symbols-outlined"
-          aria-hidden="true"
-          style={{ fontSize: "var(--v2-t-18)", fontVariationSettings: "'wght' 400" }}
-        >
-          chevron_right
-        </span>
-      </button>
-    </span>
   );
 }
 
