@@ -3,6 +3,10 @@
 > **작성일**: 2026-07-02 · **범위**: monorepo 전체 — `web/`(Next.js 16 프론트+잔류 API), `apps/api/`(Hono 백엔드), `apps/tui/`(Go ironlog), DB 스키마/쿼리, CI/CD, 배포 토폴로지.
 > **방법**: 영역별 병렬 정밀 탐색(프론트엔드·백엔드/프록시/인증·DB 스키마/핫패스·테스트/CI/부채·TUI) + 게이트 직접 실행 검증. 모든 핵심 주장은 `file:line`으로 근거를 표기한다.
 > **이전 감사**: [codebase-audit-2026-05.md](../web/docs/codebase-audit-2026-05.md) (web 단독 범위) — §7에서 후속 상태를 추적한다.
+>
+> **⚠️ 이 문서는 2026-07-02 시점의 진단이다.** 개선 계획(§5)은 2026-07-22 재확인 기준 **거의 전부 실행 완료**됐고,
+> 각 항목에 ✅ 근거를 달아 두었다. 지금 열려 있는 일만 보려면 [§우선순위 요약](#우선순위-요약)의 진행 상태 박스를 볼 것 —
+> **남은 것은 god-component 분해와 DB 멀티유저 격리(의도적 이월) 둘뿐**이다. 발견 당시의 진단 표(§4)는 이력으로 보존한다.
 
 ---
 
@@ -13,21 +17,27 @@
 - 게이트 직접 실행 결과 전부 통과: web `typecheck` ✓ · `lint`(경고 0) ✓ · apps/api `typecheck` ✓ · TUI `go build`+`go vet` ✓.
 - 코드 위생: TODO/FIXME/HACK **0건**, `@deprecated` 0건, eslint-disable 단 5건(전부 `react-hooks/exhaustive-deps`), 디자인 린트 baseline **전항목 0**, 죽은 코드 정리 활발(#482·#483).
 - 실제 위험은 세 곳에 집중: **① apps/api 공개 인증 엔드포인트의 보안 공백**(rate limit 부재, ops fail-open), **② CI가 web만 지키는 게이트 사각지대**(apps/api CI 0, TUI 테스트 미편입, e2e 13/14 미게이트), **③ 사용 기간에 비례해 느려지는 DB 핫패스**(전체 이력 스캔, 인덱스 누락, 렌더-시-쓰기).
+  → **셋 다 해소됨**(2026-07-22 재확인). ①은 §5.1, ②는 §4.2 재확인 박스, ③은 §5.2를 볼 것.
 
 규모: web 444 TS 파일 / 8.5만 줄 · apps/api 4.5천 줄(엔드포인트 53개) · TUI Go 9.5천 줄(31 소스 + 21 테스트 파일) · 총 1,168 커밋.
 
 ### 우선순위 요약
 
-| 우선도 | 작업 | 노력 | 근거 위치 |
+> **진행 상태 (2026-07-22 전수 재확인)**: 아래 P0~P3가 **전부 반영 완료**되었다. 코드에서 직접 확인한
+> 근거는 각 항목의 "현재" 칸과 §4.2·§4.3·§5에 적었다. **남은 것은 두 가지뿐** — god-component 분해(§5.4-4)와
+> DB 멀티유저 격리(§7, 의도적 이월). R8(사전 커밋 훅)은 미도입이나, 근거였던 CI 사각지대 R1~R3이 닫혀 위험도가 내려갔다.
+
+| 우선도 | 작업 | 노력 | 현재 |
 |---|---|---|---|
-| **P0 즉시** | apps/api login/signup rate limit 재장착 + ops fail-closed | S | `apps/api/src/routes/auth.ts:59,112` · `routes/ops.ts:20-26` |
-| **P0 즉시** | CI에 apps/api typecheck job + TUI `go test`/`go vet` job 추가 (릴리스 태그 포함) | S | `.github/workflows/ci.yml` · `tui-release.yml` |
-| **P1 다음** | 인덱스 2개 추가 + PR 감지 lookback 제한 + 렌더-시-쓰기 완화 | M | §5.2 |
-| **P1 다음** | `/health` DB 핑 + apps/api 에러 경계(`app.onError`) + systemd 유닛 수정 | S | §4.2 |
+| ~~P0 즉시~~ | apps/api login/signup rate limit 재장착 + ops fail-closed | S | ✅ 완료 — `enforceAuthRateLimit`(auth.ts:44) · `opsTokenOk` fail-closed(ops.ts) |
+| ~~P0 즉시~~ | CI에 apps/api typecheck job + TUI `go test`/`go vet` job 추가 (릴리스 태그 포함) | S | ✅ 완료 — PR 체크 `apps/api Typecheck` · `TUI Build · Vet · Test` |
+| ~~P1 다음~~ | 인덱스 2개 추가 + PR 감지 lookback 제한 + 렌더-시-쓰기 완화 | M | ✅ 완료 — `0018_perf_plan_scoped_indexes.sql` · `personal-records.ts`(동결+lookback) · `onConflictDoUpdate` |
+| ~~P1 다음~~ | `/health` DB 핑 + apps/api 에러 경계(`app.onError`) + systemd 유닛 수정 | S | ✅ 완료 — `index.ts:32`(DB 핑)·`:82`(onError) · `ExecStart=…/tsx src/index.ts` |
 | **완료 2026-07-16** | 웹 terminal 테마·전용 셸·폰트 자산 제거 | M | `app-shell.tsx` · `font-stylesheet-loader.tsx` |
-| **P2 그다음** | e2e 스펙 CI 편입(nightly) + Go/TS 파리티 golden fixture | M | §4.2, §4.5 |
-| **P3 중기** | `packages/core` 추출, PBKDF2 상향, 세션 슬라이딩 만료 | L | §6 |
-| **하지 말 것** | 프록시 토폴로지 재설계(수용된 구조적 비용), 레이어 린트 error 강제(선행 부채 존재) | — | §4.5 |
+| ~~P2 그다음~~ | e2e 스펙 CI 편입(nightly) + Go/TS 파리티 golden fixture | M | ✅ 완료 — `e2e-nightly.yml`이 22스펙 전체 실행 · `packages/core/fixtures` |
+| ~~P3 중기~~ | `packages/core` 추출, PBKDF2 상향, 세션 슬라이딩 만료 | L | ✅ 완료 — #497~#503 · `ITERATIONS = 600_000` · `auth/session-policy.ts` |
+| **남음** | god-component 분해(§5.4-4) — `v2-more-page` 1041줄 · `plans-manage-content` 982줄 · `workout-log-screen` 930줄 | M | 착수 전 |
+| **하지 말 것** | 프록시 토폴로지 재설계(수용된 구조적 비용), 레이어 린트 error 강제(선행 부채 존재) | — | §4.5 (레이어 린트는 부채 해소 후 2026-07-06 강제 전환됨) |
 
 ---
 
@@ -73,6 +83,12 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 
 ### 4.2 P1 — CI 사각지대 · 신뢰성
 
+> **2026-07-22 재확인: R1~R7 전부 해소.** PR 체크가 `Lint · Typecheck · Unit Tests` · `packages/core Typecheck · Test` ·
+> `apps/api Typecheck` · `TUI Build · Vet · Test` · `E2E Smoke` · `Next.js Client Bundle Budget`로 확장됐고,
+> 전체 e2e는 `e2e-nightly.yml`이 돌린다. R4·R5(`index.ts:82`·`:32`), R6(systemd ExecStart), R7(`api/client.go`)도 반영 완료.
+> **R8(사전 커밋 훅)만 미도입** — 다만 근거였던 "CI가 R1~R3 구멍을 가짐"이 사라져 복합 리스크는 해소됐다.
+> 아래 표는 발견 당시(2026-07-02) 기록으로 남긴다.
+
 **CI 현황** (`.github/workflows/`): `ci.yml`이 PR에서 lint·lint:design·typecheck·유닛 3스크립트(35개 파일 전부, #481 검증 완료)·e2e smoke 1개를 게이트. 그 외 전부 미게이트:
 
 | # | 문제 | 위치 |
@@ -87,6 +103,9 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 | R8 | 사전 커밋 훅 없음 — 모든 강제가 CI 전용인데 그 CI가 R1~R3의 구멍을 가짐(복합 리스크) | — |
 
 ### 4.3 P2 — DB 성능 ("오래 쓸수록 느려지는" 패턴)
+
+> **2026-07-22 재확인: D1~D4·D6·D7 전부 해소** (§5.2 참조). D5는 아래 표대로 "절반 해소·나머지 설계상 유지",
+> D8은 해소. 아래 표는 발견 당시(2026-07-02) 기록으로 남긴다.
 
 핫패스 인덱스 커버리지는 대체로 양호(`workout_log(user_id, performed_at)` 복합이 대부분을 받침). 문제는 스캔 범위와 쓰기 패턴:
 
@@ -123,36 +142,36 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 
 ## 5. 개선 계획
 
-### 5.1 1단계 — 이번 주 (반나절, 코드 소량) → **P0 전부 + R4~R6**
+### 5.1 1단계 ✅ **완료** (P0 전부 + R4~R6, PR #484)
 
-1. apps/api auth 라우트에 `@/server/auth/rate-limit` 재장착 (S1)
-2. `opsTokenOk` fail-closed (S2)
-3. `/health`에 DB 핑 추가 (R5) + `app.onError` 등록·`requireAuth` try/catch (R4)
-4. `ironlog-api.service` ExecStart를 실 배포 방식(tsx 직접)으로 수정 (R6)
-5. CI: `apps-api-typecheck` job + `tui-test` job(`go test ./... && go vet ./...`) 추가, `tui-release.yml`에도 테스트 게이트 (R1·R2)
+1. ~~apps/api auth 라우트에 rate limit 재장착 (S1)~~ ✅ `enforceAuthRateLimit`(login 10/분·IP, signup 5/시간·IP)
+2. ~~`opsTokenOk` fail-closed (S2)~~ ✅ 토큰 미설정 시 거부(`WORKOUT_OPS_ALLOW_NO_TOKEN=1`만 예외)
+3. ~~`/health`에 DB 핑 + `app.onError` 등록 (R5·R4)~~ ✅ `apps/api/src/index.ts:32`·`:82`
+4. ~~`ironlog-api.service` ExecStart 수정 (R6)~~ ✅ `ExecStart=…/node_modules/.bin/tsx src/index.ts`
+5. ~~CI: apps/api typecheck job + TUI `go test`/`go vet` job (R1·R2)~~ ✅ PR 체크에 상시 노출
 
-### 5.2 2단계 — 다음 (마이그레이션 1개 + 쿼리 수정) → **D1~D4·D7**
+### 5.2 2단계 ✅ **완료** (D1~D4·D6·D7)
 
-1. 인덱스 추가: `workout_log(user_id, plan_id, performed_at)` · `plan_progress_event(log_id)` (D2)
-2. PR 감지에 lookback 윈도우 + LIMIT, 또는 종목별 best-e1rm 사전계산 (D1)
-3. `get-plans-for-manage`의 전체 로그 로드 → SQL `max() groupBy` (D4)
-4. `generateAndSaveSession` → `INSERT … ON CONFLICT` + snapshot 무변경 시 skip (D3)
-5. strength-summary N+1 배치화 (D7) · rebuild 이벤트 INSERT 멀티로우 배치 (D5)
-6. apps/api용 풀 사이즈 env 분리(`DB_POOL_MAX`) + `statement_timeout` (D6)
+1. ~~인덱스 추가: `workout_log(user_id, plan_id, performed_at)` · `plan_progress_event(log_id)` (D2)~~ ✅ `migrations/0018_perf_plan_scoped_indexes.sql`(PR #485)
+2. ~~PR 감지에 lookback 윈도우 + LIMIT (D1)~~ ✅ `packages/core/src/services/workout-log/personal-records.ts` — `gte(performedAt, fromPerformedAt)` 윈도우 + `getOrFreezePersonalRecords` 동결(삭제 시 무효화 후 lazy 재계산)
+3. ~~`get-plans-for-manage` 전체 로그 로드 → SQL `max() groupBy` (D4)~~ ✅ `max(workoutLog.performedAt)` + `groupBy(planId)`로 plan당 1행
+4. ~~`generateAndSaveSession` → `INSERT … ON CONFLICT` (D3)~~ ✅ `onConflictDoUpdate`(generateSession.ts, PR #487)
+5. ~~strength-summary N+1 배치화 (D7)~~ ✅ `inArray` 2쿼리 + `Promise.all` · rebuild 이벤트 배치 INSERT는 D5에서 이미 해소
+6. ~~apps/api용 `DB_POOL_MAX` + `statement_timeout` (D6)~~ ✅ `packages/core/src/db/client.ts:26,38`
 
 ### 5.3 3단계 — 그다음 (체감 성능 + 게이트 완성)
 
 1. ~~terminal 테마 첫 렌더 분기 수정~~ — 테마 제거로 해소 (F1, 2026-07-16)
 2. ~~폰트 로딩 정리: Pretendard·Material Symbols `<link>` 선주입/preload 검토~~ ✅ 완료(F2, 2026-07-20)
-3. e2e 13스펙 CI 편입 — 최소 nightly 스케줄 (R3)
-4. Go/TS 파리티 golden fixture (session-key·bodyweight) (§4.5)
-5. TUI 401 → `loggedOutMsg` 발행 + 에러 문구 분리 (R7) · self-update 체크섬 hard-fail (S4)
-6. PR 히스토리 가상화 (F3) · ~~i18n 번들 확인~~ ✅ 확인 완료·기우(F4) · ~~마이그레이션 meta 스냅샷 보수~~ ✅ 완료(D8, 2026-07-20)
+3. ~~e2e 13스펙 CI 편입 — 최소 nightly 스케줄 (R3)~~ ✅ 완료 — `e2e-nightly.yml`이 필터 없이 전체(현재 22스펙) 실행
+4. ~~Go/TS 파리티 golden fixture (session-key·bodyweight)~~ ✅ 완료 — `packages/core/fixtures`
+5. ~~TUI 401 → `loggedOutMsg` 발행 + 에러 문구 분리 (R7) · self-update 체크섬 hard-fail (S4)~~ ✅ 완료 — `api/client.go`(`IsUnauthorized`·`sessionExpired`) · `selfupdate.go`(SHA256 hard-fail)
+6. ~~PR 히스토리 가상화 (F3)~~ ✅ 완료(PR #490) · ~~i18n 번들 확인~~ ✅ 확인 완료·기우(F4) · ~~마이그레이션 meta 스냅샷 보수~~ ✅ 완료(D8, 2026-07-20)
 
 ### 5.4 4단계 — 중기 (상업화/확장 대비)
 
 1. ~~`packages/core` 추출~~ ✅ **완료(2026-07-03, #497~#503)** — 7개 PR 점진 추출: 워크스페이스 인프라 → 순수 lib(+Go/TS golden fixture, Stage 3 잔여 흡수) → db → auth → 도메인 엔진 → 서비스(locale 명시 인자화) → alias 제거/경계 린트. 부수 수정: TUI trimNum 정밀도, getHomeData 쿠키 스냅샷 오용(TUI 홈 설정 미반영).
-2. PBKDF2 600k 상향 + 로그인 시 점진 재해시, 세션 슬라이딩 만료·자동 prune (S3)
+2. ~~PBKDF2 600k 상향 + 로그인 시 점진 재해시, 세션 슬라이딩 만료·자동 prune (S3)~~ ✅ 완료 — `auth/password.ts`(`ITERATIONS = 600_000`, 해시 포맷에 iterations 내장 → 검증 시 점진 재해시) · `auth/session-policy.ts`(sliding IDLE_TTL)
 3. ~~`no-explicit-any` warn 승격 · 레이어 린트 error 강제~~ ✅ **완료(2026-07-06, #509·#510)** — any warn 승격(85건 가시화, 점진 감축은 계속), 레이어 부채 3건+승격 중 발견 1건(widgets→app loading) 해소 후 방향 린트 error 강제(type-only·테스트 예외). 상세: [architecture-layers.md](../web/docs/architecture-layers.md) "강제 현황".
 4. god-component 분해: `plans-manage-content` 로직의 `features/*/model` 이동부터
 
@@ -173,8 +192,8 @@ S1은 web에 이미 있는 `@/server/auth/rate-limit` 재장착으로 해결(신
 | 죽은 zustand `/workout/[sessionId]` 서브트리 + zustand/immer 의존 | ✅ **해결** — deps에서 제거 확인, import 0건 |
 | 죽은 offline-queue 인프라 | ✅ **해결** — `lib/offline-queue.ts` 삭제됨 |
 | PWA 유명무실(SW·manifest 부재) | ✅ **해결** — `app/sw.js/route.ts`(버전드 동적 SW) + `app/manifest.ts` 구현 |
-| `server/→features/` 역방향 의존 (`weight-rules`) | 🔶 **부분 해결** — `weight-rules`는 `@/lib/workout-record`로 이동했으나, 같은 파일이 `@/features/workout-log/model/last-session-summary`를 런타임 import (`load-workout-log-context.ts:19-22`) — 동일 패턴 잔존 |
-| `/api/stats/strength-summary` N+1 | ❌ **이월** — apps/api로 이식되며 패턴 유지 (`routes/stats.ts:215-240`, 본 문서 D7) |
+| `server/→features/` 역방향 의존 (`weight-rules`) | ✅ **해결(2026-07-22 재확인)** — `load-workout-log-context.ts`에 `@/features/*` import 0건. 레이어 방향 린트 error 강제(2026-07-06, #509·#510)로 재발도 차단됨 |
+| `/api/stats/strength-summary` N+1 | ✅ **해결(2026-07-22 재확인)** — `inArray` 배치 2쿼리 + `Promise.all`로 전환(본 문서 D7·§5.2-5) |
 | DB 레벨 멀티유저 격리 부재 (`user_id` text, appUser FK 0) | ❌ **이월** — 스키마 변화 없음. 1인 사용 맥락에서 위험 낮음 판정 유지, 상업화 시 재평가 |
 | `cacheComponents`(PPR) 채택 결정 | ✅ **결정 완료** — 의도적 비활성(`next.config.ts:22-25`, 사유 주석) |
 

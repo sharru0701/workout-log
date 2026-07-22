@@ -142,4 +142,5 @@ internal/
 ## 로드맵
 
 - **완료**: 전 워크플로(인증·로깅·통계·기록·플랜·운동·설정·백업) · 릴리스 자동화(GoReleaser → GitHub Releases)
-- **다음**: 백엔드를 Hono로 추출 + 토큰 인증 도입(웹 cross-origin & TUI 쿠키 스크래핑 동시 해결), 모노레포 `packages/core` 공유
+- **완료**: 백엔드 Hono 추출(`apps/api`) + 토큰 인증 — 웹은 `wl_session` 쿠키를 `Authorization: Bearer`로 변환해 프록시하고, TUI는 같은 토큰을 직접 쓴다(쿠키 스크래핑 해소). 모노레포 `packages/core` 공유도 완료(#497~#503)
+- **다음**: 세션 타겟 overrides(웹 대비 유일한 기능 격차 — 보강 성격이라 생략 가능). 웹 화면 39개·API 58개 전수 대조에서 그 외 누락 0
