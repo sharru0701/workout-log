@@ -598,6 +598,9 @@ export function ProgramDetailSheet({
                   variant.template.slug,
                   locale,
                 );
+                // 표시 문구가 등록되지 않은 변형은 "기본"으로 위장시키느니 행을 내지 않는다
+                // (같은 이름 두 개가 뜨는 쪽이 사용자에게 더 나쁘다).
+                if (!presentation) return null;
                 return (
                   <V2SelectableRow
                     key={variant.template.id}
