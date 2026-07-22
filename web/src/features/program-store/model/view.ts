@@ -100,10 +100,13 @@ export function groupProgramStoreListItems(
       locale === "ko"
         ? `${variants.length}가지 방식 · ${variantLabels.join(" / ")}`
         : `${variants.length} variants · ${variantLabels.join(" / ")}`,
+    // 세 변형은 주 4회·4주 파형·TM 진행이 같고 보조만 다르다. 다만 BBB만 근비대 성격이 붙어
+    // goal facet이 갈리므로(hypertrophy 태그), 근비대로 필터링해 이 카드를 만난 사람이
+    // "왜 근력 프로그램이 떴지?" 하지 않도록 어느 변형이 그 볼륨을 담당하는지 설명에 밝힌다.
     description:
       locale === "ko"
-        ? "동일한 4주 5/3/1 진행을 바탕으로 보조 운동 구성에 따라 기본·FSL·BBB 중 선택합니다."
-        : "Choose Base, FSL, or BBB assistance while keeping the same four-week 5/3/1 progression.",
+        ? "동일한 4주 5/3/1 진행에 보조 운동만 다르게 얹습니다. 기본은 메인 세트만, FSL은 첫 작업 세트 중량으로 5×5, BBB는 TM 50%로 5×10을 더해 근비대 볼륨을 크게 가져갑니다."
+        : "The same four-week 5/3/1 progression with different assistance: Base runs the main sets only, FSL adds 5×5 at the first working-set load, and BBB adds 5×10 at 50% of the training max for a much larger hypertrophy stimulus.",
     variants,
   };
 

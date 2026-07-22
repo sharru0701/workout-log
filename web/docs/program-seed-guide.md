@@ -80,6 +80,41 @@
 - rule 다양성은 manual session의 `note/percent`로 표현
 - AMRAP/top set/back-off 성격은 `set.note` 기반으로 UI에서 표시
 
+### 변형(variant)을 스토어에서 분리할지 묶을지
+
+한 프로그램에 여러 버전이 있을 때 **별도 카드로 낼지, 한 카드 안의 선택지로 둘지**를 가르는 기준.
+지금 5/3/1은 묶여 있고(기본/FSL/BBB) Tactical Barbell은 분리돼 있는데(Operator/Fighter/Zulu),
+비대칭이 아니라 아래 한 기준을 각각 적용한 결과다.
+
+> **변형이 스토어 카드가 광고하는 값을 바꾸면 별도 프로그램, 세션 안에서 일어나는 일만 바꾸면
+> 한 카드 안의 옵션.**
+
+카드가 광고하는 값 = facet 5축(`goal`·`level`·`engine`·`frequency`·`style`)과 스케줄 라벨
+([`facets.ts`](../../packages/core/src/program-store/facets.ts) · `getProgramScheduleLabel`).
+
+| | 5/3/1 기본·FSL·BBB | TB Operator·Fighter·Zulu |
+|---|---|---|
+| `schedule.sessionsPerWeek` | 4 / 4 / 4 (동일) | 3 / 2 / 4 (**다름**) |
+| 파형·진행 규칙 | 동일 | 동일 |
+| 실제 차이 | 메인 뒤 보조 세트만 | 주당 세션 수·세션별 리프트 구성 |
+| 결론 | **묶음** — 분리하면 접미사만 다른 카드 3장 | **분리** — 주당 횟수는 프로그램 선택의 1순위 조건 |
+
+**묶었을 때의 대가**: 그룹 카드는 대표 변형의 값을 그대로 쓴다(`{...representative}`). 필터 자체는
+"변형 중 하나라도 맞으면 카드가 살아남는" 규칙이라 깨지지 않지만
+([`view.ts` `filterProgramListItemsByFacets`](../src/features/program-store/model/view.ts)),
+**필터 조건과 카드에 찍힌 값이 어긋난다.** TB를 묶으면 "주 2회"로 걸렀는데 카드엔 "주 3회"(Operator)가
+적히고 모달을 열어야 Fighter를 찾게 된다 — 필터를 불신하게 만드는 종류의 어긋남이라 분리를 택했다.
+
+5/3/1도 같은 어긋남이 약하게 있다. **BBB만 `hypertrophy` 태그**를 달아 goal facet이 갈리므로,
+근비대로 필터링하면 그룹 카드가 뜬다. frequency만큼 치명적이지 않다고 보고 묶음을 유지하되,
+그룹 카드 설명에 **어느 변형이 그 볼륨을 담당하는지 밝히는 것으로 보완**했다.
+
+**계열 태그**: 같은 계열의 변형은 공통 태그(`tactical-barbell` 등)를 **전부** 달 것. 하나만 빠지면
+계열 검색·필터에서 그 템플릿만 조용히 누락된다(Operator가 실제로 그랬다).
+
+⚠️ 그룹핑 구현은 현재 **5/3/1 전용 하드코딩**이다(`WENDLER_531_VARIANT_SLUGS`,
+`market-family-wendler-531`). 다른 계열을 묶으려면 먼저 일반화가 필요하다.
+
 ### 핵심 파라미터 (샘플 테스트 데이터)
 
 ```

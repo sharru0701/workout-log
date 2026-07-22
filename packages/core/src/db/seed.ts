@@ -248,7 +248,9 @@ export async function runSeed(options: SeedRunOptions = {}) {
     description:
       "A submaximal strength program built for tactical athletes and field operators. It uses 90% of true 1RM as the training max, runs squat, bench, and deadlift through a 6-week wave, and prioritizes repeatable heavy practice without grinding failures. After each cycle, the training max is nudged upward to sustain long-term progressive overload.",
     // block-periodization: 6주 웨이브를 돌고 사이클 끝에 TM을 올린다(설명의 "6-week wave").
-    tags: ["strength", "barbell", "operator", "intermediate", "block-periodization"],
+    // tactical-barbell: Fighter·Zulu와 같은 계열 태그. Operator만 빠져 있으면 계열 검색·필터에서
+    // 원본 템플릿이 누락된다(이름에 "Tactical Barbell"이 있어 현재 검색은 걸리지만 태그 기반은 못 잡음).
+    tags: ["strength", "barbell", "tactical-barbell", "operator", "intermediate", "block-periodization"],
   });
 
   const templateOperatorV1 = await upsertVersion(templateOperator.id, 1, {
