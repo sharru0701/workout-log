@@ -1,6 +1,7 @@
 import { pathToFileURL } from "node:url";
 import { db } from "./client";
 import {
+  appUser,
   exercise,
   exerciseAlias,
   plan as planTable,
@@ -1196,12 +1197,27 @@ export async function runSeed(options: SeedRunOptions = {}) {
     await upsertExercise(item);
   }
 
+  // Canonical local/dev fallback identity. Domain user_id now FKs app_user(id) (uuid),
+  // so the fallback must be a real uuid with a seeded app_user row. Matches CI's
+  // WORKOUT_AUTH_USER_ID and the value standardized in docs/db-multiuser-isolation-plan.md.
+  const DEV_FALLBACK_USER_ID = "00000000-0000-4000-8000-000000c1c1c1";
   const devUserId =
     options.devUserId?.trim() ||
-    (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() ||
-    "dev";
+    (process.env.WORKOUT_AUTH_USER_ID ?? "").trim() ||
+    DEV_FALLBACK_USER_ID;
 
   if (includeDemoPlans) {
+    // Ensure the fallback account exists before any user-owned row references it (FK to app_user).
+    await db
+      .insert(appUser)
+      .values({
+        id: devUserId,
+        email: `local-dev-fallback+${devUserId}@localhost`,
+        passwordHash: "local-dev-no-login",
+        displayName: "Local Dev Fallback",
+      })
+      .onConflictDoNothing({ target: appUser.id });
+
     if (templateOperatorV1?.id) {
       await upsertPlanForUser(devUserId, "Program Tactical Barbell Operator", {
         type: "SINGLE",

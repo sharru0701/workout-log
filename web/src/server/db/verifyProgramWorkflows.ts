@@ -491,7 +491,11 @@ async function verifyRef5Workflow(input: {
 }
 
 async function main() {
-  const userId = (process.env.WORKOUT_AUTH_USER_ID ?? "dev").trim() || "dev";
+  // Domain user_id FKs app_user(id) (uuid); the fallback must be a real uuid.
+  // runSeed({ devUserId }) below seeds the matching app_user row.
+  const DEV_FALLBACK_USER_ID = "00000000-0000-4000-8000-000000c1c1c1";
+  const userId =
+    (process.env.WORKOUT_AUTH_USER_ID ?? "").trim() || DEV_FALLBACK_USER_ID;
   const timezone = "Asia/Seoul";
   const createdLogIds: string[] = [];
 

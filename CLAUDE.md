@@ -114,7 +114,7 @@ pnpm -C web build
 ```bash
 DATABASE_URL=postgres://app:app@127.0.0.1:5432/workoutlog  # 또는 Supabase pooler URL
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-WORKOUT_AUTH_USER_ID=local-user
+WORKOUT_AUTH_USER_ID=00000000-0000-4000-8000-000000c1c1c1  # app_user.id(uuid) FK 대상 — uuid만 허용, seed가 이 계정 생성
 NEXT_PUBLIC_DISABLE_SW=1
 # NEXT_PUBLIC_EMAIL_RECOVERY_ENABLED=1  # (선택) 이메일 복구 UI 노출 — RESEND_*와 함께일 때만 켤 것
 # DB_SCHEMA=dev   # (선택) prod 인스턴스의 dev 스키마로 격리 개발 시 — DATABASE_URL을 prod 풀러로 두고 함께 설정
