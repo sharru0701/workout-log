@@ -1,15 +1,15 @@
 # DB 멀티유저 격리 마이그레이션 계획
 
-> 상태: **dev 리허설 완료·검증 통과** (2026-07-23). 코드/마이그레이션 스테이징됨(미커밋). **prod 적용은 미실행**(별도 승인 게이트).
+> 상태: **✅ 완료 — dev·prod 모두 적용** (2026-07-23, PR [#593](https://github.com/dawntide/workout-log/pull/593) 머지). prod `migration_run_log` SUCCESS, prod public에 app_user FK 8개 + 복합 FK 재생성 확인. 사전점검 결과 prod는 실사용자 1명·blocker 0이라 fail-loud 없이 적용됨.
 > 근거 감사: [`codebase-audit-2026-07.md`](codebase-audit-2026-07.md) §7 — "DB 레벨 멀티유저 격리 부재(`user_id` text, appUser FK 0)".
 >
 > **구현 상태:**
 > - ✅ `schema.ts`: 7개 도메인 `user_id` + `owner_user_id` → `uuid` + FK(app_user, cascade). `ux_event_log`는 `text` 유지.
 > - ✅ dev 마이그레이션 `migrations-dev/0008` 저작·**적용·검증**: 컬럼 uuid화, FK 8개(cascade), 잔여 non-uuid/orphan 0, FK 거부·cascade 실동작 PASS.
-> - ✅ prod 마이그레이션 `migrations/0025` 저작(**fail-loud 가드** + `USING ::uuid`, canonical 계정 미seed). **미적용.** ⚠️ prod엔 `0007`의 테넌트 복합 FK `generated_session_plan_user_fk`(`(plan_id,user_id)`→`plan(id,user_id)`, schema.ts 미반영 raw SQL)가 있어, 타입 변경 전 `DROP` → 양쪽 uuid화 후 **재생성**해야 함. **dev 스키마는 squash로 이 제약이 없어 리허설이 못 잡음 → CI(prod 전체 체인)가 발견**(E2E Smoke, 42804).
+> - ✅ prod 마이그레이션 `migrations/0025` 저작·**적용**(**fail-loud 가드** + `USING ::uuid`, canonical 계정 미seed). ⚠️ prod엔 `0007`의 테넌트 복합 FK `generated_session_plan_user_fk`(`(plan_id,user_id)`→`plan(id,user_id)`, schema.ts 미반영 raw SQL)가 있어, 타입 변경 전 `DROP` → 양쪽 uuid화 후 **재생성**해야 함. **dev 스키마는 squash로 이 제약이 없어 리허설이 못 잡음 → CI(prod 전체 체인)가 발견**(E2E Smoke, 42804).
 > - ✅ `seed.ts`: fallback 기본값 canonical uuid + 해당 app_user seed. 코어 테스트 472/472, web typecheck 통과.
 > - ✅ `.env.local`·docs(CLAUDE/AGENTS/README/local-dev/qa)·`verifyProgramWorkflows` fallback을 canonical uuid로 표준화.
-> - ⏭️ **prod 게이트**: public 사전점검(승인) → 레거시/orphan 정합 → `migrations/0025` 적용(=prod 배포). CI 검증 스크립트(idempotency·account-lifecycle)는 자체 app_user 생성 패턴이라 FK 호환.
+> - ✅ **prod 게이트 통과**: public 사전점검 blocker 0 확인 → 머지 → Vercel prod 빌드가 `migrations/0025` 적용(`migration_run_log` SUCCESS). CI 검증 스크립트(idempotency·account-lifecycle)는 자체 app_user 생성 패턴이라 FK 호환.
 > - ⏭️ **후속 PR**: auth 계열 FK(§3 2차 배치), `ux_event_log` nullable-user 재설계(선택).
 
 ## 1. 문제
