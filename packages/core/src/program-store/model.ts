@@ -1,5 +1,6 @@
 import { mapExerciseNameToTarget } from "../strength-engine/target-mapping";
 import { EXERCISE_NAMES } from "../exercise/catalog";
+import type { ManualSession, ManualSet, ManualDefinition } from "../program-dsl/schema";
 import {
   ASYMPTOTE_HYBRID_TM_PERCENT,
   ASYMPTOTE_SESSIONS,
@@ -866,7 +867,8 @@ export function selectDisplayStrengthBaselineKeys(keys: string[]): string[] {
   return present.filter((key, index) => present.indexOf(key) === index && !shadowed.has(key));
 }
 
-function oneRmTargetsFromManualDefinition(definition: any): OneRmTarget[] {
+function oneRmTargetsFromManualDefinition(rawDefinition: unknown): OneRmTarget[] {
+  const definition = rawDefinition as ManualDefinition;
   if (definition?.kind !== "manual" || !Array.isArray(definition.sessions)) return [];
   const operatorStyle = definition?.operatorStyle === true || String(definition?.programFamily ?? "").trim().toLowerCase() === "operator";
   // madcow/nsuns도 운동별 슬롯 프로그램이라 1RM을 family(SQUAT/BENCH/…)로 뭉치면 안 된다.
@@ -935,13 +937,13 @@ export function extractOneRmTargetsFromTemplate(template: ProgramTemplate): OneR
   return fallback.map((key) => ({ key, label: targetLabel(key) }));
 }
 
-function sessionDraftFromManual(session: any): ProgramSessionDraft {
+function sessionDraftFromManual(session: ManualSession): ProgramSessionDraft {
   const key = String(session?.key ?? "").trim() || "A";
   const items = Array.isArray(session?.items) ? session.items : [];
   return {
     id: uid("session"),
     key,
-    exercises: items.map((item: any, index: number) => {
+    exercises: items.map((item, index: number) => {
       const sets = Array.isArray(item?.sets) ? item.sets : [];
       const first = sets[0] ?? {};
       return {
@@ -1069,9 +1071,9 @@ export function buildSlottedLpSlot(
 }
 
 /** 정의의 세트 배열 → draft 세트 행. 진행에 쓰이는 값(reps·percent·amrap)과 표시 note만 남긴다. */
-function toSetRowDrafts(sets: any[]): ProgramSetRowDraft[] | null {
+function toSetRowDrafts(sets: ManualSet[]): ProgramSetRowDraft[] | null {
   if (!Array.isArray(sets) || sets.length === 0) return null;
-  return sets.map((set: any) => {
+  return sets.map((set) => {
     const percent = Number(set?.percent);
     const note = typeof set?.note === "string" ? set.note.trim() : "";
     return {
@@ -1083,14 +1085,14 @@ function toSetRowDrafts(sets: any[]): ProgramSetRowDraft[] | null {
   });
 }
 
-function slottedLpSessionDrafts(sessions: any[], family: string): ProgramSessionDraft[] {
-  return sessions.map((session: any) => {
+function slottedLpSessionDrafts(sessions: ManualSession[], family: string): ProgramSessionDraft[] {
+  return sessions.map((session) => {
     const sessionKey = String(session?.key ?? "").trim() || "D1";
     const items = Array.isArray(session?.items) ? session.items : [];
     return {
       id: uid("session"),
       key: sessionKey,
-      exercises: items.map((item: any, idx: number) => {
+      exercises: items.map((item, idx: number) => {
         const name =
           String(item?.exerciseName ?? item?.name ?? "").trim() || `Exercise ${idx + 1}`;
         const target = inferProgressionTargetFromExerciseName(name);
