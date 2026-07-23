@@ -82,10 +82,13 @@ test("DSL golden: LOGIC dispatcher output is unchanged", () => {
     return;
   }
 
+  // Compare line-ending-agnostic: git may check the golden out as CRLF on Windows,
+  // and this pins output content, not byte-for-byte encoding.
+  const lf = (s: string) => s.replace(/\r\n/g, "\n");
   const expected = fs.readFileSync(goldenPath, "utf8");
   assert.equal(
-    serialized,
-    expected,
+    lf(serialized),
+    lf(expected),
     "generateFromLogicDefinition output drifted from the golden — if intentional, regenerate with UPDATE_DSL_GOLDEN=1",
   );
 });

@@ -1,6 +1,11 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 0 완료** (2026-07-23). G1 골든 하네스 + G2 dev 인벤토리 착지. Phase 1부터 단계별 진행(각 단계 확인 후).
+> 상태: **Phase 1a 완료** (2026-07-23) — zod 스키마 모듈 + conformance. 다음: Phase 1b(쓰기 경로 적용) → Phase 2(소비자 연결).
+>
+> **Phase 1a 산출물** (`packages/core/src/program-dsl/`):
+> - ✅ zod 판별 유니온 `programDefinitionSchema`(kind 판별: manual·operator·531·asymptote·ref5) + `parseProgramDefinition`(미지 kind는 throw 아닌 `{ok:false}` fallback — 엔진 "Unsupported kind" 시맨틱 보존). 스키마=타입(`z.infer`)=파서 단일 소스. `.passthrough()`로 미지 필드 보존.
+> - ✅ **conformance 테스트**: `fixtures/dsl/inputs.json`의 실 정의 18개 전수 파싱 통과 + fork 필드·동의어·미지 kind fallback. **실데이터가 스키마를 또 교정**: `ref5.protocolVersion`이 number가 아니라 **문자열 "1.1"**(→ `string|number`로 수정) — dev만 봤으면 못 잡음.
+> - ✅ **G2 prod 인벤토리 완료**: kind 분포 dev와 동일 5종. **candito-linear=0(dev·prod 모두 → 죽은 코드 확정)**. **유저 fork 1건**(operator→manual 구체화)에서 seed 밖 필드 **`operatorStyle`(top-level)·`setNumber`(set)** 발견 → 스키마에 반영. zod ^3.25.76 core에 추가(소비자 미연결이라 아직 번들 무영향).
 >
 > **Phase 0 산출물:**
 > - ✅ **G1 골든**: `generateFromLogicDefinition`(LOGIC 디스패처 — 실 DB 경로가 타는 함수) export + `dsl-golden.test.ts`. dev에서 덤프한 실 LOGIC 정의 7개(operator 3·531 3·asymptote 1) × 4 (week,day) 출력을 `fixtures/dsl/golden-logic.json`에 고정(2회 실행 안정 확인, core 473/473). ref5는 디스패처 밖 경로라 제외, manual slotted 라우팅은 Phase 2 골든에서(현재 기존 행위 테스트 16파일이 커버).
@@ -65,7 +70,8 @@
 | Phase | 내용 | 리스크 | 게이트 |
 |---|---|---|---|
 | ~~**0. 하네스+인벤토리**~~ ✅ | G1 골든(`dsl-golden.test.ts`, LOGIC 디스패처 고정) + G2 dev 인벤토리(`inputs.json`). candito 0·ref5 5번째 kind 발견. | 없음 | ✅ core 473/473, 골든 2회 안정 |
-| **1. `program-dsl` 모듈** | 판별 유니온 타입 + kind별 정규화 함수 + 내로잉 헬퍼. **쓰기 경로부터 적용**(seed.ts·program-store 직렬화가 `ProgramDefinition`을 생산하도록) — 새 데이터의 계약 강제, 읽기는 아직 무변경 | 낮음 | G1 불변 + typecheck |
+| **1a. `program-dsl` 모듈** ✅ | zod 판별 유니온 + `parseProgramDefinition` + conformance 테스트(실 정의 전수). 소비자 미연결. | 없음 | ✅ core 477/477, conformance green |
+| **1b. 쓰기 경로 적용** | seed.ts·program-store 직렬화가 `ProgramDefinition`을 생산하도록 — 새 데이터 계약 강제, 읽기는 무변경 | 낮음 | G1 불변 + typecheck |
 | **2. manual 경로** | `pickManualSession`/`mapManualSet`/`plannedExercisesFromManualSession`이 `parseManualDefinition` 경유로 전환 | 중 | G1 바이트 동일 + manual 계열 행위 테스트 |
 | **3. LOGIC kind별 1PR** | operator → 531 → asymptote 순(asymptote 최후 — ref5/hybrid 얽힘 최대). 각 generator의 def/defaults 접근을 타입 경유로 | 중~높음 | kind별 G1 + 해당 행위 테스트 |
 | **4. Snapshot v3 타입** | 엔진이 `SnapshotV3`를 생산하도록 타입 부여 → 소비자(home-service `buildPlannedExercises`·workout-record model·plans bootstrap) 순차 전환. PR #597에서 남긴 홈 잔여 5건 해소 | 중 | G1 + E2E smoke |
@@ -84,5 +90,5 @@
 ## 7. 결정 사항
 
 1. **런타임 검증**: ✅ **zod 채택**(2026-07-23) — 스키마=타입=파서 단일 소스로 드리프트 차단. 서버 사이드 한정 + Phase 1에서 번들 예산 확인.
-2. **candito-linear**: dev 0건 확인 — prod 스캔에서도 0이면 타입 제외 + 엔진 분기 삭제(죽은 코드 정리). **prod 확인 대기.**
-3. **G2 prod 스캔 승인**: read-only지만 prod 접근 — Phase 1 착수 전 별도 승인 필요(candito 최종 판정 + 유저 fork/import 유입 형태 확인).
+2. **candito-linear**: ✅ **dev·prod 모두 0건 확인** → 타입 모델에서 제외 완료. **엔진 분기 삭제는 Phase 3(LOGIC)에서** — 골든이 지키는 상태에서 죽은 분기 제거.
+3. **G2 prod 스캔**: ✅ 완료(2026-07-23). fork 필드 `operatorStyle`·`setNumber` 발견해 스키마 반영. import 유입 형태는 `userImport.ts`가 임의 JSON을 insert하므로 Phase 1b/2에서 `parseProgramDefinition` 관용성(`.passthrough()`+fallback)으로 흡수.
