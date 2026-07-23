@@ -1,6 +1,8 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 2b-2 완료** (2026-07-23) — slotted 생성기 4개 타이핑. generateSession any 56→45. 다음: LOGIC 소비자 / program-store 수렴.
+> 상태: **Phase 2c 완료** (2026-07-23) — program-store/model.ts READ 소비자 타이핑(11→3 any). generateSession any 56→45. 다음: (선택) 남은 슬라이스는 확연히 줄어든 잔여만 — params/defaults(별도 plan-params DSL 30), snapshot(Phase 4 13), nsuns 세트빌더 3, normalizeTargets(크로스-kind 느슨).
+>
+> **Phase 2c**(`program-store/model.ts`): draft 빌더 `sessionDraftFromManual(→ManualSession)`·`toSetRowDrafts(→ManualSet[])`·`slottedLpSessionDrafts(→ManualSession[])` + `oneRmTargetsFromManualDefinition(unknown+cast ManualDefinition)` 타이핑. 로컬 `ManualDefinitionSession`(WRITE 직렬화용)은 미변경. model·view 테스트 통과. `normalizeTargets`는 `lifts`/`mainLifts` 등 크로스-kind 느슨한 리더라 제외.
 >
 > **Phase 2b-2**: `plannedExercisesFrom{Operator,Asymptote,531,SlottedLp}ManualSession(manualSession: ManualSession|null)` + 내부 item 반복 타이핑. `ManualSession.key`를 optional로(테스트가 items만으로 세션 구성) · `.map` 콜백에 `: PlannedExercise|null` 반환 주석(리터럴 유니온→PlannedExercise 위장). 출력 불변(골든·엔진 16테스트·conformance). 남은 `(s: any)` 3개는 nsuns 세트 빌더(setRows가 ManualSet|ManualItem 유니온) — 후속.
 >
