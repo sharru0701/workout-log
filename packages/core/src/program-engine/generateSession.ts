@@ -1295,7 +1295,7 @@ export function plannedExercisesFromSlottedLpManualSession(
           (typeof slot?.startWeightKg === "number" && slot.startWeightKg > 0
             ? slot.startWeightKg
             : null);
-        const pctSets = setRows.map((s: any) => {
+        const pctSets = setRows.map((s) => {
           const base = mapManualSet(s);
           const pct = toNumberOrNull(s?.percent);
           if (percentBaseKg !== null && percentBaseKg > 0) {
@@ -1340,7 +1340,7 @@ export function plannedExercisesFromSlottedLpManualSession(
         const iKg = Number(effectiveParams?.texasIntensityByTarget?.[progressionTarget ?? ""]) || 0;
         const factor = txRole === "volume" ? 0.9 : 0.8;
         const derivedKg = iKg > 0 ? roundToNearest2p5(iKg * factor) : effectiveKg;
-        const txSets = setRows.map((s: any) => {
+        const txSets = setRows.map((s) => {
           const base = mapManualSet(s);
           if (derivedKg !== null && derivedKg > 0) base.targetWeightKg = derivedKg;
           return base;
@@ -1380,7 +1380,7 @@ export function plannedExercisesFromSlottedLpManualSession(
         gzTier === "T1" || gzTier === "T2" ? Number(effectiveParams?.stageByKey?.[slotKey]) || 0 : null;
       const sets: PlannedSet[] = stageScheme
         ? buildGzclpStageSets(stageScheme, setRows, effectiveKg)
-        : setRows.map((s: any, sIdx: number) => {
+        : setRows.map((s, sIdx: number) => {
             const base = mapManualSet(s);
             if (effectiveKg !== null && effectiveKg > 0) base.targetWeightKg = effectiveKg;
             if (injectT3Amrap && sIdx === setRows.length - 1) base.amrap = true;
