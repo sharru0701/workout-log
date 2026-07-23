@@ -25,6 +25,7 @@ import {
 } from "./asymptote";
 import { roundToNearest2p5 } from "./round";
 import type { ManualSet, ManualItem, ManualSession, ManualDefinition } from "../program-dsl/schema";
+import type { PlanParams, ProgramDefaults } from "../program-dsl/plan-params";
 import { mapExerciseNameToTarget as inferTargetFromExerciseName } from "@workout/core/strength-engine/target-mapping";
 import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
 import {
@@ -138,8 +139,8 @@ export type { PlannedSet };
 type GeneratorCtx = {
   week: number;
   day: number;
-  params: any;
-  defaults: any;
+  params: PlanParams;
+  defaults: ProgramDefaults;
   forcedTarget?: string;
   orderBase: number;
 };
@@ -307,7 +308,7 @@ function normalizeLookupKeys(keys: Array<string | null | undefined>) {
   );
 }
 
-function pickTrainingMaxKgByKeys(params: any, defaults: any, rawKeys: Array<string | null | undefined>) {
+function pickTrainingMaxKgByKeys(params: PlanParams, defaults: ProgramDefaults, rawKeys: Array<string | null | undefined>) {
   const keys = normalizeLookupKeys(rawKeys);
   if (keys.length < 1) return null;
   const scoped = (obj: any): number | null => {
@@ -334,14 +335,14 @@ function pickTrainingMaxKgByKeys(params: any, defaults: any, rawKeys: Array<stri
   return value;
 }
 
-function pickTrainingMaxKg(params: any, defaults: any, target: string) {
+function pickTrainingMaxKg(params: PlanParams, defaults: ProgramDefaults, target: string) {
   return pickTrainingMaxKgByKeys(params, defaults, [target]);
 }
 
 function resolveOperatorExerciseTrainingMax(input: {
-  effectiveParams: any;
-  baseParams: any;
-  defaults: any;
+  effectiveParams: PlanParams;
+  baseParams: PlanParams;
+  defaults: ProgramDefaults;
   exerciseName: string;
   fallbackTarget: string | null;
 }) {
@@ -380,7 +381,7 @@ function resolveOperatorExerciseTrainingMax(input: {
   return roundToNearest2p5(exactTm + (effectiveFamilyTm - familyBaseline));
 }
 
-function requireTrainingMaxKg(params: any, defaults: any, target: string) {
+function requireTrainingMaxKg(params: PlanParams, defaults: ProgramDefaults, target: string) {
   const tm = pickTrainingMaxKg(params, defaults, target);
   if (tm === null) {
     throw new Error(`1RM/TM 입력이 필요합니다: ${target}`);
@@ -587,7 +588,7 @@ function generateOperator(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExe
 // (2.5kg 내림)를 차용한다. 사용자가 메인 3리프트(스쿼트/벤치/풀)의 TM만 입력해도
 // 데드/오프 처방이 0으로 비지 않도록 하는 안전망 — 직접 TM이 있으면 호출부에서
 // 항상 그쪽을 우선하므로 이 추정은 "직접 입력이 아예 없을 때"만 작동한다.
-function crossLiftFallbackTm(target: string, params: any, defaults: any): number | null {
+function crossLiftFallbackTm(target: string, params: PlanParams, defaults: ProgramDefaults): number | null {
   if (target === "DEADLIFT") return pickTrainingMaxKg(params, defaults, "SQUAT");
   if (target === "OHP") {
     const bpTm = pickTrainingMaxKg(params, defaults, "BENCH");
@@ -599,8 +600,8 @@ function crossLiftFallbackTm(target: string, params: any, defaults: any): number
 
 function resolveAsymptoteTm(
   target: ProgressionTarget,
-  params: any,
-  defaults: any,
+  params: PlanParams,
+  defaults: ProgramDefaults,
 ): number | null {
   if (target === "SQUAT" || target === "BENCH" || target === "PULL") {
     return pickTrainingMaxKg(params, defaults, target);
@@ -875,9 +876,9 @@ const DERIVED_MAIN_LIFT: Record<string, { from: ProgressionTarget; ratio: number
 function applyDerivedMainLifts(
   planned: PlannedExercise[],
   week: number,
-  effectiveParams: any,
-  baseParams: any,
-  defaults: any,
+  effectiveParams: PlanParams,
+  baseParams: PlanParams,
+  defaults: ProgramDefaults,
 ): PlannedExercise[] {
   const scheme = operatorSchemeByWeek(week);
   const byTarget = new Map<string, PlannedExercise>();
@@ -923,9 +924,9 @@ function applyDerivedMainLifts(
 export function plannedExercisesFromOperatorManualSession(
   manualSession: ManualSession | null,
   week: number,
-  effectiveParams: any,
-  baseParams: any,
-  defaults: any,
+  effectiveParams: PlanParams,
+  baseParams: PlanParams,
+  defaults: ProgramDefaults,
 ): PlannedExercise[] {
   const items: ManualItem[] =
     manualSession && Array.isArray(manualSession.items) ? manualSession.items : [];
@@ -999,8 +1000,8 @@ export function plannedExercisesFromOperatorManualSession(
 export function plannedExercisesFromAsymptoteManualSession(
   manualSession: ManualSession | null,
   week: number,
-  effectiveParams: any,
-  defaults: any,
+  effectiveParams: PlanParams,
+  defaults: ProgramDefaults,
 ): PlannedExercise[] {
   const items: ManualItem[] =
     manualSession && Array.isArray(manualSession.items) ? manualSession.items : [];
@@ -1114,8 +1115,8 @@ export function plannedExercisesFromAsymptoteManualSession(
 export function plannedExercisesFrom531ManualSession(
   manualSession: ManualSession | null,
   week: number,
-  effectiveParams: any,
-  defaults: any,
+  effectiveParams: PlanParams,
+  defaults: ProgramDefaults,
 ): PlannedExercise[] {
   const items: ManualItem[] =
     manualSession && Array.isArray(manualSession.items) ? manualSession.items : [];
@@ -1193,7 +1194,7 @@ export function plannedExercisesFrom531ManualSession(
 // gzclp 정석 stage(v2)에서 강등 단계별 세트 스킴. stage 0은 저장 세트를 쓰므로 여기 없음.
 // T1: 5×3 → 6×2 → 10×1, T2: 3×10 → 3×8 → 3×6 (인덱스 = stage).
 function resolveGzclpStageScheme(
-  effectiveParams: any,
+  effectiveParams: PlanParams,
   family: string | null | undefined,
   tier: string | undefined,
   slotKey: string,
@@ -1227,8 +1228,8 @@ function buildGzclpStageSets(
 
 export function plannedExercisesFromSlottedLpManualSession(
   manualSession: any,
-  effectiveParams: any,
-  defaults: any,
+  effectiveParams: PlanParams,
+  defaults: ProgramDefaults,
   family?: string | null,
 ): PlannedExercise[] {
   const items: ManualItem[] =
@@ -1881,28 +1882,28 @@ async function buildSession(
             snapshot.manualSession,
             sessionCtx.week,
             effectivePlanParams,
-            p.params ?? {},
-            version.defaults ?? {},
+            (p.params ?? {}) as PlanParams,
+            (version.defaults ?? {}) as ProgramDefaults,
           );
         } else if (manualPlanner === "asymptote") {
           snapshot.exercises = plannedExercisesFromAsymptoteManualSession(
             snapshot.manualSession,
             sessionCtx.week,
             effectivePlanParams,
-            version.defaults ?? {},
+            (version.defaults ?? {}) as ProgramDefaults,
           );
         } else if (manualPlanner === "wendler-531") {
           snapshot.exercises = plannedExercisesFrom531ManualSession(
             snapshot.manualSession,
             sessionCtx.week,
             effectivePlanParams,
-            version.defaults ?? {},
+            (version.defaults ?? {}) as ProgramDefaults,
           );
         } else if (manualPlanner === "slotted-lp") {
           snapshot.exercises = plannedExercisesFromSlottedLpManualSession(
             snapshot.manualSession,
             effectivePlanParams,
-            version.defaults ?? {},
+            (version.defaults ?? {}) as ProgramDefaults,
             manualEntry?.family,
           );
         } else {
@@ -2084,28 +2085,28 @@ export function previewSessionExercises(
         manualSession,
         input.week,
         effectivePlanParams,
-        (input.planParams ?? {}) as Record<string, unknown>,
-        input.rootVersion.defaults ?? {},
+        (input.planParams ?? {}) as PlanParams,
+        (input.rootVersion.defaults ?? {}) as ProgramDefaults,
       );
     } else if (manualPlanner === "asymptote") {
       exercises = plannedExercisesFromAsymptoteManualSession(
         manualSession,
         input.week,
         effectivePlanParams,
-        input.rootVersion.defaults ?? {},
+        (input.rootVersion.defaults ?? {}) as ProgramDefaults,
       );
     } else if (manualPlanner === "wendler-531") {
       exercises = plannedExercisesFrom531ManualSession(
         manualSession,
         input.week,
         effectivePlanParams,
-        input.rootVersion.defaults ?? {},
+        (input.rootVersion.defaults ?? {}) as ProgramDefaults,
       );
     } else if (manualPlanner === "slotted-lp") {
       exercises = plannedExercisesFromSlottedLpManualSession(
         manualSession,
         effectivePlanParams,
-        input.rootVersion.defaults ?? {},
+        (input.rootVersion.defaults ?? {}) as ProgramDefaults,
         manualEntry?.family,
       );
     } else {

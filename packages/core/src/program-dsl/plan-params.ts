@@ -24,10 +24,14 @@ export const planParamsSchema = z
     schedule: z.array(str).optional(),
     trainingMaxKg: liftNumberMap.optional(),
     oneRepMaxKg: liftNumberMap.optional(),
+    tm: liftNumberMap.optional(), // TM-map synonyms the engine also reads
+    tmKg: liftNumberMap.optional(),
     programFamily: str.optional(),
     protocolVersion: z.union([str, num]).optional(), // string ("1.1") in real data
     progressionModel: str.optional(),
     lightBlockMode: z.boolean().optional(),
+    stageByKey: z.record(z.union([num, str])).optional(), // nsuns per-slot stage
+    texasIntensityByTarget: z.record(num).optional(), // texas I-day work by target
     ref5: z.record(z.unknown()).optional(), // ref5 runtime config — opaque here
   })
   .passthrough();
@@ -35,6 +39,9 @@ export const planParamsSchema = z
 export const programDefaultsSchema = z
   .object({
     tmPercent: num.optional(),
+    tm: liftNumberMap.optional(),
+    tmKg: liftNumberMap.optional(),
+    trainingMaxKg: liftNumberMap.optional(),
     ref5: z.record(z.unknown()).optional(),
   })
   .passthrough();
