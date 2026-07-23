@@ -24,6 +24,7 @@ import {
   type AsymptoteTopSetSpec,
 } from "./asymptote";
 import { roundToNearest2p5 } from "./round";
+import type { ManualSet, ManualSession, ManualDefinition } from "../program-dsl/schema";
 import { mapExerciseNameToTarget as inferTargetFromExerciseName } from "@workout/core/strength-engine/target-mapping";
 import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
 import {
@@ -788,7 +789,7 @@ export function generateFromLogicDefinition(
   ];
 }
 
-function mapManualSet(s: any): PlannedSet {
+function mapManualSet(s: ManualSet): PlannedSet {
   const reps = toNumberOrNull(s?.reps) ?? undefined;
   const targetWeightKg = toNumberOrNull(s?.targetWeightKg ?? s?.weightKg) ?? undefined;
   const percent = toNumberOrNull(s?.percent) ?? undefined;
@@ -1549,10 +1550,11 @@ function applyOverridesToSnapshot(snapshot: any, overrides: any[]) {
   return snapshot;
 }
 
-function pickManualSession(definition: any, sessionKey: string) {
-  if (!definition || definition.kind !== "manual") return null;
-  const sessions = Array.isArray(definition.sessions) ? definition.sessions : [];
-  return sessions.find((s: any) => s.key === sessionKey) ?? null;
+function pickManualSession(definition: unknown, sessionKey: string): ManualSession | null {
+  if (!definition || (definition as { kind?: unknown }).kind !== "manual") return null;
+  const def = definition as ManualDefinition;
+  const sessions = Array.isArray(def.sessions) ? def.sessions : [];
+  return sessions.find((s) => s.key === sessionKey) ?? null;
 }
 
 // texas 주간 모델(v2): I(강도일) 슬롯 workKg를 progressionTarget별로 모은다. I 슬롯키는 `I_s{n}`
