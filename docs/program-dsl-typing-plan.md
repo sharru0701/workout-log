@@ -1,6 +1,6 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 2d-2 완료** (2026-07-23) — params/defaults 소비자 타이핑. generateSession any **56→21**. DSL 소비자 연결 대부분 완료.
+> 상태: **Phase 2e 완료** (2026-07-23) — nsuns 세트빌더 타이핑으로 manual 세트 경로 마무리. generateSession any **56→18**. 남은 18 = snapshot(Phase 4)·COMPOSITE blocks·plan-override 캐스트.
 >
 > **Phase 2d-2**(`generateSession.ts`): 24개 `params/effectiveParams/baseParams: any`→`PlanParams`, `defaults: any`→`ProgramDefaults`. 경계(`p.params ?? {}`·`version.defaults ?? {}`)는 **캐스트**(런타임 parse는 미지 형태에서 params 통째 드롭 위험 → 지양). 코드가 읽지만 dev 데이터엔 없던 필드(`tm`·`tmKg`·`stageByKey`·`texasIntensityByTarget`) 스키마 보강. 출력 불변(골든·엔진·conformance 479/479).
 >
