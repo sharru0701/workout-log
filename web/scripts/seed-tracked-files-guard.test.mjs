@@ -41,11 +41,18 @@ function readTrackedFiles() {
   return out;
 }
 
-/** seed.ts의 상대경로 import를 실제 파일 경로로 해석한다. */
+/**
+ * seed.ts의 상대경로 import를 실제 파일 경로로 해석한다.
+ * `import type … `은 빌드 시 지워져 seed 출력에 영향이 없으므로(내용 의존 아님) 제외한다 —
+ * 그 모듈이 바뀌어도 seed 결과가 그대로라 해시가 안 바뀌는 게 정상이다.
+ */
 function readSeedLocalImports() {
   const source = fs.readFileSync(seedPath, "utf8");
-  const specifiers = [...source.matchAll(/from\s+"(\.[^"]+)"/g)].map((m) => m[1]);
-  return [...new Set(specifiers)];
+  const all = [...source.matchAll(/from\s+"(\.[^"]+)"/g)].map((m) => m[1]);
+  const typeOnly = new Set(
+    [...source.matchAll(/import\s+type\b[\s\S]*?from\s+"(\.[^"]+)"/g)].map((m) => m[1]),
+  );
+  return [...new Set(all.filter((specifier) => !typeOnly.has(specifier)))];
 }
 
 const trackedFiles = readTrackedFiles();

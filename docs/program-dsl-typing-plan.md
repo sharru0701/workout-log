@@ -1,6 +1,6 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 1a 완료** (2026-07-23) — zod 스키마 모듈 + conformance. 다음: Phase 1b(쓰기 경로 적용) → Phase 2(소비자 연결).
+> 상태: **Phase 1b 완료** (2026-07-23) — seed 쓰기 경로가 `ProgramDefinition` 계약. 다음: Phase 2(소비자 연결 = 실제 `any` 감축 + program-store 로컬 타입 수렴).
 >
 > **Phase 1a 산출물** (`packages/core/src/program-dsl/`):
 > - ✅ zod 판별 유니온 `programDefinitionSchema`(kind 판별: manual·operator·531·asymptote·ref5) + `parseProgramDefinition`(미지 kind는 throw 아닌 `{ok:false}` fallback — 엔진 "Unsupported kind" 시맨틱 보존). 스키마=타입(`z.infer`)=파서 단일 소스. `.passthrough()`로 미지 필드 보존.
@@ -71,7 +71,8 @@
 |---|---|---|---|
 | ~~**0. 하네스+인벤토리**~~ ✅ | G1 골든(`dsl-golden.test.ts`, LOGIC 디스패처 고정) + G2 dev 인벤토리(`inputs.json`). candito 0·ref5 5번째 kind 발견. | 없음 | ✅ core 473/473, 골든 2회 안정 |
 | **1a. `program-dsl` 모듈** ✅ | zod 판별 유니온 + `parseProgramDefinition` + conformance 테스트(실 정의 전수). 소비자 미연결. | 없음 | ✅ core 477/477, conformance green |
-| **1b. 쓰기 경로 적용** | seed.ts·program-store 직렬화가 `ProgramDefinition`을 생산하도록 — 새 데이터 계약 강제, 읽기는 무변경 | 낮음 | G1 불변 + typecheck |
+| **1b. seed 쓰기 경로** ✅ | seed `upsertVersion(values.definition)`를 `ProgramDefinition`으로 타이핑 — 18개 canonical 정의가 컴파일 타임 계약 검사 통과, 향후 malformed seed 프로그램은 빌드에서 차단. 런타임 무변경. | 없음 | ✅ core 477/477, web·apps/api typecheck |
+| **2 예정: program-store 쓰기 직렬화** | fork 재료화(`model.ts`의 `{kind:"manual", operatorStyle, …}` 생산)는 program-store **로컬 정의 타입**(`ManualDefinitionSession` 등)과 얽혀 있음 → Phase 2에서 로컬 타입을 zod-inferred 타입으로 **수렴**하며 함께 처리 | 중 | G1 불변 |
 | **2. manual 경로** | `pickManualSession`/`mapManualSet`/`plannedExercisesFromManualSession`이 `parseManualDefinition` 경유로 전환 | 중 | G1 바이트 동일 + manual 계열 행위 테스트 |
 | **3. LOGIC kind별 1PR** | operator → 531 → asymptote 순(asymptote 최후 — ref5/hybrid 얽힘 최대). 각 generator의 def/defaults 접근을 타입 경유로 | 중~높음 | kind별 G1 + 해당 행위 테스트 |
 | **4. Snapshot v3 타입** | 엔진이 `SnapshotV3`를 생산하도록 타입 부여 → 소비자(home-service `buildPlannedExercises`·workout-record model·plans bootstrap) 순차 전환. PR #597에서 남긴 홈 잔여 5건 해소 | 중 | G1 + E2E smoke |
