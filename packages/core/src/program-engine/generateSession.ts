@@ -26,6 +26,7 @@ import {
 import { roundToNearest2p5 } from "./round";
 import type { ManualSet, ManualItem, ManualSession, ManualDefinition } from "../program-dsl/schema";
 import type { PlanParams, ProgramDefaults } from "../program-dsl/plan-params";
+import type { SnapshotV3, SnapshotBlock, LogicBlockSource } from "./snapshot";
 import { mapExerciseNameToTarget as inferTargetFromExerciseName } from "@workout/core/strength-engine/target-mapping";
 import { EXERCISE_NAMES } from "@workout/core/exercise/catalog";
 import {
@@ -1422,7 +1423,12 @@ export function resolveManualEntry(
   });
 }
 
-function plannedExercisesFromBlocks(snapshot: any, week: number, day: number, planParams: any) {
+function plannedExercisesFromBlocks(
+  snapshot: { blocks?: readonly LogicBlockSource[] },
+  week: number,
+  day: number,
+  planParams: Record<string, unknown>,
+) {
   const blocks = Array.isArray(snapshot.blocks) ? snapshot.blocks : [];
   const exercises: PlannedExercise[] = [];
 
@@ -1435,8 +1441,10 @@ function plannedExercisesFromBlocks(snapshot: any, week: number, day: number, pl
     const generated = generateFromLogicDefinition(b?.definition, {
       week,
       day,
-      params: { ...(planParams ?? {}), ...(b?.params ?? {}) },
-      defaults: b?.defaults ?? {},
+      // 병합 결과는 스키마 상 느슨한 bag이라 ctx 계약(PlanParams/ProgramDefaults)로 캐스트한다
+      // (런타임 객체는 불변, 경계 캐스트 — Phase 2d-2와 동형).
+      params: { ...(planParams ?? {}), ...(b?.params ?? {}) } as PlanParams,
+      defaults: (b?.defaults ?? {}) as ProgramDefaults,
       forcedTarget,
       orderBase: i * 100,
     });
@@ -1446,10 +1454,10 @@ function plannedExercisesFromBlocks(snapshot: any, week: number, day: number, pl
   return exercises;
 }
 
-function reorderBlocks(blocks: any[], order: string[]) {
-  const map = new Map(blocks.map((b: any) => [b.target, b]));
-  const reordered = order.map((k: string) => map.get(k)).filter(Boolean);
-  const remaining = blocks.filter((b: any) => !order.includes(b.target));
+function reorderBlocks(blocks: SnapshotBlock[], order: string[]) {
+  const map = new Map(blocks.map((b) => [b.target, b]));
+  const reordered = order.map((k) => map.get(k)).filter((b): b is SnapshotBlock => Boolean(b));
+  const remaining = blocks.filter((b) => !order.includes(b.target));
   return [...reordered, ...remaining];
 }
 
@@ -1459,7 +1467,10 @@ function sortExercises(exercises: PlannedExercise[]) {
     .sort((a, b) => (a.order ?? 9999) - (b.order ?? 9999));
 }
 
-function applyOverridesToSnapshot(snapshot: any, overrides: any[]) {
+function applyOverridesToSnapshot(
+  snapshot: SnapshotV3,
+  overrides: ReadonlyArray<{ id: string; patch: unknown }>,
+): SnapshotV3 {
   snapshot.overridesApplied = snapshot.overridesApplied ?? [];
   snapshot.exercises = Array.isArray(snapshot.exercises) ? snapshot.exercises : [];
   snapshot.accessories = Array.isArray(snapshot.accessories) ? snapshot.accessories : [];
@@ -1494,9 +1505,9 @@ function applyOverridesToSnapshot(snapshot: any, overrides: any[]) {
     }
 
     if (p.op === "REPLACE_EXERCISE") {
-      const tgt = (p as any).target?.blockTarget;
+      const tgt = p.target?.blockTarget;
       if (tgt && Array.isArray(snapshot.blocks)) {
-        const block = snapshot.blocks.find((b: any) => b.target === tgt);
+        const block = snapshot.blocks.find((b) => b.target === tgt);
         if (block) {
           block.replacements = block.replacements ?? {};
           block.replacements.mainExercise = p.value.exerciseName;
@@ -1526,7 +1537,7 @@ function applyOverridesToSnapshot(snapshot: any, overrides: any[]) {
     }
 
     if (p.op === "REORDER_BLOCKS") {
-      const order = (p as any).value?.order;
+      const order = p.value?.order;
       if (Array.isArray(order) && Array.isArray(snapshot.blocks)) {
         snapshot.blocks = reorderBlocks(snapshot.blocks, order);
       }
@@ -1547,7 +1558,7 @@ function applyOverridesToSnapshot(snapshot: any, overrides: any[]) {
   }
 
   if (Array.isArray(snapshot.accessories)) {
-    snapshot.accessories.sort((a: any, b: any) => (a.order ?? 99) - (b.order ?? 99));
+    snapshot.accessories.sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
   }
   if (Array.isArray(snapshot.exercises)) {
     snapshot.exercises = sortExercises(snapshot.exercises);
@@ -1759,7 +1770,7 @@ async function buildSession(
   }
 
   // overrides + (modules 또는 version/template) 병렬 조회
-  let snapshot: any = {
+  let snapshot: SnapshotV3 = {
     schemaVersion: 3,
     sessionKey,
     sessionDate: sessionCtx.sessionDate,
@@ -1817,9 +1828,9 @@ async function buildSession(
             version: version.version,
           },
           definition: version.definition,
-          defaults: version.defaults ?? {},
-          params: m.params ?? {},
-        };
+          defaults: (version.defaults ?? {}) as Record<string, unknown>,
+          params: (m.params ?? {}) as Record<string, unknown>,
+        } satisfies SnapshotBlock;
       });
 
     snapshot.blocks = blocks;
@@ -1946,7 +1957,7 @@ async function buildSession(
             version: version.version,
           },
           definition: version.definition,
-          defaults: version.defaults ?? {},
+          defaults: (version.defaults ?? {}) as Record<string, unknown>,
           params: effectivePlanParams,
         },
       ];
@@ -2043,9 +2054,9 @@ export function previewSessionExercises(
     const blocks = input.modules.map((m) => ({
       target: m.target,
       definition: m.version.definition,
-      defaults: m.version.defaults ?? {},
-      params: m.params ?? {},
-    }));
+      defaults: (m.version.defaults ?? {}) as Record<string, unknown>,
+      params: (m.params ?? {}) as Record<string, unknown>,
+    } satisfies LogicBlockSource));
     return plannedExercisesFromBlocks(
       { blocks },
       input.week,
@@ -2137,9 +2148,9 @@ export function previewSessionExercises(
     {
       target: "CUSTOM",
       definition: input.rootVersion.definition,
-      defaults: input.rootVersion.defaults ?? {},
+      defaults: (input.rootVersion.defaults ?? {}) as Record<string, unknown>,
       params: effectivePlanParams,
-    },
+    } satisfies LogicBlockSource,
   ];
   return plannedExercisesFromBlocks(
     { blocks },
