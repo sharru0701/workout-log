@@ -25,6 +25,11 @@ BEGIN
     END IF;
   END LOOP;
 END $$;--> statement-breakpoint
+-- Drop the tenant-scoped composite FK (generated_session(plan_id,user_id) -> plan(id,user_id),
+-- added in 0007 as raw SQL — not in the drizzle model) before retyping either side. Both
+-- columns must move to uuid together; the FK is recreated identically afterwards. The
+-- plan_id_user_id_uq UNIQUE(id,user_id) it references stays and auto-adjusts with plan.user_id.
+ALTER TABLE "generated_session" DROP CONSTRAINT IF EXISTS "generated_session_plan_user_fk";--> statement-breakpoint
 ALTER TABLE "generated_session" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
 ALTER TABLE "plan" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
 ALTER TABLE "plan_progress_event" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
@@ -33,6 +38,8 @@ ALTER TABLE "program_template" ALTER COLUMN "owner_user_id" SET DATA TYPE uuid U
 ALTER TABLE "stats_cache" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
 ALTER TABLE "user_setting" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
 ALTER TABLE "workout_log" ALTER COLUMN "user_id" SET DATA TYPE uuid USING "user_id"::uuid;--> statement-breakpoint
+-- Recreate the tenant-scoped composite FK now that both sides are uuid (identical to 0007).
+ALTER TABLE "generated_session" ADD CONSTRAINT "generated_session_plan_user_fk" FOREIGN KEY ("plan_id","user_id") REFERENCES "public"."plan"("id","user_id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "generated_session" ADD CONSTRAINT "generated_session_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "plan" ADD CONSTRAINT "plan_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "plan_progress_event" ADD CONSTRAINT "plan_progress_event_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

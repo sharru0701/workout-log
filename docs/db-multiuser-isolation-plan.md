@@ -6,7 +6,7 @@
 > **구현 상태:**
 > - ✅ `schema.ts`: 7개 도메인 `user_id` + `owner_user_id` → `uuid` + FK(app_user, cascade). `ux_event_log`는 `text` 유지.
 > - ✅ dev 마이그레이션 `migrations-dev/0008` 저작·**적용·검증**: 컬럼 uuid화, FK 8개(cascade), 잔여 non-uuid/orphan 0, FK 거부·cascade 실동작 PASS.
-> - ✅ prod 마이그레이션 `migrations/0025` 저작(**fail-loud 가드** + `USING ::uuid`, canonical 계정 미seed). **미적용.**
+> - ✅ prod 마이그레이션 `migrations/0025` 저작(**fail-loud 가드** + `USING ::uuid`, canonical 계정 미seed). **미적용.** ⚠️ prod엔 `0007`의 테넌트 복합 FK `generated_session_plan_user_fk`(`(plan_id,user_id)`→`plan(id,user_id)`, schema.ts 미반영 raw SQL)가 있어, 타입 변경 전 `DROP` → 양쪽 uuid화 후 **재생성**해야 함. **dev 스키마는 squash로 이 제약이 없어 리허설이 못 잡음 → CI(prod 전체 체인)가 발견**(E2E Smoke, 42804).
 > - ✅ `seed.ts`: fallback 기본값 canonical uuid + 해당 app_user seed. 코어 테스트 472/472, web typecheck 통과.
 > - ✅ `.env.local`·docs(CLAUDE/AGENTS/README/local-dev/qa)·`verifyProgramWorkflows` fallback을 canonical uuid로 표준화.
 > - ⏭️ **prod 게이트**: public 사전점검(승인) → 레거시/orphan 정합 → `migrations/0025` 적용(=prod 배포). CI 검증 스크립트(idempotency·account-lifecycle)는 자체 app_user 생성 패턴이라 FK 호환.
