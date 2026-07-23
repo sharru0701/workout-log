@@ -79,8 +79,8 @@ export async function claimEnvFallbackData(input: {
         .update(t.table)
         .set({ userId: input.toUserId })
         .where(eq(t.col, fromUserId));
-      // drizzle pg result에는 rowCount가 있음
-      movedRowCounts[t.name] = (result as any)?.rowCount ?? 0;
+      // drizzle의 node-postgres 업데이트 결과에는 rowCount가 있지만 타입에 노출되지 않는다.
+      movedRowCounts[t.name] = (result as { rowCount?: number | null }).rowCount ?? 0;
     }
   });
 
