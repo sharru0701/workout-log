@@ -1,6 +1,8 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 2d-1 완료** (2026-07-23) — plan-params zod 스키마 + conformance(소비자 무변경). 다음: 2d-2(params/defaults 소비자 ~30 any 타이핑).
+> 상태: **Phase 2d-2 완료** (2026-07-23) — params/defaults 소비자 타이핑. generateSession any **56→21**. DSL 소비자 연결 대부분 완료.
+>
+> **Phase 2d-2**(`generateSession.ts`): 24개 `params/effectiveParams/baseParams: any`→`PlanParams`, `defaults: any`→`ProgramDefaults`. 경계(`p.params ?? {}`·`version.defaults ?? {}`)는 **캐스트**(런타임 parse는 미지 형태에서 params 통째 드롭 위험 → 지양). 코드가 읽지만 dev 데이터엔 없던 필드(`tm`·`tmKg`·`stageByKey`·`texasIntensityByTarget`) 스키마 보강. 출력 불변(골든·엔진·conformance 479/479).
 >
 > **Phase 2d-1**(`program-dsl/plan-params.ts`): `plan.params`/`program_version.defaults`는 program-definition과 **별개의 저장 JSON** — 자체 `planParamsSchema`(timezone·startDate·autoProgression·sessionKeyMode·sessionsPerWeek·schedule·trainingMaxKg·oneRepMaxKg·programFamily·protocolVersion·progressionModel·lightBlockMode·ref5) + `programDefaultsSchema`(tmPercent·ref5) + `parsePlanParams`/`parseProgramDefaults`(fallback {}). dev 실 params 26개·defaults 6개 dump(`fixtures/dsl/plan-params.json`)로 conformance 첫 시도 통과(protocolVersion 문자열·TM맵 union이 흡수). 소비자 미연결.
 >

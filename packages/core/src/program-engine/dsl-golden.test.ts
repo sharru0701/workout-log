@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { generateFromLogicDefinition } from "./generateSession";
+import type { ProgramDefaults } from "../program-dsl/plan-params";
 
 /**
  * DSL golden master (docs/program-dsl-typing-plan.md, Phase 0 / G1).
@@ -62,7 +63,7 @@ function buildActual(): Record<string, Record<string, unknown>> {
         week,
         day,
         params: CANON_PARAMS,
-        defaults: entry.defaults,
+        defaults: entry.defaults as ProgramDefaults,
         orderBase: 0,
       });
     }
