@@ -1,6 +1,8 @@
 # 프로그램 정의 DSL 타입 모델링 계획
 
-> 상태: **Phase 2e 완료** (2026-07-23) — nsuns 세트빌더 타이핑으로 manual 세트 경로 마무리. generateSession any **56→18**. 남은 18 = snapshot(Phase 4)·COMPOSITE blocks·plan-override 캐스트.
+> 상태: **Phase 4a 완료** (2026-07-23) — 스냅샷 *생산* 경로 타이핑. 비-REF5 generateSession이 만드는 `generated_session.snapshot`(schemaVersion 3)을 신설 `program-engine/snapshot.ts`의 `SnapshotV3`로 모델링. `let snapshot: any`·`plannedExercisesFromBlocks`·`applyOverridesToSnapshot`·`reorderBlocks`의 any 제거 + 판별 유니온(Patch) narrowing으로 `(p as any)` 2개 소거. 생성기 입력은 program 없는 미리보기 블록도 수용하도록 lean `LogicBlockSource`로 분리. 블록 defaults/params는 경계 캐스트(`Record<string,unknown>`), ctx는 `PlanParams`/`ProgramDefaults` 캐스트(2d-2 동형). `generateSessionSnapshot` 반환은 any→unknown 자연 수렴(소비자 무영향). **출력 불변**(DSL 골든 바이트 동일·core 479/479·web/apps-api typecheck green). REF5는 별도 `Ref5SessionSnapshot`(v4)이라 이 타입 밖. 소비자 READ 경로(home-service `buildPlannedExercises`·workout-record model·plans bootstrap) 전환은 **후속 4b+**.
+>
+> 상태(직전): **Phase 2e 완료** (2026-07-23) — nsuns 세트빌더 타이핑으로 manual 세트 경로 마무리. generateSession any **56→18**. 남은 18 = snapshot(Phase 4)·COMPOSITE blocks·plan-override 캐스트.
 >
 > **Phase 2d-2**(`generateSession.ts`): 24개 `params/effectiveParams/baseParams: any`→`PlanParams`, `defaults: any`→`ProgramDefaults`. 경계(`p.params ?? {}`·`version.defaults ?? {}`)는 **캐스트**(런타임 parse는 미지 형태에서 params 통째 드롭 위험 → 지양). 코드가 읽지만 dev 데이터엔 없던 필드(`tm`·`tmKg`·`stageByKey`·`texasIntensityByTarget`) 스키마 보강. 출력 불변(골든·엔진·conformance 479/479).
 >
@@ -87,7 +89,8 @@
 | **2 예정: program-store 쓰기 직렬화** | fork 재료화(`model.ts`의 `{kind:"manual", operatorStyle, …}` 생산)는 program-store **로컬 정의 타입**(`ManualDefinitionSession` 등)과 얽혀 있음 → Phase 2에서 로컬 타입을 zod-inferred 타입으로 **수렴**하며 함께 처리 | 중 | G1 불변 |
 | **2. manual 경로** | `pickManualSession`/`mapManualSet`/`plannedExercisesFromManualSession`이 `parseManualDefinition` 경유로 전환 | 중 | G1 바이트 동일 + manual 계열 행위 테스트 |
 | **3. LOGIC kind별 1PR** | operator → 531 → asymptote 순(asymptote 최후 — ref5/hybrid 얽힘 최대). 각 generator의 def/defaults 접근을 타입 경유로 | 중~높음 | kind별 G1 + 해당 행위 테스트 |
-| **4. Snapshot v3 타입** | 엔진이 `SnapshotV3`를 생산하도록 타입 부여 → 소비자(home-service `buildPlannedExercises`·workout-record model·plans bootstrap) 순차 전환. PR #597에서 남긴 홈 잔여 5건 해소 | 중 | G1 + E2E smoke |
+| **4a. Snapshot v3 생산 타입** ✅ | 신설 `program-engine/snapshot.ts`의 `SnapshotV3`로 생산부(`buildSession`/`plannedExercisesFromBlocks`/`applyOverridesToSnapshot`/`reorderBlocks`) any 제거. 생성기 입력은 lean `LogicBlockSource`(program-less 미리보기 블록 수용). 소비자 미전환. | 낮음 | ✅ DSL 골든 바이트 동일·core 479/479·web/apps-api typecheck |
+| **4b+. Snapshot 소비자 전환** | 소비자(home-service `buildPlannedExercises`·workout-record model·plans bootstrap)를 `SnapshotV3` READ로 순차 전환. 저장 jsonb는 레거시·REF5·fork 혼재라 **관용 파싱**(직접 캐스트 금지). PR #597에서 남긴 홈 잔여 5건 해소 | 중 | G1 + E2E smoke |
 | **5. 잔여+랫칫** | reducer/program-store 잔여 `any`, `params` 헬퍼 시그니처, clean 디렉터리 eslint error 승격 | 낮음 | 전체 스위트 |
 
 각 PR은 **타입/경계 이동만** 포함하고 로직 변경 0을 원칙으로 한다. G1이 깨지면 그 diff 자체가 잡아낸 잠복 버그이므로, 수정이 아니라 **보고 후 별도 결정**(골든을 고치지 말 것).
