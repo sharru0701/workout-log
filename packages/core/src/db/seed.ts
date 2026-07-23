@@ -1,5 +1,6 @@
 import { pathToFileURL } from "node:url";
 import { db } from "./client";
+import type { ProgramDefinition } from "../program-dsl/schema";
 import {
   appUser,
   exercise,
@@ -67,7 +68,18 @@ export async function runSeed(options: SeedRunOptions = {}) {
     return rows[0];
   }
 
-  async function upsertVersion(templateId: string, version: number, values: any) {
+  async function upsertVersion(
+    templateId: string,
+    version: number,
+    // Phase 1b: the definition literal must satisfy the DSL schema (program-dsl) —
+    // compile-time contract on every seeded program. Reads/output unchanged.
+    values: {
+      definition: ProgramDefinition;
+      defaults?: Record<string, unknown> | null;
+      changelog?: string | null;
+      isDeprecated?: boolean;
+    },
+  ) {
     const inserted = await db
       .insert(programVersion)
       .values({
