@@ -559,7 +559,7 @@ async function fetchLogs(userId: string, limit: number) {
 
   if (rows.length === 0) return [];
 
-  const logsById = new Map<string, any>();
+  const logsById = new Map<string, HomeLogRow>();
 
   for (const r of rows) {
     if (!logsById.has(r.id)) {
@@ -571,11 +571,11 @@ async function fetchLogs(userId: string, limit: number) {
       });
     }
     if (r.exerciseName) {
-      logsById.get(r.id).sets.push({
+      logsById.get(r.id)!.sets.push({
         exerciseName: r.exerciseName,
         reps: r.reps,
         weightKg: r.weightKg,
-        meta: r.meta,
+        meta: r.meta as LoadSetMeta,
       });
     }
   }
@@ -592,7 +592,7 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number, loc
     limit,
   };
 
-  const cached = await getStatsCache<{ items: any[] }>({
+  const cached = await getStatsCache<{ items: HomePrItem[] }>({
     userId,
     metric: "prs",
     params: cacheParams,
@@ -623,12 +623,12 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number, loc
     )
     .orderBy(workoutLog.performedAt);
 
-  const byExercise = new Map<string, any>();
+  const byExercise = new Map<string, HomePrAccum>();
   for (const r of rows) {
     const weightKg = resolveLoggedTotalLoadKg({
       exerciseName: String(r.exerciseName ?? ""),
       weightKg: r.weightKg,
-      meta: r.meta as any,
+      meta: r.meta as LoadSetMeta,
     });
     const reps = Number(r.reps ?? 0);
     if (!weightKg || !reps) continue;
@@ -676,7 +676,7 @@ async function fetchPrs(userId: string, from: Date, to: Date, limit: number, loc
 async function fetchVolumeSeries(userId: string) {
   const cacheParams = { bucket: "session", limit: 7, exerciseId: null, exerciseName: null, perExercise: false, maxExercises: 12 };
 
-  const cached = await getStatsCache<{ series: any[] }>({
+  const cached = await getStatsCache<{ series: HomeVolumePoint[] }>({
     userId,
     metric: "volume_series",
     params: cacheParams,
@@ -712,11 +712,43 @@ async function fetchVolumeSeries(userId: string) {
 
 // ─── Builders ───────────────────────────────────────────────────────
 
+// Logged-data shapes assembled by the fetch helpers above. (The generated-session
+// `snapshot` and its planned sets stay `any` — that's the program-definition DSL.)
+type LoadSetMeta = Record<string, unknown> | null;
+type HomeLogSet = {
+  exerciseName: string;
+  reps: number | null;
+  weightKg: number | null;
+  meta: LoadSetMeta;
+};
+type HomeLogRow = {
+  id: string;
+  planId: string | null;
+  performedAt: Date;
+  sets: HomeLogSet[];
+};
+type HomePrPoint = { date: string; e1rm: number; weightKg: number; reps: number };
+type HomePrAccum = {
+  exerciseId: string | null;
+  exerciseName: string;
+  first: HomePrPoint;
+  best: HomePrPoint;
+  latest: HomePrPoint;
+};
+type HomePrItem = {
+  exerciseId: string | null;
+  exerciseName: string;
+  best: HomePrPoint;
+  latest: HomePrPoint;
+  improvement: number;
+};
+type HomeVolumePoint = { period: string; tonnage: number; reps: number; sets: number };
+
 function buildHomeData(params: {
   plans: HomePlanRecord[];
-  logs: any[];
-  prs: any[];
-  volumeSeries: any[];
+  logs: HomeLogRow[];
+  prs: HomePrItem[];
+  volumeSeries: HomeVolumePoint[];
   snapshot: any;
   recentLimit: number;
   locale: AppLocale;
@@ -750,7 +782,7 @@ function buildHomeData(params: {
 
 function resolveHighlightedPlan(
   plans: HomePlanRecord[],
-  logs: any[],
+  logs: HomeLogRow[],
   todayKey: string,
   activePlanId: string | null,
 ) {
@@ -765,7 +797,7 @@ function resolveHighlightedPlan(
   return resolveActivePlan(plans, activePlanId);
 }
 
-function buildTodaySummary(plans: HomePlanRecord[], logs: any[], plannedExercises: any[], totalPlannedSets: number, locale: AppLocale, todayKey: string, bodyweightKg: number | null, activePlanId: string | null): HomeTodaySummary {
+function buildTodaySummary(plans: HomePlanRecord[], logs: HomeLogRow[], plannedExercises: any[], totalPlannedSets: number, locale: AppLocale, todayKey: string, bodyweightKg: number | null, activePlanId: string | null): HomeTodaySummary {
   const copy = HOME_TEXT[locale];
   const plansById = new Map(plans.map((p) => [p.id, p.name]));
   const todayLogs = logs.filter((l) => toLocalDateKey(l.performedAt) === todayKey);
@@ -816,7 +848,7 @@ function buildPlanOverview(plans: HomePlanRecord[], locale: AppLocale, activePla
   };
 }
 
-function buildWeeklySummary(logs: any[], locale: AppLocale, todayKey: string): HomeWeeklySummary {
+function buildWeeklySummary(logs: HomeLogRow[], locale: AppLocale, todayKey: string): HomeWeeklySummary {
   const days: HomeWeeklyDay[] = [];
   const today = new Date();
   for (let i = 6; i >= 0; i--) {
@@ -848,7 +880,7 @@ function buildWeeklySummary(logs: any[], locale: AppLocale, todayKey: string): H
   return { activeDays: resolvedDays.filter(d => d.hasWorkout).length, restDays: 7 - resolvedDays.filter(d => d.hasWorkout).length, sessionCount, completedSets, days: resolvedDays };
 }
 
-function buildRecentSessions(plans: HomePlanRecord[], logs: any[], limit: number, locale: AppLocale, todayKey: string): HomeRecentSession[] {
+function buildRecentSessions(plans: HomePlanRecord[], logs: HomeLogRow[], limit: number, locale: AppLocale, todayKey: string): HomeRecentSession[] {
   const copy = HOME_TEXT[locale];
   const plansById = new Map(plans.map(p => [p.id, p.name]));
   return logs.filter(l => toLocalDateKey(l.performedAt) !== todayKey).slice(0, limit).map(l => ({
@@ -860,7 +892,7 @@ function buildRecentSessions(plans: HomePlanRecord[], logs: any[], limit: number
   }));
 }
 
-function buildLastSession(plans: HomePlanRecord[], logs: any[], plannedWeightByExercise: Map<string, number>, locale: AppLocale, todayKey: string, bodyweightKg: number | null): HomeLastSession | null {
+function buildLastSession(plans: HomePlanRecord[], logs: HomeLogRow[], plannedWeightByExercise: Map<string, number>, locale: AppLocale, todayKey: string, bodyweightKg: number | null): HomeLastSession | null {
   const copy = HOME_TEXT[locale];
   const lastLog = logs.find(l => toLocalDateKey(l.performedAt) !== todayKey);
   if (!lastLog) return null;
@@ -874,15 +906,15 @@ function buildLastSession(plans: HomePlanRecord[], logs: any[], plannedWeightByE
   return { id: lastLog.id, planName: lastLog.planId ? plansById.get(lastLog.planId) ?? copy.unassignedProgram : copy.unassignedProgram, date: formatDate(lastLog.performedAt, locale), totalSets: lastLog.sets.length, totalVolume: Math.round(totalVolume), exercises, href: `/workout/log?context=recent&logId=${encodeURIComponent(lastLog.id)}` };
 }
 
-function buildStrengthProgress(prs: any[], plannedExercises: HomeTodayExercise[]): HomeStrengthItem[] {
+function buildStrengthProgress(prs: HomePrItem[], plannedExercises: HomeTodayExercise[]): HomeStrengthItem[] {
   // "최근 PR" 카드는 현재 수행 중인 플랜의 메인 운동으로 구성한다.
   // 메인 운동을 플랜에 나오는 순서대로 두고, 기록(1RM)이 있는 것만 매칭해 노출한다.
   const mainExercises = plannedExercises.filter((e) => e.role === "MAIN");
   if (mainExercises.length === 0) return [];
 
   // PR 인덱스: exerciseId 우선, 없으면 이름(소문자)으로 매칭.
-  const prById = new Map<string, any>();
-  const prByName = new Map<string, any>();
+  const prById = new Map<string, HomePrItem>();
+  const prByName = new Map<string, HomePrItem>();
   for (const item of prs) {
     if (item.exerciseId) prById.set(String(item.exerciseId), item);
     const nameKey = String(item.exerciseName ?? "").trim().toLowerCase();
@@ -913,11 +945,11 @@ function buildStrengthProgress(prs: any[], plannedExercises: HomeTodayExercise[]
   return result;
 }
 
-function buildVolumeTrend(series: any[], locale: AppLocale): HomeVolumeTrendPoint[] {
+function buildVolumeTrend(series: HomeVolumePoint[], locale: AppLocale): HomeVolumeTrendPoint[] {
   return series.map(p => ({ period: p.period, label: DATE_FORMATTERS[locale].monthDay.format(new Date(p.period)), tonnage: Math.round(p.tonnage), sets: p.sets, reps: p.reps }));
 }
 
-function buildQuickStats(logs: any[], todayKey: string): HomeQuickStats {
+function buildQuickStats(logs: HomeLogRow[], todayKey: string): HomeQuickStats {
   const now = new Date();
   let totalVolume = 0, thisMonthSessions = 0;
   for (const log of logs) {
@@ -967,8 +999,8 @@ function summarizeSets(sets: any[], exerciseName?: string, bodyweightKg?: number
   return formatPlannedGroups(groups, { exerciseName, bodyweightKg, locale });
 }
 
-function groupLoggedExercises(sets: any[]) {
-  const grouped = new Map<string, any>();
+function groupLoggedExercises(sets: HomeLogSet[]) {
+  const grouped = new Map<string, { sets: number; bestWeight: number; bestReps: number }>();
   for (const s of sets) {
     const name = String(s.exerciseName ?? "").trim();
     if (!name) continue;
