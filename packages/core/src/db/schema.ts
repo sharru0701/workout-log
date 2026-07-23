@@ -71,7 +71,7 @@ export const programTemplate = table(
     visibility: visibilityType("visibility").notNull().default("PUBLIC"),
 
     // fork/ownership
-    ownerUserId: text("owner_user_id"),
+    ownerUserId: uuid("owner_user_id").references(() => appUser.id, { onDelete: "cascade" }),
     parentTemplateId: uuid("parent_template_id"),
 
     description: text("description"),
@@ -133,7 +133,9 @@ export const plan = table(
   "plan",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
 
     name: text("name").notNull(),
     type: planType("type").notNull(),
@@ -167,7 +169,9 @@ export const planRuntimeState = table(
     planId: uuid("plan_id")
       .notNull()
       .references(() => plan.id, { onDelete: "cascade" }),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
     engineVersion: integer("engine_version").notNull().default(1),
     state: jsonb("state").notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
@@ -251,7 +255,9 @@ export const generatedSession = table(
       .notNull()
       .references(() => plan.id, { onDelete: "cascade" }),
 
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
 
     sessionKey: text("session_key").notNull(),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
@@ -317,7 +323,9 @@ export const workoutLog = table(
   "workout_log",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
 
     planId: uuid("plan_id").references(() => plan.id, { onDelete: "set null" }),
     generatedSessionId: uuid("generated_session_id").references(() => generatedSession.id, {
@@ -381,7 +389,9 @@ export const planProgressEvent = table(
       .notNull()
       .references(() => plan.id, { onDelete: "cascade" }),
     logId: uuid("log_id").references(() => workoutLog.id, { onDelete: "cascade" }),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
     eventType: text("event_type").notNull(),
     programSlug: text("program_slug").notNull(),
     reason: text("reason"),
@@ -448,7 +458,9 @@ export const statsCache = table(
   "stats_cache",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
     metric: text("metric").notNull(),
     paramsHash: text("params_hash").notNull(),
     payload: jsonb("payload").notNull(),
@@ -473,7 +485,9 @@ export const userSetting = table(
   "user_setting",
   {
     id: uuid("id").defaultRandom().primaryKey(),
-    userId: text("user_id").notNull(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => appUser.id, { onDelete: "cascade" }),
     key: text("key").notNull(),
     value: jsonb("value").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),

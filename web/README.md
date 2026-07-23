@@ -23,7 +23,7 @@ Required local env (`.env.local`):
 ```bash
 DATABASE_URL=postgres://app:app@127.0.0.1:5432/workoutlog
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-WORKOUT_AUTH_USER_ID=local-user
+WORKOUT_AUTH_USER_ID=00000000-0000-4000-8000-000000c1c1c1  # must be a uuid — domain user_id FKs app_user.id; seed creates this account
 WORKOUT_API_ALLOW_ENV_AUTH=1
 NEXT_PUBLIC_DISABLE_SW=1
 APPS_API_BASE=http://127.0.0.1:8787

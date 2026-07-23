@@ -22,7 +22,7 @@ Vercel 환경과 동일하게 풀러를 분리해 두 개의 URL을 설정합니
 DATABASE_URL="postgresql://postgres.[프로젝트ID]:[비밀번호]@aws-[리전].pooler.supabase.com:6543/postgres?pgbouncer=true"
 DIRECT_URL="postgresql://postgres.[프로젝트ID]:[비밀번호]@aws-[리전].pooler.supabase.com:5432/postgres"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-WORKOUT_AUTH_USER_ID=local-user
+WORKOUT_AUTH_USER_ID=00000000-0000-4000-8000-000000c1c1c1  # uuid만 허용 — 도메인 user_id가 app_user.id를 FK 참조, seed가 이 계정 생성
 NEXT_PUBLIC_DISABLE_SW=1
 ```
 

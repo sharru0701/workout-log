@@ -36,7 +36,7 @@ pnpm dev
 
 ### 1-2. 테스트 데이터 원칙
 
-- 인증 유저: 서버 환경변수 `WORKOUT_AUTH_USER_ID` (미지정 시 `dev`)
+- 인증 유저: 서버 환경변수 `WORKOUT_AUTH_USER_ID` (미지정 시 canonical uuid `00000000-0000-4000-8000-000000c1c1c1`; uuid만 허용 — app_user FK)
 - 테스트 전후 데이터 보존 필요 시 `설정 > 데이터 내보내기` 에서 JSON 백업
 
 ### 1-3. 이슈 심각도

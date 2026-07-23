@@ -176,6 +176,13 @@
       "when": 1784453256619,
       "tag": "0024_merge_pull_up_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1784770990853,
+      "tag": "0025_multiuser_isolation_fk",
+      "breakpoints": true
     }
   ]
 }
