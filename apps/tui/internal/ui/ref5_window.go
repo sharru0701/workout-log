@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"math"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -20,6 +21,33 @@ type ref5WindowProgressRow struct {
 	Current   int
 	Threshold int
 	Completed int
+	// §18 gain rate: percent of completed windows that judged INCREASE, or -1
+	// until the first window closes. Flow is the recent ↑/→ sequence.
+	GainPct int
+	Flow    string
+}
+
+// ref5WindowGainPercent mirrors the web's Math.round(gainRate * 100); -1 marks a
+// window with no completed judgment yet (gainRate null).
+func ref5WindowGainPercent(window api.Ref5WindowStatus) int {
+	if window.GainRate == nil {
+		return -1
+	}
+	return int(math.Round(*window.GainRate * 100))
+}
+
+// ref5WindowFlow renders the recent window results as ↑ (INCREASE) / → (MAINTAIN),
+// oldest→newest, matching the web arrows for identical meaning (§18).
+func ref5WindowFlow(recentResults []string) string {
+	arrows := make([]string, 0, len(recentResults))
+	for _, result := range recentResults {
+		if result == "INCREASE" {
+			arrows = append(arrows, "↑")
+		} else {
+			arrows = append(arrows, "→")
+		}
+	}
+	return strings.Join(arrows, " ")
 }
 
 type ref5WindowProgressState struct {
@@ -90,6 +118,7 @@ func ref5WindowProgressRows(windows map[string]api.Ref5WindowStatus) []ref5Windo
 		rows = append(rows, ref5WindowProgressRow{
 			Key: key, Label: ref5WindowLabel(key), Current: window.Current,
 			Threshold: window.Threshold, Completed: window.Completed,
+			GainPct: ref5WindowGainPercent(window), Flow: ref5WindowFlow(window.RecentResults),
 		})
 	}
 	return rows
@@ -99,7 +128,14 @@ func ref5WindowPlainItems(windows map[string]api.Ref5WindowStatus) []string {
 	rows := ref5WindowProgressRows(windows)
 	items := make([]string, 0, len(rows))
 	for _, row := range rows {
-		items = append(items, fmt.Sprintf("%s %d/%d·%d", row.Label, row.Current, row.Threshold, row.Completed))
+		item := fmt.Sprintf("%s %d/%d·%d", row.Label, row.Current, row.Threshold, row.Completed)
+		if row.GainPct >= 0 {
+			item += fmt.Sprintf(" 획득 %d%%", row.GainPct)
+			if row.Flow != "" {
+				item += " " + row.Flow
+			}
+		}
+		items = append(items, item)
 	}
 	return items
 }
@@ -145,11 +181,16 @@ func (l Log) ref5WindowPanelLines(width int, compact bool) []string {
 	} else {
 		items := make([]string, 0, len(ref5WindowOrder))
 		for _, row := range ref5WindowProgressRows(state.status.Windows) {
-			items = append(items,
-				lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).Render(row.Label)+" "+
-					amber.Render(fmt.Sprintf("%d/%d", row.Current, row.Threshold))+
-					dimStyle.Render(fmt.Sprintf("·%d", row.Completed)),
-			)
+			item := lipgloss.NewStyle().Foreground(theme.Fg).Bold(true).Render(row.Label) + " " +
+				amber.Render(fmt.Sprintf("%d/%d", row.Current, row.Threshold)) +
+				dimStyle.Render(fmt.Sprintf("·%d", row.Completed))
+			if row.GainPct >= 0 {
+				item += dimStyle.Render(fmt.Sprintf(" 획득 %d%%", row.GainPct))
+				if row.Flow != "" {
+					item += " " + amber.Render(row.Flow)
+				}
+			}
+			items = append(items, item)
 		}
 		lines = append(lines, strings.Split(flowHints(items, width), "\n")...)
 		if state.loading {
@@ -164,6 +205,7 @@ func (l Log) ref5WindowPanelLines(width int, compact bool) []string {
 		"집중 = INVALID 제외 당일 우선 BP·PULL 3×3",
 		"볼륨 = 진행 횟수 제외, FAIL은 최종 판정 반영",
 		"기준 도달 = 자동 판정 후 0부터 재집계",
+		"획득률 = INCREASE 판정 ÷ 완료 판정창 · ↑증량 →유지",
 	}
 	if compact {
 		guides = []string{

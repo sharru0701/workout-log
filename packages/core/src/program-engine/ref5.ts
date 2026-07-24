@@ -469,17 +469,30 @@ export interface Ref5WindowExposure {
   outcome: Ref5ComparableOutcome;
 }
 
+/** A completed judgment window resolves to exactly one of these (§13, §18). */
+export type Ref5WindowResult = "INCREASE" | "MAINTAIN";
+
+/** Bounded recent-window-result history kept for the §18 gain-rate flow. */
+export const REF5_RECENT_WINDOW_RESULTS = 6 as const;
+
 export interface Ref5MainWindowState {
   exposures: Ref5WindowExposure[];
   volumeFailEventIds: string[];
   completedWindowCount: number;
-  lastWindowResult: "INCREASE" | "MAINTAIN" | null;
+  // §18 gain rate: increaseWindowCount / completedWindowCount, plus the bounded
+  // recent flow (↑ INCREASE / → MAINTAIN). Lifetime counters — never reset by a
+  // direct-standard change, matching completedWindowCount's semantics.
+  increaseWindowCount: number;
+  recentResults: Ref5WindowResult[];
+  lastWindowResult: Ref5WindowResult | null;
 }
 
 export interface Ref5AuxiliaryWindowState {
   exposures: Ref5WindowExposure[];
   completedWindowCount: number;
-  lastWindowResult: "INCREASE" | "MAINTAIN" | null;
+  increaseWindowCount: number;
+  recentResults: Ref5WindowResult[];
+  lastWindowResult: Ref5WindowResult | null;
 }
 
 export interface Ref5FailStreamState {
@@ -606,11 +619,29 @@ function emptyFailStreams(): Record<Ref5Stream, Ref5FailStreamState> {
 }
 
 function emptyMainWindow(): Ref5MainWindowState {
-  return { exposures: [], volumeFailEventIds: [], completedWindowCount: 0, lastWindowResult: null };
+  return {
+    exposures: [],
+    volumeFailEventIds: [],
+    completedWindowCount: 0,
+    increaseWindowCount: 0,
+    recentResults: [],
+    lastWindowResult: null,
+  };
 }
 
 function emptyAuxWindow(): Ref5AuxiliaryWindowState {
-  return { exposures: [], completedWindowCount: 0, lastWindowResult: null };
+  return { exposures: [], completedWindowCount: 0, increaseWindowCount: 0, recentResults: [], lastWindowResult: null };
+}
+
+/** Accumulates one completed window's result for the §18 gain rate + flow. */
+function recordRef5WindowResult(
+  window: { increaseWindowCount: number; recentResults: Ref5WindowResult[]; lastWindowResult: Ref5WindowResult | null },
+  result: Ref5WindowResult,
+): void {
+  window.lastWindowResult = result;
+  if (result === "INCREASE") window.increaseWindowCount += 1;
+  window.recentResults.push(result);
+  if (window.recentResults.length > REF5_RECENT_WINDOW_RESULTS) window.recentResults.shift();
 }
 
 function initialStagnation(basisKg: number): Ref5StagnationState {
@@ -1746,7 +1777,7 @@ export function reduceRef5Completion(
         ? "INCREASE"
         : "MAINTAIN";
     window.completedWindowCount += 1;
-    window.lastWindowResult = result;
+    recordRef5WindowResult(window, result);
     windowDecisions[lift] = { lift, result, eventId: `window:${lift}:${input.completionEventId}` };
     window.exposures = [];
     window.volumeFailEventIds = [];
@@ -1842,7 +1873,7 @@ export function reduceRef5Completion(
     const afterKg = constrainRef5AuxiliaryCandidate(lift, ownCandidateKg, next.directStandardsKg, gridKg);
     const capConstrainedCurrent = constrainRef5AuxiliaryCandidate(lift, beforeKg, next.directStandardsKg, gridKg);
     const capForced = capConstrainedCurrent < beforeKg;
-    if (completedWindow) window.lastWindowResult = ownWindowResult;
+    if (completedWindow) recordRef5WindowResult(window, ownWindowResult ?? "MAINTAIN");
     if (afterKg !== beforeKg) {
       next.directStandardsKg[key] = afterKg;
       if (immediate.length > 0) {

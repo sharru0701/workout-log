@@ -157,6 +157,24 @@ export function Ref5WindowProgressPanel({
               >
                 {locale === "ko" ? `판정 완료 ${row.completed}회` : `${row.completed} judged`}
               </div>
+              {row.gainRatePercent !== null && (
+                <div
+                  className="v2-mono-label"
+                  style={{
+                    marginTop: 2,
+                    color: "var(--v2-ink-2)",
+                    fontSize: "var(--v2-t-12)",
+                    fontVariantNumeric: "tabular-nums",
+                  }}
+                >
+                  {locale === "ko" ? "획득률" : "gain"} {row.gainRatePercent}%
+                  {row.flow ? (
+                    <span style={{ marginLeft: "var(--v2-s-1)", color: "var(--v2-c-progress)" }}>
+                      {row.flow}
+                    </span>
+                  ) : null}
+                </div>
+              )}
             </div>
           ))}
         </div>

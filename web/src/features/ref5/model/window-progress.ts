@@ -30,6 +30,13 @@ export function getRef5WindowProgressDescription(locale: "ko" | "en") {
   return WINDOW_DESCRIPTIONS[locale];
 }
 
+/** §18 recent window flow: ↑ INCREASE / → MAINTAIN, oldest→newest. */
+export function formatRef5WindowFlow(
+  recentResults: readonly ("INCREASE" | "MAINTAIN")[],
+): string {
+  return recentResults.map((result) => (result === "INCREASE" ? "↑" : "→")).join(" ");
+}
+
 export function buildRef5WindowProgressRows(
   status: Ref5Status,
   locale: "ko" | "en",
@@ -43,6 +50,10 @@ export function buildRef5WindowProgressRows(
       threshold: window.threshold,
       completed: window.completed,
       ratio: Math.min(1, window.current / Math.max(1, window.threshold)),
+      // §18 gain rate: INCREASE judgments over completed windows, null until the
+      // first window closes so the UI can distinguish "0%" from "not yet judged".
+      gainRatePercent: window.gainRate === null ? null : Math.round(window.gainRate * 100),
+      flow: formatRef5WindowFlow(window.recentResults),
     };
   });
 }

@@ -961,6 +961,25 @@ test("normal and micro volume fail streams are independent but both veto the foc
   );
 });
 
+test("completed judgment windows accumulate the §18 gain-rate flow", () => {
+  let state = createInitialRef5State();
+  const base = "2026-01-01T09:00:00.000Z";
+  for (let index = 0; index < 8; index += 1) {
+    state = runSession(state, sessionInput(`gr-${index}`, at(base, index * 4 * DAY))).state;
+  }
+  // Eight all-PASS normal sessions complete one window per lift.
+  assert.equal(state.mainWindows.SQ.completedWindowCount, 1);
+  assert.equal(state.mainWindows.SQ.increaseWindowCount, 1);
+  assert.deepEqual(state.mainWindows.SQ.recentResults, ["INCREASE"]);
+  assert.equal(state.mainWindows.BP.increaseWindowCount, 1);
+  assert.equal(state.mainWindows.PULL.increaseWindowCount, 1);
+  assert.equal(state.auxiliaryWindows.DL.increaseWindowCount, 1);
+  // OHP's window completes but 35 kg exceeds the cap, so it records MAINTAIN.
+  assert.equal(state.auxiliaryWindows.OHP.completedWindowCount, 1);
+  assert.equal(state.auxiliaryWindows.OHP.increaseWindowCount, 0);
+  assert.deepEqual(state.auxiliaryWindows.OHP.recentResults, ["MAINTAIN"]);
+});
+
 test("normal session runs ten working sets with two-set upper-body volume; micro stays four (§7)", () => {
   const normal = generateRef5Session(createInitialRef5State(), sessionInput("ten", "2026-05-01T09:00:00.000Z"));
   assert.equal(normal.totalWorkingSets, 10);
