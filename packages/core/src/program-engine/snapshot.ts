@@ -70,7 +70,7 @@ export type SnapshotOverrideApplied = {
 };
 
 /**
- * `snapshot: any`를 대체하는 생산 타입. 초기 리터럴은 공통 필드만 담고, kind별 경로가
+ * 엔진이 만들던 느슨한 스냅샷을 대체하는 생산 타입. 초기 리터럴은 공통 필드만 담고, kind별 경로가
  * 아래 optional 필드를 조건부로 덧붙인다(COMPOSITE/LOGIC→blocks, MANUAL→manualSession/program 등).
  */
 export type SnapshotV3 = {
