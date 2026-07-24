@@ -200,10 +200,13 @@ type Ref5PendingMicroStatus struct {
 }
 
 type Ref5WindowStatus struct {
-	Current        int `json:"current"`
-	Threshold      int `json:"threshold"`
-	VolumeFailures int `json:"volumeFailures"`
-	Completed      int `json:"completed"`
+	Current        int      `json:"current"`
+	Threshold      int      `json:"threshold"`
+	VolumeFailures int      `json:"volumeFailures"`
+	Completed      int      `json:"completed"`
+	Increases      int      `json:"increases"`
+	GainRate       *float64 `json:"gainRate"`       // §18: increases/completed; null until a window closes
+	RecentResults  []string `json:"recentResults"`  // "INCREASE"|"MAINTAIN", oldest→newest
 }
 
 type Ref5StructureReviewStatus struct {

@@ -12,8 +12,9 @@ import (
 )
 
 func ref5WindowStatusFixture() *api.Ref5Status {
+	sqGain := 0.5
 	return &api.Ref5Status{Windows: map[string]api.Ref5WindowStatus{
-		"SQ":   {Current: 1, Threshold: 6, Completed: 2},
+		"SQ":   {Current: 1, Threshold: 6, Completed: 2, Increases: 1, GainRate: &sqGain, RecentResults: []string{"INCREASE", "MAINTAIN"}},
 		"BP":   {Current: 2, Threshold: 4, Completed: 3},
 		"PULL": {Current: 3, Threshold: 4, Completed: 4},
 		"DL":   {Current: 1, Threshold: 4, Completed: 5},
@@ -24,11 +25,11 @@ func ref5WindowStatusFixture() *api.Ref5Status {
 func TestRef5WindowProgressRowsNameStreamsAndKeepCompletedCounts(t *testing.T) {
 	rows := ref5WindowProgressRows(ref5WindowStatusFixture().Windows)
 	want := []ref5WindowProgressRow{
-		{Key: "SQ", Label: "SQ 하드", Current: 1, Threshold: 6, Completed: 2},
-		{Key: "BP", Label: "BP 집중", Current: 2, Threshold: 4, Completed: 3},
-		{Key: "PULL", Label: "PULL 집중", Current: 3, Threshold: 4, Completed: 4},
-		{Key: "DL", Label: "DL", Current: 1, Threshold: 4, Completed: 5},
-		{Key: "OHP", Label: "OHP", Current: 2, Threshold: 4, Completed: 6},
+		{Key: "SQ", Label: "SQ 하드", Current: 1, Threshold: 6, Completed: 2, GainPct: 50, Flow: "↑ →"},
+		{Key: "BP", Label: "BP 집중", Current: 2, Threshold: 4, Completed: 3, GainPct: -1},
+		{Key: "PULL", Label: "PULL 집중", Current: 3, Threshold: 4, Completed: 4, GainPct: -1},
+		{Key: "DL", Label: "DL", Current: 1, Threshold: 4, Completed: 5, GainPct: -1},
+		{Key: "OHP", Label: "OHP", Current: 2, Threshold: 4, Completed: 6, GainPct: -1},
 	}
 	if len(rows) != len(want) {
 		t.Fatalf("row count = %d, want %d", len(rows), len(want))
@@ -52,12 +53,14 @@ func TestRef5WindowPanelExplainsProgressAndJudgmentRules(t *testing.T) {
 
 	out := ansi.Strip(strings.Join(log.ref5WindowPanelLines(64, false), "\n"))
 	for _, want := range []string{
-		"기본 판정창", "진행/기준 · 판정완료", "SQ 하드 1/6·2",
+		"기본 판정창", "진행/기준 · 판정완료",
+		"SQ 하드 1/6·2 획득 50% ↑ →", // §18 gain rate + recent flow
 		"BP 집중 2/4·3", "PULL 집중 3/4·4", "DL 1/4·5", "OHP 2/4·6",
 		"하드 = INVALID 제외 SQ H3 3×3 / H2 3×2",
 		"집중 = INVALID 제외 당일 우선 BP·PULL 3×3",
 		"볼륨 = 진행 횟수 제외, FAIL은 최종 판정 반영",
 		"기준 도달 = 자동 판정 후 0부터 재집계",
+		"획득률 = INCREASE", // guide fragment; wrap-safe first words
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("panel missing %q:\n%s", want, out)

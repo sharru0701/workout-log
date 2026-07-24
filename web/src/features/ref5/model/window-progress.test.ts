@@ -31,6 +31,23 @@ test("REF5 window rows name hard and focus streams explicitly", () => {
   );
 });
 
+test("REF5 window rows surface the §18 gain rate and ↑/→ flow", () => {
+  const state = createInitialRef5State();
+  state.mainWindows.SQ.completedWindowCount = 3;
+  state.mainWindows.SQ.increaseWindowCount = 2;
+  state.mainWindows.SQ.recentResults = ["INCREASE", "MAINTAIN", "INCREASE"];
+
+  const rows = buildRef5WindowProgressRows(buildRef5Status(state), "ko");
+  const sq = rows.find((row) => row.key === "SQ")!;
+  assert.equal(sq.gainRatePercent, 67); // round(2 / 3 · 100)
+  assert.equal(sq.flow, "↑ → ↑");
+
+  // A not-yet-judged window reports null so the UI hides it instead of "0%".
+  const bp = rows.find((row) => row.key === "BP")!;
+  assert.equal(bp.gainRatePercent, null);
+  assert.equal(bp.flow, "");
+});
+
 test("REF5 window guidance defines hard and focus plus the volume-fail exception", () => {
   const description = getRef5WindowProgressDescription("ko");
 

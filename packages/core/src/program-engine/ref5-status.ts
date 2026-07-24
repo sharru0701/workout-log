@@ -7,7 +7,29 @@ import {
   deriveRef5Standards,
   type Ref5DirectStandardsKg,
   type Ref5RuntimeState,
+  type Ref5WindowResult,
 } from "./ref5";
+
+/**
+ * §18 gain rate for one lift: INCREASE judgments over completed judgment windows,
+ * plus the bounded recent flow. Reads the accumulators defensively so a plan whose
+ * cached state predates these counters (pre-gain-rate v1.3) still renders — a
+ * later replay repopulates them.
+ */
+function ref5WindowGain(window: {
+  completedWindowCount: number;
+  increaseWindowCount?: number;
+  recentResults?: Ref5WindowResult[];
+}) {
+  const completed = window.completedWindowCount;
+  const increases = window.increaseWindowCount ?? 0;
+  return {
+    completed,
+    increases,
+    gainRate: completed > 0 ? increases / completed : null,
+    recentResults: window.recentResults ?? [],
+  };
+}
 
 function isRef5State(value: unknown): value is Ref5RuntimeState {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
@@ -52,31 +74,31 @@ export function buildRef5Status(
         current: state.mainWindows.SQ.exposures.length,
         threshold: 6,
         volumeFailures: state.mainWindows.SQ.volumeFailEventIds.length,
-        completed: state.mainWindows.SQ.completedWindowCount,
+        ...ref5WindowGain(state.mainWindows.SQ),
       },
       BP: {
         current: state.mainWindows.BP.exposures.length,
         threshold: 4,
         volumeFailures: state.mainWindows.BP.volumeFailEventIds.length,
-        completed: state.mainWindows.BP.completedWindowCount,
+        ...ref5WindowGain(state.mainWindows.BP),
       },
       PULL: {
         current: state.mainWindows.PULL.exposures.length,
         threshold: 4,
         volumeFailures: state.mainWindows.PULL.volumeFailEventIds.length,
-        completed: state.mainWindows.PULL.completedWindowCount,
+        ...ref5WindowGain(state.mainWindows.PULL),
       },
       DL: {
         current: state.auxiliaryWindows.DL.exposures.length,
         threshold: 4,
         volumeFailures: 0,
-        completed: state.auxiliaryWindows.DL.completedWindowCount,
+        ...ref5WindowGain(state.auxiliaryWindows.DL),
       },
       OHP: {
         current: state.auxiliaryWindows.OHP.exposures.length,
         threshold: 4,
         volumeFailures: 0,
-        completed: state.auxiliaryWindows.OHP.completedWindowCount,
+        ...ref5WindowGain(state.auxiliaryWindows.OHP),
       },
     },
     directStandardsKg,
