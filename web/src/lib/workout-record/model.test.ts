@@ -143,8 +143,9 @@ test("REF5 local draft restore rejects stale protocol/concurrent-session caches"
 
 test("REF5 v1.1 session metadata is rejected for creation and log restore", () => {
   const legacySession = structuredClone(makeRef5Session());
-  legacySession.snapshot.protocolVersion = "1.1";
-  legacySession.snapshot.ref5.protocolVersion = "1.1";
+  const legacySnapshot = legacySession.snapshot as { protocolVersion: string; ref5: { protocolVersion: string } };
+  legacySnapshot.protocolVersion = "1.1";
+  legacySnapshot.ref5.protocolVersion = "1.1";
 
   assert.throws(
     () => createWorkoutRecordDraft(legacySession, "REF5"),
