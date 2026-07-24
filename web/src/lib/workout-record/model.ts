@@ -163,8 +163,8 @@ export type GeneratedSessionLike = {
   id: string;
   planId: string;
   sessionKey: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generated-session jsonb: 프로그램별 가변 구조, 방어적 optional chain으로만 소비
-  snapshot: any;
+  // generated-session jsonb: 프로그램별 가변 구조. unknown으로 두고 toRecord로 좁혀 소비한다.
+  snapshot: unknown;
 };
 
 export type ExistingWorkoutLogLike = {
@@ -481,14 +481,14 @@ function toRef5TerminationReason(value: unknown): Ref5TerminationReason | null {
   return REF5_TERMINATION_REASONS.has(normalized) ? normalized : null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- versioned JSONB snapshot
-function readRef5SessionMeta(snapshot: any): WorkoutSessionRef5Meta | null {
-  const raw = toRecord(snapshot?.ref5);
-  if (String(snapshot?.program?.slug ?? "") !== REF5_IDENTIFIERS.slug) return null;
-  const protocolVersion = String(raw.protocolVersion ?? snapshot?.protocolVersion ?? "");
+function readRef5SessionMeta(snapshot: unknown): WorkoutSessionRef5Meta | null {
+  const snap = toRecord(snapshot);
+  const raw = toRecord(snap.ref5);
+  if (String(toRecord(snap.program).slug ?? "") !== REF5_IDENTIFIERS.slug) return null;
+  const protocolVersion = String(raw.protocolVersion ?? snap.protocolVersion ?? "");
   if (protocolVersion !== REF5_PROTOCOL_VERSION) throw new Ref5StaleVersionError(protocolVersion || null);
-  const actualStartAt = String(raw.actualStartAt ?? snapshot?.actualStartAt ?? "").trim();
-  const startEventId = String(raw.startEventId ?? snapshot?.startEventId ?? "").trim();
+  const actualStartAt = String(raw.actualStartAt ?? snap.actualStartAt ?? "").trim();
+  const startEventId = String(raw.startEventId ?? snap.startEventId ?? "").trim();
   if (!actualStartAt || !startEventId) return null;
   const before = Number(raw.runtimeRevisionBefore ?? 0);
   const after = Number(raw.runtimeRevisionAfter ?? before + 1);
@@ -611,13 +611,14 @@ function normalizeScheduleEntries(value: unknown) {
     .filter(Boolean);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generated-session jsonb: 프로그램별 가변 구조, 방어적 optional chain으로만 소비
-function sessionsPerWeekFromSnapshot(snapshot: any) {
-  const firstBlock = Array.isArray(snapshot?.blocks) ? snapshot.blocks[0] ?? null : null;
+function sessionsPerWeekFromSnapshot(snapshot: unknown) {
+  const snap = toRecord(snapshot);
+  const blocks = Array.isArray(snap.blocks) ? snap.blocks : [];
+  const firstBlock = toRecord(blocks[0]);
   const candidates = [
-    snapshot?.program?.schedule?.sessionsPerWeek,
-    firstBlock?.definition?.schedule?.sessionsPerWeek,
-    snapshot?.schedule?.sessionsPerWeek,
+    toRecord(toRecord(snap.program).schedule).sessionsPerWeek,
+    toRecord(toRecord(firstBlock.definition).schedule).sessionsPerWeek,
+    toRecord(snap.schedule).sessionsPerWeek,
   ];
 
   for (const candidate of candidates) {
@@ -630,17 +631,21 @@ function sessionsPerWeekFromSnapshot(snapshot: any) {
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- generated-session jsonb: 프로그램별 가변 구조, 방어적 optional chain으로만 소비
-function isOperatorSnapshot(snapshot: any, planName: string) {
-  const firstBlock = Array.isArray(snapshot?.blocks) ? snapshot.blocks[0] ?? null : null;
+function isOperatorSnapshot(snapshot: unknown, planName: string) {
+  const snap = toRecord(snapshot);
+  const blocks = Array.isArray(snap.blocks) ? snap.blocks : [];
+  const firstBlock = toRecord(blocks[0]);
+  const snapProgram = toRecord(snap.program);
+  const firstBlockProgram = toRecord(firstBlock.program);
+  const firstBlockDefinition = toRecord(firstBlock.definition);
   const candidates = [
-    snapshot?.program?.slug,
-    snapshot?.program?.name,
-    firstBlock?.program?.slug,
-    firstBlock?.program?.name,
-    firstBlock?.definition?.kind,
-    firstBlock?.definition?.programFamily,
-    snapshot?.plan?.name,
+    snapProgram.slug,
+    snapProgram.name,
+    firstBlockProgram.slug,
+    firstBlockProgram.name,
+    firstBlockDefinition.kind,
+    firstBlockDefinition.programFamily,
+    toRecord(snap.plan).name,
     planName,
   ]
     .map((value) => String(value ?? "").trim().toLowerCase())
@@ -651,18 +656,18 @@ function isOperatorSnapshot(snapshot: any, planName: string) {
 
 function toSessionType(
   day: number,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- generated-session jsonb: 프로그램별 가변 구조, 방어적 optional chain으로만 소비
-  snapshot: any,
+  snapshot: unknown,
   planName: string,
   sessionKey: string,
   planSchedule?: unknown,
 ) {
-  const manualSessionKey = String(snapshot?.manualSessionKey ?? "").trim();
+  const snap = toRecord(snapshot);
+  const manualSessionKey = String(snap.manualSessionKey ?? "").trim();
   if (manualSessionKey) {
     return manualSessionKey;
   }
 
-  const explicitSessionLabel = String(snapshot?.sessionType ?? snapshot?.sessionLabel ?? "").trim();
+  const explicitSessionLabel = String(snap.sessionType ?? snap.sessionLabel ?? "").trim();
   if (explicitSessionLabel) {
     return explicitSessionLabel;
   }
@@ -979,7 +984,7 @@ export function createWorkoutRecordDraft(
   } = {},
 ): WorkoutRecordDraft {
   const copy = WORKOUT_RECORD_TEXT[options.locale ?? "ko"];
-  const snapshot = session.snapshot ?? {};
+  const snapshot = toRecord(session.snapshot);
   const exercises = (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[];
   const ref5Session = readRef5SessionMeta(snapshot);
   const week = ref5Session ? null : Math.max(1, Math.round(toNumber(snapshot.week, 1)));
@@ -1035,7 +1040,7 @@ export function createWorkoutRecordDraftFromLog(
   } = {},
 ): WorkoutRecordDraft {
   const copy = WORKOUT_RECORD_TEXT[options.locale ?? "ko"];
-  const snapshot = log.generatedSession?.snapshot ?? {};
+  const snapshot = toRecord(log.generatedSession?.snapshot);
   const snapshotExercises = (Array.isArray(snapshot.exercises) ? snapshot.exercises : []) as SnapshotExercise[];
   const loggedExercises = groupLoggedExercises(Array.isArray(log.sets) ? log.sets : [], snapshotExercises, options.locale);
   const parsedPerformedAt = new Date(log.performedAt);
