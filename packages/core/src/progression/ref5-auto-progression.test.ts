@@ -51,7 +51,7 @@ function generatedEnvelope(domain: Ref5SessionSnapshot) {
     actualStartAt: domain.actualStartAt,
     program: { slug: "ref5-adaptive-strength" },
     ref5: {
-      protocolVersion: "1.2",
+      protocolVersion: "1.3",
       startCommitted: true,
       startEventId: "start-1",
       domainSnapshot: domain,
@@ -75,7 +75,7 @@ function submittedSets(
             memo: "preserved",
             ref5: {
               prescription: exercise,
-              protocolVersion: "1.2",
+              protocolVersion: "1.3",
               terminationReason: reasonFor(exercise.stream),
               actualStartAt: domain.actualStartAt,
               startEventId: "start-1",
@@ -166,7 +166,7 @@ test("REF5 canonicalization enforces exact start and exact frozen set shape", ()
         performedAt: new Date(START),
         sets: sets.slice(1),
       }),
-    /requires exactly 9 prescribed sets/,
+    /requires exactly 10 prescribed sets/,
   );
 });
 
@@ -246,7 +246,7 @@ test("REF5 raw replay deduplicates the same completion idempotency key", () => {
     outcomes: {
       SQ_H3: { endReason: "NORMAL" as const, sets: Array.from({ length: 3 }, () => ({ plannedReps: 3, effectiveReps: 3 })) },
       PULL_FOCUS: { endReason: "NORMAL" as const, sets: Array.from({ length: 3 }, () => ({ plannedReps: 3, effectiveReps: 3 })) },
-      BP_VOLUME: { endReason: "NORMAL" as const, sets: [{ plannedReps: 5, effectiveReps: 5 }] },
+      BP_VOLUME_NORMAL: { endReason: "NORMAL" as const, sets: Array.from({ length: 2 }, () => ({ plannedReps: 5, effectiveReps: 5 })) },
       DL: { endReason: "NORMAL" as const, sets: Array.from({ length: 2 }, () => ({ plannedReps: 4, effectiveReps: 4 })) },
     },
   };
@@ -329,7 +329,7 @@ test("REF5 historical state helper is read-only and excludes tuples at/after tar
           userId: "user-1",
           params: {
             programFamily: "ref5",
-            protocolVersion: "1.2",
+            protocolVersion: "1.3",
             ref5: { startingValuesKg: customStarts },
           },
         }]);

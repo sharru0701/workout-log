@@ -39,6 +39,7 @@ import {
   buildRef5PlanSession,
   isRef5PlanParams,
 } from "./ref5-integration";
+import type { REF5_PROTOCOL_VERSION } from "./ref5";
 import { tacticalBarbellCluster } from "@workout/core/program-store/tactical-barbell-blueprint";
 import {
   wendler531WeekSets,
@@ -1675,7 +1676,7 @@ export type GenerateSessionInput = {
   timezone?: string;
   /** REF5 is generated from an exact first-work-set start, never a date bucket. */
   ref5?: {
-    protocolVersion: "1.2";
+    protocolVersion: typeof REF5_PROTOCOL_VERSION;
     actualStartAt: string;
     todayBodyweightKg: number;
     manualMicro: boolean;

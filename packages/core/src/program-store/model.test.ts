@@ -36,12 +36,12 @@ const ref5Template: ProgramTemplate = {
       dslVersion: 1,
       kind: "ref5",
       family: "ref5",
-      protocolVersion: "1.2",
+      protocolVersion: "1.3",
       modules: ["SQUAT", "PULL", "BENCH", "DEADLIFT", "OHP"],
     },
     defaults: {
-      schemaVersion: 2,
-      protocolVersion: "1.2",
+      schemaVersion: 3,
+      protocolVersion: "1.3",
     },
   },
 };

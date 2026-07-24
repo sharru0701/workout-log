@@ -33,9 +33,10 @@ import {
 } from "@workout/core/program-engine/ref5";
 
 /** Kept numeric-compatible with the generation adapter without importing it. */
-// Preserve the original 511 identifier while active v1.2 writes use 512.
+// 511 is the immutable v1.1 identifier; 512 is v1.2. Active v1.3 writes use 513.
 export const REF5_PROGRESSION_ENGINE_VERSION = 511;
 export const REF5_PROGRESSION_ENGINE_VERSION_V12 = 512;
+export const REF5_PROGRESSION_ENGINE_VERSION_V13 = 513;
 
 const REF5_END_REASONS = new Set<Ref5EndReason>([
   "NORMAL",
@@ -712,6 +713,7 @@ type Ref5ReplayPlanContext = {
   userId: string;
   protocolVersion: Ref5ProtocolVersion;
   initialDirectStandardsKg: Ref5DirectStandardsKg;
+  initialOhpMicroloading: boolean;
 };
 
 async function resolveRef5ReplayPlan(
@@ -734,11 +736,13 @@ async function resolveRef5ReplayPlan(
       params.protocolVersion ?? asRecord(params.ref5).protocolVersion,
     );
   }
+  const startConfig = readRef5PlanStartConfig(row.params);
   return {
     id: row.id,
     userId: row.userId,
     protocolVersion,
-    initialDirectStandardsKg: readRef5PlanStartConfig(row.params).startingValuesKg,
+    initialDirectStandardsKg: startConfig.startingValuesKg,
+    initialOhpMicroloading: startConfig.ohpMicroloading,
   };
 }
 
@@ -889,9 +893,12 @@ function foldRef5ReplaySource(input: {
   planId: string;
   planProtocolVersion: Ref5ProtocolVersion;
   initialDirectStandardsKg: Ref5DirectStandardsKg;
+  initialOhpMicroloading: boolean;
   source: Ref5ReplaySource;
 }): Ref5ReplayFold {
-  let runningState = createInitialRef5State(input.initialDirectStandardsKg);
+  let runningState = createInitialRef5State(input.initialDirectStandardsKg, {
+    ohpMicroloading: input.initialOhpMicroloading,
+  });
   const auditRows: Array<typeof planProgressEvent.$inferInsert> = [];
   const completedGeneratedSessionIds: string[] = [];
   for (const session of input.source.sessions) {
@@ -923,7 +930,7 @@ function foldRef5ReplaySource(input: {
       afterState: cloneJson(runningState),
       meta: {
         protocolVersion: replaySnapshot.protocolVersion,
-        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V12,
+        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V13,
         startEventId: session.startEventId,
         snapshotId: replaySnapshot.snapshotId,
         sessionId: replaySnapshot.sessionId,
@@ -973,7 +980,7 @@ function foldRef5ReplaySource(input: {
       afterState: cloneJson(runningState),
       meta: {
         protocolVersion: replaySnapshot.protocolVersion,
-        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V12,
+        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V13,
         startEventId: completion.startEventId,
         completionEventId: completion.completionEventId,
         completionFingerprint: completion.fingerprint,
@@ -1095,6 +1102,7 @@ export async function deriveRef5StateBeforeStart(input: {
     planId: input.planId,
     planProtocolVersion: planContext.protocolVersion,
     initialDirectStandardsKg: planContext.initialDirectStandardsKg,
+    initialOhpMicroloading: planContext.initialOhpMicroloading,
     source,
   });
   return {
@@ -1127,6 +1135,7 @@ export async function rebuildRef5ProgressionForPlan(input: {
     planId,
     planProtocolVersion: planContext.protocolVersion,
     initialDirectStandardsKg: planContext.initialDirectStandardsKg,
+    initialOhpMicroloading: planContext.initialOhpMicroloading,
     source,
   });
   const appendedAuditEventCount = await appendMissingRef5AuditRows({
@@ -1149,7 +1158,7 @@ export async function rebuildRef5ProgressionForPlan(input: {
       .update(planRuntimeState)
       .set({
         userId: input.userId,
-        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V12,
+        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V13,
         state: folded.state,
         updatedAt: new Date(),
       })
@@ -1169,7 +1178,7 @@ export async function rebuildRef5ProgressionForPlan(input: {
       .values({
         planId,
         userId: input.userId,
-        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V12,
+        engineVersion: REF5_PROGRESSION_ENGINE_VERSION_V13,
         state: folded.state,
       })
       .onConflictDoNothing({ target: planRuntimeState.planId })

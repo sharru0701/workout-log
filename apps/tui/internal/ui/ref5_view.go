@@ -34,7 +34,7 @@ func (l Log) renderRef5Start(w int) string {
 		start = at.In(ref5PlanLocation(l.ref5.Plan)).Format("2006-01-02 15:04:05 MST")
 	}
 	lines := []string{
-		amber.Render("REF5 v1.2 · FIRST SQUAT START"),
+		amber.Render("REF5 v1.3 · FIRST SQUAT START"),
 		"",
 		ref5Justify(dim.Render("실제 시작"), cyan.Render(start), w),
 		ref5Justify(dim.Render("오늘 체중"), cyan.Render(trimNum(l.ref5.Start.BodyweightKg)+" kg"), w),

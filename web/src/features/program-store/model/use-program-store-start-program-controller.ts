@@ -210,8 +210,8 @@ export function readRef5StartConfigFromTemplate(
     | undefined;
   const starts = raw?.startingValuesKg;
   if (
-    raw?.schemaVersion !== 2 ||
-    raw?.protocolVersion !== "1.2" ||
+    raw?.schemaVersion !== 3 ||
+    raw?.protocolVersion !== "1.3" ||
     !starts
   ) {
     return null;

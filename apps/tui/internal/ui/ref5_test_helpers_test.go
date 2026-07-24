@@ -17,7 +17,7 @@ func uiRef5Plan() api.Plan {
 			"protocolVersion": api.Ref5ProtocolVersion,
 			"timezone":        "Asia/Seoul",
 			"ref5": map[string]any{
-				"schemaVersion":   2,
+				"schemaVersion":   3,
 				"protocolVersion": api.Ref5ProtocolVersion,
 			},
 		},

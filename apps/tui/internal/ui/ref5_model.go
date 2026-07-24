@@ -115,7 +115,7 @@ func (r *ref5SessionState) active() bool {
 }
 
 // ref5PlanLocation is the calendar boundary that owns every REF5 decision.
-// v1.2 plans persist an explicit IANA timezone; invalid or missing values fall
+// REF5 plans persist an explicit IANA timezone; invalid or missing values fall
 // back to the terminal's local zone for a predictable display.
 func ref5PlanLocation(plan api.Plan) *time.Location {
 	if timezone, ok := plan.Params["timezone"].(string); ok {
