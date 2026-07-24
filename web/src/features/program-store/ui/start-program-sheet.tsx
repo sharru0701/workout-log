@@ -42,6 +42,7 @@ type StartProgramSheetProps = {
   onChangeRef5StartingValue: (field: Ref5StartField, value: number) => void;
   onChangeRef5SetupMode: (mode: "E1RM" | "DIRECT") => void;
   onChangeRef5E1rmInput: (lift: Ref5Lift, value: number) => void;
+  onChangeRef5OhpMicroloading: (enabled: boolean) => void;
   onApplyRecommendation: (targetKey: string) => void;
 };
 
@@ -56,6 +57,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
   onChangeRef5StartingValue,
   onChangeRef5SetupMode,
   onChangeRef5E1rmInput,
+  onChangeRef5OhpMicroloading,
   onApplyRecommendation,
 }: StartProgramSheetProps) {
   const isRef5 = draft?.mode === "REF5";
@@ -238,6 +240,7 @@ export const StartProgramSheet = memo(function StartProgramSheet({
               onChangeSetupMode={onChangeRef5SetupMode}
               onChangeE1rmInput={onChangeRef5E1rmInput}
               onChangeStartingValue={onChangeRef5StartingValue}
+              onToggleOhpMicroloading={onChangeRef5OhpMicroloading}
             />
           ) : null}
           {!isContinue && !isRef5 && draft.recommendationStatus === "loading" ? (
