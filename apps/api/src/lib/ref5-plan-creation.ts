@@ -15,9 +15,10 @@ export function resolveRef5PlanStartConfig(
 ): Ref5StartConfigValidationResult {
   const submittedRef5 = asRecord(asRecord(submittedParams).ref5);
   const defaultRef5 = asRecord(asRecord(versionDefaults).ref5);
-  return validateRef5StartConfig(
-    Object.hasOwn(submittedRef5, "startingValuesKg")
-      ? submittedRef5.startingValuesKg
-      : defaultRef5.startingValuesKg,
-  );
+  // ohpMicroloading grids OHP, so it follows the same source as the starts it
+  // grids: the submitted block when the user provided starts, else the defaults.
+  const source = Object.hasOwn(submittedRef5, "startingValuesKg") ? submittedRef5 : defaultRef5;
+  return validateRef5StartConfig(source.startingValuesKg, {
+    ohpMicroloading: source.ohpMicroloading === true,
+  });
 }

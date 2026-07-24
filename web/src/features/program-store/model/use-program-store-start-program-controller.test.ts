@@ -182,6 +182,27 @@ test("REF5 plan params preserve user-selected direct kg baselines without generi
   assert.equal("day" in raw, false);
 });
 
+test("REF5 plan params carry ohpMicroloading, gating the 1.25 kg OHP start (§5.1)", () => {
+  const onConfig = {
+    ...ref5Config,
+    ohpMicroloading: true,
+    startingValuesKg: { ...ref5Config.startingValuesKg, ohpKg: 31.25 },
+  };
+  const params = buildRef5StartPlanParams({ timezone: "Asia/Seoul", today: "2026-07-13", config: onConfig });
+  assert.equal(params.ref5.ohpMicroloading, true);
+  assert.equal(params.ref5.startingValuesKg.ohpKg, 31.25);
+  assert.equal(ref5StartConfigValidationMessage(onConfig, "ko"), null, "a 1.25 kg OHP start is valid with the toggle on");
+
+  // The same OHP start is off-grid without the toggle: build rejects it.
+  const offConfig = { ...onConfig, ohpMicroloading: false };
+  assert.throws(() => buildRef5StartPlanParams({ timezone: "Asia/Seoul", today: "2026-07-13", config: offConfig }));
+  assert.notEqual(ref5StartConfigValidationMessage(offConfig, "ko"), null);
+
+  // A plain 2.5-grid config still resolves ohpMicroloading false.
+  const defaultParams = buildRef5StartPlanParams({ timezone: "Asia/Seoul", today: "2026-07-13", config: ref5Config });
+  assert.equal(defaultParams.ref5.ohpMicroloading, false);
+});
+
 test("REF5 start validation reports the active auxiliary cap", () => {
   assert.equal(
     ref5StartConfigValidationMessage(
