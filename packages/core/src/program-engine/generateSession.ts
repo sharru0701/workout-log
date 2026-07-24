@@ -75,7 +75,7 @@ type Patch = AccessoryPatch | ReplaceExercisePatch | ReorderBlocksPatch;
  * DSL v1 contract (minimal):
  * {
  *   dslVersion?: 1,
- *   kind: "531" | "operator" | "candito-linear",
+ *   kind: "531" | "operator" | "asymptote",
  *   schedule: { weeks: number, sessionsPerWeek: number },
  *   lifts?: string[],          // generic targets
  *   modules?: string[],        // generic targets
@@ -732,38 +732,6 @@ function generateAsymptote(_def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedE
   });
 }
 
-function generateCanditoLinear(def: LogicDefinitionV1, ctx: GeneratorCtx): PlannedExercise[] {
-  const weekInCycle = ((ctx.week - 1) % 6) + 1;
-  const dayMap = Array.isArray(def.progression?.dayMap)
-    ? def.progression.dayMap.map((x: any) => normalizeTarget(String(x)))
-    : ["SQUAT", "BENCH", "DEADLIFT", "BENCH"];
-  const target = ctx.forcedTarget
-    ? normalizeTarget(ctx.forcedTarget)
-    : dayMap[(ctx.day - 1) % dayMap.length] ?? dayMap[0];
-
-  const scheme: Record<number, { sets: number; reps: number; percent: number; note?: string }> = {
-    1: { sets: 4, reps: 8, percent: 0.7, note: "volume" },
-    2: { sets: 4, reps: 6, percent: 0.75 },
-    3: { sets: 5, reps: 4, percent: 0.8, note: "strength" },
-    4: { sets: 6, reps: 3, percent: 0.85 },
-    5: { sets: 4, reps: 2, percent: 0.9, note: "peak" },
-    6: { sets: 3, reps: 1, percent: 0.95, note: "test prep" },
-  };
-
-  const tm = requireTrainingMaxKg(ctx.params, ctx.defaults, target);
-  const s = scheme[weekInCycle] ?? scheme[1];
-
-  return [
-    {
-      exerciseName: defaultExerciseNameForTarget(target),
-      role: "MAIN",
-      sourceBlockTarget: target,
-      order: ctx.orderBase,
-      sets: buildRepeatedSets(s.sets, s, tm),
-    },
-  ];
-}
-
 // Exported for the DSL golden-master harness (docs/program-dsl-typing-plan.md, Phase 0).
 // This is the real dispatch the DB session path uses for LOGIC-type definitions
 // (531/operator/asymptote); pinning its output guards the upcoming DSL retyping.
@@ -776,7 +744,6 @@ export function generateFromLogicDefinition(
 
   if (kind === "531") return generate531(def, ctx);
   if (kind === "operator") return generateOperator(def, ctx);
-  if (kind === "candito-linear") return generateCanditoLinear(def, ctx);
   if (kind === "asymptote") return generateAsymptote(def, ctx);
 
   const target = ctx.forcedTarget ? normalizeTarget(ctx.forcedTarget) : "CUSTOM";
