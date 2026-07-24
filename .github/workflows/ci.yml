@@ -103,6 +103,10 @@ jobs:
         working-directory: packages/core
         run: pnpm lint:boundary
 
+      - name: DSL any ratchet packages/core
+        working-directory: packages/core
+        run: pnpm lint:no-any
+
       - name: Test packages/core
         working-directory: packages/core
         run: pnpm test
