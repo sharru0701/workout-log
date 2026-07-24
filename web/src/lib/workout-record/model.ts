@@ -129,7 +129,7 @@ export type WorkoutRecordDraft = {
 
 /**
  * A persisted REF5 editor draft may only be restored over the exact generated
- * v1.2 session that the server just loaded. This is the browser-cache boundary
+ * v1.3 session that the server just loaded. This is the browser-cache boundary
  * for protocol upgrades and concurrent tabs; stale drafts must never hydrate an
  * active session.
  */

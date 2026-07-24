@@ -19,6 +19,7 @@ import {
   generateRef5Session,
   nearestRef5To2p5,
   readRef5PlanStartConfig,
+  ref5AuxiliaryCandidateIsWithinCap,
   reduceRef5Completion,
   ref5CalendarDate,
   replayRef5RawLogs,
@@ -140,10 +141,10 @@ function fakeStarted(
   };
 }
 
-test("v1.2 constants, direct-derived formulas, refs, caps and 2.5 kg rounding are canonical", () => {
-  assert.equal(REF5_PROTOCOL_VERSION, "1.2");
-  assert.equal(REF5_RUNTIME_SCHEMA_VERSION, 2);
-  assert.equal(REF5_SNAPSHOT_SCHEMA_VERSION, 2);
+test("v1.3 constants, direct-derived formulas, refs, caps and 2.5 kg rounding are canonical", () => {
+  assert.equal(REF5_PROTOCOL_VERSION, "1.3");
+  assert.equal(REF5_RUNTIME_SCHEMA_VERSION, 3);
+  assert.equal(REF5_SNAPSHOT_SCHEMA_VERSION, 3);
   assert.deepEqual(REF5_INITIAL_DIRECT_STANDARDS_KG, {
     sqH3Kg: 82.5,
     bpFocusKg: 82.5,
@@ -200,14 +201,19 @@ test("plan creation accepts custom direct starts, derives REFs, and rejects grid
   }
 });
 
-test("first normal session is PULL focus + H3 with nine working sets and lossless PULL metadata", () => {
+test("first normal session is PULL focus + H3 with ten working sets and lossless PULL metadata", () => {
   const state = createInitialRef5State();
   const snapshot = generateRef5Session(state, sessionInput("1", "2026-01-01T09:00:00.000Z"));
   assert.equal(snapshot.decision.sessionType, "NORMAL");
   assert.equal(snapshot.decision.focus, "PULL");
   assert.equal(snapshot.decision.squatPrescription, "H3");
-  assert.equal(snapshot.totalWorkingSets, 9);
-  assert.deepEqual(snapshot.exercises.map((item) => item.stream), ["SQ_H3", "PULL_FOCUS", "BP_VOLUME", "DL"]);
+  assert.equal(snapshot.totalWorkingSets, 10);
+  assert.deepEqual(snapshot.exercises.map((item) => item.stream), ["SQ_H3", "PULL_FOCUS", "BP_VOLUME_NORMAL", "DL"]);
+  // Normal BP volume is two sets in v1.3 (§7.2).
+  assert.deepEqual(
+    snapshot.exercises.find((item) => item.stream === "BP_VOLUME_NORMAL")?.sets.map((set) => set.plannedReps),
+    [5, 5],
+  );
   assert.equal(snapshot.pullContext.focus.lockedAddedKg, 12.5);
   assert.equal(snapshot.pullContext.volume.lockedAddedKg, 0);
   assert.equal(snapshot.pullContext.focus.actualTotalKg, 87.5);
@@ -231,25 +237,26 @@ test("first normal session is PULL focus + H3 with nine working sets and lossles
     "omitted",
     "omittedPrescriptions",
   ]) {
-    assert.equal(serialized.includes(removed), false, `${removed} must not be written by v1.2`);
+    assert.equal(serialized.includes(removed), false, `${removed} must not be written by v1.3`);
   }
 });
 
-test("normal BP focus always includes PULL volume and has nine working sets", () => {
+test("normal BP focus always includes PULL volume and has ten working sets", () => {
   const state = createInitialRef5State();
   state.nextFocus = "BP";
   const snapshot = generateRef5Session(
     state,
-    sessionInput("bp-nine", "2026-01-02T09:00:00.000Z"),
+    sessionInput("bp-ten", "2026-01-02T09:00:00.000Z"),
   );
-  assert.equal(snapshot.totalWorkingSets, 9);
+  assert.equal(snapshot.totalWorkingSets, 10);
   assert.deepEqual(snapshot.exercises.map((item) => item.stream), [
     "SQ_H3",
     "BP_FOCUS",
-    "PULL_VOLUME",
+    "PULL_VOLUME_NORMAL",
     "OHP",
   ]);
-  assert.deepEqual(snapshot.exercises.find((item) => item.stream === "PULL_VOLUME")?.sets.map((set) => set.plannedReps), [6]);
+  // Normal PULL volume is two sets of six in v1.3 (§7.3).
+  assert.deepEqual(snapshot.exercises.find((item) => item.stream === "PULL_VOLUME_NORMAL")?.sets.map((set) => set.plannedReps), [6, 6]);
 });
 
 test("valid completion alternates focus, and exact 48h allows H2 while 1ms early selects V", () => {
@@ -262,7 +269,7 @@ test("valid completion alternates focus, and exact 48h allows H2 while 1ms early
   assert.equal(early.decision.focus, "BP");
   assert.equal(early.decision.squatPrescription, "V");
   assert.equal(exact.decision.squatPrescription, "H2");
-  assert.equal(exact.totalWorkingSets, 9);
+  assert.equal(exact.totalWorkingSets, 10);
 });
 
 test("168h lower bound is open, 1ms inside counts, and an equal-time prior start blocks hard", () => {
@@ -407,7 +414,7 @@ test("PULL focus PASS/HOLD/FAIL alternate to BP while INVALID retains PULL", () 
   }
 });
 
-test("v1.2 snapshot decoder rejects protocol-less, v1.1, and retired inputs", () => {
+test("v1.3 snapshot decoder rejects protocol-less, v1.1, v1.2, and retired inputs", () => {
   const active = generateRef5Session(
     createInitialRef5State(),
     sessionInput("decode", "2026-04-03T09:00:00.000Z"),
@@ -415,6 +422,8 @@ test("v1.2 snapshot decoder rejects protocol-less, v1.1, and retired inputs", ()
   for (const candidate of [
     { ...active, protocolVersion: undefined },
     { ...active, protocolVersion: "1.1", schemaVersion: 1 },
+    // v1.3 does not reinterpret prior v1.2 snapshots/protocol input (§24.3).
+    { ...active, protocolVersion: "1.2", schemaVersion: 2 },
     { ...active, climbingWithin48h: false },
     {
       ...active,
@@ -460,14 +469,23 @@ test("manual, calendar, forced-fail and multiple stagnation reasons merge into o
     "STAGNATION_BP",
     "STAGNATION_PULL",
   ]));
-  assert.deepEqual(snapshot.exercises.map((item) => item.stream), ["SQ_V_MICRO", "BP_VOLUME", "PULL_VOLUME"]);
+  assert.deepEqual(snapshot.exercises.map((item) => item.stream), ["SQ_V_MICRO", "BP_VOLUME_MICRO", "PULL_VOLUME_MICRO"]);
+  // Micro volume stays one set even though normal volume is now two (§7.4).
+  assert.deepEqual(
+    snapshot.exercises.find((item) => item.stream === "BP_VOLUME_MICRO")?.sets.map((set) => set.plannedReps),
+    [5],
+  );
+  assert.deepEqual(
+    snapshot.exercises.find((item) => item.stream === "PULL_VOLUME_MICRO")?.sets.map((set) => set.plannedReps),
+    [6],
+  );
 });
 
 test("closing unperformed prescriptions INVALID does not enter windows or fail streams", () => {
   const result = runSession(
     createInitialRef5State(),
     sessionInput("all-invalid", "2026-06-20T09:00:00.000Z"),
-    { SQ_H3: "INVALID", PULL_FOCUS: "INVALID", BP_VOLUME: "INVALID", DL: "INVALID" },
+    { SQ_H3: "INVALID", PULL_FOCUS: "INVALID", BP_VOLUME_NORMAL: "INVALID", DL: "INVALID" },
   );
   assert.equal(result.state.completedSessions.length, 1);
   assert.equal(result.state.mainWindows.SQ.exposures.length, 0);
@@ -711,20 +729,22 @@ function rawPassEvent(
     ? {
         SQ_H3: [3, 3, 3],
         PULL_FOCUS: [3, 3, 3],
-        BP_VOLUME: [5],
+        BP_VOLUME_NORMAL: [5, 5],
         DL: [4, 4],
-        SQ_H2: [], SQ_V_NORMAL: [], SQ_V_MICRO: [], BP_FOCUS: [], PULL_VOLUME: [], OHP: [],
+        SQ_H2: [], SQ_V_NORMAL: [], SQ_V_MICRO: [], BP_FOCUS: [], BP_VOLUME_MICRO: [],
+        PULL_VOLUME_NORMAL: [], PULL_VOLUME_MICRO: [], OHP: [],
       }
     : {
         SQ_H2: [2, 2, 2],
         BP_FOCUS: [3, 3, 3],
-        PULL_VOLUME: [6],
+        PULL_VOLUME_NORMAL: [6, 6],
         OHP: [6, 6],
-        SQ_H3: [], SQ_V_NORMAL: [], SQ_V_MICRO: [], BP_VOLUME: [], PULL_FOCUS: [], DL: [],
+        SQ_H3: [], SQ_V_NORMAL: [], SQ_V_MICRO: [], BP_VOLUME_NORMAL: [],
+        BP_VOLUME_MICRO: [], PULL_FOCUS: [], PULL_VOLUME_MICRO: [], DL: [],
       };
   const streams = kind === "FIRST"
-    ? (["SQ_H3", "PULL_FOCUS", "BP_VOLUME", "DL"] as const)
-    : (["SQ_H2", "BP_FOCUS", "PULL_VOLUME", "OHP"] as const);
+    ? (["SQ_H3", "PULL_FOCUS", "BP_VOLUME_NORMAL", "DL"] as const)
+    : (["SQ_H2", "BP_FOCUS", "PULL_VOLUME_NORMAL", "OHP"] as const);
   const outcomes: Partial<Record<Ref5Stream, Ref5OutcomeInput>> = {};
   for (const stream of streams) {
     outcomes[stream] = {
@@ -854,4 +874,100 @@ test("historical START keeps frozen prescription metadata but reconstructs the c
   assert.doesNotThrow(() =>
     applyRef5FirstSquatStart(conflicting, frozen, "historical-conflict", { historicalReplay: true }),
   );
+});
+
+// ── v1.3 protocol regressions (§25) ───────────────────────────────────────────
+
+test("v1.3 start config v2 allows OHP on the 1.25 kg grid only under ohpMicroloading (§5.1)", () => {
+  const base = { sqH3Kg: 82.5, bpFocusKg: 82.5, pullFocusTotalKg: 87.5, deadliftKg: 72.5, ohpKg: 31.25 };
+  const on = validateRef5StartConfig(base, { ohpMicroloading: true });
+  assert.equal(on.ok, true);
+  if (on.ok) {
+    assert.equal(on.value.ohpMicroloading, true);
+    assert.equal(on.value.initializationVersion, 2);
+    assert.equal(on.value.startingValuesKg.ohpKg, 31.25);
+  }
+  // The same 1.25 kg OHP start is off-grid without microloading.
+  const off = validateRef5StartConfig(base, { ohpMicroloading: false });
+  assert.equal(off.ok, false);
+  if (!off.ok) assert.ok(off.errors.some((error) => error.includes("ohpKg must use the 2.5 kg grid")));
+  // Non-OHP lifts stay on the 2.5 kg grid even when microloading is on.
+  const offGridSquat = validateRef5StartConfig({ ...base, sqH3Kg: 83.75 }, { ohpMicroloading: true });
+  assert.equal(offGridSquat.ok, false);
+  if (!offGridSquat.ok) assert.ok(offGridSquat.errors.some((error) => error.includes("sqH3Kg must use the 2.5 kg grid")));
+  // The plan option round-trips through the plan-params reader.
+  assert.equal(
+    readRef5PlanStartConfig({ ref5: { startingValuesKg: base, ohpMicroloading: true } }).ohpMicroloading,
+    true,
+  );
+  assert.equal(
+    readRef5PlanStartConfig({ ref5: { startingValuesKg: { ...base, ohpKg: 32.5 } } }).ohpMicroloading,
+    false,
+    "absent option defaults to off",
+  );
+});
+
+test("v1.3 OHP microloading cap: default +1.25 (33.75) is denied while headroom starts allow 31.25 (§6.4)", () => {
+  // The cap inequality is REF-based and grid-free; only the candidate step is 1.25.
+  assert.equal(ref5AuxiliaryCandidateIsWithinCap("OHP", 33.75, { ...REF5_INITIAL_DIRECT_STANDARDS_KG }), false);
+  const headroom = { ...REF5_INITIAL_DIRECT_STANDARDS_KG, ohpKg: 30, bpFocusKg: 80 };
+  assert.equal(ref5AuxiliaryCandidateIsWithinCap("OHP", 31.25, headroom), true);
+  assert.equal(
+    ref5AuxiliaryCandidateIsWithinCap("OHP", 32.5, headroom),
+    false,
+    "the 2.5 kg step overshoots the cap that the 1.25 kg step clears",
+  );
+});
+
+function ohpImmediateDecrease(ohpMicroloading: boolean): number {
+  // OHP only appears in normal BP-focus sessions; sessions 1 and 3 (4-day spaced,
+  // hard + normal) give two consecutive OHP exposures. Failing both immediately
+  // decreases OHP by the plan grid.
+  let state = createInitialRef5State(undefined, { ohpMicroloading });
+  const base = "2026-01-01T09:00:00.000Z";
+  for (let index = 0; index < 4; index += 1) {
+    state = runSession(state, sessionInput(`ohp-${index}`, at(base, index * 4 * DAY)), { OHP: "FAIL" }).state;
+  }
+  return state.directStandardsKg.ohpKg;
+}
+
+test("ohpMicroloading changes only the OHP grid: immediate decrease is 1.25 kg on, 2.5 kg off (§13.3)", () => {
+  assert.equal(ohpImmediateDecrease(false), 30, "off uses the 2.5 kg grid (v1.2-identical)");
+  assert.equal(ohpImmediateDecrease(true), 31.25, "on uses the 1.25 kg grid");
+});
+
+test("normal and micro volume fail streams are independent but both veto the focus window (§13.2, §14)", () => {
+  const base = "2026-03-01T09:00:00.000Z";
+  let state = createInitialRef5State();
+  // Normal PULL-focus session fails BP volume normal.
+  state = runSession(state, sessionInput("vn", base), { BP_VOLUME_NORMAL: "FAIL" }).state;
+  assert.equal(state.mainWindows.BP.volumeFailEventIds.length, 1);
+  assert.equal(state.failStreams.BP_VOLUME_NORMAL.consecutiveFails, 1);
+  assert.equal(state.directStandardsKg.bpFocusKg, 82.5, "a single volume fail does not move the direct standard");
+  // A micro session fails BP volume micro: a distinct stream that still vetoes.
+  const micro = runSession(
+    state,
+    sessionInput("vm", at(base, 4 * DAY), { manualMicro: true }),
+    { BP_VOLUME_MICRO: "FAIL" },
+  );
+  state = micro.state;
+  assert.equal(state.mainWindows.BP.volumeFailEventIds.length, 2, "both volume streams feed the BP focus veto");
+  assert.equal(state.failStreams.BP_VOLUME_MICRO.consecutiveFails, 1);
+  assert.equal(state.failStreams.BP_VOLUME_NORMAL.consecutiveFails, 1, "the normal streak is untouched by a micro fail");
+  assert.equal(
+    micro.completion.changes.some((change) => change.kind === "IMMEDIATE_DECREASE"),
+    false,
+    "split streaks never combine into a decrease",
+  );
+});
+
+test("normal session runs ten working sets with two-set upper-body volume; micro stays four (§7)", () => {
+  const normal = generateRef5Session(createInitialRef5State(), sessionInput("ten", "2026-05-01T09:00:00.000Z"));
+  assert.equal(normal.totalWorkingSets, 10);
+  const micro = generateRef5Session(
+    createInitialRef5State(),
+    sessionInput("four", "2026-05-02T09:00:00.000Z", { manualMicro: true }),
+  );
+  assert.equal(micro.totalWorkingSets, 4);
+  assert.deepEqual(micro.exercises.map((item) => item.sets.length), [2, 1, 1]);
 });

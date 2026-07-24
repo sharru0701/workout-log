@@ -822,7 +822,7 @@ plansRoutes.post("/:planId/generate", async (c) => {
     const ref5Bodyweight = Number(ref5Raw.bodyweightKg ?? ref5Raw.todayBodyweightKg);
     const ref5 = hasRef5Input
       ? {
-          protocolVersion: String(ref5Raw.protocolVersion ?? "") as "1.2",
+          protocolVersion: String(ref5Raw.protocolVersion ?? "") as typeof REF5_PROTOCOL_VERSION,
           actualStartAt: String(ref5Raw.actualStartAt ?? "").trim(),
           todayBodyweightKg: ref5Bodyweight,
           manualMicro: ref5Raw.manualMicro === true,

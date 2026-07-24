@@ -16,9 +16,10 @@ import {
 import { buildInitialCreateDraft } from "./use-program-store-sheet-entry-controller";
 
 const ref5Config = {
-  initializationVersion: 1,
-  schemaVersion: 2,
-  protocolVersion: "1.2",
+  initializationVersion: 2,
+  schemaVersion: 3,
+  protocolVersion: "1.3",
+  ohpMicroloading: false,
   startingValuesKg: {
     sqH3Kg: 82.5,
     bpFocusKg: 82.5,
@@ -49,7 +50,7 @@ const ref5Template: ProgramTemplate = {
     definition: {
       kind: "ref5",
       family: "ref5",
-      protocolVersion: "1.2",
+      protocolVersion: "1.3",
       modules: ["SQUAT", "PULL", "BENCH", "DEADLIFT", "OHP"],
     },
     defaults: { ref5: ref5Config },
@@ -167,8 +168,8 @@ test("REF5 plan params preserve user-selected direct kg baselines without generi
   });
 
   assert.equal(params.programFamily, "ref5");
-  assert.equal(params.protocolVersion, "1.2");
-  assert.equal(params.ref5.schemaVersion, 2);
+  assert.equal(params.protocolVersion, "1.3");
+  assert.equal(params.ref5.schemaVersion, 3);
   assert.deepEqual(params.ref5.startingValuesKg, customConfig.startingValuesKg);
   assert.notDeepEqual(params.ref5.controlRefsKg, ref5Config.controlRefsKg);
 

@@ -1,5 +1,5 @@
 /**
- * REF5 Adaptive Strength v1.2
+ * REF5 Adaptive Strength v1.3
  *
  * Framework/DB-independent domain model.  Direct kilogram standards are the
  * canonical state; control REFs, derived prescriptions and display loads are
@@ -7,14 +7,25 @@
  * shared with this module.
  */
 
-export const REF5_PROTOCOL_VERSION = "1.2" as const;
+export const REF5_PROTOCOL_VERSION = "1.3" as const;
 export const REF5_LEGACY_PROTOCOL_VERSION = "1.1" as const;
-export const REF5_RUNTIME_SCHEMA_VERSION = 2 as const;
+/** The immediately preceding protocol. v1.3 decoders reject it (§24.3). */
+export const REF5_PRIOR_PROTOCOL_VERSION = "1.2" as const;
+export const REF5_RUNTIME_SCHEMA_VERSION = 3 as const;
 export const REF5_LEGACY_RUNTIME_SCHEMA_VERSION = 1 as const;
-export const REF5_SNAPSHOT_SCHEMA_VERSION = 2 as const;
-export const REF5_PROGRAM_VERSION = 2 as const;
-export const REF5_START_CONFIG_VERSION = 1 as const;
+export const REF5_SNAPSHOT_SCHEMA_VERSION = 3 as const;
+export const REF5_PROGRAM_VERSION = 3 as const;
+export const REF5_START_CONFIG_VERSION = 2 as const;
 export const REF5_LEGACY_ENGINE_VERSION = 511 as const;
+
+/** 1.25 kg microplate grid, allowed for OHP only when a plan opts in (§13.3). */
+export const REF5_DEFAULT_GRID_KG = 2.5 as const;
+export const REF5_OHP_MICRO_GRID_KG = 1.25 as const;
+
+/** OHP progresses on a 1.25 kg grid only when the plan enabled ohpMicroloading. */
+export function ref5OhpGridKg(ohpMicroloading: boolean): number {
+  return ohpMicroloading ? REF5_OHP_MICRO_GRID_KG : REF5_DEFAULT_GRID_KG;
+}
 
 export type Ref5ProtocolVersion = typeof REF5_PROTOCOL_VERSION;
 
@@ -56,21 +67,27 @@ export type Ref5Stream =
   | "SQ_V_NORMAL"
   | "SQ_V_MICRO"
   | "BP_FOCUS"
-  | "BP_VOLUME"
+  | "BP_VOLUME_NORMAL"
+  | "BP_VOLUME_MICRO"
   | "PULL_FOCUS"
-  | "PULL_VOLUME"
+  | "PULL_VOLUME_NORMAL"
+  | "PULL_VOLUME_MICRO"
   | "DL"
   | "OHP";
 
+// v1.3 splits each upper-body volume slot into independent NORMAL/MICRO fail
+// streams (§14). Twelve streams total; the SQ_V split predates v1.3.
 export const REF5_STREAMS: readonly Ref5Stream[] = Object.freeze([
   "SQ_H3",
   "SQ_H2",
   "SQ_V_NORMAL",
   "SQ_V_MICRO",
   "BP_FOCUS",
-  "BP_VOLUME",
+  "BP_VOLUME_NORMAL",
+  "BP_VOLUME_MICRO",
   "PULL_FOCUS",
-  "PULL_VOLUME",
+  "PULL_VOLUME_NORMAL",
+  "PULL_VOLUME_MICRO",
   "DL",
   "OHP",
 ]);
@@ -111,6 +128,11 @@ export interface Ref5StartConfig {
   protocolVersion: typeof REF5_PROTOCOL_VERSION;
   startingValuesKg: Ref5DirectStandardsKg;
   controlRefsKg: Ref5ControlRefsKg;
+  /**
+   * Start config v2 option (§5.1). When true the OHP grid/step becomes 1.25 kg;
+   * every other lift stays on the 2.5 kg grid. Immutable after plan creation.
+   */
+  ohpMicroloading: boolean;
 }
 
 export const REF5_START_LOAD_MIN_KG = 2.5;
@@ -152,16 +174,26 @@ function cleanKg(value: number): number {
   return Object.is(cleaned, -0) ? 0 : cleaned;
 }
 
+/** Mathematical floor to an arbitrary kg grid. No implicit zero floor. */
+export function floorRef5ToGrid(value: number, gridKg: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return cleanKg(Math.floor(value / gridKg) * gridKg);
+}
+
+/** Nearest grid step; an exact midpoint is rounded upward. */
+export function nearestRef5ToGrid(value: number, gridKg: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return cleanKg(Math.floor(value / gridKg + 0.5) * gridKg);
+}
+
 /** Mathematical floor to a 2.5 kg grid. No implicit zero floor is applied. */
 export function floorRef5To2p5(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return cleanKg(Math.floor(value / 2.5) * 2.5);
+  return floorRef5ToGrid(value, REF5_DEFAULT_GRID_KG);
 }
 
 /** Nearest 2.5 kg; an exact midpoint is rounded upward. */
 export function nearestRef5To2p5(value: number): number {
-  if (!Number.isFinite(value)) return 0;
-  return cleanKg(Math.floor(value / 2.5 + 0.5) * 2.5);
+  return nearestRef5ToGrid(value, REF5_DEFAULT_GRID_KG);
 }
 
 // Friendly aliases matching the protocol wording.
@@ -187,11 +219,16 @@ export function deriveRef5ControlRefs(direct: Ref5DirectStandardsKg): Ref5Contro
   };
 }
 
-export function deriveRef5AuxiliaryCaps(direct: Ref5DirectStandardsKg): Ref5AuxiliaryCapsKg {
+export function deriveRef5AuxiliaryCaps(
+  direct: Ref5DirectStandardsKg,
+  ohpMicroloading = false,
+): Ref5AuxiliaryCapsKg {
   const refs = deriveRef5ControlRefs(direct);
   return {
     deadliftMaxKg: floorRef5To2p5((refs.sqKg * 72.5) / 100),
-    ohpMaxKg: floorRef5To2p5(((refs.bpKg * 0.5) * 32.5) / 50),
+    // The REF inequality below is grid-free; only the displayed working-weight
+    // cap floors to the OHP grid so a microloading plan shows a 1.25 kg value.
+    ohpMaxKg: floorRef5ToGrid(((refs.bpKg * 0.5) * 32.5) / 50, ref5OhpGridKg(ohpMicroloading)),
     deadliftControlRefMaxKg: refs.sqKg,
     ohpControlRefMaxKg: cleanKg(refs.bpKg * 0.5),
   };
@@ -210,11 +247,20 @@ function ref5Record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+export interface Ref5StartConfigOptions {
+  /** OHP-only 1.25 kg grid (§5.1). Every other lift stays on 2.5 kg. */
+  ohpMicroloading?: boolean;
+}
+
 /** Validates plan-creation loads. Runtime progression still owns later changes. */
-export function validateRef5StartConfig(value: unknown): Ref5StartConfigValidationResult {
+export function validateRef5StartConfig(
+  value: unknown,
+  options: Ref5StartConfigOptions = {},
+): Ref5StartConfigValidationResult {
   const source = ref5Record(value);
   const errors: string[] = [];
   const startingValuesKg = {} as Ref5DirectStandardsKg;
+  const ohpMicroloading = options.ohpMicroloading === true;
 
   if (Object.keys(source).length === 0) {
     return { ok: false, errors: ["REF5 startingValuesKg must be an object"] };
@@ -231,14 +277,16 @@ export function validateRef5StartConfig(value: unknown): Ref5StartConfigValidati
         `${key} must be between ${REF5_START_LOAD_MIN_KG} and ${REF5_START_LOAD_MAX_KG} kg`,
       );
     }
-    if (Math.abs(raw - nearestRef5To2p5(raw)) > 1e-9) {
-      errors.push(`${key} must use the 2.5 kg grid`);
+    // Only OHP on a microloading plan may use the 1.25 kg grid; all else 2.5.
+    const gridKg = key === "ohpKg" ? ref5OhpGridKg(ohpMicroloading) : REF5_DEFAULT_GRID_KG;
+    if (Math.abs(raw - nearestRef5ToGrid(raw, gridKg)) > 1e-9) {
+      errors.push(`${key} must use the ${gridKg} kg grid`);
     }
     startingValuesKg[key] = cleanKg(raw);
   }
 
   if (errors.length === 0) {
-    const caps = deriveRef5AuxiliaryCaps(startingValuesKg);
+    const caps = deriveRef5AuxiliaryCaps(startingValuesKg, ohpMicroloading);
     if (startingValuesKg.deadliftKg > caps.deadliftMaxKg + 1e-9) {
       errors.push(`deadliftKg exceeds the ${caps.deadliftMaxKg} kg REF5 auxiliary cap`);
     }
@@ -256,12 +304,16 @@ export function validateRef5StartConfig(value: unknown): Ref5StartConfigValidati
       protocolVersion: REF5_PROTOCOL_VERSION,
       startingValuesKg,
       controlRefsKg: deriveRef5ControlRefs(startingValuesKg),
+      ohpMicroloading,
     },
   };
 }
 
-export function normalizeRef5StartConfig(value: unknown): Ref5StartConfig {
-  const result = validateRef5StartConfig(value);
+export function normalizeRef5StartConfig(
+  value: unknown,
+  options: Ref5StartConfigOptions = {},
+): Ref5StartConfig {
+  const result = validateRef5StartConfig(value, options);
   if (!result.ok) throw new Ref5ValidationError(result.errors);
   return result.value;
 }
@@ -269,7 +321,9 @@ export function normalizeRef5StartConfig(value: unknown): Ref5StartConfig {
 export function readRef5PlanStartConfig(planParams: unknown): Ref5StartConfig {
   const params = ref5Record(planParams);
   const nested = ref5Record(params.ref5);
-  return normalizeRef5StartConfig(nested.startingValuesKg);
+  return normalizeRef5StartConfig(nested.startingValuesKg, {
+    ohpMicroloading: nested.ohpMicroloading === true,
+  });
 }
 
 export function ref5AuxiliaryCandidateIsWithinCap(
@@ -287,16 +341,17 @@ export function ref5AuxiliaryCandidateIsWithinCap(
     : candidateRefs.ohpKg <= mainRefs.bpKg * 0.5 + 1e-9;
 }
 
-/** Lowers a candidate in 2.5 kg steps until the REF inequality is satisfied. */
+/** Lowers a candidate in grid steps until the REF inequality is satisfied. */
 export function constrainRef5AuxiliaryCandidate(
   lift: Ref5AuxiliaryLift,
   candidateKg: number,
   direct: Ref5DirectStandardsKg,
+  gridKg: number = REF5_DEFAULT_GRID_KG,
 ): number {
   let constrained = cleanKg(candidateKg);
   let guard = 0;
   while (!ref5AuxiliaryCandidateIsWithinCap(lift, constrained, direct)) {
-    constrained = cleanKg(constrained - 2.5);
+    constrained = cleanKg(constrained - gridKg);
     guard += 1;
     if (guard > 10_000) throw new Error(`Unable to constrain REF5 ${lift} candidate`);
   }
@@ -515,6 +570,8 @@ export interface Ref5RuntimeState {
   protocolVersion: typeof REF5_PROTOCOL_VERSION;
   revision: number;
   directStandardsKg: Ref5DirectStandardsKg;
+  /** Plan-fixed OHP grid selector (§13.3). Immutable for the plan's lifetime. */
+  ohpMicroloading: boolean;
   nextFocus: Ref5Focus;
   nextSquatHard: Exclude<Ref5SquatPrescription, "V">;
   startedSessions: Ref5StartedSessionSummary[];
@@ -569,6 +626,7 @@ function initialStagnation(basisKg: number): Ref5StagnationState {
 
 export function createInitialRef5State(
   standards: Ref5DirectStandardsKg = { ...REF5_INITIAL_DIRECT_STANDARDS_KG },
+  options: { ohpMicroloading?: boolean } = {},
 ): Ref5RuntimeState {
   const directStandardsKg = { ...standards };
   return {
@@ -576,6 +634,7 @@ export function createInitialRef5State(
     protocolVersion: REF5_PROTOCOL_VERSION,
     revision: 0,
     directStandardsKg,
+    ohpMicroloading: options.ohpMicroloading === true,
     nextFocus: "PULL",
     nextSquatHard: "H3",
     startedSessions: [],
@@ -782,7 +841,7 @@ export function decodeRef5SessionSnapshot(value: unknown): Ref5SessionSnapshot {
     throw new Ref5ValidationError(["invalid REF5 domain snapshot shape"]);
   }
   if (Number(candidate.schemaVersion) !== REF5_SNAPSHOT_SCHEMA_VERSION) {
-    throw new Ref5ValidationError(["unsupported REF5 v1.2 snapshot schema"]);
+    throw new Ref5ValidationError(["unsupported REF5 snapshot schema"]);
   }
   if (containsRef5V12RemovedField(candidate)) {
     throw new Ref5StaleVersionError(REF5_LEGACY_PROTOCOL_VERSION);
@@ -1019,14 +1078,21 @@ function bpFocusExercise(snapshotId: string, direct: Ref5DirectStandardsKg): Ref
   });
 }
 
-function bpVolumeExercise(snapshotId: string, derived: Ref5DerivedStandardsKg): Ref5ExercisePrescription {
+function bpVolumeExercise(
+  snapshotId: string,
+  derived: Ref5DerivedStandardsKg,
+  sessionType: Ref5SessionType,
+): Ref5ExercisePrescription {
+  // Normal sessions run two volume sets (§7.2–7.3); micro stays at one to keep
+  // the density-limited shape (§7.4). Their fail streams are independent (§14).
+  const micro = sessionType === "MICRO";
   return exercise({
     snapshotId,
     lift: "BP",
     exerciseName: "Bench Press",
     role: "VOLUME",
-    stream: "BP_VOLUME",
-    sets: prescriptionSets(1, 5, derived.bpVolumeKg),
+    stream: micro ? "BP_VOLUME_MICRO" : "BP_VOLUME_NORMAL",
+    sets: prescriptionSets(micro ? 1 : 2, 5, derived.bpVolumeKg),
     progressionTargetKg: derived.bpVolumeKg,
   });
 }
@@ -1035,15 +1101,25 @@ function pullExercise(
   snapshotId: string,
   role: "FOCUS" | "VOLUME",
   pull: Ref5PullPrescriptionMetadata,
+  sessionType: Ref5SessionType,
 ): Ref5ExercisePrescription {
   const focus = role === "FOCUS";
+  // Normal volume is two sets (§7.3); micro volume is one (§7.4). Focus is only
+  // ever prescribed in normal sessions.
+  const micro = sessionType === "MICRO";
+  const volumeSetCount = micro ? 1 : 2;
   return exercise({
     snapshotId,
     lift: "PULL",
     exerciseName: "Weighted Pull-Up",
     role,
-    stream: focus ? "PULL_FOCUS" : "PULL_VOLUME",
-    sets: prescriptionSets(focus ? 3 : 1, focus ? 3 : 6, pull.lockedAddedKg, pull.actualTotalKg),
+    stream: focus ? "PULL_FOCUS" : micro ? "PULL_VOLUME_MICRO" : "PULL_VOLUME_NORMAL",
+    sets: prescriptionSets(
+      focus ? 3 : volumeSetCount,
+      focus ? 3 : 6,
+      pull.lockedAddedKg,
+      pull.actualTotalKg,
+    ),
     progressionTargetKg: pull.targetTotalKg,
     pull,
   });
@@ -1073,7 +1149,7 @@ export function generateRef5Session(state: Ref5RuntimeState, input: Ref5SessionI
     throw new Ref5StaleVersionError(state.protocolVersion);
   }
   if (state.schemaVersion !== REF5_RUNTIME_SCHEMA_VERSION) {
-    throw new Ref5ValidationError(["unsupported REF5 v1.2 runtime schema"]);
+    throw new Ref5ValidationError(["unsupported REF5 runtime schema"]);
   }
   if (state.startedSessions.some((session) => session.sessionId === input.sessionId)) {
     throw new Ref5ValidationError([`session ${input.sessionId} has already started`]);
@@ -1096,15 +1172,15 @@ export function generateRef5Session(state: Ref5RuntimeState, input: Ref5SessionI
     squatExercise(input.snapshotId, decision.squatPrescription, decision.sessionType, direct, derived),
   ];
   if (decision.sessionType === "MICRO") {
-    exercises.push(bpVolumeExercise(input.snapshotId, derived));
-    exercises.push(pullExercise(input.snapshotId, "VOLUME", pullContext.volume));
+    exercises.push(bpVolumeExercise(input.snapshotId, derived, "MICRO"));
+    exercises.push(pullExercise(input.snapshotId, "VOLUME", pullContext.volume, "MICRO"));
   } else if (decision.focus === "PULL") {
-    exercises.push(pullExercise(input.snapshotId, "FOCUS", pullContext.focus));
-    exercises.push(bpVolumeExercise(input.snapshotId, derived));
+    exercises.push(pullExercise(input.snapshotId, "FOCUS", pullContext.focus, "NORMAL"));
+    exercises.push(bpVolumeExercise(input.snapshotId, derived, "NORMAL"));
     exercises.push(auxiliaryExercise(input.snapshotId, "DL", direct));
   } else {
     exercises.push(bpFocusExercise(input.snapshotId, direct));
-    exercises.push(pullExercise(input.snapshotId, "VOLUME", pullContext.volume));
+    exercises.push(pullExercise(input.snapshotId, "VOLUME", pullContext.volume, "NORMAL"));
     exercises.push(auxiliaryExercise(input.snapshotId, "OHP", direct));
   }
 
@@ -1122,7 +1198,7 @@ export function generateRef5Session(state: Ref5RuntimeState, input: Ref5SessionI
     directStandardsKg: direct,
     derivedStandardsKg: derived,
     controlRefsKg: deriveRef5ControlRefs(direct),
-    auxiliaryCapsKg: deriveRef5AuxiliaryCaps(direct),
+    auxiliaryCapsKg: deriveRef5AuxiliaryCaps(direct, state.ohpMicroloading),
     pullContext,
     exercises,
     totalWorkingSets: exercises.reduce((sum, item) => sum + item.sets.length, 0),
@@ -1394,8 +1470,8 @@ function resetMainLiftAfterDirectChange(
     lift === "SQ"
       ? (["SQ_H3", "SQ_H2", "SQ_V_NORMAL", "SQ_V_MICRO"] as const)
       : lift === "BP"
-        ? (["BP_FOCUS", "BP_VOLUME"] as const)
-        : (["PULL_FOCUS", "PULL_VOLUME"] as const);
+        ? (["BP_FOCUS", "BP_VOLUME_NORMAL", "BP_VOLUME_MICRO"] as const)
+        : (["PULL_FOCUS", "PULL_VOLUME_NORMAL", "PULL_VOLUME_MICRO"] as const);
   for (const stream of streams) resetFailStream(state, stream);
   const previous = state.stagnation[lift];
   state.stagnation[lift] = {
@@ -1513,7 +1589,10 @@ function relockPull(
     volumeAddedKg,
   };
   if (resetBothFailStreams || before?.focusAddedKg !== focusAddedKg) resetFailStream(state, "PULL_FOCUS");
-  if (resetBothFailStreams || before?.volumeAddedKg !== volumeAddedKg) resetFailStream(state, "PULL_VOLUME");
+  if (resetBothFailStreams || before?.volumeAddedKg !== volumeAddedKg) {
+    resetFailStream(state, "PULL_VOLUME_NORMAL");
+    resetFailStream(state, "PULL_VOLUME_MICRO");
+  }
   const eventId = `pull-relock:${state.pull.lock.windowId}:${causeEventIds.join("+")}`;
   appendProgressionChange(state, changes, {
     eventId,
@@ -1632,9 +1711,10 @@ export function reduceRef5Completion(
     };
     if (item.stream === "SQ_V_NORMAL" || item.stream === "SQ_V_MICRO") {
       if (record.outcome === "FAIL") next.mainWindows.SQ.volumeFailEventIds.push(eventId);
-    } else if (item.stream === "BP_VOLUME") {
+    } else if (item.stream === "BP_VOLUME_NORMAL" || item.stream === "BP_VOLUME_MICRO") {
+      // Both the normal and micro volume streams veto the next focus window (§13.2).
       if (record.outcome === "FAIL") next.mainWindows.BP.volumeFailEventIds.push(eventId);
-    } else if (item.stream === "PULL_VOLUME") {
+    } else if (item.stream === "PULL_VOLUME_NORMAL" || item.stream === "PULL_VOLUME_MICRO") {
       if (record.outcome === "FAIL") next.mainWindows.PULL.volumeFailEventIds.push(eventId);
     } else if (
       snapshot.decision.sessionType === "NORMAL" &&
@@ -1745,19 +1825,22 @@ export function reduceRef5Completion(
       window.exposures = [];
     }
     const key = lift === "DL" ? "deadliftKg" : "ohpKg";
+    // OHP steps on the plan's 1.25 kg grid when microloading is enabled (§13.3);
+    // DL and 2.5-grid OHP keep the v1.2 candidates exactly.
+    const gridKg = lift === "OHP" ? ref5OhpGridKg(next.ohpMicroloading) : REF5_DEFAULT_GRID_KG;
     const beforeKg = next.directStandardsKg[key];
     const immediate = immediateCauses[lift] ?? [];
-    let ownCandidateKg = immediate.length > 0 ? cleanKg(beforeKg - 2.5) : beforeKg;
+    let ownCandidateKg = immediate.length > 0 ? cleanKg(beforeKg - gridKg) : beforeKg;
     let ownWindowResult: "INCREASE" | "MAINTAIN" | null = completedWindow ? "MAINTAIN" : null;
     if (immediate.length === 0 && allPass) {
-      const increaseCandidate = cleanKg(beforeKg + 2.5);
+      const increaseCandidate = cleanKg(beforeKg + gridKg);
       if (ref5AuxiliaryCandidateIsWithinCap(lift, increaseCandidate, next.directStandardsKg)) {
         ownCandidateKg = increaseCandidate;
         ownWindowResult = "INCREASE";
       }
     }
-    const afterKg = constrainRef5AuxiliaryCandidate(lift, ownCandidateKg, next.directStandardsKg);
-    const capConstrainedCurrent = constrainRef5AuxiliaryCandidate(lift, beforeKg, next.directStandardsKg);
+    const afterKg = constrainRef5AuxiliaryCandidate(lift, ownCandidateKg, next.directStandardsKg, gridKg);
+    const capConstrainedCurrent = constrainRef5AuxiliaryCandidate(lift, beforeKg, next.directStandardsKg, gridKg);
     const capForced = capConstrainedCurrent < beforeKg;
     if (completedWindow) window.lastWindowResult = ownWindowResult;
     if (afterKg !== beforeKg) {

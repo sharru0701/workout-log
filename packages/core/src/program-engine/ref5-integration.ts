@@ -27,10 +27,11 @@ import {
 } from "./ref5";
 import { acquireActiveAccountMutationLock } from "@workout/core/auth/account-lifecycle";
 
-// 511 is the immutable v1.1 identifier. Active v1.2 writes use the new
-// constant so historical snapshots are never relabelled in place.
+// 511 is the immutable v1.1 identifier; 512 is v1.2. Active v1.3 writes use 513
+// so historical snapshots are never relabelled in place (§24.3).
 export const REF5_ENGINE_VERSION = REF5_LEGACY_ENGINE_VERSION;
 export const REF5_ENGINE_VERSION_V12 = 512;
+export const REF5_ENGINE_VERSION_V13 = 513;
 
 export type Ref5GenerateRequest = {
   protocolVersion: typeof REF5_PROTOCOL_VERSION;

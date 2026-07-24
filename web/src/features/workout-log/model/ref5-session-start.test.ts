@@ -15,7 +15,7 @@ test("REF5 plan detection accepts the family marker or immutable REF5 params", (
 
 test("preview and start share one stable REF5 input envelope", () => {
   const values = {
-    protocolVersion: "1.2",
+    protocolVersion: "1.3",
     actualStartAt: "2026-07-13T03:04:05.000Z",
     bodyweightKg: 81.2,
     manualMicro: true,
@@ -32,7 +32,7 @@ test("preview and start share one stable REF5 input envelope", () => {
   });
 });
 
-test("preview summary reads the REF5 v1.2 snapshot contract", () => {
+test("preview summary reads the REF5 v1.3 snapshot contract", () => {
   const summary = summarizeRef5Preview({
     id: "preview-only",
     planId: "plan-1",
@@ -74,11 +74,11 @@ test("preview summary reads the REF5 v1.2 snapshot contract", () => {
   ]);
 });
 
-test("v1.2 preview contains the complete nine-set PULL-focus prescription", () => {
+test("v1.3 preview contains the complete ten-set PULL-focus prescription", () => {
   const summary = summarizeRef5Preview({
-    id: "preview-v12",
+    id: "preview-v13",
     planId: "plan-1",
-    sessionKey: "ref5:preview:v12",
+    sessionKey: "ref5:preview:v13",
     snapshot: {
       ref5: {
         decision: { sessionType: "NORMAL", focus: "PULL", squatPrescription: "H3" },
@@ -86,13 +86,14 @@ test("v1.2 preview contains the complete nine-set PULL-focus prescription", () =
       exercises: [
         { exerciseName: "Back Squat", sets: Array.from({ length: 3 }, () => ({ plannedReps: 3, externalLoadKg: 82.5 })) },
         { exerciseName: "Weighted Pull-Up", sets: Array.from({ length: 3 }, () => ({ plannedReps: 3, externalLoadKg: 12.5 })) },
-        { exerciseName: "Bench Press", sets: [{ plannedReps: 5, externalLoadKg: 70 }] },
+        // v1.3 normal BP volume is two sets (§7.2).
+        { exerciseName: "Bench Press", sets: Array.from({ length: 2 }, () => ({ plannedReps: 5, externalLoadKg: 70 })) },
         { exerciseName: "Deadlift", sets: Array.from({ length: 2 }, () => ({ plannedReps: 4, externalLoadKg: 72.5 })) },
       ],
     },
   });
 
-  assert.equal(summary.setCount, 9);
+  assert.equal(summary.setCount, 10);
   assert.deepEqual(summary.exercises.map((exercise) => exercise.name), [
     "Back Squat",
     "Weighted Pull-Up",

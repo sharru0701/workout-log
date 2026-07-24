@@ -14,7 +14,7 @@ import { apiPost, isAbortError } from "@/shared/api";
 import type { GeneratedSessionLike } from "@/entities/workout-record";
 
 export type Ref5SessionStartValues = {
-  protocolVersion: "1.2";
+  protocolVersion: "1.3";
   actualStartAt: string;
   bodyweightKg: number;
   manualMicro: boolean;
@@ -228,7 +228,7 @@ function toStartValues(input: {
     return null;
   }
   return {
-    protocolVersion: "1.2",
+    protocolVersion: "1.3",
     actualStartAt: start.toISOString(),
     bodyweightKg,
     manualMicro: input.manualMicro,
@@ -326,7 +326,7 @@ export function Ref5SessionStartPanel({
           <h2 className="v2-h2" style={{ margin: 0 }}>
             {locale === "ko" ? "REF5 세션 결정" : "REF5 session decision"}
           </h2>
-          <V2Chip tone="info">v1.2</V2Chip>
+          <V2Chip tone="info">v1.3</V2Chip>
         </div>
         <p className="v2-small" style={{ margin: 0, color: "var(--v2-ink-3)" }}>
           {planName} · {dateKey}

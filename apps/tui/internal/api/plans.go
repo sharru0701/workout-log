@@ -10,9 +10,9 @@ import (
 const (
 	Ref5TemplateSlug         = "ref5-adaptive-strength"
 	Ref5ProgramFamily        = "ref5"
-	Ref5ProtocolVersion      = "1.2"
-	Ref5RuntimeSchemaVersion = 2
-	Ref5StartConfigVersion   = 1
+	Ref5ProtocolVersion      = "1.3"
+	Ref5RuntimeSchemaVersion = 3
+	Ref5StartConfigVersion   = 2
 )
 
 // Plan is a user's training plan.

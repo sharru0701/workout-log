@@ -306,7 +306,7 @@ async function verifyRef5Workflow(input: {
     planId: input.planId,
     timezone: input.timezone,
     ref5: {
-      protocolVersion: "1.2" as const,
+      protocolVersion: "1.3" as const,
       actualStartAt,
       todayBodyweightKg: 75,
       manualMicro: false,
@@ -352,7 +352,7 @@ async function verifyRef5Workflow(input: {
     assert.equal(currentA.id, currentB.id, "concurrent REF5 start was not idempotent");
     generatedIds.add(currentA.id);
     const currentSnapshot = asRecord(currentA.snapshot);
-    assert.equal(currentSnapshot.protocolVersion, "1.2");
+    assert.equal(currentSnapshot.protocolVersion, "1.3");
     assert.equal(asRecord(currentSnapshot.ref5).actualStartAt, currentRequest.ref5.actualStartAt);
     assert.equal(
       asRecords(currentSnapshot.exercises).reduce(
