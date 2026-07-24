@@ -213,14 +213,16 @@ function clampPositiveInt(v: unknown, fallback: number) {
 }
 
 function deriveSessionContext(input: {
-  plan: any;
+  plan: { params?: unknown };
   week?: number;
   day?: number;
   sessionDate?: string;
   timezone?: string;
   runtimeState?: unknown;
 }) {
-  const params = (input.plan?.params ?? {}) as any;
+  // plan.params(jsonb)는 저장 형태가 느슨하지만 여기서 읽는 필드(timezone·startDate·
+  // autoProgression·schedule·sessionsPerWeek·sessionKeyMode)는 전부 PlanParams 계약 → 경계 캐스트.
+  const params = (input.plan?.params ?? {}) as PlanParams;
   const runtimeState =
     input.runtimeState && typeof input.runtimeState === "object" && !Array.isArray(input.runtimeState)
       ? (input.runtimeState as Record<string, unknown>)
@@ -301,13 +303,14 @@ function normalizeLookupKeys(keys: Array<string | null | undefined>) {
 function pickTrainingMaxKgByKeys(params: PlanParams, defaults: ProgramDefaults, rawKeys: Array<string | null | undefined>) {
   const keys = normalizeLookupKeys(rawKeys);
   if (keys.length < 1) return null;
-  const scoped = (obj: any): number | null => {
+  const scoped = (obj: unknown): number | null => {
     if (!obj) return null;
     const asNum = toNumberOrNull(obj);
     if (asNum !== null) return asNum;
     if (typeof obj !== "object") return null;
+    const rec = obj as Record<string, unknown>;
     for (const k of keys) {
-      const n = toNumberOrNull(obj[k]);
+      const n = toNumberOrNull(rec[k]);
       if (n !== null) return n;
     }
     return null;
@@ -1172,7 +1175,7 @@ function resolveGzclpStageScheme(
 // stage 변형 세트: 저장 첫 세트를 템플릿으로 setCount개를 reps로 펼친다(무게는 reducer workKg).
 function buildGzclpStageSets(
   scheme: { setCount: number; reps: number },
-  setRows: any[],
+  setRows: ManualSet[],
   effectiveKg: number | null,
 ): PlannedSet[] {
   const template = mapManualSet(setRows[0] ?? {});
@@ -1186,14 +1189,17 @@ function buildGzclpStageSets(
 }
 
 export function plannedExercisesFromSlottedLpManualSession(
-  manualSession: any,
+  // 엔진 ManualSession과 program-store fork draft(ManualDefinitionSession)가 모두
+  // 흘러드는 WRITE/READ 교차 소비처라 unknown 경계에서 좁힌다(로컬타입 수렴 전까지).
+  manualSession: unknown,
   effectiveParams: PlanParams,
   defaults: ProgramDefaults,
   family?: string | null,
 ): PlannedExercise[] {
+  const session = (manualSession ?? null) as { items?: unknown; key?: unknown } | null;
   const items: ManualItem[] =
-    manualSession && Array.isArray(manualSession.items) ? manualSession.items : [];
-  const sessionKey = String(manualSession?.key ?? "").trim();
+    session && Array.isArray(session.items) ? session.items : [];
+  const sessionKey = String(session?.key ?? "").trim();
   return items
     .map((item, index: number): PlannedExercise | null => {
       const exerciseName = String(item?.exerciseName ?? item?.name ?? "").trim();
@@ -1829,8 +1835,8 @@ async function buildSession(
     const { version, template } = row;
 
     if (p.type === "MANUAL") {
-      const schedule = Array.isArray((effectivePlanParams as any)?.schedule)
-        ? (effectivePlanParams as any).schedule
+      const schedule = Array.isArray(effectivePlanParams.schedule)
+        ? effectivePlanParams.schedule
         : [];
       const chosenKey = schedule[sessionCtx.day - 1] ?? schedule[(sessionCtx.day - 1) % schedule.length];
       if (!chosenKey) {
